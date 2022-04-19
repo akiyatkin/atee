@@ -1,0 +1,20 @@
+{
+  "name": "@atee/controller",
+  "version": "1.0.2",
+  "type": "module",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akiyatkin/atee.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/akiyatkin/atee/issues"
+  },
+  "homepage": "https://github.com/akiyatkin/atee#readme"
+}
