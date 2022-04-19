@@ -1,10 +1,10 @@
 import { files } from "./files.js"
-import { join, dirname } from 'path'
+import { join } from 'path'
 import { readFile } from "fs/promises"
-import { fileURLToPath } from 'url';
 import { Meta, View } from "./Meta.js"
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { whereisurl } from './whereisurl.js'
+const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisurl(import.meta.url)
 
 const UPDATE_TIME = Date.now()
 let ACCESS_TIME = Date.now()
@@ -26,8 +26,7 @@ meta.addArgument('next')
 
 meta.addAction('sw.js', async view => {
     const res = await view.get('access')
-    const src = join(__dirname, 'sw.js')
-    const script = await readFile(src, 'utf-8')
+    const script = await readFile(FILE_MOD_ROOT + '/sw.js', 'utf-8')
     const ans = `
         let UPDATE_TIME = ${res.UPDATE_TIME}
         let ACCESS_TIME = ${res.ACCESS_TIME}
@@ -44,9 +43,8 @@ let LAYERS
 export const rest = l => {
     LAYERS = l
     return async (query, get) => {
-        if (query == 'init.js') return files(join(__dirname, 'public'))('init.js')
+        if (query == 'init.js') return files(FILE_MOD_ROOT + '/public')('init.js')
         const ans = await meta.get(query, get)
-
         if (query == 'sw.js') {
             return {ans, ext: 'js', status: 200, nostore: false, headers: { 'Service-Worker-Allowed': '/' }}
         } else {

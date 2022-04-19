@@ -8,6 +8,7 @@ export const files = (pub) => {
     return (query, get) => {
         const ext = getExt(query)
         if (!ext) return false
+        console.log(pub, query)
         const ans = createReadStream(join(pub, query))
         return { ans, ext, status: 200, nostore: false }
     }

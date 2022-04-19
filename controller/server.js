@@ -1,12 +1,10 @@
 import { router } from './router.js'
-
-//import http2 from 'http2'
 import http from 'http'
 import fs from 'fs/promises'
-import { join } from 'path'
 import { ReadStream } from 'fs'
-
 import { meta } from './rest.js'
+import { whereisurl } from './whereisurl.js'
+const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisurl(import.meta.url)
 
 const TYPES = {
     txt: 'text/plain',
@@ -24,6 +22,7 @@ const TYPES = {
     svg: 'image/svg+xml',
 	pdf: 'application/pdf'
 };
+
 export const server = (PORT, IP) => {
 
     const server = http.createServer()
@@ -35,12 +34,13 @@ export const server = (PORT, IP) => {
             });
             return response.end('Method not implemented')
         }
+
         const {
             secure, get,
             rest, query,
             cont, root, crumbs
-        } = await router('./public/', req.url, req)
-        console.log(req.url)
+        } = await router(req.url, req)
+        
         if (secure) {
             response.writeHead(403, {
                 'сontent-type': TYPES['txt'] + '; charset=utf-8'
@@ -86,8 +86,8 @@ export const server = (PORT, IP) => {
                 'content-type': TYPES['html'] + '; charset=utf-8',
                 'cache-control': 'public, max-age=31536000, immutable'
             })
-            const { default: data }  = await import('../public/' + json, {assert: { type: 'json' }})
-			const { root } = await import('../public/' + tpl)
+            const { default: data }  = await import(IMPORT_APP_ROOT + '/public/' + json, {assert: { type: 'json' }})
+			const { root } = await import(IMPORT_APP_ROOT + '/public/' + tpl)
 			const html = root(data)
 			return response.end(html)
         }

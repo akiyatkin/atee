@@ -83,7 +83,8 @@ export class View {
         const view = this
         view.ans.result = 1
 		if (msg) view.ans.msg = msg
-		throw new ViewException();
+		//throw new ViewException();
+        return view.ans
 	}
 }
 export class Meta {
@@ -100,7 +101,6 @@ export class Meta {
     		}
 
     		const res = await view.get(action)
-
             if (res != null) return res;
     		else return view.ans
         } catch (e) {
