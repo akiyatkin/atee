@@ -1,8 +1,8 @@
 import { rest as controller } from './rest.js'
 import { files } from './files.js'
 //import layers from '../layers.json' assert { type: "json" }
-import { whereisurl } from './whereisurl.js'
-const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisurl(import.meta.url)
+import { whereisit } from './whereisit.js'
+const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 const explode = (sep, str) => {
     const i = str.indexOf(sep)
@@ -34,14 +34,14 @@ const pathparser = request => { //request всегда со слэшом в на
 
     return {secure, crumbs, path, ext, get}
 }
-export const router = async (search, request) => {
+export const router = async (search, host) => {
 
     const { default: layers } = await import(IMPORT_APP_ROOT + '/layers.json', {assert: { type: "json" }})
 
     const SCOPE = {
         '': files('./public'),
         'robots.txt': (query, get) => {
-            const ans = "Host: " + request.headers.host
+            const ans = "Host: " + host
             return { ans, status: 200, nostore: false, ext: 'txt' }
         },
         '-controller': controller(layers)

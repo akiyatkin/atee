@@ -3,8 +3,8 @@ import { join } from 'path'
 import { readFile } from "fs/promises"
 import { Meta, View } from "./Meta.js"
 
-import { whereisurl } from './whereisurl.js'
-const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisurl(import.meta.url)
+import { whereisit } from './whereisit.js'
+const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 const UPDATE_TIME = Date.now()
 let ACCESS_TIME = Date.now()

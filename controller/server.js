@@ -3,8 +3,8 @@ import http from 'http'
 import fs from 'fs/promises'
 import { ReadStream } from 'fs'
 import { meta } from './rest.js'
-import { whereisurl } from './whereisurl.js'
-const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisurl(import.meta.url)
+import { whereisit } from './whereisit.js'
+const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 const TYPES = {
     txt: 'text/plain',
@@ -27,8 +27,8 @@ export const server = (PORT, IP) => {
 
     const server = http.createServer()
 
-	server.on('request', async (req, response) => {
-        if (!~['GET','POST'].indexOf(req.method)) {
+	server.on('request', async (request, response) => {
+        if (!~['GET','POST'].indexOf(request.method)) {
             response.writeHead(501, {
                 'content-type': TYPES['txt'] + '; charset=utf-8'
             });
@@ -39,8 +39,8 @@ export const server = (PORT, IP) => {
             secure, get,
             rest, query,
             cont, root, crumbs
-        } = await router(req.url, req)
-        
+        } = await router(request.url, request.headers.host)
+
         if (secure) {
             response.writeHead(403, {
                 'сontent-type': TYPES['txt'] + '; charset=utf-8'
@@ -61,6 +61,7 @@ export const server = (PORT, IP) => {
         		        ans.pipe(response)
         		    });
         		    return ans.on('error', () => {
+                        headers['content-type'] = TYPES['txt'] + '; charset=utf-8'
                         response.writeHead(404, headers)
         		        response.end('Not found')
         		    })
