@@ -43,7 +43,8 @@ let LAYERS
 export const rest = l => {
     LAYERS = l
     return async (query, get) => {
-        if (query == 'init.js') return files(FILE_MOD_ROOT + '/public')('init.js')
+        if (query == 'init.js') return files(FILE_MOD_ROOT + '')('init.js')
+        if (query == 'test.js') return files(FILE_MOD_ROOT + '')('test.js')
         const ans = await meta.get(query, get)
         if (query == 'sw.js') {
             return {ans, ext: 'js', status: 200, nostore: false, headers: { 'Service-Worker-Allowed': '/' }}

@@ -4,6 +4,7 @@ import fs from 'fs/promises'
 import { ReadStream } from 'fs'
 import { meta } from './rest.js'
 import { whereisit } from './whereisit.js'
+import { resolve } from './loader.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 const TYPES = {
@@ -77,7 +78,9 @@ export const server = (PORT, IP) => {
             }
         }
         if (cont) {
+            const cookies = {}, host = request.headers.host;
             const { layers } = await meta.get('layers', {prev:1,next:1})
+
             const { tpl, json } = layers
             //Контроллер root, crumbs, get
             const ar = []
@@ -87,8 +90,9 @@ export const server = (PORT, IP) => {
                 'content-type': TYPES['html'] + '; charset=utf-8',
                 'cache-control': 'public, max-age=31536000, immutable'
             })
-            const { default: data }  = await import(IMPORT_APP_ROOT + '/public/' + json, {assert: { type: 'json' }})
-			const { root } = await import(IMPORT_APP_ROOT + '/public/' + tpl)
+            const { default: data }  = await import(IMPORT_APP_ROOT + '/' + json, {assert: { type: 'json' }})
+            const ftpl = resolve(tpl)
+			const { root } = await import(IMPORT_APP_ROOT + '/' + ftpl)
 			const html = root(data)
 			return response.end(html)
         }

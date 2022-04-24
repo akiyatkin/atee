@@ -2,6 +2,7 @@ import { rest as controller } from './rest.js'
 import { files } from './files.js'
 //import layers from '../layers.json' assert { type: "json" }
 import { whereisit } from './whereisit.js'
+import { resolve } from './loader.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 const explode = (sep, str) => {
@@ -35,18 +36,24 @@ const pathparser = request => { //request всегда со слэшом в на
     return {secure, crumbs, path, ext, get}
 }
 export const router = async (search, host) => {
+    //У search всегда есть ведущий /слэш
 
     const { default: layers } = await import(IMPORT_APP_ROOT + '/layers.json', {assert: { type: "json" }})
 
     const SCOPE = {
-        '': files('./public'),
+        '': files('.'),
         'robots.txt': (query, get) => {
             const ans = "Host: " + host
             return { ans, status: 200, nostore: false, ext: 'txt' }
         },
         '-controller': controller(layers)
     }
+    // console.log('asdf',search)
+    // search = resolve(search)
+    // console.log('asdf',search)
+
     const {secure, path, crumbs, ext, get} = pathparser(search)
+
     let rest = false
     let query = false
     let root = ''
