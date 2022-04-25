@@ -2,7 +2,7 @@ import { files } from "./files.js"
 import { join } from 'path'
 import { readFile } from "fs/promises"
 import { Meta, View } from "./Meta.js"
-
+import { parse } from './headers.js'
 import { whereisit } from './whereisit.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
@@ -20,6 +20,11 @@ meta.addAction('set-access', view => {
     ACCESS_TIME = Date.now()
     return view.ret()
 })
+
+meta.addArgument('cookie', (view, cookie) => {
+    return parse(cookie, '; ')
+})
+meta.addArgument('host')
 meta.addArgument('prev')
 meta.addArgument('next')
 
@@ -33,8 +38,9 @@ meta.addAction('sw.js', async view => {
         ${script}`
     return ans
 })
+
 meta.addAction('layers', async view => {
-    const {prev, next} = await view.gets(['prev','next'])
+    const {prev, next, host, cookie} = await view.gets(['prev', 'next', 'host', 'cookie'])
     view.ans.layers = LAYERS.root
     return view.ret()
 })

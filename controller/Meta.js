@@ -31,7 +31,7 @@ export class View {
         if (opt['request']) {
             if (pname in view.req) {
                 res = view.req[pname]
-                if (res == null) res = null
+                //if (res == null) res = null
             } else {
                 res = null
             }
@@ -45,8 +45,7 @@ export class View {
         }
 
 		if (opt['required']) {
-
-			if (res == null) return view.err(`meta.required ${pname}`);
+			if (res === null) return view.err(`meta.required ${pname}`);
 		}
 		if (opt.func) {
 			const r = await opt.func(view, res, forname)

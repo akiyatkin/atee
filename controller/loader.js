@@ -1,7 +1,7 @@
 
 const MAP = {
     '/-controller/server.js': '@atee/controller/server.js',
-    'controller/server.js': '@atee/controller/server.js',
+    //'controller/server.js': '@atee/controller/server.js',
     '-index.html.js': 'index.html.js',
 }
 

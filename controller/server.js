@@ -3,9 +3,10 @@ import http from 'http'
 import fs from 'fs/promises'
 import { ReadStream } from 'fs'
 import { meta } from './rest.js'
-import { whereisit } from './whereisit.js'
-import { resolve } from './loader.js'
-const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
+
+import { controller } from './controller.js'
+
+import { parse, getPost } from './headers.js'
 
 const TYPES = {
     txt: 'text/plain',
@@ -36,11 +37,14 @@ export const server = (PORT, IP) => {
             return response.end('Method not implemented')
         }
 
+
+        const search = request.url
         const {
             secure, get,
             rest, query,
             cont, root, crumbs
-        } = await router(request.url, request.headers.host)
+        } = await router(search)
+
 
         if (secure) {
             response.writeHead(403, {
@@ -48,12 +52,12 @@ export const server = (PORT, IP) => {
             });
 			return stream.end('Forbidden')//'Forbidden'
 		}
-
+        const post = await getPost(request)
+        const req = { ...get, ...post }
         if (rest) {
-            const myrest = await rest(query, get)
+            const myrest = await rest(query, req)
             if (myrest) {
                 const {ans, ext = 'json', status = 200, nostore = false, headers = { }} = myrest
-
                 headers['content-type'] ??= TYPES[ext] + '; charset=utf-8'
                 headers['cache-control'] ??= nostore ? 'no-store' : 'public, max-age=31536000, immutable'
                 if (ans instanceof ReadStream) {
@@ -68,33 +72,38 @@ export const server = (PORT, IP) => {
         		    })
                 } else {
                     response.writeHead(status, headers)
-                    if (ext === 'json'
-                        || (typeof(ans) != 'string' && typeof(ans) != 'number')) {
+                    if (ext == 'json' || ( typeof(ans) != 'string' && typeof(ans) != 'number') ) {
                         return response.end(JSON.stringify(ans))
                     } else {
                         return response.end(ans)
                     }
                 }
             }
+            //Если rest вернул false или restа нет переходим на контроллер?
+        }
+        if (request.headers.origin?.split('://')[1] == request.headers.host) { //Если это запрос из контроллера то 404
+            response.writeHead(404)
+            response.end()
         }
         if (cont) {
-            const cookies = {}, host = request.headers.host;
-            const { layers } = await meta.get('layers', {prev:1,next:1})
 
-            const { tpl, json } = layers
-            //Контроллер root, crumbs, get
-            const ar = []
-            ar.push('</images/logo.svg>; rel=preload; as=image; type=image/svg+xml')
-            response.setHeader('Link', ar.join(','));
-            response.writeHead(200, {
-                'content-type': TYPES['html'] + '; charset=utf-8',
-                'cache-control': 'public, max-age=31536000, immutable'
+            const { layers } = await meta.get('layers', {
+                cookie: request.headers.cookie || '',
+                host: request.headers.host,
+                prev: false,
+                next: search
             })
-            const { default: data }  = await import(IMPORT_APP_ROOT + '/' + json, {assert: { type: 'json' }})
-            const ftpl = resolve(tpl)
-			const { root } = await import(IMPORT_APP_ROOT + '/' + ftpl)
-			const html = root(data)
+
+            const { html = '', status = 404, nostore = false, ar = [] } = await controller(layers)
+            response.setHeader('Link', ar.join(','));
+            response.writeHead(status, {
+                'content-type': TYPES['html'] + '; charset=utf-8',
+                'cache-control': nostore ? 'no-store' : 'public, max-age=31536000, immutable'
+            })
 			return response.end(html)
+        } else { //Это может быть новый проект без всего
+            response.writeHead(404, 'layers.json not found')
+            response.end()
         }
 	});
 	server.listen(PORT, IP)

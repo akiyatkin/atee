@@ -3,6 +3,7 @@ import { files } from './files.js'
 //import layers from '../layers.json' assert { type: "json" }
 import { whereisit } from './whereisit.js'
 import { resolve } from './loader.js'
+import { parse } from './headers.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 const explode = (sep, str) => {
@@ -19,31 +20,31 @@ const getRoot = (str) => {
 }
 const pathparser = request => { //request всегда со слэшом в начале
     request = request.slice(1);
+
     try { request = decodeURI(request) } catch { }
     const [path, params] = explode('?', request)
-    const get = { };
-    if (params) {
-        const ar = params.split('&');
-    	for (let i = 0; i < ar.length; i++) {
-            const [key, value] = explode('=', ar[i])
-            get[key] = value;
-    	}
-    }
+    const get = parse(params || '', '&');
+    // if (params) {
+    //     const ar = params.split('&');
+    // 	for (let i = 0; i < ar.length; i++) {
+    //         const [key, value] = explode('=', ar[i])
+    //         get[key] = value;
+    // 	}
+    // }
     const ext = getExt(path)
     const secure = !!~path.indexOf('/.')
     const crumbs = path.split('/')
 
     return {secure, crumbs, path, ext, get}
 }
-export const router = async (search, host) => {
+export const router = async (search) => {
     //У search всегда есть ведущий /слэш
-
     const { default: layers } = await import(IMPORT_APP_ROOT + '/layers.json', {assert: { type: "json" }})
 
     const SCOPE = {
         '': files('.'),
         'robots.txt': (query, get) => {
-            const ans = "Host: " + host
+            const ans = "Host: надо сделать через контроллер"
             return { ans, status: 200, nostore: false, ext: 'txt' }
         },
         '-controller': controller(layers)
