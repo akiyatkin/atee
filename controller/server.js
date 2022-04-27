@@ -54,7 +54,7 @@ export const server = (PORT, IP) => {
             const { ans = false, ext = 'json', status = 200, nostore = false, headers = { } } = await rest(query, req)
             if (!ans) {
                 response.writeHead(500, 'Internal Server Error')
-                response.end()
+                return response.end()
             }
             headers['content-type'] ??= TYPES[ext] + '; charset=utf-8'
             headers['cache-control'] ??= nostore ? 'no-store' : 'public, max-age=31536000, immutable'
@@ -70,8 +70,10 @@ export const server = (PORT, IP) => {
     		        response.end()
     		    })
             } else {
+
                 response.writeHead(status, headers)
                 if (ext == 'json' || ( typeof(ans) != 'string' && typeof(ans) != 'number') ) {
+                    console.log(ans)
                     return response.end(JSON.stringify(ans))
                 } else {
                     return response.end(ans)

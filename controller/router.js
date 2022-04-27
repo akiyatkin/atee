@@ -164,17 +164,20 @@ export const router = async (search) => {
                 if (v.innodemodules) rest = (await import(v.rest)).rest
                 else rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest
                 //rest = require(v.rest).rest
-                root = v.part
-                query = path.slice(v.part.length)
+                console.log(v)
+                restroot = v.part
+                query = path.slice(v.part.length + 1)
                 break;
             }
         }
     } else { //Может быть rest и может быть контроллер
         for (const v of REST_DIRECTS) {
             if (path.indexOf(v.part) === 0) {
-                rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest
+                if (v.innodemodules) rest = (await import(v.rest)).rest
+                else rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest
+                //rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest
                 restroot = v.part
-                query = path.slice(v.part.length)
+                query = path.slice(v.part.length + 1)
                 break;
             }
         }
