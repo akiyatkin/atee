@@ -1,32 +1,49 @@
+import { pathToFileURL } from 'url'
+import { readdir } from 'fs/promises'
 
-const MAP = {
-    '/-controller/server.js': '@atee/controller/server.js',
-    //'controller/server.js': '@atee/controller/server.js',
-    '-index.html.js': 'index.html.js',
-}
+// const MAP = {
+//     '-controller/server.js': '@atee/controller/server.js',
+//     //'controller/server.js': '@atee/controller/server.js',
+//     '-index.html.js': 'index.html.js',
+// }
 
-export function resolve(specifier, context, defaultResolve){
-    const end = specifier => {
-        if (defaultResolve) return defaultResolve(specifier, context, defaultResolve)
-        else return specifier
+/*
+    Все папки в корне и все папки в node_modules
+    -data - будет работать
+*/
+// const path = 'node_modules/'
+// try {
+//   const files = await readdir(path);
+//   for (const file of files)
+//     console.log('asdf',file);
+// } catch (err) {
+//   console.error(err);
+// }
+
+export async function resolve(specifier, context, defaultResolve){
+    //console.log(context.parentURL)
+    const checkfromroot = path => {
+        return defaultResolve(path, {
+            ...context,
+            parentURL: pathToFileURL('./')
+        }, defaultResolve).catch(() => false)
     }
-    //if (specifier.indexOf('/') === 0) specifier = specifier.slice(1) //Node loader запускает с ведущим слэшом
-    //Можно резолвить как абсолютный так и относительный путь
-    if (specifier in MAP) return end(MAP[specifier])
-    return end(specifier)
-
-}
-export function webresolve(specifier, context, defaultResolve){
-    const { url } = resolve(specifier, context, defaultResolve)
-    const end = specifier => {
-        if (context) return defaultResolve(specifier, context, defaultResolve)
-        else return specifier
+    let res
+    if (specifier[0] === '-') {
+        specifier = specifier.slice(1)
+        res = checkfromroot('@atee/' + specifier)
+        if (res) return res
+        // res = checkfromroot(specifier) //проверяется ключевое выражение в specifier
+        // if (res) return res
+        res = checkfromroot('./' + specifier)
+        if (res) return res
+    } else if (specifier[0] === '/') {
+        specifier = specifier.slice(1)
+        const res = await checkfromroot('./' + specifier)
+        if (res) return res
     }
-    //if (specifier.indexOf('/') === 0) specifier = specifier.slice(1) //Node loader запускает с ведущим слэшом
-    //Можно резолвить как абсолютный так и относительный путь
-    if (specifier in MAP) return end(MAP[specifier])
-    return end(specifier)
-
+    //Node loader запускает с ведущим слэшом
+    //Но это решение НЕ захватывает важные имена, например catalog contacts так как применятся только для файлов с расширением (точкой)
+    //console.log('resolve', specifier)
+    return defaultResolve(specifier, context, defaultResolve) //Проверка относительного адреса
 }
-//https://nodejs.org/api/esm.html#hooks
-//https://github.com/KaMeHb-UA/loader.mjs/blob/master/loader.mjs

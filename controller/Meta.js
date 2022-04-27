@@ -103,7 +103,8 @@ export class Meta {
             if (res != null) return res;
     		else return view.ans
         } catch (e) {
-            return view.ans
+            if (e instanceof ViewException) return view.ans
+            throw e
         }
 	}
     add (pname, a1, a2, a3) {

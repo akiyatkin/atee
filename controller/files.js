@@ -1,5 +1,5 @@
 import { join } from "path"
-import { createReadStream } from 'fs'
+import { createReadStream, readFileSync } from 'fs'
 const getExt = (str) => {
     const i = str.lastIndexOf('.')
     return ~i ? str.slice(i + 1) : ''
@@ -9,6 +9,12 @@ export const files = (pub) => {
         const ext = getExt(query)
         if (!ext) return false
         const ans = createReadStream(join(pub, query))
-        return { ans, ext, status: 200, nostore: false }
+        return { ans, ext }
+    }
+}
+export const file = (src, ext) => {
+    return (query, get) => {
+        const ans = createReadStream(src)
+        return { ans, ext }
     }
 }
