@@ -19,10 +19,10 @@ meta.addAction('access', view => {
     view.ans['ACCESS_TIME'] = Access.getAccessTime()
     return view.ret()
 })
-// meta.addAction('set-access', view => {
-//     Access.setAccessTime()
-//     return view.ret()
-// })
+meta.addAction('set-access', view => {
+    Access.setAccessTime()
+    return view.ret()
+})
 meta.addAction('set-update', async view => {
     const time = new Date();
     await utimes('../reload', time, time)
