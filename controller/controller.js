@@ -48,10 +48,9 @@ export const controller = async (layers) => {
     if (!rest) return { html: '', ar: [], status: 404, nostore: false }
 
     const { ans = false, ext = 'json', status = 200, nostore = false, headers = { } } = await rest(query, get)
+    let data = ans
     if (ans instanceof ReadStream) {
-        layers.data = await readStream(ans)
-    } else {
-        layers.data = ans
+        data = await readStream(ans)
     }
 
 
@@ -64,7 +63,7 @@ export const controller = async (layers) => {
 
     const objtpl = await import(tpl)
 
-    const html = objtpl[tplroot || 'root'](layers)
+    const html = objtpl[tplroot || 'ROOT'].call(layers, data)
 
     const ar = []
     ar.push('</images/logo.svg>; rel=preload; as=image; type=image/svg+xml')

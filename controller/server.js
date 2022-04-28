@@ -73,7 +73,6 @@ export const server = (PORT, IP) => {
 
                 response.writeHead(status, headers)
                 if (ext == 'json' || ( typeof(ans) != 'string' && typeof(ans) != 'number') ) {
-                    console.log(ans)
                     return response.end(JSON.stringify(ans))
                 } else {
                     return response.end(ans)
@@ -93,8 +92,11 @@ export const server = (PORT, IP) => {
         if (cont) {
             const { layers } = await meta.get('layers', {
                 root: root,
+                globals: '',
                 cookie: request.headers.cookie || '',
                 host: request.headers.host,
+                update_time: 0,
+                access_time: 0,
                 prev: false,
                 next: search
             })
@@ -108,7 +110,7 @@ export const server = (PORT, IP) => {
                 })
     			return response.end(html)
             } else {
-                error('layers not defined')
+                return error('layers not defined')
             }
         } else { //Это может быть новый проект без всего
             response.writeHead(404, 'layers.json not found')

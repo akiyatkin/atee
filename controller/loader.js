@@ -1,6 +1,7 @@
 import { pathToFileURL } from 'url'
 import { readdir } from 'fs/promises'
 
+
 // const MAP = {
 //     '-controller/server.js': '@atee/controller/server.js',
 //     //'controller/server.js': '@atee/controller/server.js',
@@ -19,10 +20,24 @@ import { readdir } from 'fs/promises'
 // } catch (err) {
 //   console.error(err);
 // }
+const isExt = (str) => {
+    const i = str.lastIndexOf('.')
+    const ext = ~i ? str.slice(i + 1) : ''
+    return ext && ext.length < 5 
+}
+const checkAccessMark = (src) => {
+    //data from root
+    //data
+    //./data
+}
 
-export async function resolve(specifier, context, defaultResolve){
-    //console.log(context.parentURL)
-    const checkfromroot = path => {
+export const resolve = async (specifier, context, defaultResolve) => {
+    //console.log(context.parentURL)    
+    const checkfromroot = async path => {
+        const { Access } = await import('@atee/controller/Access.js')
+        if (isExt(path) && path.indexOf('./data/') === 0) {
+            path = path + (~path.indexOf('?') ? '&' : '?') + 't=' + Access.getAccessTime()
+        }
         return defaultResolve(path, {
             ...context,
             parentURL: pathToFileURL('./')
@@ -31,11 +46,11 @@ export async function resolve(specifier, context, defaultResolve){
     let res
     if (specifier[0] === '-') {
         specifier = specifier.slice(1)
-        res = checkfromroot('@atee/' + specifier)
+        res = await checkfromroot('@atee/' + specifier)
         if (res) return res
         // res = checkfromroot(specifier) //проверяется ключевое выражение в specifier
         // if (res) return res
-        res = checkfromroot('./' + specifier)
+        res = await checkfromroot('./' + specifier)
         if (res) return res
     } else if (specifier[0] === '/') {
         specifier = specifier.slice(1)

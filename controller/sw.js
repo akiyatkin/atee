@@ -30,15 +30,14 @@ this.addEventListener('fetch', event => {
 
 	let dyn = false
 	let ext = url.pathname.match(/\.(\w+$)/)
-	if (/sw=public/.test(url.search)) {
+	if (~url.search.indexOf('sw=public')) {
 		dyn = false
-	} else if (!ext || ext == 'php' || /.*\/$/.test(url.pathname)) {
+	} else if (!ext) {
 		dyn = true
 	}
-	//Дефаулт public выставляется только для динамики системы
-	if (ext == 'php' && !/^\/-/.test(url.pathname)) return
 
-	//Если есть метка t, то пропускаем
+	//?sw=public - делает из динамики кэш как у статики. Кэш мощнее. но обновится с update_time
+	//?t - отключает обработку, если кэш есть он не сбросится никогда. Самый мощный кэш. не реагирует ни на update_time ни на access_time из расчёта что там nostore заголовок есть
 	if (/[&\?]t[=&\?]/.test(url.search)) return
 	if (/[&\?]t$/.test(url.search)) return
 
@@ -63,7 +62,6 @@ this.addEventListener('fetch', event => {
 	} else {
 		url += UPDATE_TIME
 	}
-
 
 	if (event.request.mode == 'no-cors') {
 		mode = 'no-cors'
