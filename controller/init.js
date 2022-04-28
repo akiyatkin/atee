@@ -7,6 +7,7 @@ const sw = async () => {
 		console.log('New version is ready. Reload please.', event.data)
     })
 	if (navigator.serviceWorker.controller) { //В первый раз данные придут с кодом воркера
+		await navigator.serviceWorker.ready
 		navigator.serviceWorker.controller.postMessage(AccessData)
 	}
 }
