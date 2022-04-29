@@ -1,6 +1,5 @@
 import { rest as controller } from './rest.js'
 import { file, files } from './files.js'
-//import layers from '../layers.json' assert { type: "json" }
 import { whereisit } from './whereisit.js'
 import { parse } from './headers.js'
 
@@ -10,38 +9,6 @@ import { pathToFileURL, fileURLToPath } from 'url'
 import path from 'path'
 import fs from 'fs/promises'
 
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
-
-// const getHyphen = async (source, HYPHEN, needpackage, dir) => {
-//     const files = await fs.readdir(source, { withFileTypes: true })
-//     const dirs = files.filter(dirent => {
-//         return !dirent.isFile()
-//     }).map(dirent => dirent.name)
-//     const res = { }
-//     for (const name of dirs) {
-//         if (needpackage) {
-//             const src = path.join(source, name, 'package.json')
-//             if (!await fs.access(path.join(src)).then(() => true).catch(() => false)) continue
-//         } else {
-//             if (name[0] == '.') continue
-//             if (~['node_modules','data'].indexOf(name)) continue
-//         }
-//         res[name] = [path.posix.join(dir, name)]
-//     }
-//     for (const r in res) {
-//         if (HYPHEN[r]) HYPHEN[r] = [...HYPHEN[r], ...res[r]]
-//         else HYPHEN[r] = res[r]
-//     }
-//
-// }
-// //Папки которые могут быть сокращены дефисом
-// const HYPHEN = {}
-// await getHyphen('.', HYPHEN, false, '')
-// await getHyphen('node_modules', HYPHEN, true, '')
-// await getHyphen('node_modules/@atee', HYPHEN, true, '@atree')
-// console.log(HYPHEN)
 
 const searchRest = async (source, file, RESTS, parent = source, innodemodules = false) => {
     const src = path.posix.join(source, file)
@@ -129,7 +96,7 @@ const pathparser = request => { //request всегда со слэшом в на
 
 export const router = async (search) => {
     //У search всегда есть ведущий /слэш
-    if (search.indexOf('/-') === 0) search = search.slice(1)
+    //if (search.indexOf('/-') === 0) search = search.slice(1)
     let { secure, path, crumbs, ext, get} = pathparser(search)
     let query = false
     let restroot = ''
@@ -162,8 +129,7 @@ export const router = async (search) => {
                 //const test = await import('@atee/controller/rest')
                 //console.log('asdf', v.rest, test)
                 if (v.innodemodules) rest = (await import(v.rest)).rest
-                else rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest
-                //rest = require(v.rest).rest
+                else rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest                
                 restroot = v.part
                 query = path.slice(v.part.length + 1)
                 break;

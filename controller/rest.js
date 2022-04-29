@@ -123,7 +123,10 @@ meta.addAction('layers', async view => {
     if (layers.root.jsontpl) {
         layers.root.json = interpolate(layers.root.jsontpl, {get, host, cookie, root })
     }
+    layers.root.seo = { }
+    layers.root.id = 1
     view.ans.layers = layers.root
+
     return view.ret()
 })
 

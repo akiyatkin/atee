@@ -44,19 +44,21 @@ export const resolve = async (specifier, context, defaultResolve) => {
         }, defaultResolve).catch(() => false)
     }
     let res
-    if (specifier[0] === '-') {
+    if (specifier[0] === '/') {
         specifier = specifier.slice(1)
-        res = await checkfromroot('@atee/' + specifier)
-        if (res) return res
-        // res = checkfromroot(specifier) //проверяется ключевое выражение в specifier
-        // if (res) return res
         res = await checkfromroot('./' + specifier)
         if (res) return res
-    } else if (specifier[0] === '/') {
-        specifier = specifier.slice(1)
-        const res = await checkfromroot('./' + specifier)
-        if (res) return res
+        if (specifier[0] === '-') {
+            specifier = specifier.slice(1)
+            res = await checkfromroot('@atee/' + specifier)
+            if (res) return res
+            // res = checkfromroot(specifier) //проверяется ключевое выражение в specifier
+            // if (res) return res
+            res = await checkfromroot('./' + specifier)
+            if (res) return res
+        }
     }
+    
     //Node loader запускает с ведущим слэшом
     //Но это решение НЕ захватывает важные имена, например catalog contacts так как применятся только для файлов с расширением (точкой)
     //console.log('resolve', specifier)

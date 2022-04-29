@@ -26,97 +26,99 @@ const TYPES = {
 	pdf: 'application/pdf'
 };
 
-export const server = (PORT, IP) => {
-    const server = http.createServer()
-	server.on('request', async (request, response) => {
-        if (!~['GET','POST'].indexOf(request.method)) {
-            response.writeHead(501, 'Method not implemented', {
-                'content-type': TYPES['txt'] + '; charset=utf-8'
-            });
-            return response.end()
-        }
-
-        const {
-            search, secure, get,
-            rest, query, restroot,
-            cont, root, crumbs
-        } = await router(request.url)
-
-        if (secure) {
-            response.writeHead(403, 'Forbidden', {
-                'сontent-type': TYPES['txt'] + '; charset=utf-8'
-            });
-			return stream.end()
-		}
-        if (rest) {
-            const post = await getPost(request)
-            const req = post ? { ...get, ...post } : get
-            const { ans = false, ext = 'json', status = 200, nostore = false, headers = { } } = await rest(query, req)
-            if (!ans) {
-                response.writeHead(500, 'Internal Server Error')
+export const Server = {
+    follow: (PORT = 8888, IP = "127.0.0.1") => {
+        const server = http.createServer()
+    	server.on('request', async (request, response) => {
+            if (!~['GET','POST'].indexOf(request.method)) {
+                response.writeHead(501, 'Method not implemented', {
+                    'content-type': TYPES['txt'] + '; charset=utf-8'
+                });
                 return response.end()
             }
-            headers['content-type'] ??= TYPES[ext] + '; charset=utf-8'
-            headers['cache-control'] ??= nostore ? 'no-store' : 'public, max-age=31536000, immutable'
-            if (ans instanceof ReadStream) {
 
-                ans.on('open', is => {
-                    response.writeHead(status, headers)
-    		        ans.pipe(response)
-    		    });
-    		    return ans.on('error', () => {
-                    headers['content-type'] = TYPES['txt'] + '; charset=utf-8'
-                    response.writeHead(404, 'Not found', headers)
-    		        response.end()
-    		    })
-            } else {
+            const {
+                search, secure, get,
+                rest, query, restroot,
+                cont, root, crumbs
+            } = await router(request.url)
 
-                response.writeHead(status, headers)
-                if (ext == 'json' || ( typeof(ans) != 'string' && typeof(ans) != 'number') ) {
-                    return response.end(JSON.stringify(ans))
-                } else {
-                    return response.end(ans)
+            if (secure) {
+                response.writeHead(403, 'Forbidden', {
+                    'сontent-type': TYPES['txt'] + '; charset=utf-8'
+                });
+    			return stream.end()
+    		}
+            if (rest) {
+                const post = await getPost(request)
+                const req = post ? { ...get, ...post } : get
+                const { ans = false, ext = 'json', status = 200, nostore = false, headers = { } } = await rest(query, req)
+                if (!ans) {
+                    response.writeHead(500, 'Internal Server Error')
+                    return response.end()
                 }
+                headers['content-type'] ??= TYPES[ext] + '; charset=utf-8'
+                headers['cache-control'] ??= nostore ? 'no-store' : 'public, max-age=31536000, immutable'
+                if (ans instanceof ReadStream) {
+
+                    ans.on('open', is => {
+                        response.writeHead(status, headers)
+        		        ans.pipe(response)
+        		    });
+        		    return ans.on('error', () => {
+                        headers['content-type'] = TYPES['txt'] + '; charset=utf-8'
+                        response.writeHead(404, 'Not found', headers)
+        		        response.end()
+        		    })
+                } else {
+
+                    response.writeHead(status, headers)
+                    if (ext == 'json' || ( typeof(ans) != 'string' && typeof(ans) != 'number') ) {
+                        return response.end(JSON.stringify(ans))
+                    } else {
+                        return response.end(ans)
+                    }
+                }
+                //Если rest вернул false или restа нет переходим на контроллер?
             }
-            //Если rest вернул false или restа нет переходим на контроллер?
-        }
-        if (request.headers.origin?.split('://')[1] == request.headers.host) { //Если это запрос из контроллера то 404
-            response.writeHead(404)
-            return response.end()
-        }
-        const error = (status) => {
-            response.writeHead(500, status)
-            return response.end()
-        }
+            if (request.headers.origin?.split('://')[1] == request.headers.host) { //Если это запрос из контроллера то 404
+                response.writeHead(404)
+                return response.end()
+            }
+            const error = (status) => {
+                response.writeHead(500, status)
+                return response.end()
+            }
 
-        if (cont) {
-            const { layers } = await meta.get('layers', {
-                root: root,
-                globals: '',
-                cookie: request.headers.cookie || '',
-                host: request.headers.host,
-                update_time: 0,
-                access_time: 0,
-                prev: false,
-                next: search
-            })
-
-            if (layers) {
-                const { html = '', status = 404, nostore = false, ar = [] } = await controller(layers)
-                response.setHeader('Link', ar.join(','));
-                response.writeHead(status, {
-                    'content-type': TYPES['html'] + '; charset=utf-8',
-                    'cache-control': nostore ? 'no-store' : 'public, max-age=31536000, immutable'
+            if (cont) {
+                const { layers } = await meta.get('layers', {
+                    root: root,
+                    globals: '',
+                    cookie: request.headers.cookie || '',
+                    host: request.headers.host,
+                    update_time: 0,
+                    access_time: 0,
+                    prev: false,
+                    next: search
                 })
-    			return response.end(html)
-            } else {
-                return error('layers not defined')
+
+                if (layers) {
+                    const { html = '', status = 404, nostore = false, ar = [] } = await controller(layers)
+                    response.setHeader('Link', ar.join(','));
+                    response.writeHead(status, {
+                        'content-type': TYPES['html'] + '; charset=utf-8',
+                        'cache-control': nostore ? 'no-store' : 'public, max-age=31536000, immutable'
+                    })
+        			return response.end(html)
+                } else {
+                    return error('layers not defined')
+                }
+            } else { //Это может быть новый проект без всего
+                response.writeHead(404, 'layers.json not found')
+                response.end()
             }
-        } else { //Это может быть новый проект без всего
-            response.writeHead(404, 'layers.json not found')
-            response.end()
-        }
-	});
-	server.listen(PORT, IP)
-    console.log(`Запущен на ${IP}:${PORT}`)
+    	});
+    	server.listen(PORT, IP)
+        console.log(`Запущен на ${IP}:${PORT}`)
+    }
 }
