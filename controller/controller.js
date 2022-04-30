@@ -14,33 +14,37 @@ const readStream = stream => {
         })
     })
 }
-export const controller = async (layers) => {
-    const { tpl, json, tplroot } = layers
-
-    let data = true
-    let res = {
-        ext: 'json',
-        status: 200, 
-        nostore: false, 
-        headers: { }
-    }
+const getHTML = layer => {
+    const { tpl, json, sub, div } = layer
+    let ar = []
+    let html = ''
+    let status = 200
+    let data
     if (json) {
+        let resjson = {
+            ans: '',
+            ext: 'json',
+            status: 200, 
+            nostore: false, 
+            headers: { }
+        }
         const {
             search, secure, get,
             rest, query, restroot
         } = await router(json)
 
-        if (!rest) return { ...res, html: '', ar: [], status: 404, nostore: false }
+        if (rest) resjson = {...resjson, ...(await rest(query, get))}
+        else status = 500
 
-        res = {...jsonres, ...(await rest(query, get))}
-        data = ans
+        status = Math.max(status, resjson.status)
+        data = resjson.ans
         if (res.ans instanceof ReadStream) {
             data = await readStream(ans)
         }
     }
     try {
         const objtpl = await import(tpl)
-        const html = objtpl[tplroot || 'ROOT'].call(layers, data, layers)
+        const html = objtpl[sub](data, layer, seo)
         const ar = []
         ar.push('</images/logo.svg>; rel=preload; as=image; type=image/svg+xml')
         return { ...res, html, ar}
@@ -48,5 +52,14 @@ export const controller = async (layers) => {
         console.error(e)
         return { status: 500}
     }
-    
+
+}
+export const controller = async (layers, seo) => {
+
+    for (const layer of layers) {
+        const { nostore, html, ar, status } = getHTML(layer)
+        
+
+        
+    }
 }

@@ -117,17 +117,62 @@ meta.addAction('layers', async view => {
 
     if (rest || secure || root != nextroot) return view.err()
 
-    const { default: origlayers } = await import(path.posix.join(IMPORT_APP_ROOT, root, 'layers.json'), {assert: { type: "json" }})
+    const { default: rules } = await import(path.posix.join(IMPORT_APP_ROOT, root, 'layers.json'), {assert: { type: "json" }})
     //const layers = structuredClone(origlayers)
-    const layers = {...origlayers}
-    if (layers.root.jsontpl) {
-        layers.root.json = interpolate(layers.root.jsontpl, {get, host, cookie, root })
+    //const rules = { ...origrules }
+    if (rules.type != 'landing') return view.err('Bad type layers.json')
+    
+    let { json, jsontpl, seo, tpls } = rules
+    const req = {get, host, cookie, root}
+    if (jsontpl) json = interpolate(jsontpl, req)
+    
+    const layers = []
+    const divtplsub = (dts, inherit) => {
+        let rf, rs, div, tpl, sub
+        rf = dts.split('/')
+        if (rf.length) {
+            div = rf[0]
+            rs = rf[1].split(':')
+            if (rs.length) {
+                sub = rs[1]
+                tpl = rs[0]
+            } else {
+                tpl = rf[1]
+                sub = 'ROOT'
+            }
+        } else {
+            rs = dts.split(':')
+            if (rs.length) {
+                tpl = rs[0]
+                div = sub = rs[1]
+            } else {
+                if (inherit) {
+                    tpl = inherit
+                    sub = div = dts
+                } else {
+                    tpl = dts
+                    sub = 'ROOT'
+                    div = false
+                }
+            }
+        }
+        return {div, tpl, sub}
     }
-    layers.root.seo = { }
-    layers.root.id = 1
-    view.ans.layers = layers.root
+    const dts = divtplsub(tpl)
+    const id = 1
+    layers.push({
+        id, 
+        json, 
+        tpl:tpls[dts.tpl], 
+        sub: dts.sub, 
+        div:dts.div
+    })    
+    view.ans.seo = seo
+    view.ans.layers = layers
 
-    return view.ret()
+    return view.ret()    
+    
+    
 })
 
 export const rest = async (query, get) => {
