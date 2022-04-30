@@ -91,7 +91,7 @@ export const Server = {
             }
 
             if (cont) {
-                const { layers } = await meta.get('layers', {
+                const { layers, push, seo } = await meta.get('layers', {
                     root: root,
                     globals: '',
                     cookie: request.headers.cookie || '',
@@ -103,8 +103,8 @@ export const Server = {
                 })
 
                 if (layers) {
-                    const { html = '', status = 404, nostore = false, ar = [] } = await controller(layers)
-                    response.setHeader('Link', ar.join(','));
+                    const { html = '', status = 404, nostore = false } = await controller(layers, seo)
+                    response.setHeader('Link', push.join(','));
                     response.writeHead(status, {
                         'content-type': TYPES['html'] + '; charset=utf-8',
                         'cache-control': nostore ? 'no-store' : 'public, max-age=31536000, immutable'
