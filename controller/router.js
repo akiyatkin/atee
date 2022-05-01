@@ -1,7 +1,7 @@
 import { rest as controller } from './rest.js'
 import { file, files } from './files.js'
 import { whereisit } from './whereisit.js'
-import { parse } from './headers.js'
+import { pathparser } from "./pathparser.js" 
 
 import { pathToFileURL, fileURLToPath } from 'url'
 
@@ -68,28 +68,13 @@ const webresolve = async search => {
 
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
-const explode = (sep, str) => {
-    const i = str.indexOf(sep)
-    return ~i ? [str.slice(0, i), str.slice(i + 1)] : [str]
-}
-const getExt = (str) => {
-    const i = str.lastIndexOf('.')
-    return ~i ? str.slice(i + 1) : ''
-}
+
+
 const getRoot = (str) => {
     const i = str.indexOf('/',1)
     return ~i ? str.slice(1, i) : ''
 }
-const pathparser = request => { //request всегда со слэшом в начале
-    request = request.slice(1);
-    try { request = decodeURI(request) } catch { }
-    const [path, params] = explode('?', request)
-    const get = parse(params || '', '&');
-    const ext = getExt(path)
-    const secure = !!~path.indexOf('/.')
-    const crumbs = path.split('/')
-    return {secure, crumbs, path, ext, get}
-}
+
 
 
 
@@ -117,7 +102,7 @@ export const router = async (search) => {
             }
             const query = ''
             return {
-                search, secure, get,
+                search, secure, get, path,
                 rest, query, restroot,
                 cont, root, crumbs
             }
@@ -158,7 +143,7 @@ export const router = async (search) => {
 
     }
     return {
-        search, secure, get,
+        search, secure, get, path,
         rest, query, restroot,
         cont, root, crumbs
     }

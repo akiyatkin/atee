@@ -59,35 +59,41 @@ const interpolate = function(strings, params) {
 	return new Function(...names, `return \`${strings}\``)(...vals)
 }
 const divtplsub = (dts, inherit) => {
-	let rf, rs, div, tpl, sub
+	let rf, rs, div, name, sub
 	rf = dts.split('/')
 	if (rf.length > 1) {
 		div = rf[0]
 		rs = rf[1].split(':')
 		if (rs.length > 1) {
 			sub = rs[1]
-			tpl = rs[0]
+			name = rs[0]
 		} else {
-			tpl = rf[1]
+			name = rf[1]
 			sub = 'ROOT'
 		}
 	} else {
 		rs = dts.split(':')
 		if (rs.length > 1) {
-			tpl = rs[0]
+			name = rs[0]
 			div = sub = rs[1]
 		} else {
 			if (inherit) {
-				tpl = inherit
+				name = inherit
 				sub = div = dts
 			} else {
-				tpl = dts
+				name = dts
 				sub = 'ROOT'
 				div = ''
 			}
 		}
 	}
-	return {div, tpl, sub}
+	return {div, name, sub}
+}
+const apply = (rule, source, fn, inherit) => {
+	const dts = divtplsub(source, inherit)
+	fn(dts, source)
+	if (!rule.envs[source]) return
+	rule.envs[source].forEach(source => apply(rule, source, fn, dts.name))
 }
 meta.addAction('layers', async view => {
 	const {
@@ -113,42 +119,54 @@ meta.addAction('layers', async view => {
 	view.ans.globals = globals
 	view.ans.update_time = Access.getUpdateTime()
 	view.ans.access_time = Access.getAccessTime()
-	const {
-		search, secure, get,
-		rest, query, restroot,
-		cont, root: nextroot, crumbs
-	} = await router(next)
+	// const {
+	// 	search, secure, get, path,
+	// 	rest, query, restroot,
+	// 	cont, root: nextroot, crumbs
+	// } = 
+	const route = await router(next)
+	
+	
 
-	if (rest || secure || root != nextroot) return view.err()
+	if (route.rest || route.secure || root != route.root) return view.err()
 
-	const { default: rules } = await import(path.posix.join(IMPORT_APP_ROOT, root, 'layers.json'), {assert: { type: "json" }})
+
+	const { default: rule } = await import(path.posix.join(IMPORT_APP_ROOT, root, 'layers.json'), {assert: { type: "json" }})
 	
-	if (rules.type != 'landing') return view.err('Bad type layers.json')
+	if (rule.type != 'landing') return view.err('Bad type layers.json')
+	const ans = view.ans
+	ans.layers = {}
+	ans.push = []
+	ans.seo = {}
+	if (route.path && !rule.childs[route.path]) {
+		ans.layers = []
+		return view.err()
+	}
 	
-	let { json, jsontpl, seo, tpl, tpls } = rules
-	const req = {get, host, cookie, root}
-	if (jsontpl) json = interpolate(jsontpl, req)
+
+	const req = { get: route.get, host, cookie, root }
+	const json = rule.jsontpl ? interpolate(rule.jsontpl, req) : rule.json
 	
-	const layers = []
-	
-	const dts = divtplsub(tpl)
-	const id = 1
-	layers.push({
-		id, 
-		json, 
-		tpl:tpls[dts.tpl], 
-		sub: dts.sub, 
-		div:dts.div
+	const source = rule.index || 'index'
+	apply(rule, source, (dts, source) => {
+		const layer = {...dts, json, tpl: rule.tpls[dts.name]}
+		ans.layers[layer.div] = layer
+		if (rule.push[source]) ans.push.push(...rule.push[source])
+		if (rule.seo[source]) ans.seo = rule.seo[source]
 	})
-	const push = []
-	push.push('</images/logo.svg>; rel=preload; as=image; type=image/svg+xml')
-	view.ans.push = push
-	view.ans.seo = seo
-	view.ans.layers = layers
+	if (route.path) {
+		apply(rule, rule.childs[route.path], (dts, source) => {
+			const layer = {...dts, json, tpl: rule.tpls[dts.name]}
+			ans.layers[layer.div] = layer
+
+			if (rule.push[source]) ans.push.push(...rule.push[source])
+			if (rule.seo[source]) ans.seo = rule.seo[source]
+		})	
+	}
+	ans.layers = Object.values(ans.layers)
+
 
 	return view.ret()    
-	
-	
 })
 
 export const rest = async (query, get) => {

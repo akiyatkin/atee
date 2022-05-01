@@ -85,13 +85,13 @@ export const Server = {
                 response.writeHead(404)
                 return response.end()
             }
-            const error = (status) => {
-                response.writeHead(500, status)
+            const error = (code, status) => {
+                response.writeHead(code, status)
                 return response.end()
             }
 
             if (cont) {
-                const { layers, push, seo } = await meta.get('layers', {
+                const req = {
                     root: root,
                     globals: '',
                     cookie: request.headers.cookie || '',
@@ -100,22 +100,33 @@ export const Server = {
                     access_time: 0,
                     prev: false,
                     next: search
-                })
-
-                if (layers) {
-                    const { html = '', status = 404, nostore = false } = await controller(layers, seo)
-                    response.setHeader('Link', push.join(','));
-                    response.writeHead(status, {
+                }
+                let res = await meta.get('layers', req)
+                if (res.layers) {
+                    let info = await controller(res)
+                    if (info.status == 404) {
+                        req.next = '/404'
+                        res = await meta.get('layers', req)
+                        info = await controller(res)
+                    }
+                    if (info.status == 500) {
+                        req.next = '/500'
+                        res = await meta.get('layers', req)
+                        info = await controller(res)
+                    }
+                    response.setHeader('Link', res.push.join(','));
+                    response.writeHead(info.status, {
                         'content-type': TYPES['html'] + '; charset=utf-8',
-                        'cache-control': nostore ? 'no-store' : 'public, max-age=31536000, immutable'
+                        'cache-control': info.nostore ? 'no-store' : 'public, max-age=31536000, immutable'
                     })
-        			return response.end(html)
+        			return response.end(info.html)
+                } else if (!res) {
+                    return error(500, 'layers have bad definition')
                 } else {
-                    return error('layers not defined')
+                    return error(500, 'layers not defined')
                 }
             } else { //Это может быть новый проект без всего
-                response.writeHead(404, 'layers.json not found')
-                response.end()
+                return error(404, 'layers.json not found')
             }
     	});
     	server.listen(PORT, IP)

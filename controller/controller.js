@@ -22,22 +22,16 @@ const getHTML = async (layer, seo) => {
 
 	let data
 	if (json) {
-		let res = {
-			ans: '',
-			ext: 'json',
-			status: 200, 
-			nostore: false, 
-			headers: { }
-		}
+		let res = { ans: '', ext: 'json', status: 200, nostore: false, headers: { } }
 		const {
 			search, secure, get,
 			rest, query, restroot
 		} = await router(json)
 
 		if (rest) res = {...res, ...(await rest(query, get))}
-		else res.status = 404
+		else res.status = 500 //Если нет rest это 500 ошибка
 
-		status = Math.max(status, res.status)
+		status = Math.max(status, res.status) //404 может быть только тут
 		nostore = Math.max(nostore, res.nostore)
 
 		data = res.ans
@@ -49,18 +43,19 @@ const getHTML = async (layer, seo) => {
 		const objtpl = await import(tpl)
 		const html = objtpl[sub](data, layer, seo)
 		return { status, nostore, html }
-	} catch (e) {
+	} catch (e) { //Если нет шаблона это 500 ошибка
 		console.error(e)
 		return { status: 500, nostore: true, html: ''}
 	}
 
 }
-export const controller = async (layers, seo) => {
+export const controller = async ({ layers, seo }) => {
 	const ans = {
 		html: '', 
 		status: 200, 
 		nostore: false
 	}
+	if (!layers.length) ans.status = 404
 	const doc = new Doc()
 	for (const layer of layers) {
 		const { nostore, html, status } = await getHTML(layer, seo)
@@ -72,7 +67,7 @@ export const controller = async (layers, seo) => {
 	return ans
 }
 class Doc {
-	exp = /(<\w+.*?id=['"])((\w+?)['"].*?>)(.*?<)/si
+	exp = /(<\w+.*?id=['"])((\w+?)['"].*?>)(.*?)</si
 	divs = {'':[]}
 	insert (html, div = '') {
 		const r = html.split(this.exp)
