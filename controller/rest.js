@@ -35,6 +35,7 @@ meta.addArgument('cookie', (view, cookie) => {
 meta.addFunction('int', n => Number(n))
 meta.addFunction('array', n => explode(',', n))
 meta.addArgument('host')
+meta.addArgument('ip')
 meta.addArgument('prev')
 meta.addArgument('next')
 meta.addArgument('root')
@@ -98,7 +99,7 @@ const apply = (rule, source, fn, inherit) => {
 meta.addAction('layers', async view => {
 	const {
 		prev, next, host, cookie, root, access_time, update_time, globals 
-	} = await view.gets(['prev', 'next', 'host', 'cookie', 'root', 'access_time', 'update_time', 'globals'])
+	} = await view.gets(['prev', 'ip', 'next', 'host', 'cookie', 'root', 'access_time', 'update_time', 'globals'])
 	//next и prev globals не содержат, был редирект на без globals
 	if (update_time < Access.getUpdateTime()) {
 		//update_time - reload
@@ -126,10 +127,7 @@ meta.addAction('layers', async view => {
 	// } = 
 	const route = await router(next)
 	
-	
-
 	if (route.rest || route.secure || root != route.root) return view.err()
-
 
 	const { default: rule } = await import(path.posix.join(IMPORT_APP_ROOT, root, 'layers.json'), {assert: { type: "json" }})
 	
@@ -169,12 +167,15 @@ meta.addAction('layers', async view => {
 	return view.ret()    
 })
 
-export const rest = async (query, get) => {
+export const rest = async (query, get, client) => {
 	if (query == 'init.js') return file(FILE_MOD_ROOT + 'init.js', 'js')
 	if (query == 'test.js') return files(FILE_MOD_ROOT + 'test.js', 'js')
 
-	const ans = await meta.get(query, get)
-	delete ans.push
+	const req = {...client, ...get}
+	const ans = await meta.get(query, req)
+	if (query == 'layers') {
+		delete ans.push
+	}
 	if (query == 'sw') {
 		return { ans, ext: 'js', status: 200, nostore: false, headers: { 'Service-Worker-Allowed': '/' }}
 	} else if (~query.indexOf('set-') || ~['access','layers'].indexOf(query)) {

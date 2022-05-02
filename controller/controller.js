@@ -14,7 +14,7 @@ const readStream = stream => {
 		})
 	})
 }
-const getHTML = async (layer, seo) => {
+const getHTML = async (layer, seo, client) => {
 	const { tpl, json, sub, div } = layer
 	let html = ''
 	let status = 200
@@ -28,13 +28,14 @@ const getHTML = async (layer, seo) => {
 			rest, query, restroot
 		} = await router(json)
 
-		if (rest) res = {...res, ...(await rest(query, get))}
+		if (rest) res = {...res, ...(await rest(query, get, client))}
 		else res.status = 500 //Если нет rest это 500 ошибка
 
 		status = Math.max(status, res.status) //404 может быть только тут
 		nostore = Math.max(nostore, res.nostore)
 
 		data = res.ans
+
 		if (res.ans instanceof ReadStream) {
 			data = await readStream(ans)
 		}
@@ -49,16 +50,17 @@ const getHTML = async (layer, seo) => {
 	}
 
 }
-export const controller = async ({ layers, seo }) => {
+export const controller = async ({ layers, seo }, client) => {
 	const ans = {
 		html: '', 
 		status: 200, 
 		nostore: false
 	}
 	if (!layers.length) ans.status = 404
+
 	const doc = new Doc()
 	for (const layer of layers) {
-		const { nostore, html, status } = await getHTML(layer, seo)
+		const { nostore, html, status } = await getHTML(layer, seo, client)
 		ans.status = Math.max(ans.status, status)
 		doc.insert(html, layer.div)
 		ans.nostore = ans.nostore || nostore

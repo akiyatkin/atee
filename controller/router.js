@@ -9,7 +9,10 @@ import { pathToFileURL, fileURLToPath } from 'url'
 import path from 'path'
 import fs from 'fs/promises'
 
-
+const getExt = (str) => {
+    const i = str.lastIndexOf('.')
+    return ~i ? str.slice(i + 1) : ''
+}
 const searchRest = async (source, file, RESTS, parent = source, innodemodules = false) => {
     const src = path.posix.join(source, file)
     if (await fs.access(src).then(() => true).catch(() => false)) {
@@ -42,7 +45,8 @@ await searchRest('.', 'rest.js', RESTS)
 let REST_DIRECTS = {}
 let REST_HYPHENS = {}
 for (const r in RESTS) { //Напрямую можно обратиться только к элементам в node_modules, rest проекта только через дефис
-    if (RESTS[r]['innodemodules'] && !REST_DIRECTS[RESTS[r]['direct']])
+    // && (RESTS[r]['innodemodules'] || RESTS[r]['ext'])
+    if (!REST_DIRECTS[RESTS[r]['direct']])
         REST_DIRECTS[RESTS[r]['direct']] = {part: RESTS[r]['direct'], rest:r, innodemodules: RESTS[r]['innodemodules']}
     if (!REST_HYPHENS[RESTS[r]['hyphen']])
         REST_HYPHENS[RESTS[r]['hyphen']] = {part: RESTS[r]['hyphen'], rest:r, innodemodules: RESTS[r]['innodemodules']}
@@ -66,6 +70,13 @@ const webresolve = async search => {
      return await import.meta.resolve(search, pathToFileURL('./').href).then(src => fileURLToPath(src)).catch(() => false)
 }
 
+// const webresolve = search => {
+//     if (webresolve.cache[search]) return webresolve.cache[search]
+//     webresolve.cache[search] = import.meta.resolve(search, pathToFileURL('./').href).then(src => fileURLToPath(src)).catch(() => false)
+//     return webresolve.cache[search]
+// }
+// webresolve.cache = {}
+
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 
@@ -88,7 +99,6 @@ export const router = async (search) => {
     let root = ''
     let rest = false
     let cont = false
-
     if (ext) {
         const src = await webresolve(search)
         if (src) { //найден файл
@@ -102,17 +112,16 @@ export const router = async (search) => {
             }
             const query = ''
             return {
-                search, secure, get, path,
+                search, secure, get, path, ext,
                 rest, query, restroot,
                 cont, root, crumbs
             }
         }
     }
-    if (search[0] == '-') { //Обязательный rest и без контроллера
+
+    if (path[0] == '-') { //Обязательный rest и без контроллера
         for (const v of REST_HYPHENS) {
             if (path.indexOf(v.part) === 0) {
-                //const test = await import('@atee/controller/rest')
-                //console.log('asdf', v.rest, test)
                 if (v.innodemodules) rest = (await import(v.rest)).rest
                 else rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest                
                 restroot = v.part
@@ -120,30 +129,32 @@ export const router = async (search) => {
                 break;
             }
         }
-    } else { //Может быть rest и может быть контроллер
+
+    } else {
         for (const v of REST_DIRECTS) {
+            if (!v.part && !ext) continue //rest в корне только при наличии расширения
             if (path.indexOf(v.part) === 0) {
                 if (v.innodemodules) rest = (await import(v.rest)).rest
                 else rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest
-                //rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest
                 restroot = v.part
-                query = path.slice(v.part.length + 1)
+                query = path.slice(v.part.length)
                 break;
             }
         }
-        for (const v of CONT_DIRECTS) {
-            if (path.indexOf(v.part) === 0) {
-                //layers = (await import(IMPORT_APP_ROOT + '/' + v.rest, {assert: { type: "json" }})).default
-                cont = true
-                root = v.part
-                crumbs = path.slice(v.part.length).split('/')
-                break;
+        if (!rest) {
+            for (const v of CONT_DIRECTS) {
+                if (path.indexOf(v.part) === 0) {
+                    //layers = (await import(IMPORT_APP_ROOT + '/' + v.rest, {assert: { type: "json" }})).default
+                    cont = true
+                    root = v.part
+                    crumbs = path.slice(v.part.length).split('/')
+                    break;
+                }
             }
         }
-
     }
     return {
-        search, secure, get, path,
+        search, secure, get, path, ext,
         rest, query, restroot,
         cont, root, crumbs
     }

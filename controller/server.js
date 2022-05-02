@@ -36,42 +36,37 @@ export const Server = {
                 });
                 return response.end()
             }
+            const error = (code, status) => {
+                response.writeHead(code, status)
+                return response.end()
+            }
+            const route = await router(request.url)
+            if (route.secure) return error(403, 'Forbidden')
 
             const {
-                search, secure, get,
+                search, secure, get, path, ext,
                 rest, query, restroot,
                 cont, root, crumbs
-            } = await router(request.url)
-
-            if (secure) {
-                response.writeHead(403, 'Forbidden', {
-                    'сontent-type': TYPES['txt'] + '; charset=utf-8'
-                });
-    			return stream.end()
-    		}
-            if (rest) {
+            } = route
+    		const client = { cookie: request.headers.cookie, host: request.headers.host, ip:request.socket.localAddress }
+            if (route.rest) {
                 const post = await getPost(request)
-                const req = post ? { ...get, ...post } : get
-                const { ans = false, ext = 'json', status = 200, nostore = false, headers = { } } = await rest(query, req)
-                if (!ans) {
-                    response.writeHead(500, 'Internal Server Error')
-                    return response.end()
-                }
+                const req = post ? { ...route.get, ...post } : route.get
+                const res = await rest(route.query, req, client)
+                
+                if (!res?.ans) return error(404, 'There is no suitable answer')
+                const { 
+                    ans = false, ext = 'json', status = 200, nostore = false, headers = { } 
+                } = res
                 headers['content-type'] ??= TYPES[ext] + '; charset=utf-8'
                 headers['cache-control'] ??= nostore ? 'no-store' : 'public, max-age=31536000, immutable'
                 if (ans instanceof ReadStream) {
-
                     ans.on('open', is => {
                         response.writeHead(status, headers)
         		        ans.pipe(response)
         		    });
-        		    return ans.on('error', () => {
-                        headers['content-type'] = TYPES['txt'] + '; charset=utf-8'
-                        response.writeHead(404, 'Not found', headers)
-        		        response.end()
-        		    })
+        		    return ans.on('error', () => error(404, 'Not found'))
                 } else {
-
                     response.writeHead(status, headers)
                     if (ext == 'json' || ( typeof(ans) != 'string' && typeof(ans) != 'number') ) {
                         return response.end(JSON.stringify(ans))
@@ -79,42 +74,40 @@ export const Server = {
                         return response.end(ans)
                     }
                 }
-                //Если rest вернул false или restа нет переходим на контроллер?
             }
-            if (request.headers.origin?.split('://')[1] == request.headers.host) { //Если это запрос из контроллера то 404
-                response.writeHead(404)
-                return response.end()
-            }
-            const error = (code, status) => {
-                response.writeHead(code, status)
-                return response.end()
-            }
+            if (path[0] == '-') return error(404, 'Not found')
 
-            if (cont) {
+            if (route.cont) {
+                //cookie: request.headers.cookie || '',
+                //host: request.headers.host,
                 const req = {
-                    root: root,
+                    ...client,
+                    root: route.root,
                     globals: '',
-                    cookie: request.headers.cookie || '',
-                    host: request.headers.host,
                     update_time: 0,
                     access_time: 0,
                     prev: false,
                     next: search
                 }
                 let res = await meta.get('layers', req)
+
                 if (res.layers) {
-                    let info = await controller(res)
-                    if (info.status == 404) {
-                        req.next = '/404'
-                        res = await meta.get('layers', req)
-                        info = await controller(res)
+                    let info = await controller(res, client)
+                    if (!ext) {
+                        if (info.status == 404) {
+                            req.next = '/404'
+                            res = await meta.get('layers', req)
+                            info = await controller(res)
+                            info.status = 404
+                        }
+                        if (info.status == 500) {
+                            req.next = '/500'
+                            res = await meta.get('layers', req)
+                            info = await controller(res)
+                            info.status = 500
+                        }
                     }
-                    if (info.status == 500) {
-                        req.next = '/500'
-                        res = await meta.get('layers', req)
-                        info = await controller(res)
-                    }
-                    response.setHeader('Link', res.push.join(','));
+                    if (res.push.length) response.setHeader('Link', res.push.join(','));
                     response.writeHead(info.status, {
                         'content-type': TYPES['html'] + '; charset=utf-8',
                         'cache-control': info.nostore ? 'no-store' : 'public, max-age=31536000, immutable'

@@ -30,37 +30,42 @@ const checkAccessMark = (src) => {
     //data
     //./data
 }
-
-export const resolve = async (specifier, context, defaultResolve) => {
-    //console.log(context.parentURL)    
-    const checkfromroot = async path => {
-        const { Access } = await import('@atee/controller/Access.js')
-        if (isExt(path) && path.indexOf('./data/') === 0) {
-            path = path + (~path.indexOf('?') ? '&' : '?') + 't=' + Access.getAccessTime()
-        }
-        return defaultResolve(path, {
-            ...context,
-            parentURL: pathToFileURL('./')
-        }, defaultResolve).catch(() => false)
+const checkfromroot = async (path, context, defaultResolve) => {
+    const { Access } = await import('@atee/controller/Access.js')
+    if (isExt(path) && path.indexOf('./data/') === 0) {
+        path = path + (~path.indexOf('?') ? '&' : '?') + 't=' + Access.getAccessTime()
     }
-    let res
-    if (specifier[0] === '/') {
-        specifier = specifier.slice(1)
-        res = await checkfromroot('./' + specifier)
-        if (res) return res
-        if (specifier[0] === '-') {
-            specifier = specifier.slice(1)
-            res = await checkfromroot('@atee/' + specifier)
-            if (res) return res
-            // res = checkfromroot(specifier) //проверяется ключевое выражение в specifier
-            // if (res) return res
-            res = await checkfromroot('./' + specifier)
-            if (res) return res
-        }
-    }
-    
-    //Node loader запускает с ведущим слэшом
-    //Но это решение НЕ захватывает важные имена, например catalog contacts так как применятся только для файлов с расширением (точкой)
-    //console.log('resolve', specifier)
-    return defaultResolve(specifier, context, defaultResolve) //Проверка относительного адреса
+    return defaultResolve(path, {
+        ...context,
+        parentURL: pathToFileURL('./')
+    }, defaultResolve).catch(() => false)
 }
+export const resolve = (specifier, context, defaultResolve) => {
+    const key = specifier + context.parentURL //conditions, importAssertions не могут различваться у одного parentURL и specifier
+    if (resolve.cache[key]) return resolve.cache[key]
+    const res = (async () => {
+        let res
+        if (specifier[0] === '/') {
+            specifier = specifier.slice(1)
+            res = await checkfromroot('./' + specifier, context, defaultResolve)
+            if (res) return res
+            if (specifier[0] === '-') {
+                specifier = specifier.slice(1)
+                res = await checkfromroot('@atee/' + specifier, context, defaultResolve)
+                if (res) return res
+                // res = checkfromroot(specifier) //проверяется ключевое выражение в specifier
+                // if (res) return res
+                res = await checkfromroot('./' + specifier, context, defaultResolve)
+                if (res) return res
+            }
+        }
+        
+        //Node loader запускает с ведущим слэшом
+        //Но это решение НЕ захватывает важные имена, например catalog contacts так как применятся только для файлов с расширением (точкой)
+        //console.log('resolve', specifier)
+        return defaultResolve(specifier, context, defaultResolve) //Проверка относительного адреса
+    })()
+    resolve.cache[key] = res
+    return res
+}
+resolve.cache = {}
