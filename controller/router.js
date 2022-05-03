@@ -70,13 +70,6 @@ const webresolve = async search => {
      return await import.meta.resolve(search, pathToFileURL('./').href).then(src => fileURLToPath(src)).catch(() => false)
 }
 
-// const webresolve = search => {
-//     if (webresolve.cache[search]) return webresolve.cache[search]
-//     webresolve.cache[search] = import.meta.resolve(search, pathToFileURL('./').href).then(src => fileURLToPath(src)).catch(() => false)
-//     return webresolve.cache[search]
-// }
-// webresolve.cache = {}
-
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 
@@ -121,15 +114,14 @@ export const router = async (search) => {
 
     if (path[0] == '-') { //Обязательный rest и без контроллера
         for (const v of REST_HYPHENS) {
-            if (path.indexOf(v.part) === 0) {
+            if (path.indexOf(v.part) === 1) {
                 if (v.innodemodules) rest = (await import(v.rest)).rest
                 else rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest                
                 restroot = v.part
-                query = path.slice(v.part.length + 1)
+                query = path.slice(v.part.length + 2)
                 break;
             }
         }
-
     } else {
         for (const v of REST_DIRECTS) {
             if (!v.part && !ext) continue //rest в корне только при наличии расширения

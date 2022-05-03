@@ -1,6 +1,7 @@
 import { pathparse, parse } from './pathparse.js'
 
 export const Client = {
+
 	sw: async () => {
 		if (!navigator.serviceWorker) return
 		//const { default: access_data } = await import('/-controller/access', {assert: { type: 'json' }})
@@ -64,25 +65,19 @@ export const Client = {
 	apply: async () => {
 		if (!Client.next) return
 		const {search, promise} = Client.next
-
 		const req = {
 			globals: '',
 			update_time: 0,
 			access_time: 0,
-			prev: false,
+			prev: Client.search,
 			next: search
-		}
-		
-		let data = new FormData()
-  		data.append('globals', '')
-  		data.append('update_time', 0)
-  		data.append('access_time', 0)
-  		data.append('prev', '')
-  		data.append('next', search)
-
+		}		
 		const res = await fetch('/-controller/layers', {
 			method: "post",
-			body: data
+			headers: {
+		    	'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+			},
+			body: new URLSearchParams(req)
 		}).then(res => res.json())
 		
 		console.log(res)
@@ -113,3 +108,4 @@ const createPromise = (payload) => {
 	promise.catch(e => {})
 	return promise
 }
+Client.search = Client.getSearch()

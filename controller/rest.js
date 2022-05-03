@@ -123,6 +123,7 @@ meta.addAction('layers', async view => {
 	const {
 		prev, next, host, cookie, access_time, update_time, globals 
 	} = await view.gets(['prev', 'ip', 'next', 'host', 'cookie', 'access_time', 'update_time', 'globals'])
+
 	//next и prev globals не содержат, был редирект на без globals
 	if (update_time < Access.getUpdateTime()) {
 		//update_time - reload
@@ -182,8 +183,9 @@ export const rest = async (query, get, client) => {
 	if (query == 'init.js') return file(FILE_MOD_ROOT + 'init.js', 'js')
 	if (query == 'test.js') return files(FILE_MOD_ROOT + 'test.js', 'js')
 
-	const req = {...client, ...get}
+	const req = {...get, ...client}
 	const ans = await meta.get(query, req)
+	
 	if (query == 'layers') {
 		delete ans.push
 	}
