@@ -1,13 +1,5 @@
+import { parse } from './pathparse.js'
 
-export const parse = (string, sep = '; ') => {
-    const cookie = string?.split(sep).reduce((res, item) => {
-        if (!item) return res
-        const data = item.split('=')
-        res[data[0]] = data[1]
-        return res
-    }, {})
-    return cookie || {}
-}
 
 export const getPost = (request, limit = 1e7) => {
     if (request.method != 'POST') return

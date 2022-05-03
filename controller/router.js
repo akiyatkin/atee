@@ -1,7 +1,7 @@
 import { rest as controller } from './rest.js'
 import { file, files } from './files.js'
 import { whereisit } from './whereisit.js'
-import { pathparser } from "./pathparser.js" 
+import { pathparse } from "./pathparse.js" 
 
 import { pathToFileURL, fileURLToPath } from 'url'
 
@@ -93,7 +93,7 @@ const getRoot = (str) => {
 export const router = async (search) => {
     //У search всегда есть ведущий /слэш
     //if (search.indexOf('/-') === 0) search = search.slice(1)
-    let { secure, path, crumbs, ext, get} = pathparser(search)
+    let { secure, path, crumbs, ext, get} = pathparse(search)
     let query = false
     let restroot = ''
     let root = ''

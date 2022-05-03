@@ -3,10 +3,11 @@ import path from 'path'
 import { readFile, utimes } from "fs/promises"
 
 import { Meta, View } from "./Meta.js"
-import { parse } from './headers.js'
+import { parse } from './pathparse.js'
 import { whereisit } from './whereisit.js'
 import { router } from './router.js'
 import { Access } from '@atee/controller/Access.js'
+import { Once } from './Once.js'
 
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
@@ -38,7 +39,6 @@ meta.addArgument('host')
 meta.addArgument('ip')
 meta.addArgument('prev')
 meta.addArgument('next')
-meta.addArgument('root')
 meta.addArgument('update_time', ['int'])
 meta.addArgument('access_time', ['int'])
 meta.addArgument('globals','array')
@@ -58,6 +58,8 @@ const interpolate = function(strings, params) {
 	const names = Object.keys(params)
 	const vals = Object.values(params)
 	return new Function(...names, `return \`${strings}\``)(...vals)
+	//const req = { get: route.get, host, cookie, root }
+	//const json = rule.jsontpl ? interpolate(rule.jsontpl, req) : rule.json
 }
 const divtplsub = (dts, inherit) => {
 	let rf, rs, div, name, sub
@@ -88,18 +90,39 @@ const divtplsub = (dts, inherit) => {
 			}
 		}
 	}
-	return {div, name, sub}
+	return {div, name, sub, divs:{}}
 }
-const apply = (rule, source, fn, inherit) => {
+const apply = (ans, rule, source, divs, applyfn, inherit) => {
 	const dts = divtplsub(source, inherit)
-	fn(dts, source)
-	if (!rule.envs[source]) return
-	rule.envs[source].forEach(source => apply(rule, source, fn, dts.name))
+	applyfn(ans, rule, dts, source, divs)
+	if (!rule.env[source]) return
+	rule.env[source].forEach(source => apply(ans, rule, source, dts.divs, applyfn, dts.name))
 }
+const applyfn = (ans, rule, layer, source, divs) => {
+	layer.json = rule.json[source]
+	layer.tpl = rule.tpl[layer.name]
+	divs[layer.div] = layer
+	if (rule.push[source]) ans.push.push(...rule.push[source])
+	const shortsource = layer.name + (layer.sub == 'ROOT' ? '' : `:${layer.sub}`)
+	if (rule.seo[shortsource]) ans.seo = rule.seo[shortsource]
+}
+const divs2layers = (layer, fn) => {
+	for (const i in layer.divs) divs2layers(layer.divs[i])
+	layer.layers = Object.values(layer.divs)
+	delete layer.divs
+}
+
+const getRule = Once.proxy( async root => {
+	const { default: rule } = await import(path.posix.join(IMPORT_APP_ROOT, root, 'layers.json'), {assert: { type: "json" }})
+	if (rule.type != 'landing') return false
+	return rule
+})
+
+
 meta.addAction('layers', async view => {
 	const {
-		prev, next, host, cookie, root, access_time, update_time, globals 
-	} = await view.gets(['prev', 'ip', 'next', 'host', 'cookie', 'root', 'access_time', 'update_time', 'globals'])
+		prev, next, host, cookie, access_time, update_time, globals 
+	} = await view.gets(['prev', 'ip', 'next', 'host', 'cookie', 'access_time', 'update_time', 'globals'])
 	//next и prev globals не содержат, был редирект на без globals
 	if (update_time < Access.getUpdateTime()) {
 		//update_time - reload
@@ -120,48 +143,36 @@ meta.addAction('layers', async view => {
 	view.ans.globals = globals
 	view.ans.update_time = Access.getUpdateTime()
 	view.ans.access_time = Access.getAccessTime()
-	// const {
-	// 	search, secure, get, path,
-	// 	rest, query, restroot,
-	// 	cont, root: nextroot, crumbs
-	// } = 
+
 	const route = await router(next)
 	
-	if (route.rest || route.secure || root != route.root) return view.err()
+	// || prevroute.root != nextroute.root
+	if (route.rest || route.secure) return view.err()
 
-	const { default: rule } = await import(path.posix.join(IMPORT_APP_ROOT, root, 'layers.json'), {assert: { type: "json" }})
+	const rule = await getRule(route.root)
+	if (!rule) return view.err('Bad type layers.json')
 	
-	if (rule.type != 'landing') return view.err('Bad type layers.json')
 	const ans = view.ans
-	ans.layers = {}
+	
+
 	ans.push = []
 	ans.seo = {}
+
 	if (route.path && !rule.childs[route.path]) {
 		ans.layers = []
 		return view.err()
 	}
-	
 
-	const req = { get: route.get, host, cookie, root }
-	const json = rule.jsontpl ? interpolate(rule.jsontpl, req) : rule.json
-	
 	const source = rule.index || 'index'
-	apply(rule, source, (dts, source) => {
-		const layer = {...dts, json, tpl: rule.tpls[dts.name]}
-		ans.layers[layer.div] = layer
-		if (rule.push[source]) ans.push.push(...rule.push[source])
-		if (rule.seo[source]) ans.seo = rule.seo[source]
-	})
+	ans.divs = {}
+	
+	apply(ans, rule, source, ans.divs, applyfn)
 	if (route.path) {
-		apply(rule, rule.childs[route.path], (dts, source) => {
-			const layer = {...dts, json, tpl: rule.tpls[dts.name]}
-			ans.layers[layer.div] = layer
-
-			if (rule.push[source]) ans.push.push(...rule.push[source])
-			if (rule.seo[source]) ans.seo = rule.seo[source]
-		})	
+		apply(ans, rule, rule.childs[route.path], ans.divs[''].divs, applyfn, source)	
 	}
-	ans.layers = Object.values(ans.layers)
+	//console.log(ans.divs[''])
+	divs2layers(ans)
+	//ans.divs = Object.values(ans.divs)
 
 
 	return view.ret()    
