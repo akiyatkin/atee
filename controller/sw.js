@@ -1,15 +1,16 @@
-
+let ACCESS_TIME = 0
+let UPDATE_TIME = 0
 this.addEventListener('install', event => {
-	console.log('SW install', { ACCESS_TIME, UPDATE_TIME })
+	console.log('SW install')
   	this.skipWaiting();
 })
 
 this.addEventListener('activate', event => {
-	console.log('SW activate', { ACCESS_TIME, UPDATE_TIME })
+	console.log('SW activate')
 })
 
 this.addEventListener('message', event => {
-	if (ACCESS_TIME + 10 >= event.data.ACCESS_TIME && UPDATE_TIME + 10 >= event.data.UPDATE_TIME) return
+	if (ACCESS_TIME >= event.data.ACCESS_TIME && UPDATE_TIME >= event.data.UPDATE_TIME) return
 	ACCESS_TIME = event.data.ACCESS_TIME
 	UPDATE_TIME = event.data.UPDATE_TIME
 	event.waitUntil(this.clients.matchAll().then(clientList => {
@@ -22,6 +23,7 @@ this.addEventListener('message', event => {
 this.addEventListener('fetch', event => {
 	//Только с сервера, только GET, и без -
 	if (event.request.method !== 'GET') return
+	if (!ACCESS_TIME || !UPDATE_TIME) return
 
 	let url = new URL(event.request.url)
 

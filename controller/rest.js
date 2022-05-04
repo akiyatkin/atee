@@ -33,8 +33,8 @@ meta.addAction('set-update', async view => {
 meta.addArgument('cookie', (view, cookie) => {
 	return parse(cookie, '; ')
 })
-meta.addFunction('int', n => Number(n))
-meta.addFunction('array', n => explode(',', n))
+meta.addFunction('int', (view, n) => Number(n))
+meta.addFunction('array', (view, n) => explode(',', n))
 meta.addArgument('host')
 meta.addArgument('ip')
 meta.addArgument('prev')
@@ -44,15 +44,15 @@ meta.addArgument('access_time', ['int'])
 meta.addArgument('globals','array')
 
 
-meta.addAction('sw', async view => {
-	const res = await view.get('access')
-	const script = await readFile(FILE_MOD_ROOT + '/sw.js', 'utf-8')
-	const ans = `
-		let UPDATE_TIME = ${res.UPDATE_TIME}
-		let ACCESS_TIME = ${res.ACCESS_TIME}
-		${script}`
-	return ans
-})
+// meta.addAction('sw', async view => {
+// 	const res = await view.get('access')
+// 	const script = await readFile(FILE_MOD_ROOT + '/sw.js', 'utf-8')
+// 	const ans = `
+// 		let UPDATE_TIME = ${res.UPDATE_TIME}
+// 		let ACCESS_TIME = ${res.ACCESS_TIME}
+// 		${script}`
+// 	return ans
+// })
 
 const interpolate = function(strings, params) {
 	const names = Object.keys(params)
@@ -107,6 +107,9 @@ meta.addAction('layers', async view => {
 		prev, next, host, cookie, access_time, update_time, globals 
 	} = await view.gets(['prev', 'ip', 'next', 'host', 'cookie', 'access_time', 'update_time', 'globals'])
 
+	view.ans.update_time = Access.getUpdateTime()
+	view.ans.access_time = Access.getAccessTime()
+	
 	//next и prev globals не содержат, был редирект на без globals
 	if (update_time < Access.getUpdateTime()) {
 		//update_time - reload
@@ -125,8 +128,7 @@ meta.addAction('layers', async view => {
 	//Пока не придёт ответ со старшими update_time и access_time клиент свои не поменяет
 	//Если придут старшие значит именно в этом запросе есть нужные слои в момент когда пришли старшие, для всех предыдущих 
 	view.ans.globals = globals
-	view.ans.update_time = Access.getUpdateTime()
-	view.ans.access_time = Access.getAccessTime()
+	
 
 	
 	const nroute = await router(next)

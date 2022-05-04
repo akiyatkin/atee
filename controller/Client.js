@@ -1,21 +1,27 @@
 import { pathparse } from './pathparse.js'
 import { SEO } from './SEO.js'
-export const Client = {
-	sw: async () => {
+import access_data from '/-controller/access' assert { type: 'json' }
+const SW = {
+	register: async () => {
 		if (!navigator.serviceWorker) return
-		//const { default: access_data } = await import('/-controller/access', {assert: { type: 'json' }})
-		const access_data = await fetch('/-controller/access').then(res => res.json())
-		navigator.serviceWorker.register('/-controller/sw?t', { scope:'/' });
+		navigator.serviceWorker.register('/-controller/sw.js', { scope:'/' });
 		navigator.serviceWorker.addEventListener('message', event => {
 			console.log('New version is ready. Reload please.', event.data)
+			access_data.UPDATE_TIME = event.data.UPDATE_TIME
+			access_data.ACCESS_TIME = event.data.ACCESS_TIME
 		})
-		if (navigator.serviceWorker.controller) { //В первый раз данные придут с кодом воркера
-			await navigator.serviceWorker.ready
-			navigator.serviceWorker.controller.postMessage(access_data)
-		}
 	},
+	postMessage: async (access_data) => {
+		if (!navigator.serviceWorker) return
+		await navigator.serviceWorker.ready
+		navigator.serviceWorker.controller.postMessage(access_data)
+	}
+}
+export const Client = {
+	
 	follow: async () => {
-		Client.sw()
+		SW.register()
+		SW.postMessage(access_data)
 		window.addEventListener('click', e => {
 			const a = e.target.closest('a')
 			if (!a) return
@@ -25,7 +31,13 @@ export const Client = {
 			if (~search.lastIndexOf('.')) return
 			if (search[1] == '-') return
 			e.preventDefault()
-			Client.pushState(search)
+			const promise = Client.pushState(search)
+
+			a.style.cssText = `opacity: 0.5`
+			promise.finally(() => {
+				a.style.cssText = `transition: 0.2s`	
+			})
+
 		})
 		window.addEventListener('popstate', event => { 
 			Client.crossing(Client.getSearch())
@@ -41,7 +53,7 @@ export const Client = {
 	pushState: (search) => {
 		const { secure, crumbs, path, ext, get } = pathparse(search)
 		history.pushState(null, null, search)
-		Client.crossing(search)
+		return Client.crossing(search)
 	},
 	replaceState: () => {
 		
@@ -65,46 +77,73 @@ export const Client = {
 		const {search, promise} = Client.next
 		const req = {
 			globals: '',
-			update_time: 0,
-			access_time: 0,
+			update_time: access_data.UPDATE_TIME,
+			access_time: access_data.ACCESS_TIME,
 			prev: Client.search,
 			next: search
-		}		
-		const json = await fetch('/-controller/layers', {
-			method: "post",
-			headers: {
-		    	'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-			},
-			body: new URLSearchParams(req)
-		}).then(res => res.json())
-		if (promise.rejected) return Client.applyCrossing()
-		if (!json || !json.result || !json.layers) return location.href = search
+		}
+
+
+
+		
 		try {
+			const json = await fetch('/-controller/layers', {
+				method: "post",
+				headers: {
+			    	'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+				},
+				body: new URLSearchParams(req)
+			}).then(res => res.json())
+			if (json.update_time && json.access_time) {
+				access_data.UPDATE_TIME = json.update_time
+				access_data.ACCESS_TIME = json.access_time
+				SW.postMessage(access_data)
+			}
+			if (promise.rejected) return Client.applyCrossing()
+			if (!json || !json.result || !json.layers) return location.href = search
+			
 			SEO.accept(json.seo)
+			for (const layer of json.layers) {
+				layer.sys = {}
+				const div = document.getElementById(layer.div)
+				layer.sys.div = div
+
+				div.style.cssText = `
+					will-change: content;
+					opacity: 0.5;
+				`
+				promise.finally(() => {
+					div.style.cssText = `
+						transition: 0.2s;
+					`
+				})
+
+			}
 			const promises = loadAll(json.layers)
 			await Promise.all(promises)
 			if (promise.rejected) return Client.applyCrossing()
 			const {crumbs, path, get} = pathparse(search)
 			const crumb = {
-				crumbs, search, get, path,
-				//root: route.root
+				crumbs, search, get, path
 			}
+			
 			for (const layer of json.layers) {
 				layer.sys.template = document.createElement('template')
-				layer.sys.div = document.getElementById(layer.div)
 				addHtml(layer.sys.template, layer, crumb)
 			}
 			for (const layer of json.layers) {
 				const elements = layer.sys.template.content
 				layer.sys.div.replaceChildren(elements)
 				evalScriptsInNode(layer.sys.div)
-				delete layer.sys
 			}
 			Client.search = search
 			Client.next = false
 			promise.resolve(search)
 		} catch (e) {
-			return location.href = search
+			console.log(e)
+			Client.next = false
+			promise.reject()
+			//return location.href = search
 		}
 	}
 }
@@ -123,7 +162,7 @@ const addHtml = (template, layer, crumb) => {
 const loadAll = (layers, promises = []) => {
 	let promise
 	for (const layer of layers) {
-		layer.sys = {}
+		if (!layer.sys) layer.sys = {}
 
 		promise = import(layer.tpl)
 		promise.then(res => {

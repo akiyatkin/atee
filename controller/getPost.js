@@ -1,6 +1,5 @@
 import { parse } from './pathparse.js'
 
-
 export const getPost = (request, limit = 1e7) => {
     if (request.method != 'POST') return
     return new Promise((resolve, reject) => {

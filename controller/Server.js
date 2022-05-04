@@ -2,12 +2,13 @@ import { router } from './router.js'
 import http from 'http'
 import fs from 'fs/promises'
 import { ReadStream } from 'fs'
+import { Access } from '@atee/controller/Access.js'
 import { meta } from './rest.js'
 
 import { Doc } from './Doc.js'
 
 import { parse } from './pathparse.js'
-import { getPost } from './headers.js'
+import { getPost } from './getPost.js'
 
 const TYPES = {
 	txt: 'text/plain',
@@ -86,21 +87,19 @@ export const Server = {
 				const req = {
 					...client,
 					globals: '',
-					update_time: 0,
-					access_time: 0,
+					update_time: Access.getUpdateTime(),
+					access_time: Access.getAccessTime(),
 					prev: false,
 					next: search
 				}
+                
 				let res = await meta.get('layers', req)
-
-
 				if (!res) return error(500, 'layers have bad definition')
                 if (!res.layers) return error(500, 'layers not defined')
 				
 				const crumb = {
 					path: route.path, 
-					search: route.search,
-					root: route.root
+					search: route.search
 				}
                 let status = res.status
                 let info
