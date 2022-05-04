@@ -1,7 +1,6 @@
-import { pathparse, parse } from './pathparse.js'
-
+import { pathparse } from './pathparse.js'
+import { SEO } from './SEO.js'
 export const Client = {
-
 	sw: async () => {
 		if (!navigator.serviceWorker) return
 		//const { default: access_data } = await import('/-controller/access', {assert: { type: 'json' }})
@@ -39,7 +38,6 @@ export const Client = {
 	global: () => {
 
 	},
-
 	pushState: (search) => {
 		const { secure, crumbs, path, ext, get } = pathparse(search)
 		history.pushState(null, null, search)
@@ -59,10 +57,10 @@ export const Client = {
 			return Client.next.promise
 		}
 		Client.next = { search, promise: createPromise(search) }
-		Client.apply()
+		Client.applyCrossing()
 		return Client.next.promise
 	},
-	apply: async () => {
+	applyCrossing: async () => {
 		if (!Client.next) return
 		const {search, promise} = Client.next
 		const req = {
@@ -72,20 +70,83 @@ export const Client = {
 			prev: Client.search,
 			next: search
 		}		
-		const res = await fetch('/-controller/layers', {
+		const json = await fetch('/-controller/layers', {
 			method: "post",
 			headers: {
 		    	'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
 			},
 			body: new URLSearchParams(req)
 		}).then(res => res.json())
-		
-		console.log(res)
-		
-		if (promise.rejected) return Client.apply()
+		if (promise.rejected) return Client.applyCrossing()
+		if (!json || !json.result || !json.layers) return location.href = search
+		try {
+			SEO.accept(json.seo)
+			const promises = loadAll(json.layers)
+			await Promise.all(promises)
+			if (promise.rejected) return Client.applyCrossing()
+			const {crumbs, path, get} = pathparse(search)
+			const crumb = {
+				crumbs, search, get, path,
+				//root: route.root
+			}
+			for (const layer of json.layers) {
+				layer.sys.template = document.createElement('template')
+				layer.sys.div = document.getElementById(layer.div)
+				addHtml(layer.sys.template, layer, crumb)
+			}
+			for (const layer of json.layers) {
+				const elements = layer.sys.template.content
+				layer.sys.div.replaceChildren(elements)
+				evalScriptsInNode(layer.sys.div)
+				delete layer.sys
+			}
+			Client.search = search
+			Client.next = false
+			promise.resolve(search)
+		} catch (e) {
+			return location.href = search
+		}
+	}
+}
+const addHtml = (template, layer, crumb) => {
+	const html = layer.sys.objtpl[layer.sub](layer.sys.data, {layer, crumb, host:location.host, cookie:document.cookie})
+	if (template.children.length) {
+		const div = template.content.getElementById(layer.div)
+		div.innerHTML = html
+	} else {
+		template.innerHTML = html
+	}
+	for (const l of layer.layers) {
+		addHtml(template, l, crumb, content)
+	}
+}
+const loadAll = (layers, promises = []) => {
+	let promise
+	for (const layer of layers) {
+		layer.sys = {}
 
-		Client.next = false
-		promise.resolve(search)
+		promise = import(layer.tpl)
+		promise.then(res => {
+			layer.sys.objtpl = res
+		})
+		promises.push(promise)
+		if (layer.json) {
+			promise = fetch(layer.json)
+			promise.then(res => res.json()).then(res => {
+				layer.sys.data = data
+			})
+			promises.push(promise)
+		}
+		loadAll(layer.layers, promises)
+	}
+	return promises
+}
+const evalScriptsInNode = div => {
+	for (const old of div.getElementsByTagName("script")) {
+		const fresh = document.createElement("script");
+		fresh.type = old.type
+		fresh.textContent = old.textContent
+		old.replaceWith(fresh)
 	}
 }
 const createPromise = (payload) => {

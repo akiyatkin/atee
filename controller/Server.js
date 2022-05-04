@@ -92,38 +92,35 @@ export const Server = {
 					next: search
 				}
 				let res = await meta.get('layers', req)
-				if (!res) return error(500, 'layers have bad definition')
-				if (res.layers) {
-					const crumb = {
-						path: route.path, 
-						search: route.search,
-						root: route.root
-					}
 
-					let info = await controller(res, client, crumb) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
-					if (!ext) {
-						if (info.status == 404) {
-							req.next = '/404'
-							res = await meta.get('layers', req)
-							info = await controller(res, client, crumb)
-							info.status = 404
-						}
-						if (info.status == 500) {
-							req.next = '/500'
-							res = await meta.get('layers', req)
-							info = await controller(res, client, crumb)
-							info.status = 500
-						}
-					}
-					if (res.push.length) response.setHeader('Link', res.push.join(','));
-					response.writeHead(info.status, {
-						'Content-Type': TYPES['html'] + '; charset=utf-8',
-						'Cache-Control': info.nostore ? 'no-store' : 'public, max-age=31536000, immutable'
-					})
-					return response.end(info.html)
-				} else {
-					return error(500, 'layers not defined')
+
+				if (!res) return error(500, 'layers have bad definition')
+                if (!res.layers) return error(500, 'layers not defined')
+				
+				const crumb = {
+					path: route.path, 
+					search: route.search,
+					root: route.root
 				}
+                let status = res.status
+                let info
+                try {
+				    info = await controller(res, client, crumb) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
+                    status = Math.max(info.status, status)
+                } catch (e) {
+                    console.log(500,e)
+                    req.next = '/500'
+                    res = await meta.get('layers', req)
+                    info = await controller(res, client, crumb)
+                    status = 500
+                }
+
+				if (res.push.length) response.setHeader('Link', res.push.join(','));
+				response.writeHead(status, {
+					'Content-Type': TYPES['html'] + '; charset=utf-8',
+					'Cache-Control': info.nostore ? 'no-store' : 'public, max-age=31536000, immutable'
+				})
+				return response.end(info.html)
 			} else { //Это может быть новый проект без всего
 				return error(404, 'layers.json not found')
 			}
@@ -150,10 +147,8 @@ const readStream = stream => {
 }
 const getHTML = async (layer, { seo, client, crumb }) => {
 	const { tpl, json, sub, div } = layer
-	let html = ''
-	let status = 200
 	let nostore = false
-
+    let status = 200
 	let data
 	if (json) {
 		let res = { ans: '', ext: 'json', status: 200, nostore: false, headers: { } }
@@ -161,10 +156,10 @@ const getHTML = async (layer, { seo, client, crumb }) => {
 			search, secure, get,
 			rest, query, restroot
 		} = await router(json)
-
-		if (rest) res = {...res, ...(await rest(query, get, client))}
-		else res.status = 500 //Если нет rest это 500 ошибка
-
+        if (!rest) throw 500
+		res = {...res, ...(await rest(query, get, client))}
+        if (res.status == 500) throw 500
+	
 		status = Math.max(status, res.status) //404 может быть только тут
 		nostore = Math.max(nostore, res.nostore)
 
@@ -174,14 +169,14 @@ const getHTML = async (layer, { seo, client, crumb }) => {
 			data = await readStream(ans)
 		}
 	}
-	try {
-		const objtpl = await import(tpl)
-		const html = objtpl[sub](data, {layer, crumb, seo, client})
-		return { status, nostore, html }
-	} catch (e) { //Если нет шаблона это 500 ошибка
-		console.error(e)
-		return { status: 500, nostore: true, html: ''}
-	}
+	//try {
+	const objtpl = await import(tpl)
+	const html = objtpl[sub](data, {layer, crumb, seo, host: client.host, cookie: client.cookie})
+	return { status, nostore, html }
+	// } catch (e) { //Если нет шаблона это 500 ошибка
+	// 	console.error(e)
+	// 	return { status: 500, nostore: true, html: ''}
+	// }
 
 }
 
@@ -195,17 +190,16 @@ const runLayers = async (layers, fn, parent) => {
 }
 export const controller = async ({ layers, seo }, client, crumb) => {
 	const ans = {
-		html: '', 
-		status: 200, 
+		html: '',
+        status: 200,
 		nostore: false
 	}
 	const look = {seo, client, crumb}
-	if (!layers.length) ans.status = 404
 	const doc = new Doc()
 	await runLayers(layers, async layer => {
 		const { nostore, html, status } = await getHTML(layer, look)
-		ans.status = Math.max(ans.status, status)
 		ans.nostore = Math.max(ans.nostore, nostore)
+        ans.status = Math.max(ans.status, status)
 		doc.insert(html, layer.div, layer.layers.length)
 	})
 	ans.html = doc.get()

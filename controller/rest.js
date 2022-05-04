@@ -92,25 +92,8 @@ const divtplsub = (dts, inherit) => {
 	}
 	return {div, name, sub, divs:{}}
 }
-const apply = (ans, rule, source, divs, applyfn, inherit) => {
-	const dts = divtplsub(source, inherit)
-	applyfn(ans, rule, dts, source, divs)
-	if (!rule.env[source]) return
-	rule.env[source].forEach(source => apply(ans, rule, source, dts.divs, applyfn, dts.name))
-}
-const applyfn = (ans, rule, layer, source, divs) => {
-	layer.json = rule.json[source]
-	layer.tpl = rule.tpl[layer.name]
-	divs[layer.div] = layer
-	if (rule.push[source]) ans.push.push(...rule.push[source])
-	const shortsource = layer.name + (layer.sub == 'ROOT' ? '' : `:${layer.sub}`)
-	if (rule.seo[shortsource]) ans.seo = rule.seo[shortsource]
-}
-const divs2layers = (layer, fn) => {
-	for (const i in layer.divs) divs2layers(layer.divs[i])
-	layer.layers = Object.values(layer.divs)
-	delete layer.divs
-}
+
+
 
 const getRule = Once.proxy( async root => {
 	const { default: rule } = await import(path.posix.join(IMPORT_APP_ROOT, root, 'layers.json'), {assert: { type: "json" }})
@@ -145,47 +128,90 @@ meta.addAction('layers', async view => {
 	view.ans.update_time = Access.getUpdateTime()
 	view.ans.access_time = Access.getAccessTime()
 
-	const route = await router(next)
 	
-	// || prevroute.root != nextroute.root
-	if (route.rest || route.secure) return view.err()
-
-	const rule = await getRule(route.root)
+	const nroute = await router(next)
+	if (nroute.rest || nroute.secure) return view.err()
+	const rule = await getRule(nroute.root)
 	if (!rule) return view.err('Bad type layers.json')
+	const nopt = getLayers(rule, nroute.path)
+	if (!nopt.layers) return view.err()
 	
-	const ans = view.ans
-	
+	view.ans.status = nopt.status
 
-	ans.push = []
-	ans.seo = {}
-
-	if (route.path && !rule.childs[route.path]) {
-		ans.layers = []
-		return view.err()
+	if (!prev) {
+		view.ans.push = nopt.push
+		view.ans.seo = nopt.seo
+		view.ans.layers = nopt.layers
+		return view.ret()
 	}
+	const proute = await router(prev)
+	if (proute.rest || proute.secure) return view.err()
+	if (proute.root != nroute.root) return view.err()
+	const popt = getLayers(rule, proute.path)
+	if (!popt.layers) return view.err()
 
-	const source = rule.index || 'index'
-	ans.divs = {}
-	
-	apply(ans, rule, source, ans.divs, applyfn)
-	if (route.path) {
-		apply(ans, rule, rule.childs[route.path], ans.divs[''].divs, applyfn, source)	
-	}
-	//console.log(ans.divs[''])
-	divs2layers(ans)
-	//ans.divs = Object.values(ans.divs)
 
+	view.ans.seo = nopt.seo
+	view.ans.layers = getDiff(popt.layers, nopt.layers)
 
 	return view.ret()    
 })
-
+const getDiff = (players, nlayers, layers = []) => {
+	nlayers.forEach(nlayer => {
+		const player = players.find(player => {
+			return nlayer.div == player.div && nlayer.sub == player.sub && nlayer.json == player.json && nlayer.name == player.name
+		})
+		if (player) {
+			getDiff(player.layers, nlayer.layers, layers)
+		} else {
+			layers.push(nlayer) //Слой не найден, его надо показать
+		}
+	})
+	return layers
+}
+const apply = (rule, source, divs, applyfn, options, inherit) => {
+	const dts = divtplsub(source, inherit)
+	applyfn(rule, dts, source, divs, options)
+	if (!rule.env[source]) return
+	rule.env[source].forEach(source => apply(rule, source, dts.divs, applyfn, options, dts.name))
+}
+const applyfn = (rule, layer, source, divs, options) => {
+	layer.json = rule.json[source]
+	layer.tpl = rule.tpl[layer.name]
+	divs[layer.div] = layer
+	if (rule.push[source]) options.push.push(...rule.push[source])
+	const shortsource = layer.name + (layer.sub == 'ROOT' ? '' : `:${layer.sub}`)
+	if (rule.seo[shortsource]) options.seo = rule.seo[shortsource]
+}
+const divs2layers = (divs, fn) => {
+	for (const i in divs) {
+		divs[i].layers = divs2layers(divs[i].divs)
+		delete divs[i].divs
+	}
+	return Object.values(divs)
+}
+const getLayers = (rule, path, options = {push: []}, status = 200) => {
+	if (path && !rule.childs[path]) {
+		if (path == '404') return []
+		return getLayers(rule, '404', options, 404)
+	}
+	const source = rule.index || 'index'
+	
+	const divs = {}
+	apply(rule, source, divs, applyfn, options)
+	if (path) {
+		apply(rule, rule.childs[path], divs[''].divs, applyfn, options, source)	
+	}
+	const layers = divs2layers(divs)
+	return { seo: options.seo, push: options.push, layers, status }
+}
 export const rest = async (query, get, client) => {
 	if (query == 'init.js') return file(FILE_MOD_ROOT + 'init.js', 'js')
 	if (query == 'test.js') return files(FILE_MOD_ROOT + 'test.js', 'js')
 
 	const req = {...get, ...client}
 	const ans = await meta.get(query, req)
-	
+
 	if (query == 'layers') {
 		delete ans.push
 	}
