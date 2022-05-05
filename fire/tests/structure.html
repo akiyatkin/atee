@@ -1,0 +1,25 @@
+
+<script type="module">
+	import { CDN } from '/vendor/akiyatkin/load/CDN.js'
+	import { DOM } from '/vendor/akiyatkin/load/DOM.js'
+
+	let promise1 = CDN.fire('test')
+	let promise2 = CDN.fire('test')
+	if (promise1 == promise2) console.log(1)
+
+	const wait = delay => new Promise(resolve => setTimeout(resolve, delay))
+
+	let promise = wait(1000);
+	promise.then(async () => {
+		console.log(3)
+	})
+
+	wait(500).then(async () => {
+		console.log(2)
+		await promise
+		console.log(4)
+	})
+</script>
+<pre>
+Счёт от 1 до 4
+</pre>

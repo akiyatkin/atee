@@ -1,0 +1,34 @@
+<link data-name="bootstrap" rel="stylesheet" href="//bootswatch.com/4/cosmo/bootstrap.min.css">
+<script type="module">
+    import { Fire } from '/-fire/Fire.js'
+
+	let Test = { ...Fire }
+	window.Test = Test
+
+	const wait = delay => new Promise(resolve => setTimeout(resolve, delay))
+
+	;(async () => {
+		
+		Test.hand('show', async (obj) => {
+			//await wait(Math.random()*100)
+			console.log(obj)
+		})
+		Test.puff('show',2, 1)
+		console.log(1)
+		await wait(50); Test.puff('show',10, 1)
+		await wait(50); Test.puff('show',11, 1)
+		await wait(50); Test.puff('show',3, 1)
+		// await wait(150); Test.puff('show',7, 1)
+		// await wait(50); Test.puff('show',8, 1)
+		// await wait(50); Test.puff('show',3, 1)
+		await wait(1500); Test.puff('show',4, 1)
+		await wait(50); Test.puff('show',9, 1)
+		await wait(50); Test.puff('show',5, 1)
+		
+		
+	})();
+	
+</script>
+<pre>
+Счёт от 1 до 5
+</pre>

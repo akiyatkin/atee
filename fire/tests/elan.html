@@ -1,0 +1,21 @@
+
+<script type="module">
+    import { Fire } from '/-fire/Fire.js'
+
+	let Test = { ...Fire }
+	window.Test = Test
+
+	Test.fire('check', 'a')
+
+	//fire и сбрасываются события для других объектов
+	Test.elan('check', 'b').then(async () => {	
+		Test.hand('check', obj => {
+		 	console.log(1, obj)
+		})
+	})
+	
+	
+</script>
+
+<pre>До 1
+</pre>

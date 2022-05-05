@@ -1,0 +1,36 @@
+<link data-name="bootstrap" rel="stylesheet" href="//bootswatch.com/4/cosmo/bootstrap.min.css">
+<script type="module">
+    import { Fire } from '/-fire/Fire.js'
+
+	let Test = { ...Fire }
+	window.Test = Test
+
+	const wait = delay => new Promise(resolve => setTimeout(resolve, delay))
+
+	;(async () => {
+
+		Test.hand('show', async (event, opt) => {
+			let rand = Math.random()*100
+			await wait(rand)
+			console.log(opt)
+			return event
+		})
+
+		let timers = {}
+		
+		await wait(50); let res1 = Test.chil('show', 'src?param=2', 'src')
+		await wait(50); let res2 = Test.chil('show', 'src?param=1', 'src', 1)
+		await wait(1000); let res3 = Test.chil('show', 'src?param=2', 'src', 2)
+		await wait(1000); let res4 = Test.chil('show', 'src?param=1', 'src')
+		
+		if (res1 === res2) {
+			console.log(3);	
+		}
+		
+		
+	})();
+	
+</script>
+<pre>
+Счёт от 1 до 3
+</pre>

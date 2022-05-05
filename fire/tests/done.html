@@ -1,0 +1,33 @@
+<link data-name="bootstrap" rel="stylesheet" href="//bootswatch.com/4/cosmo/bootstrap.min.css">
+<script type="module">
+    import { Fire } from '/-fire/Fire.js'
+
+	let Test = { ...Fire }
+	window.Test = Test
+
+	;(async () => {
+		
+		Test.once('show', function(){
+			console.log(3, 'once')
+		})
+
+		console.log(1, 'done')
+
+		Test.done('show', () => {
+		 	console.log(7, 'done')
+		})
+
+		console.log(2, 'done')
+		Test.fire('show', 1);
+
+		console.log(4, 'done')
+		Test.hand('show', () => {
+		 	console.log(6, 'hand')
+		})
+		console.log(5, 'done')
+	})();
+	
+</script>
+<pre>
+Цифры по порядку до 7
+</pre>

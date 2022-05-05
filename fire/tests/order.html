@@ -1,0 +1,70 @@
+<link data-name="bootstrap" rel="stylesheet" href="//bootswatch.com/4/cosmo/bootstrap.min.css">
+<script type="module">
+    import { Fire } from '/-fire/Fire.js'
+
+	let Test = { ...Fire }
+	window.Test = Test
+	;(async () => {
+
+		Test.once('show', r => {
+			console.log('ONCE', r)
+		}).then(async r => {
+			console.log('THEN', r)
+		})
+		
+		Test.done('show', r => {
+		 	console.log('done', r)
+		})
+		
+		Test.before('show', r => {
+		 	console.log('before', r)
+		})
+		Test.hand('show', r => {
+			console.log('hand', r)
+		})
+		Test.after('show', r => {
+		 	console.log('after', r)
+		})
+		Test.race('show', r => {
+			console.log('race', r)
+		})
+
+		Test.fire('show',1); //fire через setTimeout перепрыгивает через все прописы
+
+		Test.fire('show',2);
+		
+	})();
+	
+	// (async ()=> {
+	// 	return
+	// 	let test = 1;
+
+	// 	(async ()=> {
+	// 		if (test != 1) return
+	// 		Promise.resolve().then( () => {
+	// 			//if (test != 1) return
+	// 			console.log(test)
+	// 		})
+	// 	})();
+			
+	// 	(async ()=> {
+	// 		test = 2
+	// 	})();
+			
+
+	// })();
+</script>
+<pre>
+ONCE undefined
+race 1
+race 2
+before 1
+before 2
+hand 1
+hand 2
+after 1
+after 2
+done 1
+done 2
+THEN undefined
+</pre>

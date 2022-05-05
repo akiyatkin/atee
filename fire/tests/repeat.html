@@ -1,0 +1,30 @@
+
+<script type="module">
+    import { Fire } from '/-fire/Fire.js'
+
+	let One = { ...Fire }
+	window.One = One
+
+
+	One.hand('check', async () => {
+		console.log('One')		
+	});
+
+	One.emit('check')
+	One.emit('check')
+	//Two.emit('check')
+
+	// One.done('check', async () => {
+	// 	await Two.fire('check')
+	// })
+	// Two.once('check', async () => {
+	// 	await One.fire('check')
+	// })
+
+	
+	
+</script>
+<pre>
+One
+One
+</pre>

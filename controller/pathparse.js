@@ -20,7 +20,7 @@ export const parse = (string, sep = '; ') => {
     const cookie = string?.split(sep).reduce((res, item) => {
         if (!item) return res
         const data = item.split('=')
-        res[decodeURIComponent(data[0])] = decodeURIComponent(data[1])
+        res[decodeURIComponent(data.shift())] = data.length ? decodeURIComponent(data.join('=')) : null
         return res
     }, {})
     return cookie || {}

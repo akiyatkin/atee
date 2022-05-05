@@ -1,0 +1,28 @@
+.a-crossing-before {
+	transform-origin: center; 
+	transform: scale(0.97);
+	/*opacity: 0.5; */
+	transition:none;
+}
+.a-crossing-after {
+	transform-origin: center; 
+	transition: transform 0.3s;
+	/*transition: opacity 0.3s;*/
+	/*transition: opacity 0.3s, transform 0.3s;*/
+}
+
+.div-crossing-before {
+	will-change: content; 
+	/*transform-origin: top left;
+	transform: scale(0.99);*/
+	opacity: 0.5;
+	transition: none;
+	
+	
+}
+.div-crossing-after {
+	transition: opacity 0.3s;
+	/*transition: transform 0.3s;
+	transform-origin: top left;*/
+	/*transition: opacity 0.3s, transform 0.3s;*/
+}

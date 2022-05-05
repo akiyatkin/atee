@@ -37,11 +37,11 @@ meta.addFunction('int', (view, n) => Number(n))
 meta.addFunction('array', (view, n) => explode(',', n))
 meta.addArgument('host')
 meta.addArgument('ip')
-meta.addArgument('prev')
-meta.addArgument('next')
-meta.addArgument('update_time', ['int'])
-meta.addArgument('access_time', ['int'])
-meta.addArgument('globals','array')
+meta.addArgument('pv') //prev
+meta.addArgument('nt') //next
+meta.addArgument('ut', ['int']) //update_time
+meta.addArgument('st', ['int']) //access_time
+meta.addArgument('gs','array') //globals
 
 
 // meta.addAction('sw', async view => {
@@ -104,11 +104,11 @@ const getRule = Once.proxy( async root => {
 
 meta.addAction('layers', async view => {
 	const {
-		prev, next, host, cookie, access_time, update_time, globals 
-	} = await view.gets(['prev', 'ip', 'next', 'host', 'cookie', 'access_time', 'update_time', 'globals'])
+		pv: prev, nt: next, host, cookie, at: access_time, ut: update_time, gs: globals 
+	} = await view.gets(['pv', 'ip', 'nt', 'host', 'cookie', 'st', 'ut', 'gs'])
 
-	view.ans.update_time = Access.getUpdateTime()
-	view.ans.access_time = Access.getAccessTime()
+	view.ans.ut = Access.getUpdateTime()
+	view.ans.st = Access.getAccessTime()
 	
 	//next и prev globals не содержат, был редирект на без globals
 	if (update_time < Access.getUpdateTime()) {
@@ -127,7 +127,7 @@ meta.addAction('layers', async view => {
 	//Нужно сообщить какие globals update_time access_time обработал данный запрос
 	//Пока не придёт ответ со старшими update_time и access_time клиент свои не поменяет
 	//Если придут старшие значит именно в этом запросе есть нужные слои в момент когда пришли старшие, для всех предыдущих 
-	view.ans.globals = globals
+	view.ans.gs = globals
 	
 
 	

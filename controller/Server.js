@@ -86,11 +86,11 @@ export const Server = {
 				//host: request.headers.host,
 				const req = {
 					...client,
-					globals: '',
-					update_time: Access.getUpdateTime(),
-					access_time: Access.getAccessTime(),
-					prev: false,
-					next: search
+					gs: '',
+					ut: Access.getUpdateTime(),
+					st: Access.getAccessTime(),
+					pv: false,
+					nt: search
 				}
                 
 				let res = await meta.get('layers', req)
@@ -108,7 +108,7 @@ export const Server = {
                     status = Math.max(info.status, status)
                 } catch (e) {
                     console.log(500,e)
-                    req.next = '/500'
+                    req.nt = '/500'
                     res = await meta.get('layers', req)
                     info = await controller(res, client, crumb)
                     status = 500

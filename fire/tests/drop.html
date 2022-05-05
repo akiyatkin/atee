@@ -1,0 +1,36 @@
+
+<script type="module">
+	import { Fire } from '/-fire/Fire.js'
+
+	let Test = {...Fire}
+
+	let sleep = (ms) => {
+		return new Promise(resolve => {
+			setTimeout(resolve, ms)
+		})
+	}
+
+	Test.hand('show', async () => {
+		console.log(1)
+		await sleep(100)
+		console.log(4)
+	})
+
+	Test.fire('show').then(()=> {
+		console.log(5)
+	})
+	sleep(5).then(() => {
+		console.log(2)
+		Test.drop('show')
+		console.log(3)
+	})
+	
+	
+
+
+	//let json = NLoad.fire('json','-cart/?type=order&id='); NLoad.drop('json','-cart/?type=order&id=');
+	//console.log(json)
+</script>
+
+<pre>До 5
+</pre>

@@ -1,0 +1,40 @@
+<link data-name="bootstrap" rel="stylesheet" href="//bootswatch.com/4/cosmo/bootstrap.min.css">
+<script type="module">
+	import { Fire } from '/-fire/Fire.js'
+
+	let Test = { ...Fire }
+	window.Test = Test
+
+	const wait = delay => new Promise(resolve => setTimeout(resolve, delay))
+
+		; (async () => {
+			Test.hand('show', async (event, opt) => {
+				console.log('start', opt)
+				await wait(Math.random() * 100)
+				console.log('end', opt)
+			})
+			let turn = call => {
+				let promise = call()
+			}
+
+
+
+
+			Test.emit('show', 1, 1)
+			Test.emit('show', 1, 2)
+			Test.emit('show', 1, 3)
+			Test.emit('show', 1, 4)
+
+		})();
+
+</script>
+<pre>
+	start 1
+	end 1
+	start 2
+	end 2
+	start 3
+	end 3
+	start 4
+	end 4
+</pre>

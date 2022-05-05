@@ -1,0 +1,41 @@
+
+<script type="module">
+    import { Fire } from '/-fire/Fire.js'
+
+	let One = { ...Fire }
+	window.One = One
+	
+
+	One.fire('check', 3)
+	One.fire('check', 4)
+
+	One.once('check', async (obj) => {
+		console.log(1, 'once')
+		await Promise.resolve()
+		console.log(2, 'once')
+	});
+	
+	
+	
+	setTimeout(async () => {
+
+		let res = One.fire('check', 5)		
+		One.hand('check', async (obj) => {
+			await Promise.resolve()
+			console.log(obj, 'hand1')
+			return 'good'
+		});
+		// One.hand('check', async (obj) => {
+		// 	await Promise.resolve()
+		// 	console.log(obj, 'hand2')
+		// 	return 'nice'
+		// });
+		console.log(6, await res)
+	}, 100)
+	
+	
+	
+</script>
+<pre>
+До 6
+</pre>

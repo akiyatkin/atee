@@ -1,0 +1,46 @@
+
+<script type="module">
+    import { Fire } from '/-fire/Fire.js'
+
+	let One = { ...Fire }
+	let Two = { ...Fire }
+	window.One = One
+	window.Two = Two
+
+
+	One.tick('check') //Нужна инициализация
+	Two.tick('check') //Нужна инициализация
+	Two.__fire['check'] = One.__fire['check'] //Общий контекст у разных событий
+
+
+
+	One.hand('check', async () => {
+		console.log('One')		
+	});
+	
+	Two.hand('check', async () => {
+		console.log('Two')
+	});
+
+	One.emit('check').then( () => {
+		One.emit('check')	
+	})
+	
+	//Two.emit('check')
+
+	// One.done('check', async () => {
+	// 	await Two.fire('check')
+	// })
+	// Two.once('check', async () => {
+	// 	await One.fire('check')
+	// })
+
+	
+	
+</script>
+<pre>
+One
+Two
+One
+Two
+</pre>

@@ -1,0 +1,30 @@
+<link data-name="bootstrap" rel="stylesheet" href="//bootswatch.com/4/cosmo/bootstrap.min.css">
+<script type="module">
+    import { Fire } from '/-fire/Fire.js'
+
+	let Test = { ...Fire }
+	window.Test = Test
+
+	;(async () => {
+		Test.hand('show', () => {
+		 	console.log('hand')
+		 	return true
+		})
+		
+		Test.done('show', (obj, r) => {
+		 	console.log('done', r)
+		})
+
+		await Test.on('show',1);
+		await Test.on('show',1);
+
+		
+
+		
+	})();
+	
+</script>
+<pre>
+hand
+done true
+</pre>

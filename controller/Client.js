@@ -1,5 +1,6 @@
 import { pathparse } from './pathparse.js'
 import { SEO } from './SEO.js'
+import { Fire } from '/@atee/fire/Fire.js'
 import access_data from '/-controller/access' assert { type: 'json' }
 const SW = {
 	register: async () => {
@@ -17,7 +18,22 @@ const SW = {
 		navigator.serviceWorker.controller.postMessage(access_data)
 	}
 }
+const requestNextAnimationFrame = (fn) => requestAnimationFrame(() => requestAnimationFrame(fn))
 export const Client = {
+	...Fire,
+	search:'',
+	animateA: (a, promise) => {
+		if (!a.classList.replace('a-crossing-after', 'a-crossing-before')) a.classList.add('a-crossing-before')
+		promise.finally(() => {
+			requestNextAnimationFrame(() => a.classList.replace('a-crossing-before', 'a-crossing-after'))
+		})
+	},
+	animateDiv: (div, promise) => {
+		if (!div.classList.replace('div-crossing-after', 'div-crossing-before')) div.classList.add('div-crossing-before')
+		promise.finally(() => {
+			requestNextAnimationFrame(() => div.classList.replace('div-crossing-before', 'div-crossing-after'))
+		})
+	},
 	
 	follow: async () => {
 		SW.register()
@@ -31,17 +47,21 @@ export const Client = {
 			if (~search.lastIndexOf('.')) return
 			if (search[1] == '-') return
 			e.preventDefault()
-			const promise = Client.pushState(search)
-
-			a.style.cssText = `opacity: 0.5`
-			promise.finally(() => {
-				a.style.cssText = `transition: 0.2s`	
-			})
-
+			const promise = search == Client.search ? Client.replaceState(search) : Client.pushState(search)
+			Client.animateA(a, promise)
 		})
 		window.addEventListener('popstate', event => { 
-			Client.crossing(Client.getSearch())
-		});
+			const promise = Client.crossing(Client.getSearch())
+			promise.then(() => {
+			 	window.scrollTo(...event.state.scroll)	
+			}).catch(() => {})
+		})
+		window.addEventListener('load', event => {
+			const link = document.createElement('link')
+			link.rel = "stylesheet"
+			link.href = "/-controller/style.css"
+			document.head.append(link)
+		})
 	},
 	getSearch: () => decodeURI(location.pathname + location.search),
 	attach: () => {
@@ -50,16 +70,20 @@ export const Client = {
 	global: () => {
 
 	},
-	pushState: (search) => {
-		const { secure, crumbs, path, ext, get } = pathparse(search)
-		history.pushState(null, null, search)
+	pushState: search => {
+		//history.state = {scroll: [window.scrollX, window.scrollY]}
+		history.replaceState({scroll: [window.scrollX, window.scrollY]}, null, Client.search)
+		history.pushState({scroll: [0,0]}, null, search)
 		return Client.crossing(search)
 	},
-	replaceState: () => {
-		
+	replaceState: search => {
+		//history.state = {scroll: [window.scrollX, window.scrollY]}
+		history.replaceState({scroll: [window.scrollX, window.scrollY]}, null, search)
+		return Client.crossing(search)	
 	},
 	next: false,
 	crossing: (search) => {
+		Client.elan('state', search)
 		if (Client.next) {
 			if (Client.next.search == search) return Client.next.promise
 			Client.next.search = search
@@ -76,16 +100,12 @@ export const Client = {
 		if (!Client.next) return
 		const {search, promise} = Client.next
 		const req = {
-			globals: '',
-			update_time: access_data.UPDATE_TIME,
-			access_time: access_data.ACCESS_TIME,
-			prev: Client.search,
-			next: search
+			gs: '',
+			ut: access_data.UPDATE_TIME,
+			st: access_data.ACCESS_TIME,
+			pv: Client.search,
+			nt: search
 		}
-
-
-
-		
 		try {
 			const json = await fetch('/-controller/layers', {
 				method: "post",
@@ -94,39 +114,28 @@ export const Client = {
 				},
 				body: new URLSearchParams(req)
 			}).then(res => res.json())
-			if (json.update_time && json.access_time) {
-				access_data.UPDATE_TIME = json.update_time
-				access_data.ACCESS_TIME = json.access_time
+			if (json.ut && json.st) {
+				access_data.UPDATE_TIME = json.ut
+				access_data.ACCESS_TIME = json.st
 				SW.postMessage(access_data)
 			}
 			if (promise.rejected) return Client.applyCrossing()
 			if (!json || !json.result || !json.layers) return location.href = search
 			
-			SEO.accept(json.seo)
+			const promises = loadAll(json.layers)
 			for (const layer of json.layers) {
 				layer.sys = {}
 				const div = document.getElementById(layer.div)
 				layer.sys.div = div
-
-				div.style.cssText = `
-					will-change: content;
-					opacity: 0.5;
-				`
-				promise.finally(() => {
-					div.style.cssText = `
-						transition: 0.2s;
-					`
-				})
-
-			}
-			const promises = loadAll(json.layers)
-			await Promise.all(promises)
-			if (promise.rejected) return Client.applyCrossing()
+				Client.animateDiv(div, promise)
+			}	
 			const {crumbs, path, get} = pathparse(search)
 			const crumb = {
 				crumbs, search, get, path
 			}
-			
+			await Promise.all(promises)
+			if (promise.rejected) return Client.applyCrossing()
+			SEO.accept(json.seo)
 			for (const layer of json.layers) {
 				layer.sys.template = document.createElement('template')
 				addHtml(layer.sys.template, layer, crumb)
@@ -138,6 +147,7 @@ export const Client = {
 			}
 			Client.search = search
 			Client.next = false
+			Client.elan('load', search)
 			promise.resolve(search)
 		} catch (e) {
 			console.log(e)

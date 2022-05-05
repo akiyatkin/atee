@@ -1,0 +1,39 @@
+
+<script type="module">
+    import { Fire } from '/-fire/Fire.js'
+    
+	let One = { ...Fire }
+	window.One = One
+
+
+	
+	One.fire('check')
+
+	One.race('check', () => {
+		console.log(1)
+	});
+
+	One.race('show', () => {
+		console.log(2)
+	});
+	
+	One.fire('show')
+	One.fire('show')
+	
+	//One.emit('check')
+	//Two.emit('check')
+
+	// One.done('check', async () => {
+	// 	await Two.fire('check')
+	// })
+	// Two.once('check', async () => {
+	// 	await One.fire('check')
+	// })
+
+	
+	
+</script>
+<pre>
+1
+2
+</pre>

@@ -1,0 +1,25 @@
+<script type="module">
+    import { Fire } from '/-fire/Fire.js'
+
+	let Test = { ...Fire }
+	window.Test = Test
+
+	;(async () => {
+		Test.fire('check')
+
+		Test.once('check', async () => {
+			await console.log(1)
+		})
+
+		Test.before('check', () => {
+			console.log(2)
+		})
+	})()
+	
+	
+	
+</script>
+
+<pre>
+По порядку до 2
+</pre>

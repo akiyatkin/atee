@@ -1,0 +1,33 @@
+<link data-name="bootstrap" rel="stylesheet" href="//bootswatch.com/4/cosmo/bootstrap.min.css">
+<script type="module">
+    import { Fire } from '/-fire/Fire.js'
+
+	let Test = { ...Fire }
+	window.Test = Test
+
+	;(async () => {
+		Test.once('show', event => {
+			console.log(1, 'once')
+		})
+
+		Test.wait('show', 1).then( () => {
+		 	console.log(5, 'wait')
+		})
+
+		Test.race('show', () => {
+		 	console.log(3, 'race')
+		})		
+
+		Test.hand('show', () => {
+		 	console.log(4, 'hand')
+		})
+		console.log(0)
+		Test.fire('show',1);	
+		console.log(2)
+		
+	})();
+	
+</script>
+<pre>
+Счёт от 0 до 5
+</pre>

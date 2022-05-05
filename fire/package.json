@@ -1,6 +1,6 @@
 {
-  "name": "@atee/controller",
-  "version": "1.0.9",
+  "name": "@atee/fire",
+  "version": "1.0.0",
   "type": "module",
   "description": "",
   "scripts": {
@@ -15,8 +15,5 @@
   "bugs": {
     "url": "https://github.com/akiyatkin/atee/issues"
   },
-  "homepage": "https://github.com/akiyatkin/atee#readme",
-  "dependencies": {
-    "@atee/fire": "^1.0.0"
-  }
+  "homepage": "https://github.com/akiyatkin/atee#readme"
 }

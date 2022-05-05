@@ -1,0 +1,65 @@
+
+<script type="module">
+    import { Fire } from '/-fire/Fire.js'
+
+	let One = { ...Fire }
+	window.One = One
+
+	
+	One.fire('check')
+
+	One.once('check', () => {
+		console.log(1)
+	})
+	setTimeout(()=>{
+
+		One.once('check', () => {
+			return new Promise(resolve => {
+				setTimeout(()=>{
+					console.log(4)
+					resolve()
+				}, 100)
+			})
+		});
+
+		One.once('check', () => {
+			console.log(2)
+		}).then(()=> {
+			console.log(6)
+		})
+
+		
+		console.log(3)
+
+		One.done('check', async () => {
+			console.log(5,'check')
+		});
+
+	}, 100)
+	
+	
+</script>
+<!-- <script type="module">
+    //import { Fire } from '/-fire/Fire.js'
+    import { Fire } from '/vendor/akiyatkin/load/Elan.js'
+
+	let One = { ...Fire }
+	window.One = One
+
+	
+	One.fire('check')
+
+	One.once('check', () => {
+
+		console.log(1)
+		return Promise.resolve()
+	})
+
+	One.done('check', () => {
+	})
+	
+	
+</script> -->
+<pre>
+По порядку
+</pre>

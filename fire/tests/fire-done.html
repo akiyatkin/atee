@@ -1,0 +1,38 @@
+
+<script type="module">
+    import { Fire } from '/-fire/Fire.js'
+    
+	let One = { ...Fire }
+	window.One = One
+	console.log(1, 'fire show')
+	One.fire('show')
+	
+</script>
+
+<script type="module">
+	console.log(2, 'done show')
+	One.done('show', (obj) => {
+		console.log(3, 'done')
+	});
+</script>
+
+<script type="module">
+	console.log(4, 'once show')
+	
+	One.once('show', async (obj) => {
+		console.log(5, 'once')
+		await Promise.resolve()
+		console.log(7, 'once end')
+	});
+	One.done('show', (obj) => {
+		console.log(8, 'done')
+	});
+	One.done('show', (obj) => {
+		console.log(9, 'done')
+	});
+	console.log(6, 'end')
+</script>
+
+<pre>
+Цифры по порядку до 9
+</pre>
