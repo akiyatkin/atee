@@ -1,6 +1,5 @@
 import { pathparse } from './pathparse.js'
 import { SEO } from './SEO.js'
-import { Fire } from '/@atee/fire/Fire.js'
 import access_data from '/-controller/access' assert { type: 'json' }
 const SW = {
 	register: async () => {
@@ -20,7 +19,6 @@ const SW = {
 }
 const requestNextAnimationFrame = (fn) => requestAnimationFrame(() => requestAnimationFrame(fn))
 export const Client = {
-	...Fire,
 	search:'',
 	animateA: (a, promise) => {
 		if (!a.classList.replace('a-crossing-after', 'a-crossing-before')) a.classList.add('a-crossing-before')
@@ -83,7 +81,6 @@ export const Client = {
 	},
 	next: false,
 	crossing: (search) => {
-		Client.elan('state', search)
 		if (Client.next) {
 			if (Client.next.search == search) return Client.next.promise
 			Client.next.search = search
@@ -147,7 +144,6 @@ export const Client = {
 			}
 			Client.search = search
 			Client.next = false
-			Client.elan('load', search)
 			promise.resolve(search)
 		} catch (e) {
 			console.log(e)
