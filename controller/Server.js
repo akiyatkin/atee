@@ -171,7 +171,12 @@ const getHTML = async (layer, { seo, client, crumb }) => {
 	let html = ''
 	if (tpl) {
 		const objtpl = await import(tpl)
-		html = objtpl[sub](data, {layer, crumb, seo, host: client.host, cookie: client.cookie})
+        try {
+            html = objtpl[sub](data, {...layer, crumb, seo, host: client.host, cookie: client.cookie})
+        } catch(e) {
+            html = `<pre><code>${layer.ts}<br>${e.toString()}</code></pre>`
+            status = 500
+        }
 	}
 	return { status, nostore, html }	
 }

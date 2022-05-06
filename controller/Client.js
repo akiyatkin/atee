@@ -155,7 +155,7 @@ export const Client = {
 	}
 }
 const addHtml = (template, layer, crumb) => {
-	const html = layer.sys.objtpl ? layer.sys.objtpl[layer.sub](layer.sys.data, {layer, crumb, host:location.host, cookie:document.cookie}) : ''
+	const html = layer.sys.objtpl ? layer.sys.objtpl[layer.sub](layer.sys.data, {...layer, crumb, host:location.host, cookie:document.cookie}) : ''
 	if (template.children.length) {
 		const div = template.content.getElementById(layer.div)
 		div.innerHTML = html
