@@ -168,22 +168,19 @@ const getHTML = async (layer, { seo, client, crumb }) => {
 			data = await readStream(ans)
 		}
 	}
-	//try {
-	const objtpl = await import(tpl)
-	const html = objtpl[sub](data, {layer, crumb, seo, host: client.host, cookie: client.cookie})
-	return { status, nostore, html }
-	// } catch (e) { //Если нет шаблона это 500 ошибка
-	// 	console.error(e)
-	// 	return { status: 500, nostore: true, html: ''}
-	// }
-
+	let html = ''
+	if (tpl) {
+		const objtpl = await import(tpl)
+		html = objtpl[sub](data, {layer, crumb, seo, host: client.host, cookie: client.cookie})
+	}
+	return { status, nostore, html }	
 }
 
 const runLayers = async (layers, fn, parent) => {
 	let promises = []
 	for (const layer of layers) {
 		promises.push(fn(layer, parent))
-		if (layer.layers.length) promises.push(runLayers(layer.layers, fn, layer))
+		if (layer.layers?.length) promises.push(runLayers(layer.layers, fn, layer))
 	}
 	return Promise.all(promises)
 }
@@ -199,7 +196,7 @@ export const controller = async ({ layers, seo }, client, crumb) => {
 		const { nostore, html, status } = await getHTML(layer, look)
 		ans.nostore = Math.max(ans.nostore, nostore)
         ans.status = Math.max(ans.status, status)
-		doc.insert(html, layer.div, layer.layers.length)
+		doc.insert(html, layer.div, layer.layers?.length)
 	})
 	ans.html = doc.get()
 	return ans

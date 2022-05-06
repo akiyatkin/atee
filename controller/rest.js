@@ -61,43 +61,76 @@ const interpolate = function(strings, params) {
 	//const req = { get: route.get, host, cookie, root }
 	//const json = rule.jsontpl ? interpolate(rule.jsontpl, req) : rule.json
 }
-const divtplsub = (dts, inherit) => {
-	let rf, rs, div, name, sub
-	rf = dts.split('/')
-	if (rf.length > 1) {
-		div = rf[0]
-		rs = rf[1].split(':')
-		if (rs.length > 1) {
-			sub = rs[1]
-			name = rs[0]
-		} else {
-			name = rf[1]
-			sub = 'ROOT'
+
+
+const wakeup = rule => {
+	if (!rule) return
+	if (!rule.layout) return
+	for (const pts in rule.layout) {
+		for (const div in rule.layout[pts]) {
+			const ts = rule.layout[pts][div]
+			const [name, sub] = ts ? ts.split(':') : ['','ROOT']
+			rule.layout[pts][div] = { ts, name, sub, div }
 		}
-	} else {
-		rs = dts.split(':')
-		if (rs.length > 1) {
-			name = rs[0]
-			div = sub = rs[1]
-		} else {
-			if (inherit) {
-				name = inherit
-				sub = div = dts
-			} else {
-				name = dts
-				sub = 'ROOT'
-				div = ''
+	}
+	wakeup(rule.child)
+	for (const path in rule.childs) {
+		wakeup(rule.childs[path])
+	}
+}
+const spread = (rule, parent) => {
+	if (!rule) return
+	if (!rule.layout) return
+	if (parent) {
+		for (const ts in parent.layout) {
+			if (!rule.layout[ts]) rule.layout[ts] = {}
+			for (const div in parent.layout[ts]) {
+				if (!rule.layout[ts][div]) rule.layout[ts][div] = { ...parent.layout[ts][div] }
 			}
 		}
 	}
-	return {div, name, sub, divs:{}}
+	spread(rule.child, rule)
+	for (const path in rule.childs) {
+		spread(rule.childs[path], rule)
+	}
 }
 
-
+const runByIndex = (rule, fn) => {
+	fn(rule)
+	if (rule.childs) for(const i in rule.childs) fn(rule.childs[i])
+	if (rule.child) fn(rule.child)
+}
+const maketree = (layer, layout, rule, seo = null, push = []) => {
+	if (!layout) return
+	const ts = layer.ts
+	if (!layout[ts]) return
+	layer.layers = Object.values(layout[layer.ts])
+	for (const l of layer.layers) {
+		maketree(l, layout, rule, seo, push)
+	}
+}
+const runByRootLayer = (root, fn) => {
+	fn(root)
+	root.layers?.forEach(l => runByRootLayer(l, fn))
+}
+const runByLayer = (rule, fn) => {
+	runByIndex(rule, r => {
+		runByRootLayer(rule.root, fn)
+	})
+}
 
 const getRule = Once.proxy( async root => {
 	const { default: rule } = await import(path.posix.join(IMPORT_APP_ROOT, root, 'layers.json'), {assert: { type: "json" }})
-	if (rule.type != 'landing') return false
+	wakeup(rule) //объекты слоёв
+	spread(rule) //childs самодостаточный
+	const [name, sub] = rule.index.split(':')
+	runByIndex(rule, r => { //строим дерево root по дивам
+		r.root = { ts: rule.index, name, sub }	
+		maketree(r.root, r.layout, rule)
+		
+		delete r.layout
+	})
+
 	return rule
 })
 
@@ -135,31 +168,37 @@ meta.addAction('layers', async view => {
 	if (nroute.rest || nroute.secure) return view.err()
 	const rule = await getRule(nroute.root)
 	if (!rule) return view.err('Bad type layers.json')
-	const nopt = getLayers(rule, nroute.path)
-	if (!nopt.layers) return view.err()
+	const nopt = getIndex(rule, nroute.path) //{ seo, push, root, status }
+	
+	if (!nopt.root) return view.err()
 	
 	view.ans.status = nopt.status
 
 	if (!prev) {
 		view.ans.push = nopt.push
 		view.ans.seo = nopt.seo
-		view.ans.layers = nopt.layers
+		view.ans.layers = [nopt.root]
 		return view.ret()
 	}
+
 	const proute = await router(prev)
+
 	if (proute.rest || proute.secure) return view.err()
 	if (proute.root != nroute.root) return view.err()
-	const popt = getLayers(rule, proute.path)
-	if (!popt.layers) return view.err()
+
+	const popt = getIndex(rule, proute.path)
+	if (!popt.root) return view.err()
 
 
 	view.ans.seo = nopt.seo
-	view.ans.layers = getDiff(popt.layers, nopt.layers)
+
+	view.ans.layers = getDiff(popt.root.layers, nopt.root.layers)
+
 
 	return view.ret()    
 })
 const getDiff = (players, nlayers, layers = []) => {
-	nlayers.forEach(nlayer => {
+	nlayers?.forEach(nlayer => {
 		const player = players.find(player => {
 			return nlayer.div == player.div && nlayer.sub == player.sub && nlayer.json == player.json && nlayer.name == player.name
 		})
@@ -171,42 +210,27 @@ const getDiff = (players, nlayers, layers = []) => {
 	})
 	return layers
 }
-const apply = (rule, source, divs, applyfn, options, inherit) => {
-	const dts = divtplsub(source, inherit)
-	applyfn(rule, dts, source, divs, options)
-	if (!rule.env[source]) return
-	rule.env[source].forEach(source => apply(rule, source, dts.divs, applyfn, options, dts.name))
-}
-const applyfn = (rule, layer, source, divs, options) => {
-	layer.json = rule.json[source]
-	layer.tpl = rule.tpl[layer.name]
-	divs[layer.div] = layer
-	if (rule.push[source]) options.push.push(...rule.push[source])
-	const shortsource = layer.name + (layer.sub == 'ROOT' ? '' : `:${layer.sub}`)
-	if (rule.seo[shortsource]) options.seo = rule.seo[shortsource]
-}
-const divs2layers = (divs, fn) => {
-	for (const i in divs) {
-		divs[i].layers = divs2layers(divs[i].divs)
-		delete divs[i].divs
-	}
-	return Object.values(divs)
-}
-const getLayers = (rule, path, options = {push: []}, status = 200) => {
+
+
+const getIndex = (rule, path, options = {push: [], seo: {}}, status = 200) => {
 	if (path && !rule.childs[path]) {
 		if (path == '404') return []
-		return getLayers(rule, '404', options, 404)
+		return getIndex(rule, '404', options, 404)
 	}
-	const source = rule.index || 'index'
-	
-	const divs = {}
-	apply(rule, source, divs, applyfn, options)
-	if (path) {
-		apply(rule, rule.childs[path], divs[''].divs, applyfn, options, source)	
-	}
-	const layers = divs2layers(divs)
-	return { seo: options.seo, push: options.push, layers, status }
+	const index = path ? rule.childs[path] : rule
+
+	runByRootLayer(index.root, layer => {
+		const ts = layer.ts
+		if (layer.name) layer.tpl = rule.tpl[layer.name]
+		if (rule.json[ts]) layer.json = rule.json[ts]
+		
+		if (rule.push[ts]) options.push.push(...rule.push[ts])
+		if (rule.seo[ts]) options.seo = rule.seo[ts]
+	})
+	return { seo: options.seo, push: options.push, root: index.root, status }
 }
+
+
 export const rest = async (query, get, client) => {
 	if (query == 'init.js') return file(FILE_MOD_ROOT + 'init.js', 'js')
 	if (query == 'test.js') return files(FILE_MOD_ROOT + 'test.js', 'js')

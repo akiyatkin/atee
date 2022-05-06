@@ -137,6 +137,7 @@ export const Client = {
 				layer.sys.template = document.createElement('template')
 				addHtml(layer.sys.template, layer, crumb)
 			}
+
 			for (const layer of json.layers) {
 				const elements = layer.sys.template.content
 				layer.sys.div.replaceChildren(elements)
@@ -154,27 +155,29 @@ export const Client = {
 	}
 }
 const addHtml = (template, layer, crumb) => {
-	const html = layer.sys.objtpl[layer.sub](layer.sys.data, {layer, crumb, host:location.host, cookie:document.cookie})
+	const html = layer.sys.objtpl ? layer.sys.objtpl[layer.sub](layer.sys.data, {layer, crumb, host:location.host, cookie:document.cookie}) : ''
 	if (template.children.length) {
 		const div = template.content.getElementById(layer.div)
 		div.innerHTML = html
 	} else {
 		template.innerHTML = html
 	}
-	for (const l of layer.layers) {
+	if (layer.layers) for (const l of layer.layers) {
 		addHtml(template, l, crumb, content)
 	}
 }
 const loadAll = (layers, promises = []) => {
 	let promise
+	if (!layers) return promises
 	for (const layer of layers) {
 		if (!layer.sys) layer.sys = {}
-
-		promise = import(layer.tpl)
-		promise.then(res => {
-			layer.sys.objtpl = res
-		})
-		promises.push(promise)
+		if (layer.ts) {
+			promise = import(layer.tpl)
+			promise.then(res => {
+				layer.sys.objtpl = res
+			})
+			promises.push(promise)
+		}
 		if (layer.json) {
 			promise = fetch(layer.json)
 			promise.then(res => res.json()).then(res => {
