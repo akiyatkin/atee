@@ -1,5 +1,5 @@
 export class Doc {
-    exp = /(<\w+.*?id=['"])((\w+?)['"].*?>)(.*?)</si
+    exp = /(<\w+.*?id=['"])((\w+?)['"].*?>)([^>]*?)/si
     divs = {}
     insert (html, div = '', childs = false) {
         const ar = []
@@ -7,7 +7,7 @@ export class Doc {
             const r = html.split(this.exp)
             for (let i = 0; i < r.length; i = i + 5) {
                 const div = r[i + 3]
-                const start = i ? '<' + r[i] : r[i]
+                const start = r[i]
                 if (div) {
                     const empty = r[i + 4]
                     ar.push(start + r[i + 1] + r[i + 2])
@@ -19,7 +19,9 @@ export class Doc {
         } else {
             ar.push(html)
         }
+
         this.divs[div] = ar
+        if (div == '') console.log(ar)
     }
     get (div = '', empty = '') {
         if (!this.divs[div]?.length) return empty

@@ -1,12 +1,14 @@
 import { pathparse } from './pathparse.js'
 import { SEO } from './SEO.js'
-import access_data from '/-controller/access' assert { type: 'json' }
+//import access_data from '/-controller/access' assert { type: 'json' }
+const access_data_promise = fetch('/-controller/access').then(res => res.json())
 const SW = {
 	register: async () => {
 		if (!navigator.serviceWorker) return
 		navigator.serviceWorker.register('/-controller/sw.js', { scope:'/' });
-		navigator.serviceWorker.addEventListener('message', event => {
+		navigator.serviceWorker.addEventListener('message', async event => {
 			console.log('New version is ready. Reload please.', event.data)
+			const access_data = await access_data_promise
 			access_data.UPDATE_TIME = event.data.UPDATE_TIME
 			access_data.ACCESS_TIME = event.data.ACCESS_TIME
 		})
@@ -35,7 +37,7 @@ export const Client = {
 	
 	follow: async () => {
 		SW.register()
-		SW.postMessage(access_data)
+
 		window.addEventListener('click', e => {
 			const a = e.target.closest('a')
 			if (!a) return
@@ -44,15 +46,10 @@ export const Client = {
 			if (/^\w+:/.test(search)) return
 			if (~search.lastIndexOf('.')) return
 			if (search[1] == '-') return
+
 			e.preventDefault()
 			const promise = search == Client.search ? Client.replaceState(search) : Client.pushState(search)
 			Client.animateA(a, promise)
-		})
-		window.addEventListener('popstate', event => { 
-			const promise = Client.crossing(Client.getSearch())
-			promise.then(() => {
-			 	window.scrollTo(...event.state.scroll)	
-			}).catch(() => {})
 		})
 		window.addEventListener('load', event => {
 			const link = document.createElement('link')
@@ -60,6 +57,28 @@ export const Client = {
 			link.href = "/-controller/style.css"
 			document.head.append(link)
 		})
+		window.addEventListener('popstate', event => { 
+			Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
+			const search = Client.getSearch()
+			const promise = Client.crossing(search)
+			if (event.state?.view == Client.view) { //Вперёд
+				const { cursor } = event.state
+				Client.cursor = cursor
+				promise.then(() => window.scrollTo(...Client.history[Client.cursor].scroll)).catch(() => {})
+			} else { 
+				if (Client.start < history.length) { //назад
+					Client.start--
+				} else { //вперёд
+					Client.start++
+				}
+				Client.cursor = history.length - Client.start
+				history.replaceState({cursor:Client.cursor, view:Client.view}, null, search)
+			}
+			
+		})
+		const access_data = await access_data_promise
+		SW.postMessage(access_data)
+		
 	},
 	getSearch: () => decodeURI(location.pathname + location.search),
 	attach: () => {
@@ -68,16 +87,36 @@ export const Client = {
 	global: () => {
 
 	},
+	view:Math.round(Date.now() / 1000), //Метка сеанса в котором актуальна Client.history
+	history:[],
+	start:history.length - 1,
+	cursor:0,
 	pushState: search => {
-		//history.state = {scroll: [window.scrollX, window.scrollY]}
-		history.replaceState({scroll: [window.scrollX, window.scrollY]}, null, Client.search)
-		history.pushState({scroll: [0,0]}, null, search)
-		return Client.crossing(search)
+		Client.history[++Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
+		history.pushState({cursor:Client.cursor, view:Client.view}, null, search)
+
+		const promise = Client.crossing(search)
+		promise.then(() => {
+			let div
+			const hash = location.hash.slice(1)
+			if (hash) div = document.getElementById(hash)
+			if (div) div.scrollIntoView()
+			else window.scrollTo(0,0)
+		}).catch(() => {})
+		return promise
 	},
 	replaceState: search => {
-		//history.state = {scroll: [window.scrollX, window.scrollY]}
-		history.replaceState({scroll: [window.scrollX, window.scrollY]}, null, search)
-		return Client.crossing(search)	
+		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
+		history.replaceState({cursor:Client.cursor, view:Client.view}, null, search)
+		const promise = Client.crossing(search)
+		promise.then(() => {
+			let div
+			const hash = location.hash.slice(1)
+			if (hash) div = document.getElementById(hash)
+			if (div) div.scrollIntoView()
+			else window.scrollTo(0,0)
+		}).catch(() => {})
+		return promise
 	},
 	next: false,
 	crossing: (search) => {
@@ -95,7 +134,9 @@ export const Client = {
 	},
 	applyCrossing: async () => {
 		if (!Client.next) return
-		const {search, promise} = Client.next
+		let {search, promise} = Client.next
+		search = search.split('#')[0]
+		const access_data = await access_data_promise
 		const req = {
 			gs: '',
 			ut: access_data.UPDATE_TIME,
@@ -218,3 +259,4 @@ const createPromise = (payload) => {
 	return promise
 }
 Client.search = Client.getSearch()
+window.Client = Client

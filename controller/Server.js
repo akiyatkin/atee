@@ -199,6 +199,7 @@ export const controller = async ({ layers, seo }, client, crumb) => {
 	const doc = new Doc()
 	await runLayers(layers, async layer => {
 		const { nostore, html, status } = await getHTML(layer, look)
+
 		ans.nostore = Math.max(ans.nostore, nostore)
         ans.status = Math.max(ans.status, status)
 		doc.insert(html, layer.div, layer.layers?.length)
