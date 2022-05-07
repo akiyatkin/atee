@@ -19,9 +19,7 @@ export class Doc {
         } else {
             ar.push(html)
         }
-
         this.divs[div] = ar
-        if (div == '') console.log(ar)
     }
     get (div = '', empty = '') {
         if (!this.divs[div]?.length) return empty

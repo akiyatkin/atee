@@ -66,12 +66,8 @@ export const Client = {
 				Client.cursor = cursor
 				promise.then(() => window.scrollTo(...Client.history[Client.cursor].scroll)).catch(() => {})
 			} else { 
-				if (Client.start < history.length) { //назад
-					Client.start--
-				} else { //вперёд
-					Client.start++
-				}
-				Client.cursor = history.length - Client.start
+				Client.start--
+				Client.cursor = Client.start
 				history.replaceState({cursor:Client.cursor, view:Client.view}, null, search)
 			}
 			
@@ -89,8 +85,8 @@ export const Client = {
 	},
 	view:Math.round(Date.now() / 1000), //Метка сеанса в котором актуальна Client.history
 	history:[],
-	start:history.length - 1,
-	cursor:0,
+	start:history.length,
+	cursor:history.length - 1,
 	pushState: search => {
 		Client.history[++Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 		history.pushState({cursor:Client.cursor, view:Client.view}, null, search)
