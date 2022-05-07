@@ -3,7 +3,7 @@ import path from 'path'
 import { readFile, utimes } from "fs/promises"
 
 import { Meta, View } from "./Meta.js"
-import { parse } from './pathparse.js'
+import { parse, explode } from './pathparse.js'
 import { whereisit } from './whereisit.js'
 import { router } from './router.js'
 import { Access } from '@atee/controller/Access.js'
@@ -35,13 +35,17 @@ meta.addArgument('cookie', (view, cookie) => {
 })
 meta.addFunction('int', (view, n) => Number(n))
 meta.addFunction('array', (view, n) => explode(',', n))
+meta.addFunction('checksearch', (view, n) => {
+	if (n && n[0] != '/') return view.err()
+	return n
+})
 meta.addArgument('host')
 meta.addArgument('ip')
-meta.addArgument('pv') //prev
-meta.addArgument('nt') //next
+meta.addArgument('pv', ['checksearch']) //prev
+meta.addArgument('nt', ['checksearch']) //next
 meta.addArgument('ut', ['int']) //update_time
 meta.addArgument('st', ['int']) //access_time
-meta.addArgument('gs','array') //globals
+meta.addArgument('gs', ['array']) //globals
 
 
 // meta.addAction('sw', async view => {
@@ -54,12 +58,10 @@ meta.addArgument('gs','array') //globals
 // 	return ans
 // })
 
-const interpolate = function(strings, params) {
+const interpolate = function(string, params) {
 	const names = Object.keys(params)
 	const vals = Object.values(params)
-	return new Function(...names, `return \`${strings}\``)(...vals)
-	//const req = { get: route.get, host, cookie, root }
-	//const json = rule.jsontpl ? interpolate(rule.jsontpl, req) : rule.json
+	return new Function(...names, 'return `'+string+'`')(...vals)
 }
 
 
@@ -70,7 +72,9 @@ const wakeup = rule => {
 		for (const div in rule.layout[pts]) {
 			const ts = rule.layout[pts][div]
 			const [name, sub] = ts ? ts.split(':') : ['','ROOT']
-			rule.layout[pts][div] = { ts, name, sub, div }
+			const layer = { ts, name, sub, div }
+			if (rule.animate && rule.animate[ts]) layer.animate = rule.animate[ts]
+			rule.layout[pts][div] = layer
 		}
 	}
 	wakeup(rule.child)
@@ -142,7 +146,7 @@ meta.addAction('layers', async view => {
 
 	view.ans.ut = Access.getUpdateTime()
 	view.ans.st = Access.getAccessTime()
-	
+	if (!next) return view.err()
 	//next и prev globals не содержат, был редирект на без globals
 	if (update_time < Access.getUpdateTime()) {
 		//update_time - reload
@@ -165,10 +169,12 @@ meta.addAction('layers', async view => {
 
 	
 	const nroute = await router(next)
+
 	if (nroute.rest || nroute.secure) return view.err()
 	const rule = await getRule(nroute.root)
 	if (!rule) return view.err('Bad type layers.json')
-	const nopt = getIndex(rule, nroute.path) //{ seo, push, root, status }
+
+	const nopt = getIndex(rule, nroute) //{ seo, push, root, status }
 	
 	if (!nopt.root) return view.err()
 	
@@ -186,21 +192,29 @@ meta.addAction('layers', async view => {
 	if (proute.rest || proute.secure) return view.err()
 	if (proute.root != nroute.root) return view.err()
 
-	const popt = getIndex(rule, proute.path)
+	const nlayers = structuredClone(nopt.root.layers)
+	const popt = getIndex(rule, proute)
 	if (!popt.root) return view.err()
 
 
-	view.ans.seo = nopt.seo
+	
 
-	view.ans.layers = getDiff(popt.root.layers, nopt.root.layers)
+	view.ans.layers = getDiff(popt.root.layers, nlayers)
+	if (view.ans.layers.length) {
+		view.ans.seo = nopt.seo
+	}
 
 
 	return view.ret()    
 })
 const getDiff = (players, nlayers, layers = []) => {
+
 	nlayers?.forEach(nlayer => {
 		const player = players.find(player => {
-			return nlayer.div == player.div && nlayer.sub == player.sub && nlayer.json == player.json && nlayer.name == player.name
+			return nlayer.div == player.div 
+			&& nlayer.ts == player.ts 
+			&& nlayer.json == player.json 
+			&& nlayer.parsed == player.parsed
 		})
 		if (player) {
 			getDiff(player.layers, nlayer.layers, layers)
@@ -212,20 +226,29 @@ const getDiff = (players, nlayers, layers = []) => {
 }
 
 
-const getIndex = (rule, path, options = {push: [], seo: {}}, status = 200) => {
+const getIndex = (rule, {path, get}, options = {push: [], seo: {}}, status = 200) => {
 	if (path && !rule.childs[path]) {
 		if (path == '404') return []
-		return getIndex(rule, '404', options, 404)
+		return getIndex(rule, {path:'404', get}, options, 404)
 	}
 	const index = path ? rule.childs[path] : rule
-
+	const req = {path, get}
+	//const req = { get: route.get, host, cookie, root }
 	runByRootLayer(index.root, layer => {
 		const ts = layer.ts
 		if (layer.name) layer.tpl = rule.tpl[layer.name]
-		if (rule.json[ts]) layer.json = rule.json[ts]
 		
-		if (rule.push[ts]) options.push.push(...rule.push[ts])
-		if (rule.seo[ts]) options.seo = rule.seo[ts]
+		if (rule.parsedtpl && rule.parsedtpl[ts]) {
+			layer.parsed = interpolate(rule.parsedtpl[ts], req)
+		}
+		if (rule.jsontpl && rule.jsontpl[ts]) {
+			layer.json = interpolate(rule.jsontpl[ts], req)
+		} else {
+			if (rule.json && rule.json[ts]) layer.json = rule.json[ts]
+		}
+
+		if (rule.push && rule.push[ts]) options.push.push(...rule.push[ts])
+		if (rule.seo && rule.seo[ts]) options.seo = rule.seo[ts]
 	})
 	return { seo: options.seo, push: options.push, root: index.root, status }
 }

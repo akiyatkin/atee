@@ -39,8 +39,8 @@ export const Server = {
 			if (!~['GET','POST'].indexOf(request.method)) {
 				return error(501, 'Method not implemented')
 			}
-			
 			const route = await router(request.url)
+
 			if (route.secure) return error(403, 'Forbidden')
 
 			const {
@@ -79,6 +79,7 @@ export const Server = {
 					}
 				}
 			}
+
 			if (path[0] == '-') return error(404, 'Not found')
 
 			if (route.cont) {
@@ -92,12 +93,13 @@ export const Server = {
 					pv: false,
 					nt: search
 				}
-                
 				let res = await meta.get('layers', req)
 				if (!res) return error(500, 'layers have bad definition')
                 if (!res.layers) return error(500, 'layers not defined')
 				
 				const crumb = {
+					crumbs: route.crumbs,
+					get: route.get,
 					path: route.path, 
 					search: route.search
 				}
@@ -172,7 +174,7 @@ const getHTML = async (layer, { seo, client, crumb }) => {
 	if (tpl) {
 		const objtpl = await import(tpl)
         try {
-            html = objtpl[sub](data, {...layer, crumb, seo, host: client.host, cookie: client.cookie})
+            html = objtpl[sub](data, {...layer, ...crumb, seo, host: client.host, cookie: client.cookie})
         } catch(e) {
             html = `<pre><code>${layer.ts}<br>${e.toString()}</code></pre>`
             status = 500
@@ -204,6 +206,11 @@ export const controller = async ({ layers, seo }, client, crumb) => {
         ans.status = Math.max(ans.status, status)
 		doc.insert(html, layer.div, layer.layers?.length)
 	})
-	ans.html = doc.get()
+	try {
+		ans.html = doc.get()
+	} catch (e) {
+		ans.html = e.toString()
+		ans.status = 500
+	}
 	return ans
 }

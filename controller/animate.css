@@ -1,28 +1,44 @@
-.a-crossing-before {
+.a-animate-before {
 	transform-origin: center; 
 	transform: scale(0.97);
 	opacity: 0.5; 
 	transition:none;
 }
-.a-crossing-after {
+.a-animate-after {
 	transform-origin: center; 
 	/*transition: transform 0.3s;*/
 	/*transition: opacity 0.3s;*/
 	transition: opacity 0.3s, transform 0.3s;
 }
+.a-animate-opacity-before {
+	opacity: 0.5;
+	transition:none;
+}
+.a-animate-opacity-after {
+	transition: opacity 0.3s;
+}
 
-.div-crossing-before {
+.div-animate-before {
 	will-change: content; 
 	transform-origin: top left;
 	transform: scale(0.95);
 	opacity: 0.5;
 	transition: none;
-	
-	
 }
-.div-crossing-after {
+.div-animate-after {
 	/*transition: transform 0.3s;*/
 	transform-origin: top left;
 	/*transition: opacity 0.3s;*/
 	transition: opacity 0.3s, transform 0.3s;
+}
+.div-animate-opacity-before {
+	will-change: content;
+	opacity: 0.5;
+	transition: none;
+}
+.div-animate-opacity-after {
+	transition: opacity 0.3s;
+}
+.div-animate-none-before {
+	will-change: content;
 }

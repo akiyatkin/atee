@@ -3,14 +3,14 @@ export const SEO = {
 	rules: {
 		title: title => document.title = title,
 		description: descr => {
-			qs('meta[name=description]').content = descr
+			SEO.qs('meta[name=description]').content = descr
 		},
 		keywords: keys => {
-			qs('meta[name=keywords]').content = keys
+			SEO.qs('meta[name=keywords]').content = keys
 		},
 		image_src: src => {
-			qs('meta[property="og:image"]').content = src
-			qs('link[rel=image_src]').href = src
+			SEO.qs('meta[property="og:image"]').content = src
+			SEO.qs('link[rel=image_src]').href = src
 		}
 	},
 	accept: obj => {

@@ -1,43 +1,38 @@
 import { pathparse } from './pathparse.js'
 import { SEO } from './SEO.js'
-//import access_data from '/-controller/access' assert { type: 'json' }
-const access_data_promise = fetch('/-controller/access').then(res => res.json())
-const SW = {
-	register: async () => {
-		if (!navigator.serviceWorker) return
-		navigator.serviceWorker.register('/-controller/sw.js', { scope:'/' });
-		navigator.serviceWorker.addEventListener('message', async event => {
-			console.log('New version is ready. Reload please.', event.data)
-			const access_data = await access_data_promise
-			access_data.UPDATE_TIME = event.data.UPDATE_TIME
-			access_data.ACCESS_TIME = event.data.ACCESS_TIME
-		})
-	},
-	postMessage: async (access_data) => {
-		if (!navigator.serviceWorker) return
-		await navigator.serviceWorker.ready
-		navigator.serviceWorker.controller.postMessage(access_data)
-	}
-}
+import { ServiceWorker } from './ServiceWorker.js'
+
 const requestNextAnimationFrame = (fn) => requestAnimationFrame(() => requestAnimationFrame(fn))
 export const Client = {
 	search:'',
-	animateA: (a, promise) => {
-		if (!a.classList.replace('a-crossing-after', 'a-crossing-before')) a.classList.add('a-crossing-before')
+	animate: (tag, a, promise, animate = '') => {
+		const reg = new RegExp(tag + '-animate-')
+		if (animate) animate = '-' + animate
+		const list = a.classList
+		list.forEach(name => {
+			if (reg.test(name)) list.remove(name)
+		})
+		list.add(tag + '-animate'+animate+'-before')	
 		promise.finally(() => {
-			requestNextAnimationFrame(() => a.classList.replace('a-crossing-before', 'a-crossing-after'))
+			requestNextAnimationFrame(() => list.replace(tag + '-animate'+animate+'-before', tag + '-animate'+animate+'-after'))
 		})
 	},
-	animateDiv: (div, promise) => {
-		if (!div.classList.replace('div-crossing-after', 'div-crossing-before')) div.classList.add('div-crossing-before')
-		promise.finally(() => {
-			requestNextAnimationFrame(() => div.classList.replace('div-crossing-before', 'div-crossing-after'))
-		})
+	access_promise:null,
+	getAccessData: () => {
+		if (Client.access_promise) return Client.access_promise
+		Client.access_promise = fetch('/-controller/access').then(res => res.json())
+		return Client.access_promise
 	},
-	
-	follow: async () => {
-		SW.register()
-
+	setAccessData: (access_data) => {
+		Client.access_promise = Promise.resolve(access_data)	
+	},
+	follow: () => {
+		Client.getAccessData().then(access_data => {
+			ServiceWorker.register(access_data => {
+				Client.setAccessData(access_data)
+			})	
+			ServiceWorker.postMessage(access_data)
+		})
 		window.addEventListener('click', e => {
 			const a = e.target.closest('a')
 			if (!a) return
@@ -46,15 +41,15 @@ export const Client = {
 			if (/^\w+:/.test(search)) return
 			if (~search.lastIndexOf('.')) return
 			if (search[1] == '-') return
-
+			const scroll = a.dataset.scroll == 'none' ? false : true
 			e.preventDefault()
-			const promise = search == Client.search ? Client.replaceState(search) : Client.pushState(search)
-			Client.animateA(a, promise)
+			const promise = search == Client.search ? Client.replaceState(search, scroll) : Client.pushState(search, scroll)
+			Client.animate('a', a, promise, a.dataset.animate)
 		})
 		window.addEventListener('load', event => {
 			const link = document.createElement('link')
 			link.rel = "stylesheet"
-			link.href = "/-controller/style.css"
+			link.href = "/-controller/animate.css"
 			document.head.append(link)
 		})
 		window.addEventListener('popstate', event => { 
@@ -72,9 +67,6 @@ export const Client = {
 			}
 			
 		})
-		const access_data = await access_data_promise
-		SW.postMessage(access_data)
-		
 	},
 	getSearch: () => decodeURI(location.pathname + location.search),
 	attach: () => {
@@ -87,12 +79,28 @@ export const Client = {
 	history:[],
 	start:history.length,
 	cursor:history.length - 1,
-	pushState: search => {
+	fixsearch: search => {
+		if (search[0] != '/') {
+			if (search == '?' ) search = location.pathname
+			else if (search == '?#' ) search = location.pathname
+			else if (search == '#' ) search = location.pathname + location.search
+			else if (search[0] == '?') search = location.pathname + search
+			else if (search[0] == '#') search = location.pathname + location.search + search
+			else {
+				//const i = location.pathname.lastIndexOf('/')
+				//if (~i) search = location.pathname.slice(0, i) + '/' + search
+			}
+			
+		}
+		return search
+	},
+	pushState: (search, scroll = true) => {
+		search = Client.fixsearch(search)
 		Client.history[++Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 		history.pushState({cursor:Client.cursor, view:Client.view}, null, search)
-
+		search = Client.getSearch()
 		const promise = Client.crossing(search)
-		promise.then(() => {
+		if (scroll)	promise.then(() => {
 			let div
 			const hash = location.hash.slice(1)
 			if (hash) div = document.getElementById(hash)
@@ -101,11 +109,13 @@ export const Client = {
 		}).catch(() => {})
 		return promise
 	},
-	replaceState: search => {
+	replaceState: (search, scroll = true) => {
+		search = Client.fixsearch(search)
 		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 		history.replaceState({cursor:Client.cursor, view:Client.view}, null, search)
+		search = Client.getSearch()
 		const promise = Client.crossing(search)
-		promise.then(() => {
+		if (scroll) promise.then(() => {
 			let div
 			const hash = location.hash.slice(1)
 			if (hash) div = document.getElementById(hash)
@@ -132,7 +142,7 @@ export const Client = {
 		if (!Client.next) return
 		let {search, promise} = Client.next
 		search = search.split('#')[0]
-		const access_data = await access_data_promise
+		const access_data = await Client.getAccessData()
 		const req = {
 			gs: '',
 			ut: access_data.UPDATE_TIME,
@@ -149,9 +159,12 @@ export const Client = {
 				body: new URLSearchParams(req)
 			}).then(res => res.json())
 			if (json.ut && json.st) {
-				access_data.UPDATE_TIME = json.ut
-				access_data.ACCESS_TIME = json.st
-				SW.postMessage(access_data)
+				const access_data = {
+					UPDATE_TIME: json.ut,
+					ACCESS_TIME: json.st
+				}
+				Client.setAccessData(access_data)
+				ServiceWorker.postMessage(access_data)
 			}
 			if (promise.rejected) return Client.applyCrossing()
 			if (!json || !json.result || !json.layers) return location.href = search
@@ -161,7 +174,7 @@ export const Client = {
 				layer.sys = {}
 				const div = document.getElementById(layer.div)
 				layer.sys.div = div
-				Client.animateDiv(div, promise)
+				Client.animate('div', div, promise, layer.animate)
 			}	
 			const {crumbs, path, get} = pathparse(search)
 			const crumb = {
@@ -169,7 +182,7 @@ export const Client = {
 			}
 			await Promise.all(promises)
 			if (promise.rejected) return Client.applyCrossing()
-			SEO.accept(json.seo)
+			if (json.seo) SEO.accept(json.seo)
 			for (const layer of json.layers) {
 				layer.sys.template = document.createElement('template')
 				addHtml(layer.sys.template, layer, crumb)
@@ -192,15 +205,15 @@ export const Client = {
 	}
 }
 const addHtml = (template, layer, crumb) => {
-	const html = layer.sys.objtpl ? layer.sys.objtpl[layer.sub](layer.sys.data, {...layer, crumb, host:location.host, cookie:document.cookie}) : ''
-	if (template.children.length) {
+	const html = layer.sys.objtpl ? layer.sys.objtpl[layer.sub](layer.sys.data, {...layer, ...crumb, host:location.host, cookie:document.cookie}) : ''
+	if (template.content.children.length) {
 		const div = template.content.getElementById(layer.div)
 		div.innerHTML = html
 	} else {
 		template.innerHTML = html
 	}
 	if (layer.layers) for (const l of layer.layers) {
-		addHtml(template, l, crumb, content)
+		addHtml(template, l, crumb)
 	}
 }
 const loadAll = (layers, promises = []) => {

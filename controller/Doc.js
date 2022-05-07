@@ -28,6 +28,10 @@ export class Doc {
             if (typeof(el) == 'string') html += el
             else html += this.get(el.div, el.empty)
         })
+        delete this.divs[div]
+        if (!div) for (const div in this.divs) {
+            throw `Не найден div ${div}`
+        }
         return html
     }
 }
