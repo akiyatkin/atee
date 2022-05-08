@@ -1,0 +1,102 @@
+.float-label {
+	position: relative;
+	margin-bottom: 1rem;
+}
+.float-label > * {
+	width:  100%;
+}
+.float-label > select,
+.float-label > input,
+.float-label > input ~ label {
+	padding: .75rem .75rem;   
+}
+
+
+.float-label > input ~ label {
+	pointer-events: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: block;
+	width: 100%;
+	margin-bottom: 0; /* Override default `<label>` margin */
+	line-height: 1.5;
+	color: #999;
+	border: 1px solid transparent;
+	border-radius: .25rem;
+	transition: all .1s ease-in-out;
+}
+
+.float-label > input::-webkit-input-placeholder {
+	color: transparent;
+}
+
+.float-label > input:-ms-input-placeholder {
+	color: transparent;
+}
+
+.float-label > input::-ms-input-placeholder {
+	color: transparent;
+}
+
+.float-label > input::-moz-placeholder {
+	color: transparent;
+}
+
+.float-label > input::placeholder {
+	color: transparent;
+}
+
+.float-label > input:not(:placeholder-shown) {
+	padding-top: calc(.75rem + .75rem * (2 / 3));
+	padding-bottom: calc(.75rem / 3);
+}
+
+.float-label > input:not(:placeholder-shown) ~ label {
+	padding-top: calc(.75rem / 3);
+	padding-bottom: calc(.75rem / 3);
+	font-size: 12px;
+	color: #999;
+}
+.float-label > input[type=date]:not(:placeholder-shown) {
+	padding-top: calc(.55rem + .75rem * (2 / 3));
+}
+@-moz-document url-prefix() { 
+	.float-label > input[type=date]:not(:placeholder-shown) {
+		padding-top: calc(.75rem + .75rem * (2 / 3));
+	}
+}
+
+.float-label.icon > input {
+	background-repeat: no-repeat;
+	background-position: 5px center;
+	padding-left:  35px;
+}
+.float-label.icon > input ~ label {
+	padding-left:  35px;
+}
+
+.float-label.icon.phone > input {
+	background-image: url('icons/phone.svg');
+}
+.float-label.icon.name > input {
+	background-image: url('icons/name.svg');
+}
+.float-label.icon.geo > input {
+	background-image: url('icons/geo.svg');
+}
+.float-label.icon.date > input {
+	background-image: url('icons/date.svg');
+}
+.float-label.icon.plus > input {
+	background-image: url('icons/plus.svg');
+}
+.float-label.icon.mail > input {
+	background-image: url('icons/mail.svg');
+}
+.float-label.icon.org > input {
+	background-image: url('icons/org.svg');
+}
+.float-label.icon.child > input {
+	background-image: url('icons/child.svg');
+}

@@ -13,11 +13,10 @@ const getExt = (str) => {
 }
 export const pathparse = (request) => {
     //У request всегда есть ведущий /слэш
-
 	request = request.slice(1);
     try { request = decodeURI(request) } catch { }
     let [path = '', params = ''] = explode('?', request)
-    //path = path.replace(/\/+/,'/').replace(/\/$/,'')
+    path = path.replace(/\/+/,'/').replace(/\/$/,'')//Дубли и слешей не ломают путь, но это плохо...
     
     const get = parse(params, '&');
     const ext = getExt(path)
