@@ -1,6 +1,6 @@
 {
   "name": "@atee/controller",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "type": "module",
   "description": "",
   "scripts": {
@@ -16,7 +16,5 @@
     "url": "https://github.com/akiyatkin/atee/issues"
   },
   "homepage": "https://github.com/akiyatkin/atee#readme",
-  "dependencies": {
-    
-  }
+  "dependencies": {}
 }
