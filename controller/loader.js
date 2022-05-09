@@ -51,11 +51,11 @@ export const resolve = (specifier, context, defaultResolve) => {
             if (res) return res
             if (specifier[0] === '-') {
                 specifier = specifier.slice(1)
-                res = await checkfromroot('@atee/' + specifier, context, defaultResolve)
-                if (res) return res
-                // res = checkfromroot(specifier) //проверяется ключевое выражение в specifier
-                // if (res) return res
+                
                 res = await checkfromroot('./' + specifier, context, defaultResolve)
+                if (res) return res
+
+                res = await checkfromroot('@atee/' + specifier, context, defaultResolve)
                 if (res) return res
             }
         }

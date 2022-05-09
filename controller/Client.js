@@ -46,12 +46,6 @@ export const Client = {
 			const promise = search == Client.search ? Client.replaceState(search, scroll) : Client.pushState(search, scroll)
 			Client.animate('a', a, promise, a.dataset.animate)
 		})
-		window.addEventListener('load', event => {
-			const link = document.createElement('link')
-			link.rel = "stylesheet"
-			link.href = "/-controller/animate.css"
-			document.head.append(link)
-		})
 		window.addEventListener('popstate', event => { 
 			Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 			const search = Client.getSearch()

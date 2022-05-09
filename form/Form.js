@@ -13,7 +13,10 @@ Form.hand('submit', async form => {
 	if (!form.getAttribute('action')) return ans
 	let response = await fetch(form.action, {
 		method: 'POST',
-		body: new FormData(form)
+		headers: {
+	        "Content-Type": "application/x-www-form-urlencoded",
+	    },
+		body: new URLSearchParams(new FormData(form))
 	})
 	let msg = 'Connect Error'
 	
