@@ -114,11 +114,11 @@ export const router = async (search) => {
 
     if (path[0] == '-') { //Обязательный rest и без контроллера
         for (const v of REST_HYPHENS) {
-            if (path.indexOf(v.part) === 1) {
+            if (path.indexOf(v.part) === 1 || !v.part) {
                 if (v.innodemodules) rest = (await import(v.rest)).rest
                 else rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest                
                 restroot = v.part
-                query = path.slice(v.part.length + 2)
+                query = path.slice(v.part.length + (v.part ? 2 : 1)) //Отрезаем - и последний /
                 break;
             }
         }
