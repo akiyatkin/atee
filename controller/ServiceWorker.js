@@ -1,4 +1,3 @@
-const access_data_promise = fetch('/-controller/access').then(res => res.json())
 export const ServiceWorker = {
 	register: async (fn) => {
 		if (!navigator.serviceWorker) return
