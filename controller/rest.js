@@ -3,7 +3,7 @@ import path from 'path'
 import { readFile, utimes } from "fs/promises"
 
 import { Meta, View } from "./Meta.js"
-import { parse, explode } from './pathparse.js'
+import { parse, explode } from './Spliter.js'
 import { whereisit } from './whereisit.js'
 import { router } from './router.js'
 import { Access } from '@atee/controller/Access.js'
@@ -18,6 +18,7 @@ export const meta = new Meta()
 meta.addAction('access', view => {
 	view.ans['UPDATE_TIME'] = Access.getUpdateTime()
 	view.ans['ACCESS_TIME'] = Access.getAccessTime()
+	view.ans['VIEW_TIME'] = Date.now()
 	return view.ret()
 })
 meta.addAction('set-access', view => {
@@ -40,9 +41,11 @@ meta.addFunction('checksearch', (view, n) => {
 	return n
 })
 meta.addArgument('host')
+
 meta.addArgument('ip')
 meta.addArgument('pv', ['checksearch']) //prev
 meta.addArgument('nt', ['checksearch']) //next
+meta.addArgument('vt', ['int']) //view_time
 meta.addArgument('ut', ['int']) //update_time
 meta.addArgument('st', ['int']) //access_time
 meta.addArgument('gs', ['array']) //globals
@@ -141,8 +144,8 @@ const getRule = Once.proxy( async root => {
 
 meta.addAction('layers', async view => {
 	const {
-		pv: prev, nt: next, host, cookie, at: access_time, ut: update_time, gs: globals 
-	} = await view.gets(['pv', 'ip', 'nt', 'host', 'cookie', 'st', 'ut', 'gs'])
+		pv: prev, nt: next, host, cookie, st: access_time, ut: update_time, vt: view_time, gs: globals 
+	} = await view.gets(['pv', 'ip', 'nt', 'host', 'cookie', 'st', 'ut', 'gs', 'vt'])
 
 	view.ans.ut = Access.getUpdateTime()
 	view.ans.st = Access.getAccessTime()
@@ -169,12 +172,17 @@ meta.addAction('layers', async view => {
 
 	
 	const nroute = await router(next)
+	// return {
+	// 	search, secure, get, path, ext,
+	// 	rest, query, restroot,
+	// 	cont, root, crumbs
+	// }
 
 	if (nroute.rest || nroute.secure) return view.err()
 	const rule = await getRule(nroute.root)
 	if (!rule) return view.err('Bad type layers.json')
-
-	const nopt = getIndex(rule, nroute) //{ seo, push, root, status }
+	view.ans.vt = Date.now() //new_view_time
+	const nopt = getIndex(rule, nroute, view.ans.vt) //{ seo, push, root, status }
 	
 	if (!nopt.root) return view.err()
 	
@@ -193,14 +201,14 @@ meta.addAction('layers', async view => {
 	if (proute.root != nroute.root) return view.err()
 
 	const nlayers = structuredClone(nopt.root.layers)
-	const popt = getIndex(rule, proute)
+	const popt = getIndex(rule, proute, view_time)
 	if (!popt.root) return view.err()
 
 
 	
-
+	//console.log(JSON.stringify(popt.root.layers), JSON.stringify(nlayers))
 	view.ans.layers = getDiff(popt.root.layers, nlayers)
-	if (view.ans.layers.length) {
+	if (nopt.search != popt.search) {
 		view.ans.seo = nopt.seo
 	}
 
@@ -226,13 +234,13 @@ const getDiff = (players, nlayers, layers = []) => {
 }
 
 
-const getIndex = (rule, {path, get}, options = {push: [], seo: {}}, status = 200) => {
+const getIndex = (rule, {path, get}, view_time, options = {push: [], seo: {}}, status = 200) => {
 	if (path && !rule.childs[path]) {
 		if (path == '404') return []
-		return getIndex(rule, {path:'404', get}, options, 404)
+		return getIndex(rule, {path:'404', get}, view_time, options, 404)
 	}
 	const index = path ? rule.childs[path] : rule
-	const req = {path, get}
+	const req = {path, get, view_time}
 	//const req = { get: route.get, host, cookie, root }
 	runByRootLayer(index.root, layer => {
 		const ts = layer.ts

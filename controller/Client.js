@@ -1,4 +1,4 @@
-import { pathparse } from './pathparse.js'
+import { pathparse } from './Spliter.js'
 import { SEO } from './SEO.js'
 import { ServiceWorker } from './ServiceWorker.js'
 
@@ -139,6 +139,7 @@ export const Client = {
 		const access_data = await Client.getAccessData()
 		const req = {
 			gs: '',
+			vt: access_data.VIEW_TIME,
 			ut: access_data.UPDATE_TIME,
 			st: access_data.ACCESS_TIME,
 			pv: Client.search,
@@ -154,6 +155,7 @@ export const Client = {
 			}).then(res => res.json())
 			if (json.ut && json.st) {
 				const access_data = {
+					VIEW_TIME: json.vt,
 					UPDATE_TIME: json.ut,
 					ACCESS_TIME: json.st
 				}

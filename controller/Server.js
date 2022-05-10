@@ -7,7 +7,7 @@ import { meta } from './rest.js'
 
 import { Doc } from './Doc.js'
 
-import { parse } from './pathparse.js'
+import { parse } from './Spliter.js'
 import { getPost } from './getPost.js'
 
 const TYPES = {

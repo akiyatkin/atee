@@ -1,4 +1,4 @@
-import { parse } from './pathparse.js'
+import { parse } from './Spliter.js'
 
 export const getPost = (request, limit = 1e7) => {
     if (request.method != 'POST') return
