@@ -18,3 +18,10 @@ export const file = (src, ext) => {
         return { ans, ext }
     }
 }
+export const filesw = (src, ext) => {
+    return (query, get) => {
+        const ans = createReadStream(src)
+        const headers = { 'Service-Worker-Allowed': '/' }
+        return { ans, ext, headers }
+    }
+}

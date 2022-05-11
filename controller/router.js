@@ -1,5 +1,5 @@
 import { rest as controller } from './rest.js'
-import { file, files } from './files.js'
+import { file, files, filesw } from './files.js'
 import { whereisit } from './whereisit.js'
 import { pathparse } from "./Spliter.js" 
 
@@ -101,7 +101,9 @@ export const router = async (search) => {
 					return { ans, ext }
 				}
 			} else { //файлы передаются стримом
-				rest = file(src, ext)
+				console.log(search)
+				if (search == '/-controller/sw.js') rest = filesw(src, ext)
+				else rest = file(src, ext)
 			}
 			const query = ''
 			return {
