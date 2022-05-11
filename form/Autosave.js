@@ -140,7 +140,7 @@ const Autosave = {
 				pips.set(inp, pip)
 			}
 		}
-		Promise.all(Autosave.proc).then(() => Autosave.proc = [])
+		return Promise.all(Autosave.proc).then(() => Autosave.proc = [])
 	}
 }
 

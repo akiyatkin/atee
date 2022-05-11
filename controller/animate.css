@@ -1,7 +1,7 @@
 .a-animate-before {
 	transform-origin: center; 
 	transform: scale(0.97);
-	opacity: 0.5; 
+	opacity: 0.5;
 	transition:none;
 }
 .a-animate-after {
@@ -11,10 +11,12 @@
 	transition: opacity 0.3s, transform 0.3s;
 }
 .a-animate-opacity-before {
+	
 	opacity: 0.5;
 	transition:none;
 }
 .a-animate-opacity-after {
+
 	transition: opacity 0.3s;
 }
 
@@ -22,7 +24,7 @@
 	will-change: content; 
 	transform-origin: top left;
 	transform: scale(0.95);
-	opacity: 0.5;
+	opacity: 0;
 	transition: none;
 }
 .div-animate-after {
@@ -32,12 +34,14 @@
 	transition: opacity 0.3s, transform 0.3s;
 }
 .div-animate-opacity-before {
+	visibility: hidden;
 	will-change: content;
-	opacity: 0.5;
+	opacity: 0;
 	transition: none;
 }
 .div-animate-opacity-after {
-	transition: opacity 0.3s;
+	visibility: visible;
+	transition: opacity 0.4s;
 }
 .div-animate-none-before {
 	will-change: content;

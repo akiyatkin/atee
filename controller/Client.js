@@ -173,7 +173,8 @@ export const Client = {
 				layer.sys = {}
 				const div = document.getElementById(layer.div)
 				layer.sys.div = div
-				Client.animate('div', div, promise, layer.animate)
+				layer.sys.execute = createPromise()
+				Client.animate('div', div, layer.sys.execute, layer.animate)
 			}
 			const { pathparse } = await import('./Spliter.js')
 			const {crumbs, path, get} = pathparse(search)
@@ -190,12 +191,15 @@ export const Client = {
 				layer.sys.template = document.createElement('template')
 				addHtml(layer.sys.template, layer, crumb)
 			}
-
+			//const scripts = []
 			for (const layer of json.layers) {
 				const elements = layer.sys.template.content
 				layer.sys.div.replaceChildren(elements)
-				evalScriptsInNode(layer.sys.div)
+				const promise = evalScriptsInNode(layer.sys.div)
+				promise.then(() => layer.sys.execute.resolve())
+				//scripts.push(promise)
 			}
+			//await Promise.all(scripts)
 			Client.search = search
 			Client.next = false
 			promise.resolve(search)
@@ -243,12 +247,19 @@ const loadAll = (layers, promises = []) => {
 	return promises
 }
 const evalScriptsInNode = div => {
+	const scripts = []
+	let i = 0
 	for (const old of div.getElementsByTagName("script")) {
-		const fresh = document.createElement("script");
-		fresh.type = old.type
-		fresh.textContent = old.textContent
-		old.replaceWith(fresh)
-	}
+		scripts.push(new Promise((resolve, reject) => {
+			const fresh = document.createElement("script");
+			fresh.type = old.type
+			fresh.addEventListener('ready', resolve)
+			fresh.textContent = old.textContent + ';document.getElementById("'+div.id+'").getElementsByTagName("script")['+i+'].dispatchEvent(new Event("ready"))'
+			old.replaceWith(fresh)
+		}))
+		i++
+	}	
+	return Promise.all(scripts)
 }
 const createPromise = (payload) => {
 	let resolve, reject
