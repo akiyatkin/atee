@@ -1,5 +1,4 @@
-import { pathparse } from './Spliter.js'
-import { SEO } from './SEO.js'
+
 import { ServiceWorker } from './ServiceWorker.js'
 
 const requestNextAnimationFrame = (fn) => requestAnimationFrame(() => requestAnimationFrame(fn))
@@ -30,6 +29,7 @@ export const Client = {
 		ServiceWorker.register(access_data => {
 			Client.setAccessData(access_data)
 		})
+		//Обновить кэш - куда-нибудь кликнуть, потом обновить страницу
 		// Client.getAccessData().then(access_data => {	
 		// 	ServiceWorker.postMessage(access_data)
 		// })
@@ -136,6 +136,10 @@ export const Client = {
 		let {search, promise} = Client.next
 		search = search.split('#')[0]
 		const access_data = await Client.getAccessData()
+
+		
+		
+
 		const req = {
 			gs: '',
 			vt: access_data.VIEW_TIME,
@@ -170,14 +174,18 @@ export const Client = {
 				const div = document.getElementById(layer.div)
 				layer.sys.div = div
 				Client.animate('div', div, promise, layer.animate)
-			}	
+			}
+			const { pathparse } = await import('./Spliter.js')
 			const {crumbs, path, get} = pathparse(search)
 			const crumb = {
 				crumbs, search, get, path
 			}
 			await Promise.all(promises)
 			if (promise.rejected) return Client.applyCrossing()
-			if (json.seo) SEO.accept(json.seo)
+			if (json.seo) {
+				const { SEO } = await import('./SEO.js')
+				SEO.accept(json.seo)
+			}
 			for (const layer of json.layers) {
 				layer.sys.template = document.createElement('template')
 				addHtml(layer.sys.template, layer, crumb)

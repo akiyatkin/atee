@@ -26,6 +26,7 @@ const Modal = {
 		for (const fnhide of state.fnhides) fnhide()
 	},
 	show: div => {
+		Modal.init()
 		const modal = div.classList.contains('popupmodal') ? div : cls('popupmodal', div)[0]
 		modal.classList.add('show')
 		const close = cls('close', modal)[0]
