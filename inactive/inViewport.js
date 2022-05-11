@@ -1,6 +1,6 @@
-import { CallFrame } from "/vendor/akiyatkin/waitshow/CallFrame.js"
-import { isViewport } from "/vendor/akiyatkin/load/isViewport.js"
-import { inActive } from "/vendor/akiyatkin/load/inActive.js"
+import { CallFrame } from "./CallFrame.js"
+import { isViewport } from "./isViewport.js"
+import { inActive } from "./inActive.js"
 
 
 const inViewport = (el, cb) => {

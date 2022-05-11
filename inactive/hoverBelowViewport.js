@@ -1,5 +1,5 @@
-import { CallFrame } from "/vendor/akiyatkin/waitshow/CallFrame.js"
-import { isBelowViewport } from "/vendor/akiyatkin/load/isBelowViewport.js"
+import { CallFrame } from "./CallFrame.js"
+import { isBelowViewport } from "./isBelowViewport.js"
 let second = false
 const hoverBelowViewport = (el, over, out) => {
     let isover = false
