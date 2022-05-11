@@ -1,0 +1,7 @@
+.waitshow {
+	opacity:0;
+	transition:0.4s;
+}
+.waitshow.show {
+	opacity:1;
+}
