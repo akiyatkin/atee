@@ -101,7 +101,6 @@ export const router = async (search) => {
 					return { ans, ext }
 				}
 			} else { //файлы передаются стримом
-				console.log(search)
 				if (search == '/-controller/sw.js') rest = filesw(src, ext)
 				else rest = file(src, ext)
 			}
