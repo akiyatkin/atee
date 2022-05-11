@@ -27,12 +27,12 @@ export const Client = {
 		Client.access_promise = Promise.resolve(access_data)	
 	},
 	follow: () => {
-		Client.getAccessData().then(access_data => {
-			ServiceWorker.register(access_data => {
-				Client.setAccessData(access_data)
-			})	
-			ServiceWorker.postMessage(access_data)
+		ServiceWorker.register(access_data => {
+			Client.setAccessData(access_data)
 		})
+		// Client.getAccessData().then(access_data => {	
+		// 	ServiceWorker.postMessage(access_data)
+		// })
 		window.addEventListener('click', e => {
 			const a = e.target.closest('a')
 			if (!a) return
@@ -59,7 +59,6 @@ export const Client = {
 				Client.cursor = Client.start
 				history.replaceState({cursor:Client.cursor, view:Client.view}, null, search)
 			}
-			
 		})
 	},
 	getSearch: () => decodeURI(location.pathname + location.search),
