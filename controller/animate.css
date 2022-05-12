@@ -41,7 +41,7 @@
 }
 .div-animate-opacity-after {
 	visibility: visible;
-	transition: opacity 0.4s;
+	transition: opacity 0.2s;
 }
 .div-animate-none-before {
 	will-change: content;
