@@ -89,7 +89,8 @@ export const Client = {
 	},
 	pushState: (search, scroll = true) => {
 		search = Client.fixsearch(search)
-		Client.history[++Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
+		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
+		Client.cursor++
 		history.pushState({cursor:Client.cursor, view:Client.view}, null, search)
 		search = Client.getSearch()
 		const promise = Client.crossing(search)
