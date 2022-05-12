@@ -19,7 +19,7 @@ export const Client = {
 	access_promise:null,
 	getAccessData: () => {
 		if (Client.access_promise) return Client.access_promise
-		Client.access_promise = fetch('/-controller/access').then(res => res.json())
+		Client.access_promise = fetch('/-controller/access').then(res => res.json()).catch(() => false)
 		return Client.access_promise
 	},
 	setAccessData: (access_data) => {
