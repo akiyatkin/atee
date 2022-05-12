@@ -25,6 +25,7 @@ export const pathparse = (request) => {
     return {secure, crumbs, path, ext, get}
 }
 export const parse = (string, sep = '; ') => {
+    string = string.replace(/\+/g, '%20')
     const cookie = string?.split(sep).reduce((res, item) => {
         if (!item) return res
         const data = item.split('=')
