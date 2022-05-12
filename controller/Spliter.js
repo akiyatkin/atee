@@ -25,9 +25,10 @@ export const pathparse = (request) => {
     return {secure, crumbs, path, ext, get}
 }
 export const parse = (string, sep = '; ') => {
-    string = string.replace(/\+/g, '%20')
+    
     const cookie = string?.split(sep).reduce((res, item) => {
         if (!item) return res
+        item = item.replace(/\+/g, '%20')
         const data = item.split('=')
         res[decodeURIComponent(data.shift())] = data.length ? decodeURIComponent(data.join('=')) : ''
         return res
