@@ -1,4 +1,4 @@
-import { files } from "./files.js"
+import { files, file } from "./files.js"
 import path from 'path'
 import { readFile, utimes } from "fs/promises"
 
@@ -263,8 +263,8 @@ const getIndex = (rule, {path, get}, view_time, options = {push: [], seo: {}}, s
 
 
 export const rest = async (query, get, client) => {
-	if (query == 'init.js') return file(FILE_MOD_ROOT + 'init.js', 'js')
-	if (query == 'test.js') return files(FILE_MOD_ROOT + 'test.js', 'js')
+	//if (query == 'init.js') return file(FILE_MOD_ROOT + 'init.js', 'js')
+	//if (query == 'test.js') return files(FILE_MOD_ROOT + 'test.js', 'js')
 
 	const req = {...get, ...client}
 	const ans = await meta.get(query, req)
