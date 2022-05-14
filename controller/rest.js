@@ -235,11 +235,11 @@ const getDiff = (players, nlayers, layers = []) => {
 
 
 const getIndex = (rule, {path, get}, view_time, options = {push: [], seo: {}}, status = 200) => {
-	if (path && !rule?.childs[path]) {
+	if (path && (!rule.childs || !rule.childs[path])) {
 		if (path == '404') return []
 		return getIndex(rule, {path:'404', get}, view_time, options, 404)
 	}
-	const index = path ? rule?.childs[path] : rule
+	const index = path ? rule.childs[path] : rule
 	const req = {path, get, view_time}
 	//const req = { get: route.get, host, cookie, root }
 	runByRootLayer(index.root, layer => {
