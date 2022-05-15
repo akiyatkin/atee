@@ -10,9 +10,24 @@ import { Ses } from './Ses.js'
 
 const pips = new WeakMap()
 const inpsready = new WeakSet()
+window.addEventListener('beforeunload', () => {
+	const inp = document.activeElement
+	if (!inpsready.has(inp)) return
+	inp.dispatchEvent(new Event("change", {
+		bubbles: true,
+		cancelable: true
+	}))
+})
 const Autosave = {
 	getInps: function (div) {
-		
+		const nodelist = div.querySelectorAll('select, .autosaveblock, [type=date], [type=search], [type=number], [type=tel], [type=email], [type=password], [type=text], [type=radio], [type=checkbox], textarea')
+		const inps = [...nodelist].filter(inp => {
+			if (inp.dataset.autoasave == 'none') return false
+			if (inp.closest('.autosavenone')) return false
+			if (!inp.name) return false
+			return true
+		})
+		return inps
 	},
 	/**
 	* слой у которого нужно очистить весь autosave, например после отправки формы на сервер, нужно сбросить сохранённые в инпутах данные
@@ -73,10 +88,12 @@ const Autosave = {
 	},
 	setValChange: function (inp, valsave) {
 		Autosave.setVal(inp, valsave)
-		inp.dispatchEvent(new Event("change", {
+		const e = new Event("change", {
 			bubbles: true,
 			cancelable: true
-		}))
+		})
+		e.autosave = true
+		inp.dispatchEvent(e)
 	},
 	statusPip: function (inp, is) {
 		const pip = pips.get(inp)
@@ -99,21 +116,16 @@ const Autosave = {
 	proc: [],
 	init: async (div, autosavename = 'user') => {
 		await Promise.all(Autosave.proc)
-		const nodelist = div.querySelectorAll('select, .autosaveblock, [type=date], [type=search], [type=number], [type=tel], [type=email], [type=password], [type=text], [type=radio], [type=checkbox], textarea')
-		const inps = [...nodelist].filter(inp => {
-			if (inp.dataset.autoasave == 'none') return false
-			if (inp.closest('.autosavenone')) return false
-			if (!inp.name) return false
-			return true
-		})
+		const inps = Autosave.getInps(div)
 
 		Autosave.proc = [];
 		for (const inp of inps) {
 			if (inpsready.has(inp)) continue
-			inpsready.add(inps)
+			inpsready.add(inp)
 
-			inp.addEventListener('change', () => {
-				const val = Autosave.getVal(inp);
+			inp.addEventListener('change', e => {
+				if (e.autosave) return //мы и инициировали это событие
+				const val = Autosave.getVal(inp);				
 				Autosave.statusPip(inp, true);
 				Ses.set(autosavename, inp.name, val);
 			})
