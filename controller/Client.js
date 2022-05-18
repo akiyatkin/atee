@@ -185,8 +185,8 @@ export const Client = {
 			await Promise.all(promises)
 			if (promise.rejected) return Client.applyCrossing()
 			if (json.seo) {
-				const { SEO } = await import('./SEO.js')
-				SEO.accept(json.seo)
+				const { Head } = await import('./Head.js')
+				Head.accept(json.seo)
 			}
 			for (const layer of json.layers) {
 				layer.sys.template = document.createElement('template')
@@ -213,7 +213,12 @@ export const Client = {
 	}
 }
 const addHtml = (template, layer, crumb) => {
-	const html = layer.sys.objtpl ? layer.sys.objtpl[layer.sub](layer.sys.data, {...layer, ...crumb, host:location.host, cookie:document.cookie}) : ''
+	let html = ''
+	if (layer.sys.objtpl) {
+		const env = {...layer, ...crumb, host:location.host, cookie:document.cookie}
+		const data = layer.sys.data
+		html = layer.sys.objtpl[layer.sub](data, env)
+	}
 	if (template.content.children.length) {
 		const div = template.content.getElementById(layer.div)
 		div.innerHTML = html
@@ -225,20 +230,18 @@ const addHtml = (template, layer, crumb) => {
 	}
 }
 const loadAll = (layers, promises = []) => {
-	let promise
+	
 	if (!layers) return promises
 	for (const layer of layers) {
 		if (!layer.sys) layer.sys = {}
-		if (layer.ts) {
-			promise = import(layer.tpl)
-			promise.then(res => {
+		if (layer.ts) { //ts это например, index:ROOT означает что есть шаблон
+			let promise = import(layer.tpl).then(res => {
 				layer.sys.objtpl = res
 			})
 			promises.push(promise)
 		}
 		if (layer.json) {
-			promise = fetch(layer.json)
-			promise.then(res => res.json()).then(res => {
+			let promise = fetch(layer.json).then(res => res.json()).then(data => {
 				layer.sys.data = data
 			})
 			promises.push(promise)

@@ -43,6 +43,7 @@ meta.addFunction('checksearch', (view, n) => {
 meta.addArgument('host')
 
 meta.addArgument('ip')
+meta.addArgument('root', ['checksearch']) //prev
 meta.addArgument('pv', ['checksearch']) //prev
 meta.addArgument('nt', ['checksearch']) //next
 meta.addArgument('vt', ['int']) //view_time
@@ -102,18 +103,18 @@ const spread = (rule, parent) => {
 	}
 }
 
-const runByIndex = (rule, fn) => {
-	fn(rule)
-	if (rule.childs) for(const i in rule.childs) fn(rule.childs[i])
-	if (rule.child) fn(rule.child)
+const runByIndex = (rule, fn, path = []) => {
+	fn(rule, path)
+	if (rule.childs) for(const i in rule.childs) runByIndex(rule.childs[i], fn, [...path, i])
+	if (rule.child) runByIndex(rule.child, fn, [...path, false])
 }
-const maketree = (layer, layout, rule, seo = null, push = []) => {
+const maketree = (layer, layout, rule, head = null, push = []) => {
 	if (!layout) return
 	const ts = layer.ts
 	if (!layout[ts]) return
 	layer.layers = Object.values(layout[layer.ts])
 	for (const l of layer.layers) {
-		maketree(l, layout, rule, seo, push)
+		maketree(l, layout, rule, head, push)
 	}
 }
 const runByRootLayer = (root, fn) => {
@@ -134,14 +135,60 @@ const getRule = Once.proxy( async root => {
 	runByIndex(rule, r => { //строим дерево root по дивам
 		r.root = { ts: rule.index, name, sub }	
 		maketree(r.root, r.layout, rule)
-		
 		delete r.layout
+
+		const push = []
+		let head = {}
+		runByRootLayer(r.root, layer => {
+			const ts = layer.ts
+			if (rule.push && rule.push[ts]) push.push(...rule.push[ts])
+			if (rule.head && rule.head[ts]) head = rule.head[ts]
+		})
+		r.push = push
+		r.head = head
 	})
 
 	return rule
 })
-
-
+meta.addAction('sitemap', async view => {
+	const { root } = await view.gets(['root'])
+	const rule = await getRule(root)
+	if (!rule) return view.err()
+	/*
+		Карта динамическая так как данные меняются не только при update
+		У нас есть крошки
+		{
+			child
+			childs:{
+				crumb1:*
+				crumb2:*
+			}
+		}
+		нужно каждой крошке найти соответствующий head объект
+	*/
+	
+	const list = []
+	const date = new Date(Access.getUpdateTime() * 1000)
+	let dd = date.getDate();
+	if (dd < 10) dd = '0' + dd;
+	let mm = date.getMonth() + 1; // месяц 1-12
+	if (mm < 10) mm = '0' + mm;
+	const modified = date.getFullYear() + '-' + mm + '-' + dd
+	runByIndex(rule, (index, path) => {
+		if (~path.indexOf(false)) return
+		if (~['404','500'].indexOf(path[0])) return
+		list.push({
+			name: index.head.name || index.head.title,
+			modified,
+			href: path.length ? '/' + path.join('/') : ''
+		})
+	})
+	console.log(list)
+	return list
+})
+// meta.addAction('get-push', async view => {
+// 	const { nt: next } = await view.gets(['nt'])
+// })
 meta.addAction('layers', async view => {
 	const {
 		pv: prev, nt: next, host, cookie, st: access_time, ut: update_time, vt: view_time, gs: globals 
@@ -182,15 +229,12 @@ meta.addAction('layers', async view => {
 	const rule = await getRule(nroute.root)
 	if (!rule) return view.err('Bad type layers.json')
 	view.ans.vt = Date.now() //new_view_time
-	const nopt = getIndex(rule, nroute, view.ans.vt) //{ seo, push, root, status }
-	
+	const { index: nopt, status } = getIndex(rule, nroute, view.ans.vt) //{ index: {head, push, root}, status }
 	if (!nopt.root) return view.err()
-	
-	view.ans.status = nopt.status
-
+	view.ans.status = status
 	if (!prev) {
 		view.ans.push = nopt.push
-		view.ans.seo = nopt.seo
+		view.ans.head = nopt.head
 		view.ans.layers = [nopt.root]
 		return view.ret()
 	}
@@ -201,15 +245,12 @@ meta.addAction('layers', async view => {
 	if (proute.root != nroute.root) return view.err()
 
 	const nlayers = structuredClone(nopt.root.layers)
-	const popt = getIndex(rule, proute, view_time)
+	const { index: popt } = getIndex(rule, proute, view_time)
 	if (!popt.root) return view.err()
 
-
-	
-	//console.log(JSON.stringify(popt.root.layers), JSON.stringify(nlayers))
 	view.ans.layers = getDiff(popt.root.layers, nlayers)
 	if (nopt.search != popt.search) {
-		view.ans.seo = nopt.seo
+		view.ans.head = nopt.head
 	}
 
 
@@ -234,7 +275,7 @@ const getDiff = (players, nlayers, layers = []) => {
 }
 
 
-const getIndex = (rule, {path, get}, view_time, options = {push: [], seo: {}}, status = 200) => {
+const getIndex = (rule, {path, get}, view_time, options = {push: [], head: {}}, status = 200) => {
 	if (path && (!rule.childs || !rule.childs[path])) {
 		if (path == '404') return []
 		return getIndex(rule, {path:'404', get}, view_time, options, 404)
@@ -254,24 +295,19 @@ const getIndex = (rule, {path, get}, view_time, options = {push: [], seo: {}}, s
 		} else {
 			if (rule.json && rule.json[ts]) layer.json = rule.json[ts]
 		}
-
-		if (rule.push && rule.push[ts]) options.push.push(...rule.push[ts])
-		if (rule.seo && rule.seo[ts]) options.seo = rule.seo[ts]
 	})
-	return { seo: options.seo, push: options.push, root: index.root, status }
+	return { index, status }
 }
 
 
 export const rest = async (query, get, client) => {
-	//if (query == 'init.js') return file(FILE_MOD_ROOT + 'init.js', 'js')
-	//if (query == 'test.js') return files(FILE_MOD_ROOT + 'test.js', 'js')
-
 	const req = {...get, ...client}
 	const ans = await meta.get(query, req)
 
 	if (query == 'layers') {
 		delete ans.push
 	}
+
 	if (query == 'sw') {
 		return { ans, ext: 'js', status: 200, nostore: false, headers: { 'Service-Worker-Allowed': '/' }}
 	} else if (~query.indexOf('set-') || ~['access','layers'].indexOf(query)) {

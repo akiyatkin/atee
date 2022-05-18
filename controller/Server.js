@@ -16,6 +16,7 @@ const TYPES = {
 	js: 'application/javascript',
 	woff2: 'font/woff2',
 	webm: 'video/webm',
+	xml: 'application/xml',
 	html: 'text/html',
 	css: 'text/css',
 	ico: 'image/x-icon',
@@ -146,7 +147,7 @@ const readStream = stream => {
 		})
 	})
 }
-const getHTML = async (layer, { seo, client, crumb }) => {
+const getHTML = async (layer, { head, client, crumb }) => {
 	const { tpl, json, sub, div } = layer
 	let nostore = false
     let status = 200
@@ -174,7 +175,8 @@ const getHTML = async (layer, { seo, client, crumb }) => {
 	if (tpl) {
 		const objtpl = await import(tpl)
         try {
-            html = objtpl[sub](data, {...layer, ...crumb, seo, host: client.host, cookie: client.cookie})
+        	const env = {...layer, ...crumb, host: client.host, cookie: client.cookie, head}
+            html = objtpl[sub](data, env)
         } catch(e) {
             html = `<pre><code>${layer.ts}<br>${e.toString()}</code></pre>`
             status = 500
@@ -191,13 +193,13 @@ const runLayers = async (layers, fn, parent) => {
 	}
 	return Promise.all(promises)
 }
-export const controller = async ({ layers, seo }, client, crumb) => {
+export const controller = async ({ layers, head }, client, crumb) => {
 	const ans = {
 		html: '',
         status: 200,
 		nostore: false
 	}
-	const look = {seo, client, crumb}
+	const look = {head, client, crumb}
 	const doc = new Doc()
 	await runLayers(layers, async layer => {
 		const { nostore, html, status } = await getHTML(layer, look)
