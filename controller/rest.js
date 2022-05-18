@@ -128,6 +128,7 @@ const runByLayer = (rule, fn) => {
 }
 
 const getRule = Once.proxy( async root => {
+	//root должен быть без ведущего слэша
 	const { default: rule } = await import(path.posix.join(IMPORT_APP_ROOT, root, 'layers.json'), {assert: { type: "json" }})
 	wakeup(rule) //объекты слоёв
 	spread(rule) //childs самодостаточный
