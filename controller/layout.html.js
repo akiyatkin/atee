@@ -26,7 +26,7 @@ export const ER404 = (data, { host, path }) => `
 
 export const SITEMAP = (data, { host }) => `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-	${data.map(obj => mapitem(obj, { host }))}
+	${data.map(obj => mapitem(obj, { host })).join('')}
 	
 </urlset>`
 const mapitem = (obj, { host }) => `
