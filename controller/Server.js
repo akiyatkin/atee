@@ -52,13 +52,19 @@ export const Server = {
 			const client = {
 				cookie: request.headers.cookie, 
 				host: request.headers.host, 
-				ip:request.socket.localAddress 
+				ip:request.headers['x-forwarded-for'] || request.socket.remoteAddress
 			}
+			//request.headers['x-forwarded-for']
 			if (route.rest) {
 				const post = await getPost(request)
 				const req = post ? { ...route.get, ...post } : route.get
-				const res = await rest(route.query, req, client)
-				
+				let res
+				try {
+					res = await rest(route.query, req, client)
+				} catch (e) {
+					console.error(e)
+					res = false
+				}
 				if (!res?.ans) return error(404, 'There is no suitable answer')
 				const { 
 					ans = false, ext = 'json', status = 200, nostore = false, headers = { } 
