@@ -31,7 +31,7 @@ export const SITEMAP_XML = (data, { host }) => `<?xml version="1.0" encoding="UT
 </urlset>`
 const mapitem = (obj, { host }) => `
 	<url>
-        <loc>https://${host}${obj.href}</loc>
+        <loc>https://${host}${obj.href ? '/' + obj.href : ''}</loc>
         <lastmod>${obj.modified}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>

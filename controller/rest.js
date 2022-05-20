@@ -174,7 +174,6 @@ meta.addAction('sitemap', async view => {
 			href: path.join('/')
 		})
 	})
-	console.log(list)
 	return list
 })
 // meta.addAction('get-push', async view => {
