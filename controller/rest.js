@@ -8,6 +8,7 @@ import { whereisit } from './whereisit.js'
 import { router } from './router.js'
 import { Access } from '@atee/controller/Access.js'
 import { Once } from './Once.js'
+import { SITEMAP_XML, ROBOTS_TXT } from '/-controller/layout.html.js'
 
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
@@ -52,15 +53,6 @@ meta.addArgument('st', ['int']) //access_time
 meta.addArgument('gs', ['array']) //globals
 
 
-// meta.addAction('sw', async view => {
-// 	const res = await view.get('access')
-// 	const script = await readFile(FILE_MOD_ROOT + '/sw.js', 'utf-8')
-// 	const ans = `
-// 		let UPDATE_TIME = ${res.UPDATE_TIME}
-// 		let ACCESS_TIME = ${res.ACCESS_TIME}
-// 		${script}`
-// 	return ans
-// })
 
 const interpolate = function(string, params) {
 	const names = Object.keys(params)
@@ -108,13 +100,13 @@ const runByIndex = (rule, fn, path = []) => {
 	if (rule.childs) for(const i in rule.childs) runByIndex(rule.childs[i], fn, [...path, i])
 	if (rule.child) runByIndex(rule.child, fn, [...path, false])
 }
-const maketree = (layer, layout, rule, head = null, push = []) => {
+const maketree = (layer, layout, rule) => {
 	if (!layout) return
 	const ts = layer.ts
 	if (!layout[ts]) return
 	layer.layers = Object.values(layout[layer.ts])
 	for (const l of layer.layers) {
-		maketree(l, layout, rule, head, push)
+		maketree(l, layout, rule)
 	}
 }
 const runByRootLayer = (root, fn) => {
@@ -137,7 +129,6 @@ const getRule = Once.proxy( async root => {
 		r.root = { ts: rule.index, name, sub }	
 		maketree(r.root, r.layout, rule)
 		delete r.layout
-
 		const push = []
 		let head = {}
 		runByRootLayer(r.root, layer => {
@@ -145,10 +136,9 @@ const getRule = Once.proxy( async root => {
 			if (rule.push && rule.push[ts]) push.push(...rule.push[ts])
 			if (rule.head && rule.head[ts]) head = rule.head[ts]
 		})
-		r.push = push
-		r.head = head
+		r.ready_push = push
+		r.ready_head = head
 	})
-
 	return rule
 })
 meta.addAction('sitemap', async view => {
@@ -179,9 +169,9 @@ meta.addAction('sitemap', async view => {
 		if (~path.indexOf(false)) return
 		if (~['404','500'].indexOf(path[0])) return
 		list.push({
-			name: index.head.name || index.head.title,
+			...index.ready_head,
 			modified,
-			href: path.length ? '/' + path.join('/') : ''
+			href: path.join('/')
 		})
 	})
 	console.log(list)
@@ -234,8 +224,8 @@ meta.addAction('layers', async view => {
 	if (!nopt.root) return view.err()
 	view.ans.status = status
 	if (!prev) {
-		view.ans.push = nopt.push
-		view.ans.head = nopt.head
+		view.ans.push = nopt.ready_push
+		view.ans.head = nopt.ready_head
 		view.ans.layers = [nopt.root]
 		return view.ret()
 	}
@@ -251,7 +241,8 @@ meta.addAction('layers', async view => {
 
 	view.ans.layers = getDiff(popt.root.layers, nlayers)
 	if (nopt.search != popt.search) {
-		view.ans.head = nopt.head
+		view.ans.head = nopt.ready_head
+		view.ans.push = nopt.ready_push
 	}
 
 
@@ -300,18 +291,26 @@ const getIndex = (rule, {path, get}, view_time, options = {push: [], head: {}}, 
 	return { index, status }
 }
 
-
+meta.addAction('sitemap.xml', async view => {
+	const { sitemap, host } = await view.gets(['sitemap','host'])
+	return SITEMAP_XML( sitemap, { host } )
+})
+meta.addAction('robots.txt', async view => {
+	const { host } = await view.gets(['host'])
+	return ROBOTS_TXT( true, { host } )
+})
 export const rest = async (query, get, client) => {
-	const req = {...get, ...client}
+	const req = {root:'', ...get, ...client}
 	const ans = await meta.get(query, req)
 
 	if (query == 'layers') {
 		delete ans.push
 	}
-
-	if (query == 'sw') {
-		return { ans, ext: 'js', status: 200, nostore: false, headers: { 'Service-Worker-Allowed': '/' }}
-	} else if (~query.indexOf('set-') || ~['access','layers'].indexOf(query)) {
+	if (query == 'sitemap.xml') {
+		return { ans, ext: 'xml', status: 200, nostore: false }
+	} else if (query == 'robots.txt') {
+		return { ans, ext: 'txt', status: 200, nostore: false }
+    } else if (~query.indexOf('set-') || ~[ 'access', 'layers' ].indexOf(query)) {
 		return { ans, status: 200, nostore: true, ext: 'json' }
 	} else {
 		return { ans, status: 200, nostore: false, ext: 'json' }

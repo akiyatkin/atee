@@ -96,6 +96,7 @@ export class Meta {
         try {
     		if (!meta.list[view.action]?.response
             && !meta.list[view.action]?.request) {
+            	view.ans.status = 404
     			return view.err('meta.badrequest')
     		}
 

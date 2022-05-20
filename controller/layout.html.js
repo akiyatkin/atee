@@ -10,7 +10,7 @@ export const HEAD = (data, { head }) =>
 		Client.follow()
 	</script>`
 
-export const ROBOTS = (data, { host }) => `Host: ${host}
+export const ROBOTS_TXT = (data, { host }) => `Host: ${host}
 Sitemap: /sitemap.xml`
 
 export const ER500 = (data, { host, path }) => `
@@ -24,7 +24,7 @@ export const ER404 = (data, { host, path }) => `
 	</div>
 `
 
-export const SITEMAP = (data, { host }) => `<?xml version="1.0" encoding="UTF-8"?>
+export const SITEMAP_XML = (data, { host }) => `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	${data.map(obj => mapitem(obj, { host })).join('')}
 	
