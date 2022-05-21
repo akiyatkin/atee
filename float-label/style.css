@@ -3,15 +3,21 @@
 	margin-bottom: 1rem;
 }
 .float-label > * {
+	box-sizing: border-box;
 	width:  100%;
 }
 .float-label > select,
 .float-label > input,
+.float-label > textarea,
+.float-label > textarea ~ label,
 .float-label > input ~ label {
-	padding: .75rem .75rem;   
+	padding: .75rem .75rem;
+	font-size: inherit;
+    line-height: inherit;
+    margin-top: 0; /*textarea has top margin*/
 }
 
-
+.float-label > textarea ~ label,
 .float-label > input ~ label {
 	pointer-events: none;
 	position: absolute;
@@ -20,7 +26,8 @@
 	display: block;
 	width: 100%;
 	margin-bottom: 0; /* Override default `<label>` margin */
-	line-height: 1.5;
+	
+
 	color: #999;
 	border: 1px solid transparent;
 	border-radius: .25rem;
@@ -43,15 +50,16 @@
 	color: transparent;
 }
 
+.float-label > textarea::placeholder,
 .float-label > input::placeholder {
 	color: transparent;
 }
-
+.float-label > textarea:not(:placeholder-shown),
 .float-label > input:not(:placeholder-shown) {
 	padding-top: calc(.75rem + .75rem * (2 / 3));
 	padding-bottom: calc(.75rem / 3);
 }
-
+.float-label > textarea:not(:placeholder-shown) ~ label,
 .float-label > input:not(:placeholder-shown) ~ label {
 	padding-top: calc(.75rem / 3);
 	padding-bottom: calc(.75rem / 3);
