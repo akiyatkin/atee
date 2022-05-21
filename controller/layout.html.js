@@ -13,15 +13,11 @@ export const HEAD = (data, { head }) =>
 export const ROBOTS_TXT = (data, { host }) => `Host: ${host}
 Sitemap: /sitemap.xml`
 
-export const ER500 = (data, { host, path }) => `
-	<div class="container" style="padding-bottom:50px">
-		<p>${host}/<b>${path}</b> &mdash; ошибка на сервере, код 500</p>
-	</div>
+export const ER500 = (data, { host, path }) => `	
+	<p>${host}/<b>${path}</b> &mdash; ошибка на сервере, код 500</p>
 `
 export const ER404 = (data, { host, path }) => `
-	<div class="container" style="padding-bottom:50px">
-		<p>${host}/<b>${path}</b> &mdash; страница не найдена, код 404</p>
-	</div>
+	<p>${host}/<b>${path}</b> &mdash; страница не найдена, код 404</p>
 `
 
 export const SITEMAP_XML = (data, { host }) => `<?xml version="1.0" encoding="UTF-8"?>

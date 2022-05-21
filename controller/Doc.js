@@ -1,5 +1,5 @@
 export class Doc {
-    exp = /(<\w+.*?id=['"])((\w+?)['"].*?>)([^>]*?)/si
+    exp = /(<\w+.*?id=['"])(([\w\.]+?)['"].*?>)([^>]*?)/si
     divs = {}
     insert (html, div = '', childs = false) {
         const ar = []
@@ -30,7 +30,8 @@ export class Doc {
         })
         delete this.divs[div]
         if (!div) for (const div in this.divs) {
-            throw `Не найден div ${div}`
+            //throw `Не найден div ${div}`
+            html = html + `Не найден div ${div}`
         }
         return html
     }

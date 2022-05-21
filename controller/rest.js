@@ -3,7 +3,7 @@ import path from 'path'
 import { readFile, utimes } from "fs/promises"
 
 import { Meta, View } from "./Meta.js"
-import { parse, explode } from './Spliter.js'
+import { parse, explode, split } from './Spliter.js'
 import { whereisit } from './whereisit.js'
 import { router } from './router.js'
 import { Access } from '@atee/controller/Access.js'
@@ -66,9 +66,11 @@ const wakeup = rule => {
 	if (!rule.layout) return
 	for (const pts in rule.layout) {
 		for (const div in rule.layout[pts]) {
-			const ts = rule.layout[pts][div]
-			const [name, sub] = ts ? ts.split(':') : ['','ROOT']
-			const layer = { ts, name, sub, div }
+			const tsf = rule.layout[pts][div]
+			const [name, subframe] = tsf ? split(':', tsf) : ['','ROOT']
+			const [sub, frame] = split('.', subframe)
+			const ts = name + ':' + sub
+			const layer = { ts, tsf, name, sub, div, frame }
 			if (rule.animate && rule.animate[ts]) layer.animate = rule.animate[ts]
 			rule.layout[pts][div] = layer
 		}
@@ -82,10 +84,10 @@ const spread = (rule, parent) => {
 	if (!rule) return
 	if (!rule.layout) return
 	if (parent) {
-		for (const ts in parent.layout) {
-			if (!rule.layout[ts]) rule.layout[ts] = {}
-			for (const div in parent.layout[ts]) {
-				if (!rule.layout[ts][div]) rule.layout[ts][div] = { ...parent.layout[ts][div] }
+		for (const tsf in parent.layout) {
+			if (!rule.layout[tsf]) rule.layout[tsf] = {}
+			for (const div in parent.layout[tsf]) {
+				if (!rule.layout[tsf][div]) rule.layout[tsf][div] = { ...parent.layout[tsf][div] }
 			}
 		}
 	}
@@ -102,9 +104,9 @@ const runByIndex = (rule, fn, path = []) => {
 }
 const maketree = (layer, layout, rule) => {
 	if (!layout) return
-	const ts = layer.ts
-	if (!layout[ts]) return
-	layer.layers = Object.values(layout[layer.ts])
+	const tsf = layer.tsf
+	if (!layout[tsf]) return
+	layer.layers = Object.values(layout[layer.tsf])
 	for (const l of layer.layers) {
 		maketree(l, layout, rule)
 	}
@@ -118,15 +120,40 @@ const runByLayer = (rule, fn) => {
 		runByRootLayer(rule.root, fn)
 	})
 }
+const applyframes = (rule) => {
+	if (!rule.frame) return
+	const frame = rule.frame
+	//Нужно встроить фреймы в вёрстку
+	runByIndex(rule, (root) => {
+		//Показывается ли в каком-то div слой с frame
+		for (const up in root.layout) {
+			for (const div in root.layout[up]) {
+				const inner = root.layout[up][div]
+				if (!frame[inner]) continue
+				
+				root.layout[up][div] = frame[inner] + '.' + div
+				const tsf = frame[inner] +'.' +div
+				//rule.frames[frame[inner]]
 
+				if (!root.layout[tsf]) root.layout[tsf] = (rule.frames && rule.frames[frame[inner]]) ? {...rule.frames[frame[inner]]} : {}
+				root.layout[tsf]['FRAME'+'.'+div] = inner
+			}
+		}
+	})
+}
 const getRule = Once.proxy( async root => {
 	//root должен быть без ведущего слэша
 	const { default: rule } = await import(path.posix.join(IMPORT_APP_ROOT, root, 'layers.json'), {assert: { type: "json" }})
+	applyframes(rule) //встраиваем фреймы
 	wakeup(rule) //объекты слоёв
 	spread(rule) //childs самодостаточный
-	const [name, sub] = rule.index.split(':')
+	
+	const tsf = rule.index
+	const [name, subframe] = split(':', tsf)
+	const [sub, frame] = split('.', subframe)
+	const ts = name + ':' + sub
 	runByIndex(rule, r => { //строим дерево root по дивам
-		r.root = { ts: rule.index, name, sub }	
+		r.root = { tsf, ts, name, sub, frame }	
 		maketree(r.root, r.layout, rule)
 		delete r.layout
 		const push = []

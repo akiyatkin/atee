@@ -117,7 +117,6 @@ const Autosave = {
 	init: async (div, autosavename = 'user') => {
 		await Promise.all(Autosave.proc)
 		const inps = Autosave.getInps(div)
-
 		Autosave.proc = [];
 		for (const inp of inps) {
 			if (inpsready.has(inp)) continue
