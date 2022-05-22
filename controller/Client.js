@@ -184,9 +184,9 @@ export const Client = {
 			}
 			await Promise.all(promises)
 			if (promise.rejected) return Client.applyCrossing()
-			if (json.seo) {
+			if (json.head) {
 				const { Head } = await import('./Head.js')
-				Head.accept(json.seo)
+				Head.accept(json.head)
 			}
 			for (const layer of json.layers) {
 				layer.sys.template = document.createElement('template')

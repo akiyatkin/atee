@@ -266,7 +266,8 @@ meta.addAction('layers', async view => {
 	if (!popt.root) return view.err()
 
 	view.ans.layers = getDiff(popt.root.layers, nlayers)
-	if (nopt.search != popt.search) {
+	
+	if (nroute.search != proute.search) {
 		view.ans.head = nopt.ready_head
 		view.ans.push = nopt.ready_push
 	}
