@@ -10,8 +10,12 @@ export const ServiceWorker = {
 	postMessage: async (access_data) => {
 		if (!navigator.serviceWorker) return
 		const serviceWorkerRegistration = await navigator.serviceWorker.ready
-		const subscription = await serviceWorkerRegistration.pushManager.getSubscription()
-		if (!subscription) return
+
+		if (serviceWorkerRegistration.pushManager && serviceWorkerRegistration.pushManager.getSubscription) {
+			const subscription = await serviceWorkerRegistration.pushManager.getSubscription()
+			//if (!subscription) return
+		}
+
 		navigator.serviceWorker.controller.postMessage(access_data)
 	}
 }
