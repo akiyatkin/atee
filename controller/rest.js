@@ -136,7 +136,7 @@ const applyframes = (rule) => {
 				//rule.frames[frame[inner]]
 
 				if (!root.layout[tsf]) root.layout[tsf] = (rule.frames && rule.frames[frame[inner]]) ? {...rule.frames[frame[inner]]} : {}
-				root.layout[tsf]['FRAME'+'.'+div] = inner
+				root.layout[tsf]['FRAME'+'-'+div] = inner
 			}
 		}
 	})

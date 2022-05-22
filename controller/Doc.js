@@ -1,5 +1,5 @@
 export class Doc {
-    exp = /(<\w+.*?id=['"])(([\w\.]+?)['"].*?>)([^>]*?)/si
+    exp = /(<\w+.*?id=['"])(([\w\.\-]+?)['"].*?>)([^>]*?)/si
     divs = {}
     insert (html, div = '', childs = false) {
         const ar = []
