@@ -56,6 +56,7 @@ export const Server = {
 			}
 			//request.headers['x-forwarded-for']
 			if (route.rest) {
+
 				const post = await getPost(request)
 				const req = post ? { ...route.get, ...post } : route.get
 				let res
@@ -65,7 +66,9 @@ export const Server = {
 					console.error(e)
 					res = false
 				}
+
 				if (!res?.ans) return error(404, 'There is no suitable answer')
+
 				const { 
 					ans = false, ext = 'json', status = 200, nostore = false, headers = { } 
 				} = res
@@ -107,6 +110,7 @@ export const Server = {
 				const crumb = {
 					crumbs: route.crumbs,
 					get: route.get,
+					root: route.root,
 					path: route.path, 
 					search: route.search
 				}
@@ -116,7 +120,7 @@ export const Server = {
 				    info = await controller(res, client, crumb) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
                     status = Math.max(info.status, status)
                 } catch (e) {
-                    console.log(500,e)
+                    console.log(500, e)
                     req.nt = '/500'
                     res = await meta.get('layers', req)
                     info = await controller(res, client, crumb)

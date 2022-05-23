@@ -1,0 +1,15 @@
+{
+	"index":"index:ROOT",
+	"layout":{
+		"index:ROOT": {
+			"BODY":"layout:ROOT"
+		}
+	},
+	"json":{
+		"layout:ROOT":"/-notion/get-state"
+	},
+	"tpl":{
+		"index":"/-notion/index.html.js",
+		"layout":"/-notion/layout.html.js"
+	}
+}

@@ -1,7 +1,7 @@
 import { rest as controller } from './rest.js'
 import { file, files, filesw } from './files.js'
 import { whereisit } from './whereisit.js'
-import { pathparse } from "./Spliter.js" 
+import { pathparse, split } from "./Spliter.js" 
 
 import { pathToFileURL, fileURLToPath } from 'url'
 
@@ -65,7 +65,6 @@ for (const r in CONTS) {
 CONT_DIRECTS = Object.values(CONT_DIRECTS)
 CONT_DIRECTS.sort(fnsort)
 
-
 const webresolve = async search => {
 	 return await import.meta.resolve(search, pathToFileURL('./').href).then(src => fileURLToPath(src)).catch(() => false)
 }
@@ -124,14 +123,17 @@ export const router = async (search) => {
 			}
 		}
 	} else {
-		for (const v of REST_DIRECTS) {
-			if (!v.part && !ext) continue //rest в корне только при наличии расширения
-			if (path.indexOf(v.part) === 0) {
-				if (v.innodemodules) rest = (await import(v.rest)).rest
-				else rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest
-				restroot = v.part
-				query = path.slice(v.part.length)
-				break;
+		if (ext) { //Без дефиса подходит только rest в корне для файлов
+			for (const v of REST_DIRECTS) {
+				//if (!v.part && !ext) continue //rest в корне только при наличии расширения
+				if (v.part) continue
+				if (path.indexOf(v.part) === 0) {
+					if (v.innodemodules) rest = (await import(v.rest)).rest
+					else rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest
+					restroot = v.part
+					query = path.slice(v.part.length + 1)
+					break;
+				}
 			}
 		}
 		if (!rest) {
@@ -140,10 +142,13 @@ export const router = async (search) => {
 					//layers = (await import(IMPORT_APP_ROOT + '/' + v.rest, {assert: { type: "json" }})).default
 					cont = true
 					root = v.part
-					crumbs = path.slice(v.part.length).split('/')
+					path = path.slice(root.length + (root ? 1 : 0))
+					crumbs = split('/', path)
 					break;
 				}
+
 			}
+			
 		}
 	}
 	return {

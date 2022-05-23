@@ -2,7 +2,7 @@ import { files, file } from "./files.js"
 import path from 'path'
 import { readFile, utimes } from "fs/promises"
 
-import { Meta, View } from "./Meta.js"
+import { Meta } from "./Meta.js"
 import { parse, explode, split } from './Spliter.js'
 import { whereisit } from './whereisit.js'
 import { router } from './router.js'
@@ -69,7 +69,7 @@ const wakeup = rule => {
 			const tsf = rule.layout[pts][div]
 			const [name, subframe] = tsf ? split(':', tsf) : ['','ROOT']
 			const [sub, frame = ''] = split('.', subframe)
-			const frameid = 'FRAMEID-' + frame.replaceAll('.','-')
+			const frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
 			const ts = name + ':' + sub
 			const layer = { ts, tsf, name, sub, div, frame, frameid }
 			if (rule.animate && rule.animate[ts]) layer.animate = rule.animate[ts]
@@ -143,8 +143,12 @@ const applyframes = (rule) => {
 	})
 }
 const getRule = Once.proxy( async root => {
-	//root должен быть без ведущего слэша
-	const { default: rule } = await import(path.posix.join(IMPORT_APP_ROOT, root, 'layers.json'), {assert: { type: "json" }})
+	//root должен быть без ведущего слэша и работать с дефисом
+	
+	if (root) root = '-' + root
+	const { default: rule } = await import('/' + root + '/layers.json', {assert: { type: "json" }})
+	
+
 	applyframes(rule) //встраиваем фреймы
 	wakeup(rule) //объекты слоёв
 	spread(rule) //childs самодостаточный
@@ -152,7 +156,7 @@ const getRule = Once.proxy( async root => {
 	const tsf = rule.index
 	const [name, subframe] = split(':', tsf)
 	const [sub, frame = ''] = split('.', subframe)
-	const frameid = 'FRAMEID-' + frame.replaceAll('.','-')
+	const frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
 	const ts = name + ':' + sub
 	runByIndex(rule, r => { //строим дерево root по дивам
 		r.root = { tsf, ts, name, sub, frame, frameid }	
@@ -248,8 +252,10 @@ meta.addAction('layers', async view => {
 	const rule = await getRule(nroute.root)
 	if (!rule) return view.err('Bad type layers.json')
 	view.ans.vt = Date.now() //new_view_time
+	
 	const { index: nopt, status } = getIndex(rule, nroute, view.ans.vt) //{ index: {head, push, root}, status }
-	if (!nopt.root) return view.err()
+
+	if (!nopt?.root) return view.err()
 	view.ans.status = status
 	if (!prev) {
 		view.ans.push = nopt.ready_push
@@ -296,16 +302,19 @@ const getDiff = (players, nlayers, layers = []) => {
 }
 
 
-const getIndex = (rule, {path, get}, view_time, options = {push: [], head: {}}, status = 200) => {
-	if (path && (!rule.childs || !rule.childs[path])) {
-		if (path == '404') return []
-		return getIndex(rule, {path:'404', get}, view_time, options, 404)
-	}
-	const index = path ? rule.childs[path] : rule
-	const req = {path, get, view_time}
+const getIndex = (rule, route, view_time, options = {push: [], head: {}}, status = 200) => {
+	//route {path, get}
+
+	if (route.path && (!rule.childs || !rule.childs[route.path])) {
+		if (route.path == '404') return []
+		return getIndex(rule, {path:'404', get: route.get}, view_time, options, 404)
+	}	
+	const index = route.path ? rule.childs[route.path] : rule
+	const req = {path:route.path, get: route.get, view_time}
 	//const req = { get: route.get, host, cookie, root }
 	runByRootLayer(index.root, layer => {
 		const ts = layer.ts
+		//const { default: rule } = await import(path.posix.join(IMPORT_APP_ROOT, root, 'layers.json'), {assert: { type: "json" }})
 		if (layer.name) layer.tpl = rule.tpl[layer.name]
 		
 		if (rule.parsedtpl && rule.parsedtpl[ts]) {
@@ -331,7 +340,7 @@ meta.addAction('robots.txt', async view => {
 export const rest = async (query, get, client) => {
 	const req = {root:'', ...get, ...client}
 	const ans = await meta.get(query, req)
-
+	ans.cont = query
 	if (query == 'layers') {
 		delete ans.push
 	}

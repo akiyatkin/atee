@@ -1,6 +1,0 @@
-{
-    "root": {
-        "tpl":"-layout.html.js",
-        "json":"-sitemap/json"
-    }
-}
