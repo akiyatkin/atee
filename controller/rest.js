@@ -68,9 +68,10 @@ const wakeup = rule => {
 		for (const div in rule.layout[pts]) {
 			const tsf = rule.layout[pts][div]
 			const [name, subframe] = tsf ? split(':', tsf) : ['','ROOT']
-			const [sub, frame] = split('.', subframe)
+			const [sub, frame = ''] = split('.', subframe)
+			const frameid = 'FRAMEID-' + frame.replaceAll('.','-')
 			const ts = name + ':' + sub
-			const layer = { ts, tsf, name, sub, div, frame }
+			const layer = { ts, tsf, name, sub, div, frame, frameid }
 			if (rule.animate && rule.animate[ts]) layer.animate = rule.animate[ts]
 			rule.layout[pts][div] = layer
 		}
@@ -136,7 +137,7 @@ const applyframes = (rule) => {
 				//rule.frames[frame[inner]]
 
 				if (!root.layout[tsf]) root.layout[tsf] = (rule.frames && rule.frames[frame[inner]]) ? {...rule.frames[frame[inner]]} : {}
-				root.layout[tsf]['FRAME'+'-'+div] = inner
+				root.layout[tsf]['FRAMEID'+'-'+div] = inner
 			}
 		}
 	})
@@ -150,10 +151,11 @@ const getRule = Once.proxy( async root => {
 	
 	const tsf = rule.index
 	const [name, subframe] = split(':', tsf)
-	const [sub, frame] = split('.', subframe)
+	const [sub, frame = ''] = split('.', subframe)
+	const frameid = 'FRAMEID-' + frame.replaceAll('.','-')
 	const ts = name + ':' + sub
 	runByIndex(rule, r => { //строим дерево root по дивам
-		r.root = { tsf, ts, name, sub, frame }	
+		r.root = { tsf, ts, name, sub, frame, frameid }	
 		maketree(r.root, r.layout, rule)
 		delete r.layout
 		const push = []
