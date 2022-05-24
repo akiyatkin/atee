@@ -11,7 +11,7 @@ export const HEAD = (data, { head }) =>
 	</script>`
 
 export const ROBOTS_TXT = (data, { host }) => `Host: ${host}
-Sitemap: /sitemap.xml`
+Sitemap: https://${host}/sitemap.xml`
 
 export const ER500 = (data, { host, path }) => `	
 	<p>${host}/<b>${path}</b> &mdash; ошибка на сервере, код 500</p>
