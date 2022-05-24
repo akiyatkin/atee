@@ -1,11 +1,11 @@
 import { files, file } from "./files.js"
 import path from 'path'
 import { readFile, utimes } from "fs/promises"
-import { ReadStream } from 'fs'
+
 import { Meta } from "./Meta.js"
 import { parse, explode, split } from './Spliter.js'
 import { whereisit } from './whereisit.js'
-import { router } from './router.js'
+import { loadJSON, router } from './router.js'
 import { Access } from '@atee/controller/Access.js'
 import { Once } from './Once.js'
 import { SITEMAP_XML, ROBOTS_TXT } from '/-controller/layout.html.js'
@@ -198,15 +198,37 @@ meta.addAction('sitemap', async view => {
 	let mm = date.getMonth() + 1; // месяц 1-12
 	if (mm < 10) mm = '0' + mm;
 	const modified = date.getFullYear() + '-' + mm + '-' + dd
-	runByIndex(rule, (index, path) => {
+	const client = await view.get('client')
+	let promise = Promise.resolve()
+	runByIndex(rule, async (index, path) => {
 		if (~path.indexOf(false)) return
 		if (~['404','500'].indexOf(path[0])) return
-		list.push({
-			...index.ready_head,
-			modified,
-			href: path.join('/')
-		})
+
+		if (index.ready_head.jsontpl) {
+			const req = {path, get: {}}
+			index.ready_head.json = interpolate(index.ready_head.jsontpl, req)
+		}
+		if (index.ready_head.json) {
+			const json = index.ready_head.json
+			promise = promise.then(() => loadJSON(json, client).then(data => {
+				index.ready_head = {...index.ready_head, ...data}
+				list.push({
+					...index.ready_head,
+					modified,
+					href: path.join('/')
+				})
+			}))
+		} else {
+			promise = promise.then(() => {
+				list.push({
+					...index.ready_head,
+					modified,
+					href: path.join('/')
+				})
+			})
+		}
 	})
+	await promise
 	return list
 })
 // meta.addAction('get-push', async view => {
@@ -303,38 +325,7 @@ meta.addAction('layers', async view => {
 	}
 	return view.ret()    
 })
-const loadJSON = async (json, client) => {
-	let res = { ans: '', ext: 'json', status: 200, nostore: false, headers: { } }		
-	const {
-		search, secure, get,
-		rest, query, restroot
-	} = await router(json)
-	
-    if (!rest) throw 500
 
-	res = {...res, ...(await rest(query, get, client))}
-    if (res.status == 500) throw 500
-
-	let data = res.ans
-	if (data instanceof ReadStream) {
-		data = await readStream(ans)
-	}
-	return data
-}
-const readStream = stream => {
-	return new Promise((resolve, reject) => {
-		let data = ''
-		stream.on('readable', () => {
-			const d = stream.read()
-			if (d === null) return
-			data += d
-		})
-		stream.on('error', reject)
-		stream.on('end', () => {
-			resolve(JSON.parse(data))
-		})
-	})
-}
 const getDiff = (players, nlayers, layers = []) => {
 
 	nlayers?.forEach(nlayer => {

@@ -2,7 +2,7 @@ import { rest as controller } from './rest.js'
 import { file, files, filesw } from './files.js'
 import { whereisit } from './whereisit.js'
 import { pathparse, split } from "./Spliter.js" 
-
+import { ReadStream } from 'fs'
 import { pathToFileURL, fileURLToPath } from 'url'
 
 
@@ -78,7 +78,38 @@ const getRoot = (str) => {
 	return ~i ? str.slice(1, i) : ''
 }
 
+export const loadJSON = async (json, client) => {
+	let res = { ans: '', ext: 'json', status: 200, nostore: false, headers: { } }		
+	const {
+		search, secure, get,
+		rest, query, restroot
+	} = await router(json)
+	
+    if (!rest) throw 500
 
+	res = {...res, ...(await rest(query, get, client))}
+    if (res.status == 500) throw 500
+
+	let data = res.ans
+	if (data instanceof ReadStream) {
+		data = await readStream(ans)
+	}
+	return data
+}
+const readStream = stream => {
+	return new Promise((resolve, reject) => {
+		let data = ''
+		stream.on('readable', () => {
+			const d = stream.read()
+			if (d === null) return
+			data += d
+		})
+		stream.on('error', reject)
+		stream.on('end', () => {
+			resolve(JSON.parse(data))
+		})
+	})
+}
 
 
 
