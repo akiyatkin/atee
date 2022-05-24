@@ -1,7 +1,7 @@
 import { files, file } from "./files.js"
 import path from 'path'
 import { readFile, utimes } from "fs/promises"
-
+import { ReadStream } from 'fs'
 import { Meta } from "./Meta.js"
 import { parse, explode, split } from './Spliter.js'
 import { whereisit } from './whereisit.js'
@@ -61,7 +61,7 @@ const interpolate = function(string, params) {
 }
 
 
-const wakeup = rule => {
+const wakeup = (rule) => {
 	if (!rule) return
 	if (!rule.layout) return
 	for (const pts in rule.layout) {
@@ -72,7 +72,6 @@ const wakeup = rule => {
 			const frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
 			const ts = name + ':' + sub
 			const layer = { ts, tsf, name, sub, div, frame, frameid }
-			if (rule.animate && rule.animate[ts]) layer.animate = rule.animate[ts]
 			rule.layout[pts][div] = layer
 		}
 	}
@@ -150,7 +149,7 @@ const getRule = Once.proxy( async root => {
 	
 
 	applyframes(rule) //встраиваем фреймы
-	wakeup(rule) //объекты слоёв
+	wakeup(rule, rule) //объекты слоёв
 	spread(rule) //childs самодостаточный
 	
 	const tsf = rule.index
@@ -166,6 +165,7 @@ const getRule = Once.proxy( async root => {
 		let head = {}
 		runByRootLayer(r.root, layer => {
 			const ts = layer.ts
+			if (rule.animate && rule.animate[ts]) layer.animate = rule.animate[ts]
 			if (rule.push && rule.push[ts]) push.push(...rule.push[ts])
 			if (rule.head && rule.head[ts]) head = rule.head[ts]
 		})
@@ -212,6 +212,7 @@ meta.addAction('sitemap', async view => {
 // meta.addAction('get-push', async view => {
 // 	const { nt: next } = await view.gets(['nt'])
 // })
+meta.addArgument('client')
 meta.addAction('layers', async view => {
 	const {
 		pv: prev, nt: next, host, cookie, st: access_time, ut: update_time, vt: view_time, gs: globals 
@@ -260,6 +261,17 @@ meta.addAction('layers', async view => {
 	if (!prev) {
 		view.ans.push = nopt.ready_push
 		view.ans.head = nopt.ready_head
+		
+		if (view.ans.head.jsontpl) {
+			const req = {path:nroute.path, get: nroute.get, view_time}
+			view.ans.head.json = interpolate(view.ans.head.jsontpl, req)
+		}
+		if (view.ans.head.json) {
+			const client = await view.get('client')
+			const json = view.ans.head.json
+			const data = await loadJSON(json, client)
+			view.ans.head = {...view.ans.head, ...data}
+		}
 		view.ans.layers = [nopt.root]
 		return view.ret()
 	}
@@ -278,11 +290,51 @@ meta.addAction('layers', async view => {
 	if (nroute.search != proute.search) {
 		view.ans.head = nopt.ready_head
 		view.ans.push = nopt.ready_push
+		if (view.ans.head.jsontpl) {
+			const req = {path:nroute.path, get: nroute.get, view_time}
+			view.ans.head.json = interpolate(view.ans.head.jsontpl, req)
+		}
+		if (view.ans.head.json) {
+			const client = await view.get('client')
+			const json = view.ans.head.json
+			const data = await loadJSON(json, client)
+			view.ans.head = {...view.ans.head, ...data}
+		}
 	}
-
-
 	return view.ret()    
 })
+const loadJSON = async (json, client) => {
+	let res = { ans: '', ext: 'json', status: 200, nostore: false, headers: { } }		
+	const {
+		search, secure, get,
+		rest, query, restroot
+	} = await router(json)
+	
+    if (!rest) throw 500
+
+	res = {...res, ...(await rest(query, get, client))}
+    if (res.status == 500) throw 500
+
+	let data = res.ans
+	if (data instanceof ReadStream) {
+		data = await readStream(ans)
+	}
+	return data
+}
+const readStream = stream => {
+	return new Promise((resolve, reject) => {
+		let data = ''
+		stream.on('readable', () => {
+			const d = stream.read()
+			if (d === null) return
+			data += d
+		})
+		stream.on('error', reject)
+		stream.on('end', () => {
+			resolve(JSON.parse(data))
+		})
+	})
+}
 const getDiff = (players, nlayers, layers = []) => {
 
 	nlayers?.forEach(nlayer => {
@@ -338,7 +390,7 @@ meta.addAction('robots.txt', async view => {
 	return ROBOTS_TXT( true, { host } )
 })
 export const rest = async (query, get, client) => {
-	const req = {root:'', ...get, ...client}
+	const req = {root:'', ...get, ...client, client}
 	const ans = await meta.get(query, req)
 	ans.cont = query
 	if (query == 'layers') {

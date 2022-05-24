@@ -1,4 +1,8 @@
-class ViewException { }
+class ViewException { 
+	constructor (msg) {
+		this.msg = msg
+	}
+}
 export class View {
     proc = []
     constructor (meta, action, req = {}) {
@@ -20,11 +24,12 @@ export class View {
                 'process': false
             }
         }
+        
         const proc = view.proc[pname]
 		if (opt['once'] && proc['ready']) return proc['result'];
 		if (proc['process']) return view.err(`meta.recursion ${pname}`);
 		proc['process'] = true;
-
+		
 		const forname = parentname || pname;
 
         let res = parentvalue
@@ -37,16 +42,18 @@ export class View {
             }
 
         }
+        
 
 
         for (const n of opt['before'] || []) {
             const r = await view.get(n, res, forname);
 			if (r != null) res = r;
         }
-
+		
 		if (opt['required']) {
 			if (res === null) return view.err(`meta.required ${pname}`);
 		}
+
 		if (opt.func) {
 			const r = await opt.func(view, res, forname)
 			if (r != null) res = r;
@@ -76,7 +83,7 @@ export class View {
         const view = this
         view.ans.result = 0
 		if (msg) view.ans.msg = msg
-		throw new ViewException();
+		throw new ViewException(msg);
 	}
     ret (msg) {
         const view = this

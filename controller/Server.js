@@ -97,6 +97,7 @@ export const Server = {
 				//host: request.headers.host,
 				const req = {
 					...client,
+					client,
 					gs: '',
 					ut: Access.getUpdateTime(),
 					st: Access.getAccessTime(),
