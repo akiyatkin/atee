@@ -383,7 +383,6 @@ meta.addAction('robots.txt', async view => {
 export const rest = async (query, get, client) => {
 	const req = {root:'', ...get, ...client, client}
 	const ans = await meta.get(query, req)
-	ans.cont = query
 	if (query == 'layers') {
 		delete ans.push
 	}

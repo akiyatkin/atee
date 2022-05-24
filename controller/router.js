@@ -162,7 +162,7 @@ export const router = async (search) => {
 					if (v.innodemodules) rest = (await import(v.rest)).rest
 					else rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest
 					restroot = v.part
-					query = path.slice(v.part.length + 1)
+					query = path.slice(v.part.length)
 					break;
 				}
 			}

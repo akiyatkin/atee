@@ -41,7 +41,6 @@ export const Server = {
 				return error(501, 'Method not implemented')
 			}
 			const route = await router(request.url)
-
 			if (route.secure) return error(403, 'Forbidden')
 
 			const {
@@ -60,6 +59,7 @@ export const Server = {
 				const post = await getPost(request)
 				const req = post ? { ...route.get, ...post } : route.get
 				let res
+
 				try {
 					res = await rest(route.query, req, client)
 				} catch (e) {
