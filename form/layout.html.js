@@ -8,6 +8,7 @@ export const UTMS = (utms) => `
 		</tbody>
 	</table>
 `
+
 const ddmm = new Intl.DateTimeFormat("ru-RU", { dateStyle: 'short', timeStyle: 'short' })
 const utm = (utm) => `
 	<tr>
@@ -15,4 +16,9 @@ const utm = (utm) => `
 		<td style="vertical-align: top"><nobr title="${utm.ref.pathname}${utm.ref.search}">${utm.ref.host}</nobr></td>
 		<td style="vertical-align: top">${utm.url.pathname}${utm.url.search}</td>
 	</tr>
+`
+
+
+export const UTMSTG = (utms) => `${utms.map(utmtg).join('')}`
+const utmtg = (utm) => `${ddmm.format(new Date(utm.time))} ${utm.ref.host} → <a href="https://${utm.url.host}/${utm.url.pathname}">${utm.url.pathname}${utm.url.search}</a>
 `
