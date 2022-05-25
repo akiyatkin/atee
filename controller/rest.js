@@ -70,7 +70,7 @@ const wakeup = (rule) => {
 			const [name, subframe] = tsf ? split(':', tsf) : ['','ROOT']
 			const [sub, frame = ''] = split('.', subframe)
 			const frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
-			const ts = name + ':' + sub
+			const ts = tsf ? name + ':' + sub : ''
 			const layer = { ts, tsf, name, sub, div, frame, frameid }
 			rule.layout[pts][div] = layer
 		}
@@ -156,7 +156,7 @@ const getRule = Once.proxy( async root => {
 	const [name, subframe] = split(':', tsf)
 	const [sub, frame = ''] = split('.', subframe)
 	const frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
-	const ts = name + ':' + sub
+	const ts = tsf ? name + ':' + sub : ''
 	runByIndex(rule, r => { //строим дерево root по дивам
 		r.root = { tsf, ts, name, sub, frame, frameid }	
 		maketree(r.root, r.layout, rule)
