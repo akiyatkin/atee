@@ -6,7 +6,7 @@ const UTM = {
 		if (!referrer) return
 		const ref = new URL(referrer)
 		if (ref.host == location.host) return
-		const time = Math.round(new Date().getTime() / 1000)
+		const time = new Date().getTime()
 		const href = location.href
 		return UTM.update({ time, referrer, href })
 	},
