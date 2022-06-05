@@ -68,7 +68,7 @@ export const Client = {
 	global: () => {
 
 	},
-	view:Math.round(Date.now() / 1000), //Метка сеанса в котором актуальна Client.history
+	view:Date.now(), //Метка сеанса в котором актуальна Client.history
 	history:[],
 	start:history.length,
 	cursor:history.length - 1,
@@ -86,6 +86,9 @@ export const Client = {
 			
 		}
 		return search
+	},
+	refreshState: () => {
+		Client.replaceState(location.href)
 	},
 	pushState: (search, scroll = true) => {
 		search = Client.fixsearch(search)
@@ -241,7 +244,15 @@ const loadAll = (layers, promises = []) => {
 			promises.push(promise)
 		}
 		if (layer.json) {
-			let promise = fetch(layer.json).then(res => res.json()).then(data => {
+			let promise = fetch(layer.json).then(res => {
+				if (res.status != 200) {
+					location.reload()
+					return new Promise(() => {})//reload сразу не происходит, надо зависнуть
+				}
+				const type = res.headers.get('Content-Type')
+				if (~type.indexOf('text/html')) return res.text()
+				return res.json()
+			}).then(data => {
 				layer.sys.data = data
 			})
 			promises.push(promise)

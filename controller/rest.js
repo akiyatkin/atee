@@ -4,22 +4,39 @@ import { readFile, utimes } from "fs/promises"
 
 import { Meta } from "./Meta.js"
 import { parse, explode, split } from './Spliter.js'
-import { whereisit } from './whereisit.js'
+
 import { loadJSON, router } from './router.js'
 import { Access } from '@atee/controller/Access.js'
 import { Once } from './Once.js'
 import { SITEMAP_XML, ROBOTS_TXT } from '/-controller/layout.html.js'
-
+import { whereisit } from './whereisit.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 
 
 export const meta = new Meta()
 
-meta.addAction('access', view => {
+// meta.addArgument('cookie', (view, cookie) => {
+// 	return parse(cookie, '; ')
+// })
+meta.addArgument('cookie')
+meta.addHandler('admin', async (view) => {
+	const { cookie } = await view.gets(['cookie'])
+	view.ans.status = 403
+	view.ans.nostore = true
+	if (!await Access.isAdmin(cookie)) return view.err('Access denied')
+})
+// meta.addArgument('password')
+// meta.addAction('set-access', async view => {
+// 	const { password } = await view.gets(['password'])
+// })
+meta.addAction('access', async view => {
+	const { cookie } = await view.gets(['cookie'])
+	view.ans['admin'] = await Access.isAdmin(cookie)
 	view.ans['UPDATE_TIME'] = Access.getUpdateTime()
 	view.ans['ACCESS_TIME'] = Access.getAccessTime()
 	view.ans['VIEW_TIME'] = Date.now()
+	view.ans.nostore = true
 	return view.ret()
 })
 meta.addAction('set-access', view => {
@@ -27,14 +44,13 @@ meta.addAction('set-access', view => {
 	return view.ret()
 })
 meta.addAction('set-update', async view => {
+	const { cookie } = await view.gets(['admin'])
 	const time = new Date();
 	await utimes('../reload', time, time)
 	return view.ret()
 })
 
-meta.addArgument('cookie', (view, cookie) => {
-	return parse(cookie, '; ')
-})
+
 meta.addFunction('int', (view, n) => Number(n))
 meta.addFunction('array', (view, n) => explode(',', n))
 meta.addFunction('checksearch', (view, n) => {
@@ -192,7 +208,7 @@ meta.addAction('sitemap', async view => {
 	*/
 	
 	const list = []
-	const date = new Date(Access.getUpdateTime() * 1000)
+	const date = new Date(Access.getUpdateTime())
 	let dd = date.getDate();
 	if (dd < 10) dd = '0' + dd;
 	let mm = date.getMonth() + 1; // месяц 1-12
@@ -202,7 +218,7 @@ meta.addAction('sitemap', async view => {
 	let promise = Promise.resolve()
 	runByIndex(rule, async (index, path) => {
 		if (~path.indexOf(false)) return
-		if (~['404','500'].indexOf(path[0])) return
+		if (~['404','403','500'].indexOf(path[0])) return
 
 		if (index.ready_head.jsontpl) {
 			const req = {path, get: {}}
@@ -211,11 +227,16 @@ meta.addAction('sitemap', async view => {
 		if (index.ready_head.json) {
 			const json = index.ready_head.json
 			promise = promise.then(() => loadJSON(json, client).then(data => {
-				index.ready_head = {...index.ready_head, ...data}
-				list.push({
-					...index.ready_head,
-					modified,
-					href: path.join('/')
+				if (!Array.isArray(data)) data = [data]
+				let h = path.join('/')
+				data.forEach(data => {
+					const href = data.child ? h + '/' + data.child : h
+					index.ready_head = {...index.ready_head, ...data}
+					list.push({
+						...index.ready_head,
+						modified,
+						href
+					})
 				})
 			}))
 		} else {
@@ -236,6 +257,7 @@ meta.addAction('sitemap', async view => {
 // })
 meta.addArgument('client')
 meta.addAction('layers', async view => {
+	view.ans.nostore = true
 	const {
 		pv: prev, nt: next, host, cookie, st: access_time, ut: update_time, vt: view_time, gs: globals 
 	} = await view.gets(['pv', 'ip', 'nt', 'host', 'cookie', 'st', 'ut', 'gs', 'vt'])
@@ -346,14 +368,20 @@ const getDiff = (players, nlayers, layers = []) => {
 
 
 const getIndex = (rule, route, view_time, options = {push: [], head: {}}, status = 200) => {
-	//route {path, get}
-
-	if (route.path && (!rule.childs || !rule.childs[route.path])) {
+	const crumb = route.crumbs ? route.crumbs[0] : route.path
+	if (route.path && (!rule.childs || !rule.childs[crumb])) {
 		if (route.path == '404') return []
+
 		return getIndex(rule, {path:'404', get: route.get}, view_time, options, 404)
 	}	
-	const index = route.path ? rule.childs[route.path] : rule
-	const req = {path:route.path, get: route.get, view_time}
+	const index = route.path ? rule.childs[crumb] : rule
+	const controller_request = {
+		path: route.path, 
+		get: route.get, 
+		crumb: crumb,
+		child: route.crumbs[1] || '', 
+		view_time
+	}
 	//const req = { get: route.get, host, cookie, root }
 	runByRootLayer(index.root, layer => {
 		const ts = layer.ts
@@ -361,10 +389,10 @@ const getIndex = (rule, route, view_time, options = {push: [], head: {}}, status
 		if (layer.name) layer.tpl = rule.tpl[layer.name]
 		
 		if (rule.parsedtpl && rule.parsedtpl[ts]) {
-			layer.parsed = interpolate(rule.parsedtpl[ts], req)
+			layer.parsed = interpolate(rule.parsedtpl[ts], controller_request)
 		}
 		if (rule.jsontpl && rule.jsontpl[ts]) {
-			layer.json = interpolate(rule.jsontpl[ts], req)
+			layer.json = interpolate(rule.jsontpl[ts], controller_request)
 		} else {
 			if (rule.json && rule.json[ts]) layer.json = rule.json[ts]
 		}
@@ -374,25 +402,31 @@ const getIndex = (rule, route, view_time, options = {push: [], head: {}}, status
 
 meta.addAction('sitemap.xml', async view => {
 	const { sitemap, host } = await view.gets(['sitemap','host'])
+	view.ans.ext = 'xml'
 	return SITEMAP_XML( sitemap, { host } )
 })
 meta.addAction('robots.txt', async view => {
 	const { host } = await view.gets(['host'])
+	view.ans.ext = 'txt'
 	return ROBOTS_TXT( true, { host } )
 })
 export const rest = async (query, get, client) => {
+	if (query == 'set-admin') {
+		const result = await Access.isAdmin(get.password)
+		return { ans:{result}, status: 200, nostore: true, ext: 'json', 
+			headers: {
+				'Set-Cookie':'-controller=' + (get.password ?? '') + '; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT'
+			}
+		}	
+	}
 	const req = {root:'', ...get, ...client, client}
 	const ans = await meta.get(query, req)
-	if (query == 'layers') {
-		delete ans.push
-	}
-	if (query == 'sitemap.xml') {
-		return { ans, ext: 'xml', status: 200, nostore: false }
-	} else if (query == 'robots.txt') {
-		return { ans, ext: 'txt', status: 200, nostore: false }
-    } else if (~query.indexOf('set-') || ~[ 'access', 'layers' ].indexOf(query)) {
-		return { ans, status: 200, nostore: true, ext: 'json' }
-	} else {
-		return { ans, status: 200, nostore: false, ext: 'json' }
-	}
+	
+	const { ext = 'json', status = 200, nostore = ~query.indexOf('set-')} = ans
+	delete ans.status
+	delete ans.nostore
+	delete ans.ext
+	delete ans.push
+	return { ans, status, nostore, ext }
+	
 }

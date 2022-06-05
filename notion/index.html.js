@@ -3,6 +3,7 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 <html>
 	<head>
 		${HEAD(...args)}
+		<base href="/@atee/notion/">
 		<link rel="icon" type="/image/svg+xml" href="/images/favicon.svg">
 		<link rel="preload" as="style" href="/-modal/style.css" onload="this.onload=null;this.rel='stylesheet'">
 		<link rel="preload" as="style" href="/-controller/animate.css" onload="this.onload=null;this.rel='stylesheet'">
@@ -11,10 +12,8 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 	</head>
 	<body style="padding:10px; max-width: 1200px">
 		<header id="HEADER">${HEADER(...args)}</header>
-		<main id="BODY"></main>
-		<footer id="FOOTER">
-
-		</footer>
+		<main id="MAIN"></main>
+		<footer id="FOOTER"></footer>
 	</body>
 </html>
 `
@@ -24,3 +23,4 @@ export const HEADER = (data, {root, host}) => `
 		<a href="/">${host}</a>
 	</div>
 `
+

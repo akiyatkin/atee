@@ -5,6 +5,9 @@ export const HEAD = (data, { head }) =>
 	<meta name="description" content="${ head.description ?? '' }">
 	<meta property="og:image" content="${ head.image_src ?? '' }">
 	<link rel="image_src" href="${ head.image_src ?? '' }">
+
+	<link rel="preload" as="style" href="/-controller/animate.css" onload="this.onload=null;this.rel='stylesheet'">
+	
 	<script type="module">
 		import { Client } from "/-controller/Client.js"
 		Client.follow()
@@ -13,11 +16,14 @@ export const HEAD = (data, { head }) =>
 export const ROBOTS_TXT = (data, { host }) => `Host: ${host}
 Sitemap: https://${host}/sitemap.xml`
 
-export const ER500 = (data, { host, path }) => `	
-	<p>${host}/<b>${path}</b> &mdash; ошибка на сервере, код 500</p>
+export const ER500 = (data, { root, host, path, search }) => `	
+	<p>${host}<b>${search}</b> &mdash; ошибка на сервере, код 500</p>
 `
-export const ER404 = (data, { host, path }) => `
-	<p>${host}/<b>${path}</b> &mdash; страница не найдена, код 404</p>
+export const ER404 = (data, { root, host, path, search }) => `
+	<p>${host}<b>${search}</b> &mdash; страница не найдена, код 404</p>
+`
+export const ER403 = (data, { root, host, path, search }) => `
+	<p>${host}<b>${search}</b> &mdash; доступ закрыт, код 403</p>
 `
 
 export const SITEMAP_XML = (data, { host }) => `<?xml version="1.0" encoding="UTF-8"?>

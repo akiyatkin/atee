@@ -2,13 +2,59 @@
 	"index":"index:ROOT",
 	"layout":{
 		"index:ROOT": {
-			"BODY":"layout:ROOT"
+			"MAIN":"layout:ROOT"
 		}
 	},
+	"childs":{
+		"404":{
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"controller:ER404"
+				}
+			}
+		},
+		"403":{
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"controller:ER403"
+				}
+			}
+		},
+		"500":{
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"controller:ER500"
+				}
+			}
+		},
+		"list":{
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"layout:LIST"
+				}
+			}	
+		},
+		"page":{
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"layout:PAGE"
+				}
+			}	
+		}
+
+	},
+	"parsedtpl":{
+		"layout:LIST":"${view_time}"
+	},
 	"json":{
-		"layout:ROOT":"/-notion/get-state"
+		"layout:ROOT":"/-notion/get-state",
+		"layout:LIST":"/-notion/get-list"
+	},
+	"jsontpl":{
+		"layout:PAGE":"/-notion/get-page?id=${child}"
 	},
 	"tpl":{
+		"controller":"/-controller/layout.html.js",
 		"index":"/-notion/index.html.js",
 		"layout":"/-notion/layout.html.js"
 	}

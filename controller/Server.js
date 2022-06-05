@@ -121,11 +121,12 @@ export const Server = {
 				    info = await controller(res, client, crumb) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
                     status = Math.max(info.status, status)
                 } catch (e) {
-                    console.log(500, e)
-                    req.nt = '/500'
+                	console.error(e)
+                	status = e.status || 500
+                	const root = crumb.root ? '/' + crumb.root + '/' : '/'
+                    req.nt = root + status
                     res = await meta.get('layers', req)
                     info = await controller(res, client, crumb)
-                    status = 500
                 }
 
 				if (res.push.length) response.setHeader('Link', res.push.join(','));
@@ -169,9 +170,9 @@ const getHTML = async (layer, { head, client, crumb }) => {
 			search, secure, get,
 			rest, query, restroot
 		} = await router(json)
-        if (!rest) throw 500
+        if (!rest) throw { status: 500 }
 		res = {...res, ...(await rest(query, get, client))}
-        if (res.status == 500) throw 500
+        if (res.status != 200) throw { status: res.status }
 	
 		status = Math.max(status, res.status) //404 может быть только тут
 		nostore = Math.max(nostore, res.nostore)

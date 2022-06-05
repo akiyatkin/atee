@@ -11,6 +11,11 @@ const getExt = (str) => {
     const ext = ~i ? str.slice(i + 1) : ''
     return ~i && !ext ? true : ext
 }
+const getName = (str) => {
+    const i = str.lastIndexOf('.')
+    const name = ~i ? str.slice(0, i) : file
+    return name
+}
 export const pathparse = (request) => {
     //У request всегда есть ведущий /слэш
 	request = request.slice(1);

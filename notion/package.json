@@ -1,19 +1,22 @@
 {
-  "name": "@atee/notion",
-  "version": "1.0.1",
-  "type": "module",
-  "description": "",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/akiyatkin/atee.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/akiyatkin/atee/issues"
-  },
-  "homepage": "https://github.com/akiyatkin/atee#readme"
+	"name": "@atee/notion",
+	"version": "1.0.1",
+	"type": "module",
+	"description": "",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/akiyatkin/atee.git"
+	},
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/akiyatkin/atee/issues"
+	},
+	"homepage": "https://github.com/akiyatkin/atee#readme",
+	"dependencies": {
+		"notion-api-js": "^2.4.0"
+	}
 }

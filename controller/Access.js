@@ -1,14 +1,26 @@
+
 const STORE = {}
 export const Access = {
+	isAdmin: async (cookie) => {
+		try {
+			const {default:{access:PASS}} = await import('/data/.controller.json', {assert: {type: "json"}})
+			if (cookie === PASS) return true
+			let pass = cookie.match('(^|;)?\-controller=([^;]*)(;|$)')
+			if (!pass) return false
+			pass = decodeURIComponent(pass[2])
+			return pass === PASS
+		} catch (e) {
+			return false
+		}
+	},
 	getStore: (name, args) => {
 		const hash = JSON.stringify(args)
 		if (!STORE[name]) STORE[name] = {}
 		if (!STORE[name][hash]) STORE[name][hash] = {}
 		return STORE[name][hash]
 	},
-	now: () => Math.round(Date.now() / 1000),
 	setAccessTime: () => {
-		ACCESS_TIME = Access.now()
+		ACCESS_TIME = Date.now()
 		for (const i in STORE) delete STORE[i]
 	},
 	getAccessTime: () => ACCESS_TIME,
@@ -21,5 +33,5 @@ export const Access = {
 		return store.result
 	}
 }
-const UPDATE_TIME = Access.now()
-let ACCESS_TIME = Access.now()
+const UPDATE_TIME = Date.now()
+let ACCESS_TIME = Date.now()

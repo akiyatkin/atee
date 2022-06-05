@@ -1,0 +1,20 @@
+{
+	"tpl":{
+		"index":"/-controller/index.html.js"
+	},
+	"index":"index:ROOT",
+	"layout":{
+		"index:ROOT":{
+			"MAIN":"index:MAIN"
+		}
+	},
+	"json":{
+		"index:MAIN":"/-controller/access"
+	},
+	"animate":{
+		"index:MAIN":"none"
+	},
+	"parsedtpl":{
+		"index:MAIN":"${view_time}"	
+	}
+}
