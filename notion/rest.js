@@ -28,13 +28,12 @@ meta.addAction('set-del', async (view) => {
 })
 meta.addAction('get-page', async (view) => {
 	const { id } = await view.gets(['id','admin'])
-	const html = await Notion.getHtml(id)
-	view.ans.ext = 'html'
-	if (!html) {
+	const page = await Notion.getData(id)
+	if (!page) {
 		view.ans.status = 404
-		return ''
+		return view.err()
 	}
-	return html
+	return page
 })
 meta.addArgument('cookie')
 meta.addHandler('admin', async (view) => {

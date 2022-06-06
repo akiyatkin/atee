@@ -46,4 +46,16 @@ const fileitem = ({ Name, id, props, Edited, Loaded }) => `
 `
 const date = (time) => time ? new Date(time).toLocaleDateString('ru-RU', {dateStyle:'short'}) : ''
 const prop = ([key, {type, val}]) => `<div>${key}: ${val}</div>`
-export const PAGE = (html) => html
+export const PAGE = (page) => `
+	${page.cover?cover(page.cover):''}
+	<div style="max-width: 700px">
+		<small style="float:right" title="Последние изменения">${date(page.Edited)}</small>
+		<h1>${page.Name}</h1>
+		${page.html}
+	</div>
+`
+const cover = (cover) => `
+	<div style="margin-top: 1rem; 
+		background-image:url('${cover}&fm=webp&q=75&auto=compress&w=1360&h=200&fit=crop'); 
+		background-size: cover; height:200px; background-position: center;"></div>
+`

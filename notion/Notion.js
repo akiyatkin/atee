@@ -44,6 +44,44 @@ export const Notion = {
 		    Notion.pages[Nick] = json
 		}
 	},
+	getPageData: (obj) => {
+		const props = {}
+		let Edited = 0;
+		let Created = 0;
+		for (const prop in obj.properties) {
+			const p = obj.properties[prop]
+			const type = p.type
+
+			let val = ''
+			if (~['Name','Public','Nick'].indexOf(prop)) {
+				continue
+			} else if (~['rich_text'].indexOf(type)) {
+				val = p.rich_text.map(rt => rt.plain_text).join(', ')
+			} else if (~['title'].indexOf(type)) {
+				val = p[type].map(rt => rt.plain_text).join(', ')
+			} else if (type == 'checkbox') {
+				val = p[type]
+			} else if (~['created_time','last_edited_time'].indexOf(type)) {
+				val = new Date(p[type]).getTime()	
+				if (type == 'last_edited_time') Edited = val
+				if (type == 'created_time') Created = val
+				continue
+			} else if (~['created_by'].indexOf(type)) {
+				continue
+			} else if (~['multi_select'].indexOf(type)) {
+				val = p[type].map(v => v.name).join(', ')
+			} else {
+				console.log(prop, p)
+			}
+			if (!val) continue
+			props[prop] = { type, val }
+		}
+		const Nick = obj.properties.Nick.rich_text[0].plain_text
+		const id = obj.id
+		const Name = obj.properties.Name.title[0].plain_text
+		const data = { props, Nick, Name, id, Created, Edited }
+		return data
+	},
 	getList: async () => {
 		const CONFIG = await Notion.getConfig()
 		if (!CONFIG) return []
@@ -63,45 +101,10 @@ export const Notion = {
 		
 
 		for (let i = 0, l = res.results.length; i < l; i++) {
-			const obj = res.results[i]
-			
-			const props = {}
-			let Edited = 0;
-			let Created = 0;
-			for (const prop in obj.properties) {
-				const p = obj.properties[prop]
-				const type = p.type
-
-				let val = ''
-				if (~['Name','Public','Nick'].indexOf(prop)) {
-					continue
-				} else if (~['rich_text'].indexOf(type)) {
-					val = p.rich_text.map(rt => rt.plain_text).join(', ')
-				} else if (~['title'].indexOf(type)) {
-					val = p[type].map(rt => rt.plain_text).join(', ')
-				} else if (type == 'checkbox') {
-					val = p[type]
-				} else if (~['created_time','last_edited_time'].indexOf(type)) {
-					val = new Date(p[type]).getTime()	
-					if (type == 'last_edited_time') Edited = val
-					if (type == 'created_time') Created = val
-					continue
-				} else if (~['created_by'].indexOf(type)) {
-					continue
-				} else if (~['multi_select'].indexOf(type)) {
-					val = p[type].map(v => v.name).join(', ')
-				} else {
-					console.log(prop, p)
-				}
-				if (!val) continue
-				props[prop] = { type, val }
-			}
-			const Nick = obj.properties.Nick.rich_text[0].plain_text
-			const id = obj.id
-			const Name = obj.properties.Name.title[0].plain_text
-			pages[Nick] = { props, Nick, Name, id, Created, Edited, ...pages[Nick] }
-		}
-		console.log('123',pages)
+			const page = res.results[i]
+			const data = Notion.getPageData(page)
+			pages[data.Nick] = {...data, ...pages[data.Nick]}
+		}		
 		return Object.values(pages)
 	},
 	load: async (id) => {
@@ -125,32 +128,66 @@ export const Notion = {
 		Notion.prepare()
 		return r
 	},
-	getHtml: async (id) => {
-		const obj = await Notion.getData(id)
-		return obj.html
-	},
 	getData: async (id) => {
 		const connect = await Notion.getConnect()
 		const page = await connect.pages.retrieve({
 			page_id: id,
 		});
+		const data = Notion.getPageData(page)
+		const cover = page.cover?.external?.url
 		const Name = page.properties.Name.title[0].plain_text
 		const block = await connect.blocks.retrieve({
 			block_id: id,
 		});
 		const html = await Notion.getBlockHtml(block)
 		const Nick = page.properties.Nick.rich_text[0].plain_text
-		return { html:'<h1>'+ Name +'</h1>' + html, Nick, Name }
+		return { html: html, Nick, Name, cover, ...data }
+	},
+	getRichHtml: (rich) => {
+		const strset  = {
+			'bold': 'b',
+			'italic': 'i',
+			'code': 'code',
+			'strikethrough': 'strike'
+		}
+		return rich.map((rich) => {
+			let html = ''
+			for (const i in rich.annotations) {
+				const v = rich.annotations[i]
+				if (!v) continue
+				if (strset[i]) html += '<'+strset[i]+'>'
+			}
+			if (rich.href) {
+				html +='<a target="about:blank" href="'+rich.href+'">'
+			}
+			html += rich.plain_text	
+			if (rich.href) {
+				html += '</a>'
+			}
+			for (const i in rich.annotations) {
+				const v = rich.annotations[i]
+				if (!v) continue
+				if (strset[i]) html += '</'+strset[i]+'>'
+			}
+			return html
+		}).join('')
 	},
 	getBlockHtml: async (block, ul = false) => {
 		let html = ''
-		if (block.type == 'paragraph') {
-			html += '<p>'+block.paragraph.rich_text[0].plain_text+'</p>'
-		} else if (block.type == 'bulleted_list_item') {
-			html += '<li>'+block.bulleted_list_item.rich_text[0].plain_text+'</li>'
-			//console.log(block)
+		const preset = {
+			"heading_3":"h3",
+			"heading_2":"h2",
+			"heading_1":"h1",
+			"numbered_list_item":"li",
+			"bulleted_list_item":"li",
+			"paragraph":"p",
+			"callout":"blockquote"
+		}
+		const type = block.type
+		if (preset[type]) {
+			html += '<'+preset[type]+'>'+ (block[type].icon?.type == 'emoji' ? block[type].icon.emoji + ' ' : '') +  Notion.getRichHtml(block[type].rich_text)
 		} else {
-			console.log(block.type)
+			console.log(3, block.type)
 		}
 		
 		if (block.has_children) {
@@ -160,22 +197,55 @@ export const Notion = {
 				page_size: 500,
 			});
 			let ul = false
+			let ol = false
 			for (let i = 0, l = res.results.length; i < l; i++) {
+				const last = i == l - 1
 				const block = res.results[i]
-				if (block.type == 'bulleted_list_item') {
+				const type = block.type
+				if (type == 'bulleted_list_item') {
 					if (!ul) {
 						html += '<ul>'
 						ul = true
 					}
 				}
-				html += await Notion.getBlockHtml(block)
-				if (block.type != 'bulleted_list_item') {
+				if (type == 'numbered_list_item') {
+					if (!ol) {
+						html += '<ol>'
+						ol = true
+					}
+				}
+				if (type != 'bulleted_list_item' || last) {
 					if (ul) {
 						ul = false
 						html+='</ul>'
 					}
 				}
+				if (type != 'numbered_list_item' || last) {
+					if (ol) {
+						ol = false
+						html+='</ol>'
+					}
+				}
+				const h = await Notion.getBlockHtml(block)
+				html += h
+				if (last) {
+					if (ul) {
+						ul = false
+						html+='</ul>'
+					}
+				}
+				if (last) {
+					if (ol) {
+						ol = false
+						html+='</ol>'
+					}
+				}
+				
 			}
+		}
+		
+		if (preset[type]) {
+			html += '</'+preset[type]+'>'
 		}
 		return html
 		
