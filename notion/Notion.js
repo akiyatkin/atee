@@ -1,4 +1,5 @@
 import Client from "/node_modules/@notionhq/client/build/src/Client.js"
+//import Client from "@notionhq/client"
 import fs from 'fs/promises'
 import { whereisit } from '/-controller/whereisit.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
@@ -103,7 +104,7 @@ export const Notion = {
 		for (let i = 0, l = res.results.length; i < l; i++) {
 			const page = res.results[i]
 			const data = Notion.getPageData(page)
-			pages[data.Nick] = {...data, ...pages[data.Nick]}
+			pages[data.Nick] = {...pages[data.Nick], ...data}
 		}		
 		return Object.values(pages)
 	},
@@ -143,6 +144,7 @@ export const Notion = {
 		const Nick = page.properties.Nick.rich_text[0].plain_text
 		return { html: html, Nick, Name, cover, ...data }
 	},
+	
 	getRichHtml: (rich) => {
 		const strset  = {
 			'bold': 'b',
@@ -150,7 +152,7 @@ export const Notion = {
 			'code': 'code',
 			'strikethrough': 'strike'
 		}
-		return rich.map((rich) => {
+		const html = rich.map((rich) => {
 			let html = ''
 			for (const i in rich.annotations) {
 				const v = rich.annotations[i]
@@ -160,7 +162,10 @@ export const Notion = {
 			if (rich.href) {
 				html +='<a target="about:blank" href="'+rich.href+'">'
 			}
-			html += rich.plain_text	
+			html += rich.plain_text.replace(/[<>]/g, tag => ({
+			      '<': '&lt;',
+			      '>': '&gt;'
+		    }[tag]))
 			if (rich.href) {
 				html += '</a>'
 			}
@@ -171,6 +176,8 @@ export const Notion = {
 			}
 			return html
 		}).join('')
+		console.log(html)
+		return html
 	},
 	getBlockHtml: async (block, ul = false) => {
 		let html = ''

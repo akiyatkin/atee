@@ -1,6 +1,6 @@
 {
 	"name": "@atee/notion",
-	"version": "1.0.2",
+	"version": "1.0.5",
 	"type": "module",
 	"description": "",
 	"scripts": {
@@ -17,6 +17,6 @@
 	},
 	"homepage": "https://github.com/akiyatkin/atee#readme",
 	"dependencies": {
-		"notion-api-js": "^2.4.0"
+		"@notionhq/client": "^1.0.4"
 	}
 }

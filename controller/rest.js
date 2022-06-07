@@ -219,7 +219,7 @@ meta.addAction('sitemap', async view => {
 	runByIndex(rule, async (index, path) => {
 		if (~path.indexOf(false)) return
 		if (~['404','403','500'].indexOf(path[0])) return
-
+		if (index.ready_head.hidden) return			
 		if (index.ready_head.jsontpl) {
 			const req = {path, get: {}}
 			index.ready_head.json = interpolate(index.ready_head.jsontpl, req)
