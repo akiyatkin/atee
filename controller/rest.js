@@ -402,12 +402,10 @@ const getIndex = (rule, route, view_time, options = {push: [], head: {}}, status
 
 meta.addAction('sitemap.xml', async view => {
 	const { sitemap, host } = await view.gets(['sitemap','host'])
-	view.ans.ext = 'xml'
 	return SITEMAP_XML( sitemap, { host } )
 })
 meta.addAction('robots.txt', async view => {
 	const { host } = await view.gets(['host'])
-	view.ans.ext = 'txt'
 	return ROBOTS_TXT( true, { host } )
 })
 export const rest = async (query, get, client) => {
@@ -421,7 +419,8 @@ export const rest = async (query, get, client) => {
 	}
 	const req = {root:'', ...get, ...client, client}
 	const ans = await meta.get(query, req)
-	
+	if (query == 'robots.txt') return { ans, ext:'txt' }
+	if (query == 'sitemap.xml') return { ans, ext:'xml' }
 	const { ext = 'json', status = 200, nostore = ~query.indexOf('set-')} = ans
 	delete ans.status
 	delete ans.nostore
