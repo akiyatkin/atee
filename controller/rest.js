@@ -372,7 +372,7 @@ const getIndex = (rule, route, view_time, options = {push: [], head: {}}, status
 	if (route.path && (!rule.childs || !rule.childs[crumb])) {
 		if (route.path == '404') return []
 
-		return getIndex(rule, {path:'404', get: route.get}, view_time, options, 404)
+		return getIndex(rule, {crumbs:['404'], path:'404', get: route.get}, view_time, options, 404)
 	}	
 	const index = route.path ? rule.childs[crumb] : rule
 	const controller_request = {
