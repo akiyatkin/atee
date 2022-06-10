@@ -311,9 +311,16 @@ meta.addAction('layers', async view => {
 			view.ans.head.json = interpolate(view.ans.head.jsontpl, req)
 		}
 		if (view.ans.head.json) {
+			const child = nroute.crumbs ? nroute.crumbs[1] : nroute.path
 			const client = await view.get('client')
 			const json = view.ans.head.json
-			const data = await loadJSON(json, client)
+			const data = await loadJSON(json, client).then(data => {
+				if (!Array.isArray(data)) data = [data]
+				let h = path.join('/')
+				return data.find(data => {
+					if (data.child == child) return data
+				})
+			});
 			view.ans.head = {...view.ans.head, ...data}
 		}
 		view.ans.layers = [nopt.root]
@@ -339,9 +346,16 @@ meta.addAction('layers', async view => {
 			view.ans.head.json = interpolate(view.ans.head.jsontpl, req)
 		}
 		if (view.ans.head.json) {
+			const child = nroute.crumbs ? nroute.crumbs[1] : nroute.path
 			const client = await view.get('client')
 			const json = view.ans.head.json
-			const data = await loadJSON(json, client)
+			const data = await loadJSON(json, client).then(data => {
+				if (!Array.isArray(data)) data = [data]
+				let h = path.join('/')
+				return data.find(data => {
+					if (data.child == child) return data
+				})
+			});
 			view.ans.head = {...view.ans.head, ...data}
 		}
 	}
