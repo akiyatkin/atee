@@ -7,7 +7,7 @@ export const meta = new Meta()
 
 meta.addArgument('nick')
 meta.addArgument('id')
-meta.addAction('get-list', async (view) => {
+meta.addAction('get-list', async (view) => {	
 	const {  } = await view.gets(['admin'])
 	view.ans.pages = await Notion.getList()
 	return view.ret()

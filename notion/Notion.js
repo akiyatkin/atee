@@ -72,11 +72,12 @@ export const Notion = {
 			} else if (~['multi_select'].indexOf(type)) {
 				val = p[type].map(v => v.name).join(', ')
 			} else {
-				console.log(prop, p)
+				console.log(4, prop, p)
 			}
 			if (!val) continue
 			props[prop] = { type, val }
 		}
+
 		const Nick = obj.properties.Nick.rich_text[0].plain_text
 		const id = obj.id
 		const Name = obj.properties.Name.title[0].plain_text
@@ -92,10 +93,17 @@ export const Notion = {
 		const res = await connect.databases.query({
 			database_id: CONFIG.database_id,
 			filter: {
-				property: "Public",
-				checkbox: {
-					"equals": true
-				}
+				and:[{
+					property: "Public",
+					checkbox: {
+						"equals": true
+					}
+				},{
+					property: "Nick",
+					"rich_text": {
+			            "is_not_empty": true
+			        }
+				}]
 			}
 		})
 
@@ -176,7 +184,6 @@ export const Notion = {
 			}
 			return html
 		}).join('')
-		console.log(html)
 		return html
 	},
 	getBlockHtml: async (block, ul = false) => {
@@ -221,32 +228,34 @@ export const Notion = {
 						ol = true
 					}
 				}
-				if (type != 'bulleted_list_item' || last) {
-					if (ul) {
-						ul = false
-						html+='</ul>'
-					}
-				}
-				if (type != 'numbered_list_item' || last) {
+				
+				if (type != 'numbered_list_item') {
 					if (ol) {
 						ol = false
 						html+='</ol>'
+					}
+				}
+				if (type != 'bulleted_list_item') {
+					if (ul) {
+						ul = false
+						html+='</ul>'
 					}
 				}
 				const h = await Notion.getBlockHtml(block)
 				html += h
 				if (last) {
-					if (ul) {
-						ul = false
-						html+='</ul>'
-					}
-				}
-				if (last) {
 					if (ol) {
 						ol = false
 						html+='</ol>'
 					}
 				}
+				if (last) {
+					if (ul) {
+						ul = false
+						html+='</ul>'
+					}
+				}
+				
 				
 			}
 		}

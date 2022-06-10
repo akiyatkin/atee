@@ -48,7 +48,7 @@ const date = (time) => time ? new Date(time).toLocaleDateString('ru-RU', {dateSt
 const prop = ([key, {type, val}]) => `<div>${key}: ${val}</div>`
 export const PAGE = (page) => `
 	${page.cover?cover(page.cover):''}
-	<div style="max-width: 700px">
+	<div style="max-width: 800px">
 		<small style="float:right" title="Последние изменения">${date(page.Edited)}</small>
 		<h1>${page.Name}</h1>
 		${page.html}
