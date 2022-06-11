@@ -74,6 +74,7 @@ this.addEventListener('fetch', event => {
 	let request = new Request(url, options)
 
 	//console.log(event.request.url, UPDATE_TIME)
-	let responce = fetch(request)
-	event.respondWith(responce)
+	let response = fetch(request)
+	response.headers.set('Cache-Control', 'no-store');
+	event.respondWith(response)
 });

@@ -33,7 +33,8 @@ meta.addAction('get-page', async (view) => {
 		view.ans.status = 404
 		return view.err()
 	}
-	return page
+	view.ans.page = page
+	return view.ret()
 })
 meta.addArgument('cookie')
 meta.addHandler('admin', async (view) => {

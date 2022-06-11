@@ -148,7 +148,8 @@ export const Notion = {
 		const block = await connect.blocks.retrieve({
 			block_id: id,
 		});
-		const html = await Notion.getBlockHtml(block)
+		let html = await Notion.getBlockHtml(block)
+		if (html) html = '<div class="notion">' + html + '</div>'
 		const Nick = page.properties.Nick.rich_text[0].plain_text
 		return { html: html, Nick, Name, cover, ...data }
 	},
@@ -199,7 +200,17 @@ export const Notion = {
 		}
 		const type = block.type
 		if (preset[type]) {
-			html += '<'+preset[type]+'>'+ (block[type].icon?.type == 'emoji' ? block[type].icon.emoji + ' ' : '') +  Notion.getRichHtml(block[type].rich_text)
+			html += '<'+preset[type]+'>'
+
+			if (block[type].icon?.type == 'emoji') {
+				html += `<div class="icon">${block[type].icon.emoji}</div>`
+			}
+			// if (block[type].icon?.type == 'emoji') {
+			// 	html += '<'+preset[type]+'>'+ block[type].icon.emoji + ' ' +  Notion.getRichHtml(block[type].rich_text)	
+			// } else {
+			html += Notion.getRichHtml(block[type].rich_text)	
+			//}
+			
 		} else {
 			console.log(3, block.type)
 		}

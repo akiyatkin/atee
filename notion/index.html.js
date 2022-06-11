@@ -7,8 +7,8 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 		<link rel="icon" type="/image/svg+xml" href="/images/favicon.svg">
 		<link rel="preload" as="style" href="/-modal/style.css" onload="this.onload=null;this.rel='stylesheet'">
 		<link rel="preload" as="style" href="/-controller/animate.css" onload="this.onload=null;this.rel='stylesheet'">
-		<link rel="stylesheet" href="/-float-label/style.css">
-		<link href="/style.css" rel="stylesheet">
+		<link rel="stylesheet" href="/-notion/style.css">
+		<link rel="stylesheet" href="/style.css">
 	</head>
 	<body style="padding:10px; max-width: 1200px">
 		<header id="HEADER">${HEADER(...args)}</header>

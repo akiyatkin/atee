@@ -14,6 +14,7 @@ export const LIST = (data, {div, root, host}) => `
 		div.addEventListener('click', async e => {
 			const button = e.target.closest('.load')
 			if (!button) return
+			button.disabled = true
 			const id = button.dataset.id
 			const res = await fetch('/-notion/set-load?id=' + id).then(res => res.json())
 			console.log(res)
@@ -22,6 +23,7 @@ export const LIST = (data, {div, root, host}) => `
 		div.addEventListener('click', async e => {
 			const button = e.target.closest('.del')
 			if (!button) return
+			button.disabled = true
 			const id = button.dataset.id
 			const res = await fetch('/-notion/set-del?id=' + id).then(res => res.json())
 			console.log(res)
@@ -46,16 +48,37 @@ const fileitem = ({ Name, id, props, Edited, Loaded }) => `
 `
 const date = (time) => time ? new Date(time).toLocaleDateString('ru-RU', {dateStyle:'short'}) : ''
 const prop = ([key, {type, val}]) => `<div>${key}: ${val}</div>`
-export const PAGE = (page) => `
+export const PAGE = ({ page }) => `
 	${page.cover?cover(page.cover):''}
 	<div style="max-width: 800px">
-		<small style="float:right" title="Последние изменения">${date(page.Edited)}</small>
+		<small style="float:right; margin-left: 2rem" title="Последние изменения">${date(page.Edited)}</small>
 		<h1>${page.Name}</h1>
 		${page.html}
 	</div>
 `
 const cover = (cover) => `
-	<div style="margin-top: 1rem; 
-		background-image:url('${cover}&fm=webp&q=75&auto=compress&w=1360&h=200&fit=crop'); 
-		background-size: cover; height:200px; background-position: center;"></div>
+	<div class="topimage">
+		<style> 
+			.topimage {
+				margin-top: 1rem; margin-bottom: 2rem; display: flex; justify-content: center; overflow:hidden;
+				max-width: 800px;
+				height: 250px
+			}
+			.topimage img {
+				transition: opacity 1s; opacity: 0; 
+				max-height: 100%; 
+				width: auto
+			}
+			@media (max-width: 600px) {
+				.topimage {
+					height: 150px
+				}
+			}
+		</style>
+		<picture>
+			<source srcset="${cover.replace('&crop=entropy','')}&fm=webp&q=75&auto=compress&w=600&h=150&fit=crop" media="(max-width: 600px)"/>
+			<img onload="this.style.opacity=1"
+			src="${cover.replace('&crop=entropy','')}&fm=webp&q=75&auto=compress&w=800&h=250&fit=crop">
+		</picture>
+	</div>
 `
