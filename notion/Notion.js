@@ -1,5 +1,5 @@
-import Client from "/node_modules/@notionhq/client/build/src/Client.js"
-//import Client from "@notionhq/client"
+//import Client from "/node_modules/@notionhq/client/build/src/Client.js"
+import Client from "@notionhq/client"
 import fs from 'fs/promises'
 import { whereisit } from '/-controller/whereisit.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)

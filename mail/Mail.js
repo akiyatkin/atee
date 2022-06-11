@@ -1,5 +1,5 @@
-//import nodemailer from 'nodemailer'
-import nodemailer from '/node_modules/nodemailer/lib/nodemailer.js'
+import nodemailer from 'nodemailer'
+//import nodemailer from '/node_modules/nodemailer/lib/nodemailer.js'
 
 import CONFIG from '/data/.mail.json' assert {type: "json"}
 const transport = nodemailer.createTransport(CONFIG.nodemailer);
