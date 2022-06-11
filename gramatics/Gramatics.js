@@ -9,10 +9,13 @@ export const Gramatics = {
 		}
 		const href = location.href
 		const error = selection.toString()
-		const right = (window.prompt('Ошибка в тексте "' + error + '". Подскажите, пожалуйста, как правильно. (опционально)')||'').replace(/[<>]/g, tag => ({
+		let right = window.prompt('Ошибка в тексте "' + error + '". Подскажите, пожалуйста, как правильно:')
+		if (right === null) return
+		right = ( right || '' ).replace(/[<>]/g, tag => ({
 		      '<': '&lt;',
 		      '>': '&gt;'
-	    }[tag]))		    
+	    }[tag]))
+	    
 	    const data = {href, block, error, right}
 	    await fetch('/-gramatics/set-send', {
 			method: 'POST',
