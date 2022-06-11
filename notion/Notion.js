@@ -1,5 +1,5 @@
 //import Client from "/node_modules/@notionhq/client/build/src/Client.js"
-import Client from "@notionhq/client"
+import { Client } from "@notionhq/client"
 import fs from 'fs/promises'
 import { whereisit } from '/-controller/whereisit.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
@@ -16,7 +16,7 @@ export const Notion = {
 	getConnect: async () => {
 		const CONFIG = await Notion.getConfig()
 		if (!CONFIG) return false
-		const connect = new Client.default({
+		const connect = new Client({
 			auth: CONFIG.secret
 		});
 		Notion.getConnect = () => connect
