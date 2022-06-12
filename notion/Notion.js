@@ -161,6 +161,7 @@ export const Notion = {
 			'code': 'code',
 			'strikethrough': 'strike'
 		}
+		console.log(rich)
 		const html = rich.map((rich) => {
 			let html = ''
 			for (const i in rich.annotations) {
@@ -171,10 +172,14 @@ export const Notion = {
 			if (rich.href) {
 				html +='<a target="about:blank" href="'+rich.href+'">'
 			}
-			html += rich.plain_text.replace(/[<>]/g, tag => ({
-			      '<': '&lt;',
-			      '>': '&gt;'
-		    }[tag]))
+			if (rich.plain_text == '\n') {
+				html += '<br>'
+			} else {
+				html += rich.plain_text.replace(/[<>]/g, tag => ({
+				      '<': '&lt;',
+				      '>': '&gt;'
+			    }[tag]))
+			}
 			if (rich.href) {
 				html += '</a>'
 			}
@@ -198,6 +203,7 @@ export const Notion = {
 			"paragraph":"p",
 			"callout":"blockquote"
 		}
+
 		const type = block.type
 		if (preset[type]) {
 			html += '<'+preset[type]+'>'
