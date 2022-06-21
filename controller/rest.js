@@ -381,19 +381,20 @@ const getDiff = (players, nlayers, layers = []) => {
 }
 
 
-const getIndex = (rule, route, view_time, options = {push: [], head: {}}, status = 200) => {
+const getIndex = (rule, route, view_time, options = {push: [], head: {}}, status = 200, oroute = {}) => {
 	const crumb = route.crumbs ? route.crumbs[0] : route.path
+	const ocrumb = (oroute.crumbs ? oroute.crumbs[0] : oroute.path) || crumb
 	if (route.path && (!rule.childs || !rule.childs[crumb])) {
 		if (route.path == '404') return []
 
-		return getIndex(rule, {crumbs:['404'], path:'404', get: route.get}, view_time, options, 404)
+		return getIndex(rule, {crumbs:['404'], path:'404', get: route.get}, view_time, options, 404, route)
 	}	
 	const index = route.path ? rule.childs[crumb] : rule
 	const controller_request = {
-		path: route.path, 
-		get: route.get, 
-		crumb: crumb,
-		child: route.crumbs[1] || '', 
+		path: oroute.path || route.path, 
+		get: oroute.get || route.get, 
+		crumb: ocrumb,
+		child: oroute.crumbs ? (oroute.crumbs[1] || '') : (route.crumbs[1] || ''), 
 		view_time
 	}
 	//const req = { get: route.get, host, cookie, root }
@@ -403,7 +404,9 @@ const getIndex = (rule, route, view_time, options = {push: [], head: {}}, status
 		if (layer.name) layer.tpl = rule.tpl[layer.name]
 		
 		if (rule.parsedtpl && rule.parsedtpl[ts]) {
+
 			layer.parsed = interpolate(rule.parsedtpl[ts], controller_request)
+			if (ts == 'errors:ER404' )console.log(layer)
 		}
 		if (rule.jsontpl && rule.jsontpl[ts]) {
 			layer.json = interpolate(rule.jsontpl[ts], controller_request)
@@ -435,6 +438,7 @@ export const rest = async (query, get, client) => {
 	const ans = await meta.get(query, req)
 	if (query == 'robots.txt') return { ans, ext:'txt' }
 	if (query == 'sitemap.xml') return { ans, ext:'xml' }
+	if (query == 'layers') ans.status = 200
 	const { ext = 'json', status = 200, nostore = ~query.indexOf('set-')} = ans
 	delete ans.status
 	delete ans.nostore

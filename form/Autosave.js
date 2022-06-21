@@ -56,7 +56,7 @@ const Autosave = {
 		if (inp.type == 'checkbox') {
 			return inp.checked
 		} else if (inp.type == 'radio') {
-			return inp.checked
+			return inp.form.elements[inp.name].value
 		} else if (inp.tagName == 'SELECT') {
 			let val = [...inp.options].filter(option => option.selected).map(option => option.value)
 			if (!inp.multiple) val = val[0]
