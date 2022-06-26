@@ -2,6 +2,7 @@
 import { Client } from "@notionhq/client"
 import fs from 'fs/promises'
 import { whereisit } from '/-controller/whereisit.js'
+import probe from 'probe-image-size';
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 export const Notion = {
@@ -161,7 +162,6 @@ export const Notion = {
 			'code': 'code',
 			'strikethrough': 'strike'
 		}
-		console.log(rich)
 		const html = rich.map((rich) => {
 			let html = ''
 			for (const i in rich.annotations) {
@@ -192,6 +192,21 @@ export const Notion = {
 		}).join('')
 		return html
 	},
+	getPlainText: (rich) => {
+		const text = rich.map((rich) => {
+			let text = ''
+			if (rich.plain_text == '\n') {
+				text += ' '
+			} else {
+				text += rich.plain_text.replace(/[<>]/g, tag => ({
+				      '<': '&lt;',
+				      '>': '&gt;'
+			    }[tag]))
+			}
+			return text
+		}).join('')
+		return text
+	},
 	getBlockHtml: async (block, ul = false) => {
 		let html = ''
 		const preset = {
@@ -216,7 +231,16 @@ export const Notion = {
 			// } else {
 			html += Notion.getRichHtml(block[type].rich_text)	
 			//}
-			
+		} else if (type == 'code') {
+			html += '<pre><code>'
+			if (block[type].icon?.type == 'emoji') {
+				html += `<div class="icon">${block[type].icon.emoji}</div>`
+			}
+			html += Notion.getRichHtml(block[type].rich_text)
+		} else if (type == 'image' && block[type].file?.url) {
+			const img = await probe(block[type].file.url)
+			const caption = Notion.getPlainText(block[type].caption)
+			html += `<p><img title="${caption}" alt="${caption}" width="${img.width}" height="${img.height}" loading="lazy" alt="" style="max-width: 100%; height:auto" src="${block[type].file.url}"></p>`
 		} else {
 			console.log(3, block.type)
 		}
@@ -279,6 +303,8 @@ export const Notion = {
 		
 		if (preset[type]) {
 			html += '</'+preset[type]+'>'
+		} else if (type == 'code') {
+			html += '</code></pre>'
 		}
 		return html
 		
