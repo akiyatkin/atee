@@ -15,7 +15,6 @@ export const ServiceWorker = {
 			const subscription = await serviceWorkerRegistration.pushManager.getSubscription()
 			//if (!subscription) return
 		}
-
-		navigator.serviceWorker.controller.postMessage(access_data)
+		if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage(access_data)
 	}
 }
