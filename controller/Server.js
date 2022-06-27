@@ -73,7 +73,7 @@ export const Server = {
 					ans = false, ext = 'json', status = 200, nostore = false, headers = { } 
 				} = res
 				headers['Content-Type'] ??= TYPES[ext] + '; charset=utf-8'
-				headers['Cache-Control'] ??= nostore ? 'no-store' : 'public, max-age=31536000, immutable'
+				headers['Cache-Control'] ??= nostore ? 'no-store' : 'public, max-age=31536000'
 				if (ans instanceof ReadStream) {
 					ans.on('open', is => {
 						response.writeHead(status, headers)
@@ -132,7 +132,7 @@ export const Server = {
 				if (res.push.length) response.setHeader('Link', res.push.join(','));
 				response.writeHead(status, {
 					'Content-Type': TYPES['html'] + '; charset=utf-8',
-					'Cache-Control': info.nostore ? 'no-store' : 'public, max-age=31536000, immutable'
+					'Cache-Control': info.nostore ? 'no-store' : 'public, max-age=31536000'
 				})
 				return response.end(info.html)
 			} else { //Это может быть новый проект без всего
