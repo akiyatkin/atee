@@ -31,12 +31,13 @@ export const LIST = (data, {div, root, host}) => `
 		})
 	</script>
 `
-const fileitem = ({ Name, id, props, Edited, Loaded }) => `
+const fileitem = ({ finded, Name, id, props, Edited, Loaded }) => `
 	<div style="margin-bottom: 1rem">
 		<a href="page/${id}">${Name}</a>
 		<div style="font-size: 13px; line-height: normal">
-			<div style="color: ${(!Loaded || !Edited || Edited > Loaded) ? 'red' : 'inherit'}">
-				<span title="Edited">${date(Edited)}</span> -> <span title="Loaded">${date(Loaded)}</span>
+			<div>
+				<span style="color: ${(!finded || !Loaded || !Edited || Edited > Loaded) ? 'red' : 'inherit'}" title="Edited">${date(Edited)}</span> -> 
+				<span style="color: ${(!Loaded || !Edited || Edited > Loaded) ? 'red' : 'inherit'}" title="Loaded">${date(Loaded)}</span>
 			</div>
 			${Object.entries(props).map(prop).join('')} 
 		</div>

@@ -32,19 +32,28 @@ export const Notion = {
 	prepare: async () => {
 		const CONFIG = await Notion.getConfig()
 		if (!CONFIG) return []
-		Notion.pages = {}
-		const files = await fs.readdir('./' + CONFIG.dir).catch(() => [])
-
-		for (const file of files) {
+		let files = await fs.readdir('./' + CONFIG.dir).catch(() => [])
+		files = files.filter(file => {
 			const i = file.lastIndexOf('.')
-			if (!~i) return
+			if (!~i) return false
 			const ext = file.slice(i + 1)
-
-			if (ext != 'json') continue
-			const Nick = file.slice(0, i)
-			const json = await fs.readFile('./' + CONFIG.dir + file, 'utf8').then(text => JSON.parse(text))
-		    Notion.pages[Nick] = json
+			if (ext != 'json') return false
+			return true
+		})
+		for (let i = 0, l = files.length; i < l; i++) {
+			files[i] = await fs.readFile('.' + CONFIG.dir + files[i], 'utf8').then(text => JSON.parse(text))
 		}
+
+		files.sort((a, b) => {
+			if (a.Edited < b.Edited) return 1
+			if (a.Edited > b.Edited) return -1
+			return 0
+		})
+		Notion.pages = {}
+		for (let i = 0, l = files.length; i < l; i++) {
+			Notion.pages[files[i].Nick] = files[i]
+		}
+		
 	},
 	getPageData: (obj) => {
 		const props = {}
@@ -93,6 +102,7 @@ export const Notion = {
 		const connect = await Notion.getConnect()
 		const res = await connect.databases.query({
 			database_id: CONFIG.database_id,
+			//sorts: [{ "timestamp": "last_edited_time", "direction": "descending" }],
 			filter: {
 				and:[{
 					property: "Public",
@@ -107,14 +117,12 @@ export const Notion = {
 				}]
 			}
 		})
-
-		
-
 		for (let i = 0, l = res.results.length; i < l; i++) {
 			const page = res.results[i]
 			const data = Notion.getPageData(page)
-			pages[data.Nick] = {...pages[data.Nick], ...data}
-		}		
+			pages[data.Nick] = {...pages[data.Nick], ...data, finded: true}
+		}
+
 		return Object.values(pages)
 	},
 	load: async (id) => {
@@ -130,13 +138,19 @@ export const Notion = {
 		return r
 	},
 	del: async (id) => {
-		const {Nick, html} = await Notion.getData(id)
+		await Notion.init()
 		const CONFIG = await Notion.getConfig()
-		const stat = await fs.stat('./' + CONFIG.dir + '/' + Nick + '.json').catch(() => false)
-		if (!stat) return true;
-		const r = await fs.unlink('./' + CONFIG.dir + '/' + Nick + '.json').then(() => true).catch(() => false)
+		for (const i in Notion.pages) {
+			const page = Notion.pages[i]
+			if (page.id != id) continue
+			const Nick = page.Nick
+			const stat = await fs.stat('./' + CONFIG.dir + '/' + Nick + '.json').catch(() => false)
+			if (!stat) continue;
+			const r = await fs.unlink('./' + CONFIG.dir + '/' + Nick + '.json').then(() => true).catch(() => false)
+			if (!r) return false
+		}
 		Notion.prepare()
-		return r
+		return true
 	},
 	getData: async (id) => {
 		const connect = await Notion.getConnect()
@@ -213,6 +227,7 @@ export const Notion = {
 			"heading_3":"h3",
 			"heading_2":"h2",
 			"heading_1":"h1",
+			"quote":"blockquote",
 			"numbered_list_item":"li",
 			"bulleted_list_item":"li",
 			"paragraph":"p",
@@ -221,16 +236,13 @@ export const Notion = {
 
 		const type = block.type
 		if (preset[type]) {
-			html += '<'+preset[type]+'>'
-
-			if (block[type].icon?.type == 'emoji') {
+			const hasicon = block[type].icon?.type == 'emoji'
+			html += '<' + preset[type] + (hasicon ? ' class="hasicon"': '') +'>'
+			if (hasicon) {
 				html += `<div class="icon">${block[type].icon.emoji}</div>`
 			}
-			// if (block[type].icon?.type == 'emoji') {
-			// 	html += '<'+preset[type]+'>'+ block[type].icon.emoji + ' ' +  Notion.getRichHtml(block[type].rich_text)	
-			// } else {
 			html += Notion.getRichHtml(block[type].rich_text)	
-			//}
+			
 		} else if (type == 'code') {
 			html += '<pre><code>'
 			if (block[type].icon?.type == 'emoji') {
@@ -238,9 +250,23 @@ export const Notion = {
 			}
 			html += Notion.getRichHtml(block[type].rich_text)
 		} else if (type == 'image' && block[type].file?.url) {
-			const img = await probe(block[type].file.url)
+
+			const url = block[type].file.url
+			const CONFIG = await Notion.getConfig()
+			const img = await probe(url)
+			const path = CONFIG.dir + '/' + block.id + '.' + img.type
+			
+			await fetch(url).then(response => response.blob()).then(async blob => {
+				const arrayBuffer = await blob.arrayBuffer()
+				const dataView = new DataView(arrayBuffer)
+				
+				
+				return fs.writeFile('.' + path, dataView)
+			});
+			
+			
 			const caption = Notion.getPlainText(block[type].caption)
-			html += `<p><img title="${caption}" alt="${caption}" width="${img.width}" height="${img.height}" loading="lazy" alt="" style="max-width: 100%; height:auto" src="${block[type].file.url}"></p>`
+			html += `<p><img title="${caption}" alt="${caption}" width="${img.width}" height="${img.height}" loading="lazy" alt="" style="max-width: 100%; height:auto" src="${path}"></p>`
 		} else {
 			console.log(3, block.type)
 		}
