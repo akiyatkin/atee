@@ -1,5 +1,5 @@
 
-import { ServiceWorker } from './ServiceWorker.js'
+//import { ServiceWorker } from './ServiceWorker.js'
 
 const requestNextAnimationFrame = (fn) => requestAnimationFrame(() => requestAnimationFrame(fn))
 export const Client = {
@@ -22,44 +22,50 @@ export const Client = {
 		Client.access_promise = fetch('/-controller/access').then(res => res.json()).catch(() => false)
 		return Client.access_promise
 	},
-	setAccessData: (access_data) => {
-		Client.access_promise = Promise.resolve(access_data)	
+	setAccessData: (timings) => {
+		Client.access_promise = Promise.resolve(timings)	
 	},
-	follow: () => {
-		ServiceWorker.register(access_data => {
-			Client.setAccessData(access_data)
-		})
-		//Обновить кэш - куда-нибудь кликнуть, потом обновить страницу
-		// Client.getAccessData().then(access_data => {	
-		// 	ServiceWorker.postMessage(access_data)
-		// })
-		window.addEventListener('click', e => {
-			const a = e.target.closest('a')
+	follow: (event) => {
+		navigator.serviceWorker?.register('/-controller/sw.js', { scope:'/' })
+		window.addEventListener('click', event => {
+			const a = event.target.closest('a')
 			if (!a) return
 			const search = a.getAttribute('href')
 			if (!search) return
 			if (/^\w+:/.test(search)) return
 			if (~search.lastIndexOf('.')) return
 			if (search[1] == '-') return
-			const scroll = a.dataset.scroll == 'none' ? false : true
-			e.preventDefault()
-			const promise = search == Client.search ? Client.replaceState(search, scroll) : Client.pushState(search, scroll)
-			Client.animate('a', a, promise, a.dataset.animate)
+			event.preventDefault()
+			Client.click(a)
 		})
-		window.addEventListener('popstate', event => { 
-			Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
-			const search = Client.getSearch()
-			const promise = Client.crossing(search)
-			if (event.state?.view == Client.view) { //Вперёд
-				const { cursor } = event.state
-				Client.cursor = cursor
-				promise.then(() => window.scrollTo(...Client.history[Client.cursor].scroll)).catch(() => {})
-			} else { 
-				Client.start--
-				Client.cursor = Client.start
-				history.replaceState({cursor:Client.cursor, view:Client.view}, null, search)
-			}
+		window.addEventListener('popstate', event => {
+			Client.popstate(event)
 		})
+		if (!event) return
+		const a = event.target.closest('a')
+		Client.click(a)
+	},
+	popstate: (e) => {
+		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
+		const search = Client.getSearch()
+		const promise = Client.crossing(search)
+		if (event.state?.view == Client.view) { //Вперёд
+			const { cursor } = event.state
+			Client.cursor = cursor
+			promise.then(() => window.scrollTo(...Client.history[Client.cursor].scroll)).catch(() => {})
+		} else { 
+			Client.start--
+			Client.cursor = Client.start
+			history.replaceState({cursor:Client.cursor, view:Client.view}, null, search)
+		}
+	},
+	click: (a) => {
+		const search = a.getAttribute('href')
+		const scroll = a.dataset.scroll != 'none'
+		
+		const promise = search == Client.search ? Client.replaceState(search, scroll) : Client.pushState(search, scroll)
+		Client.animate('a', a, promise, a.dataset.animate)
+		return true
 	},
 	getSearch: () => decodeURI(location.pathname + location.search),
 	attach: () => {
@@ -139,16 +145,12 @@ export const Client = {
 		if (!Client.next) return
 		let {search, promise} = Client.next
 		search = search.split('#')[0]
-		const access_data = await Client.getAccessData()
-
-		
-		
-
+		const timings = await Client.getAccessData()
 		const req = {
 			gs: '',
-			vt: access_data.VIEW_TIME,
-			ut: access_data.UPDATE_TIME,
-			st: access_data.ACCESS_TIME,
+			vt: timings.view_time,
+			ut: timings.update_time,
+			st: timings.access_time,
 			pv: Client.search,
 			nt: search
 		}
@@ -160,17 +162,17 @@ export const Client = {
 				},
 				body: new URLSearchParams(req)
 			}).then(res => res.json())
-			if (json.ut && json.st) {
-				const access_data = {
-					VIEW_TIME: json.vt,
-					UPDATE_TIME: json.ut,
-					ACCESS_TIME: json.st
-				}
-				Client.setAccessData(access_data)
-				ServiceWorker.postMessage(access_data)
-			}
 			if (promise.rejected) return Client.applyCrossing()
-			if (!json || !json.result || !json.layers) return location.href = search
+			if (!json || !json.st || !json.ut || !json.result || !json.layers) return location.href = search
+			
+
+			const timings = {
+				view_time: json.vt,
+				update_time: json.ut,
+				access_time: json.st
+			}
+			Client.setAccessData(timings);
+			
 			
 			const promises = loadAll(json.layers)
 			for (const layer of json.layers) {
@@ -189,23 +191,46 @@ export const Client = {
 			if (promise.rejected) return Client.applyCrossing()
 			if (json.head) {
 				const { Head } = await import('./Head.js')
+				if (promise.rejected) return Client.applyCrossing()
 				Head.accept(json.head)
 			}
 			for (const layer of json.layers) {
 				layer.sys.template = document.createElement('template')
-				addHtml(layer.sys.template, layer, crumb)
+				addHtml(layer.sys.template, layer, crumb, timings)
 			}
-			//const scripts = []
+			const scripts = []
 			for (const layer of json.layers) {
 				const elements = layer.sys.template.content
 				layer.sys.div.replaceChildren(elements)
 				const promise = evalScriptsInNode(layer.sys.div)
-				promise.then(() => layer.sys.execute.resolve())
-				//scripts.push(promise)
+				promise.then(() => layer.sys.execute.resolve()) //Покажется когда выполнятся скрипты
+				scripts.push(promise)
 			}
-			//await Promise.all(scripts)
 			Client.search = search
 			Client.next = false
+			Promise.all(scripts).then(async () => {
+				if (!navigator.serviceWorker) return
+				const sw = navigator.serviceWorker
+				const swr = await sw.ready
+				if (swr.pushManager && swr.pushManager.getSubscription) {
+					const subscription = await swr.pushManager.getSubscription()
+				}
+				if (sw.controller) {
+					sw.controller.postMessage(timings)	
+				}
+				// window.addEventListener('crossing', async ({detail: {timings, search}}) => {
+				// 	if (!navigator.serviceWorker) return
+				// 	const sw = navigator.serviceWorker
+				// 	const swr = await sw.ready
+				// 	if (swr.pushManager && swr.pushManager.getSubscription) {
+				// 		const subscription = await swr.pushManager.getSubscription()
+				// 	}
+				// 	if (sw.controller) sw.controller.postMessage(timings)	
+				// })
+
+				// const event = new CustomEvent('crossing', {detail: {timings, search}})
+				// window.dispatchEvent(event)	
+			})
 			promise.resolve(search)
 		} catch (e) {
 			console.log(e)
@@ -215,10 +240,10 @@ export const Client = {
 		}
 	}
 }
-const addHtml = (template, layer, crumb) => {
+const addHtml = (template, layer, crumb, timings) => {
 	let html = ''
 	if (layer.sys.objtpl) {
-		const env = {...layer, ...crumb, host:location.host, cookie:document.cookie}
+		const env = {...layer, ...crumb, host:location.host, cookie:document.cookie, ...timings}
 		const data = layer.sys.data
 		html = layer.sys.objtpl[layer.sub](data, env)
 	}
@@ -229,7 +254,7 @@ const addHtml = (template, layer, crumb) => {
 		template.innerHTML = html
 	}
 	if (layer.layers) for (const l of layer.layers) {
-		addHtml(template, l, crumb)
+		addHtml(template, l, crumb, timings)
 	}
 }
 const loadAll = (layers, promises = []) => {

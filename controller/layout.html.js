@@ -1,17 +1,24 @@
 export const HEAD = (data, { head }) => 
-`	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>${ head.title ?? '' }</title>
-	<meta name="description" content="${ head.description ?? '' }">
-	<meta property="og:image" content="${ head.image_src ?? '' }">
-	<link rel="image_src" href="${ head.image_src ?? '' }">
-
-	<link rel="preload" as="style" href="/-controller/animate.css" onload="this.onload=null;this.rel='stylesheet'">
-	
-	<script type="module">
-		import { Client } from "/-controller/Client.js"
-		Client.follow()
-	</script>`
+`<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>${ head.title ?? '' }</title>
+		<meta name="description" content="${ head.description ?? '' }">
+		<meta property="og:image" content="${ head.image_src ?? '' }">
+		<link rel="image_src" href="${ head.image_src ?? '' }">
+		<link rel="preload" as="style" href="/-controller/animate.css" onload="this.onload=null;this.rel='stylesheet'">
+		<script type="module">
+			window.addEventListener('click', event => {
+				const a = event.target.closest('a')
+				if (!a) return
+				const search = a.getAttribute('href')
+				if (!search) return
+				if (/^\w+:/.test(search)) return
+				if (~search.lastIndexOf('.')) return
+				if (search[1] == '-') return
+				event.preventDefault()
+				import("/-controller/Client.js").then(({ Client }) => Client.follow(event))
+			}, { once: true })
+		</script>`
 
 export const ROBOTS_TXT = (data, { host }) => `Host: ${host}
 Sitemap: https://${host}/sitemap.xml`

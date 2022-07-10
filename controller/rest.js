@@ -33,9 +33,9 @@ meta.addHandler('admin', async (view) => {
 meta.addAction('access', async view => {
 	const { cookie } = await view.gets(['cookie'])
 	view.ans['admin'] = await Access.isAdmin(cookie)
-	view.ans['UPDATE_TIME'] = Access.getUpdateTime()
-	view.ans['ACCESS_TIME'] = Access.getAccessTime()
-	view.ans['VIEW_TIME'] = Date.now()
+	view.ans['update_time'] = Access.getUpdateTime()
+	view.ans['access_time'] = Access.getAccessTime()
+	view.ans['view_time'] = Date.now()
 	view.ans.nostore = true
 	return view.ret()
 })
@@ -178,13 +178,16 @@ const getRule = Once.proxy( async root => {
 		maketree(r.root, r.layout, rule)
 		delete r.layout
 		const push = []
+		const pushtpl = []
 		let head = {}
 		runByRootLayer(r.root, layer => {
 			const ts = layer.ts
 			if (rule.animate && rule.animate[ts]) layer.animate = rule.animate[ts]
 			if (rule.push && rule.push[ts]) push.push(...rule.push[ts])
+			if (rule.pushtpl && rule.pushtpl[ts]) pushtpl.push(...rule.pushtpl[ts])
 			if (rule.head && rule.head[ts]) head = rule.head[ts]
 		})
+		r.ready_pushtpl = pushtpl
 		r.ready_push = push
 		r.ready_head = head
 	})
@@ -261,16 +264,21 @@ meta.addAction('layers', async view => {
 	const {
 		pv: prev, nt: next, host, cookie, st: access_time, ut: update_time, vt: view_time, gs: globals 
 	} = await view.gets(['pv', 'ip', 'nt', 'host', 'cookie', 'st', 'ut', 'gs', 'vt'])
-
-	view.ans.ut = Access.getUpdateTime()
-	view.ans.st = Access.getAccessTime()
+	const timings = {
+		update_time: Access.getUpdateTime(),
+		view_time: Date.now(),
+		access_time: Access.getAccessTime()
+	}
+	view.ans.ut = timings.update_time
+	view.ans.st = timings.access_time
+	view.ans.vt = timings.view_time
 	if (!next) return view.err()
 	//next и prev globals не содержат, был редирект на без globals
-	if (update_time < Access.getUpdateTime()) {
+	if (update_time < timings.update_time) {
 		//update_time - reload
 		return view.err()
 	}
-	if (access_time < Access.getAccessTime()) {
+	if (access_time < timings.access_time) {
 		//access_time - все слои надо показать заного
 		return view.err() //Ну или перезагрузиться
 	}
@@ -296,19 +304,25 @@ meta.addAction('layers', async view => {
 	if (nroute.rest || nroute.secure) return view.err()
 	const rule = await getRule(nroute.root)
 	if (!rule) return view.err('Bad type layers.json')
-	view.ans.vt = Date.now() //new_view_time
 	
-	const { index: nopt, status } = getIndex(rule, nroute, view.ans.vt) //{ index: {head, push, root}, status }
+	
+	const { index: nopt, status, controller_request } = getIndex(rule, nroute, timings) //{ index: {head, push, root}, status }
 
 	if (!nopt?.root) return view.err()
 	view.ans.status = status
+	//const req = {path:nroute.path, get: nroute.get, ...timing}
+	
 	if (!prev) {
 		view.ans.push = nopt.ready_push
 		view.ans.head = nopt.ready_head
 		
+		if (nopt.ready_pushtpl.length) {
+			nopt.ready_pushtpl.forEach((val) => {
+				view.ans.push.push(interpolate(val, controller_request))	
+			})
+		}
 		if (view.ans.head.jsontpl) {
-			const req = {path:nroute.path, get: nroute.get, view_time}
-			view.ans.head.json = interpolate(view.ans.head.jsontpl, req)
+			view.ans.head.json = interpolate(view.ans.head.jsontpl, controller_request)
 		}
 		if (view.ans.head.json) {
 			const child = nroute.crumbs ? nroute.crumbs[1] : nroute.path
@@ -333,7 +347,7 @@ meta.addAction('layers', async view => {
 	if (proute.root != nroute.root) return view.err()
 
 	const nlayers = structuredClone(nopt.root.layers)
-	const { index: popt } = getIndex(rule, proute, view_time)
+	const { index: popt } = getIndex(rule, proute, timings)
 	if (!popt.root) return view.err()
 
 	view.ans.layers = getDiff(popt.root.layers, nlayers)
@@ -341,9 +355,13 @@ meta.addAction('layers', async view => {
 	if (nroute.search != proute.search) {
 		view.ans.head = nopt.ready_head
 		view.ans.push = nopt.ready_push
+		if (nopt.ready_pushtpl) {
+			nopt.ready_pushtpl.forEach((val) => {
+				view.ans.push.push(interpolate(val, controller_request))	
+			})
+		}
 		if (view.ans.head.jsontpl) {
-			const req = {path:nroute.path, get: nroute.get, view_time}
-			view.ans.head.json = interpolate(view.ans.head.jsontpl, req)
+			view.ans.head.json = interpolate(view.ans.head.jsontpl, controller_request)
 		}
 		if (view.ans.head.json) {
 			const child = nroute.crumbs ? nroute.crumbs[1] : nroute.path
@@ -381,13 +399,13 @@ const getDiff = (players, nlayers, layers = []) => {
 }
 
 
-const getIndex = (rule, route, view_time, options = {push: [], head: {}}, status = 200, oroute = {}) => {
+const getIndex = (rule, route, timings, options = {push: [], head: {}}, status = 200, oroute = {}) => {
 	const crumb = route.crumbs ? route.crumbs[0] : route.path
 	const ocrumb = (oroute.crumbs ? oroute.crumbs[0] : oroute.path) || crumb
 	if (route.path && (!rule.childs || !rule.childs[crumb])) {
 		if (route.path == '404') return []
 
-		return getIndex(rule, {crumbs:['404'], path:'404', get: route.get}, view_time, options, 404, route)
+		return getIndex(rule, {crumbs:['404'], path:'404', get: route.get}, timings, options, 404, route)
 	}	
 	const index = route.path ? rule.childs[crumb] : rule
 	const controller_request = {
@@ -395,7 +413,7 @@ const getIndex = (rule, route, view_time, options = {push: [], head: {}}, status
 		get: oroute.get || route.get, 
 		crumb: ocrumb,
 		child: oroute.crumbs ? (oroute.crumbs[1] || '') : (route.crumbs[1] || ''), 
-		view_time
+		...timings
 	}
 	//const req = { get: route.get, host, cookie, root }
 	runByRootLayer(index.root, layer => {
@@ -414,7 +432,7 @@ const getIndex = (rule, route, view_time, options = {push: [], head: {}}, status
 			if (rule.json && rule.json[ts]) layer.json = rule.json[ts]
 		}
 	})
-	return { index, status }
+	return { index, status, controller_request }
 }
 
 meta.addAction('sitemap.xml', async view => {

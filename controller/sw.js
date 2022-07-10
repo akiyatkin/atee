@@ -1,5 +1,6 @@
-let ACCESS_TIME = 0
-let UPDATE_TIME = 0
+let ACCESS_TIME = UPDATE_TIME = 1 //Версия sw.js
+let ZERO_ACCESS_TIME = ZERO_UPDATE_TIME = 0
+
 this.addEventListener('install', event => {
 	console.log('SW install')
   	this.skipWaiting();
@@ -9,24 +10,34 @@ this.addEventListener('activate', event => {
 	console.log('SW activate')
 })
 
+
 this.addEventListener('message', event => {
-	if (ACCESS_TIME >= event.data.ACCESS_TIME && UPDATE_TIME >= event.data.UPDATE_TIME) return
-	ACCESS_TIME = event.data.ACCESS_TIME
-	UPDATE_TIME = event.data.UPDATE_TIME
-	event.waitUntil(this.clients.matchAll().then(clientList => {
-		clientList.forEach(client => {
-			client.postMessage(event.data)
-		})
-	}))
+	if (ACCESS_TIME >= event.data.access_time && UPDATE_TIME >= event.data.update_time) return
+	if (!ZERO_ACCESS_TIME || ZERO_ACCESS_TIME == event.data.access_time) { 
+		//Первые данные пропускаем, так как это текущий 0
+		ZERO_ACCESS_TIME = event.data.access_time
+		ZERO_UPDATE_TIME = event.data.update_time
+	} else {
+		ACCESS_TIME = event.data.access_time
+		UPDATE_TIME = event.data.update_time
+	}
+	// Отправлять не надо, другие вкладки при переходе сами узнают об изменениях
+	// event.waitUntil(this.clients.matchAll().then(clientList => {
+	// 	clientList.forEach(client => {
+	// 		client.postMessage(event.data)
+	// 	})
+	// }))
 })
 
 this.addEventListener('fetch', event => {
 	//Только с сервера, только GET, и без -
+
 	if (event.request.method !== 'GET') return
+
 	if (!ACCESS_TIME || !UPDATE_TIME) return
 
 	let url = new URL(event.request.url)
-
+	
 	//??
 	if (url.origin !== location.origin) return
 
