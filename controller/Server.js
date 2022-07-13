@@ -104,7 +104,7 @@ export const Server = {
 					pv: false,
 					nt: search
 				}
-				let res = await meta.get('layers', req)
+				let res = await meta.get('get-layers', req)
 				if (!res) return error(500, 'layers have bad definition')
                 if (!res.layers) return error(500, 'layers not defined')
 				
@@ -125,7 +125,7 @@ export const Server = {
                 	status = e.status || 500
                 	const root = crumb.root ? '/' + crumb.root + '/' : '/'
                     req.nt = root + status
-                    res = await meta.get('layers', req)
+                    res = await meta.get('get-layers', req)
                     info = await controller(res, client, crumb)
                 }
 

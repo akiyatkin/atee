@@ -259,7 +259,7 @@ meta.addAction('sitemap', async view => {
 // 	const { nt: next } = await view.gets(['nt'])
 // })
 meta.addArgument('client')
-meta.addAction('layers', async view => {
+meta.addAction('get-layers', async view => {
 	view.ans.nostore = true
 	const {
 		pv: prev, nt: next, host, cookie, st: access_time, ut: update_time, vt: view_time, gs: globals 
@@ -274,11 +274,11 @@ meta.addAction('layers', async view => {
 	view.ans.vt = timings.view_time
 	if (!next) return view.err()
 	//next и prev globals не содержат, был редирект на без globals
-	if (update_time < timings.update_time) {
+	if (update_time && update_time < timings.update_time) {
 		//update_time - reload
 		return view.err()
 	}
-	if (access_time < timings.access_time) {
+	if (access_time && access_time < timings.access_time) {
 		//access_time - все слои надо показать заного
 		return view.err() //Ну или перезагрузиться
 	}
@@ -456,7 +456,7 @@ export const rest = async (query, get, client) => {
 	const ans = await meta.get(query, req)
 	if (query == 'robots.txt') return { ans, ext:'txt' }
 	if (query == 'sitemap.xml') return { ans, ext:'xml' }
-	if (query == 'layers') ans.status = 200
+	if (query == 'get-layers') ans.status = 200
 	const { ext = 'json', status = 200, nostore = ~query.indexOf('set-')} = ans
 	delete ans.status
 	delete ans.nostore

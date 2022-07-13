@@ -5,7 +5,6 @@ export const HEAD = (data, { head }) =>
 		<meta name="description" content="${ head.description ?? '' }">
 		<meta property="og:image" content="${ head.image_src ?? '' }">
 		<link rel="image_src" href="${ head.image_src ?? '' }">
-		<link rel="preload" as="style" href="/-controller/animate.css" onload="this.onload=null;this.rel='stylesheet'">
 		<script type="module">
 			window.addEventListener('click', event => {
 				const a = event.target.closest('a')
@@ -34,15 +33,11 @@ export const ER403 = (data, { root, host, path, search }) => `
 `
 
 export const SITEMAP_XML = (data, { host }) => `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-	${data.map(obj => mapitem(obj, { host })).join('')}
-	
-</urlset>`
-const mapitem = (obj, { host }) => `
-	<url>
-        <loc>https://${host}${obj.href ? '/' + obj.href : ''}</loc>
-        <lastmod>${obj.modified}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.5</priority>
-    </url>
-`
+	<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+		${data.map(obj => `<url>
+			<loc>https://${host}${obj.href ? '/' + obj.href : ''}</loc>
+			<lastmod>${obj.modified}</lastmod>
+			<changefreq>monthly</changefreq>
+			<priority>0.5</priority>
+		</url>`).join('')}
+	</urlset>`

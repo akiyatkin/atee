@@ -1,32 +1,30 @@
+import { animate } from './animate.js'
+import { pathparse } from './Spliter.js'
+import { Head } from './Head.js'
 
-//import { ServiceWorker } from './ServiceWorker.js'
-
-const requestNextAnimationFrame = (fn) => requestAnimationFrame(() => requestAnimationFrame(fn))
 export const Client = {
 	search:'',
-	animate: (tag, a, promise, animate = '') => {
-		const reg = new RegExp(tag + '-animate-')
-		if (animate) animate = '-' + animate
-		const list = a.classList
-		list.forEach(name => {
-			if (reg.test(name)) list.remove(name)
-		})
-		list.add(tag + '-animate'+animate+'-before')	
-		promise.finally(() => {
-			requestNextAnimationFrame(() => list.replace(tag + '-animate'+animate+'-before', tag + '-animate'+animate+'-after'))
-		})
-	},
-	access_promise:null,
-	getAccessData: () => {
-		if (Client.access_promise) return Client.access_promise
-		Client.access_promise = fetch('/-controller/access').then(res => res.json()).catch(() => false)
-		return Client.access_promise
-	},
-	setAccessData: (timings) => {
-		Client.access_promise = Promise.resolve(timings)	
+	access_promise: null,
+	timings: {
+		view_time: 0,
+		update_time: 0,
+		access_time: 0
 	},
 	follow: (event) => {
 		navigator.serviceWorker?.register('/-controller/sw.js', { scope:'/' })
+		
+		window.addEventListener('crossing', async ({detail: { timings }}) => {
+			if (!navigator.serviceWorker) return
+			const sw = navigator.serviceWorker
+			const swr = await sw.ready
+			if (swr.pushManager && swr.pushManager.getSubscription) {
+				const subscription = await swr.pushManager.getSubscription()
+			}
+			if (sw.controller) sw.controller.postMessage(timings)	
+		})
+		window.addEventListener('crossing', async ({detail: { head }}) => {
+			Head.accept(head)
+		})
 		window.addEventListener('click', event => {
 			const a = event.target.closest('a')
 			if (!a) return
@@ -64,7 +62,7 @@ export const Client = {
 		const scroll = a.dataset.scroll != 'none'
 		
 		const promise = search == Client.search ? Client.replaceState(search, scroll) : Client.pushState(search, scroll)
-		Client.animate('a', a, promise, a.dataset.animate)
+		animate('a', a, promise, a.dataset.animate)
 		return true
 	},
 	getSearch: () => decodeURI(location.pathname + location.search),
@@ -78,26 +76,12 @@ export const Client = {
 	history:[],
 	start:history.length,
 	cursor:history.length - 1,
-	fixsearch: search => {
-		if (search[0] != '/') {
-			if (search == '?' ) search = location.pathname
-			else if (search == '?#' ) search = location.pathname
-			else if (search == '#' ) search = location.pathname + location.search
-			else if (search[0] == '?') search = location.pathname + search
-			else if (search[0] == '#') search = location.pathname + location.search + search
-			else {
-				//const i = location.pathname.lastIndexOf('/')
-				//if (~i) search = location.pathname.slice(0, i) + '/' + search
-			}
-			
-		}
-		return search
-	},
-	refreshState: () => {
+	
+	refreshState: () => { //depricated
 		Client.replaceState(location.href)
 	},
 	pushState: (search, scroll = true) => {
-		search = Client.fixsearch(search)
+		search = fixsearch(search)
 		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 		Client.cursor++
 		history.pushState({cursor:Client.cursor, view:Client.view}, null, search)
@@ -113,7 +97,7 @@ export const Client = {
 		return promise
 	},
 	replaceState: (search, scroll = true) => {
-		search = Client.fixsearch(search)
+		search = fixsearch(search)
 		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 		history.replaceState({cursor:Client.cursor, view:Client.view}, null, search)
 		search = Client.getSearch()
@@ -138,106 +122,103 @@ export const Client = {
 			return Client.next.promise
 		}
 		Client.next = { search, promise: createPromise(search) }
-		Client.applyCrossing()
+		applyCrossing()
 		return Client.next.promise
-	},
-	applyCrossing: async () => {
-		if (!Client.next) return
-		let {search, promise} = Client.next
-		search = search.split('#')[0]
-		const timings = await Client.getAccessData()
-		const req = {
-			gs: '',
-			vt: timings.view_time,
-			ut: timings.update_time,
-			st: timings.access_time,
-			pv: Client.search,
-			nt: search
+	}	
+}
+const fixsearch = search => {
+	if (search[0] != '/') {
+		if (search == '?' ) search = location.pathname
+		else if (search == '?#' ) search = location.pathname
+		else if (search == '#' ) search = location.pathname + location.search
+		else if (search[0] == '?') search = location.pathname + search
+		else if (search[0] == '#') search = location.pathname + location.search + search
+		else {
+			//const i = location.pathname.lastIndexOf('/')
+			//if (~i) search = location.pathname.slice(0, i) + '/' + search
 		}
-		try {
-			const json = await fetch('/-controller/layers', {
-				method: "post",
-				headers: {
-			    	'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-				},
-				body: new URLSearchParams(req)
-			}).then(res => res.json())
-			if (promise.rejected) return Client.applyCrossing()
-			if (!json || !json.st || !json.ut || !json.result || !json.layers) return location.href = search
-			
+		
+	}
+	return search
+}
+const applyCrossing = async () => {
+	if (!Client.next) return
+	let {search, promise} = Client.next
+	search = search.split('#')[0]
+	const timings = Client.timings
+	/*
+	Допустим 0 это текущие тайминги загрузки и их нужно подменить следующими. 
+	Исходим из того, что следующие обязательно не изменения
+	Но со второго раза надо уже передать корректные данные
+	*/
+	const req = {
+		gs: '',
+		vt: timings.view_time,
+		ut: timings.update_time,
+		st: timings.access_time,
+		pv: Client.search,
+		nt: search
+	}
+	try {
+		const json = await fetch('/-controller/get-layers', {
+			method: "post",
+			headers: {
+		    	'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+			},
+			body: new URLSearchParams(req)
+		}).then(res => res.json())
+		if (promise.rejected) return applyCrossing()
+		if (!json || !json.st || !json.ut || !json.result || !json.layers) return location.href = search
+		
 
-			const timings = {
-				view_time: json.vt,
-				update_time: json.ut,
-				access_time: json.st
-			}
-			Client.setAccessData(timings);
-			
-			
-			const promises = loadAll(json.layers)
-			for (const layer of json.layers) {
-				layer.sys = {}
-				const div = document.getElementById(layer.div)
-				layer.sys.div = div
-				layer.sys.execute = createPromise()
-				Client.animate('div', div, layer.sys.execute, layer.animate)
-			}
-			const { pathparse } = await import('./Spliter.js')
-			const {crumbs, path, get} = pathparse(search)
-			const crumb = {
-				crumbs, search, get, path
-			}
-			await Promise.all(promises)
-			if (promise.rejected) return Client.applyCrossing()
-			if (json.head) {
-				const { Head } = await import('./Head.js')
-				if (promise.rejected) return Client.applyCrossing()
-				Head.accept(json.head)
-			}
-			for (const layer of json.layers) {
-				layer.sys.template = document.createElement('template')
-				addHtml(layer.sys.template, layer, crumb, timings)
-			}
-			const scripts = []
-			for (const layer of json.layers) {
-				const elements = layer.sys.template.content
-				layer.sys.div.replaceChildren(elements)
-				const promise = evalScriptsInNode(layer.sys.div)
-				promise.then(() => layer.sys.execute.resolve()) //Покажется когда выполнятся скрипты
-				scripts.push(promise)
-			}
-			Client.search = search
-			Client.next = false
-			Promise.all(scripts).then(async () => {
-				if (!navigator.serviceWorker) return
-				const sw = navigator.serviceWorker
-				const swr = await sw.ready
-				if (swr.pushManager && swr.pushManager.getSubscription) {
-					const subscription = await swr.pushManager.getSubscription()
-				}
-				if (sw.controller) {
-					sw.controller.postMessage(timings)	
-				}
-				// window.addEventListener('crossing', async ({detail: {timings, search}}) => {
-				// 	if (!navigator.serviceWorker) return
-				// 	const sw = navigator.serviceWorker
-				// 	const swr = await sw.ready
-				// 	if (swr.pushManager && swr.pushManager.getSubscription) {
-				// 		const subscription = await swr.pushManager.getSubscription()
-				// 	}
-				// 	if (sw.controller) sw.controller.postMessage(timings)	
-				// })
-
-				// const event = new CustomEvent('crossing', {detail: {timings, search}})
-				// window.dispatchEvent(event)	
-			})
-			promise.resolve(search)
-		} catch (e) {
-			console.log(e)
-			Client.next = false
-			promise.reject()
-			//return location.href = search
+		const timings = {
+			view_time: json.vt,
+			update_time: json.ut,
+			access_time: json.st
 		}
+		Client.timings = timings
+			
+		const promises = loadAll(json.layers)
+		for (const layer of json.layers) {
+			layer.sys = {}
+			const div = document.getElementById(layer.div)
+			layer.sys.div = div
+			layer.sys.execute = createPromise()
+			animate('div', div, layer.sys.execute, layer.animate)
+		}
+		
+		const {crumbs, path, get} = pathparse(search)
+		const crumb = { crumbs, search, get, path }
+		
+
+		await Promise.all(promises)
+		if (promise.rejected) return applyCrossing()
+
+		
+		for (const layer of json.layers) {
+			layer.sys.template = document.createElement('template')
+			addHtml(layer.sys.template, layer, crumb, timings)
+		}
+		const scripts = []
+		for (const layer of json.layers) {
+			const elements = layer.sys.template.content
+			layer.sys.div.replaceChildren(elements)
+			const promise = evalScriptsInNode(layer.sys.div)
+			promise.then(() => layer.sys.execute.resolve()) //Покажется когда выполнятся скрипты
+			scripts.push(promise)
+		}
+		Client.search = search
+		Client.next = false
+		promise.resolve(search)
+
+		const event = new CustomEvent('crossing', {detail: {timings, crumb, head: json.head}})
+		window.dispatchEvent(event)
+		
+	} catch (e) {
+		console.log(e)
+		Client.next = false
+		promise.reject()
+		//return location.href = search
 	}
 }
 const addHtml = (template, layer, crumb, timings) => {

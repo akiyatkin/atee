@@ -38,7 +38,7 @@ export const MAIN = (data) => `
 			form.addEventListener('submit', (e) => {
 				e.preventDefault()
 				document.cookie = '-controller=' + input.value + '; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT'
-				Client.refreshState()
+				Client.replaceState(location.href)
 			})
 		</script>
 	
