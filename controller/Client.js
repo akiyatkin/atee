@@ -87,13 +87,16 @@ export const Client = {
 		history.pushState({cursor:Client.cursor, view:Client.view}, null, search)
 		search = Client.getSearch()
 		const promise = Client.crossing(search)
-		if (scroll)	promise.then(() => {
-			let div
-			const hash = location.hash.slice(1)
-			if (hash) div = document.getElementById(hash)
-			if (div) div.scrollIntoView()
-			else window.scrollTo(0,0)
-		}).catch(() => {})
+		if (scroll)	{
+			window.scrollTo(0,0)
+			promise.then(() => {
+				let div
+				const hash = location.hash.slice(1)
+				if (hash) div = document.getElementById(hash)
+				if (div) div.scrollIntoView()
+				else window.scrollTo(0,0)
+			}).catch(() => {})
+		}
 		return promise
 	},
 	replaceState: (search, scroll = true) => {
@@ -102,13 +105,16 @@ export const Client = {
 		history.replaceState({cursor:Client.cursor, view:Client.view}, null, search)
 		search = Client.getSearch()
 		const promise = Client.crossing(search)
-		if (scroll) promise.then(() => {
-			let div
-			const hash = location.hash.slice(1)
-			if (hash) div = document.getElementById(hash)
-			if (div) div.scrollIntoView()
-			else window.scrollTo(0,0)
-		}).catch(() => {})
+		if (scroll) {
+			window.scrollTo(0,0)
+			promise.then(() => {
+				let div
+				const hash = location.hash.slice(1)
+				if (hash) div = document.getElementById(hash)
+				if (div) div.scrollIntoView()
+				else window.scrollTo(0,0)
+			}).catch(() => {})
+		}
 		return promise
 	},
 	next: false,
@@ -207,6 +213,7 @@ const applyCrossing = async () => {
 			promise.then(() => layer.sys.execute.resolve()) //Покажется когда выполнятся скрипты
 			scripts.push(promise)
 		}
+		await Promise.all(scripts)
 		Client.search = search
 		Client.next = false
 		promise.resolve(search)
