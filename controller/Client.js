@@ -88,7 +88,7 @@ export const Client = {
 		search = Client.getSearch()
 		const promise = Client.crossing(search)
 		if (scroll)	{
-			window.scrollTo(0,0)
+			//window.scrollTo(0,0)
 			promise.then(() => {
 				let div
 				const hash = location.hash.slice(1)
@@ -106,7 +106,7 @@ export const Client = {
 		search = Client.getSearch()
 		const promise = Client.crossing(search)
 		if (scroll) {
-			window.scrollTo(0,0)
+			//window.scrollTo(0,0)
 			promise.then(() => {
 				let div
 				const hash = location.hash.slice(1)
