@@ -128,7 +128,6 @@ export const Server = {
                     res = await meta.get('get-layers', req)
                     info = await controller(res, client, crumb)
                 }
-
 				if (res.push.length) response.setHeader('Link', res.push.join(','));
 				response.writeHead(status, {
 					'Content-Type': TYPES['html'] + '; charset=utf-8',
@@ -216,7 +215,6 @@ export const controller = async ({ vt, st, ut, layers, head }, client, crumb) =>
 	const doc = new Doc()
 	await runLayers(layers, async layer => {
 		const { nostore, html, status } = await getHTML(layer, look)
-
 		ans.nostore = Math.max(ans.nostore, nostore)
         ans.status = Math.max(ans.status, status)
 		doc.insert(html, layer.div, layer.layers?.length)

@@ -264,6 +264,7 @@ meta.addAction('get-layers', async view => {
 	const {
 		pv: prev, nt: next, host, cookie, st: access_time, ut: update_time, vt: view_time, gs: globals 
 	} = await view.gets(['pv', 'ip', 'nt', 'host', 'cookie', 'st', 'ut', 'gs', 'vt'])
+	const ptimings = { access_time, update_time, view_time }
 	const timings = {
 		update_time: Access.getUpdateTime(),
 		view_time: Date.now(),
@@ -347,7 +348,7 @@ meta.addAction('get-layers', async view => {
 	if (proute.root != nroute.root) return view.err()
 
 	const nlayers = structuredClone(nopt.root.layers)
-	const { index: popt } = getIndex(rule, proute, timings)
+	const { index: popt } = getIndex(rule, proute, ptimings)
 	if (!popt.root) return view.err()
 
 	view.ans.layers = getDiff(popt.root.layers, nlayers)
@@ -404,7 +405,6 @@ const getIndex = (rule, route, timings, options = {push: [], head: {}}, status =
 	const ocrumb = (oroute.crumbs ? oroute.crumbs[0] : oroute.path) || crumb
 	if (route.path && (!rule.childs || !rule.childs[crumb])) {
 		if (route.path == '404') return []
-
 		return getIndex(rule, {crumbs:['404'], path:'404', get: route.get}, timings, options, 404, route)
 	}	
 	const index = route.path ? rule.childs[crumb] : rule
@@ -415,6 +415,7 @@ const getIndex = (rule, route, timings, options = {push: [], head: {}}, status =
 		child: oroute.crumbs ? (oroute.crumbs[1] || '') : (route.crumbs[1] || ''), 
 		...timings
 	}
+
 	//const req = { get: route.get, host, cookie, root }
 	runByRootLayer(index.root, layer => {
 		const ts = layer.ts
@@ -425,6 +426,7 @@ const getIndex = (rule, route, timings, options = {push: [], head: {}}, status =
 
 			layer.parsed = interpolate(rule.parsedtpl[ts], controller_request)
 			if (ts == 'errors:ER404' )console.log(layer)
+
 		}
 		if (rule.jsontpl && rule.jsontpl[ts]) {
 			layer.json = interpolate(rule.jsontpl[ts], controller_request)
@@ -454,8 +456,8 @@ export const rest = async (query, get, client) => {
 	}
 	const req = {root:'', ...get, ...client, client}
 	const ans = await meta.get(query, req)
-	if (query == 'robots.txt') return { ans, ext:'txt' }
-	if (query == 'sitemap.xml') return { ans, ext:'xml' }
+	if (query == 'robots.txt') return { ans, ext:'txt', nostore: true }
+	if (query == 'sitemap.xml') return { ans, ext:'xml', nostore: true }
 	if (query == 'get-layers') ans.status = 200
 	const { ext = 'json', status = 200, nostore = ~query.indexOf('set-')} = ans
 	delete ans.status

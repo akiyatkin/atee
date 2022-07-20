@@ -68,6 +68,7 @@ this.addEventListener('fetch', event => {
 	}
 
 	url = event.request.url
+
 	url = url + (~url.indexOf('?') ? '&' : '?') + 't='
 
 	if (dyn || event.request.mode == 'navigate') {
@@ -75,16 +76,19 @@ this.addEventListener('fetch', event => {
 	} else {
 		url += UPDATE_TIME
 	}
-
-	if (event.request.mode == 'no-cors') {
-		mode = 'no-cors'
-	} else {
-		mode = null
-	}
+	console.log(url)
+	// if (event.request.mode == 'no-cors') {
+	// 	mode = 'no-cors'
+	// } else if (event.request.mode == 'navigate') {
+	// 	mode = 'navigate'
+	// } else {
+	// 	mode = null
+	// }
 
 	let request = new Request(url, options)
 
 	//console.log(event.request.url, UPDATE_TIME)
+
 	let response = fetch(request)
 	// let response = fetch(request).then(response => {
 	// 	response.headers.set('Cache-Control', 'no-store')
