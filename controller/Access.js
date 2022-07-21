@@ -1,3 +1,4 @@
+import fs from 'fs/promises'
 
 const STORE = {}
 export const Access = {
@@ -25,12 +26,41 @@ export const Access = {
 	},
 	getAccessTime: () => ACCESS_TIME,
 	getUpdateTime: () => UPDATE_TIME,
-	cache: (name, args, fn) => {
-		const store = Access.getStore(name, args)
-		if (store.executed) return store.result
-		store.executed = true
-		store.result = fn(...args)
-		return store.result
+	cache: fn => {
+		fn.store = {}
+		return (...args) => {
+			const hash = JSON.stringify(args)
+			const store = fn.store[hash] || {}
+			fn.store[hash] = store
+			if (store.executed) {
+				if (store.executed >= Access.getAccessTime()) return store.result
+			}
+			store.executed = Date.now()
+			store.result = fn(...args)
+			return store.result
+		}
+	},
+	mcache: (src, fn) => {
+		fn.store = {}
+		return async (...args) => {
+			args.push(src)
+			const hash = JSON.stringify(args)
+
+			const store = fn.store[hash] || {}
+			fn.store[hash] = store
+			
+			if (store.executed) {
+				if (store.executed >= Access.getAccessTime()) return store.result
+				const { mtime } = await fs.stat(src)
+				if (store.executed >= mtime) {
+					store.executed = Access.getAccessTime()
+					return store.result
+				}
+			}
+			store.executed = Date.now()
+			store.result = await fn(...args)
+			return store.result
+		}
 	}
 }
 const UPDATE_TIME = Date.now()

@@ -42,7 +42,7 @@ this.addEventListener('fetch', event => {
 	if (url.origin !== location.origin) return
 
 	let dyn = false
-	let ext = url.pathname.match(/\.(\w+$)/)
+	let ext = url.pathname.match(/\.(\w+$)/) //Любая точка делает запрос нединамическим с update_cache
 	if (~url.search.indexOf('sw=public')) {
 		dyn = false
 	} else if (!ext) {
@@ -62,10 +62,7 @@ this.addEventListener('fetch', event => {
 
 	let cache = 'default'
 
-	let options = {
-		cache, credentials, headers, integrity,
-		method, redirect, referrer, referrerPolicy
-	}
+	
 
 	url = event.request.url
 
@@ -76,18 +73,14 @@ this.addEventListener('fetch', event => {
 	} else {
 		url += UPDATE_TIME
 	}
-	console.log(url)
-	// if (event.request.mode == 'no-cors') {
-	// 	mode = 'no-cors'
-	// } else if (event.request.mode == 'navigate') {
-	// 	mode = 'navigate'
-	// } else {
-	// 	mode = null
-	// }
 
+
+	let options = {
+		cache, credentials, headers, integrity,
+		method, redirect, referrer, referrerPolicy
+	}
 	let request = new Request(url, options)
 
-	//console.log(event.request.url, UPDATE_TIME)
 
 	let response = fetch(request)
 	// let response = fetch(request).then(response => {
