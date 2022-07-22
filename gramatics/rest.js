@@ -11,7 +11,7 @@ meta.addArgument('host')
 
 meta.addAction('set-send', async (view) => {
 	const { host, href, block, error, right } = await view.gets(['host', 'href','block','error','right'])
-	const r = await Mail.send(`Орфографическая ошибка ${host}`,`
+	const r = await Mail.toSupport(`Орфографическая ошибка ${host}`,`
 			<a href="${href}">${href}</a>
 			<p>Ошибка: ${error}</p>
 			<p>Как правильно: ${right}</p>
