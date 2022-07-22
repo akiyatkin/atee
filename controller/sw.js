@@ -56,18 +56,15 @@ this.addEventListener('fetch', event => {
 
 
 	const {
+		mode,
 		credentials, headers, integrity,
 		method, redirect, referrer, referrerPolicy
 	} = event.request
 
 	let cache = 'default'
 
-	
-
 	url = event.request.url
-
 	url = url + (~url.indexOf('?') ? '&' : '?') + 't='
-
 	if (dyn || event.request.mode == 'navigate') {
 		url += ACCESS_TIME
 	} else {
@@ -76,6 +73,7 @@ this.addEventListener('fetch', event => {
 
 
 	let options = {
+		mode,
 		cache, credentials, headers, integrity,
 		method, redirect, referrer, referrerPolicy
 	}
