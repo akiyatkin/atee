@@ -71,9 +71,8 @@ this.addEventListener('fetch', event => {
 		url += UPDATE_TIME
 	}
 
-
 	let options = {
-		mode,
+		mode: mode === 'navigate' ? 'no-cors' : mode,
 		cache, credentials, headers, integrity,
 		method, redirect, referrer, referrerPolicy
 	}
