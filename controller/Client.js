@@ -89,7 +89,7 @@ export const Client = {
 		const promise = Client.crossing(search)
 		if (scroll)	{
 			//window.scrollTo(0,0)
-			promise.then(() => {
+			promise.started.then(() => {
 				let div
 				const hash = location.hash.slice(1)
 				if (hash) div = document.getElementById(hash)
@@ -107,7 +107,7 @@ export const Client = {
 		const promise = Client.crossing(search)
 		if (scroll) {
 			//window.scrollTo(0,0)
-			promise.then(() => {
+			promise.started.then(() => {
 				let div
 				const hash = location.hash.slice(1)
 				if (hash) div = document.getElementById(hash)
@@ -119,15 +119,20 @@ export const Client = {
 	},
 	next: false,
 	crossing: (search) => {
+		if (Client.next && Client.next.search == search) return Client.next.promise
+		
+		const promise = createPromise(search)
+		promise.started = createPromise()
+		promise.catch(() => promise.started.reject())
+
 		if (Client.next) {
-			if (Client.next.search == search) return Client.next.promise
 			Client.next.search = search
-			const promise = createPromise(search)
 			Client.next.promise.reject(promise)
 			Client.next.promise = promise
 			return Client.next.promise
 		}
-		Client.next = { search, promise: createPromise(search) }
+
+		Client.next = { search, promise }
 		applyCrossing()
 		return Client.next.promise
 	}	
@@ -190,7 +195,10 @@ const applyCrossing = async () => {
 			const div = document.getElementById(layer.div)
 			layer.sys.div = div
 			layer.sys.execute = createPromise()
-			animate('div', div, layer.sys.execute, layer.animate)
+			const hash = location.hash.slice(1)
+			let anim = layer.animate
+			if (hash && anim != 'none') anim = 'opacity'
+			animate('div', div, layer.sys.execute, anim)
 		}
 		
 		const {crumbs, path, get} = pathparse(search)
@@ -205,6 +213,7 @@ const applyCrossing = async () => {
 			layer.sys.template = document.createElement('template')
 			addHtml(layer.sys.template, layer, crumb, timings)
 		}
+		promise.started.resolve(search)
 		const scripts = []
 		for (const layer of json.layers) {
 			const elements = layer.sys.template.content
