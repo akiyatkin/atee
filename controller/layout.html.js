@@ -6,7 +6,7 @@ export const HEAD = (data, { head }) =>
 		<meta property="og:image" content="${ head.image_src ?? '' }">
 		<link rel="image_src" href="${ head.image_src ?? '' }">
 		<script type="module">
-			window.addEventListener('click', event => {
+			const click = event => {
 				const a = event.target.closest('a')
 				if (!a) return
 				const search = a.getAttribute('href')
@@ -15,8 +15,12 @@ export const HEAD = (data, { head }) =>
 				if (~search.lastIndexOf('.')) return
 				if (search[1] == '-') return
 				event.preventDefault()
-				import("/-controller/Client.js").then(({ Client }) => Client.follow(event))
-			}, { once: true })
+				import("/-controller/Client.js").then(({ Client }) => {
+					Client.follow(event)
+					window.removeEventListener('click', click)
+				})
+			}
+			window.addEventListener('click', click)
 		</script>`
 
 export const ROBOTS_TXT = (data, { host }) => `Host: ${host}

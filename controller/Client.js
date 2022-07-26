@@ -40,8 +40,11 @@ export const Client = {
 			Client.popstate(event)
 		})
 		if (!event) return
-		const a = event.target.closest('a')
-		Client.click(a)
+		Client.follow = event => {
+			const a = event.target.closest('a')
+			Client.click(a)	
+		}
+		Client.follow(event)
 	},
 	popstate: (e) => {
 		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
@@ -89,13 +92,16 @@ export const Client = {
 		const promise = Client.crossing(search)
 		if (scroll)	{
 			//window.scrollTo(0,0)
-			promise.started.then(() => {
+			const go = () => {
 				let div
 				const hash = location.hash.slice(1)
 				if (hash) div = document.getElementById(hash)
 				if (div) div.scrollIntoView()
 				else window.scrollTo(0,0)
-			}).catch(() => {})
+				if (hash && !promise.finalled) promise.then(go).catch(() => {})
+			}
+			promise.started.then(go).catch(() => {})
+			
 		}
 		return promise
 	},
@@ -308,11 +314,13 @@ const createPromise = (payload) => {
 	promise.resolve = r => {
 		promise.result = r
 		promise.resolved = true
+		promise.finalled = true
 		resolve(r)
 	}
 	promise.reject = r => {
 		promise.result = r
 		promise.rejected = true
+		promise.finalled = true
 		reject(r)
 	}
 	promise.catch(e => {})
