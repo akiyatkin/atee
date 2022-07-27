@@ -45,3 +45,22 @@ export const SITEMAP_XML = (data, { host }) => `<?xml version="1.0" encoding="UT
 			<priority>0.5</priority>
 		</url>`).join('')}
 	</urlset>`
+
+export const CACHE_RELOAD = (data, { update_time }) => `
+	<script type="module">
+		const hast = search => {
+			if (/[&\?]t[=&\?]/.test(search)) return true
+			if (/[&\?]t$/.test(search)) return true
+		}
+		let search = location.search
+		if (!hast(search)) {
+			const page_update_time = ${update_time}
+			const { update_time: new_update_time } = await fetch('/-controller/get-access').then(data => data.json()).catch(() => false)
+			if (new_update_time != page_update_time) {
+				search += search ? '&' : '?'
+				search += 't='+new_update_time
+				location.href = location.pathname + search + location.hash
+			}
+		}
+	</script>
+`

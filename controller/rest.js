@@ -30,7 +30,7 @@ meta.addHandler('admin', async (view) => {
 // meta.addAction('set-access', async view => {
 // 	const { password } = await view.gets(['password'])
 // })
-meta.addAction('access', async view => {
+meta.addAction('get-access', async view => {
 	const { cookie } = await view.gets(['cookie'])
 	view.ans['admin'] = await Access.isAdmin(cookie)
 	view.ans['update_time'] = Access.getUpdateTime()
