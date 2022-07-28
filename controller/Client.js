@@ -14,13 +14,14 @@ export const Client = {
 		navigator.serviceWorker?.register('/-controller/sw.js', { scope:'/' })
 		
 		window.addEventListener('crossing', async ({detail: { timings }}) => {
-			if (!navigator.serviceWorker) return
-			const sw = navigator.serviceWorker
-			const swr = await sw.ready
-			if (swr.pushManager && swr.pushManager.getSubscription) {
-				const subscription = await swr.pushManager.getSubscription()
+			if (navigator.serviceWorker) {
+				const sw = navigator.serviceWorker
+				const swr = await sw.ready
+				if (swr.pushManager && swr.pushManager.getSubscription) {
+					const subscription = await swr.pushManager.getSubscription()
+				}
+				if (sw.controller) sw.controller.postMessage(timings)
 			}
-			if (sw.controller) sw.controller.postMessage(timings)	
 		})
 		window.addEventListener('crossing', async ({detail: { head }}) => {
 			Head.accept(head)
@@ -83,6 +84,17 @@ export const Client = {
 	refreshState: () => { //depricated
 		Client.replaceState(location.href)
 	},
+	scroll: promise => {
+		const go = () => {
+			let div
+			const hash = location.hash.slice(1)
+			if (hash) div = document.getElementById(hash)
+			if (div) div.scrollIntoView()
+			else window.scrollTo(0,0)
+			if (hash && !promise.finalled) promise.then(go).catch(() => {})
+		}
+		promise.started.then(go).catch(() => {})
+	},
 	pushState: (search, scroll = true) => {
 		search = fixsearch(search)
 		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
@@ -90,19 +102,7 @@ export const Client = {
 		history.pushState({cursor:Client.cursor, view:Client.view}, null, search)
 		search = Client.getSearch()
 		const promise = Client.crossing(search)
-		if (scroll)	{
-			//window.scrollTo(0,0)
-			const go = () => {
-				let div
-				const hash = location.hash.slice(1)
-				if (hash) div = document.getElementById(hash)
-				if (div) div.scrollIntoView()
-				else window.scrollTo(0,0)
-				if (hash && !promise.finalled) promise.then(go).catch(() => {})
-			}
-			promise.started.then(go).catch(() => {})
-			
-		}
+		if (scroll)	Client.scroll(promise)
 		return promise
 	},
 	replaceState: (search, scroll = true) => {
@@ -111,16 +111,7 @@ export const Client = {
 		history.replaceState({cursor:Client.cursor, view:Client.view}, null, search)
 		search = Client.getSearch()
 		const promise = Client.crossing(search)
-		if (scroll) {
-			//window.scrollTo(0,0)
-			promise.started.then(() => {
-				let div
-				const hash = location.hash.slice(1)
-				if (hash) div = document.getElementById(hash)
-				if (div) div.scrollIntoView()
-				else window.scrollTo(0,0)
-			}).catch(() => {})
-		}
+		if (scroll)	Client.scroll(promise)
 		return promise
 	},
 	next: false,
@@ -202,7 +193,7 @@ const applyCrossing = async () => {
 			layer.sys.div = div
 			layer.sys.execute = createPromise()
 			const hash = location.hash.slice(1)
-			let anim = layer.animate
+			let anim = layer.animate //Скрол неточный 1. из-за анимации и 2. из-за изменений DOM в скриптах
 			if (hash && anim != 'none') anim = 'opacity'
 			animate('div', div, layer.sys.execute, anim)
 		}

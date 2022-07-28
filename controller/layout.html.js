@@ -21,15 +21,29 @@ export const HEAD = (data, { update_time, head }) =>
 				})
 			}
 			window.addEventListener('click', click)
+		</script>
+		
+		<script type="module">	
 			const check = async () => {
 				let search = location.search
 				if (/[&\?]t[=&\?]/.test(search)) return
 				if (/[&\?]t$/.test(search)) return
 				const page_update_time = ${update_time}
-				const { update_time: new_update_time } = await fetch('/-controller/get-access').then(data => data.json()).catch(() => false)
+				const timings = await fetch('/-controller/get-access').then(data => data.json()).catch(() => false)
+				const new_update_time = timings.update_time
 				if (new_update_time == page_update_time) return
 				search += search ? '&' : '?'
-				search += 't='+new_update_time
+				search += 't=' + (new_update_time || 1)
+
+				if (navigator.serviceWorker) {
+					const sw = navigator.serviceWorker
+					const swr = await sw.ready
+					if (swr.pushManager && swr.pushManager.getSubscription) {
+						const subscription = await swr.pushManager.getSubscription()
+					}
+					if (sw.controller) sw.controller.postMessage(timings)
+				}
+
 				location.href = location.pathname + search + location.hash
 			}
 			check()
