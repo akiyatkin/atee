@@ -33,7 +33,12 @@ export const HEAD = (data, { update_time, head }) =>
 				const new_update_time = timings.update_time
 				if (new_update_time == page_update_time) return
 				search += search ? '&' : '?'
-				search += 't=' + (new_update_time || 1)
+				if (new_update_time) {
+					search += 't=' + new_update_time
+				} else {
+					search += 't'
+				}
+				
 
 				if (navigator.serviceWorker) {
 					const sw = navigator.serviceWorker

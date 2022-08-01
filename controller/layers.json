@@ -9,7 +9,7 @@
 		}
 	},
 	"json":{
-		"index:MAIN":"/-controller/access"
+		"index:MAIN":"/-controller/get-access"
 	},
 	"animate":{
 		"index:MAIN":"none"

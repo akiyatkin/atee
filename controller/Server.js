@@ -169,9 +169,9 @@ const getHTML = async (layer, { head, client, crumb, timings }) => {
 			search, secure, get,
 			rest, query, restroot
 		} = await router(json)
-        if (!rest) throw { status: 500 }
+        if (!rest) throw { status: 500, json }
 		res = {...res, ...(await rest(query, get, client))}
-        if (res.status != 200) throw { status: res.status }
+        if (res.status != 200) throw { status: res.status, json }
 	
 		status = Math.max(status, res.status) //404 может быть только тут
 		nostore = Math.max(nostore, res.nostore)
