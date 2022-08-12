@@ -176,7 +176,10 @@ const applyCrossing = async () => {
 			body: new URLSearchParams(req)
 		}).then(res => res.json())
 		if (promise.rejected) return applyCrossing()
-		if (!json || !json.st || !json.ut || !json.result || !json.layers) return location.href = search
+		if (!json || !json.st || !json.ut || !json.result || !json.layers) {
+			return location.reload()
+			//return location.href = location.href //Client.next.search
+		}
 		
 
 		const timings = {
