@@ -35,15 +35,18 @@ const checkfromroot = async (path, context, defaultResolve) => {
     if (isExt(path) && path.indexOf('./data/') === 0) {
         path = path + (~path.indexOf('?') ? '&' : '?') + 't=' + Access.getAccessTime()
     }
-    return defaultResolve(path, {
+    const res = defaultResolve(path, {
         ...context,
         parentURL: pathToFileURL('./')
     }, defaultResolve).catch(() => false)
+    
+    return res
 }
-export const resolve = (specifier, context, defaultResolve) => {
+export const resolve = async (specifier, context, defaultResolve) => {
     const key = specifier + context.parentURL //conditions, importAssertions не могут различваться у одного parentURL и specifier
     if (resolve.cache[key]) return resolve.cache[key]
-    const res = (async () => {
+
+    const res = await (async () => {
         let res
         if (specifier[0] === '/') {
             specifier = specifier.slice(1)
@@ -65,6 +68,7 @@ export const resolve = (specifier, context, defaultResolve) => {
         //console.log('resolve', specifier)
         return defaultResolve(specifier, context, defaultResolve) //Проверка относительного адреса
     })()
+    res.shortCircuit = true
     resolve.cache[key] = res
     return res
 }

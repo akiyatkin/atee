@@ -42,24 +42,28 @@ export const Access = {
 	},
 	mcache: (src, fn) => {
 		fn.store = {}
-		return async (...args) => {
+		return (...args) => {
 			args.push(src)
 			const hash = JSON.stringify(args)
-
 			const store = fn.store[hash] || {}
 			fn.store[hash] = store
 			
-			if (store.executed) {
-				if (store.executed >= Access.getAccessTime()) return store.result
+			
+			if (store.executed && store.executed >= Access.getAccessTime()) return store.result
+			if (store.promise) return store.promise
+
+			store.promise = new Promise(async resolve => {
 				const { mtime } = await fs.stat(src)
 				if (store.executed >= mtime) {
 					store.executed = Access.getAccessTime()
-					return store.result
+				} else {
+					store.executed = Date.now()
+					store.result = await fn(...args)
 				}
-			}
-			store.executed = Date.now()
-			store.result = await fn(...args)
-			return store.result
+				resolve(store.result)
+				delete store.promise
+			})
+			return store.promise
 		}
 	}
 }
