@@ -146,13 +146,19 @@ export const router = async (search) => {
 	if (path[0] == '-') { //Обязательный rest и без контроллера
 		for (const v of REST_HYPHENS) {
 			if (path.indexOf(v.part) === 1 || !v.part) {
-				if (v.innodemodules) rest = (await import(v.rest)).rest
-				else rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest                
-				restroot = v.part
-				query = path.slice(v.part.length + (v.part ? 2 : 1)) //Отрезаем - и последний /
-				break;
+				if (	
+						(path == '-' + v.part)  //-params = params
+						|| path[v.part.length + 1] == '/' || !v.part //-params-list != params, -params/list = params
+				) { 
+					if (v.innodemodules) rest = (await import(v.rest)).rest
+					else rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest                
+					restroot = v.part
+					query = path.slice(v.part.length + (v.part ? 2 : 1)) //Отрезаем - и последний /
+					break;
+				}
 			}
 		}
+
 	} else {
 		if (ext) { //Без дефиса подходит только rest в корне для файлов
 			for (const v of REST_DIRECTS) {

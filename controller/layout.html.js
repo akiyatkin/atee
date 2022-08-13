@@ -6,6 +6,7 @@ export const HEAD = (data, { update_time, head }) =>
 		<meta property="og:image" content="${head.image_src??''}">
 		<link rel="image_src" href="${head.image_src??''}">
 		<script type="module">
+			const time = Date.now()
 			const click = event => {
 				const a = event.target.closest('a')
 				if (!a) return
@@ -16,7 +17,7 @@ export const HEAD = (data, { update_time, head }) =>
 				if (search[1] == '-') return
 				event.preventDefault()
 				import("/-controller/Client.js").then(({ Client }) => {
-					Client.follow(event)
+					Client.follow(event, time)
 					window.removeEventListener('click', click)
 				})
 			}

@@ -53,9 +53,9 @@ meta.addAction('get-menu', async view => {
 
 
 
-meta.addAction('get-list', async view => {
+meta.addAction('get-sheet', async view => {
 	const { name } = await view.gets(['name'])
-	view.ans.list = await getList(name)
+	view.ans.sheet = await getList(name)
 	return view.ret()
 })
 export const rest = async (...args) => {

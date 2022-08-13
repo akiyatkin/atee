@@ -5,14 +5,13 @@ import { Head } from './Head.js'
 export const Client = {
 	search:'',
 	access_promise: null,
-	timings: {
-		view_time: 0,
-		update_time: 0,
-		access_time: 0
-	},
-	follow: (event) => {
+	follow: (event, time) => {
+		Client.timings = {
+			view_time: time,
+			update_time: time,
+			access_time: time
+		}
 		navigator.serviceWorker?.register('/-controller/sw.js', { scope:'/' })
-		
 		window.addEventListener('crossing', async ({detail: { timings }}) => {
 			if (navigator.serviceWorker) {
 				const sw = navigator.serviceWorker
@@ -176,9 +175,9 @@ const applyCrossing = async () => {
 			body: new URLSearchParams(req)
 		}).then(res => res.json())
 		if (promise.rejected) return applyCrossing()
+		
 		if (!json || !json.st || !json.ut || !json.result || !json.layers) {
 			return location.reload()
-			//return location.href = location.href //Client.next.search
 		}
 		
 
@@ -229,6 +228,9 @@ const applyCrossing = async () => {
 
 		const event = new CustomEvent('crossing', {detail: {timings, crumb, head: json.head}})
 		window.dispatchEvent(event)
+		if (req.ut && req.ut < timings.update_time) {
+			location.reload()
+		}
 		
 	} catch (e) {
 		console.log(e)

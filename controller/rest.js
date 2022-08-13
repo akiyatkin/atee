@@ -275,14 +275,16 @@ meta.addAction('get-layers', async view => {
 	view.ans.vt = timings.view_time
 	if (!next) return view.err()
 	//next и prev globals не содержат, был редирект на без globals
-	if (update_time && update_time < timings.update_time) {
-		//update_time - reload
-		return view.err()
-	}
-	if (access_time && access_time < timings.access_time) {
-		//access_time - все слои надо показать заного
-		return view.err() //Ну или перезагрузиться
-	}
+
+	// if (update_time && update_time < timings.update_time) {
+	// 	//update_time - reload
+	// 	return view.err()
+	// }
+	// if (access_time && access_time < timings.access_time) {
+	// 	//access_time - все слои надо показать заного
+	// 	return view.err() //Ну или перезагрузиться
+	// }
+	
 	if (globals.length) {
 		//access_time - какие-то слои надо показать заного
 		return view.err() //Ну или перезагрузиться	
