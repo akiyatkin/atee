@@ -241,7 +241,9 @@ const applyCrossing = async () => {
 }
 const addHtml = (template, layer, crumb, timings) => {
 	let html = ''
-	if (layer.sys.objtpl) {
+	if (layer.sys.html) {
+		html = layer.sys.html
+	} else if (layer.sys.objtpl) {
 		const env = {...layer, ...crumb, host:location.host, cookie:document.cookie, ...timings}
 		const data = layer.sys.data
 		html = layer.sys.objtpl[layer.sub](data, env)
@@ -261,23 +263,36 @@ const loadAll = (layers, promises = []) => {
 	if (!layers) return promises
 	for (const layer of layers) {
 		if (!layer.sys) layer.sys = {}
-		if (layer.ts) { //ts это например, index:ROOT означает что есть шаблон
-			let promise = import(layer.tpl).then(res => {
-				layer.sys.objtpl = res
-			})
-			promises.push(promise)
-		}
-		if (layer.json) {
-			let promise = fetch(layer.json).then(res => {
+		if (layer.tpl) {
+			if (layer.ts) { //ts это например, index:ROOT означает что есть шаблон
+				let promise = import(layer.tpl).then(res => {
+					layer.sys.objtpl = res
+				})
+				promises.push(promise)
+			}
+			if (layer.json) {
+				let promise = fetch(layer.json).then(res => {
+					if (res.status != 200) {
+						location.reload()
+						return new Promise(() => {})//reload сразу не происходит, надо зависнуть
+					}
+					const type = res.headers.get('Content-Type')
+					if (~type.indexOf('text/html')) return res.text()
+					return res.json()
+				}).then(data => {
+					layer.sys.data = data
+				})
+				promises.push(promise)
+			}
+		} else if (layer.html) {
+			let promise = fetch(layer.html).then(res => {
 				if (res.status != 200) {
 					location.reload()
 					return new Promise(() => {})//reload сразу не происходит, надо зависнуть
 				}
-				const type = res.headers.get('Content-Type')
-				if (~type.indexOf('text/html')) return res.text()
-				return res.json()
-			}).then(data => {
-				layer.sys.data = data
+				return res.text()
+			}).then(html => {
+				layer.sys.html = html
 			})
 			promises.push(promise)
 		}

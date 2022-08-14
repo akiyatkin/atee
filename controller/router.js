@@ -78,25 +78,33 @@ const getRoot = (str) => {
 	return ~i ? str.slice(1, i) : ''
 }
 
-export const loadJSON = async (json, client) => {
-	let res = { ans: '', ext: 'json', status: 200, nostore: false, headers: { } }		
+export const loadJSON = async (src, client) => {
+	return load(src, client, 'json')
+}
+export const loadTEXT = async (src, client) => {
+	return load(src, client, 'txt')
+}
+const load = async (src, client, type) => {
+	let res = { ans: '', ext: type, status: 200, nostore: false, headers: { } }		
 	const {
 		search, secure, get,
 		rest, query, restroot
-	} = await router(json)
-	
-    if (!rest) throw 500
+	} = await router(src)
+
+    if (!rest) throw { status: 500, src }
 
 	res = {...res, ...(await rest(query, get, client))}
-    if (res.status == 500) throw 500
+    if (res.status != 200) throw { status: res.status, src }
 
 	let data = res.ans
 	if (data instanceof ReadStream) {
-		data = await readStream(ans)
+		data = await readTextStream(data)
+		if (type == 'json') data = JSON.parse(data)
 	}
-	return data
+	return {data, nostore:res.nostore}
 }
-const readStream = stream => {
+
+export const readTextStream = stream => {
 	return new Promise((resolve, reject) => {
 		let data = ''
 		stream.on('readable', () => {
@@ -106,7 +114,7 @@ const readStream = stream => {
 		})
 		stream.on('error', reject)
 		stream.on('end', () => {
-			resolve(JSON.parse(data))
+			resolve(data)
 		})
 	})
 }

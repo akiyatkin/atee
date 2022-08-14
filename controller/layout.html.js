@@ -1,4 +1,4 @@
-export const HEAD = (data, { update_time, head }) => 
+export const HEAD = (data, { access_time, update_time, head }) => 
 `<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>${head.title??''}</title>
@@ -6,7 +6,6 @@ export const HEAD = (data, { update_time, head }) =>
 		<meta property="og:image" content="${head.image_src??''}">
 		<link rel="image_src" href="${head.image_src??''}">
 		<script type="module">
-			const time = Date.now()
 			const click = event => {
 				const a = event.target.closest('a')
 				if (!a) return
@@ -17,7 +16,7 @@ export const HEAD = (data, { update_time, head }) =>
 				if (search[1] == '-') return
 				event.preventDefault()
 				import("/-controller/Client.js").then(({ Client }) => {
-					Client.follow(event, time)
+					Client.follow(event, ${access_time})
 					window.removeEventListener('click', click)
 				})
 			}
@@ -29,18 +28,11 @@ export const HEAD = (data, { update_time, head }) =>
 				let search = location.search
 				if (/[&\?]t[=&\?]/.test(search)) return
 				if (/[&\?]t$/.test(search)) return
-				const page_update_time = ${update_time}
 				const timings = await fetch('/-controller/get-access').then(data => data.json()).catch(() => false)
-				const new_update_time = timings.update_time
-				if (new_update_time == page_update_time) return
-				search += search ? '&' : '?'
-				if (new_update_time) {
-					search += 't=' + new_update_time
-				} else {
-					search += 't'
-				}
-				
-
+				const new_access_time = timings.access_time
+				if (new_access_time == ${access_time}) return
+				search += (search ? '&' : '?') + 't'
+				if (new_access_time) search += '=' + new_access_time
 				if (navigator.serviceWorker) {
 					const sw = navigator.serviceWorker
 					const swr = await sw.ready
@@ -49,7 +41,6 @@ export const HEAD = (data, { update_time, head }) =>
 					}
 					if (sw.controller) sw.controller.postMessage(timings)
 				}
-
 				location.href = location.pathname + search + location.hash
 			}
 			check()

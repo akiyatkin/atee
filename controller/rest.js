@@ -229,7 +229,7 @@ meta.addAction('sitemap', async view => {
 		}
 		if (index.ready_head.json) {
 			const json = index.ready_head.json
-			promise = promise.then(() => loadJSON(json, client).then(data => {
+			promise = promise.then(() => loadJSON(json, client).then(({data}) => {
 				if (!Array.isArray(data)) data = [data]
 				let h = path.join('/')
 				data.forEach(data => {
@@ -331,7 +331,7 @@ meta.addAction('get-layers', async view => {
 			const child = nroute.crumbs ? nroute.crumbs[1] : nroute.path
 			const client = await view.get('client')
 			const json = view.ans.head.json
-			const data = await loadJSON(json, client).then(data => {
+			const data = await loadJSON(json, client).then(({data}) => {
 				if (!Array.isArray(data)) data = [data]
 				let h = path.join('/')
 				return data.find(data => {
@@ -370,7 +370,7 @@ meta.addAction('get-layers', async view => {
 			const child = nroute.crumbs ? nroute.crumbs[1] : nroute.path
 			const client = await view.get('client')
 			const json = view.ans.head.json
-			const data = await loadJSON(json, client).then(data => {
+			const data = await loadJSON(json, client).then(({data}) => {
 				if (!Array.isArray(data)) data = [data]
 				let h = path.join('/')
 				return data.find(data => {
@@ -418,17 +418,14 @@ const getIndex = (rule, route, timings, options = {push: [], head: {}}, status =
 		...timings
 	}
 
-	//const req = { get: route.get, host, cookie, root }
 	runByRootLayer(index.root, layer => {
 		const ts = layer.ts
-		//const { default: rule } = await import(path.posix.join(IMPORT_APP_ROOT, root, 'layers.json'), {assert: { type: "json" }})
-		if (layer.name) layer.tpl = rule.tpl[layer.name]
-		
+		if (layer.name) {
+			if (rule.tpl) layer.tpl = rule.tpl[layer.name]
+			if (rule.html) layer.html = rule.html[layer.name]
+		}
 		if (rule.parsedtpl && rule.parsedtpl[ts]) {
-
 			layer.parsed = interpolate(rule.parsedtpl[ts], controller_request)
-			if (ts == 'errors:ER404' )console.log(layer)
-
 		}
 		if (rule.jsontpl && rule.jsontpl[ts]) {
 			layer.json = interpolate(rule.jsontpl[ts], controller_request)

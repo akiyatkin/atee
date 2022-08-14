@@ -1,4 +1,4 @@
-import { router } from './router.js'
+import { router, readTextStream, loadJSON, loadTEXT } from './router.js'
 import http from 'http'
 import fs from 'fs/promises'
 import { ReadStream } from 'fs'
@@ -144,52 +144,44 @@ export const Server = {
 }
 
 
-const readStream = stream => {
-	return new Promise((resolve, reject) => {
-		let data = ''
-		stream.on('readable', () => {
-			const d = stream.read()
-			if (d === null) return
-			data += d
-		})
-		stream.on('error', reject)
-		stream.on('end', () => {
-			resolve(JSON.parse(data))
-		})
-	})
-}
+// const readStream = stream => {
+// 	return new Promise((resolve, reject) => {
+// 		let data = ''
+// 		stream.on('readable', () => {
+// 			const d = stream.read()
+// 			if (d === null) return
+// 			data += d
+// 		})
+// 		stream.on('error', reject)
+// 		stream.on('end', () => {
+// 			resolve(JSON.parse(data))
+// 		})
+// 	})
+// }
+const errmsg = (layer, e) => `<pre><code>${layer.ts}<br>${e.toString()}</code></pre>`
 const getHTML = async (layer, { head, client, crumb, timings }) => {
 	const { tpl, json, sub, div } = layer
 	let nostore = false
     let status = 200
 	let data
-	if (json) {
-		let res = { ans: '', ext: 'json', status: 200, nostore: false, headers: { } }
-		const {
-			search, secure, get,
-			rest, query, restroot
-		} = await router(json)
-        if (!rest) throw { status: 500, json }
-		res = {...res, ...(await rest(query, get, client))}
-        if (res.status != 200) throw { status: res.status, json }
 	
-		status = Math.max(status, res.status) //404 может быть только тут
-		nostore = Math.max(nostore, res.nostore)
-
-		data = res.ans
-
-		if (res.ans instanceof ReadStream) {
-			data = await readStream(ans)
-		}
-	}
 	let html = ''
-	if (tpl) {
+	if (layer.html) {
+		const ans = await loadTEXT(layer.html, client).catch(e => { return {data: errmsg(layer, e), nostore: true} })
+		html = ans.data
+		nostore = nostore || ans.nostore
+	} else if (tpl) {
+		if (json) {
+			const ans = await loadJSON(json, client).catch(e => { return {data: errmsg(layer, e), nostore: true} })
+			data = ans.data
+			nostore = nostore || ans.nostore
+		}
 		const objtpl = await import(tpl)
         try {
         	const env = {...layer, ...crumb, host: client.host, cookie: client.cookie, head, ...timings}
             html = objtpl[sub](data, env)
         } catch(e) {
-            html = `<pre><code>${layer.ts}<br>${e.toString()}</code></pre>`
+            html = errmsg(layer, e)
             status = 500
         }
 	}
