@@ -1,0 +1,45 @@
+{
+	"index":"index:ROOT",
+	"layout":{
+		"index:ROOT": {
+			"MAIN":"layout:ROOT"
+		}
+	},
+	"childs":{
+		"404":{
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"controller:ER404"
+				}
+			}
+		},
+		"403":{
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"controller:ER403"
+				}
+			}
+		},
+		"500":{
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"controller:ER500"
+				}
+			}
+		}
+	},
+	"parsedtpl":{
+		
+	},
+	"json":{
+		"layout:ROOT":"/-showcase/get-state"
+	},
+	"jsontpl":{
+		
+	},
+	"tpl":{
+		"controller":"/-controller/layout.html.js",
+		"index":"/-showcase/index.html.js",
+		"layout":"/-showcase/layout.html.js"
+	}
+}

@@ -5,12 +5,7 @@ import { Head } from './Head.js'
 export const Client = {
 	search:'',
 	access_promise: null,
-	follow: (event, time) => {
-		Client.timings = {
-			view_time: time,
-			update_time: time,
-			access_time: time
-		}
+	follow: () => {
 		navigator.serviceWorker?.register('/-controller/sw.js', { scope:'/' })
 		window.addEventListener('crossing', async ({detail: { timings }}) => {
 			if (navigator.serviceWorker) {
@@ -26,27 +21,28 @@ export const Client = {
 			Head.accept(head)
 		})
 		window.addEventListener('click', event => {
-			const a = event.target.closest('a')
-			if (!a) return
-			const search = a.getAttribute('href')
-			if (!search) return
-			if (/^\w+:/.test(search)) return
-			if (~search.lastIndexOf('.')) return
-			if (search[1] == '-') return
-			event.preventDefault()
+			
+				const a = event.target.closest('a')
+				if (!a) return
+				const search = a.getAttribute('href')
+				if (!search) return
+				if (/^\w+:/.test(search)) return
+				if (~search.lastIndexOf('.')) return
+				if (search[1] == '-') return
+				event.preventDefault()
+
+
 			Client.click(a)
 		})
 		window.addEventListener('popstate', event => {
 			Client.popstate(event)
 		})
-		if (!event) return
 		Client.follow = event => {
 			const a = event.target.closest('a')
-			Client.click(a)	
+			Client.click(a)
 		}
-		Client.follow(event)
 	},
-	popstate: (e) => {
+	popstate: (event) => {
 		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 		const search = Client.getSearch()
 		const promise = Client.crossing(search)
@@ -54,7 +50,7 @@ export const Client = {
 			const { cursor } = event.state
 			Client.cursor = cursor
 			promise.then(() => window.scrollTo(...Client.history[Client.cursor].scroll)).catch(() => {})
-		} else { 
+		} else {
 			Client.start--
 			Client.cursor = Client.start
 			history.replaceState({cursor:Client.cursor, view:Client.view}, null, search)
@@ -179,8 +175,6 @@ const applyCrossing = async () => {
 		if (!json || !json.st || !json.ut || !json.result || !json.layers) {
 			return location.reload()
 		}
-		
-
 		const timings = {
 			view_time: json.vt,
 			update_time: json.ut,
@@ -351,5 +345,4 @@ const createPromise = (payload) => {
 	promise.catch(e => {})
 	return promise
 }
-Client.search = Client.getSearch()
-window.Client = Client
+//window.Client = Client

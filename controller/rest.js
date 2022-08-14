@@ -347,7 +347,10 @@ meta.addAction('get-layers', async view => {
 	const proute = await router(prev)
 
 	if (proute.rest || proute.secure) return view.err()
-	if (proute.root != nroute.root) return view.err()
+	if (proute.root != nroute.root) {
+		//view.ans.reload = true
+		return view.err()
+	}
 
 	const nlayers = structuredClone(nopt.root.layers)
 	const { index: popt } = getIndex(rule, proute, ptimings)

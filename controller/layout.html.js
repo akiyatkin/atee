@@ -1,4 +1,4 @@
-export const HEAD = (data, { access_time, update_time, head }) => 
+export const HEAD = (data, { search, access_time, update_time, head }) => 
 `<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>${head.title??''}</title>
@@ -7,6 +7,7 @@ export const HEAD = (data, { access_time, update_time, head }) =>
 		<link rel="image_src" href="${head.image_src??''}">
 		<script type="module">
 			const click = event => {
+				
 				const a = event.target.closest('a')
 				if (!a) return
 				const search = a.getAttribute('href')
@@ -15,12 +16,38 @@ export const HEAD = (data, { access_time, update_time, head }) =>
 				if (~search.lastIndexOf('.')) return
 				if (search[1] == '-') return
 				event.preventDefault()
-				import("/-controller/Client.js").then(({ Client }) => {
-					Client.follow(event, ${access_time})
-					window.removeEventListener('click', click)
+
+				init().then(Client => {
+					Client.follow()
+					Client.click(a)
 				})
 			}
+			
+			const popstate = event => {
+				init().then(Client => {
+					Client.follow()
+					Client.popstate(event)
+				})
+			}
+
+			const time = ${access_time}
+			const search = '${search}'
+			const init = async () => {
+				window.removeEventListener('popstate', popstate)
+				window.removeEventListener('click', click)
+				return import("/-controller/Client.js").then(({ Client }) => {
+					Client.search = search
+					Client.timings = {
+						view_time: time,
+						update_time: time,
+						access_time: time
+					}
+					return Client
+				})
+			}
+			
 			window.addEventListener('click', click)
+			window.addEventListener('popstate', popstate)
 		</script>
 		
 		<script type="module">	
