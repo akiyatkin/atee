@@ -85,16 +85,16 @@ export const loadTEXT = async (src, client) => {
 	return load(src, client, 'txt')
 }
 const load = async (src, client, type) => {
-	let res = { ans: '', ext: type, status: 200, nostore: false, headers: { } }		
+	let res = { ans: '', status: 200, nostore: false } //, headers: { }, ext: type
 	const {
 		search, secure, get,
 		rest, query, restroot
 	} = await router(src)
 
-    if (!rest) throw { status: 500, src }
+    if (!rest) throw { status: 500, src, type }
 
 	res = {...res, ...(await rest(query, get, client))}
-    if (res.status != 200) throw { status: res.status, src }
+    if (res.status != 200) throw { status: res.status, src, res, type }
 
 	let data = res.ans
 	if (data instanceof ReadStream) {

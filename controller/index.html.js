@@ -32,11 +32,11 @@ export const MAIN = (data) => `
 			<button type="submit">Применить</button>
 		</form>
 		<script type="module" async>
-			import { Client } from "/-controller/Client.js"
 			const form = document.forms[0]
 			const input = form.getElementsByTagName('input')[0]
-			form.addEventListener('submit', (e) => {
+			form.addEventListener('submit', async (e) => {
 				e.preventDefault()
+				const Client = await window.getClient()
 				document.cookie = '-controller=' + input.value + '; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT'
 				Client.replaceState(location.href)
 			})

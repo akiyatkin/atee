@@ -15,6 +15,8 @@ const translit = str => {
 	return ar.join('')
 }
 export const nicked = str => {
+	if (typeof(str) == 'number') str = String(str)
+	if (!str) return '';
 	str = str.replace(/[\+]/g, 'p')
 	str = str.toLowerCase()
 	str = translit(str)

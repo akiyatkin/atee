@@ -5,6 +5,21 @@ class ViewException {
 }
 export class View {
     proc = []
+    store = {}
+    getStore (name, args) {
+		const hash = JSON.stringify(args)
+		const STORE = this.store
+		if (!STORE[name]) STORE[name] = {}
+		if (!STORE[name][hash]) STORE[name][hash] = {}
+		return STORE[name][hash]
+	}
+    once (name, args, callback) {
+    	const store = this.getStore(name, args)
+    	if (store.ready) return store.promise
+    	store.promise = callback(...args)
+    	store.ready = true
+    	return store.promise
+    }
     constructor (meta, action, req = {}) {
         const view = this
         view.action = action

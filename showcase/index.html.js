@@ -8,17 +8,70 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 		<link rel="stylesheet" href="/style.css">
 		<link rel="stylesheet" href="/-showcase/style.css">
 	</head>
-	<body style="padding:10px; max-width: 1200px">
-		<header id="HEADER">${HEADER(...args)}</header>
-		<main id="MAIN"></main>
-		<footer id="FOOTER"></footer>
+	<body style="margin:0;">
+		<div style="padding:10px; min-height:100vh; display:flex; flex-direction:column">
+			<header id="HEADER">${HEADER(...args)}</header>
+			<main id="CONTENT" style="flex-grow: 1" ></main>
+			<div style="position: sticky; bottom:0; background-color:white; 
+				padding-bottom:1rem; padding-top:1rem; 
+				
+				border-top:1px gray solid;
+				
+				">
+				<div style="display: flex; gap:0.5rem; flex-wrap:wrap;"> 
+					<button disabled>Внести прайсы</button>
+					<button disabled>Внести данные</button>
+					<button>Связать всё с файлами</button>
+					<!-- при загрузке файлов на сервер, нет никаких событий. Мы никогда не знает есть новые файлы или нет -->
+				</div>
+				
+			</div>
+			<footer id="FOOTER"></footer>
+			
+		</div>
 	</body>
 </html>
 `
 export const HEADER = (data, {root, host}) => `
-	<div style="display: flex; justify-content: space-between;">
+	<div style="display: flex; justify-content: space-between; flex-wrap:wrap">
 		<a href="/${root}">SHOWCASE</a>
 		<a href="/">${host}</a>
 	</div>
+	<div style="display: flex; justify-content: space-between; flex-wrap:wrap">
+		<p>
+			<a href="tables">Данные</a>
+			<a href="prices">Прайсы</a>
+			<a href="brands">Бренды</a>
+			<a href="groups">Группы</a>
+			<a href="props">Свойства</a>
+			<a href="values">Значения</a>
+			<a href="models">Модели</a>
+		</p>
+		<p>
+			<button>Применить всё</button>
+		</p>
+	</div>
 `
 
+export const MAIN = (data) => `
+<p>
+	Администратор сайта: ${data.admin?'Да':'Нет'}
+</p>
+`
+
+export const FOOTER = (data) => `
+	<div style="
+		margin-top: 1rem;
+		padding-top: 1rem;
+		border-top:1px #eee solid; display: flex; flex-wrap: wrap; gap:0.5rem">
+
+		<div style="flex-grow:1;">
+			<a href="/@atee/controller">Вход</a> <a href="settings">Настройки</a>
+		</div>
+		<div style="display: flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem; align-items:center"> 
+			<button>Очистить всё</button>
+			<button>Очистить все прайсы</button>
+		</div>
+	</div>
+
+`

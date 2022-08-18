@@ -22,7 +22,6 @@ export const pathparse = (request) => {
     try { request = decodeURI(request) } catch { }
     let [path = '', params = ''] = explode('?', request)
     path = path.replace(/\/+/,'/').replace(/\/$/,'')//Дубли и слешей не ломают путь, но это плохо...
-    
     const get = parse(params, '&');
     const ext = getExt(path)
     const secure = !!~path.indexOf('/.')
@@ -30,13 +29,12 @@ export const pathparse = (request) => {
     return {secure, crumbs, path, ext, get}
 }
 export const parse = (string, sep = '; ') => {
-    
-    const cookie = string?.split(sep).reduce((res, item) => {
+    const obj = string?.split(sep).reduce((res, item) => {
         if (!item) return res
         item = item.replace(/\+/g, '%20')
         const data = item.split('=')
         res[decodeURIComponent(data.shift())] = data.length ? decodeURIComponent(data.join('=')) : ''
         return res
     }, {})
-    return cookie || {}
+    return obj || {}
 }

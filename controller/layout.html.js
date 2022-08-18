@@ -2,12 +2,12 @@ export const HEAD = (data, { search, access_time, update_time, head }) =>
 `<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>${head.title??''}</title>
+		<link rel="stylesheet" href="/-notreset/style.css">
 		<meta name="description" content="${head.description??''}">
 		<meta property="og:image" content="${head.image_src??''}">
 		<link rel="image_src" href="${head.image_src??''}">
 		<script type="module">
 			const click = event => {
-				
 				const a = event.target.closest('a')
 				if (!a) return
 				const search = a.getAttribute('href')
@@ -17,14 +17,14 @@ export const HEAD = (data, { search, access_time, update_time, head }) =>
 				if (search[1] == '-') return
 				event.preventDefault()
 
-				init().then(Client => {
+				getClient().then(Client => {
 					Client.follow()
 					Client.click(a)
 				})
 			}
 			
 			const popstate = event => {
-				init().then(Client => {
+				getClient().then(Client => {
 					Client.follow()
 					Client.popstate(event)
 				})
@@ -32,20 +32,24 @@ export const HEAD = (data, { search, access_time, update_time, head }) =>
 
 			const time = ${access_time}
 			const search = '${search}'
-			const init = async () => {
-				window.removeEventListener('popstate', popstate)
-				window.removeEventListener('click', click)
-				return import("/-controller/Client.js").then(({ Client }) => {
-					Client.search = search
-					Client.timings = {
-						view_time: time,
-						update_time: time,
-						access_time: time
-					}
-					return Client
+			window.getClient = () => {
+				const promise = new Promise((resolve, reject) => {
+					window.removeEventListener('popstate', popstate)
+					window.removeEventListener('click', click)
+					import("/-controller/Client.js").then(({ Client }) => {
+						Client.search = search
+						Client.timings = {
+							view_time: time,
+							update_time: time,
+							access_time: time
+						}
+						resolve(Client)
+					}).catch(reject)
 				})
+				window.getClient = () => promise
+				return promise
 			}
-			
+
 			window.addEventListener('click', click)
 			window.addEventListener('popstate', popstate)
 		</script>

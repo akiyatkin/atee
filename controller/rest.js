@@ -67,6 +67,7 @@ meta.addArgument('vt', ['int']) //view_time
 meta.addArgument('ut', ['int']) //update_time
 meta.addArgument('st', ['int']) //access_time
 meta.addArgument('gs', ['array']) //globals
+meta.addArgument('rd', ['array']) //globals
 
 
 
@@ -85,9 +86,12 @@ const wakeup = (rule) => {
 			const tsf = rule.layout[pts][div]
 			const [name, subframe] = tsf ? split(':', tsf) : ['','ROOT']
 			const [sub, frame = ''] = split('.', subframe)
-			const frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
 			const ts = tsf ? name + ':' + sub : ''
-			const layer = { ts, tsf, name, sub, div, frame, frameid }
+			const layer = { ts, tsf, name, sub, div}
+			if (frame) {
+				layer.frame = frame
+				layer.frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
+			}
 			rule.layout[pts][div] = layer
 		}
 	}
@@ -262,8 +266,8 @@ meta.addArgument('client')
 meta.addAction('get-layers', async view => {
 	view.ans.nostore = true
 	const {
-		pv: prev, nt: next, host, cookie, st: access_time, ut: update_time, vt: view_time, gs: globals 
-	} = await view.gets(['pv', 'ip', 'nt', 'host', 'cookie', 'st', 'ut', 'gs', 'vt'])
+		rd:reloaddivs, pv: prev, nt: next, host, cookie, st: access_time, ut: update_time, vt: view_time, gs: globals 
+	} = await view.gets(['rd', 'pv', 'ip', 'nt', 'host', 'cookie', 'st', 'ut', 'gs', 'vt'])
 	const ptimings = { access_time, update_time, view_time }
 	const timings = {
 		update_time: Access.getUpdateTime(),
@@ -298,6 +302,7 @@ meta.addAction('get-layers', async view => {
 
 	
 	const nroute = await router(next)
+
 	// return {
 	// 	search, secure, get, path, ext,
 	// 	rest, query, restroot,
@@ -310,7 +315,7 @@ meta.addAction('get-layers', async view => {
 	
 	
 	const { index: nopt, status, controller_request } = getIndex(rule, nroute, timings) //{ index: {head, push, root}, status }
-
+	
 	if (!nopt?.root) return view.err()
 	view.ans.status = status
 	//const req = {path:nroute.path, get: nroute.get, ...timing}
@@ -356,7 +361,8 @@ meta.addAction('get-layers', async view => {
 	const { index: popt } = getIndex(rule, proute, ptimings)
 	if (!popt.root) return view.err()
 
-	view.ans.layers = getDiff(popt.root.layers, nlayers)
+	view.ans.layers = getDiff(popt.root.layers, nlayers, reloaddivs)
+	if (reloaddivs.length) view.ans.rd = reloaddivs
 	
 	if (nroute.search != proute.search) {
 		view.ans.head = nopt.ready_head
@@ -386,17 +392,17 @@ meta.addAction('get-layers', async view => {
 	return view.ret()    
 })
 
-const getDiff = (players, nlayers, layers = []) => {
+const getDiff = (players, nlayers, reloaddivs, layers = []) => {
 
 	nlayers?.forEach(nlayer => {
 		const player = players.find(player => {
 			return nlayer.div == player.div 
 			&& nlayer.ts == player.ts 
 			&& nlayer.json == player.json 
-			&& nlayer.parsed == player.parsed
+			&& nlayer.parsed == player.parsed && !~reloaddivs.indexOf(player.div)
 		})
 		if (player) {
-			getDiff(player.layers, nlayer.layers, layers)
+			getDiff(player.layers, nlayer.layers, reloaddivs, layers)
 		} else {
 			layers.push(nlayer) //Слой не найден, его надо показать
 		}

@@ -1,0 +1,24 @@
+html {
+	overflow-y: scroll;
+}
+* {
+    box-sizing: border-box;
+}
+svg, img {
+	vertical-align: middle;
+}
+img, iframe, object, embed, video {
+    max-width: 100%;
+    height: auto;
+}
+button, input {
+	line-height: inherit;
+	font-size: inherit;
+	font-family: inherit;
+}
+button:not(:disabled) {
+	cursor: pointer;
+}
+table td, table th {
+	vertical-align: top;
+}

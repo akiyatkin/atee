@@ -51,7 +51,7 @@ export const Server = {
 			const client = {
 				cookie: request.headers.cookie, 
 				host: request.headers.host, 
-				ip:request.headers['x-forwarded-for'] || request.socket.remoteAddress
+				ip: request.headers['x-forwarded-for'] || request.socket.remoteAddress
 			}
 			//request.headers['x-forwarded-for']
 			if (route.rest) {
@@ -172,12 +172,16 @@ const getHTML = async (layer, { head, client, crumb, timings }) => {
 		nostore = nostore || ans.nostore
 	} else if (tpl) {
 		if (json) {
-			const ans = await loadJSON(json, client).catch(e => { return {data: errmsg(layer, e), nostore: true} })
+			const ans = await loadJSON(json, client)
 			data = ans.data
 			nostore = nostore || ans.nostore
 		}
-		const objtpl = await import(tpl)
+		const objtpl = await import(tpl).catch(e => {
+    		e.tpl = tpl
+    		throw e
+    	})
         try {
+        	
         	const env = {...layer, ...crumb, host: client.host, cookie: client.cookie, head, ...timings}
             html = objtpl[sub](data, env)
         } catch(e) {

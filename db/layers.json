@@ -1,0 +1,56 @@
+{
+	"index":"index:ROOT",
+	"layout":{
+		"index:ROOT": {
+			"MAIN":"layout:ROOT"
+		},
+		"layout:ROOT":{
+			"CONTENT":"layout:MAIN"
+		}
+	},
+	"childs":{
+		"404":{
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"controller:ER404"
+				}
+			}
+		},
+		"403":{
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"controller:ER403"
+				}
+			}
+		},
+		"500":{
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"controller:ER500"
+				}
+			}
+		},
+		"tables":{
+			"layout":{
+				"layout:ROOT":{
+					"CONTENT":"layout:TABLES"
+				}
+			}
+		}
+	},
+	"parsedtpl":{
+		
+	},
+	"json":{
+		"layout:ROOT":"/-db/get-state",
+		"layout:TABLES":"/-db/get-tables"
+	},
+	"jsontpl":{
+		
+	},
+	"tpl":{
+		"controller":"/-controller/layout.html.js",
+		"index":"/-db/index.html.js",
+		"layout":"/-db/layout.html.js"
+	}
+}

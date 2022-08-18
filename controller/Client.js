@@ -71,6 +71,12 @@ export const Client = {
 	global: () => {
 
 	},
+	reloaddivs:[],
+	reloaddiv: (div) => {
+		if (~Client.reloaddivs.indexOf(div)) return
+		Client.reloaddivs.push(div)
+		return Client.replaceState(location.href)
+	},
 	view:Date.now(), //Метка сеанса в котором актуальна Client.history
 	history:[],
 	start:history.length,
@@ -144,6 +150,7 @@ const fixsearch = search => {
 	}
 	return search
 }
+
 const applyCrossing = async () => {
 	if (!Client.next) return
 	let {search, promise} = Client.next
@@ -162,6 +169,7 @@ const applyCrossing = async () => {
 		pv: Client.search,
 		nt: search
 	}
+	if (Client.reloaddivs.length) req.rd = Client.reloaddivs.join(',')
 	try {
 		const json = await fetch('/-controller/get-layers', {
 			method: "post",
@@ -201,7 +209,12 @@ const applyCrossing = async () => {
 		await Promise.all(promises)
 		if (promise.rejected) return applyCrossing()
 
-		
+		if (json.rd) {
+			Client.reloaddivs = Client.reloaddivs.filter(div => {
+				if (~json.rd.indexOf(div)) return false
+				return true
+			})
+		}
 		for (const layer of json.layers) {
 			layer.sys.template = document.createElement('template')
 			addHtml(layer.sys.template, layer, crumb, timings)
@@ -233,6 +246,10 @@ const applyCrossing = async () => {
 		//return location.href = search
 	}
 }
+const errmsg = (layer, e) => {
+	console.log(layer, e)
+	return `<pre><code>${layer.ts}<br>${e.toString()}</code></pre>`
+}
 const addHtml = (template, layer, crumb, timings) => {
 	let html = ''
 	if (layer.sys.html) {
@@ -240,7 +257,11 @@ const addHtml = (template, layer, crumb, timings) => {
 	} else if (layer.sys.objtpl) {
 		const env = {...layer, ...crumb, host:location.host, cookie:document.cookie, ...timings}
 		const data = layer.sys.data
-		html = layer.sys.objtpl[layer.sub](data, env)
+		try {
+			html = layer.sys.objtpl[layer.sub](data, env)
+		} catch (e) {
+			html = errmsg(layer, e)
+		}
 	}
 	if (template.content.children.length) {
 		const div = template.content.getElementById(layer.div)
@@ -261,6 +282,8 @@ const loadAll = (layers, promises = []) => {
 			if (layer.ts) { //ts это например, index:ROOT означает что есть шаблон
 				let promise = import(layer.tpl).then(res => {
 					layer.sys.objtpl = res
+				}).catch(() => {
+					location.reload()
 				})
 				promises.push(promise)
 			}
@@ -275,6 +298,8 @@ const loadAll = (layers, promises = []) => {
 					return res.json()
 				}).then(data => {
 					layer.sys.data = data
+				}).catch(e => {
+					layer.sys.data = errmsg(layer, e)
 				})
 				promises.push(promise)
 			}
@@ -287,6 +312,8 @@ const loadAll = (layers, promises = []) => {
 				return res.text()
 			}).then(html => {
 				layer.sys.html = html
+			}).catch(e => {
+				layer.sys.html = errmsg(layer, e)
 			})
 			promises.push(promise)
 		}
