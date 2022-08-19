@@ -42,8 +42,8 @@ meta.addAction('get-tables', async view => {
 meta.addArgument('cookie')
 
 
-export const rest = async (query, get, client) => {
-	const req = {...get, ...client}
+export const rest = async (query, get, visitor) => {
+	const req = {...get, ...visitor.client}
 	const ans = await meta.get(query, req)
 	const { status = 200, nostore = true} = ans
 	delete ans.status

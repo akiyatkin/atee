@@ -28,7 +28,30 @@ const TYPES = {
 	svg: 'image/svg+xml',
 	pdf: 'application/pdf'
 };
-
+class Visitor {
+    store = {}
+    getStore (name, args) {
+		const hash = args.join('-')
+		const STORE = this.store
+		if (!STORE[name]) STORE[name] = {}
+		if (!STORE[name][hash]) STORE[name][hash] = {}
+		return STORE[name][hash]
+	}
+    once (name, args, callback) {
+    	const store = this.getStore(name, args)
+    	if (store.ready) return store.promise
+    	store.promise = callback(...args)
+    	store.ready = true
+    	return store.promise
+    }
+    constructor (request) {
+    	this.client = {
+			cookie: request.headers.cookie, 
+			host: request.headers.host, 
+			ip: request.headers['x-forwarded-for'] || request.socket.remoteAddress
+		}
+    }
+}
 export const Server = {
 	follow: (PORT = 8888, IP = "127.0.0.1") => {
 		const server = http.createServer()
@@ -48,11 +71,7 @@ export const Server = {
 				rest, query, restroot,
 				cont, root, crumbs
 			} = route
-			const client = {
-				cookie: request.headers.cookie, 
-				host: request.headers.host, 
-				ip: request.headers['x-forwarded-for'] || request.socket.remoteAddress
-			}
+			const visitor = new Visitor(request)
 			//request.headers['x-forwarded-for']
 			if (route.rest) {
 
@@ -61,7 +80,7 @@ export const Server = {
 				let res
 
 				try {
-					res = await rest(route.query, req, client)
+					res = await rest(route.query, req, visitor)
 				} catch (e) {
 					console.error(e)
 					res = false
@@ -96,8 +115,9 @@ export const Server = {
 				//cookie: request.headers.cookie || '',
 				//host: request.headers.host,
 				const req = {
-					...client,
-					client,
+					...visitor.client,
+					visitor,
+					client: visitor.client,
 					gs: '',
 					ut: Access.getUpdateTime(),
 					st: Access.getAccessTime(),
@@ -118,7 +138,7 @@ export const Server = {
                 let status = res.status
                 let info
                 try {
-				    info = await controller(res, client, crumb) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
+				    info = await controller(res, visitor, crumb) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
                     status = Math.max(info.status, status)
                 } catch (e) {
                 	console.error(e)
@@ -126,7 +146,7 @@ export const Server = {
                 	const root = crumb.root ? '/' + crumb.root + '/' : '/'
                     req.nt = root + status
                     res = await meta.get('get-layers', req)
-                    info = await controller(res, client, crumb)
+                    info = await controller(res, visitor, crumb)
                 }
 				if (res.push.length) response.setHeader('Link', res.push.join(','));
 				response.writeHead(status, {
@@ -159,7 +179,7 @@ export const Server = {
 // 	})
 // }
 const errmsg = (layer, e) => `<pre><code>${layer.ts}<br>${e.toString()}</code></pre>`
-const getHTML = async (layer, { head, client, crumb, timings }) => {
+const getHTML = async (layer, { head, visitor, crumb, timings }) => {
 	const { tpl, json, sub, div } = layer
 	let nostore = false
     let status = 200
@@ -167,12 +187,12 @@ const getHTML = async (layer, { head, client, crumb, timings }) => {
 	
 	let html = ''
 	if (layer.html) {
-		const ans = await loadTEXT(layer.html, client).catch(e => { return {data: errmsg(layer, e), nostore: true} })
+		const ans = await loadTEXT(layer.html, visitor).catch(e => { return {data: errmsg(layer, e), nostore: true} })
 		html = ans.data
 		nostore = nostore || ans.nostore
 	} else if (tpl) {
 		if (json) {
-			const ans = await loadJSON(json, client)
+			const ans = await loadJSON(json, visitor)
 			data = ans.data
 			nostore = nostore || ans.nostore
 		}
@@ -182,7 +202,13 @@ const getHTML = async (layer, { head, client, crumb, timings }) => {
     	})
         try {
         	
-        	const env = {...layer, ...crumb, host: client.host, cookie: client.cookie, head, ...timings}
+        	const env = {
+        		...layer, ...crumb, 
+        		host: visitor.client.host, 
+        		head, 
+        		...timings
+        	}
+        	//cookie: visitor.client.cookie, 
             html = objtpl[sub](data, env)
         } catch(e) {
             html = errmsg(layer, e)
@@ -200,14 +226,14 @@ const runLayers = async (layers, fn, parent) => {
 	}
 	return Promise.all(promises)
 }
-export const controller = async ({ vt, st, ut, layers, head }, client, crumb) => {
+export const controller = async ({ vt, st, ut, layers, head }, visitor, crumb) => {
 	const ans = {
 		html: '',
         status: 200,
 		nostore: false
 	}
 	const timings = {view_time:vt, access_time:st, update_time:ut}
-	const look = {head, client, crumb, timings}
+	const look = {head, visitor, crumb, timings}
 	const doc = new Doc()
 	await runLayers(layers, async layer => {
 		const { nostore, html, status } = await getHTML(layer, look)

@@ -21,8 +21,8 @@ meta.addAction('set-send', async (view) => {
 	return view.err()
 })
 
-export const rest = async (query, get, client) => {
-	const req = { ...get, ...client }
+export const rest = async (query, get, visitor) => {
+	const req = { ...get, ...visitor.client }
 	const ans = await meta.get(query, req)
 	return { ans }
 }

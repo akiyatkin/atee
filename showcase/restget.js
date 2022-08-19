@@ -20,14 +20,20 @@ export const restget = (meta) => {
 	})
 
 	meta.addAction('get-state', async view => {
-		const { cookie } = await view.gets(['cookie'])
-		view.ans.admin = await Access.isAdmin(cookie)
+		const { visitor } = await view.gets(['visitor'])
+		view.ans.admin = await Access.isAdmin(visitor.client.cookie)
 		return view.ret()
 	})
-	meta.addAction('get-tables', async view => {
-		const { db, config, options } = await view.gets(['db','admin','config','options'])
+	meta.addAction('get-panel', async view => {
+		const { visitor, db, config } = await view.gets(['visitor', 'db','admin','config'])
 		const dir = config['tables']
-		const files = await Files.readdirext(view, dir, ['xlsx']) //{ name, ext, file }
+		const files = await Files.readdirext(visitor, dir, ['xlsx']) //{ name, ext, file }
+		return view.ret('На')
+	})
+	meta.addAction('get-tables', async view => {
+		const { visitor, db, config, options } = await view.gets(['visitor', 'db','admin','config','options'])
+		const dir = config['tables']
+		const files = await Files.readdirext(visitor, dir, ['xlsx']) //{ name, ext, file }
 		await Promise.all(files.map(async (of) => {
 			const stat = await fs.stat(dir + of.file)
 			of.size = Math.round(stat.size / 1024 / 1024 * 100) / 100
@@ -65,6 +71,7 @@ export const restget = (meta) => {
 		view.ans.rows = rows
 		return view.ret()
 	})
+
 	meta.addAction('get-models', async view => {
 		const { db } = await view.gets(['db','admin'])
 		

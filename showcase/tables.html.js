@@ -14,11 +14,14 @@ export const ROOT = (data, env) => `
 		const id = id => document.getElementById(id)
 		const div = id('${env.div}')
 		const cls = (cls, el = div) => el.getElementsByClassName(cls)
-		for (const btn of cls('load')) {
+		for (let btn of cls('load')) {
 			btn.addEventListener('click',async () => {
 				btn.innerHTML = 'В процессе...'
 				btn.disabled = true
-				const ans = await fetch('/-showcase/set-tables-load?name=' + btn.dataset.name).then(res => res.json())
+				const ans = await fetch('/-showcase/set-tables-load?name=' + btn.name).then(res => res.json())
+
+				btn = cls('load').namedItem(btn.name)
+				if (!btn) return
 				btn.innerHTML = ans?.msg
 				btn.disabled = false
 				btn.classList.add('ready')
@@ -26,15 +29,20 @@ export const ROOT = (data, env) => `
 					other.innerHTML = 'Очистить'
 					other.disabled = false
 				}
+
 				//const Client = await window.getClient()
 				//Client.reloaddiv('${env.div}')
 			})
 		}
-		for (const btn of cls('clear')) {
+		for (let btn of cls('clear')) {
 			btn.addEventListener('click',async () => {
 				btn.innerHTML = 'В процессе...'
 				btn.disabled = true
-				const ans = await fetch('/-showcase/set-tables-clear?name=' + btn.dataset.name).then(res => res.json())
+				const ans = await fetch('/-showcase/set-tables-clear?name=' + btn.name).then(res => res.json())
+
+				btn = cls('clear').namedItem(btn.name)
+				if (!btn) return
+				
 				btn.innerHTML = ans?.msg
 				for (const other of cls('load', btn.parentElement)) {
 					other.innerHTML = 'Внести'
@@ -80,8 +88,8 @@ const tablerow = ({options, row, file, name, size, mtime, ready}) => `
 			`}
 			
 			<div style="display: flex; flex-wrap: wrap; gap:5px">
-				<button data-name="${name}" ${row?.loaded ? '':'disabled'} class="clear">Очистить</button>
-				<button data-name="${name}" class="load ${ready?'ready':''}">Внести</button>
+				<button name="${name}" ${row?.loaded ? '':'disabled'} class="clear">Очистить</button>
+				<button name="${name}" class="load ${ready?'ready':''}">Внести</button>
 			</div>
 		</td>
 	</tr>

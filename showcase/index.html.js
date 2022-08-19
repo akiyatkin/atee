@@ -12,19 +12,10 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 		<div style="padding:10px; min-height:100vh; display:flex; flex-direction:column">
 			<header id="HEADER">${HEADER(...args)}</header>
 			<main id="CONTENT" style="flex-grow: 1" ></main>
-			<div style="position: sticky; bottom:0; background-color:white; 
+			<div id="PANEL" style="position: sticky; bottom:0; background-color:white; 
 				padding-bottom:1rem; padding-top:1rem; 
-				
 				border-top:1px gray solid;
-				
 				">
-				<div style="display: flex; gap:0.5rem; flex-wrap:wrap;"> 
-					<button disabled>Внести прайсы</button>
-					<button disabled>Внести данные</button>
-					<button>Связать всё с файлами</button>
-					<!-- при загрузке файлов на сервер, нет никаких событий. Мы никогда не знает есть новые файлы или нет -->
-				</div>
-				
 			</div>
 			<footer id="FOOTER"></footer>
 			
@@ -32,6 +23,16 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 	</body>
 </html>
 `
+
+export const PANEL = (data, env) => `
+	<div style="display: flex; gap:0.5rem; flex-wrap:wrap;"> 
+		<button disabled>Внести прайсы</button>
+		<button disabled>Внести данные</button>
+		<button>Связать всё с файлами</button>
+		<!-- при загрузке файлов на сервер, нет никаких событий. Мы никогда не знает есть новые файлы или нет -->
+	</div>
+`
+
 export const HEADER = (data, {root, host}) => `
 	<div style="display: flex; justify-content: space-between; flex-wrap:wrap">
 		<a href="/${root}">SHOWCASE</a>

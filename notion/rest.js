@@ -52,8 +52,8 @@ meta.addAction('get-state', async view => {
 	return view.ret()
 })
 
-export const rest = async (query, get, client) => {
-	const req = {...get, ...client}
+export const rest = async (query, get, visitor) => {
+	const req = {...get, ...visitor.client}
 	const ans = await meta.get(query, req)
 	if (typeof(ans) == 'string') return { ans, status: 200, nostore:true, ext: 'html' }
 	const { ext = 'json', status = 200, nostore = true} = ans

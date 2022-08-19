@@ -9,8 +9,8 @@ import { nicked } from '/-nicked/nicked.js'
 export const meta = new Meta()
 
 meta.addHandler('admin', async (view) => {
-	const { cookie } = await view.gets(['cookie'])
-	if (!await Access.isAdmin(cookie)) {
+	const { visitor } = await view.gets(['visitor'])
+	if (!await Access.isAdmin(visitor.client.cookie)) {
 		view.ans.status = 403
 		view.ans.nostore = true
 		return view.err('Access denied')
@@ -46,14 +46,14 @@ meta.addVariable('db', async view => {
 	return db
 })
 meta.addArgument('name')
-meta.addArgument('cookie')
+meta.addArgument('visitor')
+
 
 restget(meta)
 restset(meta)
 
-export const rest = async (query, get, client) => {
-	const req = {...get, ...client}
-	const ans = await meta.get(query, req)
+export const rest = async (query, get, visitor) => {
+	const ans = await meta.get(query, {...get, visitor})
 	if (typeof(ans) == 'string') return { ans, status: 200, nostore:true, ext: 'html' }
 	const { status = 200, nostore = true } = ans
 	delete ans.status

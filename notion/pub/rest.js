@@ -32,8 +32,8 @@ meta.addAction('get-page', async (view) => {
 	return view.ret()
 })
 
-export const rest = async (query, get, client) => {
-	const req = {...get, ...client}
+export const rest = async (query, get, visitor) => {
+	const req = {...get, ...visitor.client}
 	const ans = await meta.get(query, req)
 	if (typeof(ans) == 'string') {
 		if (!ans) return { ans, status: 404, nostore:false, ext: 'html' }

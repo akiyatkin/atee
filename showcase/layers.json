@@ -4,6 +4,7 @@
 	"layout":{
 		"index:ROOT": {
 			"CONTENT":"index:MAIN",
+			"PANEL":"index:PANEL",
 			"FOOTER":"index:FOOTER"
 		},
 		"settings:ROOT":{
@@ -96,6 +97,7 @@
 		"index:MAIN":"/-showcase/get-state",
 		"settings:DATABASE":"/-showcase/get-settings",
 		"tables:ROOT":"/-showcase/get-tables",
+		"index:PANEL":"/-showcase/get-panel",
 		"models:ROOT":"/-showcase/get-models"
 	},
 	"jsontpl":{

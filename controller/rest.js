@@ -453,7 +453,7 @@ meta.addAction('robots.txt', async view => {
 	const { host } = await view.gets(['host'])
 	return ROBOTS_TXT( true, { host } )
 })
-export const rest = async (query, get, client) => {
+export const rest = async (query, get, visitor) => {
 	if (query == 'set-admin') {
 		const result = await Access.isAdmin(get.password)
 		return { ans:{result}, status: 200, nostore: true, ext: 'json', 
@@ -462,7 +462,7 @@ export const rest = async (query, get, client) => {
 			}
 		}	
 	}
-	const req = {root:'', ...get, ...client, client}
+	const req = {root:'', ...get, ...visitor.client, client:visitor.client}
 	const ans = await meta.get(query, req)
 	if (query == 'robots.txt') return { ans, ext:'txt', nostore: true }
 	if (query == 'sitemap.xml') return { ans, ext:'xml', nostore: true }

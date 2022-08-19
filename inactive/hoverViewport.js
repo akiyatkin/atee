@@ -16,12 +16,12 @@ const hoverViewport = (el, over, out) => {
 				if (isover) return
 				isover = true
 				isout = false
-				r = over()
+				if (over) r = over()
 			} else {
 				if (isout) return
 				isout = true
 				isover = false
-				r = out()
+				if (out) r = out()
 			}
 			if (r !== false) return
 			document.body.removeEventListener('click', handler)

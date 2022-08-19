@@ -47,19 +47,13 @@ export const restset = (meta) => {
 	meta.addAction('set-models-clearempty', async view => {
 		const { db } = await view.gets(['db','admin'])
 		const models = await db.all(`
-			SELECT 
-				m.model_title,
-				m.model_nick,
-				g.group_title,
-				g.group_nick,
-				b.brand_title,
-				b.brand_nick,
-				count(i.model_id) as items
+			DELETE
+				m
 			FROM showcase_groups g, showcase_brands b, showcase_models m
 			LEFT JOIN showcase_items i on i.model_id = m.model_id
-			WHERE m.brand_id = b.brand_id and g.group_id = m.group_id
-			GROUP BY m.model_id
+			WHERE m.brand_id = b.brand_id and g.group_id = m.group_id and i.model_id is null
 		`)
+		Access.setAccessTime()
 		return view.ret('Удалено')
 	})
 
@@ -80,6 +74,7 @@ export const restset = (meta) => {
 				loaded = 0
 			WHERE table_id = :table_id
 		`, { table_id })
+		Access.setAccessTime()
 		return view.ret('Очищено')
 	})
 	meta.addAction('set-tables-load', async view => {

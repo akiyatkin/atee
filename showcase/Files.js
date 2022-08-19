@@ -1,14 +1,14 @@
 import fs from "fs/promises"
 
 export const Files = {
-	getFileName: async(view, dir, name, exts) => {
-		let files = await Files.readdir(view, dir)
+	getFileName: async(visitor, dir, name, exts) => {
+		let files = await Files.readdir(visitor, dir)
 		files = files.filter(({ext}) => ~exts.indexOf(ext))
 		const { file } = files.find(of => of.name == name)
 		return file
 	},
-	readdir: async (view, dir) => {
-		return view.once('readdir', [dir], async (dir) => {
+	readdir: async (visitor, dir) => {
+		return visitor.once('readdir', [dir], async (dir) => {
 			let files = await fs.readdir(dir).catch(() => [])
 			files = files.map((file) => {
 				let i, name, ext, num, secure
@@ -28,8 +28,8 @@ export const Files = {
 			return files
 		})
 	},
-	readdirext: async (view, dir, exts) => {
-		let files = await Files.readdir(view, dir)
+	readdirext: async (visitor, dir, exts) => {
+		let files = await Files.readdir(visitor, dir)
 
 		files = files.filter(({ext}) => ~exts.indexOf(ext))
 		files.sort((a, b) => {

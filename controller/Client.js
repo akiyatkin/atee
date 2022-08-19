@@ -255,7 +255,13 @@ const addHtml = (template, layer, crumb, timings) => {
 	if (layer.sys.html) {
 		html = layer.sys.html
 	} else if (layer.sys.objtpl) {
-		const env = {...layer, ...crumb, host:location.host, cookie:document.cookie, ...timings}
+		const env = {
+			...layer, 
+			...crumb, 
+			host:location.host, 
+			...timings
+		}
+		//cookie:document.cookie, 
 		const data = layer.sys.data
 		try {
 			html = layer.sys.objtpl[layer.sub](data, env)

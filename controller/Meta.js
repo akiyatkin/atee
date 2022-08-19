@@ -55,7 +55,6 @@ export class View {
             } else {
                 res = null
             }
-
         }
         
 

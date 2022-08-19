@@ -78,30 +78,32 @@ const getRoot = (str) => {
 	return ~i ? str.slice(1, i) : ''
 }
 
-export const loadJSON = async (src, client) => {
-	return load(src, client, 'json')
+export const loadJSON = async (src, visitor) => {
+	return load(src, visitor, 'json')
 }
-export const loadTEXT = async (src, client) => {
-	return load(src, client, 'txt')
+export const loadTEXT = async (src, visitor) => {
+	return load(src, visitor, 'txt')
 }
-const load = async (src, client, type) => {
-	let res = { ans: '', status: 200, nostore: false } //, headers: { }, ext: type
-	const {
-		search, secure, get,
-		rest, query, restroot
-	} = await router(src)
+const load = (src, visitor, type) => {
+	return visitor.once('router load', [src, type], async (src, type) => {
+		let res = { ans: '', status: 200, nostore: false } //, headers: { }, ext: type
+		const {
+			search, secure, get,
+			rest, query, restroot
+		} = await router(src)
 
-    if (!rest) throw { status: 500, src, type }
+	    if (!rest) throw { status: 500, src, type }
 
-	res = {...res, ...(await rest(query, get, client))}
-    if (res.status != 200) throw { status: res.status, src, res, type }
+		res = {...res, ...(await rest(query, get, visitor))}
+	    if (res.status != 200) throw { status: res.status, src, res, type }
 
-	let data = res.ans
-	if (data instanceof ReadStream) {
-		data = await readTextStream(data)
-		if (type == 'json') data = JSON.parse(data)
-	}
-	return {data, nostore:res.nostore}
+		let data = res.ans
+		if (data instanceof ReadStream) {
+			data = await readTextStream(data)
+			if (type == 'json') data = JSON.parse(data)
+		}
+		return {data, nostore:res.nostore}
+	})
 }
 
 export const readTextStream = stream => {
