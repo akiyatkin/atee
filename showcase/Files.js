@@ -1,6 +1,12 @@
 import fs from "fs/promises"
 
 export const Files = {
+	exts: {
+		image:['png','webp','jpg','jpeg','svg'],
+		text: ['html','tpl','docx'],
+		file: ['zip','pdf','rar'],
+		video: ['avi','ogv','mp4','swf']
+	},
 	getFileName: async(visitor, dir, name, exts) => {
 		let files = await Files.readdir(visitor, dir)
 		files = files.filter(({ext}) => ~exts.indexOf(ext))
@@ -8,27 +14,40 @@ export const Files = {
 		return file
 	},
 	readdirDeep: async (visitor, dir) => {
-		const dirents = await fs.readdir(dir, {withFileTypes: true}).catch(() => [])
+		const dirents = await visitor.once('readdirDeep', [dir], () => {
+			return fs.readdir(dir, {withFileTypes: true}).catch(() => [])	
+		})
+
 		const root = {
 			dir,
 			'files':[],
 			'dirs':[]
 		}
 		for (const dirent of dirents) {
-			const info = Files.nameInfo(item.name)
-			if (dirent.isFile()) return root.files.push(info)
-			const subroot = await Files.readdirDeep(visitor, dir + item.name + '/')
+			const info = Files.nameInfo(dirent.name)
+			if (info.secure) continue
+			delete info.secure
+			if (dirent.isFile()) {
+				root.files.push(info)
+				continue
+			}
+			const subroot = await Files.readdirDeep(visitor, dir + dirent.name + '/')
 			root['dirs'].push({
-				info, ...subroot
+				...info, ...subroot
 			})
 		}
 		return root
+	},
+	filterDeep: async (root, callback, level = 0) => {
+		const results = await Promise.all(root.files.map((info, i) => callback(root, info, level, i)))
+		root.files = root.files.filter((info, i) => results[i])
+		await Promise.all(root.dirs.map(root => Files.filterDeep(root, callback, ++level)))
 	},
 	nameInfo: (file) => {
 		let i, name, ext, num, secure, match
 		i = file.lastIndexOf('.')
 		name = ~i ? file.slice(0, i) : file
-		ext = ~i ? file.slice(i + 1) : ''
+		ext = (~i ? file.slice(i + 1) : '').toLowerCase()
 		secure = file[0] == '.' || file[0] == '~'
 
 		//Цифры в конце в скобках

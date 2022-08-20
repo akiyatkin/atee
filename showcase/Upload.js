@@ -45,6 +45,23 @@ export class Upload {
 		})
 		return files
 	}
+	async receiveValue(value_title) {
+		const { visitor, options, db } = this.opt
+		const value = {
+			value_title,
+			value_nick: nicked(value_title)
+		}
+		value.value_id = await db.insertId(`
+			INSERT INTO 
+	 			showcase_values
+	 		SET
+	 			value_title = :value_title,
+	 			value_nick = :value_nick
+	 		ON DUPLICATE KEY UPDATE
+	 		 	value_id = LAST_INSERT_ID(value_id)
+	 	`, value)
+	 	return value
+	}
 	async receiveProp(prop_title) {
 		const { visitor, options, db } = this.opt
 		return visitor.once('receiveProp', [prop_title], async (prop_title) => {

@@ -31,7 +31,7 @@ export const restget = (meta) => {
 		view.ans.ready = {
 			prices: true,
 			tables: true,
-			files: true
+			files: false
 		}
 		try {
 			const tables = await upload.getNewTables()
@@ -192,20 +192,20 @@ export const restget = (meta) => {
 		
 		/*
 			Собираем папку с подсказкой производитель и модель
-			folders = {
-				dir : {
-					files:[
-					]
-				}
-			}
-			files: [
-			]
+			dirs = [{
+				files: [info],
+				dirs:[{
+					files:[info],
+					dirs:[...]
+				}]
+			}]
+			files: [{info}]
 
 			Собираем по подсказке что указано в базе и оставляем только то чего нет
 		*/
 
+		//grouptexts данамическая папка, подключается на лету для любого запроса поиска и т.п.
 		//groupicons папка [картинки] с файлами по группам и свободной иерархией
-		//grouptexts папка [тексты] с файлами по группам и свободной иерархией
 		//brandlogos папка [картинки] с файлами по брендам и свободной иерархией
 
 		//Для items файлы записываются, как обычные свойства [images, slides, texts, files, videos]
@@ -217,10 +217,128 @@ export const restget = (meta) => {
 		//files по брендам папки [файлы] с файлами по моделям и свободной иерархией
 		//videos по брендам папки [видео] с файлами по моделям и свободной иерархией
 		//slides по брендам папки [картинки] с файлами по моделям и свободной иерархией
-		const list = await Files.readdirDeep(visitor, config.groupicons)
-		view.ans.list = list
+		const parts = {}
+		let part
+
+		part = 'groupicons'
+		parts[part] = await Files.readdirDeep(visitor, config[part])
+		await Files.filterDeep(parts[part], async (dirinfo, fileinfo, level) => {
+			if (!~Files.exts.image.indexOf(fileinfo.ext)) return true
+			const src = dirinfo.dir+fileinfo.file
+			const is = await db.col('SELECT 1 FROM showcase_groups where icon = :src LIMIT 1', {src})
+			if (is) return false
+			return true
+		})
+
+		part = 'brandlogos'
+		parts[part] = await Files.readdirDeep(visitor, config[part])
+		await Files.filterDeep(parts[part], async (dirinfo, fileinfo, level) => {
+			if (!~Files.exts.image.indexOf(fileinfo.ext)) return true
+			const src = dirinfo.dir+fileinfo.file
+			const is = await db.col('SELECT 1 FROM showcase_brands where logo = :src LIMIT 1', {src})
+			if (is) return false
+			return true
+		})
+		part = 'videos'
+		parts[part] = await Files.readdirDeep(visitor, config[part])
+		for (const root of parts[part].dirs) {
+			const brand_nick = nicked(root.name)
+			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
+			if (!brand_id) continue
+			await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
+				if (!~Files.exts.video.indexOf(fileinfo.ext)) return true
+				const src = nicked(dirinfo.dir + fileinfo.file)
+				const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
+				if (is) return false
+				return true
+			})
+		}
+
+		part = 'texts'
+		parts[part] = await Files.readdirDeep(visitor, config[part])
+		for (const root of parts[part].dirs) {
+			const brand_nick = nicked(root.name)
+			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
+			if (!brand_id) continue
+			await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
+				if (!~Files.exts.text.indexOf(fileinfo.ext)) return true
+				const src = nicked(dirinfo.dir + fileinfo.file)
+				const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
+				if (is) return false
+				return true
+			})
+		}
+
+		part = 'files'
+		parts[part] = await Files.readdirDeep(visitor, config[part])
+		for (const root of parts[part].dirs) {
+			const brand_nick = nicked(root.name)
+			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
+			if (!brand_id) continue
+			await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
+				if (!~Files.exts.file.indexOf(fileinfo.ext)) return true
+				const src = nicked(dirinfo.dir + fileinfo.file)
+				const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
+				if (is) return false
+				return true
+			})
+		}
+
+
+		part = 'slides'
+		parts[part] = await Files.readdirDeep(visitor, config[part])
+		for (const root of parts[part].dirs) {
+			const brand_nick = nicked(root.name)
+			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
+			if (!brand_id) continue
+			await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
+				if (!~Files.exts.image.indexOf(fileinfo.ext)) return true
+				const src = nicked(dirinfo.dir + fileinfo.file)
+				const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
+				if (is) return false
+				return true
+			})
+		}
+
+		part = 'folders'
+		parts[part] = await Files.readdirDeep(visitor, config[part])
+		for (const root of parts[part].dirs) {
+			const brand_nick = nicked(root.name)
+			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
+			if (!brand_id) continue
+			await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
+				//В папке любой файл должен быть связан вне зависимости от расширения
+				const src = nicked(dirinfo.dir + fileinfo.file)
+				const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
+				if (is) return false
+				return true
+			})
+		}
+
+
+		part = 'images'
+		parts[part] = await Files.readdirDeep(visitor, config[part])
+		for (const root of parts[part].dirs) {
+			const brand_nick = nicked(root.name)
+			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
+			if (!brand_id) continue
+			await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
+				if (!~Files.exts.image.indexOf(fileinfo.ext)) return true
+				const src = nicked(dirinfo.dir + fileinfo.file)
+				const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
+				if (is) return false
+				return true
+			})
+		}
+
+
+		
+
+		view.ans.parts = parts
+
 		return view.ret()
 	})
+
 	meta.addAction('get-props', async view => {
 		await view.get('admin')
 		const { db } = await view.gets(['db'])

@@ -28,7 +28,7 @@ export const PANEL = (data, env) => `
 	<div style="display: flex; gap:0.5rem; flex-wrap:wrap;"> 
 		<button name="tables" data-action="set-tables-loadall" class="${data.ready.tables ? 'ready' : ''}">Внести данные</button>
 		<button name="prices" data-action="set-prices-loadall" class="${data.ready.prices ? 'ready' : ''}">Внести прайсы</button>
-		<button name="files" data-action="set-files-loadall" class="ready">Связать всё с файлами</button>
+		<button name="files" data-action="set-files-loadall" class="${data.ready.files ? 'ready' : ''}">Связать всё с файлами</button>
 		<!-- при загрузке файлов на сервер, нет никаких событий. Мы никогда не знает есть новые файлы или нет -->
 	</div>
 	<script type="module" async>
@@ -44,13 +44,13 @@ export const PANEL = (data, env) => `
 				if (!btn) return
 				btn.innerHTML = ans?.msg || 'Ошибка'
 				btn.classList.add('ready')
-				const Client = await window.getClient()
-				await Client.reloadts('tables:ROOT')
+				
 				btn = tag('button').namedItem(btn.name)
 				if (!btn) return
 				btn.disabled = false
-				//Client.reloaddiv('PANEL')
-				//await Client.pushState(btn.name)
+				
+				const Client = await window.getClient()
+				Client.reloaddiv('CONTENT')
 			})
 		}
 	</script>

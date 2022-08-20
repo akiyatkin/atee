@@ -19,7 +19,7 @@ meta.addHandler('admin', async (view) => {
 
 meta.addVariable('options', async view => {
 	const { config: {options: src} } = await view.gets(['config'])
-	const { options } = await import(src)
+	const { options } = await import('/'+src)
 	options.numbers ??= []
 	options.texts ??= []
 	options.tables ??= {}

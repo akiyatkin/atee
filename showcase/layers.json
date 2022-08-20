@@ -113,6 +113,7 @@
 		"groups:ROOT":"/-showcase/get-groups",
 		"brands:ROOT":"/-showcase/get-brands",
 		"props:ROOT":"/-showcase/get-props",
+		"files:ROOT":"/-showcase/get-files",
 		"values:ROOT":"/-showcase/get-values"
 	},
 	"jsontpl":{
