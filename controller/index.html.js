@@ -3,6 +3,9 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 <html>
 	<head>
 		${HEAD(...args)}
+		<base href="/@atee/showcase/">
+		<link rel="icon" type="/image/svg+xml" href="/images/favicon.svg">
+		<link rel="stylesheet" href="/style.css">
 	</head>
 	<body style="padding:10px; max-width: 1200px">
 		<header id="HEADER">${HEADER(...args)}</header>
@@ -28,7 +31,7 @@ export const MAIN = (data) => `
 			Администратор: <b>${data.admin ? 'Да' : 'Нет'}</b>
 		</p>
 		<form>
-			<input type="text" placeholder="Пароль">
+			<input name="password" type="password" placeholder="Пароль">
 			<button type="submit">Применить</button>
 		</form>
 		<script type="module" async>

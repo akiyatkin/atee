@@ -28,8 +28,8 @@ export const meta = new Meta()
 meta.addArgument('name')
 meta.addAction('get-menu', async view => {
 	const { name } = await view.gets(['name'])
-	const {descr, data, head} = await getList(name)
-	if (!head) return view.err("Данные не найдены")
+	const {descr, data, head_titles} = await getList(name)
+	if (!head_titles) return view.err("Данные не найдены")
 	const root = {'Уровень':false}
 	let prev = root
 	data.forEach(row => {

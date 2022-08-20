@@ -3,16 +3,17 @@ import { Files } from "/-showcase/Files.js"
 import { Access } from "/-controller/Access.js"
 import { Excel } from "/-showcase/Excel.js"
 import fs from "fs/promises"
-import { whereisit } from '/-controller/whereisit.js'
+
 import { nicked } from '/-nicked/nicked.js'
 import { unique } from '/-nicked/unique.js'
 
-
+import { whereisit } from '/-controller/whereisit.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 export const restset = (meta) => {
 	meta.addAction('set-reset', async view => {
-		const { db } = await view.gets(['db','admin'])
+		await view.get('admin')
+		const { db } = await view.gets(['db'])
 
 		const res = await db.exec(`DROP TABLE IF EXISTS 
 			showcase_groups,
@@ -28,7 +29,7 @@ export const restset = (meta) => {
 			showcase_iprops,
 			showcase_gprops
 		`)
-		db.start()
+		await db.start()
 		const src = FILE_MOD_ROOT + '/update.sql'
 		const sql = await fs.readFile(src).then(buffer => buffer.toString())
 		const sqls = sql.split(';')
@@ -40,15 +41,129 @@ export const restset = (meta) => {
 		db.commit()
 		await Promise.all(promises)
 		
-		
+		Access.setAccessTime()
 		return view.ret('База пересоздана')
 	})
+	meta.addAction('set-brands-clearempty', async view => {
+		await view.get('admin')
+		const { db } = await view.gets(['db'])
+		await db.changedRows(`
+			DELETE b
+			FROM showcase_brands b
+			LEFT JOIN showcase_models m on m.brand_id = b.brand_id
+			WHERE m.brand_id is null
+		`)
+		Access.setAccessTime()
+		return view.ret('Удалено')
+	})
+	meta.addAction('set-groups-clearempty', async view => {
+		await view.get('admin')
+		const { db } = await view.gets(['db'])
+
+		await db.start()
+		const groups = await db.all(`
+			SELECT 
+				g.group_title,
+				g.group_nick,
+				g.group_id,
+				g.parent_id,
+				count(m.model_id) as models
+			FROM showcase_groups g
+			LEFT JOIN showcase_models m on m.group_id = g.group_id
+			GROUP BY g.group_id
+		`)
+		const objgroups = {}
+		for (const group of groups) {
+			objgroups[group.group_id] = group
+		}
+		for (const group of groups) {
+			if (!group.parent_id) continue
+			objgroups[group.parent_id].models += group.models
+		}
+		for (const group of groups) {
+			if (group.models > 0) continue
+			await db.changedRows(`
+				DELETE g
+				FROM showcase_groups g
+				WHERE g.group_id = :group_id
+			`, group)
+		}
+		await db.commit()
+		Access.setAccessTime()
+		return view.ret('Удалено')
+	})
 	
+	meta.addAction('set-props-move', async view => {
+		await view.get('admin')
+		const { db, before_id, after_id } = await view.gets(['db','before_id','after_id'])
+
+		await db.start()
+		const props = await db.all(`
+			SELECT 
+				p.prop_id,
+				p.ordain
+			FROM showcase_props p
+			ORDER by ordain
+		`)
+		let ordain = 0
+		let before, after
+		props.forEach(prop => {
+			if (prop.prop_id == after_id) after = prop
+			if (prop.prop_id == before_id) before = prop
+			ordain = ordain + 2
+			prop.ordain = ordain
+		})
+		if (!before || !after) return view.err('Не найдены свойства')
+		before.ordain = after.ordain - 1
+
+		for (const prop of props) {
+			await db.changedRows(`
+				UPDATE
+					showcase_props 
+				SET
+					ordain = :ordain
+				WHERE prop_id = :prop_id
+			`, prop)
+		}
+		await db.changedRows(`
+			DELETE v
+			FROM showcase_values v
+			LEFT JOIN showcase_iprops ip on ip.value_id = v.value_id
+			WHERE ip.value_id is null
+		`)
+		await db.commit()
+		Access.setAccessTime()
+		return view.ret('Удалено')
+	})
+	meta.addAction('set-values-clearempty', async view => {
+		await view.get('admin')
+		const { db } = await view.gets(['db'])
+		await db.changedRows(`
+			DELETE v
+			FROM showcase_values v
+			LEFT JOIN showcase_iprops ip on ip.value_id = v.value_id
+			WHERE ip.value_id is null
+		`)
+		Access.setAccessTime()
+		return view.ret('Удалено')
+	})
+	meta.addAction('set-props-clearempty', async view => {
+		await view.get('admin')
+		const { db } = await view.gets(['db'])
+		await db.changedRows(`
+			DELETE p
+			FROM showcase_props p
+			LEFT JOIN showcase_iprops ip on ip.prop_id = p.prop_id
+			WHERE ip.prop_id is null
+		`)
+		Access.setAccessTime()
+		return view.ret('Удалено')
+	})
 	meta.addAction('set-models-clearempty', async view => {
-		const { db } = await view.gets(['db','admin'])
+		await view.get('admin')
+		const { db } = await view.gets(['db'])
 		const models = await db.all(`
-			DELETE
-				m
+			DELETE m
 			FROM showcase_groups g, showcase_brands b, showcase_models m
 			LEFT JOIN showcase_items i on i.model_id = m.model_id
 			WHERE m.brand_id = b.brand_id and g.group_id = m.group_id and i.model_id is null
@@ -58,28 +173,28 @@ export const restset = (meta) => {
 	})
 
 	meta.addAction('set-tables-clear', async view => {
-		const { db, name } = await view.gets(['db','admin', 'name'])
-		const table_nick = nicked(name)
-		const table_id = await db.col('SELECT table_id from showcase_tables where table_nick = :table_nick', { table_nick })
-		if (!table_id) return view.err('Данные не найдены')
-		await db.changedRows(`
-			DELETE i, ip FROM showcase_items i, showcase_iprops ip 
-			WHERE i.model_id = ip.model_id and i.item_num = ip.item_num and i.table_id = :table_id
-		`, { table_id })
-		
-		await db.changedRows(`
-			UPDATE
-				showcase_tables 
-			SET
-				loaded = 0
-			WHERE table_id = :table_id
-		`, { table_id })
+		await view.get('admin')
+		const { upload, name } = await view.gets(['upload', 'name'])
+		const row = await upload.clearTable(name)
+		view.ans.row = row
 		Access.setAccessTime()
 		return view.ret('Очищено')
 	})
+	meta.addAction('set-tables-loadall', async view => {
+		await view.get('admin')
+		const { upload } = await view.gets(['upload'])
+		const files = await upload.getNewTables()
+		let count = 0
+		await Promise.all(files.map(async of => {
+			const { quantity = 0 } = await upload.loadTable(of.name)
+			count += quantity
+		}))
+		Access.setAccessTime()
+		return view.ret('Внесено ' + count)
+	})
 	meta.addAction('set-tables-load', async view => {
-		const { options, upload, db, config, name } = await view.gets(['options', 'upload', 'db','admin', 'config','name'])
-
+		await view.get('admin')
+		const { upload, name } = await view.gets(['upload','name'])
 		/*
 			Центральная таблица для ячеек 
 			iprops - очищается
@@ -95,249 +210,69 @@ export const restset = (meta) => {
 
 			РЕДАКТИРУЕТСЯ: можно менять ordain и регистр, можно удалить если нет позиций, показывается нередактируемый nick
 		*/
-		let duration = Date.now()
-		const dir = config.tables
-		const file = await Files.getFileName(view, dir, name, ['xlsx'])
-		const {groups, models, sheets, brands} = await Excel.load(dir + file, name)
-		const values = {}
-		const props = {}
-		const table_name = name
-		const table_nick = nicked(name)
-		for (const brandmod in models) {
-			const items = models[brandmod]
-			items.forEach(item => {
-				const sheet_title = item[item.length - 1] //Последняя запись это имя листа sheet_title
-				const { descr, heads, indexes } = sheets[sheet_title]
-				heads.head_titles.forEach((prop_title, i) => {
-					const prop_nick = heads.head_nicks[i]
-					props[prop_nick] = { 
-						prop_nick, 
-						prop_title, 
-						ordain: i 
-					}
-				})
-
-				item.forEach((value_title,i) => {
-					if (value_title === null) return
-					if (~options.number_nicks.indexOf(heads.head_nicks[i])) return
-					if (~options.text_nicks.indexOf(heads.head_nicks[i])) return
-					const value_nick = nicked(value_title)
-					values[value_title] = { 
-						value_title,
-						value_nick 
-					}
-				})
-			})
-		}
-
+		const row = await upload.loadTable(name)
+		view.ans.row = row
 		
-		const table_id = await db.insertId(`
-			INSERT INTO 
-				showcase_tables 
-			SET
-				table_name = :table_name,
-				table_nick = :table_nick, 
-				loaded = 0
-			ON DUPLICATE KEY UPDATE
-				table_name = :table_name,
-			 	table_id = LAST_INSERT_ID(table_id),
-			 	loaded = 0
-		`, {
-			table_name: table_name,
-			table_nick: table_nick
-		})
-
-
-		//console.log(table_id)
-		//return view.ret()
-		for (const prop_nick in props) {
-			const pr = props[prop_nick]
-			pr.type = 'value'
-			if (~options.number_nicks.indexOf(prop_nick)) pr.type = 'number'
-			if (~options.text_nicks.indexOf(prop_nick)) pr.type = 'text'
-			pr.prop_id = await db.insertId(`
-				INSERT INTO 
-					showcase_props 
-				SET
-					type = :type,
-					prop_title = :prop_title,
-					prop_nick = :prop_nick,
-					ordain = :ordain
-				ON DUPLICATE KEY UPDATE
-					type = :type,
-				 	prop_id = LAST_INSERT_ID(prop_id)
-			`, pr)
-		}
-
-		for (const value_title in values) {
-			const value = values[value_title]
-			value.value_id = await db.insertId(`
-				INSERT INTO 
-					showcase_values
-				SET
-					value_title = :value_title,
-					value_nick = :value_nick
-				ON DUPLICATE KEY UPDATE
-				 	value_id = LAST_INSERT_ID(value_id)
-			`, value)
-		}
-		
-		
-
-
-
-		let ordain = 1
-		for (const brand_nick in brands) {
-			const brand = brands[brand_nick]
-			brand.brand_id = await db.insertId(`
-				INSERT INTO 
-					showcase_brands 
-				SET
-					brand_title = :brand_title,
-					brand_nick = :brand_nick,
-					ordain = :ordain
-				ON DUPLICATE KEY UPDATE
-				 	brand_id = LAST_INSERT_ID(brand_id)
-			`, brand)
-
-		}
-		
-		ordain = 1
-		for (const group_nick in groups) {
-			const group = groups[group_nick]
-			group.ordain = ++ordain;
-			group.parent_id = group.parent_nick ? groups[group.parent_nick].group_id : null
-			group.group_id = await db.insertId(`
-				INSERT INTO 
-					showcase_groups 
-				SET
-					group_title = :group_title,
-					parent_id = :parent_id, 
-					group_nick = :group_nick, 
-					ordain = :ordain
-				ON DUPLICATE KEY UPDATE
-				 	group_id = LAST_INSERT_ID(group_id)
-			`, group) //group_title, ordain, group_id не меняются. Сохраняются при очистке базы данных. 
-		}
-		let quantity = 0
-
-		await db.start()
-		await db.changedRows(`
-			DELETE i, ip FROM showcase_items i, showcase_iprops ip 
-			WHERE i.model_id = ip.model_id and i.item_num = ip.item_num and i.table_id = :table_id
-		`, { table_id })
-		for (const brandmod in models) {
-			const items = models[brandmod]
-			const item = items[0]
-			const sheet_title = item[item.length - 1] //Последняя запись это имя листа sheet_title
-			const { descr, heads, indexes } = sheets[sheet_title]
-			const model_title = item[indexes.model_title]
-			const model_nick = item[indexes.model_nick]
-			const brand_nick = item[indexes.brand_nick]
-			const group_nick = item[indexes.group_nick]
-			const brand_id = brands[brand_nick].brand_id
-			const group_id = groups[group_nick].group_id
-
-			let search = []
-			items.forEach(async (item) => {
-				search.push(item.join('-'))
-			})
-			search = nicked(search.join('-'))
-			search = search.split('-')
-			search = unique(search)
-			search = search.join(' ')
-
-			const model_id = await db.insertId(`
-				INSERT INTO 
-					showcase_models
-				SET
-					model_title = :model_title,
-					model_nick = :model_nick,
-					brand_id = :brand_id,
-					group_id = :group_id,
-					search = :search
-				ON DUPLICATE KEY UPDATE
-					search = :search,
-				 	model_id = LAST_INSERT_ID(model_id)
-			`, {model_title, model_nick, brand_id, group_id, search})
-
-
-			let item_num = await db.col(`
-				SELECT max(item_num) 
-				FROM showcase_items
-				WHERE model_id = :model_id
-			`, { model_id }) || 0
-			await Promise.all(items.map(async (item, ordain) => {
-				quantity++
-				const myitem_num = ++item_num
-				ordain++
-				await db.exec(`
-					INSERT INTO 
-						showcase_items
-					SET
-						model_id = :model_id,
-						item_num = :item_num,
-						ordain = :ordain,
-						table_id = :table_id
-				`, { model_id, item_num, ordain, table_id })
-
-				// `model_id` MEDIUMINT unsigned NOT NULL COMMENT '',
-				// `item_num` SMALLINT unsigned NOT NULL COMMENT '',
-				// `ordain` SMALLINT unsigned COMMENT 'Порядковый номер строки в таблице',
-				// `table_id` SMALLINT unsigned COMMENT '',
-				await Promise.all(item.map(async (value_title, i) => {
-					if (value_title === null) return
-					if (~[
-						indexes.brand_title, 
-						indexes.brand_nick,
-						indexes.model_title, 
-						indexes.model_nick,
-						indexes.group_nick, 
-						indexes.sheet_title
-					].indexOf(i)) return
-					const prop_nick = heads.head_nicks[i]
-					const {prop_id, type} = props[prop_nick]
-					let value_id = null
-					let text = null
-					let number = null
-					if (type == 'value') {
-						value_id = values[value_title].value_id
-					} else if (type == 'text') {
-						text = value_title
-					} else if (type == 'number') {
-						number = value_title - 0
-					}
-					await db.exec(`
-						INSERT INTO 
-							showcase_iprops
-						SET
-							model_id = :model_id,
-							item_num = :item_num,
-							prop_id = :prop_id,
-							text = :text,
-							number = :number,
-							value_id = :value_id
-					`, { model_id, item_num:myitem_num, prop_id, text, number, value_id })
-				}))
-			}))
-		}
-		duration = Date.now() - duration
-		await db.changedRows(`
-			UPDATE
-				showcase_tables 
-			SET
-				duration = :duration, 
-				loadtime = now(),
-				quantity = :quantity,
-				loaded = 1
-			WHERE table_id = :table_id
-		`, {
-			duration,
-			table_id,
-			quantity
-		})	
-		await db.commit()
 		Access.setAccessTime()
-		return view.ret('Внесено ' + quantity)
+		return view.ret('Внесено ' + row.quantity)
+	})
+	meta.addAction('set-prices-clearall', async view => {
+		await view.get('admin')
+		const { upload, db } = await view.gets(['upload', 'db'])
+		const rows = await db.all(`
+			SELECT
+				price_title
+			FROM showcase_prices
+		`)
+		await Promise.all(rows.map(({price_title}) => {
+			return upload.clearPrice(price_title)
+		}))
+		Access.setAccessTime()
+		
+		return view.ret('Прайсы очищены')
+	})
+	meta.addAction('set-tables-clearall', async view => {
+		await view.get('admin')
+		const { upload, db } = await view.gets(['upload', 'db'])
+		const rows = await db.all(`
+			SELECT
+				table_title
+			FROM showcase_tables
+		`)
+		await Promise.all(rows.map(({table_title}) => {
+			return upload.clearTable(table_title)
+		}))
+		Access.setAccessTime()
+		return view.ret('Данные очищены')
+	})
+	meta.addAction('set-prices-clear', async view => {
+		await view.get('admin')
+		const { upload, name } = await view.gets(['upload', 'name'])
+		const row = await upload.clearPrice(name)
+		view.ans.row = row
+		Access.setAccessTime()
+		return view.ret('Очищено')
+	})
+	meta.addAction('set-prices-load', async view => {
+		await view.get('admin')
+		const { upload, name } = await view.gets(['upload','name'])
+		
+		const row = await upload.loadPrice(name)
+		view.ans.row = row
+		
+		Access.setAccessTime()
+		return view.ret('Внесено ' + row.quantity)
+	})
+	meta.addAction('set-prices-loadall', async view => {
+		await view.get('admin')
+		const { upload } = await view.gets(['upload'])
+		const files = await upload.getNewPrices()
+		let count = 0
+		await Promise.all(files.map(async of => {
+			const { quantity = 0 } = await upload.loadPrice(of.name)
+			count += quantity
+		}))
+		Access.setAccessTime()
+		return view.ret('Внесено ' + count)
 	})
 }

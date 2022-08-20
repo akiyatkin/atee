@@ -19,19 +19,26 @@ export const ROOT = (data, env) => `
 				btn.innerHTML = 'В процессе...'
 				btn.disabled = true
 				const ans = await fetch('/-showcase/set-tables-load?name=' + btn.name).then(res => res.json())
-
+				const Client = await window.getClient()
+				const tpl = await import('${env.tpl}')
 				btn = cls('load').namedItem(btn.name)
 				if (!btn) return
-				btn.innerHTML = ans?.msg
+				btn.innerHTML = ans?.msg || 'Ошибка'
+				if (!ans?.result) return
 				btn.disabled = false
 				btn.classList.add('ready')
+				
+				
+				const rowdata = cls('rowdata', btn.parentElement.parentElement)[0]
+				const html = tpl.rowdata(ans.row)
+				Client.htmltodiv(html, rowdata)
+
 				for (const other of cls('clear', btn.parentElement)) {
 					other.innerHTML = 'Очистить'
 					other.disabled = false
 				}
 
-				//const Client = await window.getClient()
-				//Client.reloaddiv('${env.div}')
+				Client.reloaddiv('PANEL')
 			})
 		}
 		for (let btn of cls('clear')) {
@@ -39,37 +46,29 @@ export const ROOT = (data, env) => `
 				btn.innerHTML = 'В процессе...'
 				btn.disabled = true
 				const ans = await fetch('/-showcase/set-tables-clear?name=' + btn.name).then(res => res.json())
-
+				const Client = await window.getClient()
+				const tpl = await import('${env.tpl}')
 				btn = cls('clear').namedItem(btn.name)
 				if (!btn) return
-				
 				btn.innerHTML = ans?.msg
+				if (!ans?.result) return
+				
+
+				const rowdata = cls('rowdata', btn.parentElement.parentElement)[0]
+				const html = tpl.rowdata(ans.row)
+				Client.htmltodiv(html, rowdata)
+				
+
 				for (const other of cls('load', btn.parentElement)) {
 					other.innerHTML = 'Внести'
 					other.classList.remove('ready')
 				}
-				//const Client = await window.getClient()
-				//Client.reloaddiv('${env.div}')
+
+				Client.reloaddiv('PANEL')
 			})
 		}
 		
 	</script>
-	<!-- <p align="right">
-		<button class="ordain">Упорядочить</button>
-		<script type="module" async>
-			const id = id => document.getElementById(id)
-			const div = id('${env.div}')
-			const cls = cls => div.getElementsByClassName(cls)
-			const btnordain = cls('ordain')[0]
-			btnordain.addEventListener('click',async () => {
-				btnordain.innerHTML = 'В процессе...'
-				const ans = await fetch('/-showcase/set-tables-ordain').then(res => res.json())
-				btnordain.innerHTML = ans.msg
-
-			})
-		</script>
-	</p> -->
-	
 `
 const tablerow = ({options, row, file, name, size, mtime, ready}) => `
 	<tr>
@@ -79,18 +78,22 @@ const tablerow = ({options, row, file, name, size, mtime, ready}) => `
 		</td>
 		<td style="padding-left:5px">
 			<div style="margin-bottom:3px">
-				${size} Mb, <span title="Файл изменён ${new Date(mtime).toLocaleDateString()}">${ago(mtime)}</span>
+				${!mtime ? 'Файла нет': `
+					${size} Mb, <span title="Файл изменён ${new Date(mtime).toLocaleDateString()}">${ago(mtime)}</span>
+				`}
 			</div>
-			${!row ? '' : `
-				<div style="margin-bottom:3px; ${row.loaded? '' : 'opacity:0.5'}">
-					${row.quantity} ${words(row.quantity,'строка','строки','строк')} за ${passed(row.duration)}, <span title="Файл загружен ${new Date(row.loadtime).toLocaleDateString()}">${ago(row.loadtime)}</span>
-				</div>
-			`}
-			
+			<div class="rowdata">
+				${row ? rowdata(row) : ''}
+			</div>
 			<div style="display: flex; flex-wrap: wrap; gap:5px">
 				<button name="${name}" ${row?.loaded ? '':'disabled'} class="clear">Очистить</button>
 				<button name="${name}" class="load ${ready?'ready':''}">Внести</button>
 			</div>
 		</td>
 	</tr>
+`
+export const rowdata = (row) => `
+	<div style="margin-bottom:3px; ${row.loaded? '' : 'opacity:0.5'}">
+		${row.quantity} ${words(row.quantity,'строка','строки','строк')} за ${passed(row.duration)}, <span title="Файл загружен ${new Date(row.loadtime).toLocaleDateString()}">${ago(row.loadtime)}</span>
+	</div>
 `

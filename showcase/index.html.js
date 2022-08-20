@@ -26,11 +26,34 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 
 export const PANEL = (data, env) => `
 	<div style="display: flex; gap:0.5rem; flex-wrap:wrap;"> 
-		<button disabled>Внести прайсы</button>
-		<button disabled>Внести данные</button>
-		<button>Связать всё с файлами</button>
+		<button name="tables" data-action="set-tables-loadall" class="${data.ready.tables ? 'ready' : ''}">Внести данные</button>
+		<button name="prices" data-action="set-prices-loadall" class="${data.ready.prices ? 'ready' : ''}">Внести прайсы</button>
+		<button name="files" data-action="set-files-loadall" class="ready">Связать всё с файлами</button>
 		<!-- при загрузке файлов на сервер, нет никаких событий. Мы никогда не знает есть новые файлы или нет -->
 	</div>
+	<script type="module" async>
+		const id = id => document.getElementById(id)
+		const div = id('${env.div}')
+		const tag = (tag, el = div) => el.getElementsByTagName(tag)
+		for (let btn of tag('button')) {
+			btn.addEventListener('click',async () => {
+				btn.innerHTML = 'В процессе...'
+				btn.disabled = true
+				const ans = await fetch('/-showcase/'+btn.dataset.action).then(res => res.json()).catch(e => false)
+				btn = tag('button').namedItem(btn.name)
+				if (!btn) return
+				btn.innerHTML = ans?.msg || 'Ошибка'
+				btn.classList.add('ready')
+				const Client = await window.getClient()
+				await Client.reloadts('tables:ROOT')
+				btn = tag('button').namedItem(btn.name)
+				if (!btn) return
+				btn.disabled = false
+				//Client.reloaddiv('PANEL')
+				//await Client.pushState(btn.name)
+			})
+		}
+	</script>
 `
 
 export const HEADER = (data, {root, host}) => `
@@ -47,6 +70,7 @@ export const HEADER = (data, {root, host}) => `
 			<a href="props">Свойства</a>
 			<a href="values">Значения</a>
 			<a href="models">Модели</a>
+			<a href="files">Файлы</a>
 		</p>
 		<p>
 			<button>Применить всё</button>
@@ -56,11 +80,11 @@ export const HEADER = (data, {root, host}) => `
 
 export const MAIN = (data) => `
 <p>
-	Администратор сайта: ${data.admin?'Да':'Нет'}
+	Администратор сайта: ${data.admin?'Да':'Нет<br><a href="/@atee/controller">Вход</a>'}
 </p>
 `
 
-export const FOOTER = (data) => `
+export const FOOTER = (data, env) => `
 	<div style="
 		margin-top: 1rem;
 		padding-top: 1rem;
@@ -70,9 +94,29 @@ export const FOOTER = (data) => `
 			<a href="/@atee/controller">Вход</a> <a href="settings">Настройки</a>
 		</div>
 		<div style="display: flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem; align-items:center"> 
-			<button>Очистить всё</button>
-			<button>Очистить все прайсы</button>
+			<button name="set-tables-clearall">Очистить данные</button>
+			<button name="set-prices-clearall">Очистить прайсы</button>
 		</div>
 	</div>
+	<script type="module" async>
+		const id = id => document.getElementById(id)
+		const div = id('${env.div}')
+		const tag = (tag, el = div) => el.getElementsByTagName(tag)
+		for (let btn of tag('button')) {
+			btn.addEventListener('click',async () => {
+				btn.innerHTML = 'В процессе...'
+				btn.disabled = true
+				const ans = await fetch('/-showcase/'+btn.name).then(res => res.json()).catch(e => false)
+				btn = tag('button').namedItem(btn.name)
+				if (!btn) return
+				btn.innerHTML = ans?.msg || 'Ошибка'
+				btn.classList.add('ready')
+				btn.disabled = false
+				const Client = await window.getClient()
+				Client.reloaddiv('CONTENT')
+				Client.reloaddiv('PANEL')
+			})
+		}
+	</script>
 
 `

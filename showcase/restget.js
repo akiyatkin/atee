@@ -5,7 +5,8 @@ import fs from "fs/promises"
 
 export const restget = (meta) => {
 	meta.addAction('get-settings', async view => {
-		const { db } = await view.gets(['db','admin'])
+		await view.get('admin')
+		const { db } = await view.gets(['db'])
 		const rows = await db.all(`
 			SELECT 
 			     table_name AS 'name', 
@@ -25,13 +26,66 @@ export const restget = (meta) => {
 		return view.ret()
 	})
 	meta.addAction('get-panel', async view => {
-		const { visitor, db, config } = await view.gets(['visitor', 'db','admin','config'])
-		const dir = config['tables']
+		const { upload } = await view.gets(['upload'])
+		
+		view.ans.ready = {
+			prices: true,
+			tables: true,
+			files: true
+		}
+		try {
+			const tables = await upload.getNewTables()
+			view.ans.ready.tables = !tables.length
+			const prices = await upload.getNewPrices()
+			view.ans.ready.prices = !prices.length
+		} catch (e) {
+			return view.err()
+		}
+		return view.ret()
+	})
+	meta.addAction('get-prices', async view => {
+		await view.get('admin')
+		const { visitor, db, config, options } = await view.gets(['visitor', 'db','config','options'])
+		const dir = config['prices']
 		const files = await Files.readdirext(visitor, dir, ['xlsx']) //{ name, ext, file }
-		return view.ret('На')
+		await Promise.all(files.map(async (of) => {
+			const stat = await fs.stat(dir + of.file)
+			of.size = Math.round(stat.size / 1024 / 1024 * 100) / 100
+			of.mtime = new Date(stat.mtime).getTime()
+		}))
+
+		const rows = await db.all(`
+			SELECT 
+				price_id,
+				price_title,
+				price_nick,
+				unix_timestamp(loadtime)*1000 as loadtime,
+				quantity,
+				loaded,
+				duration
+			FROM showcase_prices
+		`)
+		files.forEach(of => {
+			const index = rows.findIndex(row => row.price_nick == nicked(of.name))
+			if (!~index) return
+			const row = rows.splice(index, 1)[0]
+			of.row = row
+			if (row.loaded && row.loadtime > of.mtime) of.ready = true
+		})
+		rows.forEach(row => {
+			files.push({name:row.price_title, row})
+		})
+		files.forEach(of => {
+			of.options = options.prices[of.name]
+		})
+		
+		view.ans.files = files
+		view.ans.rows = rows
+		return view.ret()
 	})
 	meta.addAction('get-tables', async view => {
-		const { visitor, db, config, options } = await view.gets(['visitor', 'db','admin','config','options'])
+		await view.get('admin')
+		const { visitor, db, config, options } = await view.gets(['visitor', 'db', 'config','options'])
 		const dir = config['tables']
 		const files = await Files.readdirext(visitor, dir, ['xlsx']) //{ name, ext, file }
 		await Promise.all(files.map(async (of) => {
@@ -43,15 +97,14 @@ export const restget = (meta) => {
 		const rows = await db.all(`
 			SELECT 
 				table_id,
-				table_name,
+				table_title,
 				table_nick,
 				unix_timestamp(loadtime)*1000 as loadtime,
 				quantity,
 				loaded,
 				duration
-			FROM showcase_tables			
+			FROM showcase_tables
 		`)
-		
 		files.forEach(of => {
 			const index = rows.findIndex(row => row.table_nick == nicked(of.name))
 			if (!~index) return
@@ -60,10 +113,9 @@ export const restget = (meta) => {
 			if (row.loaded && row.loadtime > of.mtime) of.ready = true
 		})
 		rows.forEach(row => {
-			files.push({name:row.table_name, row})
+			files.push({name:row.table_title, row})
 		})
 		files.forEach(of => {
-			if (!options.tables[of.name]) return
 			of.options = options.tables[of.name]
 		})
 		
@@ -73,7 +125,8 @@ export const restget = (meta) => {
 	})
 
 	meta.addAction('get-models', async view => {
-		const { db } = await view.gets(['db','admin'])
+		await view.get('admin')
+		const { db } = await view.gets(['db'])
 		
 		const models = await db.all(`
 			SELECT 
@@ -90,6 +143,127 @@ export const restget = (meta) => {
 			GROUP BY m.model_id
 		`)
 		view.ans.models = models
+		return view.ret()
+	})
+	meta.addAction('get-values', async view => {
+		await view.get('admin')
+		const { db } = await view.gets(['db'])
+		const values = await db.all(`
+			SELECT 
+				v.value_nick,
+				v.value_title,
+				v.value_id,
+				count(ip.value_id) as props
+			FROM showcase_values v
+			LEFT JOIN showcase_iprops ip on ip.value_id = v.value_id
+			GROUP BY v.value_id
+			ORDER by props DESC
+		`)
+		view.ans.values = values
+		// await new Promise(resolve => {
+		// 	setTimeout(resolve, 1000)
+		// })
+		return view.ret()
+	})
+	meta.addAction('get-brands', async view => {
+		await view.get('admin')
+		const { db } = await view.gets(['db'])
+		const brands = await db.all(`
+			SELECT 
+				b.brand_title,
+				b.brand_nick,
+				b.brand_id,
+				count(m.brand_id) as models
+			FROM showcase_brands b
+			LEFT JOIN showcase_models m on m.brand_id = b.brand_id
+			GROUP BY b.brand_id
+			ORDER by models DESC
+		`)
+		view.ans.brands = brands
+		return view.ret()
+	})
+	meta.addAction('get-files', async view => {
+		await view.get('admin')
+		const { visitor, db, config } = await view.gets(['visitor', 'db', 'config'])
+		
+		//Надо показать иерархию. Часто папки объединяются
+		//Содержимое папок под контролем полностью и надо показать что не привязано
+
+		
+		/*
+			Собираем папку с подсказкой производитель и модель
+			folders = {
+				dir : {
+					files:[
+					]
+				}
+			}
+			files: [
+			]
+
+			Собираем по подсказке что указано в базе и оставляем только то чего нет
+		*/
+
+		//groupicons папка [картинки] с файлами по группам и свободной иерархией
+		//grouptexts папка [тексты] с файлами по группам и свободной иерархией
+		//brandlogos папка [картинки] с файлами по брендам и свободной иерархией
+
+		//Для items файлы записываются, как обычные свойства [images, slides, texts, files, videos]
+
+		//folders по брендам папки [картинки, тексты, файлы] с папками по моделям
+
+		//images по брендам папки [картинки] с файлами по моделям и свободной иерархией
+		//texts по брендам папки [тексты] с файлами по моделям и свободной иерархией
+		//files по брендам папки [файлы] с файлами по моделям и свободной иерархией
+		//videos по брендам папки [видео] с файлами по моделям и свободной иерархией
+		//slides по брендам папки [картинки] с файлами по моделям и свободной иерархией
+		const list = await Files.readdirDeep(visitor, config.groupicons)
+		view.ans.list = list
+		return view.ret()
+	})
+	meta.addAction('get-props', async view => {
+		await view.get('admin')
+		const { db } = await view.gets(['db'])
+		const props = await db.all(`
+			SELECT 
+				p.prop_title,
+				p.prop_nick,
+				p.prop_id,
+				p.ordain,
+				count(ip.prop_id) as items
+			FROM showcase_props p
+			LEFT JOIN showcase_iprops ip on ip.prop_id = p.prop_id
+			GROUP BY p.prop_id
+			ORDER by ordain
+		`)
+		view.ans.props = props
+		return view.ret()
+	})
+	meta.addAction('get-groups', async view => {
+		await view.get('admin')
+		const { db } = await view.gets(['db'])
+		const groups = await db.all(`
+			SELECT 
+				g.group_title,
+				g.group_nick,
+				g.group_id,
+				g.parent_id,
+				count(m.group_id) as models
+			FROM showcase_groups g
+			LEFT JOIN showcase_models m on m.group_id = g.group_id
+			GROUP BY g.group_id
+		`)
+		const objgroups = {}
+		for (const group of groups) {
+			objgroups[group.group_id] = group
+		}
+		for (const group of groups) {
+			if (!group.parent_id) continue
+			objgroups[group.parent_id].models += group.models
+		}
+		groups.sort((a, b) => b.models - a.models)
+
+		view.ans.groups = groups
 		return view.ret()
 	})
 }

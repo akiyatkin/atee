@@ -14,9 +14,9 @@ export const animate = (tag, a, promise, animate = '') => {
 	})
 	list.add(tag + '-animate'+animate+'-before')	
 	setTimeout(() => {
-		promise.finally(() => {
+		promise.finally(() => {			
 			requestNextAnimationFrame(() => list.replace(tag + '-animate' + animate + '-before', tag + '-animate' + animate + '-after'))
-		})
+		}).catch(e => null)
 	}, 100)
 	
 }

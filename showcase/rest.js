@@ -18,7 +18,7 @@ meta.addHandler('admin', async (view) => {
 })
 
 meta.addVariable('options', async view => {
-	const { config: {options: src} } = await view.gets(['admin','config'])
+	const { config: {options: src} } = await view.gets(['config'])
 	const { options } = await import(src)
 	options.numbers ??= []
 	options.texts ??= []
@@ -33,9 +33,8 @@ meta.addVariable('config', async view => {
 	const {default: config} = await import('/showcase.json', {assert:{type:"json"}})
 	return config
 })
-meta.addVariable('upload', async view => {
-	const { db } = await view.gets(['db'])
-	return new Upload(view, db)
+meta.addVariable('upload', async view => {	
+	return new Upload(await view.gets(['db','config','options', 'visitor']))
 })
 meta.addVariable('db', async view => {
 	const db = await new Db().connect()
@@ -47,6 +46,11 @@ meta.addVariable('db', async view => {
 })
 meta.addArgument('name')
 meta.addArgument('visitor')
+
+meta.addFunction('int', (view, n) => Number(n))
+meta.addArgument('before_id', ['int'])
+meta.addArgument('after_id', ['int'])
+
 
 
 restget(meta)

@@ -7,9 +7,27 @@ const readXlsxFile = require('read-excel-file/node')
 const { readSheetNames } = require('read-excel-file/node')
 
 export const Excel = {
-	load: async (src, brand) => {
+	loadPrice: async (src, {start = 0, starts = {}}) => {
 		const listsheets = await readSheetNames(src)
-		//const nicked = (str) => view.once('nicked', [str], nicked(str))
+		const onicked = str => {
+			if (onicked[str]) return onicked[str]
+			onicked[str] = nicked(str)
+			return onicked[str]
+		}
+		const sheets = []
+		for (const sheet of listsheets) {
+			let rows_source = await readXlsxFile(src, { sheet })
+			rows_source.slice(starts[sheet] ?? start)
+			const {descr, rows_table} = Dabudi.splitDescr(rows_source)
+			const {heads, rows_body} = Dabudi.splitHead(rows_table)
+			const rows_items = rows_body.filter(row => row.filter(cel => cel).length)
+			sheets.push({ sheet, descr, heads, rows:rows_items})
+		}
+		
+		return {sheets}
+	},
+	loadTable: async (src, brand) => {
+		const listsheets = await readSheetNames(src)
 		const onicked = str => {
 			if (onicked[str]) return onicked[str]
 			onicked[str] = nicked(str)
@@ -33,9 +51,9 @@ export const Excel = {
 			
 
 			const indexes = {}
-			indexes.brand_title = Dabudi.getColIndex(heads, 'Бренд')
+			indexes.brand_title = Dabudi.getColIndexOrRename(heads, 'Бренд','Производитель')
 			indexes.brand_nick = Dabudi.getColIndex(heads, 'brand_nick')
-			indexes.model_title = Dabudi.getColIndex(heads, 'Модель')
+			indexes.model_title = Dabudi.getColIndexOrRename(heads, 'Модель','Артикул')
 			indexes.model_nick = Dabudi.getColIndex(heads, 'model_nick')
 			indexes.group_nick = Dabudi.getColIndex(heads, 'group_nick')
 			indexes.sheet_title = Dabudi.getColIndex(heads, 'sheet_title') //Обязательно последний

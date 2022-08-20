@@ -1,20 +1,21 @@
 
 CREATE TABLE IF NOT EXISTS `showcase_prices` (
 	`price_id` SMALLINT unsigned NOT NULL AUTO_INCREMENT COMMENT 'id источника',
-	`price_name` varchar(255) NOT NULL COMMENT 'Идентификационное имя источника - имя файла',
+	`price_title` varchar(255) NOT NULL COMMENT 'Идентификационное имя источника - имя файла',
+	`price_nick` varchar(255) NOT NULL COMMENT '',
 	`loadtime` DATETIME NULL DEFAULT NULL COMMENT 'Дата последнего внесения',
-	`ordain` SMALLINT unsigned COMMENT 'Порядок применнеия данных',
 	`quantity` SMALLINT unsigned COMMENT 'Количество записей',
 	`duration` SMALLINT unsigned COMMENT 'Записывается время разбора данных',
 	`ans` mediumtext NULL COMMENT '',
 	`loaded` int(1) unsigned NULL COMMENT 'Метка загружена ли таблица',
+	UNIQUE INDEX (`price_nick`),
 	PRIMARY KEY (`price_id`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci AUTO_INCREMENT=1;
 
 
 CREATE TABLE IF NOT EXISTS `showcase_tables` (
 	`table_id` SMALLINT unsigned NOT NULL AUTO_INCREMENT COMMENT 'id источника',
-	`table_name` varchar(255) NOT NULL COMMENT 'Идентификационное имя источника - имя файла, связь с файлом',
+	`table_title` varchar(255) NOT NULL COMMENT 'Идентификационное имя источника - имя файла, связь с файлом',
 	`table_nick` varchar(255) NOT NULL COMMENT '',
 	`loadtime` DATETIME NULL DEFAULT NULL COMMENT 'Дата последнего внесения',
 	`quantity` SMALLINT unsigned COMMENT 'Количество позиций в обработке',
@@ -94,6 +95,7 @@ CREATE TABLE IF NOT EXISTS `showcase_iprops` (
 	`text` mediumtext NULL COMMENT '',
 	`price_id` SMALLINT unsigned NULL COMMENT '65 тыс',
 	UNIQUE (`model_id`, `item_num`, `prop_id`, `value_id`),
-	INDEX (prop_id, value_id),
-	INDEX (model_id, prop_id)
+	INDEX (prop_id),
+	INDEX (value_id),
+	INDEX (`number`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;

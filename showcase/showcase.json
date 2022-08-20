@@ -1,0 +1,14 @@
+{
+	"prices":"data/catalog/.prices/",
+	"tables":"data/catalog/tables/",
+	"images":"data/catalog/images",
+	"folders":"data/catalog/folders/",
+	"texts":"data/catalog/texts/",
+	"files":"data/catalog/files/",
+	"videos":"data/catalog/videos/",
+	"slides":"data/catalog/slides/",
+	"groupicons":"data/catalog/groupicons/",
+	"brandlogos":"data/catalog/brandlogos/",
+	"grouptexts":"data/catalog/grouptexts/",
+	"options":"/data/catalog/.showcase.js"
+}

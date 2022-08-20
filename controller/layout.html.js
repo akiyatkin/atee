@@ -18,14 +18,12 @@ export const HEAD = (data, { search, access_time, update_time, head }) =>
 				event.preventDefault()
 
 				getClient().then(Client => {
-					Client.follow()
 					Client.click(a)
 				})
 			}
 			
 			const popstate = event => {
 				getClient().then(Client => {
-					Client.follow()
 					Client.popstate(event)
 				})
 			}
@@ -43,6 +41,7 @@ export const HEAD = (data, { search, access_time, update_time, head }) =>
 							update_time: time,
 							access_time: time
 						}
+						Client.follow()
 						resolve(Client)
 					}).catch(reject)
 				})

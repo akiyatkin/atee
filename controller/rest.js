@@ -52,7 +52,7 @@ meta.addAction('set-update', async view => {
 
 
 meta.addFunction('int', (view, n) => Number(n))
-meta.addFunction('array', (view, n) => explode(',', n))
+meta.addFunction('array', (view, n) => n ? n.split(',') : [])
 meta.addFunction('checksearch', (view, n) => {
 	if (n && n[0] != '/') return view.err()
 	return n
@@ -67,7 +67,8 @@ meta.addArgument('vt', ['int']) //view_time
 meta.addArgument('ut', ['int']) //update_time
 meta.addArgument('st', ['int']) //access_time
 meta.addArgument('gs', ['array']) //globals
-meta.addArgument('rd', ['array']) //globals
+meta.addArgument('rd', ['array']) //reloaddivs
+meta.addArgument('rt', ['array']) //reloadts
 
 
 
@@ -266,8 +267,8 @@ meta.addArgument('client')
 meta.addAction('get-layers', async view => {
 	view.ans.nostore = true
 	const {
-		rd:reloaddivs, pv: prev, nt: next, host, cookie, st: access_time, ut: update_time, vt: view_time, gs: globals 
-	} = await view.gets(['rd', 'pv', 'ip', 'nt', 'host', 'cookie', 'st', 'ut', 'gs', 'vt'])
+		rt:reloadtss, rd:reloaddivs, pv: prev, nt: next, host, cookie, st: access_time, ut: update_time, vt: view_time, gs: globals 
+	} = await view.gets(['rt', 'rd', 'pv', 'ip', 'nt', 'host', 'cookie', 'st', 'ut', 'gs', 'vt'])
 	const ptimings = { access_time, update_time, view_time }
 	const timings = {
 		update_time: Access.getUpdateTime(),
@@ -361,8 +362,9 @@ meta.addAction('get-layers', async view => {
 	const { index: popt } = getIndex(rule, proute, ptimings)
 	if (!popt.root) return view.err()
 
-	view.ans.layers = getDiff(popt.root.layers, nlayers, reloaddivs)
+	view.ans.layers = getDiff(popt.root.layers, nlayers, reloaddivs, reloadtss)
 	if (reloaddivs.length) view.ans.rd = reloaddivs
+	if (reloadtss.length) view.ans.rt = reloadtss
 	
 	if (nroute.search != proute.search) {
 		view.ans.head = nopt.ready_head
@@ -392,17 +394,19 @@ meta.addAction('get-layers', async view => {
 	return view.ret()    
 })
 
-const getDiff = (players, nlayers, reloaddivs, layers = []) => {
+const getDiff = (players, nlayers, reloaddivs, reloadtss, layers = []) => {
 
 	nlayers?.forEach(nlayer => {
 		const player = players.find(player => {
 			return nlayer.div == player.div 
 			&& nlayer.ts == player.ts 
 			&& nlayer.json == player.json 
-			&& nlayer.parsed == player.parsed && !~reloaddivs.indexOf(player.div)
+			&& nlayer.parsed == player.parsed 
+			&& !~reloaddivs.indexOf(player.div)
+			&& !~reloadtss.indexOf(player.ts)
 		})
 		if (player) {
-			getDiff(player.layers, nlayer.layers, reloaddivs, layers)
+			getDiff(player.layers, nlayer.layers, reloaddivs, reloadtss, layers)
 		} else {
 			layers.push(nlayer) //Слой не найден, его надо показать
 		}

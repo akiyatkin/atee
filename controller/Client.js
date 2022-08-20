@@ -49,7 +49,7 @@ export const Client = {
 		if (event.state?.view == Client.view) { //Вперёд
 			const { cursor } = event.state
 			Client.cursor = cursor
-			promise.then(() => window.scrollTo(...Client.history[Client.cursor].scroll)).catch(() => {})
+			promise.then(() => window.scrollTo(...Client.history[Client.cursor].scroll)).catch(() => null)
 		} else {
 			Client.start--
 			Client.cursor = Client.start
@@ -77,6 +77,12 @@ export const Client = {
 		Client.reloaddivs.push(div)
 		return Client.replaceState(location.href)
 	},
+	reloadtss:[],
+	reloadts: (ts) => {
+		if (~Client.reloadtss.indexOf(ts)) return
+		Client.reloadtss.push(ts)
+		return Client.replaceState(location.href)
+	},
 	view:Date.now(), //Метка сеанса в котором актуальна Client.history
 	history:[],
 	start:history.length,
@@ -92,12 +98,22 @@ export const Client = {
 			if (hash) div = document.getElementById(hash)
 			if (div) div.scrollIntoView()
 			else window.scrollTo(0,0)
-			if (hash && !promise.finalled) promise.then(go).catch(() => {})
+			if (hash && !promise.finalled) promise.then(go).catch(() => null)
 		}
-		promise.started.then(go).catch(() => {})
+		promise.started.then(go).catch(() => null)
 	},
 	pushState: (search, scroll = true) => {
 		search = fixsearch(search)
+
+		if (~location.href.indexOf(search)) {
+			const a = document.createElement('a')
+			a.href = Client.search
+			const oldahref = a.href
+			a.href = search
+			const newahref = a.href
+			if (oldahref == newahref) return Client.replaceState(search, scroll)
+		}
+
 		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 		Client.cursor++
 		history.pushState({cursor:Client.cursor, view:Client.view}, null, search)
@@ -116,24 +132,38 @@ export const Client = {
 		return promise
 	},
 	next: false,
-	crossing: (search) => {
+	crossing: (search, promise) => {
 		if (Client.next && Client.next.search == search) return Client.next.promise
-		
-		const promise = createPromise(search)
-		promise.started = createPromise()
-		promise.catch(() => promise.started.reject())
+		if (!promise) {
+			promise = createPromise('loaded and ready')
+			promise.started = createPromise('already started')
+		}
 
 		if (Client.next) {
+			if (Client.next.promise.started.finalled) {
+				Client.next.promise.then(() => Client.crossing(search, promise)).catch(e => null)
+				return promise
+			}
 			Client.next.search = search
-			Client.next.promise.reject(promise)
+			const oldpromise = Client.next.promise
 			Client.next.promise = promise
-			return Client.next.promise
+			oldpromise.started.reject(promise)
+			oldpromise.reject(promise)
 		}
 
 		Client.next = { search, promise }
-		applyCrossing()
-		return Client.next.promise
-	}	
+		requestAnimationFrame(applyCrossing)
+		return promise
+	},
+	htmltodiv: (html, div) => {
+		div.innerHTML = html
+		const promise = evalScriptsInNode(div)
+		Client.animate(div, promise)
+	},
+	animate: (el, promise = Promise.resolve(), anim = 'opacity') => {
+		const tag = el.tagName == 'A' ? 'a' : 'div'
+		return animate(tag, el, promise, anim)
+	}
 }
 const fixsearch = search => {
 	if (search[0] != '/') {
@@ -154,6 +184,8 @@ const fixsearch = search => {
 const applyCrossing = async () => {
 	if (!Client.next) return
 	let {search, promise} = Client.next
+	
+	
 	search = search.split('#')[0]
 	const timings = Client.timings
 	/*
@@ -170,6 +202,8 @@ const applyCrossing = async () => {
 		nt: search
 	}
 	if (Client.reloaddivs.length) req.rd = Client.reloaddivs.join(',')
+	if (Client.reloadtss.length) req.rt = Client.reloadtss.join(',')
+		
 	try {
 		const json = await fetch('/-controller/get-layers', {
 			method: "post",
@@ -178,8 +212,7 @@ const applyCrossing = async () => {
 			},
 			body: new URLSearchParams(req)
 		}).then(res => res.json())
-		if (promise.rejected) return applyCrossing()
-		
+		if (promise.rejected) return
 		if (!json || !json.st || !json.ut || !json.result || !json.layers) {
 			return location.reload()
 		}
@@ -189,13 +222,16 @@ const applyCrossing = async () => {
 			access_time: json.st
 		}
 		Client.timings = timings
-			
+		
 		const promises = loadAll(json.layers)
 		for (const layer of json.layers) {
 			layer.sys = {}
 			const div = document.getElementById(layer.div)
 			layer.sys.div = div
 			layer.sys.execute = createPromise()
+			promise.started.finally(() => {
+				layer.sys.execute.reject()
+			}).catch(e => null)
 			const hash = location.hash.slice(1)
 			let anim = layer.animate //Скрол неточный 1. из-за анимации и 2. из-за изменений DOM в скриптах
 			if (hash && anim != 'none') anim = 'opacity'
@@ -207,7 +243,9 @@ const applyCrossing = async () => {
 		
 
 		await Promise.all(promises)
-		if (promise.rejected) return applyCrossing()
+
+		if (promise.rejected) return
+		promise.started.resolve(search)
 
 		if (json.rd) {
 			Client.reloaddivs = Client.reloaddivs.filter(div => {
@@ -215,17 +253,23 @@ const applyCrossing = async () => {
 				return true
 			})
 		}
+		if (json.rt) {
+			Client.reloadtss = Client.reloadtss.filter(ts => {
+				if (~json.rt.indexOf(ts)) return false
+				return true
+			})
+		}
 		for (const layer of json.layers) {
 			layer.sys.template = document.createElement('template')
 			addHtml(layer.sys.template, layer, crumb, timings)
 		}
-		promise.started.resolve(search)
+		
 		const scripts = []
 		for (const layer of json.layers) {
 			const elements = layer.sys.template.content
 			layer.sys.div.replaceChildren(elements)
 			const promise = evalScriptsInNode(layer.sys.div)
-			promise.then(() => layer.sys.execute.resolve()) //Покажется когда выполнятся скрипты
+			promise.then(() => layer.sys.execute.resolve()).catch(e => null) //Покажется когда выполнятся скрипты
 			scripts.push(promise)
 		}
 		await Promise.all(scripts)
@@ -242,9 +286,11 @@ const applyCrossing = async () => {
 	} catch (e) {
 		console.log(e)
 		Client.next = false
+		promise.started.reject()
 		promise.reject()
 		//return location.href = search
 	}
+
 }
 const errmsg = (layer, e) => {
 	console.log(layer, e)
@@ -366,16 +412,18 @@ const createPromise = (payload) => {
 	promise.resolve = r => {
 		promise.result = r
 		promise.resolved = true
+		promise.rejected = false
 		promise.finalled = true
 		resolve(r)
 	}
 	promise.reject = r => {
 		promise.result = r
+		promise.resolved = false
 		promise.rejected = true
 		promise.finalled = true
 		reject(r)
 	}
-	promise.catch(e => {})
+	promise.catch(e => null)
 	return promise
 }
 //window.Client = Client
