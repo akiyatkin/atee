@@ -132,7 +132,7 @@ export class Upload {
 		const { visitor, options, view, db, config } = this.opt
 		const upload = this
 		const price_nick = nicked(price_title)
-		await db.start()
+		
 		const row = await db.fetch(`
 			SELECT price_id,
 				price_title,
@@ -167,7 +167,6 @@ export class Upload {
 			`, { price_id })
 			
 		}
-		await db.commit()
 		return row
 	}
 	async loadPrice (price_title) {
@@ -193,7 +192,7 @@ export class Upload {
 
 		const { sheets } = await Excel.loadPrice(dir + file, conf)
 		let quantity = 0
-		await db.start()
+		
 		const price = {price_title, price_nick}
 		price.price_id = await db.insertId(`
 			INSERT INTO 
@@ -365,7 +364,7 @@ export class Upload {
 			price_id:price.price_id,
 			quantity
 		})	
-		await db.commit()
+		
 		return { quantity, duration, loadtime:Date.now(), loaded:1 }
 	}
 	async loadTable (name) {
@@ -490,7 +489,7 @@ export class Upload {
 				SET
 					brand_title = :brand_title,
 					brand_nick = :brand_nick,
-					ordain = :ordain
+					ordain = 1
 				ON DUPLICATE KEY UPDATE
 				 	brand_id = LAST_INSERT_ID(brand_id)
 			`, brand)

@@ -219,121 +219,72 @@ export const restget = (meta) => {
 		//slides по брендам папки [картинки] с файлами по моделям и свободной иерархией
 		const parts = {}
 		let part
-
+		let count = 0
 		part = 'groupicons'
 		parts[part] = await Files.readdirDeep(visitor, config[part])
 		await Files.filterDeep(parts[part], async (dirinfo, fileinfo, level) => {
-			if (!~Files.exts.image.indexOf(fileinfo.ext)) return true
+			if (!~Files.exts['images'].indexOf(fileinfo.ext)) return ++count
 			const src = dirinfo.dir+fileinfo.file
 			const is = await db.col('SELECT 1 FROM showcase_groups where icon = :src LIMIT 1', {src})
 			if (is) return false
-			return true
+			return ++count
 		})
 
 		part = 'brandlogos'
 		parts[part] = await Files.readdirDeep(visitor, config[part])
 		await Files.filterDeep(parts[part], async (dirinfo, fileinfo, level) => {
-			if (!~Files.exts.image.indexOf(fileinfo.ext)) return true
+			if (!~Files.exts['images'].indexOf(fileinfo.ext)) return ++count
 			const src = dirinfo.dir+fileinfo.file
 			const is = await db.col('SELECT 1 FROM showcase_brands where logo = :src LIMIT 1', {src})
 			if (is) return false
-			return true
+			return ++count
 		})
-		part = 'videos'
-		parts[part] = await Files.readdirDeep(visitor, config[part])
-		for (const root of parts[part].dirs) {
-			const brand_nick = nicked(root.name)
-			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
-			if (!brand_id) continue
-			await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
-				if (!~Files.exts.video.indexOf(fileinfo.ext)) return true
-				const src = nicked(dirinfo.dir + fileinfo.file)
-				const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
-				if (is) return false
-				return true
-			})
-		}
 
-		part = 'texts'
-		parts[part] = await Files.readdirDeep(visitor, config[part])
-		for (const root of parts[part].dirs) {
-			const brand_nick = nicked(root.name)
-			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
-			if (!brand_id) continue
-			await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
-				if (!~Files.exts.text.indexOf(fileinfo.ext)) return true
-				const src = nicked(dirinfo.dir + fileinfo.file)
-				const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
-				if (is) return false
-				return true
-			})
-		}
-
-		part = 'files'
-		parts[part] = await Files.readdirDeep(visitor, config[part])
-		for (const root of parts[part].dirs) {
-			const brand_nick = nicked(root.name)
-			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
-			if (!brand_id) continue
-			await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
-				if (!~Files.exts.file.indexOf(fileinfo.ext)) return true
-				const src = nicked(dirinfo.dir + fileinfo.file)
-				const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
-				if (is) return false
-				return true
-			})
-		}
-
-
-		part = 'slides'
-		parts[part] = await Files.readdirDeep(visitor, config[part])
-		for (const root of parts[part].dirs) {
-			const brand_nick = nicked(root.name)
-			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
-			if (!brand_id) continue
-			await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
-				if (!~Files.exts.image.indexOf(fileinfo.ext)) return true
-				const src = nicked(dirinfo.dir + fileinfo.file)
-				const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
-				if (is) return false
-				return true
-			})
+		for (const part of ['slides','files','images','texts','videos']) {
+			parts[part] = await Files.readdirDeep(visitor, config[part])
+			for (const root of parts[part].dirs) {
+				const brand_nick = nicked(root.name)
+				const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
+				if (!brand_id) continue
+				await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
+					if (!~Files.exts[part].indexOf(fileinfo.ext)) return true
+					const src = nicked(dirinfo.dir + fileinfo.file)
+					const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
+					if (is) return false
+					return true
+				})
+			}
+			for (const root of parts[part].dirs) {
+				await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
+					count++
+					return true
+				})
+			}
 		}
 
 		part = 'folders'
 		parts[part] = await Files.readdirDeep(visitor, config[part])
-		for (const root of parts[part].dirs) {
-			const brand_nick = nicked(root.name)
+		for (const dirinfo of parts[part].dirs) { //Бренды
+			const brand_nick = nicked(dirinfo.name)
 			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
 			if (!brand_id) continue
-			await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
-				//В папке любой файл должен быть связан вне зависимости от расширения
-				const src = nicked(dirinfo.dir + fileinfo.file)
-				const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
-				if (is) return false
-				return true
-			})
+			for (const subinfo of dirinfo.dirs) { //Модели
+				for (const fileinfo of subinfo.files) { //Файлы
+					//В папке любой файл должен быть связан вне зависимости от расширения
+					const src = nicked(dirinfo.dir + fileinfo.file)
+					const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
+					if (is) return false
+					return ++count
+				}
+			}
 		}
-
-
-		part = 'images'
-		parts[part] = await Files.readdirDeep(visitor, config[part])
 		for (const root of parts[part].dirs) {
-			const brand_nick = nicked(root.name)
-			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
-			if (!brand_id) continue
-			await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
-				if (!~Files.exts.image.indexOf(fileinfo.ext)) return true
-				const src = nicked(dirinfo.dir + fileinfo.file)
-				const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
-				if (is) return false
-				return true
-			})
+			for (const subinfo of dirinfo.dirs) {
+				count += subinfo.files.length
+			}
 		}
 
-
-		
-
+		view.ans.count = count
 		view.ans.parts = parts
 
 		return view.ret()

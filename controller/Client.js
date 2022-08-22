@@ -21,26 +21,14 @@ export const Client = {
 			Head.accept(head)
 		})
 		window.addEventListener('click', event => {
-			
-				const a = event.target.closest('a')
-				if (!a) return
-				const search = a.getAttribute('href')
-				if (!search) return
-				if (/^\w+:/.test(search)) return
-				if (~search.lastIndexOf('.')) return
-				if (search[1] == '-') return
-				event.preventDefault()
-
-
+			const a = event.target.closest('a')
+			if (!a || !Client.isSuitable(a)) return
+			event.preventDefault()
 			Client.click(a)
 		})
 		window.addEventListener('popstate', event => {
 			Client.popstate(event)
 		})
-		Client.follow = event => {
-			const a = event.target.closest('a')
-			Client.click(a)
-		}
 	},
 	popstate: (event) => {
 		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
@@ -159,6 +147,7 @@ export const Client = {
 		div.innerHTML = html
 		const promise = evalScriptsInNode(div)
 		Client.animate(div, promise)
+		return promise
 	},
 	animate: (el, promise = Promise.resolve(), anim = 'opacity') => {
 		const tag = el.tagName == 'A' ? 'a' : 'div'

@@ -26,31 +26,42 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 
 export const PANEL = (data, env) => `
 	<div style="display: flex; gap:0.5rem; flex-wrap:wrap;"> 
-		<button name="tables" data-action="set-tables-loadall" class="${data.ready.tables ? 'ready' : ''}">Внести данные</button>
-		<button name="prices" data-action="set-prices-loadall" class="${data.ready.prices ? 'ready' : ''}">Внести прайсы</button>
-		<button name="files" data-action="set-files-loadall" class="${data.ready.files ? 'ready' : ''}">Связать всё с файлами</button>
+		<button name="set-tables-loadall" class="${data.ready.tables ? 'ready' : ''}">Внести данные</button>
+		<button name="set-prices-loadall" class="${data.ready.prices ? 'ready' : ''}">Внести прайсы</button>
+		<button name="set-files-loadall" class="${data.ready.files ? 'ready' : ''}">Связать всё с файлами</button>
 		<!-- при загрузке файлов на сервер, нет никаких событий. Мы никогда не знает есть новые файлы или нет -->
 	</div>
 	<script type="module" async>
 		const id = id => document.getElementById(id)
 		const div = id('${env.div}')
 		const tag = (tag, el = div) => el.getElementsByTagName(tag)
+		const cls = (cls, el = div) => el.getElementsByClassName(cls)
 		for (let btn of tag('button')) {
+			
+			const pop = document.createElement('div')
+			div.append(pop)
+
 			btn.addEventListener('click',async () => {
 				btn.innerHTML = 'В процессе...'
 				btn.disabled = true
-				const ans = await fetch('/-showcase/'+btn.dataset.action).then(res => res.json()).catch(e => false)
-				btn = tag('button').namedItem(btn.name)
-				if (!btn) return
-				btn.innerHTML = ans?.msg || 'Ошибка'
-				btn.classList.add('ready')
+
 				
-				btn = tag('button').namedItem(btn.name)
-				if (!btn) return
-				btn.disabled = false
-				
+				const ans = await fetch('/-showcase/'+btn.name).then(res => res.json()).catch(e => false)
 				const Client = await window.getClient()
+				btn = tag('button').namedItem(btn.name)
+				if (btn) {
+					btn.innerHTML = ans?.msg || 'Ошибка'
+					btn.classList.add('ready')	
+					btn.disabled = false
+				}
 				Client.reloaddiv('CONTENT')
+				
+				
+				const sub = btn.name.replaceAll('-','_')
+				const tplobj = await import('/-showcase/popups.html.js')
+				const html = tplobj[sub](ans)
+				const { Dialog } = await import('/-dialog/Dialog.js')
+				Dialog.show(pop, html)
 			})
 		}
 	</script>
@@ -103,6 +114,8 @@ export const FOOTER = (data, env) => `
 		const div = id('${env.div}')
 		const tag = (tag, el = div) => el.getElementsByTagName(tag)
 		for (let btn of tag('button')) {
+			const pop = document.createElement('div')
+			div.append(pop)
 			btn.addEventListener('click',async () => {
 				btn.innerHTML = 'В процессе...'
 				btn.disabled = true
@@ -114,7 +127,12 @@ export const FOOTER = (data, env) => `
 				btn.disabled = false
 				const Client = await window.getClient()
 				Client.reloaddiv('CONTENT')
-				Client.reloaddiv('PANEL')
+
+				const sub = btn.name.replaceAll('-','_')
+				const tplobj = await import('/-showcase/popups.html.js')
+				const html = tplobj[sub](ans)
+				const { Dialog } = await import('/-dialog/Dialog.js')
+				Dialog.show(pop, html)
 			})
 		}
 	</script>

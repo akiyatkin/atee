@@ -7,35 +7,36 @@ export const HEAD = (data, { search, access_time, update_time, head }) =>
 		<meta property="og:image" content="${head.image_src??''}">
 		<link rel="image_src" href="${head.image_src??''}">
 		<script type="module">
-			const click = event => {
-				const a = event.target.closest('a')
-				if (!a) return
+			const isSuitable = a => {
 				const search = a.getAttribute('href')
 				if (!search) return
 				if (/^\w+:/.test(search)) return
 				if (~search.lastIndexOf('.')) return
 				if (search[1] == '-') return
+				return true
+			}
+			const click = event => {
+				const a = event.target.closest('a')
+				if (!a || !isSuitable(a)) return
 				event.preventDefault()
-
 				getClient().then(Client => {
 					Client.click(a)
 				})
 			}
-			
 			const popstate = event => {
 				getClient().then(Client => {
 					Client.popstate(event)
 				})
 			}
-
-			const time = ${access_time}
-			const search = '${search}'
 			window.getClient = () => {
 				const promise = new Promise((resolve, reject) => {
 					window.removeEventListener('popstate', popstate)
 					window.removeEventListener('click', click)
+					const time = ${access_time}
+					const search = '${search}'
 					import("/-controller/Client.js").then(({ Client }) => {
 						Client.search = search
+						Client.isSuitable = isSuitable
 						Client.timings = {
 							view_time: time,
 							update_time: time,

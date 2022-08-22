@@ -41,46 +41,33 @@ export class Db {
 		this.db = await pool.getConnection()
 		return this
 	}
-	async fetch(sql, values) {
-		const [rows, fields] = await this.db.query({ sql, values })
-		return rows[0]
-	}
+	
 	async start() {
 		await this.db.query('START TRANSACTION')
 	}
 	async commit() {
 		await this.db.query('COMMIT')
 	}
+
+	//select
+	async fetch(sql, values) {
+		const [rows, fields] = await this.db.execute({ sql, values })
+		return rows[0]
+	}
 	async col(sql, values) {
-		const [rows, fields] = await this.db.query({ sql, values })
+		const [rows, fields] = await this.db.execute({ sql, values })
 		if (!rows.length) return null
 		return rows[0][fields[0].name]
 	}
-	async insertId(sql, values) {
-		const [rows, fields] = await this.db.query({ sql, values })
-		return rows.insertId
-	}
-	async changedRows(sql, values) {
-		const [rows, fields] = await this.db.query({ sql, values })
-		return rows.changedRows
-	}
-	async exec(sql, values) {
-		const [rows, fields] = await this.db.execute({ sql, values })
-		return rows.changedRows
-	}
-	async query(sql, values) {
-		const [rows, fields] = await this.db.query({ sql, values })
-		return rows.changedRows
-	}
 	async colAll(sql, values) {
-		const [rows, fields] = await this.db.query({ sql, values })
+		const [rows, fields] = await this.db.execute({ sql, values })
 		return rows.reduce((ak, row) => {
 			ak.push(row[fields[0].name])
 			return ak
 		}, [])
 	}
 	async all(sql, values) {
-		return this.db.query({ sql, values }).then(([rows]) => rows)
+		return this.db.execute({ sql, values }).then(([rows]) => rows)
 	}
 	async allto(name, sql, values) {
 		return this.all(sql, values).then(rows => {
@@ -90,6 +77,32 @@ export class Db {
 			}, {})
 		})
 	}
+
+	
+	async insertId(sql, values) { //insert
+		const [rows, fields] = await this.db.query({ sql, values })
+		return rows.insertId
+	}
+	async affectedRows(sql, values) { //insert, delete
+		const [rows, fields] = await this.db.execute({ sql, values })
+		return rows.affectedRows
+	}
+
+	
+	async changedRows(sql, values) { //update
+		const [rows, fields] = await this.db.execute({ sql, values })
+		return rows.changedRows
+	}
+
+	async exec(sql, values) { //for mysql
+		const [rows, fields] = await this.db.execute({ sql, values })
+		return rows.changedRows
+	}
+	async query(sql, values) { //for client
+		const [rows, fields] = await this.db.query({ sql, values })
+		return rows.changedRows
+	}
+	
 }
 // export const Db = {
 // 	getConnection: () => {

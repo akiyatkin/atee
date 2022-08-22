@@ -1,3 +1,4 @@
+import { words } from "/-words/words.js"
 const run = (obj, call) => {
 	const res = []
 	for (const key in obj) res.push(call(obj[key], key))
@@ -5,7 +6,7 @@ const run = (obj, call) => {
 }
 export const ROOT = (data, env) => `
 	<h1>Файлы</h1>
-	<p>Не используются. Возможно их лучше удалить или переименовать.</p>
+	<p>Свободно: <b>${data.count}</b> ${words(data.count, 'файл', 'файла', 'файлов')}.</p>
 	${run(data.parts, printpart).join('')}
 `
 const printpart = (root, name) => `

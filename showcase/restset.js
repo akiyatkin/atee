@@ -190,6 +190,7 @@ export const restset = (meta) => {
 			count += quantity
 		}))
 		Access.setAccessTime()
+		view.ans.count = count
 		return view.ret('Внесено ' + count)
 	})
 	meta.addAction('set-tables-load', async view => {
@@ -212,7 +213,7 @@ export const restset = (meta) => {
 		*/
 		const row = await upload.loadTable(name)
 		view.ans.row = row
-		
+		view.ans.count = row.quantity
 		Access.setAccessTime()
 		return view.ret('Внесено ' + row.quantity)
 	})
@@ -234,6 +235,7 @@ export const restset = (meta) => {
 	meta.addAction('set-tables-clearall', async view => {
 		await view.get('admin')
 		const { upload, db } = await view.gets(['upload', 'db'])
+		await db.start()
 		const rows = await db.all(`
 			SELECT
 				table_title
@@ -242,37 +244,44 @@ export const restset = (meta) => {
 		await Promise.all(rows.map(({table_title}) => {
 			return upload.clearTable(table_title)
 		}))
+		await db.commit()
 		Access.setAccessTime()
 		return view.ret('Данные очищены')
 	})
 	meta.addAction('set-prices-clear', async view => {
 		await view.get('admin')
-		const { upload, name } = await view.gets(['upload', 'name'])
+		const { db, upload, name } = await view.gets(['db','upload', 'name'])
+		await db.start()
 		const row = await upload.clearPrice(name)
+		await db.commit()
 		view.ans.row = row
 		Access.setAccessTime()
 		return view.ret('Очищено')
 	})
 	meta.addAction('set-prices-load', async view => {
 		await view.get('admin')
-		const { upload, name } = await view.gets(['upload','name'])
-		
+		const { db, upload, name } = await view.gets(['db', 'upload','name'])
+		await db.start()
 		const row = await upload.loadPrice(name)
 		view.ans.row = row
-		
+		await db.commit()
 		Access.setAccessTime()
+		view.ans.count = row.quantity
 		return view.ret('Внесено ' + row.quantity)
 	})
 	meta.addAction('set-prices-loadall', async view => {
 		await view.get('admin')
-		const { upload } = await view.gets(['upload'])
+		const { db, upload } = await view.gets(['db','upload'])
+		await db.start()
 		const files = await upload.getNewPrices()
 		let count = 0
 		await Promise.all(files.map(async of => {
 			const { quantity = 0 } = await upload.loadPrice(of.name)
 			count += quantity
 		}))
+		await db.commit()
 		Access.setAccessTime()
+		view.ans.count = count
 		return view.ret('Внесено ' + count)
 	})
 	meta.addAction('set-files-loadall', async view => {
@@ -280,8 +289,9 @@ export const restset = (meta) => {
 		const { visitor, db, config, upload } = await view.gets(['visitor', 'db', 'config', 'upload'])
 
 		const parts = {}
+		const doublepath = []
 		let part, count = 0
-
+		await db.start()
 		
 		part = 'groupicons'
 		await db.changedRows(`
@@ -292,7 +302,7 @@ export const restset = (meta) => {
 		`)
 		parts[part] = await Files.readdirDeep(visitor, config[part])
 		await Files.filterDeep(parts[part], async (dirinfo, fileinfo, level) => {
-			if (!~Files.exts.image.indexOf(fileinfo.ext)) return false
+			if (!~Files.exts.images.indexOf(fileinfo.ext)) return false
 			const src = dirinfo.dir+fileinfo.file	
 			const group_nick = nicked(fileinfo.name)
 			const is = await db.changedRows(`
@@ -316,7 +326,7 @@ export const restset = (meta) => {
 		`)
 		parts[part] = await Files.readdirDeep(visitor, config[part])
 		await Files.filterDeep(parts[part], async (dirinfo, fileinfo, level) => {
-			if (!~Files.exts.image.indexOf(fileinfo.ext)) return false
+			if (!~Files.exts.images.indexOf(fileinfo.ext)) return false
 			const src = dirinfo.dir+fileinfo.file	
 			const brand_nick = nicked(fileinfo.name)
 			const is = await db.changedRows(`
@@ -340,134 +350,181 @@ export const restset = (meta) => {
 		props.art = await upload.receiveProp('Арт')
 
 
-		// part = 'videos'
-		// parts[part] = await Files.readdirDeep(visitor, config[part])
-		// for (const root of parts[part].dirs) {
-		// 	const brand_nick = nicked(root.name)
-		// 	const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
-		// 	if (!brand_id) continue
-		// 	await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
-		// 		if (!~Files.exts.video.indexOf(fileinfo.ext)) return false
-		// 		const src = nicked(dirinfo.dir + fileinfo.file)
-		// 		const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
-		// 		if (is) return false
-		// 		return true
-		// 	})
-		// }
 
-		// part = 'texts'
-		// parts[part] = await Files.readdirDeep(visitor, config[part])
-		// for (const root of parts[part].dirs) {
-		// 	const brand_nick = nicked(root.name)
-		// 	const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
-		// 	if (!brand_id) continue
-		// 	await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
-		// 		if (!~Files.exts.text.indexOf(fileinfo.ext)) return false
-		// 		const src = nicked(dirinfo.dir + fileinfo.file)
-		// 		const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
-		// 		if (is) return false
-		// 		return true
-		// 	})
-		// }
-
-		// part = 'files'
-		// parts[part] = await Files.readdirDeep(visitor, config[part])
-		// for (const root of parts[part].dirs) {
-		// 	const brand_nick = nicked(root.name)
-		// 	const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
-		// 	if (!brand_id) continue
-		// 	await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
-		// 		if (!~Files.exts.file.indexOf(fileinfo.ext)) return false
-		// 		const src = nicked(dirinfo.dir + fileinfo.file)
-		// 		const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
-		// 		if (is) return false
-		// 		return true
-		// 	})
-		// }
-
-
-		// part = 'slides'
-		// parts[part] = await Files.readdirDeep(visitor, config[part])
-		// for (const root of parts[part].dirs) {
-		// 	const brand_nick = nicked(root.name)
-		// 	const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
-		// 	if (!brand_id) continue
-		// 	await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
-		// 		if (!~Files.exts.image.indexOf(fileinfo.ext)) return false
-		// 		const src = nicked(dirinfo.dir + fileinfo.file)
-		// 		const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
-		// 		if (is) return false
-		// 		return true
-		// 	})
-		// }
-
-		// part = 'folders'
-		// parts[part] = await Files.readdirDeep(visitor, config[part])
-		// for (const root of parts[part].dirs) {
-		// 	const brand_nick = nicked(root.name)
-		// 	const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
-		// 	if (!brand_id) continue
-		// 	await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
-		// 		//В папке любой файл должен быть связан вне зависимости от расширения
-		// 		const src = nicked(dirinfo.dir + fileinfo.file)
-		// 		const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
-		// 		if (is) return false
-		// 		return true
-		// 	})
-		// }
-
-
-		part = 'images'
-		await db.changedRows(`
-			DELETE FROM showcase_iprops
-			WHERE prop_id = :prop_id
-		`, props[part])
-		parts[part] = await Files.readdirDeep(visitor, config[part])
-		for (const root of parts[part].dirs) {
-			const brand_nick = nicked(root.name)
-			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
-			if (!brand_id) continue
-			await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
-				if (!~Files.exts.image.indexOf(fileinfo.ext)) return false
-				const model_nick = nicked(fileinfo.name)
-				let model_id = await db.col('SELECT model_id FROM showcase_models WHERE brand_id = :brand_id and model_nick = :model_nick', {model_nick, brand_id})
-				let item_num = null
-				let res
-				if (!model_id) {
-					const value_id = await db.col('SELECT value_id FROM showcase_values WHERE value_nick = :model_nick', {model_nick})
-					if (!value_id) return false
-					res = await db.all(`
-						SELECT m.model_id, ip.item_num 
-						FROM showcase_iprops ip, showcase_models m
-						WHERE 
-						ip.model_id = m.model_id and m.brand_id = :brand_id
-						and ip.value_id = :value_id and ip.prop_id = :prop_id
-					`, {value_id, prop_id:props.art.prop_id, brand_id})
-					if (!res.length) return false
-
-				} else {
-					res = await db.all('SELECT model_id, item_num FROM showcase_items WHERE model_id = :model_id', {model_id})
+		props.files = await upload.receiveProp('Файлы')
+		const search_prop_id = props.files.prop_id
+		const vals = await db.all(`
+			SELECT DISTINCT v.value_title as src, v.value_id as search_value_id
+			FROM showcase_values v, showcase_iprops ip
+			WHERE v.value_id = ip.value_id and ip.prop_id = :search_prop_id
+		`, { search_prop_id })
+		for (const val of vals) {
+			const {src, search_value_id} = val
+			val.res = []
+			const stat = await fs.stat(src)
+			if (stat.isFile()) {
+				const finfo = File.srcInfo(stat.file)
+				const ext = finfo.ext
+				const ordain = finfo.num
+				const part = 'files'
+				if (~Files.exts.images.indexOf(ext)) part = 'images'
+				if (~Files.exts.texts.indexOf(ext)) part = 'texts'
+				if (~Files.exts.videos.indexOf(ext)) part = 'videos'
+				val.res.push({
+					ordain,
+					src,
+					prop_id: props[part].prop_id
+				})
+			} else {
+				const root = await Files.readdirDeep(visitor, src)
+				for (const finfo of root.files) {
+					const ext = finfo.ext
+					const ordain = finfo.num
+					const part = 'files'
+					if (~Files.exts.images.indexOf(ext)) part = 'images'
+					if (~Files.exts.texts.indexOf(ext)) part = 'texts'
+					if (~Files.exts.videos.indexOf(ext)) part = 'videos'
+					val.res.push({
+						ordain,
+						src: src + finfo.file,
+						prop_id: props[part].prop_id
+					})
 				}
-
-				const src = dirinfo.dir + fileinfo.file
-				const value = upload.receiveValue(src)
-				for (const item of res) {
-
-					const is = await db.changedRows(`
-						INSERT INTO
+			}
+			for (const r of val.res) {
+				const {ordain, src, prop_id} = r //search_value_id, search_prop_id
+				const value = await upload.receiveValue(src)
+				const items = await db.all(`
+					SELECT m.model_id, ip.item_num 
+					FROM showcase_iprops ip, showcase_models m
+					WHERE 
+					ip.model_id = m.model_id
+					and ip.value_id = :search_value_id 
+					and ip.prop_id = :search_prop_id
+				`, {search_value_id, search_prop_id})
+				for (const item of items) {
+					const { model_id, item_num } = item
+					await db.affectedRows(`
+						INSERT IGNORE INTO
 							showcase_iprops
 						SET
+							ordain = :ordain,
 							value_id = :value_id,
 							model_id = :model_id,
+							item_num = :item_num,
 							prop_id = :prop_id
-					`, {...item, ...value, ...props[part]})
-					count++
+					`, {
+						item_num: item.item_num,
+						model_id: item.model_id, 
+						value_id: value.value_id, 
+						prop_id: prop_id
+					})
 				}
-				
-				return false
-			})
+			}
 		}
-		
+
+		for (const part of ['slides','files','images','texts','videos']) {
+			await db.affectedRows(`
+				DELETE FROM showcase_iprops
+				WHERE prop_id = :prop_id
+			`, props[part])
+			parts[part] = await Files.readdirDeep(visitor, config[part])
+			for (const root of parts[part].dirs) {
+				const brand_nick = nicked(root.name)
+				const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
+				if (!brand_id) continue
+				await Files.filterDeepSplit(root, async (dirinfo, name, fileinfo, level) => {
+					if (!~Files.exts.images.indexOf(fileinfo.ext)) return false
+					const res = await Files.getRelations(db, name, brand_id, props.art.prop_id)
+					const src = dirinfo.dir + fileinfo.file
+					const ordain = fileinfo.num
+					const value = await upload.receiveValue(src)
+					for (const item of res) {
+						const affectedRows = await db.affectedRows(`
+							INSERT IGNORE INTO
+								showcase_iprops
+							SET
+								ordain = :ordain,
+								value_id = :value_id,
+								model_id = :model_id,
+								item_num = :item_num,
+								prop_id = :prop_id
+						`, {
+							ordain,
+							item_num: item.item_num,
+							model_id: item.model_id, 
+							value_id: value.value_id, 
+							prop_id: props[part].prop_id
+						})
+						count += affectedRows
+						if (!affectedRows) doublepath.push(dirinfo.dir + fileinfo.file) //Встретилось имя у которого nick одинаковый и сработало исключение при повторной записи
+					}
+					return false
+				})
+			}
+		}
+
+		part = 'folders'
+		parts[part] = await Files.readdirDeep(visitor, config[part])
+		for (const dirinfo of parts[part].dirs) { //Бренды
+			const brand_nick = nicked(dirinfo.name)
+			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
+			if (!brand_id) continue
+			for (const subinfo of dirinfo.dirs) { //Модели
+				const res = await Files.getRelations(db, subinfo.name, brand_id, props.art.prop_id) //Папка может быть привязана к Art
+				for (const fileinfo of subinfo.files) { //Файлы
+					const src = nicked(subinfo.dir + fileinfo.file)
+					const ext = fileinfo.ext
+					const ordain = fileinfo.num
+					const value = await upload.receiveValue(src)
+					part = 'files'
+					if (~Files.exts.images.indexOf(ext)) part = 'images'
+					if (~Files.exts.texts.indexOf(ext)) part = 'texts'
+					if (~Files.exts.videos.indexOf(ext)) part = 'videos'
+
+					for (const item of res) { //Позиции
+						const affectedRows = await db.affectedRows(`
+							INSERT IGNORE INTO
+								showcase_iprops
+							SET
+								ordain = :ordain,
+								value_id = :value_id,
+								model_id = :model_id,
+								item_num = :item_num,
+								prop_id = :prop_id
+						`, {
+							ordain,
+							item_num: item.item_num,
+							model_id: item.model_id, 
+							value_id: value.value_id, 
+							prop_id: props[part].prop_id
+						})
+						count += affectedRows
+						if (!affectedRows) doublepath.push(dirinfo.dir + fileinfo.file) //Встретилось имя у которого nick одинаковый и сработало исключение при повторной записи
+					}
+				}
+			}
+		}
+		for (const part of ['slides','files','images','texts','videos']) {
+			const { prop_id } = props[part]
+			const list = await db.all(`
+				SELECT v.value_id
+				FROM showcase_values v, showcase_iprops ip
+				WHERE v.value_id = ip.value_id and ip.prop_id = :prop_id
+				ORDER BY ip.ordain, v.value_nick
+			`, { prop_id })
+			for (const i in list) {
+				const file = list[i]
+				await db.changedRows(`
+					UPDATE showcase_iprops ip
+					SET ordain = :ordain
+					WHERE prop_id=:prop_id and value_id = :value_id
+				`, {prop_id, value_id: file.value_id, ordain: i})
+			}
+		}
+		await db.commit()
+		view.ans.doublepath = doublepath
+		view.ans.count = count
 		return view.ret('Связано ' + count)
 	})
 }

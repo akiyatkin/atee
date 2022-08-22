@@ -92,6 +92,7 @@ CREATE TABLE IF NOT EXISTS `showcase_iprops` (
 	`prop_id` SMALLINT unsigned NOT NULL COMMENT '65 тыс',
 	`value_id` MEDIUMINT unsigned NULL COMMENT '16 млн',
 	`number` DECIMAL(19,2) NULL COMMENT '',
+	`ordain` SMALLINT unsigned COMMENT 'Порядковый номер для порядка значений в одном свойстве',
 	`text` mediumtext NULL COMMENT '',
 	`price_id` SMALLINT unsigned NULL COMMENT '65 тыс',
 	UNIQUE (`model_id`, `item_num`, `prop_id`, `value_id`),

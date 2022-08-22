@@ -1,11 +1,13 @@
 import fs from "fs/promises"
+import { nicked } from '/-nicked/nicked.js'
 
 export const Files = {
 	exts: {
-		image:['png','webp','jpg','jpeg','svg'],
-		text: ['html','tpl','docx'],
-		file: ['zip','pdf','rar'],
-		video: ['avi','ogv','mp4','swf']
+		images:['png','webp','jpg','jpeg','svg'],
+		slides:['png','webp','jpg','jpeg','svg'],
+		texts: ['html','tpl','docx'],
+		files: ['zip','pdf','rar'],
+		videos: ['avi','ogv','mp4','swf']
 	},
 	getFileName: async(visitor, dir, name, exts) => {
 		let files = await Files.readdir(visitor, dir)
@@ -43,8 +45,34 @@ export const Files = {
 		root.files = root.files.filter((info, i) => results[i])
 		await Promise.all(root.dirs.map(root => Files.filterDeep(root, callback, ++level)))
 	},
+	filterDeepSplit: (root, callback, level = 0) => {
+		return Files.filterDeep(root, async (root, info, level, i) => {
+			const names = info.name.split(',')
+			const promises = []
+			for (let name of names) {
+				name = name.trim()
+				promises.push(callback(root, name, info, level, i))
+			}
+			const results = await Promise.all(promises)
+			return results.some(r => r === true)
+		})
+	},
+	srcInfo: (path) => {
+		const i = path.lastIndexOf('/')
+		let file, dir
+		if (~i) {
+			dir = path.slice(0, i + 1)
+			file = path.slice(i + 1)
+		} else {
+			dir = ''
+			file = path
+		}
+		const info = Files.nameInfo(file)
+		info.dir = dir
+		return info
+	},
 	nameInfo: (file) => {
-		let i, name, ext, num, secure, match
+		let i, name, ext, num = 0, secure, match
 		i = file.lastIndexOf('.')
 		name = ~i ? file.slice(0, i) : file
 		ext = (~i ? file.slice(i + 1) : '').toLowerCase()
@@ -105,9 +133,29 @@ export const Files = {
 			delete of.num
 		})
 		return files
-	}
+	},
 	//,
 	// forEachAsync: async (ar, call) {
 	// 	await Promise.all(ar.map(call())
 	// }
+	getRelations: async (db, name, brand_id, prop_id) => {
+		const model_nick = nicked(name)
+		let model_id = await db.col('SELECT model_id FROM showcase_models WHERE brand_id = :brand_id and model_nick = :model_nick', {model_nick, brand_id})
+		let item_num = null
+		let res = []
+		if (!model_id) {
+			const value_id = await db.col('SELECT value_id FROM showcase_values WHERE value_nick = :model_nick', {model_nick})
+			if (!value_id) return res
+			res = await db.all(`
+				SELECT m.model_id, ip.item_num 
+				FROM showcase_iprops ip, showcase_models m
+				WHERE 
+				ip.model_id = m.model_id and m.brand_id = :brand_id
+				and ip.value_id = :value_id and ip.prop_id = :prop_id
+			`, {value_id, prop_id, brand_id})
+		} else {
+			res = await db.all('SELECT model_id, item_num FROM showcase_items WHERE model_id = :model_id', {model_id})
+		}
+		return res
+	}
 }

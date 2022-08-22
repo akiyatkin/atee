@@ -1,5 +1,4 @@
 {
-
 	"index":"index:ROOT",
 	"layout":{
 		"index:ROOT": {
@@ -100,6 +99,7 @@
 			}
 		}
 	},
+	
 	"parsedtpl":{
 		"controller:ER404":"${path}"
 	},
@@ -120,6 +120,7 @@
 		
 	},
 	"tpl":{
+		"popups":"/-showcase/popups.html.js",
 		"controller":"/-controller/layout.html.js",
 		"index":"/-showcase/index.html.js",
 		"tables":"/-showcase/tables.html.js",
