@@ -25,6 +25,13 @@ export const restget = (meta) => {
 		view.ans.admin = await Access.isAdmin(visitor.client.cookie)
 		return view.ret()
 	})
+	meta.addAction('get-stat', async view => {
+		const { visitor, db } = await view.gets(['visitor','db'])
+		view.ans.admin = await Access.isAdmin(visitor.client.cookie)
+		if (!view.ans.admin) return view.err('Требуется авторизация')
+		view.ans.count = await db.col('SELECT count(*) FROM information_schema.innodb_trx')
+		return view.ret()
+	})
 	meta.addAction('get-panel', async view => {
 		const { upload } = await view.gets(['upload'])
 		

@@ -10,7 +10,7 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 	</head>
 	<body style="margin:0;">
 		<div style="padding:10px; min-height:100vh; display:flex; flex-direction:column">
-			<header id="HEADER">${HEADER(...args)}</header>
+			<header id="HEADER"></header>
 			<main id="CONTENT" style="flex-grow: 1" ></main>
 			<div id="PANEL" style="position: sticky; bottom:0; background-color:white; 
 				padding-bottom:1rem; padding-top:1rem; 
@@ -18,7 +18,6 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 				">
 			</div>
 			<footer id="FOOTER"></footer>
-			
 		</div>
 	</body>
 </html>
@@ -37,25 +36,22 @@ export const PANEL = (data, env) => `
 		const tag = (tag, el = div) => el.getElementsByTagName(tag)
 		const cls = (cls, el = div) => el.getElementsByClassName(cls)
 		for (let btn of tag('button')) {
-			
+			let proc = false
 			const pop = document.createElement('div')
 			div.append(pop)
-
 			btn.addEventListener('click',async () => {
+				if (proc) return
+				proc = true
 				btn.innerHTML = 'В процессе...'
 				btn.classList.add('ready')
-
 				const Client = await window.getClient()
-				//const ans = {doublepath:['asdf']}
-				const ans = await fetch('/-showcase/'+btn.name).then(res => res.json()).catch(e => false)
 				
+				const ans = await fetch('/-showcase/'+btn.name).then(res => res.json()).catch(e => {})
 				btn = tag('button').namedItem(btn.name)
 				if (btn) {
-					btn.innerHTML = ans?.msg || 'Ошибка'
-					btn.classList.add('ready')
+					btn.innerHTML = ans.msg || 'Ошибка'
 				}
 				Client.reloaddiv('CONTENT')
-				
 				
 				const sub = btn.name.replaceAll('-','_')
 				const tplobj = await import('/-showcase/popups.html.js')
@@ -63,15 +59,19 @@ export const PANEL = (data, env) => `
 				const { Dialog } = await import('/-dialog/Dialog.js')
 				await Dialog.frame(pop, html)
 				Dialog.show(pop)
+				proc = false
 			})
 		}
 	</script>
 `
 
-export const HEADER = (data, {root, host}) => `
+export const HEADER = (data, env) => `
 	<div style="display: flex; justify-content: space-between; flex-wrap:wrap">
-		<a href="/${root}">SHOWCASE</a>
-		<a href="/">${host}</a>
+		<div>
+			<a href="/${env.root}">SHOWCASE</a>
+			<span id="STAT"></span>
+		</div>
+		<a href="/">${env.host}</a>
 	</div>
 	<div style="display: flex; justify-content: space-between; flex-wrap:wrap">
 		<p>
@@ -85,9 +85,40 @@ export const HEADER = (data, {root, host}) => `
 			<a href="files">Файлы</a>
 		</p>
 		<p>
-			<button>Применить всё</button>
+			<button name="set-applyall">Применить всё</button>
 		</p>
 	</div>
+	<script type="module" async>
+		const id = id => document.getElementById(id)
+		const div = id('${env.div}')
+		const tag = (tag, el = div) => el.getElementsByTagName(tag)
+		for (let btn of tag('button')) {
+			const pop = document.createElement('div')
+			div.append(pop)
+			let proc = false
+			btn.addEventListener('click', async () => {
+				if (proc) return
+				proc = true
+				btn.innerHTML = 'В процессе...'
+				btn.classList.add('ready')
+				const Client = await window.getClient()
+				Client.reloaddiv('STAT')
+				const ans = await fetch('/-showcase/'+btn.name).then(res => res.json()).catch(e => false)
+				btn = tag('button').namedItem(btn.name)
+				if (!btn) return
+				btn.innerHTML = ans?.msg || 'Ошибка'
+				
+				Client.reloaddiv('CONTENT')
+				const sub = btn.name.replaceAll('-','_')
+				const tplobj = await import('/-showcase/popups.html.js')
+				const html = tplobj[sub](ans)
+				const { Dialog } = await import('/-dialog/Dialog.js')
+				await Dialog.frame(pop, html)
+				Dialog.show(pop)
+				proc = false
+			})
+		}
+	</script>
 `
 
 export const MAIN = (data) => `
@@ -117,31 +148,25 @@ export const FOOTER = (data, env) => `
 		for (let btn of tag('button')) {
 			const pop = document.createElement('div')
 			div.append(pop)
+			let proc = false
 			btn.addEventListener('click', async () => {
+				if (proc) return
+				proc = true
 				btn.innerHTML = 'В процессе...'
 				btn.classList.add('ready')
-
-				//const ans = {doublepath:['asdf']}
 				const ans = await fetch('/-showcase/'+btn.name).then(res => res.json()).catch(e => false)
-				
 				btn = tag('button').namedItem(btn.name)
 				if (!btn) return
-				
-				
 				btn.innerHTML = ans?.msg || 'Ошибка'
-				
-				
 				const Client = await window.getClient()
 				Client.reloaddiv('CONTENT')
-
 				const sub = btn.name.replaceAll('-','_')
 				const tplobj = await import('/-showcase/popups.html.js')
+				const html = tplobj[sub](ans)
 				const { Dialog } = await import('/-dialog/Dialog.js')
-				if (tplobj[sub]) {
-					const html = tplobj[sub](ans)
-					await Dialog.frame(pop, html)
-					Dialog.show(pop)
-				}
+				await Dialog.frame(pop, html)
+				Dialog.show(pop)
+				proc = false
 			})
 		}
 	</script>

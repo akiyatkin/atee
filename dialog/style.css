@@ -16,7 +16,6 @@
 	pointer-events: none;
 }
 .dialogframe.show {
-	/*visibility: visible;*/
 	pointer-events: auto;
 	opacity: 1;
 }
@@ -44,11 +43,9 @@
 }
 .dialogframe > .dialogbody {
 	position: relative;
-	/*color: white;*/
 	min-width: 330px;
 	margin:  60px;
 	padding: 30px;
-	/*background-color: rgba(0,0,0,0.6);*/
 	background-color:white;
 }
 @media(max-width: 500px) {
@@ -56,4 +53,7 @@
 		min-width: auto;
 		margin:  15px;
 	}
+}
+.dialogframe h1 {
+	margin-top: 0;
 }

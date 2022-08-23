@@ -2,15 +2,20 @@
 	"index":"index:ROOT",
 	"layout":{
 		"index:ROOT": {
+			"HEADER":"index:HEADER",
 			"CONTENT":"index:MAIN",
 			"PANEL":"index:PANEL",
 			"FOOTER":"index:FOOTER"
+		},
+		"index:HEADER":{
+			"STAT":"stat:ROOT"
 		},
 		"settings:ROOT":{
 			"DATABASE":"settings:DATABASE"
 		}
 	},
 	"animate":{
+		"stat:ROOT":"none",
 		"index:PANEL":"none"
 	},
 	"childs":{
@@ -114,6 +119,7 @@
 		"brands:ROOT":"/-showcase/get-brands",
 		"props:ROOT":"/-showcase/get-props",
 		"files:ROOT":"/-showcase/get-files",
+		"stat:ROOT":"/-showcase/get-stat",
 		"values:ROOT":"/-showcase/get-values"
 	},
 	"jsontpl":{
@@ -124,6 +130,7 @@
 		"controller":"/-controller/layout.html.js",
 		"index":"/-showcase/index.html.js",
 		"tables":"/-showcase/tables.html.js",
+		"stat":"/-showcase/stat.html.js",
 		"prices":"/-showcase/prices.html.js",
 		"groups":"/-showcase/groups.html.js",
 		"files":"/-showcase/files.html.js",

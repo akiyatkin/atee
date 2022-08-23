@@ -106,6 +106,10 @@ export class View {
 		//throw new ViewException();
         return view.ans
 	}
+	afterlisteners = []
+	after(callback) {
+		this.afterlisteners.push(callback)
+	}
 }
 export class Meta {
     list = []
@@ -122,6 +126,7 @@ export class Meta {
     		}
 
     		const res = await view.get(action)
+    		for (const callback of view.afterlisteners) await callback()
             if (res != null) return res;
     		else return view.ans
         } catch (e) {

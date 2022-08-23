@@ -367,6 +367,245 @@ export class Upload {
 		
 		return { quantity, duration, loadtime:Date.now(), loaded:1 }
 	}
+	async loadAllFiles() {
+		const { visitor, db, config } = this.opt
+		const parts = {}
+		const doublepath = []
+		let part, count = 0
+		const upload = this
+		
+		
+		part = 'groupicons'
+		await db.changedRows(`
+			UPDATE
+				showcase_groups
+			SET
+				icon = null
+		`)
+		parts[part] = await Files.readdirDeep(visitor, config[part])
+		await Files.filterDeep(parts[part], async (dirinfo, fileinfo, level) => {
+			if (!~Files.exts.images.indexOf(fileinfo.ext)) return false
+			const src = dirinfo.dir+fileinfo.file	
+			const group_nick = nicked(fileinfo.name)
+			const is = await db.changedRows(`
+				UPDATE
+					showcase_groups
+				SET
+					icon = :src
+				WHERE
+					group_nick = :group_nick
+				`, {group_nick, src})
+			if (is) count++
+			return false
+		})
+
+		part = 'brandlogos'
+		await db.changedRows(`
+			UPDATE
+				showcase_brands
+			SET
+				logo = null
+		`)
+		parts[part] = await Files.readdirDeep(visitor, config[part])
+		await Files.filterDeep(parts[part], async (dirinfo, fileinfo, level) => {
+			if (!~Files.exts.images.indexOf(fileinfo.ext)) return false
+			const src = dirinfo.dir+fileinfo.file	
+			const brand_nick = nicked(fileinfo.name)
+			const is = await db.changedRows(`
+				UPDATE
+					showcase_brands
+				SET
+					logo = :src
+				WHERE
+					brand_nick = :brand_nick
+				`, {brand_nick, src})
+			if (is) count++
+			return false
+		})
+
+		const props = {}
+		props.images = await upload.receiveProp('images')
+		props.files = await upload.receiveProp('files')
+		props.texts = await upload.receiveProp('texts')
+		props.videos = await upload.receiveProp('videos')
+		props.slides = await upload.receiveProp('slides')
+		props.art = await upload.receiveProp('Арт')
+
+
+
+		props.files = await upload.receiveProp('Файлы')
+		const search_prop_id = props.files.prop_id
+		const vals = await db.all(`
+			SELECT DISTINCT v.value_title as src, v.value_id as search_value_id
+			FROM showcase_values v, showcase_iprops ip
+			WHERE v.value_id = ip.value_id and ip.prop_id = :search_prop_id
+		`, { search_prop_id })
+		for (const val of vals) {
+			const {src, search_value_id} = val
+			val.res = []
+			const stat = await fs.stat(src)
+			if (stat.isFile()) {
+				const finfo = File.srcInfo(stat.file)
+				const ext = finfo.ext
+				const ordain = finfo.num
+				const part = 'files'
+				if (~Files.exts.images.indexOf(ext)) part = 'images'
+				if (~Files.exts.texts.indexOf(ext)) part = 'texts'
+				if (~Files.exts.videos.indexOf(ext)) part = 'videos'
+				val.res.push({
+					ordain,
+					src,
+					prop_id: props[part].prop_id
+				})
+			} else {
+				const root = await Files.readdirDeep(visitor, src)
+				for (const finfo of root.files) {
+					const ext = finfo.ext
+					const ordain = finfo.num
+					const part = 'files'
+					if (~Files.exts.images.indexOf(ext)) part = 'images'
+					if (~Files.exts.texts.indexOf(ext)) part = 'texts'
+					if (~Files.exts.videos.indexOf(ext)) part = 'videos'
+					val.res.push({
+						ordain,
+						src: src + finfo.file,
+						prop_id: props[part].prop_id
+					})
+				}
+			}
+			for (const r of val.res) {
+				const {ordain, src, prop_id} = r //search_value_id, search_prop_id
+				const value = await upload.receiveValue(src)
+				const items = await db.all(`
+					SELECT m.model_id, ip.item_num 
+					FROM showcase_iprops ip, showcase_models m
+					WHERE 
+					ip.model_id = m.model_id
+					and ip.value_id = :search_value_id 
+					and ip.prop_id = :search_prop_id
+				`, {search_value_id, search_prop_id})
+				for (const item of items) {
+					const { model_id, item_num } = item
+					await db.affectedRows(`
+						INSERT IGNORE INTO
+							showcase_iprops
+						SET
+							ordain = :ordain,
+							value_id = :value_id,
+							model_id = :model_id,
+							item_num = :item_num,
+							prop_id = :prop_id
+					`, {
+						item_num: item.item_num,
+						model_id: item.model_id, 
+						value_id: value.value_id, 
+						prop_id: prop_id
+					})
+				}
+			}
+		}
+
+		for (const part of ['slides','files','images','texts','videos']) {
+			await db.affectedRows(`
+				DELETE FROM showcase_iprops
+				WHERE prop_id = :prop_id
+			`, props[part])
+			parts[part] = await Files.readdirDeep(visitor, config[part])
+			for (const root of parts[part].dirs) {
+				const brand_nick = nicked(root.name)
+				const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
+				if (!brand_id) continue
+				await Files.filterDeepSplit(root, async (dirinfo, name, fileinfo, level) => {
+					if (!~Files.exts.images.indexOf(fileinfo.ext)) return false
+					const res = await Files.getRelations(db, name, brand_id, props.art.prop_id)
+					const src = dirinfo.dir + fileinfo.file
+					const ordain = fileinfo.num
+					const value = await upload.receiveValue(src)
+					for (const item of res) {
+						const affectedRows = await db.affectedRows(`
+							INSERT IGNORE INTO
+								showcase_iprops
+							SET
+								ordain = :ordain,
+								value_id = :value_id,
+								model_id = :model_id,
+								item_num = :item_num,
+								prop_id = :prop_id
+						`, {
+							ordain,
+							item_num: item.item_num,
+							model_id: item.model_id, 
+							value_id: value.value_id, 
+							prop_id: props[part].prop_id
+						})
+						count += affectedRows
+						if (!affectedRows) doublepath.push(dirinfo.dir + fileinfo.file) //Встретилось имя у которого nick одинаковый и сработало исключение при повторной записи
+					}
+					return false
+				})
+			}
+		}
+
+		part = 'folders'
+		parts[part] = await Files.readdirDeep(visitor, config[part])
+		for (const dirinfo of parts[part].dirs) { //Бренды
+			const brand_nick = nicked(dirinfo.name)
+			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
+			if (!brand_id) continue
+			for (const subinfo of dirinfo.dirs) { //Модели
+				const res = await Files.getRelations(db, subinfo.name, brand_id, props.art.prop_id) //Папка может быть привязана к Art
+				for (const fileinfo of subinfo.files) { //Файлы
+					const src = nicked(subinfo.dir + fileinfo.file)
+					const ext = fileinfo.ext
+					const ordain = fileinfo.num
+					const value = await upload.receiveValue(src)
+					part = 'files'
+					if (~Files.exts.images.indexOf(ext)) part = 'images'
+					if (~Files.exts.texts.indexOf(ext)) part = 'texts'
+					if (~Files.exts.videos.indexOf(ext)) part = 'videos'
+
+					for (const item of res) { //Позиции
+						const affectedRows = await db.affectedRows(`
+							INSERT IGNORE INTO
+								showcase_iprops
+							SET
+								ordain = :ordain,
+								value_id = :value_id,
+								model_id = :model_id,
+								item_num = :item_num,
+								prop_id = :prop_id
+						`, {
+							ordain,
+							item_num: item.item_num,
+							model_id: item.model_id, 
+							value_id: value.value_id, 
+							prop_id: props[part].prop_id
+						})
+						count += affectedRows
+						if (!affectedRows) doublepath.push(dirinfo.dir + fileinfo.file) //Встретилось имя у которого nick одинаковый и сработало исключение при повторной записи
+					}
+				}
+			}
+		}
+		for (const part of ['slides','files','images','texts','videos']) {
+			const { prop_id } = props[part]
+			const list = await db.all(`
+				SELECT v.value_id
+				FROM showcase_values v, showcase_iprops ip
+				WHERE v.value_id = ip.value_id and ip.prop_id = :prop_id
+				ORDER BY ip.ordain, v.value_nick
+			`, { prop_id })
+			for (const i in list) {
+				const file = list[i]
+				await db.changedRows(`
+					UPDATE showcase_iprops ip
+					SET ordain = :ordain
+					WHERE prop_id=:prop_id and value_id = :value_id
+				`, {prop_id, value_id: file.value_id, ordain: i})
+			}
+		}
+		return {doublepath, count}
+	}
 	async loadTable (name) {
 		const { visitor, options, view, db, config } = this.opt
 		let duration = Date.now()
@@ -601,8 +840,8 @@ export class Upload {
 					} else if (type == 'number') {
 						number = value_title - 0
 					}
-					await db.exec(`
-						INSERT INTO 
+					await db.affectedRows(`
+						INSERT IGNORE INTO 
 							showcase_iprops
 						SET
 							model_id = :model_id,

@@ -6,7 +6,7 @@ const run = (obj, call) => {
 }
 export const ROOT = (data, env) => `
 	<h1>Файлы</h1>
-	<p>Свободно: <b>${data.count}</b> ${words(data.count, 'файл', 'файла', 'файлов')}.</p>
+	<p>Бесхозных <b>${data.count}</b> ${words(data.count, 'файл', 'файла', 'файлов')}.</p>
 	${run(data.parts, printpart).join('')}
 `
 const printpart = (root, name) => `

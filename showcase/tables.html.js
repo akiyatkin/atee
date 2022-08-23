@@ -7,8 +7,6 @@ import { words } from "/-words/words.js"
 
 export const ROOT = (data, env) => `
 	<h1>Данные</h1>
-	<input>
-	<button>asdf</button>
 	<table style="border-spacing: 0 0.5rem">
 		${data.files.map(tablerow).join('')}
 	</table>
@@ -29,17 +27,13 @@ export const ROOT = (data, env) => `
 				if (!ans?.result) return
 				btn.disabled = false
 				btn.classList.add('ready')
-				
-				
 				const rowdata = cls('rowdata', btn.parentElement.parentElement)[0]
 				const html = tpl.rowdata(ans.row)
 				Client.htmltodiv(html, rowdata)
-
 				for (const other of cls('clear', btn.parentElement)) {
 					other.innerHTML = 'Очистить'
 					other.disabled = false
 				}
-
 				Client.reloaddiv('PANEL')
 			})
 		}
