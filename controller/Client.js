@@ -1,6 +1,8 @@
 import { animate } from './animate.js'
 import { pathparse } from './Spliter.js'
 import { Head } from './Head.js'
+import { evalScripts } from './evalScripts.js'
+import { createPromise } from './createPromise.js'
 
 export const Client = {
 	search:'',
@@ -145,13 +147,9 @@ export const Client = {
 	},
 	htmltodiv: (html, div) => {
 		div.innerHTML = html
-		const promise = evalScriptsInNode(div)
-		Client.animate(div, promise)
+		const promise = evalScripts(div)
+		animate('div', div, promise, 'opacity')
 		return promise
-	},
-	animate: (el, promise = Promise.resolve(), anim = 'opacity') => {
-		const tag = el.tagName == 'A' ? 'a' : 'div'
-		return animate(tag, el, promise, anim)
 	}
 }
 const fixsearch = search => {
@@ -161,11 +159,6 @@ const fixsearch = search => {
 		else if (search == '#' ) search = location.pathname + location.search
 		else if (search[0] == '?') search = location.pathname + search
 		else if (search[0] == '#') search = location.pathname + location.search + search
-		else {
-			//const i = location.pathname.lastIndexOf('/')
-			//if (~i) search = location.pathname.slice(0, i) + '/' + search
-		}
-		
 	}
 	return search
 }
@@ -257,7 +250,7 @@ const applyCrossing = async () => {
 		for (const layer of json.layers) {
 			const elements = layer.sys.template.content
 			layer.sys.div.replaceChildren(elements)
-			const promise = evalScriptsInNode(layer.sys.div)
+			const promise = evalScripts(layer.sys.div)
 			promise.then(() => layer.sys.execute.resolve()).catch(e => null) //Покажется когда выполнятся скрипты
 			scripts.push(promise)
 		}
@@ -362,57 +355,3 @@ const loadAll = (layers, promises = []) => {
 	}
 	return promises
 }
-const evalScriptsInNode = div => {
-	const scripts = []
-	let i = 0
-	for (const old of div.getElementsByTagName("script")) {
-		let p
-		if (old.src) {
-			if (!evalScriptsInNode[old.src]) {
-				evalScriptsInNode[src] = new Promise((resolve, reject) => {
-					const fresh = document.createElement("script");					
-					fresh.src = old.src
-					document.head.append(fresh)
-					resolve()
-				})
-			}
-			p = evalScriptsInNode[src]
-		} else {
-			p = new Promise((resolve, reject) => {
-				const fresh = document.createElement("script");
-				fresh.type = old.type
-				fresh.addEventListener('ready', resolve)
-				fresh.textContent = old.textContent + ';document.getElementById("'+div.id+'").getElementsByTagName("script")['+i+'].dispatchEvent(new Event("ready"))'
-				old.replaceWith(fresh)
-			})
-		}
-		scripts.push(p)
-		i++
-	}	
-	return Promise.all(scripts)
-}
-const createPromise = (payload) => {
-	let resolve, reject
-	const promise = new Promise((r, j) => {
-		resolve = r
-		reject = j
-	})
-	promise.payload = payload
-	promise.resolve = r => {
-		promise.result = r
-		promise.resolved = true
-		promise.rejected = false
-		promise.finalled = true
-		resolve(r)
-	}
-	promise.reject = r => {
-		promise.result = r
-		promise.resolved = false
-		promise.rejected = true
-		promise.finalled = true
-		reject(r)
-	}
-	promise.catch(e => null)
-	return promise
-}
-//window.Client = Client

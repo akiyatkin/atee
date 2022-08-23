@@ -7,6 +7,8 @@ import { words } from "/-words/words.js"
 
 export const ROOT = (data, env) => `
 	<h1>Данные</h1>
+	<input>
+	<button>asdf</button>
 	<table style="border-spacing: 0 0.5rem">
 		${data.files.map(tablerow).join('')}
 	</table>

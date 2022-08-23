@@ -1,53 +1,65 @@
 const cls = (cls, el) => el.getElementsByClassName(cls)
+const link = document.createElement('link')
+link.rel = 'stylesheet'
+link.href = '/-dialog/style.css'
+document.head.prepend(link)
+document.addEventListener('keydown', async e => {
+	if (!~[27].indexOf(e.keyCode)) return //13
+	const l = Dialog.parents.length
+	if (!l) return
+	const parent = Dialog.parents[l-1]
+    Dialog.hide(parent)
+})
 export const Dialog = {
-	show: async (modal, html) => {
-		modal = modal.tagName ? modal : document.getElementById(modal)
+	frame: async (parent, html) => {
+		parent = parent.tagName ? parent : document.getElementById(parent)
 		const Client = await window.getClient()
 		const popobj = await import('/-dialog/layout.html.js')
-		await Client.htmltodiv(popobj['ROOT'](), modal)
-		
-		const body = cls('body', modal)[0]
-		const close = cls('close', modal)[0]
-		if (close) {
+		await Client.htmltodiv(popobj['ROOT'](), parent)
+		const dialog = parent.children[0]
+		for (const close of cls('close', dialog)) {
 			close.addEventListener('click', async (e) => {
-				if (!modal.classList.contains('show')) return
-				Dialog.hide(modal)
+				if (!dialog.classList.contains('show')) return
+				Dialog.hide(parent)
 			})
 			close.addEventListener('keypress', e => { //32 space, 13 enter
 				if (e.keyCode != 13) return
-				if (!modal.classList.contains('show')) return
+				if (!dialog.classList.contains('show')) return
 				e.preventDefault()
-				Dialog.hide(modal)
+				Dialog.hide(parent)
 			})
 		}
-		document.body.addEventListener('click', async e => {
-			if (!modal.classList.contains('show')) return
+		const body = cls('dialogbody', dialog)[0]
+		dialog.addEventListener('click', async e => {
+			if (!dialog.classList.contains('show')) return
 			let el = e.target
 			const path = [el]
 			while (el && el.parentElement) path.push(el = el.parentElement)
-			if (path.find(el => el.tagName == 'A')) return Dialog.hide(modal); //Клик по ссылке закрываем
-			if (path.find(el => el == body)) return; //Клик внутри меню, меню не сворачивает
-			Dialog.hide(modal)
-		}, true);
-		modal.addEventListener('keydown', async e => {
-			if (e.keyCode !== 13) return
-			if (e.target != modal) return
-			if (!modal.classList.contains('show')) return
-		    Dialog.hide(modal)
-		});
-		document.body.addEventListener('keydown', async e => {
-			if (e.keyCode !== 27) return
-		    if (!modal.classList.contains('show')) return
-		    Dialog.hide(modal)
-		});
-
-		const div = cls('popupcontent', modal)[0]
-		modal.classList.add('show')
-		modal.focus({ preventScroll: true })
+			if (path.some(el => el.tagName == 'A')) return Dialog.hide(parent) //Клик по ссылке закрываем
+			if (path.some(el => el == body)) return //Клик внутри, окно не сворачивает
+			if (!path.some(el => el == dialog)) return //Клик где-то вообще вне окна, по чему-то, что сверху например
+			Dialog.hide(parent)
+		}, true)
+		const div = cls('dialogcontent', dialog)[0]
 		await Client.htmltodiv(html, div)
 	},
-	hide: modal => {
-		modal = modal.tagName ? modal : document.getElementById(modal)
-		modal.classList.remove('show')
+	parents:[],
+	show: parent => {
+		parent = parent.tagName ? parent : document.getElementById(parent)
+		const dialog = parent.children[0]
+		const i = Dialog.parents.indexOf(parent)
+		if (~i) Dialog.parents.splice(i, 1)
+		Dialog.parents.push(parent)
+		dialog.classList.add('show')
+		dialog.lastfocus = document.activeElement
+		document.activeElement.blur()
+	},
+	hide: parent => {
+		parent = parent.tagName ? parent : document.getElementById(parent)
+		const dialog = parent.children[0]
+		const i = Dialog.parents.indexOf(parent)
+		if (~i) Dialog.parents.splice(i, 1)
+		dialog.classList.remove('show')
+		if (!Dialog.parents.length) dialog.lastfocus.focus({ preventScroll: true })
 	}
 }

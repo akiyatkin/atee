@@ -43,16 +43,16 @@ export const PANEL = (data, env) => `
 
 			btn.addEventListener('click',async () => {
 				btn.innerHTML = 'В процессе...'
-				btn.disabled = true
+				btn.classList.add('ready')
 
-				
-				const ans = await fetch('/-showcase/'+btn.name).then(res => res.json()).catch(e => false)
 				const Client = await window.getClient()
+				//const ans = {doublepath:['asdf']}
+				const ans = await fetch('/-showcase/'+btn.name).then(res => res.json()).catch(e => false)
+				
 				btn = tag('button').namedItem(btn.name)
 				if (btn) {
 					btn.innerHTML = ans?.msg || 'Ошибка'
-					btn.classList.add('ready')	
-					btn.disabled = false
+					btn.classList.add('ready')
 				}
 				Client.reloaddiv('CONTENT')
 				
@@ -61,7 +61,8 @@ export const PANEL = (data, env) => `
 				const tplobj = await import('/-showcase/popups.html.js')
 				const html = tplobj[sub](ans)
 				const { Dialog } = await import('/-dialog/Dialog.js')
-				Dialog.show(pop, html)
+				await Dialog.frame(pop, html)
+				Dialog.show(pop)
 			})
 		}
 	</script>
@@ -116,23 +117,31 @@ export const FOOTER = (data, env) => `
 		for (let btn of tag('button')) {
 			const pop = document.createElement('div')
 			div.append(pop)
-			btn.addEventListener('click',async () => {
+			btn.addEventListener('click', async () => {
 				btn.innerHTML = 'В процессе...'
-				btn.disabled = true
+				btn.classList.add('ready')
+
+				//const ans = {doublepath:['asdf']}
 				const ans = await fetch('/-showcase/'+btn.name).then(res => res.json()).catch(e => false)
+				
 				btn = tag('button').namedItem(btn.name)
 				if (!btn) return
+				
+				
 				btn.innerHTML = ans?.msg || 'Ошибка'
-				btn.classList.add('ready')
-				btn.disabled = false
+				
+				
 				const Client = await window.getClient()
 				Client.reloaddiv('CONTENT')
 
 				const sub = btn.name.replaceAll('-','_')
 				const tplobj = await import('/-showcase/popups.html.js')
-				const html = tplobj[sub](ans)
 				const { Dialog } = await import('/-dialog/Dialog.js')
-				Dialog.show(pop, html)
+				if (tplobj[sub]) {
+					const html = tplobj[sub](ans)
+					await Dialog.frame(pop, html)
+					Dialog.show(pop)
+				}
 			})
 		}
 	</script>
