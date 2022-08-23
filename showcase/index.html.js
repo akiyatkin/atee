@@ -25,8 +25,8 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 
 export const PANEL = (data, env) => `
 	<div style="display: flex; gap:0.5rem; flex-wrap:wrap;"> 
-		<button name="set-tables-loadall" class="${data.ready.tables ? 'ready' : ''}">Внести данные</button>
-		<button name="set-prices-loadall" class="${data.ready.prices ? 'ready' : ''}">Внести прайсы</button>
+		<button name="set-tables-loadall" class="${data.ready.tables ? 'ready' : ''}">Внести новые данные</button>
+		<button name="set-prices-loadall" class="${data.ready.prices ? 'ready' : ''}">Внести новые прайсы</button>
 		<button name="set-files-loadall" class="${data.ready.files ? 'ready' : ''}">Связать всё с файлами</button>
 		<!-- при загрузке файлов на сервер, нет никаких событий. Мы никогда не знает есть новые файлы или нет -->
 	</div>

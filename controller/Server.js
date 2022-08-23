@@ -127,7 +127,6 @@ export const Server = {
 				let res = await meta.get('get-layers', req)
 				if (!res) return error(500, 'layers have bad definition')
                 if (!res.layers) return error(500, 'layers not defined')
-				
 				const crumb = {
 					crumbs: route.crumbs,
 					get: route.get,

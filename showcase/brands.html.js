@@ -10,7 +10,7 @@ export const ROOT = (data, env) => `
 	<p>
 		Всего с моделями и без: ${data.brands.length}
 	</p>
-	${data.brands.map(showbrand).join('')}
+	<div class="draglist">${data.brands.map(showbrand).join('')}</div>
 	<p align="right">
 		<button class="botbtn" data-action="set-brands-clearempty">Удалить пустые</button>
 		<script type="module" async>
@@ -26,9 +26,33 @@ export const ROOT = (data, env) => `
 				const Client = await window.getClient()
 				Client.reloaddiv('${env.div}')
 			})
+			const draglist = cls('draglist')[0]
+			let moved = false
+			draglist.addEventListener('dragstart', e => {
+				moved = e.target.closest('.item')
+			})
+			draglist.addEventListener('drop', async e => {
+				if (!moved) return
+				const current = e.target.closest('.item')
+				if (moved == current) return
+				current.before(moved)
+				const moved_id = moved.dataset.brand_id
+				moved = false
+				const ans = await fetch('/-showcase/set-brands-move?before_id=' + moved_id + '&after_id=' + current.dataset.brand_id).then(res => res.json()).catch(e => false)
+				if (!ans?.result) alert('Ошибка')
+
+			})
+			draglist.addEventListener('dragover', e => {
+				const current = e.target.closest('.item')
+				e.preventDefault()
+				delete current.style.transition
+			})
 		</script>
 	</p>
 `
 const showbrand = (brand) => `
-	${brand.brand_title} <small>${brand.models}</small><br>
+	<div data-brand_id="${brand.brand_id}" draggable="true" class="item ${brand.brand_nick}" style="transition: 0.3s;">
+		<span style="cursor: move">&blk14;</span>
+		<span title="${brand.brand_nick}">${brand.brand_title} <small>${brand.models}</small></span>
+	</div>
 `

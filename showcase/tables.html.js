@@ -22,7 +22,10 @@ export const ROOT = (data, env) => `
 				const Client = await window.getClient()
 				const tpl = await import('${env.tpl}')
 				btn = cls('load').namedItem(btn.name)
-				if (!btn) return
+				if (!btn) { //Ушли на другую страницу
+					Client.reloaddiv('CONTENT')
+					return
+				}
 				btn.innerHTML = ans?.msg || 'Ошибка'
 				if (!ans?.result) return
 				btn.disabled = false
@@ -34,7 +37,7 @@ export const ROOT = (data, env) => `
 					other.innerHTML = 'Очистить'
 					other.disabled = false
 				}
-				Client.reloaddiv('PANEL')
+				//Client.reloaddiv('PANEL')
 			})
 		}
 		for (let btn of cls('clear')) {
@@ -45,7 +48,10 @@ export const ROOT = (data, env) => `
 				const Client = await window.getClient()
 				const tpl = await import('${env.tpl}')
 				btn = cls('clear').namedItem(btn.name)
-				if (!btn) return
+				if (!btn) { //Ушли на другую страницу
+					Client.reloaddiv('CONTENT')
+					return
+				}
 				btn.innerHTML = ans?.msg
 				if (!ans?.result) return
 				
@@ -60,7 +66,7 @@ export const ROOT = (data, env) => `
 					other.classList.remove('ready')
 				}
 
-				Client.reloaddiv('PANEL')
+				//Client.reloaddiv('PANEL')
 			})
 		}
 		

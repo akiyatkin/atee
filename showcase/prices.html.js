@@ -37,7 +37,7 @@ export const ROOT = (data, env) => `
 					other.disabled = false
 				}
 				
-				Client.reloaddiv('PANEL')
+				//Client.reloaddiv('PANEL')
 			})
 		}
 		for (let btn of cls('clear')) {
@@ -61,7 +61,7 @@ export const ROOT = (data, env) => `
 					other.classList.remove('ready')
 				}
 				
-				Client.reloaddiv('PANEL')
+				//Client.reloaddiv('PANEL')
 			})
 		}
 		

@@ -89,10 +89,24 @@ export class Upload {
 		})
 		
 	}
+	async clearAllTable() {
+		const { visitor, options, view, db, config } = this.opt
+		await db.changedRows(`
+			DELETE i, ip FROM showcase_items i
+			LEFT JOIN showcase_iprops ip on (i.model_id = ip.model_id and i.item_num = ip.item_num)
+		`)
+		const dir = config.tables
+		await db.changedRows(`
+			UPDATE
+				showcase_tables
+			SET
+				loaded = 0
+		`)
+	}
 	async clearTable (table_title) {
 		const { visitor, options, view, db, config } = this.opt
 		const table_nick = nicked(table_title)
-		await db.start()
+		
 		const row = await db.fetch(`
 			SELECT table_id,
 				table_title,
@@ -125,7 +139,7 @@ export class Upload {
 				WHERE table_id = :table_id
 			`, { table_id })
 		}
-		await db.commit()
+		
 		return row
 	}
 	async clearPrice (price_title) {
@@ -430,6 +444,7 @@ export class Upload {
 		props.videos = await upload.receiveProp('videos')
 		props.slides = await upload.receiveProp('slides')
 		props.art = await upload.receiveProp('Арт')
+		props.photo = await upload.receiveProp('Фото')
 
 
 
@@ -517,7 +532,7 @@ export class Upload {
 				if (!brand_id) continue
 				await Files.filterDeepSplit(root, async (dirinfo, name, fileinfo, level) => {
 					if (!~Files.exts.images.indexOf(fileinfo.ext)) return false
-					const res = await Files.getRelations(db, name, brand_id, props.art.prop_id)
+					const res = await Files.getRelations(db, name, brand_id, [props.art.prop_id,props.photo.prop_id])
 					const src = dirinfo.dir + fileinfo.file
 					const ordain = fileinfo.num
 					const value = await upload.receiveValue(src)
@@ -553,7 +568,7 @@ export class Upload {
 			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
 			if (!brand_id) continue
 			for (const subinfo of dirinfo.dirs) { //Модели
-				const res = await Files.getRelations(db, subinfo.name, brand_id, props.art.prop_id) //Папка может быть привязана к Art
+				const res = await Files.getRelations(db, subinfo.name, brand_id, [props.art.prop_id]) //Папка может быть привязана к Art
 				for (const fileinfo of subinfo.files) { //Файлы
 					const src = nicked(subinfo.dir + fileinfo.file)
 					const ext = fileinfo.ext
@@ -754,7 +769,7 @@ export class Upload {
 		}
 		let quantity = 0
 
-		await db.start()
+		
 		await db.changedRows(`
 			DELETE i, ip FROM showcase_items i, showcase_iprops ip 
 			WHERE i.model_id = ip.model_id and i.item_num = ip.item_num and i.table_id = :table_id
@@ -869,7 +884,7 @@ export class Upload {
 			table_id,
 			quantity
 		})	
-		await db.commit()
+		
 		return { quantity, duration, loadtime:Date.now(), loaded:1 }
 	}
 }

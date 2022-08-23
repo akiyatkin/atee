@@ -44,6 +44,9 @@ meta.addVariable('db', async view => {
 		view.ans.status = 500
 		return view.err('Нет соединения с базой данных')
 	}
+	view.after(async () => {
+		await db.db.release()
+	})
 	return db
 })
 meta.addArgument('name')
@@ -68,8 +71,8 @@ restset(meta)
 
 export const rest = async (query, get, visitor) => {
 	const ans = await meta.get(query, {...get, visitor})
-
 	if (typeof(ans) == 'string') return { ans, status: 200, nostore:true, ext: 'html' }
+	if (~query.indexOf('set-')) Access.setAccessTime()
 	const { status = 200, nostore = true } = ans
 	delete ans.status
 	delete ans.nostore	

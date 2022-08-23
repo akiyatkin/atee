@@ -138,21 +138,25 @@ export const Files = {
 	// forEachAsync: async (ar, call) {
 	// 	await Promise.all(ar.map(call())
 	// }
-	getRelations: async (db, name, brand_id, prop_id) => {
-		const model_nick = nicked(name)
-		let model_id = await db.col('SELECT model_id FROM showcase_models WHERE brand_id = :brand_id and model_nick = :model_nick', {model_nick, brand_id})
+	getRelations: async (db, name, brand_id, props_id) => {
+		const nick = nicked(name)
+		let model_id = await db.col('SELECT model_id FROM showcase_models WHERE brand_id = :brand_id and model_nick = :nick', {nick, brand_id})
 		let item_num = null
 		let res = []
 		if (!model_id) {
-			const value_id = await db.col('SELECT value_id FROM showcase_values WHERE value_nick = :model_nick', {model_nick})
-			if (!value_id) return res
-			res = await db.all(`
-				SELECT m.model_id, ip.item_num 
-				FROM showcase_iprops ip, showcase_models m
-				WHERE 
-				ip.model_id = m.model_id and m.brand_id = :brand_id
-				and ip.value_id = :value_id and ip.prop_id = :prop_id
-			`, {value_id, prop_id, brand_id})
+			let value_id
+			for (const prop_id of props_id) {
+				value_id = await db.col('SELECT value_id FROM showcase_values WHERE value_nick = :nick', {nick})
+				if (!value_id) continue
+				res = await db.all(`
+					SELECT m.model_id, ip.item_num 
+					FROM showcase_iprops ip, showcase_models m
+					WHERE 
+					ip.model_id = m.model_id and m.brand_id = :brand_id
+					and ip.value_id = :value_id and ip.prop_id = :prop_id
+				`, {value_id, prop_id, brand_id})
+				if (res.length) break
+			}
 		} else {
 			res = await db.all('SELECT model_id, item_num FROM showcase_items WHERE model_id = :model_id', {model_id})
 		}

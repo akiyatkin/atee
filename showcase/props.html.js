@@ -55,6 +55,6 @@ export const ROOT = (data, env) => `
 const show = (prop) => `
 	<div data-prop_id="${prop.prop_id}" draggable="true" class="item ${prop.prop_nick}" style="transition: 0.3s;">
 		<span style="cursor: move">&blk14;</span>
-		<span>${prop.prop_title} <small>${prop.items}</small></span>
+		<span title="${prop.prop_nick}">${prop.prop_title} <small>${prop.items}</small></span>
 	</div>
 `

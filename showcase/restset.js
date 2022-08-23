@@ -1,6 +1,4 @@
-
 import { Files } from "/-showcase/Files.js"
-import { Access } from "/-controller/Access.js"
 import { Excel } from "/-showcase/Excel.js"
 import fs from "fs/promises"
 
@@ -26,8 +24,7 @@ export const restset = (meta) => {
 			showcase_items,
 			showcase_models,
 			showcase_search,
-			showcase_iprops,
-			showcase_gprops
+			showcase_iprops
 		`)
 		
 		const src = FILE_MOD_ROOT + '/update.sql'
@@ -41,7 +38,6 @@ export const restset = (meta) => {
 		
 		await Promise.all(promises)
 		
-		Access.setAccessTime()
 		return view.ret('База пересоздана')
 	})
 	meta.addAction('set-brands-clearempty', async view => {
@@ -53,7 +49,6 @@ export const restset = (meta) => {
 			LEFT JOIN showcase_models m on m.brand_id = b.brand_id
 			WHERE m.brand_id is null
 		`)
-		Access.setAccessTime()
 		return view.ret('Удалено')
 	})
 	meta.addAction('set-groups-clearempty', async view => {
@@ -89,14 +84,82 @@ export const restset = (meta) => {
 			`, group)
 		}
 		
-		Access.setAccessTime()
 		return view.ret('Удалено')
 	})
+	meta.addAction('set-brands-move', async view => {
+		await view.gets(['admin','start'])
+		const { db, before_id, after_id } = await view.gets(['db','before_id','after_id'])
+		await db.start()
+		const brands = await db.all(`
+			SELECT 
+				p.brand_id,
+				p.ordain
+			FROM showcase_brands p
+			ORDER by ordain
+		`)
+		let ordain = 0
+		let before, after
+		brands.forEach(brand => {
+			if (brand.brand_id == after_id) after = brand
+			if (brand.brand_id == before_id) before = brand
+			ordain = ordain + 2
+			brand.ordain = ordain
+		})
+		if (!before || !after) return view.err('Не найдены свойства')
+		before.ordain = after.ordain - 1
+
+		for (const brand of brands) {
+			await db.changedRows(`
+				UPDATE
+					showcase_brands 
+				SET
+					ordain = :ordain
+				WHERE brand_id = :brand_id
+			`, brand)
+		}
 	
+		await db.commit()
+		return view.ret('Перенесено')
+	})
+	meta.addAction('set-groups-move', async view => {
+		await view.gets(['admin','start'])
+		const { db, before_id, after_id } = await view.gets(['db','before_id','after_id'])
+		await db.start()
+		const groups = await db.all(`
+			SELECT 
+				p.group_id,
+				p.ordain
+			FROM showcase_groups p
+			ORDER by ordain
+		`)
+		let ordain = 0
+		let before, after
+		groups.forEach(group => {
+			if (group.group_id == after_id) after = group
+			if (group.group_id == before_id) before = group
+			ordain = ordain + 2
+			group.ordain = ordain
+		})
+		if (!before || !after) return view.err('Не найдены свойства')
+		before.ordain = after.ordain - 1
+
+		for (const group of groups) {
+			await db.changedRows(`
+				UPDATE
+					showcase_groups 
+				SET
+					ordain = :ordain
+				WHERE group_id = :group_id
+			`, group)
+		}
+	
+		await db.commit()
+		return view.ret('Перенесено')
+	})
 	meta.addAction('set-props-move', async view => {
 		await view.gets(['admin','start'])
 		const { db, before_id, after_id } = await view.gets(['db','before_id','after_id'])
-
+		await db.start()
 		const props = await db.all(`
 			SELECT 
 				p.prop_id,
@@ -124,15 +187,9 @@ export const restset = (meta) => {
 				WHERE prop_id = :prop_id
 			`, prop)
 		}
-		await db.changedRows(`
-			DELETE v
-			FROM showcase_values v
-			LEFT JOIN showcase_iprops ip on ip.value_id = v.value_id
-			WHERE ip.value_id is null
-		`)
-
-		Access.setAccessTime()
-		return view.ret('Удалено')
+		
+		await db.commit()
+		return view.ret('Упорядочено')
 	})
 	meta.addAction('set-values-clearempty', async view => {
 		await view.gets(['admin','start'])
@@ -143,7 +200,6 @@ export const restset = (meta) => {
 			LEFT JOIN showcase_iprops ip on ip.value_id = v.value_id
 			WHERE ip.value_id is null
 		`)
-		Access.setAccessTime()
 		return view.ret('Удалено')
 	})
 	meta.addAction('set-props-clearempty', async view => {
@@ -155,7 +211,6 @@ export const restset = (meta) => {
 			LEFT JOIN showcase_iprops ip on ip.prop_id = p.prop_id
 			WHERE ip.prop_id is null
 		`)
-		Access.setAccessTime()
 		return view.ret('Удалено')
 	})
 	meta.addAction('set-models-clearempty', async view => {
@@ -169,7 +224,6 @@ export const restset = (meta) => {
 			WHERE m.brand_id = b.brand_id and g.group_id = m.group_id and i.model_id is null
 		`)
 		
-		Access.setAccessTime()
 		return view.ret('Удалено')
 	})
 
@@ -180,7 +234,6 @@ export const restset = (meta) => {
 		const row = await upload.clearTable(name)
 		view.ans.row = row
 		
-		Access.setAccessTime()
 		return view.ret('Очищено')
 	})
 	meta.addAction('set-tables-loadall', async view => {
@@ -193,7 +246,6 @@ export const restset = (meta) => {
 			const { quantity = 0 } = await upload.loadTable(of.name)
 			count += quantity
 		}))
-		Access.setAccessTime()
 		view.ans.count = count
 		
 		return view.ret('Внесено ' + count)
@@ -221,7 +273,7 @@ export const restset = (meta) => {
 		
 		view.ans.row = row
 		view.ans.count = row.quantity
-		Access.setAccessTime()
+
 		return view.ret('Внесено ' + row.quantity)
 	})
 	meta.addAction('set-prices-clearall', async view => {
@@ -235,23 +287,22 @@ export const restset = (meta) => {
 		await Promise.all(rows.map(({price_title}) => {
 			return upload.clearPrice(price_title)
 		}))
-		Access.setAccessTime()
 		return view.ret('Прайсы очищены')
 	})
 	meta.addAction('set-tables-clearall', async view => {
 		await view.gets(['admin','start'])
 		const { upload, db } = await view.gets(['upload', 'db'])
 		
-		const rows = await db.all(`
-			SELECT
-				table_title
-			FROM showcase_tables
-		`)
-		await Promise.all(rows.map(({table_title}) => {
-			return upload.clearTable(table_title)
-		}))
+		await upload.clearAllTable()
+		// const rows = await db.all(`
+		// 	SELECT
+		// 		table_title
+		// 	FROM showcase_tables
+		// `)
+		// await Promise.all(rows.map(({table_title}) => {
+		// 	return upload.clearTable(table_title)
+		// }))
 		
-		Access.setAccessTime()
 		return view.ret('Данные очищены')
 	})
 	meta.addAction('set-prices-clear', async view => {
@@ -261,7 +312,7 @@ export const restset = (meta) => {
 		const row = await upload.clearPrice(name)
 		
 		view.ans.row = row
-		Access.setAccessTime()
+
 		return view.ret('Очищено')
 	})
 	meta.addAction('set-prices-load', async view => {
@@ -271,7 +322,7 @@ export const restset = (meta) => {
 		const row = await upload.loadPrice(name)
 		view.ans.row = row
 		
-		Access.setAccessTime()
+		
 		view.ans.count = row.quantity
 		return view.ret('Внесено ' + row.quantity)
 	})
@@ -298,7 +349,7 @@ export const restset = (meta) => {
 
 		const {doublepath, count:countfiles} = await upload.loadAllFiles()		
 
-		Access.setAccessTime()
+		
 		view.ans.count = count + countfiles
 		return view.ret('Внесено ' + count + ', файлов ' + countfiles)
 	})
@@ -311,7 +362,7 @@ export const restset = (meta) => {
 			const { quantity = 0 } = await upload.loadPrice(of.name)
 			count += quantity
 		}))
-		Access.setAccessTime()
+		
 		view.ans.count = count
 		return view.ret('Внесено ' + count)
 	})

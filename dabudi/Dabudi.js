@@ -79,8 +79,10 @@ export const Dabudi = {
 		const head_nicks = head_titles.map(h => nicked(h))
 		return {heads: {head_nicks, head_titles}, rows_body}
 	},
-	splitGroups: (rows_body, heads, group_title, index_group, groups) => {
-		let group_nick = nicked(group_title)
+	splitGroups: (rows_body, heads, root_title, index_group, groups) => {
+		const root_nick = nicked(root_title) 
+		let group_title = root_title
+		let group_nick = root_nick
 		if (!groups) {
 			const groups = {}
 			groups[group_nick] = {
@@ -103,7 +105,12 @@ export const Dabudi = {
 				return
 			}
 			const parent_nick = wasitems ? groups[group_nick].parent_nick : group_nick
-			group_nick = parent_nick + '-' + nicked(group_title)
+			if (parent_nick && parent_nick != root_nick) {
+				group_nick = parent_nick + '-' + nicked(group_title)	
+			} else {
+				group_nick = nicked(group_title)	
+			}
+			
 			if (groups[group_nick]) return
 			groups[group_nick] = {
 				group_nick, 

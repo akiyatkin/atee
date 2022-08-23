@@ -1,5 +1,6 @@
 {
 	"tpl":{
+		"controller":"/-controller/layout.html.js",
 		"index":"/-controller/index.html.js"
 	},
 	"index":"index:ROOT",

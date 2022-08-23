@@ -299,8 +299,8 @@ export const restget = (meta) => {
 
 	meta.addAction('get-props', async view => {
 		await view.get('admin')
-		const { db } = await view.gets(['db'])
-		const props = await db.all(`
+		const { db, upload } = await view.gets(['db','upload'])
+		let props = await db.all(`
 			SELECT 
 				p.prop_title,
 				p.prop_nick,
@@ -312,6 +312,14 @@ export const restget = (meta) => {
 			GROUP BY p.prop_id
 			ORDER by ordain
 		`)
+		const specs = []
+		specs.push(await upload.receiveProp('images'))
+		specs.push(await upload.receiveProp('files'))
+		specs.push(await upload.receiveProp('texts'))
+		specs.push(await upload.receiveProp('videos'))
+		specs.push(await upload.receiveProp('slides'))
+		specs.push(await upload.receiveProp('Фото'))
+		props = props.filter(prop => !specs.some(spec => spec.prop_id == prop.prop_id))
 		view.ans.props = props
 		return view.ret()
 	})
@@ -328,6 +336,7 @@ export const restget = (meta) => {
 			FROM showcase_groups g
 			LEFT JOIN showcase_models m on m.group_id = g.group_id
 			GROUP BY g.group_id
+			ORDER by ordain
 		`)
 		const objgroups = {}
 		for (const group of groups) {
@@ -337,7 +346,7 @@ export const restget = (meta) => {
 			if (!group.parent_id) continue
 			objgroups[group.parent_id].models += group.models
 		}
-		groups.sort((a, b) => b.models - a.models)
+		//groups.sort((a, b) => b.models - a.models)
 
 		view.ans.groups = groups
 		return view.ret()

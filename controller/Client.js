@@ -65,13 +65,13 @@ export const Client = {
 	reloaddiv: (div) => {
 		if (~Client.reloaddivs.indexOf(div)) return
 		Client.reloaddivs.push(div)
-		return Client.replaceState(location.href)
+		return Client.replaceState(location.href, false)
 	},
 	reloadtss:[],
 	reloadts: (ts) => {
 		if (~Client.reloadtss.indexOf(ts)) return
 		Client.reloadtss.push(ts)
-		return Client.replaceState(location.href)
+		return Client.replaceState(location.href, false)
 	},
 	view:Date.now(), //Метка сеанса в котором актуальна Client.history
 	history:[],
