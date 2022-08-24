@@ -2,100 +2,62 @@ import { ago } from "/-words/ago.js"
 import { passed } from "/-words/passed.js"
 import { words } from "/-words/words.js"
 
-
-
-
-export const ROOT = (data, env) => `
+export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 	<h1>Данные</h1>
 	<table style="border-spacing: 0 0.5rem">
-		${data.files.map(tablerow).join('')}
+		${data.files.map(itemrow).join('')}
 	</table>
 	<script type="module" async>
-		const id = id => document.getElementById(id)
-		const div = id('${env.div}')
+		import { action } from "/-showcase/action.js"
+		const div = document.getElementById('${env.div}')
+		const tag = (tag, el = div) => el.getElementsByTagName(tag)
 		const cls = (cls, el = div) => el.getElementsByClassName(cls)
-		for (let btn of cls('load')) {
-			btn.addEventListener('click',async () => {
-				btn.innerHTML = 'В процессе...'
-				btn.disabled = true
-				const ans = await fetch('/-showcase/set-tables-load?name=' + btn.name).then(res => res.json())
-				const Client = await window.getClient()
+		const applyrow = (rowdata) => {
+			const name = rowdata.dataset.name
+			for (const btn of tag('button', rowdata)) action(btn, async (Client, ans) => {
 				const tpl = await import('${env.tpl}')
-				btn = cls('load').namedItem(btn.name)
-				if (!btn) { //Ушли на другую страницу
-					Client.reloaddiv('CONTENT')
-					return
+				let rowdata
+				for (let item of cls('rowdata')) {
+					if (item.dataset.name == name) rowdata = item
 				}
-				btn.innerHTML = ans?.msg || 'Ошибка'
-				if (!ans?.result) return
-				btn.disabled = false
-				btn.classList.add('ready')
-				const rowdata = cls('rowdata', btn.parentElement.parentElement)[0]
+				if (!rowdata) return
 				const html = tpl.rowdata(ans.row)
 				Client.htmltodiv(html, rowdata)
-				for (const other of cls('clear', btn.parentElement)) {
-					other.innerHTML = 'Очистить'
-					other.disabled = false
-				}
-				//Client.reloaddiv('PANEL')
-			})
+				applyrow(rowdata)
+			}, name)
 		}
-		for (let btn of cls('clear')) {
-			btn.addEventListener('click',async () => {
-				btn.innerHTML = 'В процессе...'
-				btn.disabled = true
-				const ans = await fetch('/-showcase/set-tables-clear?name=' + btn.name).then(res => res.json())
-				const Client = await window.getClient()
-				const tpl = await import('${env.tpl}')
-				btn = cls('clear').namedItem(btn.name)
-				if (!btn) { //Ушли на другую страницу
-					Client.reloaddiv('CONTENT')
-					return
-				}
-				btn.innerHTML = ans?.msg
-				if (!ans?.result) return
-				
-
-				const rowdata = cls('rowdata', btn.parentElement.parentElement)[0]
-				const html = tpl.rowdata(ans.row)
-				Client.htmltodiv(html, rowdata)
-				
-
-				for (const other of cls('load', btn.parentElement)) {
-					other.innerHTML = 'Внести'
-					other.classList.remove('ready')
-				}
-
-				//Client.reloaddiv('PANEL')
-			})
-		}
-		
+		for (const rowdata of cls('rowdata')) applyrow(rowdata)
 	</script>
 `
-const tablerow = ({options, row, file, name, size, mtime, ready}) => `
+
+//{options, row, file, name, size, mtime, ready}
+const itemrow = (item) => `
 	<tr>
 		<td>
-			<b>${name}</b><br>
-			${options?.brand === true ? 'Мультибренд' : `Бренд: ${options?.brand || name}`}
+			<b>${item.name}</b><br>
+			${item.options?.brand === true ? 'Мультибренд' : `Бренд: ${item.options?.brand || item.name}`}
 		</td>
 		<td style="padding-left:5px">
 			<div style="margin-bottom:3px">
-				${!mtime ? 'Файла нет': `
-					${size} Mb, <span title="Файл изменён ${new Date(mtime).toLocaleDateString()}">${ago(mtime)}</span>
-				`}
+				${fileinfo(item)}
 			</div>
-			<div class="rowdata">
-				${row ? rowdata(row) : ''}
-			</div>
-			<div style="display: flex; flex-wrap: wrap; gap:5px">
-				<button name="${name}" ${row?.loaded ? '':'disabled'} class="clear">Очистить</button>
-				<button name="${name}" class="load ${ready?'ready':''}">Внести</button>
+			<div class="rowdata" data-name="${item.name}">
+				${rowdata(item.row)}
 			</div>
 		</td>
 	</tr>
 `
-export const rowdata = (row) => `
+
+export const rowdata = (row) => (!row ? '' : `
 	<div style="margin-bottom:3px; ${row.loaded? '' : 'opacity:0.5'}">
 		${row.quantity} ${words(row.quantity,'строка','строки','строк')} за ${passed(row.duration)}, <span title="Файл загружен ${new Date(row.loadtime).toLocaleDateString()}">${ago(row.loadtime)}</span>
 	</div>
+`) + `
+	<div style="display: flex; flex-wrap: wrap; gap:5px">
+		<button name="set-tables-load" class="${row.ready?'ready':''}">Внести</button>
+		<button name="set-tables-clear" ${row?.loaded ? '':'disabled'}>Очистить</button>
+	</div>
+`
+const fileinfo = (item) => !item.mtime ? 'Файла нет' : `
+	${item.size} Mb, <span title="Файл изменён ${new Date(item.mtime).toLocaleDateString()}">${ago(item.mtime)}</span>
 `

@@ -94,7 +94,6 @@ export const Client = {
 	},
 	pushState: (search, scroll = true) => {
 		search = fixsearch(search)
-
 		if (~location.href.indexOf(search)) {
 			const a = document.createElement('a')
 			a.href = Client.search
@@ -103,7 +102,6 @@ export const Client = {
 			const newahref = a.href
 			if (oldahref == newahref) return Client.replaceState(search, scroll)
 		}
-
 		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 		Client.cursor++
 		history.pushState({cursor:Client.cursor, view:Client.view}, null, search)
@@ -231,14 +229,12 @@ const applyCrossing = async () => {
 
 		if (json.rd) {
 			Client.reloaddivs = Client.reloaddivs.filter(div => {
-				if (~json.rd.indexOf(div)) return false
-				return true
+				return !~json.rd.indexOf(div)
 			})
 		}
 		if (json.rt) {
 			Client.reloadtss = Client.reloadtss.filter(ts => {
-				if (~json.rt.indexOf(ts)) return false
-				return true
+				return !~json.rt.indexOf(ts)
 			})
 		}
 		for (const layer of json.layers) {

@@ -25,43 +25,16 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 
 export const PANEL = (data, env) => `
 	<div style="display: flex; gap:0.5rem; flex-wrap:wrap;"> 
-		<button name="set-tables-loadall" class="${data.ready.tables ? 'ready' : ''}">Внести новые данные</button>
-		<button name="set-prices-loadall" class="${data.ready.prices ? 'ready' : ''}">Внести новые прайсы</button>
-		<button name="set-files-loadall" class="${data.ready.files ? 'ready' : ''}">Связать всё с файлами</button>
+		<button name="set-tables-loadall" class="${data.ready?.tables ? 'ready' : ''}">Внести новые данные</button>
+		<button name="set-prices-loadall" class="${data.ready?.prices ? 'ready' : ''}">Внести новые прайсы</button>
+		<button name="set-files-loadall" class="${data.ready?.files ? 'ready' : ''}">Связать всё с файлами</button>
 		<!-- при загрузке файлов на сервер, нет никаких событий. Мы никогда не знает есть новые файлы или нет -->
 	</div>
 	<script type="module" async>
-		const id = id => document.getElementById(id)
-		const div = id('${env.div}')
-		const tag = (tag, el = div) => el.getElementsByTagName(tag)
-		const cls = (cls, el = div) => el.getElementsByClassName(cls)
-		for (let btn of tag('button')) {
-			let proc = false
-			const pop = document.createElement('div')
-			div.append(pop)
-			btn.addEventListener('click',async () => {
-				if (proc) return
-				proc = true
-				btn.innerHTML = 'В процессе...'
-				btn.classList.add('ready')
-				const Client = await window.getClient()
-				
-				const ans = await fetch('/-showcase/'+btn.name).then(res => res.json()).catch(e => {})
-				btn = tag('button').namedItem(btn.name)
-				if (btn) {
-					btn.innerHTML = ans.msg || 'Ошибка'
-				}
-				Client.reloaddiv('CONTENT')
-				
-				const sub = btn.name.replaceAll('-','_')
-				const tplobj = await import('/-showcase/popups.html.js')
-				const html = tplobj[sub](ans)
-				const { Dialog } = await import('/-dialog/Dialog.js')
-				await Dialog.frame(pop, html)
-				Dialog.show(pop)
-				proc = false
-			})
-		}
+		import { action } from "/-showcase/action.js"
+		const div = document.getElementById('${env.div}')
+		const tag = tag => div.getElementsByTagName(tag)
+		for (const btn of tag('button')) action(btn)
 	</script>
 `
 
@@ -89,41 +62,18 @@ export const HEADER = (data, env) => `
 		</p>
 	</div>
 	<script type="module" async>
-		const id = id => document.getElementById(id)
-		const div = id('${env.div}')
-		const tag = (tag, el = div) => el.getElementsByTagName(tag)
-		for (let btn of tag('button')) {
-			const pop = document.createElement('div')
-			div.append(pop)
-			let proc = false
-			btn.addEventListener('click', async () => {
-				if (proc) return
-				proc = true
-				btn.innerHTML = 'В процессе...'
-				btn.classList.add('ready')
-				const Client = await window.getClient()
-				Client.reloaddiv('STAT')
-				const ans = await fetch('/-showcase/'+btn.name).then(res => res.json()).catch(e => false)
-				btn = tag('button').namedItem(btn.name)
-				if (!btn) return
-				btn.innerHTML = ans?.msg || 'Ошибка'
-				
-				Client.reloaddiv('CONTENT')
-				const sub = btn.name.replaceAll('-','_')
-				const tplobj = await import('/-showcase/popups.html.js')
-				const html = tplobj[sub](ans)
-				const { Dialog } = await import('/-dialog/Dialog.js')
-				await Dialog.frame(pop, html)
-				Dialog.show(pop)
-				proc = false
-			})
-		}
+		import { action } from "/-showcase/action.js"
+		const div = document.getElementById('${env.div}')
+		const tag = tag => div.getElementsByTagName(tag)
+		for (const btn of tag('button')) action(btn)
 	</script>
 `
 
 export const MAIN = (data) => `
 <p>
 	Администратор сайта: ${data.admin?'Да':'Нет<br><a href="/@atee/controller">Вход</a>'}
+	<br>
+	База данных: ${data.isdb?'Да':'Нет'}
 </p>
 `
 
@@ -142,33 +92,10 @@ export const FOOTER = (data, env) => `
 		</div>
 	</div>
 	<script type="module" async>
-		const id = id => document.getElementById(id)
-		const div = id('${env.div}')
-		const tag = (tag, el = div) => el.getElementsByTagName(tag)
-		for (let btn of tag('button')) {
-			const pop = document.createElement('div')
-			div.append(pop)
-			let proc = false
-			btn.addEventListener('click', async () => {
-				if (proc) return
-				proc = true
-				btn.innerHTML = 'В процессе...'
-				btn.classList.add('ready')
-				const ans = await fetch('/-showcase/'+btn.name).then(res => res.json()).catch(e => false)
-				btn = tag('button').namedItem(btn.name)
-				if (!btn) return
-				btn.innerHTML = ans?.msg || 'Ошибка'
-				const Client = await window.getClient()
-				Client.reloaddiv('CONTENT')
-				const sub = btn.name.replaceAll('-','_')
-				const tplobj = await import('/-showcase/popups.html.js')
-				const html = tplobj[sub](ans)
-				const { Dialog } = await import('/-dialog/Dialog.js')
-				await Dialog.frame(pop, html)
-				Dialog.show(pop)
-				proc = false
-			})
-		}
+		import { action } from "/-showcase/action.js"
+		const div = document.getElementById('${env.div}')
+		const tag = tag => div.getElementsByTagName(tag)
+		for (const btn of tag('button')) action(btn)
 	</script>
 
 `

@@ -5,7 +5,7 @@ import { words } from "/-words/words.js"
 
 
 
-export const ROOT = (data, env) => `
+export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 	<h1>Бренды</h1>
 	<p>
 		Всего с моделями и без: ${data.brands.length}

@@ -1,6 +1,9 @@
 html {
 	overflow-y: scroll;
 }
+body {
+	margin: 0;
+}
 * {
     box-sizing: border-box;
 }
@@ -21,4 +24,7 @@ button:not(:disabled) {
 }
 table td, table th {
 	vertical-align: top;
+}
+table th {
+	text-align: left;
 }

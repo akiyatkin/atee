@@ -187,7 +187,12 @@ export class Upload {
 		const { visitor, options, view, db, config } = this.opt
 		const upload = this
 		const price_nick = nicked(price_title)
+		
 		let duration = Date.now()
+		let quantity = 0
+		let count = 0
+		let omissions = {}
+
 		const dir = config.prices
 		const file = await Files.getFileName(visitor, dir, price_title, ['xlsx'])
 		const conf = options.prices[price_title] || { }
@@ -205,7 +210,6 @@ export class Upload {
 		
 
 		const { sheets } = await Excel.loadPrice(dir + file, conf)
-		let quantity = 0
 		
 		const price = {price_title, price_nick}
 		price.price_id = await db.insertId(`
@@ -236,7 +240,8 @@ export class Upload {
 		if (catalogprop.type == 'text') return false //Соединение только по типу value или number
 
 		
-		for (const {heads: {head_titles, head_nicks}, rows} of sheets) {
+		for (const {sheet, heads: {head_titles, head_nicks}, rows} of sheets) {
+
 			//Ищем ключ который есть в прайсе и по нему будем брать значение для связи
 			const priceprop_title = conf.synonyms[conf.priceprop].find(prop => ~head_titles.indexOf(prop))
 			if (!priceprop_title) break
@@ -255,9 +260,14 @@ export class Upload {
 					}
 				}
 			}
+			omissions[sheet] = {notconnected:[], notfinded:[], emptyprops:{}, head_titles}
+			count += rows.length
 			for (const row of rows) {
 				const key_title = row[priceprop_index]
-				if (!key_title) break
+				if (!key_title) {
+					omissions[sheet].notconnected.push(row)
+					continue
+				}
 				const key_nick = nicked(key_title)
 				
 				let item = false
@@ -299,13 +309,20 @@ export class Upload {
 					}
 					
 				}
-				if (!item) continue
+				if (!item) {
+					omissions[sheet].notfinded.push(row)
+					continue
+				}
 
 				for (const {prop_title, index} of props) {
 					//Свойства которые нужно записать ищем их по синонимам
 					const prop = await upload.receiveProp(prop_title)
 					const value_title = row[index]
-					if (!value_title) continue //Пустое значение.. с прайсом итак было удалено
+					if (!value_title) {
+						omissions[sheet].emptyprops[prop_title] ??= []
+						omissions[sheet].emptyprops[prop_title].push(row)
+						continue //Пустое значение.. с прайсом итак было удалено
+					}
 					
 					const fillings = []
 					let value_id = null
@@ -316,7 +333,12 @@ export class Upload {
 						const values = value_title.split(",")
 						for (const value of values) {
 							const value_nick = nicked(value_title)
-							if (!value_nick) continue
+							if (!value_nick) {
+								omissions[sheet].emptyprops[prop_title] ??= []
+								omissions[sheet].emptyprops[prop_title].push(row)
+								continue
+					
+							}
 							value_id = await db.insertId(`
 								INSERT INTO 
 						 			showcase_values
@@ -336,11 +358,14 @@ export class Upload {
 							const numbers = value_title.split(",")	
 							for (const num of numbers) {
 								number = nicked(num)
-								if (number === '') continue
+								if (number === '') {
+									omissions[sheet].emptyprops[prop_title] ??= []
+									omissions[sheet].emptyprops[prop_title].push(row)
+									continue
+								}
 								fillings.push({value_id, text, number})
 							}
 						}
-						
 						number = value_title - 0
 					}
 
@@ -377,9 +402,9 @@ export class Upload {
 			duration,
 			price_id:price.price_id,
 			quantity
-		})	
-		
-		return { quantity, duration, loadtime:Date.now(), loaded:1 }
+		})
+
+		return { omissions, count, quantity, duration, loadtime:Date.now(), loaded:1 }
 	}
 	async loadAllFiles() {
 		const { visitor, db, config } = this.opt
@@ -624,6 +649,7 @@ export class Upload {
 	async loadTable (name) {
 		const { visitor, options, view, db, config } = this.opt
 		let duration = Date.now()
+		const upload = this
 		const dir = config.tables
 		const file = await Files.getFileName(visitor, dir, name, ['xlsx'])
 		if (!file) return false
@@ -699,22 +725,24 @@ export class Upload {
 		//console.log(table_id)
 		//return view.ret()
 		for (const prop_nick in props) {
-			const pr = props[prop_nick]
+			let pr = props[prop_nick]
 			pr.type = 'value'
 			if (~options.number_nicks.indexOf(prop_nick)) pr.type = 'number'
 			if (~options.text_nicks.indexOf(prop_nick)) pr.type = 'text'
-			pr.prop_id = await db.insertId(`
-				INSERT INTO 
-					showcase_props 
-				SET
-					type = :type,
-					prop_title = :prop_title,
-					prop_nick = :prop_nick,
-					ordain = :ordain
-				ON DUPLICATE KEY UPDATE
-					type = :type,
-				 	prop_id = LAST_INSERT_ID(prop_id)
-			`, pr)
+			props[prop_nick] = await upload.receiveProp(pr.prop_title)
+
+			// pr.prop_id = await db.insertId(`
+			// 	INSERT INTO 
+			// 		showcase_props 
+			// 	SET
+			// 		type = :type,
+			// 		prop_title = :prop_title,
+			// 		prop_nick = :prop_nick,
+			// 		ordain = :ordain
+			// 	ON DUPLICATE KEY UPDATE
+			// 		type = :type,
+			// 	 	prop_id = LAST_INSERT_ID(prop_id)
+			// `, pr)
 		}
 
 		for (const value_title in values) {

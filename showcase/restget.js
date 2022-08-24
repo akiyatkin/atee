@@ -21,12 +21,14 @@ export const restget = (meta) => {
 	})
 
 	meta.addAction('get-state', async view => {
-		const { visitor } = await view.gets(['visitor'])
+		const { isdb, visitor } = await view.gets(['isdb', 'visitor'])
 		view.ans.admin = await Access.isAdmin(visitor.client.cookie)
+		view.ans.isdb = !!isdb
 		return view.ret()
 	})
 	meta.addAction('get-stat', async view => {
 		const { visitor, db } = await view.gets(['visitor','db'])
+		if (!db) return view.err('Нет соединения с базой данных')
 		view.ans.admin = await Access.isAdmin(visitor.client.cookie)
 		if (!view.ans.admin) return view.err('Требуется авторизация')
 		view.ans.count = await db.col('SELECT count(*) FROM information_schema.innodb_trx')
@@ -342,13 +344,18 @@ export const restget = (meta) => {
 		for (const group of groups) {
 			objgroups[group.group_id] = group
 		}
+		let root
 		for (const group of groups) {
-			if (!group.parent_id) continue
+			if (!group.parent_id) {
+				root = group
+				continue
+			}
+			objgroups[group.parent_id].childs ??= []
+			objgroups[group.parent_id].childs.push(group)
 			objgroups[group.parent_id].models += group.models
-		}
-		//groups.sort((a, b) => b.models - a.models)
-
-		view.ans.groups = groups
+		}		
+		view.ans.count = groups.length
+		view.ans.root = root
 		return view.ret()
 	})
 }

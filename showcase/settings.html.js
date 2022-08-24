@@ -19,7 +19,7 @@ export const ROOT = (data, env) => `
 	</script>
 	<div id="DATABASE"></div>
 `
-export const DATABASE = (data, env) => `
+export const DATABASE = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 	<table>
 		<tr><td></td><td>Строк</td><td>Мб</td></tr>
 		${data.list.map(({name, size, length}) => `<tr><td>${name}</td><td>${length}</td><td>${size}</td></tr>`).join('')}

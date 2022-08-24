@@ -81,19 +81,22 @@ export const Dabudi = {
 	},
 	splitGroups: (rows_body, heads, root_title, index_group, groups) => {
 		const root_nick = nicked(root_title) 
-		let group_title = root_title
+		let group_title = root_title.split('#')[0]
 		let group_nick = root_nick
+		let group_orig = root_title
 		if (!groups) {
-			const groups = {}
+			groups = {}
 			groups[group_nick] = {
 				group_nick, 
 				group_title,
+				group_orig,
 				parent_nick: false
 			}
 		}
 		let wasitems = false
 		const rows_items = rows_body.filter((row, i) => {
 			const group_title = Dabudi.getOne(rows_body[i])
+			const group_orig = group_title
 			if (!group_title) {
 				wasitems = true
 				row[index_group] = group_nick
@@ -104,16 +107,21 @@ export const Dabudi = {
 				group_nick = groups[group_nick].parent_nick
 				return
 			}
-			const parent_nick = wasitems ? groups[group_nick].parent_nick : group_nick
+			const parent_nick = (wasitems && groups[group_nick].parent_nick) ? groups[group_nick].parent_nick : group_nick
+
+
+			wasitems = false
 			if (parent_nick && parent_nick != root_nick) {
-				group_nick = parent_nick + '-' + nicked(group_title)	
+				group_nick = nicked(groups[parent_nick].group_orig) + '-' + nicked(group_title)	
 			} else {
 				group_nick = nicked(group_title)	
 			}
+
 			
 			if (groups[group_nick]) return
 			groups[group_nick] = {
-				group_nick, 
+				group_nick,
+				group_orig,
 				group_title:group_title.split('#')[0], 
 				parent_nick
 			}

@@ -34,20 +34,25 @@ meta.addVariable('config', async view => {
 	return config
 })
 meta.addVariable('upload', async view => {	
-	return new Upload(await view.gets(['db','config','options', 'visitor']))
+	const opt = await view.gets(['db','config','options', 'visitor'])
+	return new Upload(opt)
 })
 
-
-meta.addVariable('db', async view => {
+meta.addVariable('isdb', async view => {
 	const db = await new Db().connect()
-	if (!db) {
-		view.ans.status = 500
+	if (db) {
+		view.after(async () => {
+			await db.release()
+		})
+	}
+	return db
+})
+meta.addVariable('db', async view => {
+	const { isdb } = await view.gets(['isdb'])
+	if (!isdb) {
 		return view.err('Нет соединения с базой данных')
 	}
-	view.after(async () => {
-		await db.db.release()
-	})
-	return db
+	return isdb
 })
 meta.addArgument('name')
 meta.addArgument('visitor')

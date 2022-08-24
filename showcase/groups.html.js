@@ -3,14 +3,20 @@ import { passed } from "/-words/passed.js"
 import { words } from "/-words/words.js"
 
 
+const runGroups = (root) => {
+	if (!root) return ''
+	let html = `<div draggable="true" class="item" data-group_id="${root.group_id}">`+showgroup(root)
+	if (!root.childs) return html+'</div>'
+	return `${html}<div class="childs" style="margin-left:20px">${root.childs.map(runGroups).join('')}</div></div>`
+}
 
 
-export const ROOT = (data, env) => `
+export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 	<h1>Группы</h1>
 	<p>
-		Всего с моделями и без: ${data.groups.length}
+		Всего с моделями и без: ${data.count}
 	</p>
-	<div class="draglist">${data.groups.map(showgroup).join('')}</div>
+	<div class="draglist">${data.root.childs.map(runGroups).join('')}</div>
 	<p align="right">
 		<button class="botbtn" data-action="set-groups-clearempty">Удалить пустые</button>
 		<script type="module" async>
@@ -26,32 +32,34 @@ export const ROOT = (data, env) => `
 				const Client = await window.getClient()
 				Client.reloaddiv('${env.div}')
 			})
-			const draglist = cls('draglist')[0]
-			let moved = false
-			draglist.addEventListener('dragstart', e => {
-				moved = e.target.closest('.item')
-			})
-			draglist.addEventListener('drop', async e => {
-				if (!moved) return
-				const current = e.target.closest('.item')
-				if (moved == current) return
-				current.before(moved)
-				const moved_id = moved.dataset.group_id
-				moved = false
-				const ans = await fetch('/-showcase/set-groups-move?before_id=' + moved_id + '&after_id=' + current.dataset.group_id).then(res => res.json()).catch(e => false)
-				if (!ans?.result) alert('Ошибка')
+			for (const draglist of cls('draglist')) {
+				let moved = false
+				draglist.addEventListener('dragstart', e => {
+					moved = e.target.closest('.item')
+				})
+				draglist.addEventListener('drop', async e => {
+					if (!moved) return
+					const current = e.target.closest('.item')
+					if (moved == current) return
+					if (moved.closest('.childs') != current.closest('.childs')) return
+					current.before(moved)
+					const moved_id = moved.dataset.group_id
+					moved = false
+					const ans = await fetch('/-showcase/set-groups-move?before_id=' + moved_id + '&after_id=' + current.dataset.group_id).then(res => res.json()).catch(e => false)
+					if (!ans?.result) alert('Ошибка')
 
-			})
-			draglist.addEventListener('dragover', e => {
-				const current = e.target.closest('.item')
-				e.preventDefault()
-				delete current.style.transition
-			})
+				})
+				draglist.addEventListener('dragover', e => {
+					const current = e.target.closest('.item')
+					e.preventDefault()
+					delete current.style.transition
+				})
+			}
 		</script>
 	</p>
 `
 const showgroup = (group) => `
-	<div data-group_id="${group.group_id}" draggable="true" class="item ${group.group_nick}" style="transition: 0.3s;">
+	<div class="${group.group_nick}" style="transition: 0.3s;">
 		<span style="cursor: move">&blk14;</span>
 		<span title="${group.group_nick}">${group.group_title} <small>${group.models}</small></span>
 	</div>

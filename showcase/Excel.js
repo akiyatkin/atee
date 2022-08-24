@@ -39,6 +39,7 @@ export const Excel = {
 		const root = 'Каталог'
 		groups[group_nick] = {
 			group_nick: nicked(root), 
+			group_orig: root,
 			group_title: root,
 			parent_nick: false
 		}
@@ -60,8 +61,9 @@ export const Excel = {
 
 			sheets[sheet] = { descr, heads, indexes }
 
-
+			
 			let {rows_items} = Dabudi.splitGroups(rows_body, heads, root, indexes.group_nick, groups)
+			//if (sheet == 'Светодиодные ленты') console.log(1, sheet, groups, indexes.group_nick, root, heads)
 			const {head_titles, head_nicks} = heads
 
 			

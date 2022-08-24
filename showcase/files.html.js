@@ -4,7 +4,7 @@ const run = (obj, call) => {
 	for (const key in obj) res.push(call(obj[key], key))
 	return res
 }
-export const ROOT = (data, env) => `
+export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 	<h1>Файлы</h1>
 	<p>Бесхозных <b>${data.count}</b> ${words(data.count, 'файл', 'файла', 'файлов')}.</p>
 	${run(data.parts, printpart).join('')}

@@ -227,15 +227,7 @@ export const restset = (meta) => {
 		return view.ret('Удалено')
 	})
 
-	meta.addAction('set-tables-clear', async view => {
-		await view.gets(['admin','start'])
-		const { db, upload, name } = await view.gets(['db', 'upload', 'name'])
-		
-		const row = await upload.clearTable(name)
-		view.ans.row = row
-		
-		return view.ret('Очищено')
-	})
+
 	meta.addAction('set-tables-loadall', async view => {
 		await view.gets(['admin','start'])
 		const { db, upload } = await view.gets(['db', 'upload'])
@@ -250,32 +242,7 @@ export const restset = (meta) => {
 		
 		return view.ret('Внесено ' + count)
 	})
-	meta.addAction('set-tables-load', async view => {
-		await view.gets(['admin','start'])
-		const { upload, name } = await view.gets(['upload','name'])
-		
-		/*
-			Центральная таблица для ячеек 
-			iprops - очищается
-			items - очищается, items из других таблиц сохранятся
-			models - остаётся, будет модель без позиций, РЕДАКТИРУЕТСЯ без ordain
-			tables (prices) - остаётся, с меткой loaded:0
 
-			и связанные с ними объекты
-			brands - остаётся, РЕДАКТИРУЕТСЯ
-			values - остаётся, РЕДАКТИРУЕТСЯ без ordain
-			props - остаётся, РЕДАКТИРУЕТСЯ без ordain
-			groups - остаётся, РЕДАКТИРУЕТСЯ
-
-			РЕДАКТИРУЕТСЯ: можно менять ordain и регистр, можно удалить если нет позиций, показывается нередактируемый nick
-		*/
-		const row = await upload.loadTable(name)
-		
-		view.ans.row = row
-		view.ans.count = row.quantity
-
-		return view.ret('Внесено ' + row.quantity)
-	})
 	meta.addAction('set-prices-clearall', async view => {
 		await view.gets(['admin','start'])
 		const { upload, db } = await view.gets(['upload', 'db'])
@@ -305,27 +272,46 @@ export const restset = (meta) => {
 		
 		return view.ret('Данные очищены')
 	})
+
+	meta.addAction('set-tables-clear', async view => {
+		await view.gets(['admin','start'])
+		const { upload, name } = await view.gets(['upload', 'name'])
+		view.ans.name = name
+		const row = await upload.clearTable(name)
+		row.ready = false
+		view.ans.row = row
+		return view.ret('Очищено')
+	})
+	meta.addAction('set-tables-load', async view => {
+		await view.gets(['admin','start'])
+		const { upload, name } = await view.gets(['upload','name'])
+		view.ans.name = name
+		const row = await upload.loadTable(name)
+		row.ready = true
+		view.ans.row = row
+		return view.ret('Внесено ' + row.quantity)
+	})
 	meta.addAction('set-prices-clear', async view => {
 		await view.gets(['admin','start'])
-		const { db, upload, name } = await view.gets(['db','upload', 'name'])
-		
+		const { upload, name } = await view.gets(['upload', 'name'])
+		view.ans.name = name
 		const row = await upload.clearPrice(name)
-		
+		row.ready = false
 		view.ans.row = row
-
+		
 		return view.ret('Очищено')
 	})
 	meta.addAction('set-prices-load', async view => {
 		await view.gets(['admin','start'])
-		const { db, upload, name } = await view.gets(['db', 'upload','name'])
-		
+		const { upload, name } = await view.gets(['upload','name'])
+		view.ans.name = name
 		const row = await upload.loadPrice(name)
+		row.ready = true
 		view.ans.row = row
-		
-		
-		view.ans.count = row.quantity
 		return view.ret('Внесено ' + row.quantity)
 	})
+
+
 	meta.addAction('set-applyall', async view => {
 		await view.gets(['admin','start'])
 		const { db, upload } = await view.gets(['db','upload'])

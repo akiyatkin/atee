@@ -3,14 +3,10 @@ export const ROOT = (data, env) => `
 	${data.count?showcount(data):''}
 	<script type="module">
 		const div = document.getElementById('${env.div}')
-		//div.style.cursor="pointer"
-		//div.addEventListener('click', async () => {
-		
 		setTimeout(async () => {
 			const Client = await window.getClient()
-			Client.reloaddiv('${env.div}')
-		}, 1000)
-		//})
+			await Client.reloaddiv('${env.div}').catch(e => false)
+		}, 3000)
 	</script>
 `
 const showcount = (data) => `

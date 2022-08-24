@@ -122,14 +122,16 @@ export class Meta {
     		if (!meta.list[view.action]?.response
             && !meta.list[view.action]?.request) {
             	view.ans.status = 404
+            	for (const callback of view.afterlisteners) await callback()
     			return view.err('meta.badrequest')
     		}
 
     		const res = await view.get(action)
+    		const ans = res === null ? view.ans : res
     		for (const callback of view.afterlisteners) await callback()
-            if (res != null) return res;
-    		else return view.ans
+            return ans
         } catch (e) {
+        	for (const callback of view.afterlisteners) await callback()
             if (e instanceof ViewException) return view.ans
             throw e
         }
