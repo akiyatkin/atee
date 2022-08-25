@@ -18,7 +18,6 @@ export const action = (btn, callback, name = '') => {
 		if (proc) return
 		proc = true
 		btn.classList.add('ready')
-		const Client = await window.getClient()
 		
 		const src = '/-showcase/'+btn.name + (name ? '?name='+name : '')
 		const ans = await fetch(src).then(res => res.json()).catch(e => {msg:'Ошибка на сервере'})
@@ -37,9 +36,10 @@ export const action = (btn, callback, name = '') => {
 			Dialog.show(pop)
 		}
 		if (!iscontent || location.href != href) {
+			const Client = await window.getClient()
 			Client.reloaddiv('CONTENT')
 		} else {
-			callback(Client, ans)
+			callback(ans)
 		}
 		proc = false
 	})

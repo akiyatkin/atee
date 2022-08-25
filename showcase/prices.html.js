@@ -17,15 +17,16 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 		const cls = (cls, el = div) => el.getElementsByClassName(cls)
 		const applyrow = (rowdata) => {
 			const name = rowdata.dataset.name
-			for (const btn of tag('button', rowdata)) action(btn, async (Client, ans) => {
+			for (const btn of tag('button', rowdata)) action(btn, async (ans) => {
 				const tpl = await import('${env.tpl}')
+				const { htmltodiv } = await import('/-controller/htmltodiv.js')
 				let rowdata
 				for (let item of cls('rowdata')) {
 					if (item.dataset.name == name) rowdata = item
 				}
 				if (!rowdata) return
 				const html = tpl.rowdata(ans.row)
-				Client.htmltodiv(html, rowdata)
+				htmltodiv(html, rowdata)
 				applyrow(rowdata)
 			}, name)
 		}

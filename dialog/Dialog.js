@@ -13,9 +13,9 @@ document.addEventListener('keydown', async e => {
 export const Dialog = {
 	frame: async (parent, html) => {
 		parent = parent.tagName ? parent : document.getElementById(parent)
-		const Client = await window.getClient()
 		const popobj = await import('/-dialog/layout.html.js')
-		await Client.htmltodiv(popobj['ROOT'](), parent)
+		const { htmltodiv } = await import('/-controller/htmltodiv.js')
+		htmltodiv(popobj['ROOT'](), parent)
 		const dialog = parent.children[0]
 		for (const close of cls('close', dialog)) {
 			close.addEventListener('click', async (e) => {
@@ -41,7 +41,7 @@ export const Dialog = {
 			Dialog.hide(parent)
 		}, true)
 		const div = cls('dialogcontent', dialog)[0]
-		await Client.htmltodiv(html, div)
+		htmltodiv(html, div)
 	},
 	parents:[],
 	show: parent => {

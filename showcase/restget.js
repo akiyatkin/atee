@@ -167,6 +167,7 @@ export const restget = (meta) => {
 			LEFT JOIN showcase_iprops ip on ip.value_id = v.value_id
 			GROUP BY v.value_id
 			ORDER by props DESC
+			-- ORDER by value_nick
 		`)
 		view.ans.values = values
 		// await new Promise(resolve => {

@@ -1,6 +1,6 @@
 import { animate } from './animate.js'
 import { pathparse } from './Spliter.js'
-import { Head } from './Head.js'
+import { HtmlHead } from './HtmlHead.js'
 import { evalScripts } from './evalScripts.js'
 import { createPromise } from './createPromise.js'
 
@@ -20,7 +20,7 @@ export const Client = {
 			}
 		})
 		window.addEventListener('crossing', async ({detail: { head }}) => {
-			Head.accept(head)
+			HtmlHead.accept(head)
 		})
 		window.addEventListener('click', event => {
 			const a = event.target.closest('a')
@@ -55,12 +55,6 @@ export const Client = {
 		return true
 	},
 	getSearch: () => decodeURI(location.pathname + location.search),
-	attach: () => {
-
-	},
-	global: () => {
-
-	},
 	reloaddivs:[],
 	reloaddiv: (div) => {
 		if (~Client.reloaddivs.indexOf(div)) return
@@ -141,12 +135,6 @@ export const Client = {
 
 		Client.next = { search, promise }
 		requestAnimationFrame(applyCrossing)
-		return promise
-	},
-	htmltodiv: (html, div) => {
-		div.innerHTML = html
-		const promise = evalScripts(div)
-		animate('div', div, promise, 'opacity')
 		return promise
 	}
 }
@@ -278,7 +266,7 @@ const addHtml = (template, layer, crumb, timings) => {
 	let html = ''
 	if (layer.sys.html) {
 		html = layer.sys.html
-	} else if (layer.sys.objtpl) {
+	} else if (layer.sys.tplobj) {
 		const env = {
 			...layer, 
 			...crumb, 
@@ -288,7 +276,7 @@ const addHtml = (template, layer, crumb, timings) => {
 		//cookie:document.cookie, 
 		const data = layer.sys.data
 		try {
-			html = layer.sys.objtpl[layer.sub](data, env)
+			html = layer.sys.tplobj[layer.sub](data, env)
 		} catch (e) {
 			html = errmsg(layer, e)
 		}
@@ -311,7 +299,7 @@ const loadAll = (layers, promises = []) => {
 		if (layer.tpl) {
 			if (layer.ts) { //ts это например, index:ROOT означает что есть шаблон
 				let promise = import(layer.tpl).then(res => {
-					layer.sys.objtpl = res
+					layer.sys.tplobj = res
 				}).catch(() => {
 					location.reload()
 				})

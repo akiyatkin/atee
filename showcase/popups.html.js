@@ -58,6 +58,12 @@ export const set_prices_load = (ans, {div}) => `
 		#${div} table {
 			font-size:12px
 		}
+		#${div} table td {
+			max-width: 80px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
 	</style>
 	`+ (checherror(ans) || `
 		<p>
@@ -90,7 +96,7 @@ const showprops = (rows, name, data) => `
 		${rows.map(table).join('')}
 	</table>
 `
-const table = (row) => '<tr>'+row.map(cel => `<td>${cel === null ? '' : String(cel).substring(0, 10)}</td>`).join('')+'</tr>'
+const table = (row) => '<tr>'+row.map(cel => `<td>${cel === null ? '' : cel}</td>`).join('')+'</tr>'
 export const set_tables_load = (ans) => `
 	<h1>${ans.name}</h1>
 	`+ (checherror(ans) || `

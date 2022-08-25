@@ -14,7 +14,8 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 		const cls = (cls, el = div) => el.getElementsByClassName(cls)
 		const applyrow = (rowdata) => {
 			const name = rowdata.dataset.name
-			for (const btn of tag('button', rowdata)) action(btn, async (Client, ans) => {
+			for (const btn of tag('button', rowdata)) action(btn, async (ans) => {
+				const { htmltodiv } = await import('/-controller/htmltodiv.js')
 				const tpl = await import('${env.tpl}')
 				let rowdata
 				for (let item of cls('rowdata')) {
@@ -22,7 +23,7 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 				}
 				if (!rowdata) return
 				const html = tpl.rowdata(ans.row)
-				Client.htmltodiv(html, rowdata)
+				htmltodiv(html, rowdata)
 				applyrow(rowdata)
 			}, name)
 		}

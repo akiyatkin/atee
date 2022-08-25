@@ -2,10 +2,12 @@
 	position: fixed;
 	top: 0;
 	left: 0;
+	height: 100vh;
+	width: 100vw;
 	overflow-y: auto;
 	z-index:  1000;
-	bottom: 0;
-	right: 0;
+	/*bottom: 0;
+	right: 0;*/
 	background-color: rgba(0,0,0,0.2);
 	backdrop-filter: blur(5px);
 	display: grid;
@@ -44,13 +46,13 @@
 .dialogframe > .dialogbody {
 	position: relative;
 	min-width: 330px;
+	width: fit-content;
 	margin:  60px;
 	padding: 30px;
 	background-color:white;
 }
-@media(max-width: 500px) {
+@media(max-width: 700px) {
 	.dialogframe > .dialogbody {
-		min-width: auto;
 		margin:  15px;
 	}
 }

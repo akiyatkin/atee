@@ -195,7 +195,7 @@ const getHTML = async (layer, { head, visitor, crumb, timings }) => {
 			data = ans.data
 			nostore = nostore || ans.nostore
 		}
-		const objtpl = await import(tpl).catch(e => {
+		const tplobj = await import(tpl).catch(e => {
     		e.tpl = tpl
     		throw e
     	})
@@ -208,7 +208,7 @@ const getHTML = async (layer, { head, visitor, crumb, timings }) => {
         		...timings
         	}
         	//cookie: visitor.client.cookie, 
-            html = objtpl[sub](data, env)
+            html = tplobj[sub](data, env)
         } catch(e) {
             html = errmsg(layer, e)
             status = 500

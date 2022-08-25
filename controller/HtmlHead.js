@@ -1,5 +1,5 @@
 const qs = q => document.head.querySelector(q) || {}
-export const Head = {
+export const HtmlHead = {
 	rules: {
 		title: title => {
 			document.title = title
@@ -17,8 +17,8 @@ export const Head = {
 	},
 	accept: obj => {
 		for (const i in obj) {
-			if (!Head.rules[i]) continue
-			Head.rules[i](obj[i])
+			if (!HtmlHead.rules[i]) continue
+			HtmlHead.rules[i](obj[i])
 		}
 	}
 }
