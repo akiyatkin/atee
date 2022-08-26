@@ -37,7 +37,7 @@ export const Live = {
 	time: null,
 
 
-	fetch_promises: {}, //кэш
+	//fetch_promises: {}, //кэш
 	fetch_need: null, //Последний запрос на который надо ответить
 	fetch_promise: null, //Действующий запро
 	fetch: (form, need) => {
@@ -50,6 +50,7 @@ export const Live = {
 	},
 	fetchApply: (form, promise, need) => {
 		promise.then(ans => {
+			console.log(need)
 			Live.ready(form, ans, need)
 			Live.fetchNow(form)
 		}).catch(e => null)
@@ -60,13 +61,7 @@ export const Live = {
 		const need = Live.fetch_need
 		const { hash } = need
 		Live.fetch_need = null
-		
-		if (Live.fetch_promises[hash]) {
-			if (!Live.fetch_promises[hash].finalled) return
-			return Live.fetchApply(form, Live.fetch_promises[hash], need)	
-		}
 		Live.fetch_promise = Live.fetchCreate(hash)
-		Live.fetch_promises[hash] = Live.fetch_promise
 		Live.fetchApply(form, Live.fetch_promise, need)
 		Live.fetch_promise.catch(() => delete Live.fetch_promise[hash])
 		Live.fetch_promise.finally(() => Live.wait(form, need)).catch(e => null)
@@ -127,16 +122,15 @@ export const Live = {
 			const menu = await Live.getMenu(form)
 			menu.classList.add('show')
 			const need = Live.getNeed(input)
-			const title = cls(menu, 'livetitle')[0]
-			const body = cls(menu, 'livebody')[0]
 			if (state.hash != need.hash) {
+				const title = cls(menu, 'livetitle')[0]
+				const body = cls(menu, 'livebody')[0]
 				state.hash = need.hash
 				body.classList.add('mute')
 				const tplobj = await import('/-catalog/live.html.js')
-				body.classList.add('mute')
 				title.innerHTML = tplobj.TITLE(need)
+				Live.fetch(form, need)
 			}
-			Live.fetch(form, need)
 		}
 
 		form.addEventListener('submit', async e => {

@@ -25,16 +25,16 @@ export const BODY = data => `
 const BODYshow = data => `
 	<div style="padding-top: 4px; display: grid; grid-template-columns: 1fr max-content; grid-gap: 5px 5px; align-items:flex-end">
 		${data.ans.groups.map(group => suggestionGroup(group, data)).join('')}
-		${data.ans.list.map(model => suggestion(model, data)).join('')}
+		${data.ans.list.map(mod => suggestion(mod, data)).join('')}
 	</div>
 `
-export const suggestion = (model, data) => `
+export const suggestion = (mod, data) => `
 	<div>
-		<a draggable="false" href="{:model.link-pos}">
-			${model.Наименование}
-		</a> <small>${model.brand_title} ${model.model_title}</small>
+		<a draggable="false" href="${model.link.model(mod)}">
+			${mod.Наименование}
+		</a> <small>${mod.brand_title} ${mod.model_title}</small>
 	</div>
-	<div style="text-align:right">${model.Цена?cost(model.Цена):''}</div>
+	<div style="text-align:right">${mod.Цена?cost(mod.Цена):''}</div>
 `
  const cost = Цена => `
  	${Цена}${model.unit()}

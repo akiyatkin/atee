@@ -204,11 +204,12 @@ export class Upload {
 		const upload = this
 		const { db } = upload.opt
 		const iprops = await db.all(`
-			SELECT distinct ip.number, ip.text, v.value_nick 
+			SELECT distinct ip.number, ip.text, v.value_nick, p.prop_nick
 			FROM showcase_iprops ip
+			LEFT JOIN showcase_props p on ip.prop_id = p.prop_id
 			LEFT JOIN showcase_values v on ip.value_id = v.value_id
 			WHERE ip.model_id = :model_id
-		`, {model_id})
+		`, { model_id })
 		let search = []
 		iprops.forEach((props) => {
 			search.push(Object.values(props).filter(val => !!val).join('-'))
@@ -358,6 +359,7 @@ export class Upload {
 						continue //Пустое значение.. с прайсом итак было удалено
 					}
 					mvalues[item.model_id].push(value_title)
+					mvalues[item.model_id].push(prop.prop_nick)
 					
 					const fillings = []
 					let value_id = null
@@ -881,6 +883,17 @@ export class Upload {
 			let search = []
 			items.forEach(async (item) => {
 				search.push(item.join('-'))
+			})
+			heads.head_titles.forEach((prop_title, i) => {
+				if (~[
+					indexes.model_title, 
+					indexes.model_nick, 
+					indexes.brand_title, 
+					indexes.brand_nick,
+					indexes.group_nick, 
+					indexes.sheet_title 
+				].indexOf(i)) return
+				search.push(prop_title)
 			})
 			search = upload.prepareSearch(search)
 			
