@@ -21,7 +21,7 @@ export const restget = (meta) => {
 		for (const i in tables) {
 			const table = tables[i]
 			const obj = {}
-			obj.count = await db.col('select count(*) from '+table)
+			obj.count = await db.col('select count(*) from '+table).catch(e => '-')
 			obj.name = table
 			tables[i] = obj
 		}
