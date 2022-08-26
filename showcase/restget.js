@@ -358,7 +358,7 @@ export const restget = (meta) => {
 		for (const group of groups) {
 			objgroups[group.group_id] = group
 		}
-		let root
+		let root = {childs:[], models:0}
 		for (const group of groups) {
 			if (!group.parent_id) {
 				root = group
