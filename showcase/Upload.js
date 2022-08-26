@@ -159,6 +159,12 @@ export class Upload {
 		const price_id = row.price_id
 		if (!price_id) return view.err('Данные не найдены')
 
+		const searches = await db.colAll(`
+			SELECT distinct m.model_id
+			FROM showcase_models m, showcase_iprops ip
+			WHERE ip.model_id = m.model_id
+			and ip.price_id = :price_id
+		`, { price_id })
 
 		await db.changedRows(`
 			DELETE ip FROM showcase_iprops ip 
@@ -181,7 +187,34 @@ export class Upload {
 			`, { price_id })
 			
 		}
+		for (const model_id of searches) {
+			const search = await upload.getSearch(model_id)
+			await db.changedRows(`
+				UPDATE
+					showcase_models
+				SET
+					search = :search
+				WHERE
+				 	model_id = :model_id
+			`, {model_id, search})
+		}
 		return row
+	}
+	async getSearch (model_id) {
+		const upload = this
+		const { db } = upload.opt
+		const iprops = await db.all(`
+			SELECT distinct ip.number, ip.text, v.value_nick 
+			FROM showcase_iprops ip
+			LEFT JOIN showcase_values v on ip.value_id = v.value_id
+			WHERE ip.model_id = :model_id
+		`, {model_id})
+		let search = []
+		iprops.forEach((props) => {
+			search.push(Object.values(props).filter(val => !!val).join('-'))
+		})
+		search = upload.prepareSearch(search)
+		return search
 	}
 	async loadPrice (price_title) {
 		const { visitor, options, view, db, config } = this.opt
@@ -239,7 +272,7 @@ export class Upload {
 		const catalogprop = await upload.receiveProp(conf.catalogprop)
 		if (catalogprop.type == 'text') return false //Соединение только по типу value или number
 
-		
+		const mvalues = {}
 		for (const {sheet, heads: {head_titles, head_nicks}, rows} of sheets) {
 
 			//Ищем ключ который есть в прайсе и по нему будем брать значение для связи
@@ -313,7 +346,8 @@ export class Upload {
 					omissions[sheet].notfinded.push(row)
 					continue
 				}
-
+				mvalues[item.model_id] ??= []
+				
 				for (const {prop_title, index} of props) {
 					//Свойства которые нужно записать ищем их по синонимам
 					const prop = await upload.receiveProp(prop_title)
@@ -323,6 +357,7 @@ export class Upload {
 						omissions[sheet].emptyprops[prop_title].push(row)
 						continue //Пустое значение.. с прайсом итак было удалено
 					}
+					mvalues[item.model_id].push(value_title)
 					
 					const fillings = []
 					let value_id = null
@@ -354,7 +389,7 @@ export class Upload {
 						text = value_title
 						fillings.push({value_id, text, number})
 					} else if (prop.type == 'number') {
-						if (typeof(value_title ) == 'string') {
+						if (typeof(value_title) == 'string') {
 							const numbers = value_title.split(",")	
 							for (const num of numbers) {
 								number = nicked(num)
@@ -365,10 +400,12 @@ export class Upload {
 								}
 								fillings.push({value_id, text, number})
 							}
+						} else {
+							number = value_title - 0	
+							fillings.push({value_id, text, number})
 						}
-						number = value_title - 0
+						
 					}
-
 					for (const fill of fillings) {
 						await db.exec(`
 							INSERT INTO 
@@ -388,7 +425,26 @@ export class Upload {
 				quantity++
 			}
 		}
-		duration = Date.now() - duration
+		const searches = await db.all(`
+			SELECT distinct m.model_id, m.search
+			FROM showcase_models m, showcase_iprops ip
+			WHERE ip.model_id = m.model_id
+			and ip.price_id = :price_id
+		`, { price_id: price.price_id })
+		for (const {search, model_id} of searches) {
+			if (!mvalues[model_id]) continue
+			const newsearch = upload.prepareSearch([mvalues[model_id], search])
+			if (newsearch == search) continue
+			await db.changedRows(`
+				UPDATE
+					showcase_models
+				SET
+					search = :newsearch
+				WHERE
+				 	model_id = :model_id
+			`, {model_id, newsearch})
+		}
+		
 		await db.changedRows(`
 			UPDATE
 				showcase_prices 
@@ -403,7 +459,7 @@ export class Upload {
 			price_id:price.price_id,
 			quantity
 		})
-
+		duration = Date.now() - duration
 		return { omissions, count, quantity, duration, loadtime:Date.now(), loaded:1 }
 	}
 	async loadAllFiles() {
@@ -646,6 +702,14 @@ export class Upload {
 		}
 		return {doublepath, count}
 	}
+	prepareSearch (ar) {
+		let search = nicked(ar.join('-'))
+		search = search.split('-')
+		search = unique(search)
+		search.sort()
+		search = search.join(' ')
+		return search
+	}
 	async loadTable (name) {
 		const { visitor, options, view, db, config } = this.opt
 		let duration = Date.now()
@@ -818,10 +882,8 @@ export class Upload {
 			items.forEach(async (item) => {
 				search.push(item.join('-'))
 			})
-			search = nicked(search.join('-'))
-			search = search.split('-')
-			search = unique(search)
-			search = search.join(' ')
+			search = upload.prepareSearch(search)
+			
 
 			const model_id = await db.insertId(`
 				INSERT INTO 

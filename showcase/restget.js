@@ -135,8 +135,8 @@ export const restget = (meta) => {
 
 	meta.addAction('get-models', async view => {
 		await view.get('admin')
-		const { db } = await view.gets(['db'])
-		
+		const { db, upload } = await view.gets(['db','upload'])
+		const cost = await upload.receiveProp('Цена')
 		const models = await db.all(`
 			SELECT 
 				m.model_title,
@@ -145,12 +145,13 @@ export const restget = (meta) => {
 				g.group_nick,
 				b.brand_title,
 				b.brand_nick,
+				(select number from showcase_iprops ip where ip.model_id = m.model_id and ip.prop_id = :cost_id limit 1) as cost,
 				count(i.model_id) as items
 			FROM showcase_groups g, showcase_brands b, showcase_models m
 			LEFT JOIN showcase_items i on i.model_id = m.model_id
 			WHERE m.brand_id = b.brand_id and g.group_id = m.group_id
 			GROUP BY m.model_id
-		`)
+		`,{cost_id: cost.prop_id})
 		view.ans.models = models
 		return view.ret()
 	})

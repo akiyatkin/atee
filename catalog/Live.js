@@ -39,8 +39,6 @@ export const Live = {
 
 	fetch_promises: {}, //кэш
 	fetch_need: null, //Последний запрос на который надо ответить
-	//fetch_start_hash: null, //Последний отвеченный запрос, на который повторно отвечать не нужно
-	//fetch_end_hash: null, //Последний отвеченный запрос, на который повторно отвечать не нужно
 	fetch_promise: null, //Действующий запро
 	fetch: (form, need) => {
 		if (Live.fetch_need?.hash === need.hash) {
@@ -59,18 +57,19 @@ export const Live = {
 	fetchNow: async (form) => {
 		if (Live.fetch_need === null) return
 		if (Live.fetch_promise) return Live.fetch_promise.reject() //Этот облом отменит предыдущий
-		const { hash } = Live.fetch_need
+		const need = Live.fetch_need
+		const { hash } = need
 		Live.fetch_need = null
 		
 		if (Live.fetch_promises[hash]) {
 			if (!Live.fetch_promises[hash].finalled) return
-			return Live.fetchApply(form, Live.fetch_promises[hash], Live.fetch_need)	
+			return Live.fetchApply(form, Live.fetch_promises[hash], need)	
 		}
 		Live.fetch_promise = Live.fetchCreate(hash)
 		Live.fetch_promises[hash] = Live.fetch_promise
-		Live.fetchApply(form, Live.fetch_promise, Live.fetch_need)
-		
-		Live.fetch_promise.finally(() => Live.wait(form, hash)).catch(e => null)
+		Live.fetchApply(form, Live.fetch_promise, need)
+		Live.fetch_promise.catch(() => delete Live.fetch_promise[hash])
+		Live.fetch_promise.finally(() => Live.wait(form, need)).catch(e => null)
 	},
 	timer: null,
 	wait: (form, need) => {
@@ -100,16 +99,22 @@ export const Live = {
 	ready: async (form, ans, need) => {
 		const menu = await Live.getMenu(form)
 	 	const title = cls(menu, 'livetitle')[0]
+	 	const body = cls(menu, 'livebody')[0]
+	 	body.classList.remove('mute')
 	 	const state = Live.getState(form)
 		const tplobj = await import('/-catalog/live.html.js')
 		title.innerHTML = tplobj.TITLEBODY({ ...need, ans })
+		body.innerHTML = tplobj.BODY({ ...need, ans })
 	},
 	getNeed: (input) => {
 		let query = input.value
 		query = query.toLowerCase()
 		query = query.replace(/<\/?[^>]+(>|$)/g, "")
 		query = query.replace(/[\s\-\"\']+/g, " ")
-		const hash = nicked(query)
+		const hash = nicked(query).split('-')
+			//.filter(val => val.length > 1)
+			.join('-')
+		//const hash = nicked(query).split('-').filter(val => val.length > 1).join('-')
 		return {query, hash}
 	},
 	init: form => {
@@ -128,6 +133,7 @@ export const Live = {
 				state.hash = need.hash
 				body.classList.add('mute')
 				const tplobj = await import('/-catalog/live.html.js')
+				body.classList.add('mute')
 				title.innerHTML = tplobj.TITLE(need)
 			}
 			Live.fetch(form, need)
@@ -142,10 +148,10 @@ export const Live = {
 
 		if (document.activeElement == input) searchfrominput()
 		input.addEventListener('focus', () => {
-			if (!input.value) return
+			//if (!input.value) return
 			searchfrominput()
 		})
-		input.addEventListener('click', searchfrominput)
+		//input.addEventListener('click', searchfrominput)
 		input.addEventListener('input', searchfrominput)
 		const getPath = el => {
 			const path = [el]

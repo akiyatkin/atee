@@ -45,6 +45,7 @@ export const Dialog = {
 	},
 	parents:[],
 	show: parent => {
+		//document.getElementsByTagName('html')[0].style.overscrollY = 'hidden'
 		parent = parent.tagName ? parent : document.getElementById(parent)
 		const dialog = parent.children[0]
 		const i = Dialog.parents.indexOf(parent)
@@ -55,6 +56,7 @@ export const Dialog = {
 		document.activeElement.blur()
 	},
 	hide: parent => {
+		//document.getElementsByTagName('html')[0].style.overscrollY = ''
 		parent = parent.tagName ? parent : document.getElementById(parent)
 		const dialog = parent.children[0]
 		const i = Dialog.parents.indexOf(parent)
