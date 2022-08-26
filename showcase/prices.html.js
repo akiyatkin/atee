@@ -58,7 +58,7 @@ export const rowdata = (row) => (!row ? '' : `
 `) + `
 	<div style="display: flex; flex-wrap: wrap; gap:5px">
 		<button name="set-prices-load" class="${row?.ready?'ready':''}">Внести</button>
-		<button name="set-prices-clear" ${row.loaded ? '':'disabled'}>Очистить</button>
+		<button name="set-prices-clear" ${row?.loaded ? '':'disabled'}>Очистить</button>
 	</div>
 `
 const fileinfo = (item) => !item.mtime ? 'Файла нет' : `
