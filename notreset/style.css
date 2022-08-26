@@ -12,7 +12,7 @@ svg, img {
 }
 img, iframe, object, embed, video {
     max-width: 100%;
-    height: auto;
+    /*height: auto;*/
 }
 button, input {
 	line-height: inherit;
