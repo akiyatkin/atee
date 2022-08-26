@@ -21,7 +21,7 @@ export const ROOT = (data, env) => `
 `
 export const DATABASE = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 	<table>
-		<tr><td></td><td>Строк</td><td>Мб</td></tr>
-		${data.list.map(({name, size, length}) => `<tr><td>${name}</td><td>${length}</td><td>${size}</td></tr>`).join('')}
+		<tr><td></td><td>Строк</td></tr>
+		${data.tables.map(({name, count}) => `<tr><td>${name}</td><td>${count}</td></tr>`).join('')}
 	</table>
 `

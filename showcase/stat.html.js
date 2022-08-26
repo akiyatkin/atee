@@ -10,5 +10,5 @@ export const ROOT = (data, env) => `
 	</script>
 `
 const showcount = (data) => `
-	В работе <b>${data.count} ${words(data.count,'транзакция','транзакции','транзакций')}</b>
+	В работе <b>${data.count} ${words(data.size,'запрос','запроса','запросов')}</b>
 `

@@ -7,16 +7,25 @@ export const restget = (meta) => {
 	meta.addAction('get-settings', async view => {
 		await view.get('admin')
 		const { db } = await view.gets(['db'])
-		const rows = await db.all(`
-			SELECT 
-			     table_name AS 'name', 
-			     round(((data_length + index_length) / 1024 / 1024), 2) 'size',
-			     table_rows as length 
-			FROM information_schema.TABLES 
-			WHERE table_schema = :dbname and table_name like 'showcase_%'
-			ORDER BY size DESC, length DESC
-		`,{ dbname: db.conf.database })
-		view.ans.list = rows
+		const tables = [
+			'showcase_groups',
+			'showcase_prices',
+			'showcase_tables',
+			'showcase_brands',
+			'showcase_props',
+			'showcase_values',
+			'showcase_items',
+			'showcase_models',
+			'showcase_iprops'
+		]
+		for (const i in tables) {
+			const table = tables[i]
+			const obj = {}
+			obj.count = await db.col('select count(*) from '+table)
+			obj.name = table
+			tables[i] = obj
+		}
+		view.ans.tables = tables
 		return view.ret()
 	})
 
@@ -31,7 +40,10 @@ export const restget = (meta) => {
 		if (!db) return view.err('Нет соединения с базой данных')
 		view.ans.admin = await Access.isAdmin(visitor.client.cookie)
 		if (!view.ans.admin) return view.err('Требуется авторизация')
-		view.ans.count = await db.col('SELECT count(*) FROM information_schema.innodb_trx')
+		//view.ans.count = await db.col('SELECT count(*) FROM information_schema.innodb_trx')
+		let rows = await db.all(`SHOW PROCESSLIST`)
+		rows = rows.filter(row => row.User == db.conf.user && row.Command != "Sleep")
+		view.ans.count = rows.length - 1
 		return view.ret()
 	})
 	meta.addAction('get-panel', async view => {
