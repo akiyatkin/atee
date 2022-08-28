@@ -83,6 +83,17 @@ export class Db {
 			}, {})
 		})
 	}
+	async alltoint(name, sql, values, ints) {
+		return this.all(sql, values).then(rows => {
+			return rows.reduce((ak, r) => {
+				ints.forEach(n => {
+					r[n] = Number(r[n])	|| 0
+				})
+				ak[r[name]] = r
+				return ak
+			}, {})
+		})
+	}
 
 	
 	async insertId(sql, values) { //insert

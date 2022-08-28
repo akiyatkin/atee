@@ -40,20 +40,17 @@ meta.addVariable('upload', async view => {
 
 meta.addVariable('isdb', async view => {
 	const db = await new Db().connect()
-	if (db) {
-		view.after(async () => {
-			await db.release()
-		})
-	}
+	if (!db) return false
+	view.after(() => db.release())
 	return db
 })
 meta.addVariable('db', async view => {
 	const { isdb } = await view.gets(['isdb'])
-	if (!isdb) {
-		return view.err('Нет соединения с базой данных')
-	}
-	return isdb
+	if (isdb) return isdb
+	return view.err('Нет соединения с базой данных')
 })
+
+
 meta.addArgument('name')
 meta.addArgument('visitor')
 
