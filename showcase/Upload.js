@@ -573,7 +573,7 @@ export class Upload {
 			}
 			for (const r of val.res) {
 				const {ordain, src, prop_id} = r //search_value_id, search_prop_id
-				const value = await upload.receiveValue(src)
+				//const value = await upload.receiveValue(src)
 				const items = await db.all(`
 					SELECT m.model_id, ip.item_num 
 					FROM showcase_iprops ip, showcase_models m
@@ -589,14 +589,14 @@ export class Upload {
 							showcase_iprops
 						SET
 							ordain = :ordain,
-							value_id = :value_id,
+							text = :src,
 							model_id = :model_id,
 							item_num = :item_num,
 							prop_id = :prop_id
 					`, {
+						ordain, src,
 						item_num: item.item_num,
 						model_id: item.model_id, 
-						value_id: value.value_id, 
 						prop_id: prop_id
 					})
 				}
@@ -618,22 +618,21 @@ export class Upload {
 					const res = await Files.getRelations(db, name, brand_id, [props.art.prop_id,props.photo.prop_id])
 					const src = dirinfo.dir + fileinfo.file
 					const ordain = fileinfo.num
-					const value = await upload.receiveValue(src)
+					//const value = await upload.receiveValue(src)
 					for (const item of res) {
 						const affectedRows = await db.affectedRows(`
 							INSERT IGNORE INTO
 								showcase_iprops
 							SET
 								ordain = :ordain,
-								value_id = :value_id,
+								text = :src,
 								model_id = :model_id,
 								item_num = :item_num,
 								prop_id = :prop_id
 						`, {
-							ordain,
+							ordain, src,
 							item_num: item.item_num,
 							model_id: item.model_id, 
-							value_id: value.value_id, 
 							prop_id: props[part].prop_id
 						})
 						count += affectedRows
@@ -656,7 +655,7 @@ export class Upload {
 					const src = nicked(subinfo.dir + fileinfo.file)
 					const ext = fileinfo.ext
 					const ordain = fileinfo.num
-					const value = await upload.receiveValue(src)
+					//const value = await upload.receiveValue(src)
 					part = 'files'
 					if (~Files.exts.images.indexOf(ext)) part = 'images'
 					if (~Files.exts.texts.indexOf(ext)) part = 'texts'
@@ -668,15 +667,14 @@ export class Upload {
 								showcase_iprops
 							SET
 								ordain = :ordain,
-								value_id = :value_id,
+								text = :src,
 								model_id = :model_id,
 								item_num = :item_num,
 								prop_id = :prop_id
 						`, {
-							ordain,
+							ordain, src,
 							item_num: item.item_num,
 							model_id: item.model_id, 
-							value_id: value.value_id, 
 							prop_id: props[part].prop_id
 						})
 						count += affectedRows

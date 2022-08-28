@@ -50,7 +50,6 @@ export const Live = {
 	},
 	fetchApply: (form, promise, need) => {
 		promise.then(ans => {
-			console.log(need)
 			Live.ready(form, ans, need)
 			Live.fetchNow(form)
 		}).catch(e => null)

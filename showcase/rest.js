@@ -16,23 +16,24 @@ meta.addHandler('admin', async (view) => {
 		return view.err('Access denied')
 	}
 })
-
+meta.addVariable('config', async view => {
+	const {default: config} = await import('/showcase.json', {assert:{type:"json"}})
+	return config
+})
 meta.addVariable('options', async view => {
 	const { config: {options: src} } = await view.gets(['config'])
 	const { options } = await import('/'+src)
 	options.numbers ??= []
 	options.texts ??= []
+
 	options.tables ??= {}
 	options.prices ??= {}
-	//if (!~options.numbers.indexOf('Цена')) options.numbers.push('Цена')
+	
 	options.number_nicks = options.numbers.map(prop => nicked(prop))
 	options.text_nicks = options.texts.map(prop => nicked(prop))
 	return options
 })
-meta.addVariable('config', async view => {
-	const {default: config} = await import('/showcase.json', {assert:{type:"json"}})
-	return config
-})
+
 meta.addVariable('upload', async view => {	
 	const opt = await view.gets(['db','config','options', 'visitor'])
 	return new Upload(opt)

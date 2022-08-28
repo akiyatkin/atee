@@ -1,5 +1,5 @@
-import model from '/-catalog/model.html.js'
-//import cat from '-catalog/cat.html.js'
+import links from '/-catalog/links.html.js'
+import { unit } from '/-catalog/layout.html.js'
 import mark from '/-catalog/mark.html.js'
 import { words } from '/-words/words.js'
 export const MENU = () => `
@@ -30,14 +30,14 @@ const BODYshow = data => `
 `
 export const suggestion = (mod, data) => `
 	<div>
-		<a draggable="false" href="${model.link.model(mod)}">
+		<a draggable="false" href="${links.model(mod)}">
 			${mod.Наименование}
 		</a> <small>${mod.brand_title} ${mod.model_title}</small>
 	</div>
 	<div style="text-align:right">${mod.Цена?cost(mod.Цена):''}</div>
 `
  const cost = Цена => `
- 	${Цена}${model.unit()}
+ 	${Цена}${unit()}
 `
 const suggestionGroup = (group, data) => `
 	<a draggable="false" href="/catalog/${group.group_nick}${mark.add(data)}search=${data.query}"><b>${group.group_title}</b></a>
