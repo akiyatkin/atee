@@ -2,6 +2,8 @@ import { nicked } from "/-nicked/nicked.js"
 import { unique } from "/-nicked/unique.js"
 import { Catalog } from "/-catalog/Catalog.js"
 
+//const wait = delay => new Promise(resolve => setTimeout(resolve, delay))
+
 export const rest_live = (meta) => {
 	meta.addArgument('hash', (view, hash) => {
 		hash = nicked(hash)
@@ -14,7 +16,7 @@ export const rest_live = (meta) => {
 	})
 	meta.addAction('get-livemodels', async (view) => {
 		const { hashs, db } = await view.gets(['db','hashs'])
-
+		//await wait(500)
 		if (!hashs.length) {
 			const {gcount, count, list, groups} = await Catalog.getAllCount()
 			view.ans.gcount = gcount

@@ -32,7 +32,7 @@ export const suggestion = (mod, data) => `
 	<div>
 		<a draggable="false" href="${links.model(mod)}">
 			${mod.Наименование}
-		</a> <small>${mod.brand_title} ${mod.model_title}</small>
+		</a> ${mod.brand_title} ${mod.model_title}
 	</div>
 	<div style="text-align:right">${mod.Цена?cost(mod.Цена):''}</div>
 `

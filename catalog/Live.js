@@ -67,11 +67,11 @@ export const Live = {
 	},
 	timer: null,
 	wait: (form, need) => {
-		Live.timer = setTimeout(() => {
+		//Live.timer = setTimeout(() => { нужен тут драблинг или обламывать предыдущий запрос не очевидно
 			if (Live.fetch_need && Live.fetch_need.hash !== need.hash) return Live.wait(form, Live.fetch_need)
 			delete Live.fetch_promise
 			Live.fetchNow(form)
-		}, 100)
+		//}, 100)
 	},
 	fetchCreate: (hash = '') => {
 		const fetch_promise = createPromise('live promise ' + hash)

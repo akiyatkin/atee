@@ -43,8 +43,8 @@ const props = (mod) => `
 `
 const prop = (pr, mod) => `
 	<div style="margin:  0.25rem 0; display: flex">
-		<div style="padding-right: 0.5rem">${pr.prop_title}:</div>
-		<div title="{:pval}" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${mod[pr.value_title]}</div>
+		<div style="padding-right: 0.5rem">${pr}:</div>
+		<div title="${mod[pr] ?? mod.more[pr]}" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${mod[pr] ?? mod.more[pr]}</div>
 	</div>
 `
 const basket = (mod) => `

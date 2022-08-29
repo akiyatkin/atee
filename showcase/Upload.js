@@ -714,6 +714,8 @@ export class Upload {
 		const { visitor, options, view, db, config } = this.opt
 		let duration = Date.now()
 		const upload = this
+		const oldcost = await upload.receiveProp('Старая цена')
+		const cost = await upload.receiveProp('Цена')
 		const dir = config.tables
 		const file = await Files.getFileName(visitor, dir, name, ['xlsx'])
 		if (!file) return false

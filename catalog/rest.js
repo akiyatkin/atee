@@ -25,8 +25,9 @@ meta.addVariable('db', async view => {
 })
 
 meta.addFunction('int', (view, n) => Number(n))
+meta.addFunction('string', (view, n) => String(n))
 meta.addFunction('array', (view, n) => n ? n.split(',') : [])
-meta.addFunction('nicks', ['array'], (view, ns) => ns.map(v => nicked(v)).filter(v => v))
+meta.addFunction('nicks', ['array'], (view, ns) => ns.map(v => nicked(v)).filter(v => v).sort())
 
 
 meta.addVariable('lim', ['array'], (view, lim) => {
@@ -43,10 +44,14 @@ meta.addVariable('lim', ['array'], (view, lim) => {
 	return lim
 })
 meta.addArgument('vals', ['nicks'])
-const getNalichie = Access.cache(async (vals, lim) => {
+const getNalichie = Access.cache(async (partner) => {
 	const db = await new Db().connect()
-	const { prop_id } = await Catalog.getProp('Наличие')
 	const options = await Catalog.getOptions()
+	options.actions ??= ['Новинка','Распродажа']
+	const lim = 100
+	const vals = options.actions.map(v => nicked(v)).filter(v => v).sort()
+	const { prop_id } = await Catalog.getProp('Наличие')
+
 	if (!prop_id) return
 	const value_ids = []
 
@@ -60,8 +65,8 @@ const getNalichie = Access.cache(async (vals, lim) => {
 	if (!value_ids.length) return []
 	
 	//Нашли все модели
-	const model_ids = await db.colAll(`
-		SELECT distinct ip.model_id
+	const moditem_ids = await db.all(`
+		SELECT distinct ip.model_id, ip.item_num
 		FROM 
 			showcase_iprops ip
 		WHERE 
@@ -69,46 +74,18 @@ const getNalichie = Access.cache(async (vals, lim) => {
 			and ip.value_id in (${value_ids.join(',')})
 	`, { prop_id })
 
-	if (!model_ids.length) return []
-
-	//Заполнили основными данными
-	const models = await db.all(`SELECT 
-		m.model_id, m.model_nick, m.model_title, b.brand_title, b.brand_nick, g.group_nick, g.group_title, g.group_id
-		FROM showcase_models m, showcase_brands b, showcase_groups g
-
-		WHERE m.brand_id = b.brand_id and m.group_id = g.group_id
-		and m.model_id in (${model_ids.join(',')})
-	`)
-	for (const model of models) {
-		await Catalog.getValue(db, model, 'images', model.model_id)
-		await Catalog.getValue(db, model, 'Цена', model.model_id)
-		await Catalog.getValue(db, model, 'Наименование', model.model_id)
-		await Catalog.getValue(db, model, 'Наличие', model.model_id)
-		await Catalog.getValue(db, model, 'Старая цена')
-	}
-
-	//Заполнили данными для карточек
-	for (const model of models) {
-		const { props } = await Catalog.getGroupOptions(model.group_id)
-		
-		model.props = []
-		for (const pr of props) {			
-			if (model[pr.value_title]) {
-				model.props.push(pr)
-				continue //В props хранится порядок в том числе свойств имеющихся по умолчанию
-			}
-			const value = await Catalog.getValue(db, pr.prop_nick, model.model_id, 1)
-			if (!value) continue
-			model[pr.value_title] = value
-			model.props.push(pr)	
-		}
-	}
+	
+	const models = await Catalog.getModelsByItems(moditem_ids, partner)
+	
 	return models
 })
-
+meta.addArgument('partner', ['string'], async (view, partner) => {
+	const options = await Catalog.getOptions()
+	return options.partners[partner]
+})
 meta.addAction('get-nalichie', async (view) => {
-	const { db, vals, lim } = await view.gets(['db','vals','lim'])
-	view.ans.list = await getNalichie(vals, lim)
+	const { db } = await view.gets(['db','partner'])
+	view.ans.list = await getNalichie()
 	return view.ret()
 })
 
