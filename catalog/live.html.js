@@ -1,6 +1,5 @@
 import links from '/-catalog/links.html.js'
-import { unit } from '/-catalog/layout.html.js'
-import mark from '/-catalog/mark.html.js'
+import layout from '/-catalog/layout.html.js'
 import { words } from '/-words/words.js'
 export const MENU = () => `
 	<div class="livemenu">
@@ -13,7 +12,7 @@ export const TITLE = data => `
 `
 export const TITLEBODY = data => data.ans.result ? `
 	${data.query?pquery(data):''}
-	<a href="/catalog${mark.add(data)}search=${data.query}">${countmodels(data.ans.count)}</a> 
+	<a href="/catalog${links.add(data)}search=${data.query}">${countmodels(data.ans.count)}</a> 
 	в ${countgroups(data.ans.gcount)}
 ` : 'Ошибка на сервере'
 const countmodels = (count) => `${count} ${words(count,'позиция','позиции','позиций')}`
@@ -37,9 +36,9 @@ export const suggestion = (mod, data) => `
 	<div style="text-align:right">${mod.Цена?cost(mod.Цена):''}</div>
 `
  const cost = Цена => `
- 	${Цена}${unit()}
+ 	${Цена}${layout.unit()}
 `
 const suggestionGroup = (group, data) => `
-	<a draggable="false" href="/catalog/${group.group_nick}${mark.add(data)}search=${data.query}"><b>${group.group_title}</b></a>
+	<a draggable="false" href="/catalog/${group.group_nick}${links.add(data)}search=${data.query}"><b>${group.group_title}</b></a>
 	<div></div>
 `

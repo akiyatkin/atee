@@ -195,10 +195,11 @@ const getHTML = async (layer, { head, visitor, crumb, timings }) => {
 			data = ans.data
 			nostore = nostore || ans.nostore
 		}
-		const tplobj = await import(tpl).catch(e => {
+		let tplobj = await import(tpl).catch(e => {
     		e.tpl = tpl
     		throw e
     	})
+    	if (tplobj.default) tplobj = tplobj.default
         try {
         	
         	const env = {

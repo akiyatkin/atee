@@ -54,27 +54,24 @@ const getNalichie = Access.cache(async (partner) => {
 
 	if (!prop_id) return
 	const value_ids = []
-
-	//Уточнинили критерий поиска
+	
 	for (const value_nick of vals) {
 		const value_id = await db.col('SELECT value_id from showcase_values where value_nick = :value_nick', { value_nick })
 		if (!value_id) continue
 		value_ids.push(value_id)
 	}
-
 	if (!value_ids.length) return []
 	
-	//Нашли все модели
 	const moditem_ids = await db.all(`
-		SELECT distinct ip.model_id, ip.item_num
+		SELECT distinct ip.model_id, GROUP_CONCAT(distinct ip.item_num separator ',') as item_nums
 		FROM 
 			showcase_iprops ip
 		WHERE 
 			ip.prop_id = :prop_id
 			and ip.value_id in (${value_ids.join(',')})
+		GROUP BY ip.model_id
+		LIMIT 120
 	`, { prop_id })
-
-	
 	const models = await Catalog.getModelsByItems(moditem_ids, partner)
 	
 	return models
@@ -90,9 +87,8 @@ meta.addAction('get-nalichie', async (view) => {
 })
 
 
-export const rest = async (...args) => {
-	const [query, get, { host, cookie, ip }] = args 
-	const ans = await meta.get(query, { ...get, host, ip } )
+export const rest = async (query, get) => {
+	const ans = await meta.get(query, get)
 	return { ans, 
 		ext: 'json', 
 		status: ans.status ?? 200, 

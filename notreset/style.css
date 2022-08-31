@@ -28,3 +28,7 @@ table td, table th {
 table th {
 	text-align: left;
 }
+.a {
+	cursor: pointer;
+	border-bottom: dashed 1px currentColor;
+}

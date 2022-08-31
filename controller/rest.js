@@ -20,11 +20,13 @@ export const meta = new Meta()
 // 	return parse(cookie, '; ')
 // })
 meta.addArgument('cookie')
-meta.addHandler('admin', async (view) => {
+meta.addVariable('admin', async (view) => {
 	const { cookie } = await view.gets(['cookie'])
-	view.ans.status = 403
 	view.ans.nostore = true
-	if (!await Access.isAdmin(cookie)) return view.err('Access denied')
+	if (!await Access.isAdmin(cookie)) {
+		view.ans.status = 403
+		return view.err('Access denied')
+	}
 })
 // meta.addArgument('password')
 // meta.addAction('set-access', async view => {
@@ -39,12 +41,13 @@ meta.addAction('get-access', async view => {
 	view.ans.nostore = true
 	return view.ret()
 })
-meta.addAction('set-access', view => {
+meta.addAction('set-access', async view => {
+	await view.gets(['admin'])
 	Access.setAccessTime()
 	return view.ret()
 })
 meta.addAction('set-update', async view => {
-	const { cookie } = await view.gets(['admin'])
+	await view.gets(['admin'])
 	const time = new Date();
 	await utimes('../reload', time, time)
 	return view.ret()

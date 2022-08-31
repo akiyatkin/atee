@@ -6,7 +6,7 @@ import { filter } from "/-nicked/filter.js"
 
 export const Catalog = {}
 
-Catalog.getModelsByItems = async (moditems_ids, partner) => {
+Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums after group_concats, model_id}]
 	//Заполнили основными данными
 	if (!moditems_ids.length) return []
 	const db = await new Db().connect()
@@ -17,11 +17,21 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => {
 		WHERE m.brand_id = b.brand_id and m.group_id = g.group_id
 		and m.model_id in (${unique(moditems_ids.map(it => it.model_id)).join(',')})
 	`)
+
+	const modids = []
+	for (const mod of moditems_ids) {
+		const model_id = mod.model_id
+		const items = mod['item_nums'].split(',')
+		items.forEach(item_num => {
+			modids.push({item_num, model_id})
+		})
+	}
+
 	const ips = await db.all(`
 		SELECT ip.model_id, ip.item_num, v.value_title, ip.text, ip.number, ip.prop_id
 		FROM showcase_iprops ip
 			LEFT JOIN showcase_values v on v.value_id = ip.value_id
-		WHERE (ip.model_id, ip.item_num) in (${moditems_ids.map(it => '(' + it.model_id + ',' + it.item_num + ')').join(',')})
+		WHERE (ip.model_id, ip.item_num) in (${modids.map(it => '(' + it.model_id + ',' + it.item_num + ')').join(',')})
 	`)
 	
 	let list = {}
@@ -29,7 +39,7 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => {
 		m.items = {}
 		list[m.model_id] = m
 	}
-	for (const im of moditems_ids) {
+	for (const im of modids) {
 		list[im.model_id].items[im.item_num] = { item_num:im.item_num }
 	}
 	for (const ip of ips) {
@@ -73,8 +83,9 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => {
 	}
 	for (const model of list) {
 		const { props } = await Catalog.getGroupOptions(model.group_id)
-		model.props = props.map(p => p.prop_title)
-		model.props = await filter(model.props, async (p) => {
+		model.props = [...props]
+		model.props = await filter(model.props, async (pr) => {
+			const p = pr.prop_title
 			if (model[p] != null) return true
 			
 			const ppp = await Catalog.getProp(p)

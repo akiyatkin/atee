@@ -79,7 +79,7 @@ this.addEventListener('fetch', event => {
 	let request = new Request(url, options)
 
 
-	let response = fetch(request)
+	let response = fetch(request).catch(e => null)
 	// let response = fetch(request).then(response => {
 	// 	response.headers.set('Cache-Control', 'no-store')
 	// })
