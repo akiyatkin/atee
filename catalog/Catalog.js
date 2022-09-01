@@ -85,7 +85,7 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums afte
 		const { props } = await Catalog.getGroupOptions(model.group_id)
 		model.props = [...props]
 		model.props = await filter(model.props, async (pr) => {
-			const p = pr.prop_title
+			const p = pr.value_title
 			if (model[p] != null) return true
 			
 			const ppp = await Catalog.getProp(p)

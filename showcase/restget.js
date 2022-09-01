@@ -144,13 +144,51 @@ export const restget = (meta) => {
 		view.ans.rows = rows
 		return view.ret()
 	})
+	meta.addAction('get-model', async view => {
+		await view.get('admin')
+		const { id, db, upload } = await view.gets(['db','upload','id'])
+		const model = await db.fetch(`
+			SELECT 
+				m.model_id,
+				m.model_title,
+				m.model_nick,
+				g.group_title,
+				g.group_nick,
+				b.brand_title,
+				b.brand_nick
+			FROM showcase_groups g, showcase_brands b, showcase_models m
+			WHERE m.brand_id = b.brand_id and g.group_id = m.group_id and m.model_id = :model_id
+		`, {model_id: id})
 
+		
+
+
+		if (!model) return view.err('Модель не найдена')
+		const props = await db.all(`
+			SELECT 
+				ip.model_id, ip.item_num, ip.number, ip.text, v.value_title, p.prop_title, p.type
+			FROM showcase_iprops ip
+				LEFT JOIN showcase_values v on v.value_id = ip.value_id
+				LEFT JOIN showcase_props p on p.prop_id = ip.prop_id
+			WHERE ip.model_id = :model_id
+		`, {model_id: id})
+		model.props = props
+		for (const prop of props) {
+			if (prop.type == 'number') {
+				prop.number = Number(prop.number)
+			}
+		}
+
+		view.ans.model = model
+		return view.ret()
+	})
 	meta.addAction('get-models', async view => {
 		await view.get('admin')
 		const { db, upload } = await view.gets(['db','upload'])
 		const cost = await upload.receiveProp('Цена')
 		const models = await db.all(`
 			SELECT 
+				m.model_id,
 				m.model_title,
 				m.model_nick,
 				g.group_title,

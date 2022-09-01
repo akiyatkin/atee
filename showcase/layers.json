@@ -80,6 +80,13 @@
 				"index:ROOT":{
 					"CONTENT":"models:ROOT"
 				}
+			},
+			"child":{
+				"layout":{
+					"index:ROOT":{
+						"CONTENT":"model:ROOT"
+					}
+				}
 			}
 		},
 		"404":{
@@ -123,7 +130,7 @@
 		"values:ROOT":"/-showcase/get-values"
 	},
 	"jsontpl":{
-		
+		"model:ROOT":"/-showcase/get-model?id=${crumb}"
 	},
 	"tpl":{
 		"popups":"/-showcase/popups.html.js",
@@ -137,6 +144,7 @@
 		"props":"/-showcase/props.html.js",
 		"values":"/-showcase/values.html.js",
 		"models":"/-showcase/models.html.js",
+		"model":"/-showcase/model.html.js",
 		"brands":"/-showcase/brands.html.js",
 		"settings":"/-showcase/settings.html.js"
 	}

@@ -58,6 +58,7 @@ meta.addArgument('visitor')
 meta.addFunction('int', (view, n) => Number(n))
 meta.addArgument('before_id', ['int'])
 meta.addArgument('after_id', ['int'])
+meta.addArgument('id', ['int'])
 
 meta.addVariable('start', async view => {
 	const { db } = await view.gets(['db'])

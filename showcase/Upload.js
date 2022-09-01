@@ -744,31 +744,6 @@ export class Upload {
 				}
 			})
 		}
-		for (const brandmod in models) {
-			const items = models[brandmod]
-			items.forEach(item => {
-				const sheet_title = item[item.length - 1] //Последняя запись это имя листа sheet_title
-				const { descr, heads, indexes } = sheets[sheet_title]
-				item.forEach((value_title, i) => {
-					if (value_title === null) return
-					if (~[
-						indexes.model_title, 
-						indexes.model_nick, 
-						indexes.brand_title, 
-						indexes.brand_nick,
-						indexes.group_nick, 
-						indexes.sheet_title 
-					].indexOf(i)) return
-					if (~options.number_nicks.indexOf(heads.head_nicks[i])) return
-					if (~options.text_nicks.indexOf(heads.head_nicks[i])) return
-					const value_nick = nicked(value_title)
-					values[value_title] = { 
-						value_title,
-						value_nick 
-					}
-				})
-			})
-		}
 
 		
 		const table_id = await db.insertId(`
@@ -787,42 +762,12 @@ export class Upload {
 			table_nick: table_nick
 		})
 
-
-		//console.log(table_id)
-		//return view.ret()
 		for (const prop_nick in props) {
 			let pr = props[prop_nick]
-			pr.type = 'value'
-			if (~options.number_nicks.indexOf(prop_nick)) pr.type = 'number'
-			if (~options.text_nicks.indexOf(prop_nick)) pr.type = 'text'
 			props[prop_nick] = await upload.receiveProp(pr.prop_title)
-
-			// pr.prop_id = await db.insertId(`
-			// 	INSERT INTO 
-			// 		showcase_props 
-			// 	SET
-			// 		type = :type,
-			// 		prop_title = :prop_title,
-			// 		prop_nick = :prop_nick,
-			// 		ordain = :ordain
-			// 	ON DUPLICATE KEY UPDATE
-			// 		type = :type,
-			// 	 	prop_id = LAST_INSERT_ID(prop_id)
-			// `, pr)
 		}
 
-		for (const value_title in values) {
-			const value = values[value_title]
-			value.value_id = await db.insertId(`
-				INSERT INTO 
-					showcase_values
-				SET
-					value_title = :value_title,
-					value_nick = :value_nick
-				ON DUPLICATE KEY UPDATE
-				 	value_id = LAST_INSERT_ID(value_id)
-			`, value)
-		}
+		
 		
 		
 
@@ -868,7 +813,13 @@ export class Upload {
 			DELETE i, ip FROM showcase_items i, showcase_iprops ip 
 			WHERE i.model_id = ip.model_id and i.item_num = ip.item_num and i.table_id = :table_id
 		`, { table_id })
+
 		for (const brandmod in models) {
+			
+		}
+
+		for (const brandmod in models) {
+			
 			const items = models[brandmod]
 			const item = items[0]
 			const sheet_title = item[item.length - 1] //Последняя запись это имя листа sheet_title
@@ -897,6 +848,47 @@ export class Upload {
 			})
 			search = upload.prepareSearch(search)
 			
+
+			
+			for (const item of items) {
+				const sheet_title = item[item.length - 1] //Последняя запись это имя листа sheet_title
+				const { descr, heads, indexes } = sheets[sheet_title]
+				for (const i in item) {
+					const value_title = item[i]
+					if (value_title === null) continue
+					if (~[
+						indexes.model_title, 
+						indexes.model_nick, 
+						indexes.brand_title, 
+						indexes.brand_nick,
+						indexes.group_nick, 
+						indexes.sheet_title 
+					].indexOf(Number(i))) continue
+					
+					if (~options.text_nicks.indexOf(heads.head_nicks[i])) continue
+					item[i] = String(value_title).split(',').map(v => v.trim()).filter(v => !!v)
+					if (~options.number_nicks.indexOf(heads.head_nicks[i])) continue
+					for (const v_title of item[i]) {
+						if (values[v_title]) continue
+						const value_nick = nicked(v_title)
+						values[v_title] = { 
+							value_title:v_title,
+							value_nick 
+						}
+						values[v_title].value_id = await db.insertId(`
+							INSERT INTO 
+								showcase_values
+							SET
+								value_title = :value_title,
+								value_nick = :value_nick
+							ON DUPLICATE KEY UPDATE
+							 	value_id = LAST_INSERT_ID(value_id)
+						`, values[v_title])
+						//console.log(values[v_title])
+					}
+				}
+			}
+
 
 			const model_id = await db.insertId(`
 				INSERT INTO 
@@ -937,7 +929,7 @@ export class Upload {
 				// `ordain` SMALLINT unsigned COMMENT 'Порядковый номер строки в таблице',
 				// `table_id` SMALLINT unsigned COMMENT '',
 				await Promise.all(item.map(async (value_title, i) => {
-					if (value_title === null) return
+					if (value_title === null || !value_title.length) return
 					if (~[
 						indexes.brand_title, 
 						indexes.brand_nick,
@@ -948,30 +940,40 @@ export class Upload {
 					].indexOf(i)) return
 					const prop_nick = heads.head_nicks[i]
 					const {prop_id, type} = props[prop_nick]
-					let value_id = null
-					let text = null
-					let number = null
-					if (type == 'value') {
-						value_id = values[value_title].value_id
-					} else if (type == 'text') {
-						text = value_title
-					} else if (type == 'number') {
-						number = value_title - 0
+					
+					const save = async (text, number, value_id) => {
+						await db.affectedRows(`
+							INSERT IGNORE INTO 
+								showcase_iprops
+							SET
+								model_id = :model_id,
+								item_num = :item_num,
+								prop_id = :prop_id,
+								text = :text,
+								number = :number,
+								value_id = :value_id
+						`, { model_id, item_num:myitem_num, prop_id, text, number, value_id })
 					}
-					await db.affectedRows(`
-						INSERT IGNORE INTO 
-							showcase_iprops
-						SET
-							model_id = :model_id,
-							item_num = :item_num,
-							prop_id = :prop_id,
-							text = :text,
-							number = :number,
-							value_id = :value_id
-					`, { model_id, item_num:myitem_num, prop_id, text, number, value_id })
+					if (type == 'value' || type == 'number') {
+						for (const v_title of value_title) {
+
+							if (type == 'value') {
+								const value_id = values[v_title].value_id
+								await save(null, null, value_id)
+							} else if (type == 'number') {
+								const number = v_title - 0
+								await save(null, number, null)
+							}
+							
+						}
+					} else if (type == 'text') {
+						const text = value_title
+						await save(text, null, null)
+					}
 				}))
 			}))
 		}
+		
 		duration = Date.now() - duration
 		await db.changedRows(`
 			UPDATE

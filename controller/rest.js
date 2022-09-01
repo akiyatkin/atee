@@ -418,19 +418,42 @@ const getDiff = (players, nlayers, reloaddivs, reloadtss, layers = []) => {
 }
 
 
-const getIndex = (rule, route, timings, options = {push: [], head: {}}, status = 200, oroute = {}) => {
-	const crumb = route.crumbs ? route.crumbs[0] : route.path
-	const ocrumb = (oroute.crumbs ? oroute.crumbs[0] : oroute.path) || crumb
-	if (route.path && (!rule.childs || !rule.childs[crumb])) {
+const getIndex = (rule, route, timings, options = {push: [], head: {}}, status = 200, oroute = {}, ocrumb = null, ochild) => {
+	const wcrumbs = [...route.crumbs]
+	let crumb = ''
+	let notfound = false
+	let index = rule
+	let child = ''
+	
+	while (wcrumbs.length) {
+		const wcrumb = wcrumbs.shift()
+		if (index.childs && index.childs[wcrumb]) {
+			crumb = wcrumb
+			index = index.childs[wcrumb]
+		} else if (index.child) {
+			crumb = wcrumb
+			index = index.child
+		} else {
+			notfound = true
+			wcrumbs.unshift(wcrumb)
+			child = wcrumbs.join('/')
+			wcrumbs.unshift(crumb)
+			crumb = wcrumbs.join('/')
+			break
+		}
+	}
+	ocrumb ??= crumb
+	ochild ??= child
+	if (notfound) {
 		if (route.path == '404') return []
-		return getIndex(rule, {crumbs:['404'], path:'404', get: route.get}, timings, options, 404, route)
+		return getIndex(rule, {crumbs:['404'], path:'404', get: route.get}, timings, options, 404, route, crumb, child)
 	}	
-	const index = route.path ? rule.childs[crumb] : rule
+
 	const controller_request = {
 		path: oroute.path || route.path, 
 		get: oroute.get || route.get, 
 		crumb: ocrumb,
-		child: oroute.crumbs ? (oroute.crumbs[1] || '') : (route.crumbs[1] || ''), 
+		child: ochild, 
 		...timings
 	}
 

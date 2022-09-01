@@ -182,6 +182,7 @@ const applyCrossing = async () => {
 		}).then(res => res.json())
 		if (promise.rejected) return
 		if (!json || !json.st || !json.ut || !json.result || !json.layers) {
+			console.log(1, json)
 			return location.reload()
 		}
 		const timings = {
@@ -246,6 +247,7 @@ const applyCrossing = async () => {
 		const event = new CustomEvent('crossing', {detail: {timings, crumb, head: json.head}})
 		window.dispatchEvent(event)
 		if (req.ut && req.ut < timings.update_time) {
+			console.log(2, req, timings)
 			location.reload()
 		}
 		
@@ -299,8 +301,9 @@ const loadAll = (layers, promises = []) => {
 		if (layer.tpl) {
 			if (layer.ts) { //ts это например, index:ROOT означает что есть шаблон
 				let promise = import(layer.tpl).then(res => {
-					layer.sys.tplobj = res
-				}).catch(() => {
+					layer.sys.tplobj = res.default || res
+				}).catch(e => {
+					console.log(3, e)
 					location.reload()
 				})
 				promises.push(promise)
@@ -308,6 +311,7 @@ const loadAll = (layers, promises = []) => {
 			if (layer.json) {
 				let promise = fetch(layer.json).then(res => {
 					if (res.status != 200) {
+						console.log(4, res)
 						location.reload()
 						return new Promise(() => {})//reload сразу не происходит, надо зависнуть
 					}
@@ -324,6 +328,7 @@ const loadAll = (layers, promises = []) => {
 		} else if (layer.html) {
 			let promise = fetch(layer.html).then(res => {
 				if (res.status != 200) {
+					console.log(5, res)
 					location.reload()
 					return new Promise(() => {})//reload сразу не происходит, надо зависнуть
 				}

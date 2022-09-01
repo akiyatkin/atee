@@ -190,7 +190,7 @@ export const router = async (search) => {
 					cont = true
 					root = v.part
 					path = path.slice(root.length + (root ? 1 : 0))
-					crumbs = split('/', path)
+					crumbs = path.split('/').filter(v => v)
 					break;
 				}
 

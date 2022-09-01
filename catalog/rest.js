@@ -50,7 +50,9 @@ const getNalichie = Access.cache(async (partner) => {
 	options.actions ??= ['Новинка','Распродажа']
 	const lim = 100
 	const vals = options.actions.map(v => nicked(v)).filter(v => v).sort()
-	const { prop_id } = await Catalog.getProp('Наличие')
+	const p = await Catalog.getProp('Наличие')
+	if (!p) return []
+	const { prop_id } = p
 
 	if (!prop_id) return
 	const value_ids = []

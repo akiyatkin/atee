@@ -5,7 +5,7 @@ export const ROOT = (data, env) => `
 		const div = document.getElementById('${env.div}')
 		setTimeout(async () => {
 			const Client = await window.getClient()
-			await Client.reloaddiv('${env.div}').catch(e => false)
+			//await Client.reloaddiv('${env.div}').catch(e => false)
 		}, 3000)
 	</script>
 `

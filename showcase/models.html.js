@@ -30,5 +30,5 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 	</p>
 `
 const showmodel = (model) => `
-	${model.brand_title} ${model.model_title} ${model.cost} <small>${model.items}</small><br>
+	<a href="models/${model.model_id}">${model.brand_title} ${model.model_title}</a> ${model.cost||''} <small>${model.items}</small><br>
 `
