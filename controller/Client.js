@@ -207,11 +207,9 @@ const applyCrossing = async () => {
 			if (hash && anim != 'none') anim = 'opacity'
 			animate('div', div, layer.sys.execute, anim)
 		}
-		console.log(search)
-		const {path, get} = pathparse(search.slice(json.root.length)) //Останется ведущий слэ
-		const bread = new Bread(json.root, path, get, search) //root+path+get = search
-		const crumb = { search, get, path }
 		
+		const {path, get} = pathparse(search.slice(json.root.length)) //Останется ведущий слэш
+		const bread = new Bread(path, get, search, json.root) //root+path+get = search
 
 		await Promise.all(promises)
 
@@ -230,7 +228,8 @@ const applyCrossing = async () => {
 		}
 		for (const layer of json.layers) {
 			layer.sys.template = document.createElement('template')
-			addHtml(layer.sys.template, layer, crumb, timings)
+			layer.crumb = bread.getCrumb(layer.depth)
+			addHtml(layer.sys.template, layer, bread, timings)
 		}
 		
 		const scripts = []
@@ -246,7 +245,7 @@ const applyCrossing = async () => {
 		Client.next = false
 		promise.resolve(search)
 
-		const event = new CustomEvent('crossing', {detail: {timings, crumb, head: json.head}})
+		const event = new CustomEvent('crossing', {detail: {timings, bread, head: json.head}})
 		window.dispatchEvent(event)
 		if (req.ut && req.ut < timings.update_time) {
 			console.log(2, req, timings)
@@ -266,14 +265,14 @@ const errmsg = (layer, e) => {
 	console.log(layer, e)
 	return `<pre><code>${layer.ts}<br>${e.toString()}</code></pre>`
 }
-const addHtml = (template, layer, crumb, timings) => {
+const addHtml = (template, layer, bread, timings) => {
 	let html = ''
 	if (layer.sys.html) {
 		html = layer.sys.html
 	} else if (layer.sys.tplobj) {
 		const env = {
 			...layer, 
-			...crumb, 
+			bread, 
 			host:location.host, 
 			...timings
 		}
@@ -292,7 +291,7 @@ const addHtml = (template, layer, crumb, timings) => {
 		template.innerHTML = html
 	}
 	if (layer.layers) for (const l of layer.layers) {
-		addHtml(template, l, crumb, timings)
+		addHtml(template, l, bread, timings)
 	}
 }
 const loadAll = (layers, promises = []) => {

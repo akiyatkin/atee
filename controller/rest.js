@@ -182,7 +182,7 @@ const getRule = Once.proxy( async root => {
 	const frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
 	const ts = tsf ? name + ':' + sub : ''
 	runByIndex(rule, r => { //строим дерево root по дивам
-		r.root = { tsf, ts, name, sub, frame, frameid }	
+		r.root = { tsf, ts, name, sub, frame, frameid, depth: 0 }	
 		maketree(r.root, r.layout, rule)
 		delete r.layout
 		const push = []
@@ -306,7 +306,7 @@ meta.addAction('get-layers', async view => {
 
 	
 	const nroute = await router(next)
-
+	view.ans.root = nroute.root
 	// return {
 	// 	search, secure, get, path, ext,
 	// 	rest, query, restroot,
@@ -362,11 +362,12 @@ meta.addAction('get-layers', async view => {
 		return view.err()
 	}
 
-	const nlayers = structuredClone(nopt.root.layers)
+	//const nlayers = structuredClone(nopt.root.layers)
+	const nlayers = nopt.root.layers
 	const { index: popt } = getIndex(rule, proute, ptimings)
 	if (!popt.root) return view.err()
 
-	view.ans.root = nroute.root
+	
 	view.ans.layers = getDiff(popt.root.layers, nlayers, reloaddivs, reloadtss)
 	if (reloaddivs.length) view.ans.rd = reloaddivs
 	if (reloadtss.length) view.ans.rt = reloadtss

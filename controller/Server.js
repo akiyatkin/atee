@@ -125,32 +125,33 @@ export const Server = {
 					pv: false,
 					nt: search
 				}
-				let res = await meta.get('get-layers', req)
-				if (!res) return error(500, 'layers have bad definition')
-                if (!res.layers) return error(500, 'layers not defined')
+				let json = await meta.get('get-layers', req)
+				if (!json) return error(500, 'layers have bad definition')
+                if (!json.layers) return error(500, 'layers not defined')
 
-                console.log(route)
-                const bread = new Bread(route.root, route.path, route.get, route.search) //root+path+get = search
+                //console.log(route)
+                const bread = new Bread(route.path, get, search, json.root) //root+path+get = search
+
 				const crumb = {
 					get: route.get,
 					root: route.root,
 					path: route.path, 
 					search: route.search
 				}
-                let status = res.status
+                let status = json.status
                 let info
                 try {
-				    info = await controller(res, visitor, crumb) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
+				    info = await controller(json, visitor, bread) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
                     status = Math.max(info.status, status)
                 } catch (e) {
                 	console.error(e)
                 	status = e.status || 500
-                	const root = crumb.root ? '/' + crumb.root + '/' : '/'
+                	const root = bread.root ? '/' + bread.root + '/' : '/'
                     req.nt = root + status
-                    res = await meta.get('get-layers', req)
-                    info = await controller(res, visitor, crumb)
+                    json = await meta.get('get-layers', req)
+                    info = await controller(json, visitor, bread)
                 }
-				if (res.push.length) response.setHeader('Link', res.push.join(','));
+				if (json.push.length) response.setHeader('Link', json.push.join(','));
 				response.writeHead(status, {
 					'Content-Type': TYPES['html'] + '; charset=utf-8',
 					'Cache-Control': info.nostore ? 'no-store' : 'public, max-age=31536000'
@@ -165,23 +166,9 @@ export const Server = {
 	}
 }
 
-
-// const readStream = stream => {
-// 	return new Promise((resolve, reject) => {
-// 		let data = ''
-// 		stream.on('readable', () => {
-// 			const d = stream.read()
-// 			if (d === null) return
-// 			data += d
-// 		})
-// 		stream.on('error', reject)
-// 		stream.on('end', () => {
-// 			resolve(JSON.parse(data))
-// 		})
-// 	})
-// }
 const errmsg = (layer, e) => `<pre><code>${layer.ts}<br>${e.toString()}</code></pre>`
-const getHTML = async (layer, { head, visitor, crumb, timings }) => {
+const getHTML = async (layer, { head, visitor, bread, timings }) => {
+	const crumb = bread.getCrumb(layer.depth)
 	const { tpl, json, sub, div } = layer
 	let nostore = false
     let status = 200
@@ -206,7 +193,9 @@ const getHTML = async (layer, { head, visitor, crumb, timings }) => {
         try {
         	
         	const env = {
-        		...layer, ...crumb, 
+        		...layer, 
+        		crumb,
+        		bread,
         		host: visitor.client.host, 
         		head, 
         		...timings
@@ -229,16 +218,17 @@ const runLayers = async (layers, fn, parent) => {
 	}
 	return Promise.all(promises)
 }
-export const controller = async ({ vt, st, ut, layers, head }, visitor, crumb) => {
+export const controller = async ({ vt, st, ut, layers, head }, visitor, bread) => {
 	const ans = {
 		html: '',
         status: 200,
 		nostore: false
 	}
 	const timings = {view_time:vt, access_time:st, update_time:ut}
-	const look = {head, visitor, crumb, timings}
+	const look = {head, visitor, bread, timings}
 	const doc = new Doc()
 	await runLayers(layers, async layer => {
+		
 		const { nostore, html, status } = await getHTML(layer, look)
 		ans.nostore = Math.max(ans.nostore, nostore)
         ans.status = Math.max(ans.status, status)

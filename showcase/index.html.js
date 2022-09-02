@@ -40,7 +40,7 @@ export const PANEL = (data, env) => `
 export const HEADER = (data, env) => `
 	<div style="display: flex; justify-content: space-between; flex-wrap:wrap">
 		<div>
-			<a href="/${env.root}">SHOWCASE</a>
+			<a href="${env.crumb}">SHOWCASE</a>
 			<span id="STAT"></span>
 		</div>
 		<a href="/">${env.host}</a>

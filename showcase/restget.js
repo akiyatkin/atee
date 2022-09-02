@@ -160,10 +160,10 @@ export const restget = (meta) => {
 			WHERE m.brand_id = b.brand_id and g.group_id = m.group_id and m.model_id = :model_id
 		`, {model_id: id})
 
-		
-
-
-		if (!model) return view.err('Модель не найдена')
+		if (!model) {
+			view.ans.status = 404
+			return view.err('Модель не найдена')
+		}
 		const props = await db.all(`
 			SELECT 
 				ip.model_id, ip.item_num, ip.number, ip.text, v.value_title, p.prop_title, p.type
@@ -172,12 +172,16 @@ export const restget = (meta) => {
 				LEFT JOIN showcase_props p on p.prop_id = ip.prop_id
 			WHERE ip.model_id = :model_id
 		`, {model_id: id})
-		model.props = props
+		
+		model.items = {}
 		for (const prop of props) {
+			model.items[prop.item_num] ??= {item_num:prop.item_num, props:[]}
 			if (prop.type == 'number') {
 				prop.number = Number(prop.number)
 			}
+			model.items[prop.item_num].props.push(prop)
 		}
+		model.items = Object.values(model.items).reverse()
 
 		view.ans.model = model
 		return view.ret()

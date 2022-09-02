@@ -82,6 +82,7 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums afte
 		}
 	}
 	for (const model of list) {
+
 		const { props } = await Catalog.getGroupOptions(model.group_id)
 		model.props = [...props]
 		model.props = await filter(model.props, async (pr) => {
@@ -108,11 +109,9 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums afte
 			model[p] = ar.join(', ')
 			return true
 		})
+
 	}
-
-
 	const options = await Catalog.getOptions()
-	
 	for (const model of list) {
 		model.more = {}
 		for (const prop in model) {
@@ -120,6 +119,7 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums afte
 			model.more[prop] = model[prop]
 			delete model[prop]
 		}
+
 		for (const item of model.items) {
 			item.more = {}
 			for (const prop in item) {
@@ -193,6 +193,9 @@ Catalog.getOptions = Access.cache(async () => {
 	options.groupids = {}
 	options.partners ??= {}
 	options.props ??= []
+	if (!options.columns) {
+		throw 'Требуется options.columns'
+	}
 	options.columns ??= []
 	for (const group_title in options.groups) {
 		const ids = await db.colAll('SELECT group_id FROM showcase_groups where group_title = :group_title', { group_title })
