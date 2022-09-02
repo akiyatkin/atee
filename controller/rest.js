@@ -82,7 +82,7 @@ const interpolate = function(string, params) {
 }
 
 
-const wakeup = (rule) => {
+const wakeup = (rule, depth = 0) => {
 	if (!rule) return
 	if (!rule.layout) return
 	for (const pts in rule.layout) {
@@ -91,7 +91,7 @@ const wakeup = (rule) => {
 			const [name, subframe] = tsf ? split(':', tsf) : ['','ROOT']
 			const [sub, frame = ''] = split('.', subframe)
 			const ts = tsf ? name + ':' + sub : ''
-			const layer = { ts, tsf, name, sub, div}
+			const layer = { ts, tsf, name, sub, div, depth}
 			if (frame) {
 				layer.frame = frame
 				layer.frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
@@ -99,9 +99,9 @@ const wakeup = (rule) => {
 			rule.layout[pts][div] = layer
 		}
 	}
-	wakeup(rule.child)
+	wakeup(rule.child, depth + 1)
 	if (rule.childs) for (const path in rule.childs) {
-		wakeup(rule.childs[path])
+		wakeup(rule.childs[path], depth + 1)
 	}
 }
 const spread = (rule, parent) => {
@@ -173,7 +173,7 @@ const getRule = Once.proxy( async root => {
 	
 
 	applyframes(rule) //встраиваем фреймы
-	wakeup(rule, rule) //объекты слоёв
+	wakeup(rule) //объекты слоёв
 	spread(rule) //childs самодостаточный
 	
 	const tsf = rule.index
@@ -337,7 +337,8 @@ meta.addAction('get-layers', async view => {
 			view.ans.head.json = interpolate(view.ans.head.jsontpl, controller_request)
 		}
 		if (view.ans.head.json) {
-			const child = nroute.crumbs ? nroute.crumbs[1] : nroute.path
+			const crumbs = nroute.path.split('/').filter(v => v)
+			const child = crumbs[1]
 			const client = await view.get('client')
 			const json = view.ans.head.json
 			const data = await loadJSON(json, client).then(({data}) => {
@@ -365,6 +366,7 @@ meta.addAction('get-layers', async view => {
 	const { index: popt } = getIndex(rule, proute, ptimings)
 	if (!popt.root) return view.err()
 
+	view.ans.root = nroute.root
 	view.ans.layers = getDiff(popt.root.layers, nlayers, reloaddivs, reloadtss)
 	if (reloaddivs.length) view.ans.rd = reloaddivs
 	if (reloadtss.length) view.ans.rt = reloadtss
@@ -381,7 +383,8 @@ meta.addAction('get-layers', async view => {
 			view.ans.head.json = interpolate(view.ans.head.jsontpl, controller_request)
 		}
 		if (view.ans.head.json) {
-			const child = nroute.crumbs ? nroute.crumbs[1] : nroute.path
+			const crumbs = nroute.path.split('/').filter(v => v)
+			const child = crumbs[1]
 			const client = await view.get('client')
 			const json = view.ans.head.json
 			const data = await loadJSON(json, client).then(({data}) => {
@@ -419,7 +422,7 @@ const getDiff = (players, nlayers, reloaddivs, reloadtss, layers = []) => {
 
 
 const getIndex = (rule, route, timings, options = {push: [], head: {}}, status = 200, oroute = {}, ocrumb = null, ochild) => {
-	const wcrumbs = [...route.crumbs]
+	const wcrumbs = route.path.split('/').filter(v => v)
 	let crumb = ''
 	let notfound = false
 	let index = rule
@@ -446,7 +449,7 @@ const getIndex = (rule, route, timings, options = {push: [], head: {}}, status =
 	ochild ??= child
 	if (notfound) {
 		if (route.path == '404') return []
-		return getIndex(rule, {crumbs:['404'], path:'404', get: route.get}, timings, options, 404, route, crumb, child)
+		return getIndex(rule, {path:'404', get: route.get}, timings, options, 404, route, crumb, child)
 	}	
 
 	const controller_request = {

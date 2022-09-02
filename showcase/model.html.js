@@ -1,5 +1,5 @@
 export const ROOT = (data, env) => `
-	<h1>Модель ${env.child}</h1>
+	<h1>Модель ${env.crumb?.name} ${env.depth}</h1>
 	<p>
 		${data.model?showmodel(data.model):''}
 	</p>

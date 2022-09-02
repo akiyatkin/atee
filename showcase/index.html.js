@@ -3,7 +3,6 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 <html>
 	<head>
 		${HEAD(...args)}
-		<base href="/@atee/showcase/">
 		<link rel="icon" type="/image/svg+xml" href="/images/favicon.svg">
 		<link rel="stylesheet" href="/style.css">
 		<link rel="stylesheet" href="/-showcase/style.css">

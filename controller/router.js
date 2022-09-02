@@ -126,7 +126,7 @@ export const readTextStream = stream => {
 export const router = async (search) => {
 	//У search всегда есть ведущий /слэш
 	//if (search.indexOf('/-') === 0) search = search.slice(1)
-	let { secure, path, crumbs, ext, get} = pathparse(search)
+	let { secure, path, ext, get} = pathparse(search)
 	let query = false
 	let restroot = ''
 	let root = ''
@@ -148,7 +148,7 @@ export const router = async (search) => {
 			return {
 				search, secure, get, path, ext,
 				rest, query, restroot,
-				cont, root, crumbs
+				cont, root
 			}
 		}
 	}
@@ -190,7 +190,6 @@ export const router = async (search) => {
 					cont = true
 					root = v.part
 					path = path.slice(root.length + (root ? 1 : 0))
-					crumbs = path.split('/').filter(v => v)
 					break;
 				}
 
@@ -201,6 +200,6 @@ export const router = async (search) => {
 	return {
 		search, secure, get, path, ext,
 		rest, query, restroot,
-		cont, root, crumbs
+		cont, root
 	}
 }

@@ -1,7 +1,8 @@
-export const HEAD = (data, { search, access_time, update_time, head }) => 
+export const HEAD = (data, { root, search, access_time, update_time, head }) => 
 `<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>${head.title??''}</title>
+		<base href="/${root ? root + '/' : ''}">
 		<link rel="stylesheet" href="/-notreset/style.css">
 		<meta name="description" content="${head.description??''}">
 		<meta property="og:image" content="${head.image_src??''}">

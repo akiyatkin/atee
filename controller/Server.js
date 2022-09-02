@@ -4,6 +4,7 @@ import fs from 'fs/promises'
 import { ReadStream } from 'fs'
 import { Access } from '@atee/controller/Access.js'
 import { meta } from './rest.js'
+import { Bread } from './Bread.js'
 
 import { Doc } from './Doc.js'
 
@@ -69,7 +70,7 @@ export const Server = {
 			const {
 				search, secure, get, path, ext,
 				rest, query, restroot,
-				cont, root, crumbs
+				cont, root
 			} = route
 			const visitor = new Visitor(request)
 			//request.headers['x-forwarded-for']
@@ -127,8 +128,10 @@ export const Server = {
 				let res = await meta.get('get-layers', req)
 				if (!res) return error(500, 'layers have bad definition')
                 if (!res.layers) return error(500, 'layers not defined')
+
+                console.log(route)
+                const bread = new Bread(route.root, route.path, route.get, route.search) //root+path+get = search
 				const crumb = {
-					crumbs: route.crumbs,
 					get: route.get,
 					root: route.root,
 					path: route.path, 

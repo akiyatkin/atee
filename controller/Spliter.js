@@ -25,8 +25,7 @@ export const pathparse = (request) => {
     const get = parse(params, '&');
     const ext = getExt(path)
     const secure = !!~path.indexOf('/.')
-    const crumbs = path.split('/').filter(p => p)
-    return {secure, crumbs, path, ext, get}
+    return {secure, path, ext, get}
 }
 export const parse = (string, sep = '; ') => {
     const obj = string?.split(sep).reduce((res, item) => {

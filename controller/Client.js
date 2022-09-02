@@ -3,6 +3,7 @@ import { pathparse } from './Spliter.js'
 import { HtmlHead } from './HtmlHead.js'
 import { evalScripts } from './evalScripts.js'
 import { createPromise } from './createPromise.js'
+import { Bread } from './Bread.js'
 
 export const Client = {
 	search:'',
@@ -206,9 +207,10 @@ const applyCrossing = async () => {
 			if (hash && anim != 'none') anim = 'opacity'
 			animate('div', div, layer.sys.execute, anim)
 		}
-		
-		const {crumbs, path, get} = pathparse(search)
-		const crumb = { crumbs, search, get, path }
+		console.log(search)
+		const {path, get} = pathparse(search.slice(json.root.length)) //Останется ведущий слэ
+		const bread = new Bread(json.root, path, get, search) //root+path+get = search
+		const crumb = { search, get, path }
 		
 
 		await Promise.all(promises)
