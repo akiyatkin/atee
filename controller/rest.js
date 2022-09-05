@@ -5,6 +5,8 @@ import { readFile, utimes } from "fs/promises"
 import { Meta } from "./Meta.js"
 import { parse, explode, split } from './Spliter.js'
 
+import { Bread } from './Bread.js'
+
 import { loadJSON, router } from './router.js'
 import { Access } from '@atee/controller/Access.js'
 import { Once } from './Once.js'
@@ -28,10 +30,7 @@ meta.addVariable('admin', async (view) => {
 		return view.err('Access denied')
 	}
 })
-// meta.addArgument('password')
-// meta.addAction('set-access', async view => {
-// 	const { password } = await view.gets(['password'])
-// })
+
 meta.addAction('get-access', async view => {
 	const { cookie } = await view.gets(['cookie'])
 	view.ans['admin'] = await Access.isAdmin(cookie)
@@ -75,13 +74,6 @@ meta.addArgument('rt', ['array']) //reloadts
 
 
 
-const interpolate = function(string, params) {
-	const names = Object.keys(params)
-	const vals = Object.values(params)
-	return new Function(...names, 'return `'+string+'`')(...vals)
-}
-
-
 const wakeup = (rule, depth = 0) => {
 	if (!rule) return
 	if (!rule.layout) return
@@ -91,7 +83,7 @@ const wakeup = (rule, depth = 0) => {
 			const [name, subframe] = tsf ? split(':', tsf) : ['','ROOT']
 			const [sub, frame = ''] = split('.', subframe)
 			const ts = tsf ? name + ':' + sub : ''
-			const layer = { ts, tsf, name, sub, div, depth}
+			const layer = { ts, tsf, name, sub, div, depth, tpl:null, html: null, json:null, layers: null}
 			if (frame) {
 				layer.frame = frame
 				layer.frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
@@ -171,7 +163,6 @@ const getRule = Once.proxy( async root => {
 	if (root) root = '-' + root
 	const { default: rule } = await import('/' + root + '/layers.json', {assert: { type: "json" }})
 	
-
 	applyframes(rule) //встраиваем фреймы
 	wakeup(rule) //объекты слоёв
 	spread(rule) //childs самодостаточный
@@ -182,42 +173,67 @@ const getRule = Once.proxy( async root => {
 	const frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
 	const ts = tsf ? name + ':' + sub : ''
 	runByIndex(rule, r => { //строим дерево root по дивам
-		r.root = { tsf, ts, name, sub, frame, frameid, depth: 0 }	
+		r.root = { tsf, ts, name, sub, frame, frameid, depth: 0, tpl:null, html: null, json:null, layers:null }
+		//Object.seal(r.root) debug test
 		maketree(r.root, r.layout, rule)
 		delete r.layout
-		const push = []
-		const pushtpl = []
-		let head = {}
 		runByRootLayer(r.root, layer => {
 			const ts = layer.ts
 			if (rule.animate && rule.animate[ts]) layer.animate = rule.animate[ts]
-			if (rule.push && rule.push[ts]) push.push(...rule.push[ts])
-			if (rule.pushtpl && rule.pushtpl[ts]) pushtpl.push(...rule.pushtpl[ts])
-			if (rule.head && rule.head[ts]) head = rule.head[ts]
 		})
-		r.ready_pushtpl = pushtpl
-		r.ready_push = push
-		r.ready_head = head
 	})
 	return rule
 })
+const collectPush = (rule, timings, bread, root, interpolate, theme) => {
+	const push = []
+	runByRootLayer(root, layer => {
+		const crumb = bread.getCrumb(layer.depth)
+		const ts = layer.ts
+		if (rule.push && rule.push[ts]) {
+			push.push(...rule.push[ts])
+		}
+		if (rule.pushtpl && rule.pushtpl[ts]) {
+			rule.pushtpl[ts].forEach(val => {
+				push.push(interpolate(val, timings, layer, bread, crumb, theme))	
+			})
+		}
+	})
+	return push
+}
+const collectHead = async (rule, timings, bread, root, interpolate, theme) => {
+	let head = {}
+	runByRootLayer(root, layer => {
+		const ts = layer.ts
+		if (!rule.head || !rule.head[ts]) return
+		const crumb = bread.getCrumb(layer.depth)
+		head = rule.head[ts]
+		head.layer = layer
+		head.crumb = crumb
+	})		
+	if (head.jsontpl) {
+		head.json = interpolate(head.jsontpl, timings, head.layer, bread, head.crumb, theme)
+	}
+	delete head.layer
+	delete head.crumb
+	if (head.json) {
+		const child = bread.top.child
+		const client = await view.get('client')
+		const json = view.ans.head.json
+		const data = await loadJSON(json, client).then(({data}) => {
+			if (!Array.isArray(data)) data = [data]
+			let h = path.join('/')
+			return data.find(data => {
+				if (data.child == child.name) return data
+			})
+		});
+		head = {...head, ...data}
+	}
+	return head
+}
 meta.addAction('sitemap', async view => {
-	const { root } = await view.gets(['root'])
+	const { root, host } = await view.gets(['root','host'])
 	const rule = await getRule(root)
 	if (!rule) return view.err()
-	/*
-		Карта динамическая так как данные меняются не только при update
-		У нас есть крошки
-		{
-			child
-			childs:{
-				crumb1:*
-				crumb2:*
-			}
-		}
-		нужно каждой крошке найти соответствующий head объект
-	*/
-	
 	const list = []
 	const date = new Date(Access.getUpdateTime())
 	let dd = date.getDate();
@@ -226,49 +242,81 @@ meta.addAction('sitemap', async view => {
 	if (mm < 10) mm = '0' + mm;
 	const modified = date.getFullYear() + '-' + mm + '-' + dd
 	const client = await view.get('client')
-	let promise = Promise.resolve()
 	runByIndex(rule, async (index, path) => {
 		if (~path.indexOf(false)) return
 		if (~['404','403','500'].indexOf(path[0])) return
-		if (index.ready_head.hidden) return			
-		if (index.ready_head.jsontpl) {
-			const req = {path, get: {}}
-			index.ready_head.json = interpolate(index.ready_head.jsontpl, req)
+		const bread = new Bread(path.join('/'), {}, path.join('/'), index.root)
+		let head = {}
+		runByRootLayer(index.root, layer => {
+			const ts = layer.ts
+			if (!rule.head || !rule.head[ts]) return
+			const crumb = bread.getCrumb(layer.depth)
+			head = rule.head[ts]
+			head.layer = layer
+			head.crumb = crumb
+		})
+		if (head.hidden) return
+		if (head.jsontpl) {
+			head.json = new Function(
+				"host", "layer", "bread", "crumb", 
+				'return `'+head.jsontpl+'`'
+			)(
+				host, layer, bread, crumb
+			)
 		}
-		if (index.ready_head.json) {
-			const json = index.ready_head.json
-			promise = promise.then(() => loadJSON(json, client).then(({data}) => {
+		delete head.layer
+		delete head.crumb
+		if (head.json) {
+			const json = head.json
+			const res = await loadJSON(json, client).then(({data}) => {
 				if (!Array.isArray(data)) data = [data]
 				let h = path.join('/')
 				data.forEach(data => {
 					const href = data.child ? h + '/' + data.child : h
 					index.ready_head = {...index.ready_head, ...data}
 					list.push({
-						...index.ready_head,
+						...head,
 						modified,
 						href
 					})
 				})
-			}))
+			})
+			list.push(res)
 		} else {
-			promise = promise.then(() => {
-				list.push({
-					...index.ready_head,
-					modified,
-					href: path.join('/')
-				})
+			list.push({
+				...head,
+				modified,
+				href: path.join('/')
 			})
 		}
 	})
-	await promise
 	return list
 })
-// meta.addAction('get-push', async view => {
-// 	const { nt: next } = await view.gets(['nt'])
-// })
+const fromCookie = (cookie) => {
+	let name = cookie.match('(^|;)?theme=([^;]*)(;|$)')
+	if (!name) return ''
+	if (name == 'deleted') return ''
+	return decodeURIComponent(name[2])
+}
+const getTheme = (get, cookie) => {
+	const name = get.theme != null ? get.theme : fromCookie(cookie)
+	const theme = parse(name,':')
+	const value = []
+	for (const key in theme) {
+		const val = theme[key]
+		if (!val) {
+			delete theme[key]
+			continue
+		}
+		value.push(`${key}=${val}`)
+	}
+	theme.value = value.join(':')
+	return theme
+}
 meta.addArgument('client')
 meta.addAction('get-layers', async view => {
 	view.ans.nostore = true
+	view.ans.headers = {}
 	const {
 		rt:reloadtss, rd:reloaddivs, pv: prev, nt: next, host, cookie, st: access_time, ut: update_time, vt: view_time, gs: globals 
 	} = await view.gets(['rt', 'rd', 'pv', 'ip', 'nt', 'host', 'cookie', 'st', 'ut', 'gs', 'vt'])
@@ -282,89 +330,57 @@ meta.addAction('get-layers', async view => {
 	view.ans.st = timings.access_time
 	view.ans.vt = timings.view_time
 	if (!next) return view.err()
-	//next и prev globals не содержат, был редирект на без globals
-
-	// if (update_time && update_time < timings.update_time) {
-	// 	//update_time - reload
-	// 	return view.err()
-	// }
-	// if (access_time && access_time < timings.access_time) {
-	// 	//access_time - все слои надо показать заного
-	// 	return view.err() //Ну или перезагрузиться
-	// }
-	
 	if (globals.length) {
-		//access_time - какие-то слои надо показать заного
 		return view.err() //Ну или перезагрузиться	
 	}
-	
-	//Нужно сообщить какие globals update_time access_time обработал данный запрос
-	//Пока не придёт ответ со старшими update_time и access_time клиент свои не поменяет
-	//Если придут старшие значит именно в этом запросе есть нужные слои в момент когда пришли старшие, для всех предыдущих 
 	view.ans.gs = globals
-	
-
 	
 	const nroute = await router(next)
 	view.ans.root = nroute.root
-	// return {
-	// 	search, secure, get, path, ext,
-	// 	rest, query, restroot,
-	// 	cont, root, crumbs
-	// }
-
+	
 	if (nroute.rest || nroute.secure) return view.err()
 	const rule = await getRule(nroute.root)
 	if (!rule) return view.err('Bad type layers.json')
 	
-	
-	const { index: nopt, status, controller_request } = getIndex(rule, nroute, timings) //{ index: {head, push, root}, status }
-	
+	const bread = new Bread(nroute.path, nroute.get, nroute.search, nroute.root)
+	const theme = getTheme(bread.get, cookie)
+
+	if (bread.get.theme != null) {
+		if (theme.value) {
+			view.ans.headers['Set-Cookie'] = 'theme=' + encodeURIComponent(theme.value) + '; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT'
+		} else {
+			view.ans.headers['Set-Cookie'] = 'theme=; path=/; SameSite=Strict; Max-Age=-1;'
+		}
+	}
+	const interpolate = (val, timings, layer, bread, crumb, theme, head) => new Function(
+		"host","timings", "layer", "bread", "crumb", "theme", "head",
+		'return `'+val+'`'
+	)(host, timings, layer, bread, crumb, theme, head)
+
+	const { index: nopt, status } = getIndex(rule, timings, bread, interpolate, theme) //{ index: {head, push, root}, status }
 	if (!nopt?.root) return view.err()
 	view.ans.status = status
-	//const req = {path:nroute.path, get: nroute.get, ...timing}
-	
+	view.ans.theme = theme
 	if (!prev) {
-		view.ans.push = nopt.ready_push
-		view.ans.head = nopt.ready_head
-		
-		if (nopt.ready_pushtpl.length) {
-			nopt.ready_pushtpl.forEach((val) => {
-				view.ans.push.push(interpolate(val, controller_request))	
-			})
-		}
-		if (view.ans.head.jsontpl) {
-			view.ans.head.json = interpolate(view.ans.head.jsontpl, controller_request)
-		}
-		if (view.ans.head.json) {
-			const crumbs = nroute.path.split('/').filter(v => v)
-			const child = crumbs[1]
-			const client = await view.get('client')
-			const json = view.ans.head.json
-			const data = await loadJSON(json, client).then(({data}) => {
-				if (!Array.isArray(data)) data = [data]
-				let h = path.join('/')
-				return data.find(data => {
-					if (data.child == child) return data
-				})
-			});
-			view.ans.head = {...view.ans.head, ...data}
-		}
+		view.ans.push = collectPush(rule, timings, bread, nopt.root, interpolate, theme)
+		view.ans.head = await collectHead(rule, timings, bread, nopt.root, interpolate, theme)
 		view.ans.layers = [nopt.root]
 		return view.ret()
 	}
 
 	const proute = await router(prev)
-
 	if (proute.rest || proute.secure) return view.err()
 	if (proute.root != nroute.root) {
-		//view.ans.reload = true
 		return view.err()
 	}
 
-	//const nlayers = structuredClone(nopt.root.layers)
-	const nlayers = nopt.root.layers
-	const { index: popt } = getIndex(rule, proute, ptimings)
+	const nlayers = structuredClone(nopt.root.layers) //в prev определяются свойства для объектов слоёв которые повторяются
+
+	const pbread = new Bread(proute.path, proute.get, proute.search, proute.root)
+	const ptheme = getTheme(pbread.get, cookie)
+	
+	
+	const { index: popt } = getIndex(rule, ptimings, pbread, interpolate, ptheme)
 	if (!popt.root) return view.err()
 
 	
@@ -373,36 +389,12 @@ meta.addAction('get-layers', async view => {
 	if (reloadtss.length) view.ans.rt = reloadtss
 	
 	if (nroute.search != proute.search) {
-		view.ans.head = nopt.ready_head
-		view.ans.push = nopt.ready_push
-		if (nopt.ready_pushtpl) {
-			nopt.ready_pushtpl.forEach((val) => {
-				view.ans.push.push(interpolate(val, controller_request))	
-			})
-		}
-		if (view.ans.head.jsontpl) {
-			view.ans.head.json = interpolate(view.ans.head.jsontpl, controller_request)
-		}
-		if (view.ans.head.json) {
-			const crumbs = nroute.path.split('/').filter(v => v)
-			const child = crumbs[1]
-			const client = await view.get('client')
-			const json = view.ans.head.json
-			const data = await loadJSON(json, client).then(({data}) => {
-				if (!Array.isArray(data)) data = [data]
-				let h = path.join('/')
-				return data.find(data => {
-					if (data.child == child) return data
-				})
-			});
-			view.ans.head = {...view.ans.head, ...data}
-		}
+		view.ans.head = await collectHead(rule, timings, bread, nopt.root, interpolate, theme)
 	}
 	return view.ret()    
 })
 
 const getDiff = (players, nlayers, reloaddivs, reloadtss, layers = []) => {
-
 	nlayers?.forEach(nlayer => {
 		const player = players.find(player => {
 			return nlayer.div == player.div 
@@ -421,62 +413,40 @@ const getDiff = (players, nlayers, reloaddivs, reloadtss, layers = []) => {
 	return layers
 }
 
-
-const getIndex = (rule, route, timings, options = {push: [], head: {}}, status = 200, oroute = {}, ocrumb = null, ochild) => {
-	const wcrumbs = route.path.split('/').filter(v => v)
-	let crumb = ''
-	let notfound = false
+const getIndex = (rule, timings, bread, interpolate, theme) => {
+	let status = 200
 	let index = rule
-	let child = ''
-	
-	while (wcrumbs.length) {
-		const wcrumb = wcrumbs.shift()
-		if (index.childs && index.childs[wcrumb]) {
-			crumb = wcrumb
-			index = index.childs[wcrumb]
+	let top = bread.top
+	while (top.child) {
+		top = top.child
+		if (index.childs && index.childs[top.name]) {
+			index = index.childs[top.name]
 		} else if (index.child) {
-			crumb = wcrumb
 			index = index.child
 		} else {
-			notfound = true
-			wcrumbs.unshift(wcrumb)
-			child = wcrumbs.join('/')
-			wcrumbs.unshift(crumb)
-			crumb = wcrumbs.join('/')
+			if (!rule.childs[404]) return []
+			index = rule.childs[404]
+			status = 404
 			break
 		}
 	}
-	ocrumb ??= crumb
-	ochild ??= child
-	if (notfound) {
-		if (route.path == '404') return []
-		return getIndex(rule, {path:'404', get: route.get}, timings, options, 404, route, crumb, child)
-	}	
-
-	const controller_request = {
-		path: oroute.path || route.path, 
-		get: oroute.get || route.get, 
-		crumb: ocrumb,
-		child: ochild, 
-		...timings
-	}
-
 	runByRootLayer(index.root, layer => {
+		const crumb = bread.getCrumb(layer.depth)
 		const ts = layer.ts
 		if (layer.name) {
 			if (rule.tpl) layer.tpl = rule.tpl[layer.name]
 			if (rule.html) layer.html = rule.html[layer.name]
 		}
 		if (rule.parsedtpl && rule.parsedtpl[ts]) {
-			layer.parsed = interpolate(rule.parsedtpl[ts], controller_request)
+			layer.parsed = interpolate(rule.parsedtpl[ts], timings, layer, bread, crumb, theme)
 		}
 		if (rule.jsontpl && rule.jsontpl[ts]) {
-			layer.json = interpolate(rule.jsontpl[ts], controller_request)
+			layer.json = interpolate(rule.jsontpl[ts], timings, layer, bread, crumb, theme)
 		} else {
 			if (rule.json && rule.json[ts]) layer.json = rule.json[ts]
 		}
 	})
-	return { index, status, controller_request }
+	return { index, status }
 }
 
 meta.addAction('sitemap.xml', async view => {
@@ -492,7 +462,7 @@ export const rest = async (query, get, visitor) => {
 		const result = await Access.isAdmin(get.password)
 		return { ans:{result}, status: 200, nostore: true, ext: 'json', 
 			headers: {
-				'Set-Cookie':'-controller=' + (get.password ?? '') + '; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT'
+				'Set-Cookie':'-controller=' + encodeURIComponent(get.password ?? '') + '; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT'
 			}
 		}	
 	}
@@ -500,12 +470,16 @@ export const rest = async (query, get, visitor) => {
 	const ans = await meta.get(query, req)
 	if (query == 'robots.txt') return { ans, ext:'txt', nostore: true }
 	if (query == 'sitemap.xml') return { ans, ext:'xml', nostore: true }
-	if (query == 'get-layers') ans.status = 200
-	const { ext = 'json', status = 200, nostore = ~query.indexOf('set-')} = ans
+	if (query == 'get-layers') {
+		
+		ans.status = 200
+	}
+	const { ext = 'json', status = 200, nostore = ~query.indexOf('set-'), headers = {}} = ans
 	delete ans.status
 	delete ans.nostore
 	delete ans.ext
 	delete ans.push
-	return { ans, status, nostore, ext }
+	delete ans.headers
+	return { ans, status, nostore, ext, headers}
 	
 }

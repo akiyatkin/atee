@@ -131,13 +131,6 @@ export const Server = {
 
                 //console.log(route)
                 const bread = new Bread(route.path, get, search, json.root) //root+path+get = search
-
-				const crumb = {
-					get: route.get,
-					root: route.root,
-					path: route.path, 
-					search: route.search
-				}
                 let status = json.status
                 let info
                 try {
@@ -154,7 +147,8 @@ export const Server = {
 				if (json.push.length) response.setHeader('Link', json.push.join(','));
 				response.writeHead(status, {
 					'Content-Type': TYPES['html'] + '; charset=utf-8',
-					'Cache-Control': info.nostore ? 'no-store' : 'public, max-age=31536000'
+					'Cache-Control': info.nostore ? 'no-store' : 'public, max-age=31536000',
+					...json.headers
 				})
 				return response.end(info.html)
 			} else { //Это может быть новый проект без всего
@@ -167,7 +161,7 @@ export const Server = {
 }
 
 const errmsg = (layer, e) => `<pre><code>${layer.ts}<br>${e.toString()}</code></pre>`
-const getHTML = async (layer, { head, visitor, bread, timings }) => {
+const getHTML = async (layer, { head, visitor, bread, timings, theme }) => {
 	const crumb = bread.getCrumb(layer.depth)
 	const { tpl, json, sub, div } = layer
 	let nostore = false
@@ -191,14 +185,14 @@ const getHTML = async (layer, { head, visitor, bread, timings }) => {
     	})
     	if (tplobj.default) tplobj = tplobj.default
         try {
-        	
         	const env = {
-        		...layer, 
+        		layer, 
         		crumb,
         		bread,
         		host: visitor.client.host, 
-        		head, 
-        		...timings
+        		head, //только этим отличается от interpolate в get-layers
+        		timings,
+        		theme
         	}
         	//cookie: visitor.client.cookie, 
             html = tplobj[sub](data, env)
@@ -218,14 +212,14 @@ const runLayers = async (layers, fn, parent) => {
 	}
 	return Promise.all(promises)
 }
-export const controller = async ({ vt, st, ut, layers, head }, visitor, bread) => {
+export const controller = async ({ vt, st, ut, layers, head, theme }, visitor, bread) => {
 	const ans = {
 		html: '',
         status: 200,
 		nostore: false
 	}
 	const timings = {view_time:vt, access_time:st, update_time:ut}
-	const look = {head, visitor, bread, timings}
+	const look = {head, visitor, bread, timings, theme}
 	const doc = new Doc()
 	await runLayers(layers, async layer => {
 		

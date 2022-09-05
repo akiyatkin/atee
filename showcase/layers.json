@@ -113,7 +113,8 @@
 	},
 	
 	"parsedtpl":{
-		"controller:ER404":"${path}"
+		"index:HEADER":"${theme.value}",
+		"controller:ER404":"${bread.path}"
 	},
 	"json":{
 		"index:MAIN":"/-showcase/get-state",
@@ -130,7 +131,7 @@
 		"values:ROOT":"/-showcase/get-values"
 	},
 	"jsontpl":{
-		"model:ROOT":"/-showcase/get-model?id=${crumb}"
+		"model:ROOT":"/-showcase/get-model?id=${crumb.name}"
 	},
 	"tpl":{
 		"popups":"/-showcase/popups.html.js",

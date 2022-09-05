@@ -1,8 +1,8 @@
 import { HEAD } from "/-controller/layout.html.js"
-export const ROOT = (...args) => `<!DOCTYPE html>
+export const ROOT = (data, env) => `<!DOCTYPE html>
 <html>
 	<head>
-		${HEAD(...args)}
+		${HEAD(data, env)}
 		<link rel="icon" type="/image/svg+xml" href="/images/favicon.svg">
 		<link rel="stylesheet" href="/style.css">
 		<link rel="stylesheet" href="/-showcase/style.css">
@@ -22,7 +22,7 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 </html>
 `
 
-export const PANEL = (data, env) => `
+export const PANEL = (data, env, { layer:{div} } = env) => `
 	<div style="display: flex; gap:0.5rem; flex-wrap:wrap;"> 
 		<button name="set-tables-loadall" class="${data.ready?.tables ? 'ready' : ''}">Внести новые данные</button>
 		<button name="set-prices-loadall" class="${data.ready?.prices ? 'ready' : ''}">Внести новые прайсы</button>
@@ -31,7 +31,7 @@ export const PANEL = (data, env) => `
 	</div>
 	<script type="module" async>
 		import { action } from "/-showcase/action.js"
-		const div = document.getElementById('${env.div}')
+		const div = document.getElementById('${div}')
 		const tag = tag => div.getElementsByTagName(tag)
 		for (const btn of tag('button')) action(btn)
 	</script>
@@ -40,7 +40,7 @@ export const PANEL = (data, env) => `
 export const HEADER = (data, env) => `
 	<div style="display: flex; justify-content: space-between; flex-wrap:wrap">
 		<div>
-			<a href="${env.crumb}">SHOWCASE</a>
+			<a href="${env.crumb}">SHOWCASE</a> 
 			<span id="STAT"></span>
 		</div>
 		<a href="/">${env.host}</a>
@@ -62,7 +62,7 @@ export const HEADER = (data, env) => `
 	</div>
 	<script type="module" async>
 		import { action } from "/-showcase/action.js"
-		const div = document.getElementById('${env.div}')
+		const div = document.getElementById('${env.layer.div}')
 		const tag = tag => div.getElementsByTagName(tag)
 		for (const btn of tag('button')) action(btn)
 	</script>
@@ -92,7 +92,7 @@ export const FOOTER = (data, env) => `
 	</div>
 	<script type="module" async>
 		import { action } from "/-showcase/action.js"
-		const div = document.getElementById('${env.div}')
+		const div = document.getElementById('${env.layer.div}')
 		const tag = tag => div.getElementsByTagName(tag)
 		for (const btn of tag('button')) action(btn)
 	</script>

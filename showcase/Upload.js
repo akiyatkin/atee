@@ -734,8 +734,8 @@ export class Upload {
 					indexes.model_nick, 
 					indexes.brand_title, 
 					indexes.brand_nick,
-					indexes.group_nick, 
-					indexes.sheet_title 
+					indexes.group_nick
+					//, indexes.sheet_title 
 				].indexOf(i)) return
 				props[prop_nick] = { 
 					prop_nick, 
@@ -841,8 +841,8 @@ export class Upload {
 					indexes.model_nick, 
 					indexes.brand_title, 
 					indexes.brand_nick,
-					indexes.group_nick, 
-					indexes.sheet_title 
+					indexes.group_nick
+					//, indexes.sheet_title 
 				].indexOf(i)) return
 				search.push(prop_title)
 			})
@@ -861,8 +861,8 @@ export class Upload {
 						indexes.model_nick, 
 						indexes.brand_title, 
 						indexes.brand_nick,
-						indexes.group_nick, 
-						indexes.sheet_title 
+						indexes.group_nick
+						//, indexes.sheet_title 
 					].indexOf(Number(i))) continue
 					
 					if (~options.text_nicks.indexOf(heads.head_nicks[i])) continue
@@ -935,8 +935,8 @@ export class Upload {
 						indexes.brand_nick,
 						indexes.model_title, 
 						indexes.model_nick,
-						indexes.group_nick, 
-						indexes.sheet_title
+						indexes.group_nick
+						//, indexes.sheet_title
 					].indexOf(i)) return
 					const prop_nick = heads.head_nicks[i]
 					const {prop_id, type} = props[prop_nick]

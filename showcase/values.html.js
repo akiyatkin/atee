@@ -15,7 +15,7 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 		<button name="set-values-clearempty">Удалить пустые</button>
 		<script type="module" async>
 			const id = id => document.getElementById(id)
-			const div = id('${env.div}')
+			const div = id('${env.layer.div}')
 			const tag = tag => div.getElementsByTagName(tag)
 			const btn = tag('button')[0]
 			btn.addEventListener('click',async () => {
@@ -24,7 +24,7 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 				const ans = await fetch('/-showcase/'+btn.name).then(res => res.json()).catch(e => false)
 				btn.innerHTML = ans?.msg || 'Ошибка'
 				const Client = await window.getClient()
-				Client.reloaddiv('${env.div}')
+				Client.reloaddiv('${env.layer.div}')
 			})
 		</script>
 	</p>

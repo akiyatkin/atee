@@ -12,7 +12,7 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 	</table>
 	<script type="module" async>
 		import { action } from "/-showcase/action.js"
-		const div = document.getElementById('${env.div}')
+		const div = document.getElementById('${env.layer.div}')
 		const tag = (tag, el = div) => el.getElementsByTagName(tag)
 		const cls = (cls, el = div) => el.getElementsByClassName(cls)
 		const applyrow = (rowdata) => {

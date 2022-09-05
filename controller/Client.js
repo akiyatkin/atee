@@ -228,8 +228,7 @@ const applyCrossing = async () => {
 		}
 		for (const layer of json.layers) {
 			layer.sys.template = document.createElement('template')
-			layer.crumb = bread.getCrumb(layer.depth)
-			addHtml(layer.sys.template, layer, bread, timings)
+			addHtml(layer.sys.template, layer, bread, timings, json.theme, json.head)
 		}
 		
 		const scripts = []
@@ -265,17 +264,22 @@ const errmsg = (layer, e) => {
 	console.log(layer, e)
 	return `<pre><code>${layer.ts}<br>${e.toString()}</code></pre>`
 }
-const addHtml = (template, layer, bread, timings) => {
+const addHtml = (template, layer, bread, timings, theme, head) => {
+	const crumb = bread.getCrumb(layer.depth)
 	let html = ''
 	if (layer.sys.html) {
 		html = layer.sys.html
 	} else if (layer.sys.tplobj) {
 		const env = {
-			...layer, 
+			layer, 
+			crumb,
 			bread, 
 			host:location.host, 
-			...timings
+			timings,
+			head,
+			theme
 		}
+		delete env.sys
 		//cookie:document.cookie, 
 		const data = layer.sys.data
 		try {
@@ -291,7 +295,7 @@ const addHtml = (template, layer, bread, timings) => {
 		template.innerHTML = html
 	}
 	if (layer.layers) for (const l of layer.layers) {
-		addHtml(template, l, bread, timings)
+		addHtml(template, l, bread, timings, theme, head)
 	}
 }
 const loadAll = (layers, promises = []) => {

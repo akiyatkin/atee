@@ -2,10 +2,10 @@ import { words } from "/-words/words.js"
 export const ROOT = (data, env) => `
 	${data.count?showcount(data):''}
 	<script type="module">
-		const div = document.getElementById('${env.div}')
+		const div = document.getElementById('${env.layer.div}')
 		setTimeout(async () => {
 			const Client = await window.getClient()
-			//await Client.reloaddiv('${env.div}').catch(e => false)
+			//await Client.reloaddiv('${env.layer.div}').catch(e => false)
 		}, 3000)
 	</script>
 `

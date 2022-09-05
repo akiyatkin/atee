@@ -57,6 +57,7 @@ export const Excel = {
 			indexes.model_title = Dabudi.getColIndexOrRename(heads, 'Модель','Артикул')
 			indexes.model_nick = Dabudi.getColIndex(heads, 'model_nick')
 			indexes.group_nick = Dabudi.getColIndex(heads, 'group_nick')
+			indexes.sheet_row = Dabudi.getColIndex(heads, 'sheet_row')
 			indexes.sheet_title = Dabudi.getColIndex(heads, 'sheet_title') //Обязательно последний
 
 			sheets[sheet] = { descr, heads, indexes }
@@ -74,10 +75,11 @@ export const Excel = {
 				return true
 			})
 			
-			rows_items.forEach(row => {
+			rows_items.forEach((row, i) => {
 				row[indexes.brand_title] = row[indexes.brand_title] || brand
 				row[indexes.brand_nick] = nicked(row[indexes.brand_title])
 				row[indexes.model_nick] = onicked(row[indexes.model_title])
+				row[indexes.sheet_row] = i
 				row[indexes.sheet_title] = sheet
 				brands[row[indexes.brand_nick]] = { brand_title:row[indexes.brand_title], brand_nick:row[indexes.brand_nick] }
 			})

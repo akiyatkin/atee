@@ -164,26 +164,62 @@ export const restget = (meta) => {
 			view.ans.status = 404
 			return view.err('Модель не найдена')
 		}
+		const items = await db.all(`
+			SELECT 
+				i.item_num, t.table_title
+			FROM showcase_items i
+				LEFT JOIN showcase_tables t on t.table_id = i.table_id
+			WHERE i.model_id = :model_id
+		`, {model_id: id})
+		model.items = {}
+		items.forEach(item => {
+			item.more = {}
+			model.items[item.item_num] = item
+		})
+		
 		const props = await db.all(`
 			SELECT 
-				ip.model_id, ip.item_num, ip.number, ip.text, v.value_title, p.prop_title, p.type
+				ip.model_id, ip.item_num, ip.number, ip.text, v.value_title, p.prop_title, p.type, 
+				pr.price_title
 			FROM showcase_iprops ip
+				LEFT JOIN showcase_prices pr on ip.price_id = pr.price_id
 				LEFT JOIN showcase_values v on v.value_id = ip.value_id
 				LEFT JOIN showcase_props p on p.prop_id = ip.prop_id
 			WHERE ip.model_id = :model_id
 		`, {model_id: id})
 		
-		model.items = {}
+		
 		for (const prop of props) {
-			model.items[prop.item_num] ??= {item_num:prop.item_num, props:[]}
 			if (prop.type == 'number') {
 				prop.number = Number(prop.number)
 			}
-			model.items[prop.item_num].props.push(prop)
+			model.items[prop.item_num].more[prop.prop_title] ??= {value: [], ...prop}
+			model.items[prop.item_num].more[prop.prop_title].value.push(prop.text ?? prop.value_title ?? prop.number)
 		}
 		model.items = Object.values(model.items).reverse()
+		model.items.forEach(item => {
+			for( const prop_title in item.more) {
+				item.more[prop_title].value = item.more[prop_title].value.join(', ')
+			}
+		})
+		const more = {...model.items[0].more}
+		model.items.forEach(item => {
+			for (const prop_title in item.more) {
+				if (more[prop_title]?.value == item.more[prop_title].value) continue
+				delete more[prop_title]
+			}
+		})
 
+		
+		model.more = more
+		model.items.forEach(item => {
+			for (const prop_title in item.more) {
+				if (!more[prop_title]) continue
+				delete item.more[prop_title]
+			}
+		})
 		view.ans.model = model
+
 		return view.ret()
 	})
 	meta.addAction('get-models', async view => {

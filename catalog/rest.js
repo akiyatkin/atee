@@ -28,7 +28,7 @@ meta.addFunction('int', (view, n) => Number(n))
 meta.addFunction('string', (view, n) => String(n))
 meta.addFunction('array', (view, n) => n ? n.split(',') : [])
 meta.addFunction('nicks', ['array'], (view, ns) => ns.map(v => nicked(v)).filter(v => v).sort())
-
+meta.addArgument('value',['string'])
 
 meta.addVariable('lim', ['array'], (view, lim) => {
 	lim = lim.filter(v => v !== '')
@@ -78,16 +78,29 @@ const getNalichie = Access.cache(async (partner) => {
 	
 	return models
 })
-meta.addArgument('partner', ['string'], async (view, partner) => {
-	const options = await Catalog.getOptions()
-	return options.partners[partner]
-})
+
 meta.addAction('get-nalichie', async (view) => {
 	const { db } = await view.gets(['db','partner'])
 	view.ans.list = await getNalichie()
 	return view.ret()
 })
-
+meta.addArgument('partner', ['string'], async (view, partner) => {
+	const options = await Catalog.getOptions()
+	return options.partners[partner]
+})
+// meta.addAction('get-partner', async (view) => {
+// 	const { db, value } = await view.gets(['db','value'])
+// 	const options = await Catalog.getOptions()
+// 	const data =  options.partners[value]
+// 	if (!data) {
+// 		view.ans.data = {}
+// 		view.ans.value = ''
+// 		return view.err()
+// 	}
+// 	view.ans.value = value
+// 	view.ans.data = data
+// 	return view.ret()
+// })
 
 export const rest = async (query, get) => {
 	const ans = await meta.get(query, get)

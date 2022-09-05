@@ -27,11 +27,43 @@ export class View {
         view.meta = meta
         view.ans = {}
     }
+    async getopt (opt, parentvalue = null, parentname = null) { //для выполнения replaced
+    	const view = this
+    	const pname = opt.name
+		const forname = parentname || pname;
+        let res = parentvalue
+        if (opt['request']) {
+            if (pname in view.req) {
+                res = view.req[pname]
+                //if (res == null) res = null
+            } else {
+                res = null
+            }
+        }
+        for (const n of opt['before'] || []) {
+            const r = await view.get(n, res, forname);
+			if (r != null) res = r;
+        }
+		
+		if (opt['required']) {
+			if (res === null) return view.err(`meta.required ${pname}`);
+		}
+
+		if (opt.func) {
+			const r = await opt.func(view, res, forname, opt.replaced)
+			if (r != null) res = r;
+		}
+        for (const n of opt['after'] || []) {
+            const r = await view.get(n, res, pname);
+			if (r != null) res = r;
+        }
+        return res
+    }
     async get (pname, parentvalue = null, parentname = null) {
         const view = this
         const meta = view.meta
-		if (!meta.list[pname]) return view.err(`meta.notfound ${pname}`);
-		const opt = meta.list[pname];
+		if (!meta.list[pname]) return view.err(`meta.notfound ${pname}`)
+		const opt = meta.list[pname]
         if (!view.proc[pname]) {
             view.proc[pname] = {
                 'ready': false,
@@ -45,38 +77,8 @@ export class View {
 		if (proc['process']) return view.err(`meta.recursion ${pname}`);
 		proc['process'] = true;
 		
-		const forname = parentname || pname;
-
-        let res = parentvalue
-        if (opt['request']) {
-            if (pname in view.req) {
-                res = view.req[pname]
-                //if (res == null) res = null
-            } else {
-                res = null
-            }
-        }
-        
-
-
-        for (const n of opt['before'] || []) {
-            const r = await view.get(n, res, forname);
-			if (r != null) res = r;
-        }
+		const res = await view.getopt(opt, parentvalue, parentname)
 		
-		if (opt['required']) {
-			if (res === null) return view.err(`meta.required ${pname}`);
-		}
-
-		if (opt.func) {
-			const r = await opt.func(view, res, forname)
-			if (r != null) res = r;
-		}
-        for (const n of opt['after'] || []) {
-            const r = await view.get(n, res, pname);
-			if (r != null) res = r;
-        }
-
 		proc['ready'] = true
 		proc['result'] = res
 		proc['process'] = false
@@ -158,8 +160,10 @@ export class Meta {
 				before = a1;
 			}
 		}
-		if (this.list[pname]) throw `double handler ${pname}`;
+		const replaced = this.list[pname] ? this.list[pname] : false
+		//if (this.list[pname]) throw `double handler ${pname}`; //подмены разрешены
 		this.list[pname] = {
+			replaced,
 			'name': pname,
 			//'process': false,
 			'request': false, //Нужно ли брать из REQUEST

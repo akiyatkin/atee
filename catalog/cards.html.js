@@ -8,31 +8,31 @@ export default cards
 
 cards.LIST = (data, env) => `
 	<style>
-		.${env.sub} { grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)) }
+		.${env.layer.sub} { grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)) }
 		@media (max-width:767px) {
-			.${env.sub} { grid-template-columns: 1fr 1fr }
+			.${env.layer.sub} { grid-template-columns: 1fr 1fr }
 		}
 		@media (max-width:400px) {
-			.${env.sub} { grid-template-columns: 1fr }
+			.${env.layer.sub} { grid-template-columns: 1fr }
 		}
 	</style>
 	${cards.badgecss(data, env)}
-	<div class="${env.sub}" style="padding-bottom: 20px; display: grid;  grid-gap: 20px">	
+	<div class="${env.layer.sub}" style="padding-bottom: 20px; display: grid;  grid-gap: 20px">	
 		${data.list.map(mod => cards.item(data, mod)).join('')}
 	</div>
 `
 cards.badgecss = (data, env) => `
 	<style>
-		#${env.div} .badge {
+		#${env.layer.div} .badge {
 			border-radius: 8px;
 			border: solid 1px currentColor;
 			padding: 2px 8px;
 			font-size: 0.9rem;
 		}
-		#${env.div} .badge:hover {
+		#${env.layer.div} .badge:hover {
 			background-color: white;
 		}
-		#${env.div} .badge_novinka {
+		#${env.layer.div} .badge_novinka {
 			color: green;
 		}
 	</style>

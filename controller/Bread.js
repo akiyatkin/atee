@@ -1,29 +1,34 @@
 export class Bread {
 	crumbs = []
 	top = null //Верхний уровень контроллера
+	end = null //Последний уровень адресной строки
 	root = null //Путь от реального корня до контроллера
-	search = null //Строка запроса как она есть
+	href = null //Строка запроса как она есть
 	get = null //get параметры
 	path = null //строка запроса к контроллеру
-	constructor (path, get, search, root) {
-		this.search = search
+	depth = null //Глубина запроса, или последний индекс в crumbs
+	constructor (path, get, href, root) {
+		this.href = href
 		this.root = root
 		this.get = get
+		
 		this.path = path
 		path = path.split('/').filter(p => p)
-		let top = new Crumb(this, path.join('/'))
+		this.depth = path.length
+		let top = new Crumb(root, path.join('/'))
 		this.top = top
-		const cont = []
+		const prev = []
 		this.crumbs.push(top)
 		while (path.length) {
-			const p = path.shift()
-			const crumb = new Crumb(this, path.join('/'), cont.join('/'), p)
+			const name = path.shift()
+			const crumb = new Crumb(root, path.join('/'), prev.join('/'), name)
 			this.crumbs.push(crumb)
-			cont.push(p)
+			prev.push(name)
 			crumb.parent = top
 			top.child = crumb
 			top = crumb
 		}
+		this.end = this.crumbs[this.depth]
 	}
 	getCrumb (i) {
 		return this.crumbs[i]
@@ -33,13 +38,11 @@ class Crumb {
 	child = null
 	parent = null
 	#crumb = null
-	#bread = null
-	constructor (bread, next = '', cont = '', name = '') {
-		this.#bread = bread
+	constructor (root, next = '', prev = '', name = '') {
 		this.name = name
-		this.cont = cont //до, без name
+		this.prev = prev //до, без name
 		this.next = next //после, без name
-		this.#crumb = '/' + [bread.root, cont, name].filter(p => p).join('/')
+		this.#crumb = '/' + [root, prev, name].filter(p => p).join('/')
 	}
 	toString () {
 		return this.#crumb

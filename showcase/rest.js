@@ -76,8 +76,11 @@ restset(meta)
 export const rest = async (query, get, visitor) => {
 	const ans = await meta.get(query, {...get, visitor})
 	if (typeof(ans) == 'string') return { ans, status: 200, nostore:true, ext: 'html' }
-	if (~query.indexOf('set-')) Access.setAccessTime()
-	const { status = 200, nostore = true } = ans
+	if (~query.indexOf('set-')) {
+		ans.nostore = true
+		Access.setAccessTime()
+	}
+	const { status = 200, nostore = false } = ans
 	delete ans.status
 	delete ans.nostore	
 	return { ans, status, nostore, ext: 'json' }

@@ -16,6 +16,6 @@
 		"index:MAIN":"none"
 	},
 	"parsedtpl":{
-		"index:MAIN":"${view_time}"
+		"index:MAIN":"${timings.view_time}"
 	}
 }

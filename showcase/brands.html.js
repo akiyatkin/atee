@@ -15,7 +15,7 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 		<button class="botbtn" data-action="set-brands-clearempty">Удалить пустые</button>
 		<script type="module" async>
 			const id = id => document.getElementById(id)
-			const div = id('${env.div}')
+			const div = id('${env.layer.div}')
 			const cls = cls => div.getElementsByClassName(cls)
 			const btn = cls('botbtn')[0]
 			btn.addEventListener('click',async () => {
@@ -24,7 +24,7 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 				const ans = await fetch('/-showcase/'+btn.dataset.action).then(res => res.json()).catch(e => false)
 				btn.innerHTML = ans?.msg || 'Ошибка'
 				const Client = await window.getClient()
-				Client.reloaddiv('${env.div}')
+				Client.reloaddiv('${env.layer.div}')
 			})
 			const draglist = cls('draglist')[0]
 			let moved = false

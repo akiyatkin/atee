@@ -6,7 +6,7 @@ export const ROOT = (data, env) => `
 	</p>
 	<script type="module" async>
 		const id = id => document.getElementById(id)
-		const div = id('${env.div}')
+		const div = id('${env.layer.div}')
 		const btn = id('btnreset')
 		btn.addEventListener('click', async () => {
 			if (!confirm('Все данные будут удалены. Пересоздать?')) return
