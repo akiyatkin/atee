@@ -253,6 +253,7 @@ Catalog.getGroupOptions = Access.cache(async (group_id) => {
 	const tree = await Catalog.getTree()
 	const group = tree[group_id]
 	let opt = {}
+	opt.limit ??= 12
 	group.path.forEach(parent_id => {
 		if (!options.groupids[parent_id]) return
 		opt = {...opt, ...options.groupids[parent_id]}
@@ -264,16 +265,44 @@ Catalog.getGroupOptions = Access.cache(async (group_id) => {
 	})
 	return opt
 })
-
-Catalog.getAllCount = Access.cache(async () => {
+Catalog.getMainGroups = Access.cache(async (prop_title = 'Тип') => {
 	const db = await new Db().connect()
-	const count = await db.col('SELECT count(*) FROM showcase_models')
-	const gcount = await db.col('SELECT count(*) FROM showcase_groups')
+	const tree = structuredClone(await Catalog.getTree())
+	
+	const groups = Object.values(tree)
+	const root = groups.find(g => !g.parent_id)
+	const childs = groups.filter(g => g.parent_id == root.group_id && g.icon)
 
-	const list = []
-	const root_id = await db.col('SELECT group_id from showcase_groups WHERE parent_id is null')
-	const groups = !root_id ? [] : await db.all('select group_title, group_nick from showcase_groups WHERE parent_id = :root_id order by ordain', {root_id})
-	return {count, gcount, list, groups}
+	const prop = await Catalog.getProp(prop_title)
+	for (const group of childs) {
+		group.types = await db.all(`
+			SELECT distinct v.value_title, v.value_nick
+			FROM 
+				showcase_values v, showcase_iprops ip, showcase_items i, showcase_models m,
+				showcase_props p
+			WHERE v.value_id = ip.value_id and i.model_id = ip.model_id and i.item_num = ip.item_num
+			and ip.prop_id = :prop_id
+			and i.model_id = m.model_id and m.group_id in (${group.groups.join(',')})
+			and p.prop_id = ip.prop_id
+			order by p.ordain
+		`, prop)
+	
+
+		group.childs = group.childs.map(group_id => {
+			return {
+				group_title: tree[group_id].group_title,
+				group_nick: tree[group_id].group_nick
+			}
+		})
+	}
+	return {childs, prop}
+})
+Catalog.getAllCount = Access.cache(async () => {
+	const tree = await Catalog.getTree()
+	const groups = Object.values(tree)
+	const root = groups.find(g => !g.parent_id)
+	const childs = groups.filter(g => g.parent_id == root.group_id)
+	return {count:root.indepth, gcount: groups.length - 1, list:[], groups:childs}
 })
 Catalog.getPropById = Access.cache(async (prop_id) => {
 	const db = await new Db().connect()
@@ -310,5 +339,61 @@ Catalog.getTree = Access.cache(async () => {
 		//if (!group.parent_id) continue
 		//tree[group.parent_id].groups.push(group.group_id)
 	}
+	for (const group_id in tree) {
+		const group = tree[group_id]
+		group.inside = await db.col('SELECT count(*) from showcase_models where group_id = :group_id',{group_id})
+		group.indepth = group.inside
+		group.groups = [group.group_id]
+		group.childs = []
+	}
+	for (const group_id in tree) {
+		const group = tree[group_id]
+		group.path.forEach(parent_id => {
+			const parent = tree[parent_id]
+			parent.indepth += group.inside
+		})
+	}
+	for (const group_id in tree) {
+		if (!tree[group_id].indepth) delete tree[group_id]
+	}
+	for (const group_id in tree) {
+		const group = tree[group_id]
+		if (group.parent_id) {
+			const parent = tree[group.parent_id]
+			parent.childs.push(group.group_id)
+		}
+		group.path.forEach(parent_id => {
+			const parent = tree[parent_id]
+			parent.groups.push(group.group_id)
+		})
+	}
 	return tree
 })
+Catalog.getModel = async (db, brand_nick, model_nick, partner) => {
+	const moditem_ids = await db.all(`
+		SELECT m.model_id, GROUP_CONCAT(i.item_num separator ',') as item_nums
+		FROM 
+			showcase_items i
+			LEFT JOIN showcase_models m on m.model_id = i.model_id
+			LEFT JOIN showcase_brands b on m.brand_id = b.brand_id
+		WHERE b.brand_nick = :brand_nick and m.model_nick = :model_nick
+		GROUP BY m.model_id
+	`, {model_nick, brand_nick})
+	const models = await Catalog.getModelsByItems(moditem_ids, partner)
+	return models[0]
+}
+Catalog.search = async (db, group, partner) => {
+	const opt = await Catalog.getGroupOptions(group.group_id)
+	
+	const moditem_ids = await db.all(`
+		SELECT m.model_id, GROUP_CONCAT(i.item_num separator ',') as item_nums
+		FROM 
+			showcase_items i
+			LEFT JOIN showcase_models m on m.model_id = i.model_id
+		WHERE m.group_id in (${group.groups.join(',')})
+		GROUP BY m.model_id
+		LIMIT ${opt.limit}
+	`)
+	const models = await Catalog.getModelsByItems(moditem_ids, partner)
+	return models
+}

@@ -78,29 +78,30 @@ const getRoot = (str) => {
 	return ~i ? str.slice(1, i) : ''
 }
 
-export const loadJSON = async (src, visitor) => {
+export const loadJSON = (src, visitor) => {
 	return load(src, visitor, 'json')
 }
-export const loadTEXT = async (src, visitor) => {
+export const loadTEXT = (src, visitor) => {
 	return load(src, visitor, 'txt')
 }
-const load = (src, visitor, type) => {
-	return visitor.once('router load', [src, type], async (src, type) => {
-		let res = { ans: '', status: 200, nostore: false } //, headers: { }, ext: type
+const load = (src, visitor, ext) => {
+	return visitor.once('router load', [src, ext], async (src, ext) => {
+		let res = { ans: '', status: 200, nostore: false } //, headers: { }, ext: ext
+		
 		const {
 			search, secure, get,
 			rest, query, restroot
 		} = await router(src)
-
-	    if (!rest) throw { status: 500, src, type }
-
+		
+		
+	    if (!rest) throw { status: 500, src, ext }
+	    
 		res = {...res, ...(await rest(query, get, visitor))}
-	    if (res.status != 200) throw { status: res.status, src, res, type }
-
+	    if (res.status != 200) throw { status: res.status, src, res, ext }
 		let data = res.ans
 		if (data instanceof ReadStream) {
 			data = await readTextStream(data)
-			if (type == 'json') data = JSON.parse(data)
+			if (ext == 'json') data = JSON.parse(data)
 		}
 		return {data, nostore:res.nostore}
 	})

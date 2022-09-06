@@ -79,6 +79,81 @@ const getNalichie = Access.cache(async (partner) => {
 	return models
 })
 
+meta.addArgument('m',['string'])
+meta.addArgument('model_nick', (view, model_nick) => {
+	return nicked(model_nick)
+})
+meta.addArgument('brand_nick', (view, model_nick) => {	
+	return nicked(model_nick)
+})
+meta.addAction('get-model', async (view) => {
+	const { db, brand_nick, model_nick, m, partner } = await view.gets(['db','brand_nick','model_nick','m','partner'])
+	const model = await Catalog.getModel(db, brand_nick, model_nick, partner)	
+	view.ans.model = model
+	return view.ret()		
+})
+meta.addAction('get-search', async (view) => {
+	const { db, value, m, partner} = await view.gets(['db','value','m','partner'])
+	const tree = await Catalog.getTree()
+	const groups = Object.values(tree)
+	view.ans.groups=groups
+	const value_nick = nicked(value)
+	let type = 'Поиск'
+	if (!value_nick) type = ''
+	let group = value_nick ? groups.find(group => group.group_nick == value_nick) : false
+	if (group) type = 'Группа'
+	if (!group) group = groups.find(group => !group.parent_id)
+
+	const res = {
+		value, type, group,
+		childs: group.childs.map(id => tree[id]),
+		path: group.path.map(id => tree[id]),
+		list: await Catalog.search(db, group, partner)
+	}
+	Object.assign(view.ans, res)
+	return view.ret()
+})
+meta.addAction('get-search-head', async (view) => {
+	const { db, value } = await view.gets(['db','value'])
+	
+	const tree = await Catalog.getTree()
+	const groups = Object.values(tree)
+	const value_nick = nicked(value)
+	const group = groups.find(group => {
+		return group.group_nick == value_nick
+	})
+	view.ans.child = value
+	if (group) {
+		view.ans.title = group.group_title
+	} else {
+		view.ans.title = 'Группа не найдена'
+	}
+
+	return view.ret()
+})
+meta.addAction('get-catalog', async (view) => {
+	const { db } = await view.gets(['db','partner'])
+	
+	const tree = await Catalog.getTree()
+	
+	const groups = Object.values(tree)
+	const root = groups.find(g => !g.parent_id)
+	const childs = groups.filter(g => g.parent_id == root.group_id && g.icon)	
+	
+	for (const i in childs) {
+		childs[i] = structuredClone(childs[i])
+		const group = childs[i]
+		group.childs = group.childs.map(group_id => {
+			return {
+				group_title: tree[group_id].group_title,
+				group_nick: tree[group_id].group_nick
+			}
+		})
+	}
+
+	view.ans.childs = childs
+	return view.ret()
+})
 meta.addAction('get-nalichie', async (view) => {
 	const { db } = await view.gets(['db','partner'])
 	view.ans.list = await getNalichie()

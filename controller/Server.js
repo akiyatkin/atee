@@ -160,7 +160,9 @@ export const Server = {
 	}
 }
 
-const errmsg = (layer, e) => `<pre><code>${layer.ts}<br>${e.toString()}</code></pre>`
+const errmsg = (layer, e) => `
+	<pre><code>${layer.ts}<br>${e.toString()}${console.log(e) || ''}</code></pre>
+`
 const getHTML = async (layer, { head, visitor, bread, timings, theme }) => {
 	const crumb = bread.getCrumb(layer.depth)
 	const { tpl, json, sub, div } = layer
@@ -170,7 +172,9 @@ const getHTML = async (layer, { head, visitor, bread, timings, theme }) => {
 	
 	let html = ''
 	if (layer.html) {
-		const ans = await loadTEXT(layer.html, visitor).catch(e => { return {data: errmsg(layer, e), nostore: true} })
+		const ans = await loadTEXT(layer.html, visitor).catch(e => { 
+			return {data: errmsg(layer, e), nostore: true} 
+		})
 		html = ans.data
 		nostore = nostore || ans.nostore
 	} else if (tpl) {

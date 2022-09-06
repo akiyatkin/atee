@@ -21,16 +21,15 @@ export class Bread {
 		this.crumbs.push(top)
 		while (path.length) {
 			const name = path.shift()
-			const crumb = new Crumb(root, path.join('/'), prev.join('/'), name)
+			const crumb = new Crumb(root, path.join('/'), prev.join('/'), name, top)
 			this.crumbs.push(crumb)
 			prev.push(name)
-			crumb.parent = top
-			top.child = crumb
 			top = crumb
 		}
 		this.end = this.crumbs[this.depth]
 	}
 	getCrumb (i) {
+		if (!this.crumbs[i]) this.crumbs[i] = new Crumb(this.root, '', this.path, '', this.getCrumb(i - 1))
 		return this.crumbs[i]
 	}
 }
@@ -38,7 +37,9 @@ class Crumb {
 	child = null
 	parent = null
 	#crumb = null
-	constructor (root, next = '', prev = '', name = '') {
+	constructor (root, next = '', prev = '', name = '', parent) {
+		this.parent = parent
+		if (parent) parent.child = this
 		this.name = name
 		this.prev = prev //до, без name
 		this.next = next //после, без name

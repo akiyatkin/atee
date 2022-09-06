@@ -96,7 +96,7 @@ const wakeup = (rule, depth = 0) => {
 		wakeup(rule.childs[path], depth + 1)
 	}
 }
-const spread = (rule, parent) => {
+const spread = (rule, parent) => { //всё что в layout root переносим в свой child или childs
 	if (!rule) return
 	if (!rule.layout) return
 	if (parent) {
@@ -180,6 +180,7 @@ const getRule = Once.proxy( async root => {
 		runByRootLayer(r.root, layer => {
 			const ts = layer.ts
 			if (rule.animate && rule.animate[ts]) layer.animate = rule.animate[ts]
+			if (rule.depth && rule.depth[ts]) layer.depth = rule.depth[ts]
 		})
 	})
 	return rule
@@ -200,7 +201,7 @@ const collectPush = (rule, timings, bread, root, interpolate, theme) => {
 	})
 	return push
 }
-const collectHead = async (rule, timings, bread, root, interpolate, theme) => {
+const collectHead = async (visitor, rule, timings, bread, root, interpolate, theme) => {
 	let head = {}
 	runByRootLayer(root, layer => {
 		const ts = layer.ts
@@ -213,21 +214,21 @@ const collectHead = async (rule, timings, bread, root, interpolate, theme) => {
 	if (head.jsontpl) {
 		head.json = interpolate(head.jsontpl, timings, head.layer, bread, head.crumb, theme)
 	}
-	delete head.layer
-	delete head.crumb
+	
 	if (head.json) {
-		const child = bread.top.child
-		const client = await view.get('client')
-		const json = view.ans.head.json
-		const data = await loadJSON(json, client).then(({data}) => {
+		const data = await loadJSON(head.json, visitor).then(({data}) => {
 			if (!Array.isArray(data)) data = [data]
-			let h = path.join('/')
 			return data.find(data => {
-				if (data.child == child.name) return data
+				if (data.child == head.crumb.name) return data
 			})
-		});
+		}).catch(e => {
+			console.log(e)
+			return {}
+		})
 		head = {...head, ...data}
 	}
+	delete head.layer
+	delete head.crumb
 	return head
 }
 meta.addAction('sitemap', async view => {
@@ -241,7 +242,7 @@ meta.addAction('sitemap', async view => {
 	let mm = date.getMonth() + 1; // месяц 1-12
 	if (mm < 10) mm = '0' + mm;
 	const modified = date.getFullYear() + '-' + mm + '-' + dd
-	const client = await view.get('client')
+	const visitor = await view.get('visitor')
 	runByIndex(rule, async (index, path) => {
 		if (~path.indexOf(false)) return
 		if (~['404','403','500'].indexOf(path[0])) return
@@ -268,7 +269,7 @@ meta.addAction('sitemap', async view => {
 		delete head.crumb
 		if (head.json) {
 			const json = head.json
-			const res = await loadJSON(json, client).then(({data}) => {
+			const res = await loadJSON(json, visitor).then(({data}) => {
 				if (!Array.isArray(data)) data = [data]
 				let h = path.join('/')
 				data.forEach(data => {
@@ -314,12 +315,13 @@ const getTheme = (get, cookie) => {
 	return theme
 }
 meta.addArgument('client')
+meta.addArgument('visitor')
 meta.addAction('get-layers', async view => {
 	view.ans.nostore = true
 	view.ans.headers = {}
 	const {
-		rt:reloadtss, rd:reloaddivs, pv: prev, nt: next, host, cookie, st: access_time, ut: update_time, vt: view_time, gs: globals 
-	} = await view.gets(['rt', 'rd', 'pv', 'ip', 'nt', 'host', 'cookie', 'st', 'ut', 'gs', 'vt'])
+		visitor, rt:reloadtss, rd:reloaddivs, pv: prev, nt: next, host, cookie, st: access_time, ut: update_time, vt: view_time, gs: globals 
+	} = await view.gets(['visitor', 'rt', 'rd', 'pv', 'ip', 'nt', 'host', 'cookie', 'st', 'ut', 'gs', 'vt'])
 	const ptimings = { access_time, update_time, view_time }
 	const timings = {
 		update_time: Access.getUpdateTime(),
@@ -363,7 +365,7 @@ meta.addAction('get-layers', async view => {
 	view.ans.theme = theme
 	if (!prev) {
 		view.ans.push = collectPush(rule, timings, bread, nopt.root, interpolate, theme)
-		view.ans.head = await collectHead(rule, timings, bread, nopt.root, interpolate, theme)
+		view.ans.head = await collectHead(visitor, rule, timings, bread, nopt.root, interpolate, theme)
 		view.ans.layers = [nopt.root]
 		return view.ret()
 	}
@@ -389,7 +391,7 @@ meta.addAction('get-layers', async view => {
 	if (reloadtss.length) view.ans.rt = reloadtss
 	
 	if (nroute.search != proute.search) {
-		view.ans.head = await collectHead(rule, timings, bread, nopt.root, interpolate, theme)
+		view.ans.head = await collectHead(visitor, rule, timings, bread, nopt.root, interpolate, theme)
 	}
 	return view.ret()    
 })
@@ -466,12 +468,11 @@ export const rest = async (query, get, visitor) => {
 			}
 		}	
 	}
-	const req = {root:'', ...get, ...visitor.client, client:visitor.client}
+	const req = {root:'', ...get, ...visitor.client, client:visitor.client, visitor}
 	const ans = await meta.get(query, req)
 	if (query == 'robots.txt') return { ans, ext:'txt', nostore: true }
 	if (query == 'sitemap.xml') return { ans, ext:'xml', nostore: true }
 	if (query == 'get-layers') {
-		
 		ans.status = 200
 	}
 	const { ext = 'json', status = 200, nostore = ~query.indexOf('set-'), headers = {}} = ans

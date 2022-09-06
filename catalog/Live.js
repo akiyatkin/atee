@@ -136,7 +136,8 @@ export const Live = {
 			e.preventDefault()
 			const need = Live.getNeed(input)
 			const Client = await window.getClient()
-			Client.pushState(need.hash ? '/catalog?m=:search=' + need.hash : '/catalog')
+			//const m = new URL(location).searchParams.get('m')
+			Client.pushState(need.hash ? '/catalog?m=search=' + need.hash : '/catalog')
 		})
 
 		if (document.activeElement == input) searchfrominput()
