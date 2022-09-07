@@ -18,7 +18,7 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 		const applyrow = (rowdata) => {
 			const name = rowdata.dataset.name
 			for (const btn of tag('button', rowdata)) action(btn, async (ans) => {
-				const tpl = await import('${env.tpl}')
+				const tpl = await import('${env.layer.tpl}')
 				const { htmltodiv } = await import('/-controller/htmltodiv.js')
 				let rowdata
 				for (let item of cls('rowdata')) {

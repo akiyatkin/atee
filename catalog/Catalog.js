@@ -10,6 +10,7 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums afte
 	//Заполнили основными данными
 	if (!moditems_ids.length) return []
 	const db = await new Db().connect()
+	const options = await Catalog.getOptions()
 	const models = await db.all(`SELECT 
 		m.model_id, m.model_nick, m.model_title, b.brand_title, b.brand_nick, g.group_nick, g.group_title, g.group_id
 		FROM showcase_models m, showcase_brands b, showcase_groups g
@@ -29,9 +30,10 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums afte
 
 	const ips = await db.all(`
 		SELECT ip.model_id, ip.item_num, v.value_title, ip.text, ip.number, ip.prop_id
-		FROM showcase_iprops ip
+		FROM showcase_props p, showcase_iprops ip
 			LEFT JOIN showcase_values v on v.value_id = ip.value_id
-		WHERE (ip.model_id, ip.item_num) in (${modids.map(it => '(' + it.model_id + ',' + it.item_num + ')').join(',')})
+		WHERE p.prop_id = ip.prop_id and (ip.model_id, ip.item_num) in (${modids.map(it => '(' + it.model_id + ',' + it.item_num + ')').join(',')})
+		order by p.ordain DESC
 	`)
 	
 	let list = {}
@@ -62,27 +64,35 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums afte
 		}
 	}
 	for (const model of list) {
-		const common = model.items[0]
+		const model_rows = {...model.items[0]}
+		const item_rows = []
 		for (const item of model.items) {
 			for (const prop in item) {
-				if (common[prop] == null) continue
+				if (model_rows[prop] == null) continue
 				const val = item[prop]
-				if (common[prop] === val) continue
-				delete common[prop]
+				if (model_rows[prop] === val) continue
+				item_rows.push(prop)
+				delete model_rows[prop]
 			}
 		}
-		for (const prop in common) {
-			model[prop] = common[prop]
+		for (const prop in model_rows) {
+			model[prop] = model_rows[prop]
 		}
 		for (const item of model.items) {
 			for (const prop in item) {
-				if (common[prop] == null) continue
+				if (model_rows[prop] == null) continue
 				delete item[prop]
 			}
 		}
+		model.item_rows = item_rows.filter(prop => !~options.systems.indexOf(prop)) //До разделения на common и more
+		model.model_rows = Object.keys(model_rows).filter(prop => !~options.systems.indexOf(prop)&&!~options.columns.indexOf(prop))
+		/*
+			известные колонки могут попадать в items, как показать вариативность известных колонок если это может быть единственной разницей?
+		*/
+		model.model_rows = model.model_rows.map(prop => options.props[prop] ?? {prop_title:prop, prop_nick:nicked(prop), value_title:prop, value_nick:prop})
+		
 	}
 	for (const model of list) {
-
 		const { props } = await Catalog.getGroupOptions(model.group_id)
 		model.props = [...props]
 		model.props = await filter(model.props, async (pr) => {
@@ -111,11 +121,12 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums afte
 		})
 
 	}
-	const options = await Catalog.getOptions()
+	
 	for (const model of list) {
 		model.more = {}
 		for (const prop in model) {
 			if (~options.columns.indexOf(prop)) continue
+			if (~options.systems.indexOf(prop)) continue
 			model.more[prop] = model[prop]
 			delete model[prop]
 		}
@@ -124,6 +135,7 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums afte
 			item.more = {}
 			for (const prop in item) {
 				if (~options.columns.indexOf(prop)) continue
+				if (~options.systems.indexOf(prop)) continue
 				item.more[prop] = item[prop]
 				delete item[prop]
 			}
@@ -178,11 +190,11 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums afte
 			model.discount = partner.discount
 		}
 	}
-	for (const model of list) {
-		//Выбор обязателен если несколько позиций. Но если позиция одна то item_num сразу в моделе есть
-		if (model.items.length != 1) continue
-		delete model.items
-	}
+	// for (const model of list) {
+	// 	//Выбор обязателен если несколько позиций. Но если позиция одна то item_num сразу в моделе есть
+	// 	if (model.items.length != 1) continue
+	// 	delete model.items
+	// }
 	return list
 }
 Catalog.getOptions = Access.cache(async () => {
@@ -197,6 +209,7 @@ Catalog.getOptions = Access.cache(async () => {
 		throw 'Требуется options.columns'
 	}
 	options.columns ??= []
+	options.systems ??= []
 	for (const group_title in options.groups) {
 		const ids = await db.colAll('SELECT group_id FROM showcase_groups where group_title = :group_title', { group_title })
 		ids.forEach(id => {

@@ -18,7 +18,7 @@ cards.LIST = (data, env) => `
 	</style>
 	${cards.badgecss(data, env)}
 	<div class="${env.layer.sub}" style="padding-bottom: 20px; display: grid;  grid-gap: 20px">	
-		${data.list.map(mod => cards.item(data, mod)).join('')}
+		${data.list.map(mod => cards.card(data, mod)).join('')}
 	</div>
 `
 cards.badgecss = (data, env) => `
@@ -37,7 +37,7 @@ cards.badgecss = (data, env) => `
 		}
 	</style>
 `
-cards.item = (data, mod) => `
+cards.card = (data, mod) => `
 	<div style="border-radius: var(--radius); position:relative; display:flex; flex-direction: column; justify-content: space-between; box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)" 
  		class="shadow">
  		${cards.data(data, mod)}
@@ -56,7 +56,7 @@ cards.data = (data, mod) => `
 	</div>
 `
 cards.props = (data, mod) => `
-	<div class="props">
+	<div>
 		${mod.props.map(pr => {
 			const val = common.prtitle(mod, pr)
 			if (val == null) return ''
@@ -114,7 +114,7 @@ cards.basket = (mod) => {
 		`
 	} else if (mod.Цена) {
 		return `
-			<div style="float: right">${cost(mod.Цена)}${common.unit()}</div>
+			<div style="float: right"><b>${cost(mod.Цена)}${common.unit()}</b></div>
 		`
 	}
 	return ''

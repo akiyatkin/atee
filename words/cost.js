@@ -1,5 +1,8 @@
 export const cost = (cost) => {
+	if (!cost) return
 	cost = String(cost)
+	const ar = cost.split(/[,\.]/)
+	cost = Number(ar[0]);
 	let inp = '&nbsp;'
 	const l = cost.length;
 	if (l > 4) { //10000 = 10 000
@@ -14,7 +17,7 @@ export const cost = (cost) => {
 			cost = start + inp + last
 		}	
 	}
-
+	if (ar[1]) cost += '.'+ar[1]
 	return cost;
 
 }

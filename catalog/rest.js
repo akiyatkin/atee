@@ -89,7 +89,7 @@ meta.addArgument('brand_nick', (view, model_nick) => {
 meta.addAction('get-model', async (view) => {
 	const { db, brand_nick, model_nick, m, partner } = await view.gets(['db','brand_nick','model_nick','m','partner'])
 	const model = await Catalog.getModel(db, brand_nick, model_nick, partner)	
-	view.ans.model = model
+	view.ans.mod = model
 	return view.ret()		
 })
 meta.addAction('get-search', async (view) => {

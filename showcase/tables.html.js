@@ -16,7 +16,7 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 			const name = rowdata.dataset.name
 			for (const btn of tag('button', rowdata)) action(btn, async (ans) => {
 				const { htmltodiv } = await import('/-controller/htmltodiv.js')
-				const tpl = await import('${env.tpl}')
+				const tpl = await import('${env.layer.tpl}')
 				let rowdata
 				for (let item of cls('rowdata')) {
 					if (item.dataset.name == name) rowdata = item
