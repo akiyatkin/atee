@@ -8,7 +8,7 @@ const model = {}
 export default model
 
 model.ROOT = (data, env, { mod } = data) => `
-	<div style="float:left; margin-top:1rem"><a href="${env.bread.crumbs[1]}/${mod.group_nick}">${mod.group_title}</a></div>
+	<div style="float:left; margin-top:1rem"><a href="${env.bread.crumbs[1]}/${mod.group_nick}${links.setm(data)}">${mod.group_title}</a></div>
 	<h1 style="clear:both">${cards.name(mod)}</h1>
 	
 	${model.common(data, mod)}

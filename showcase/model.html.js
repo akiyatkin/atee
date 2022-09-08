@@ -4,7 +4,7 @@ export const ROOT = (data, env) => `
 	
 `
 const showmodel = (mod) => `
-	<h1>${mod?.brand_title} ${mod?.model_title}</h1>
+	<h1>${mod.brand_title} ${mod.model_title}</h1>
 
 	<div><b>Группа</b>: ${mod.group_title}</div>
 	${mapobj(mod.more, showprop).join('')}

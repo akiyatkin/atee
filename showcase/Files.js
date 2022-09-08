@@ -16,7 +16,7 @@ export const Files = {
 		return file
 	},
 	readdirDeep: async (visitor, dir) => {
-		const dirents = await visitor.once('readdirDeep', [dir], () => {
+		const dirents = await visitor.relate(Files).once('readdirDeep'+dir, () => {
 			return fs.readdir(dir, {withFileTypes: true}).catch(() => [])	
 		})
 
@@ -104,8 +104,8 @@ export const Files = {
 
 		return { secure, num, name, ext, file }
 	},
-	readdir: async (visitor, dir) => {
-		return visitor.once('readdir', [dir], async (dir) => {
+	readdir: (visitor, dir) => {
+		return visitor.relate(Files).once('readdir'+dir, async () => {
 			let files = await fs.readdir(dir).catch(() => [])
 			files = files.map((file) => Files.nameInfo(file))
 			files = files.filter(({secure}) => !secure)

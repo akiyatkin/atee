@@ -301,6 +301,21 @@ const addHtml = (template, layer, bread, timings, theme, head) => {
 const loadAll = (layers, promises = []) => {
 	
 	if (!layers) return promises
+
+	const jsons = {}
+	for (const layer of layers) {
+		if (!layer.json) continue
+		jsons[layer.json] = fetch(layer.json).then(res => {
+			if (res.status != 200) {
+				console.log(4, res)
+				location.reload()
+				return new Promise(() => {})//reload сразу не происходит, надо зависнуть
+			}
+			const type = res.headers.get('Content-Type')
+			if (~type.indexOf('text/html')) return res.text()
+			return res.json()
+		})
+	}	
 	for (const layer of layers) {
 		if (!layer.sys) layer.sys = {}
 		if (layer.tpl) {
@@ -314,21 +329,12 @@ const loadAll = (layers, promises = []) => {
 				promises.push(promise)
 			}
 			if (layer.json) {
-				let promise = fetch(layer.json).then(res => {
-					if (res.status != 200) {
-						console.log(4, res)
-						location.reload()
-						return new Promise(() => {})//reload сразу не происходит, надо зависнуть
-					}
-					const type = res.headers.get('Content-Type')
-					if (~type.indexOf('text/html')) return res.text()
-					return res.json()
-				}).then(data => {
+				jsons[layer.json].then(data => {
 					layer.sys.data = data
 				}).catch(e => {
 					layer.sys.data = errmsg(layer, e)
 				})
-				promises.push(promise)
+				promises.push(jsons[layer.json])
 			}
 		} else if (layer.html) {
 			let promise = fetch(layer.html).then(res => {

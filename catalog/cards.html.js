@@ -17,7 +17,7 @@ cards.LIST = (data, env) => `
 		}
 	</style>
 	${cards.badgecss(data, env)}
-	<div class="${env.layer.sub}" style="padding-bottom: 20px; display: grid;  grid-gap: 20px">	
+	<div class="${env.layer.sub}" style="display: grid;  grid-gap: 20px">	
 		${data.list.map(mod => cards.card(data, mod)).join('')}
 	</div>
 `
@@ -123,7 +123,7 @@ cards.name = (mod) => `
 	<a style="padding: 0; color: inherit; border: none; white-space: normal;" href="${links.model(mod)}">${mod.Наименование || mod.model_title}</a>
 `
 cards.image = (mod) => `
-	<div style="min-height: 2rem">
+	<div style="min-height: 2.7rem">
 		${mod.Наличие ? cards.nalichie(mod) : ''}
 		${mod.images?.length ? cards.img(mod) : ''}
 	</div>

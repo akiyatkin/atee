@@ -10,6 +10,7 @@ import { Doc } from './Doc.js'
 
 import { parse } from './Spliter.js'
 import { getPost } from './getPost.js'
+import Visitor from './Visitor.js'
 
 const TYPES = {
 	txt: 'text/plain',
@@ -29,30 +30,7 @@ const TYPES = {
 	svg: 'image/svg+xml',
 	pdf: 'application/pdf'
 };
-class Visitor {
-    store = {}
-    getStore (name, args) {
-		const hash = args.join('-')
-		const STORE = this.store
-		if (!STORE[name]) STORE[name] = {}
-		if (!STORE[name][hash]) STORE[name][hash] = {}
-		return STORE[name][hash]
-	}
-    once (name, args, callback) {
-    	const store = this.getStore(name, args)
-    	if (store.ready) return store.promise
-    	store.promise = callback(...args)
-    	store.ready = true
-    	return store.promise
-    }
-    constructor (request) {
-    	this.client = {
-			cookie: request.headers.cookie, 
-			host: request.headers.host, 
-			ip: request.headers['x-forwarded-for'] || request.socket.remoteAddress
-		}
-    }
-}
+
 export const Server = {
 	follow: (PORT = 8888, IP = "127.0.0.1") => {
 		const server = http.createServer()

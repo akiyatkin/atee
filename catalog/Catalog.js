@@ -205,6 +205,9 @@ Catalog.getOptions = Access.cache(async () => {
 	options.groupids = {}
 	options.partners ??= {}
 	options.props ??= []
+	options.root_title ??= 'Каталог'
+	options.root_nick = nicked(options.root_title)
+	options.actions ??= ['Новинка','Распродажа']
 	if (!options.columns) {
 		throw 'Требуется options.columns'
 	}
@@ -227,7 +230,11 @@ Catalog.getOptions = Access.cache(async () => {
 	}
 	return options
 })
-
+Catalog.getValueId = (db, visitor, value_nick) => {
+	return visitor.relate(Catalog).once('getValueId' + value_nick, () => {
+		return db.col('SELECT value_id FROM showcase_values WHERE value_nick = :value_nick',{value_nick})
+	})
+}
 Catalog.getValue = async (db, model, nickortitle, item_num = 1) => {
 	const { model_id } = model
 	const prop = await Catalog.getProp(nickortitle)
@@ -261,6 +268,7 @@ Catalog.getValue = async (db, model, nickortitle, item_num = 1) => {
 	}
 	model[nickortitle] = values
 }
+
 Catalog.getGroupOptions = Access.cache(async (group_id) => {
 	const options = await Catalog.getOptions()
 	const tree = await Catalog.getTree()
@@ -278,6 +286,7 @@ Catalog.getGroupOptions = Access.cache(async (group_id) => {
 	})
 	return opt
 })
+
 Catalog.getMainGroups = Access.cache(async (prop_title = 'Тип') => {
 	const db = await new Db().connect()
 	const tree = structuredClone(await Catalog.getTree())
@@ -328,16 +337,42 @@ Catalog.getProp = Access.cache(async (prop_title) => {
 	const prop = await db.fetch('SELECT type, prop_nick, prop_title, prop_id from showcase_props where prop_nick = :prop_nick', { prop_nick })
 	return prop
 })
+Catalog.getGroupByNick = async (nick) => {
+	const groups = await Catalog.getGroups()
+	return groups[nick]
+}
+Catalog.getBrandByNick = async (nick) => {
+	const brands = await Catalog.getBrands()
+	return brands[nick]
+}
 Catalog.getBrandById = Access.cache(async (brand_id) => {
-	const db = await new Db().connect()
-	const brand = await db.fetch('SELECT * from showcase_brands where brand_id = :brand_id', { brand_id })
-	return brand
+	const brands = await Catalog.getBrands()
+	for (const brand_nick in brands) {
+		const brand = brands[brand_nick]
+		if (brand.brand_id == brand_id) return brand
+	}
 })
 const addParents = (group, parent_id, tree) => {
 	if (!parent_id) return
 	group.path.unshift(parent_id)
 	addParents(group, tree[parent_id].parent_id, tree)
 }
+Catalog.getBrands = Access.cache(async () => {
+	const db = await new Db().connect()
+	const brands = await db.alltoint('brand_nick', `
+		SELECT brand_id, brand_nick, brand_title, logo, ordain
+		FROM showcase_brands ORDER by ordain
+	`,[], ['brand_id'])
+	return brands
+})
+Catalog.getGroups = Access.cache(async () => {
+	const tree = await Catalog.getTree()
+	const groups = {}
+	for (const group_id in tree) {
+		groups[tree[group_id].group_nick] = tree[group_id]
+	}
+	return groups
+})
 Catalog.getTree = Access.cache(async () => {
 	const db = await new Db().connect()
 	const tree = await db.alltoint('group_id', `
@@ -395,18 +430,123 @@ Catalog.getModel = async (db, brand_nick, model_nick, partner) => {
 	const models = await Catalog.getModelsByItems(moditem_ids, partner)
 	return models[0]
 }
-Catalog.search = async (db, group, partner) => {
-	const opt = await Catalog.getGroupOptions(group.group_id)
-	
-	const moditem_ids = await db.all(`
-		SELECT m.model_id, GROUP_CONCAT(i.item_num separator ',') as item_nums
-		FROM 
-			showcase_items i
-			LEFT JOIN showcase_models m on m.model_id = i.model_id
-		WHERE m.group_id in (${group.groups.join(',')})
-		GROUP BY m.model_id
-		LIMIT ${opt.limit}
-	`)
-	const models = await Catalog.getModelsByItems(moditem_ids, partner)
-	return models
+Catalog.getmdwhere = (db, visitor, md) => {
+	return visitor.relate(Catalog).once('getmdwhere' + md.m, async () => {
+		const groupnicks = await Catalog.getGroups()
+		const brandnicks = await Catalog.getBrands()
+		const where = []
+		if (md.group) {
+			let group_ids = []
+			Object.keys(md.group).forEach(nick => groupnicks[nick].groups.forEach(id => group_ids.push(id)))
+			group_ids = unique(group_ids)
+			if (group_ids.length) where.push(`m.group_id in (${group_ids.join(',')})`)
+		}
+		if (md.brand) {
+			const brand_ids = Object.keys(md.brand).map(nick => brandnicks[nick].brand_id)
+			where.push(`m.brand_id in (${brand_ids.join(',')})`)
+		}
+		if (md.search) {
+			const hashs = unique(nicked(md.search).split('-').filter(val => !!val)).sort()
+			if (hashs.length) {
+				where.push(`m.search like "%${hashs.join('%" and m.search like "%')}%"`)
+			}
+		}
+		if (md.more) {
+			const prop_number_ids = []
+			const prop_value_ids = []
+			for (const prop_nick in md.more) {
+				const prop = await Catalog.getProp(prop_nick)
+				const values = md.more[prop_nick]
+				for (const value in values) {
+					if (prop.type == 'number') prop_number_ids.push(prop.prop_id+','+value)
+					if (prop.type == 'value') {
+						let value_id = await Catalog.getValueId(db, visitor, value)
+						if (!value_id) value_id = 0
+						prop_value_ids.push(prop.prop_id+','+value_id)
+					}
+				}
+			}
+			if (prop_number_ids.length) {
+				where.push(`(ip.prop_id, ip.number) in ((${prop_number_ids.join('),(')}))`)
+			}
+			if (prop_value_ids.length) {
+				where.push(`(ip.prop_id, ip.value_id) in ((${prop_value_ids.join('),(')}))`)
+			}
+			
+		}
+		return where
+	})
 }
+Catalog.searchGroups = (db, visitor, md) => {
+	return visitor.relate(Catalog).once('searchGroups' + md.m, async () => {
+		//const {search = '', group = {}, brand = {}, more = {}} = md
+		const where = await Catalog.getmdwhere(db, visitor, md)
+		let res_ids
+		if (!where.length) {
+			const tree = await Catalog.getTree()
+			const options = await Catalog.getOptions()
+			const groupnicks = await Catalog.getGroups()
+			res_ids = groupnicks[nicked(options.root_nick)].groups.filter(id => tree[id].inside)
+		} else {
+			if (md.more) {
+				res_ids = await db.colAll(`
+					SELECT distinct group_id from showcase_models m
+					left join showcase_iprops ip on ip.model_id = m.model_id
+					WHERE ${where.join(' and ')}
+				`)	
+			} else {
+				res_ids = await db.colAll(`
+					SELECT distinct group_id from showcase_models m
+					WHERE ${where.join(' and ')}
+				`)	
+			}
+			
+		}
+		return res_ids
+	})
+}
+Catalog.getCommonChilds = async (group_ids) => {
+	const tree = await Catalog.getTree()
+	let groups = []
+	if (group_ids.length) {
+		let rootpath = tree[group_ids[0]].path
+		group_ids.forEach(group_id => {
+			rootpath = rootpath.filter(id => ~tree[group_id].path.indexOf(id) || id == group_id)
+		})
+		const root = tree[rootpath.at(-1)] //Общий корень
+
+		const level_group_ids = unique(group_ids.filter(group_id => tree[group_id].path.length >= root.path.length).map(group_id => {
+			return tree[group_id].path[root.path.length + 1] || group_id
+		}))
+		groups = level_group_ids.map(id => tree[id])
+	}
+	return groups
+}
+Catalog.getMainGroup = async md => {
+	const groupnicks = await Catalog.getGroups()
+	const options = await Catalog.getOptions()
+	const root = groupnicks[options.root_nick]
+	let group = root
+	if (md.group) {
+		const group_nicks = Object.keys(md.group)
+		if (group_nicks.length == 1) {
+			group = groupnicks[group_nicks[0]]
+		}
+	}
+	return group
+}
+// Catalog.search = async (db, group, partner) => {
+// 	const opt = await Catalog.getGroupOptions(group.group_id)
+	
+// 	const moditem_ids = await db.all(`
+// 		SELECT m.model_id, GROUP_CONCAT(i.item_num separator ',') as item_nums
+// 		FROM 
+// 			showcase_items i
+// 			LEFT JOIN showcase_models m on m.model_id = i.model_id
+// 		WHERE m.group_id in (${group.groups.join(',')})
+// 		GROUP BY m.model_id
+// 		LIMIT ${opt.limit}
+// 	`)
+// 	const models = await Catalog.getModelsByItems(moditem_ids, partner)
+// 	return models
+// }

@@ -102,12 +102,10 @@ export const Live = {
 	},
 	getNeed: (input) => {
 		let query = input.value
-		query = query.toLowerCase()
-		query = query.replace(/<\/?[^>]+(>|$)/g, "")
-		query = query.replace(/[\s\-\"\']+/g, " ")
-		const hash = nicked(query).split('-')
-			//.filter(val => val.length > 1)
-			.join('-')
+		query = query.replace(/<\/?[^>]*(>|$)/g, " ")
+		query = query.replace(/[\s\-\"\'\&\?\:\.\,\!\*]+/g, " ")
+		let hash = query.toLowerCase()
+		hash = nicked(hash).split('-').join('-')
 		//const hash = nicked(query).split('-').filter(val => val.length > 1).join('-')
 		return {query, hash}
 	},
@@ -136,8 +134,31 @@ export const Live = {
 			e.preventDefault()
 			const need = Live.getNeed(input)
 			const Client = await window.getClient()
-			//const m = new URL(location).searchParams.get('m')
-			Client.pushState(need.hash ? '/catalog?m=search=' + need.hash : '/catalog')
+			const url = new URL(location)
+			const m = url.searchParams.get('m')
+			const r = url.pathname.split('/')
+			const value = r[1] == 'catalog' && r[2] && !r[3] ? r[2] : ''
+			let src = '/catalog'
+			const newm = []
+			if (m) newm.push(m)
+			if (value) newm.push(`value=${value}`)
+			//if (need.hash) 
+			newm.push(`search=${need.query}`)
+			if (newm.length) {
+				src += '?m='+newm.join(':')
+			}
+			Client.pushState(src)	
+			// if (m) {
+			// 	Client.pushState(need.hash ? `/catalog/${need.query}?m=${m}` : `/catalog?m=${m}`)	
+			// } else {
+			// 	Client.pushState(need.hash ? `/catalog/${need.query}` : `/catalog`)	
+			// }
+			// if (m) {
+			// 	Client.pushState(need.hash ? '/catalog?m='+m+':search=' + need.query : '/catalog')	
+			// } else {
+			// 	Client.pushState(need.hash ? '/catalog?m=search=' + need.query : '/catalog')	
+			// }
+			
 		})
 
 		if (document.activeElement == input) searchfrominput()

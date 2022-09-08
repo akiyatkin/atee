@@ -172,7 +172,7 @@ const getRule = Once.proxy( async root => {
 	const [sub, frame = ''] = split('.', subframe)
 	const frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
 	const ts = tsf ? name + ':' + sub : ''
-	runByIndex(rule, r => { //строим дерево root по дивам
+	runByIndex(rule, (r,path) => { //строим дерево root по дивам		
 		r.root = { tsf, ts, name, sub, frame, frameid, depth: 0, tpl:null, html: null, json:null, layers:null }
 		//Object.seal(r.root) debug test
 		maketree(r.root, r.layout, rule)
@@ -180,7 +180,10 @@ const getRule = Once.proxy( async root => {
 		runByRootLayer(r.root, layer => {
 			const ts = layer.ts
 			if (rule.animate && rule.animate[ts]) layer.animate = rule.animate[ts]
-			if (rule.depth && rule.depth[ts]) layer.depth = rule.depth[ts]
+			if (!rule.depth || !rule.depth[ts]) return
+			const dif = rule.depth[ts] - layer.depth
+			layer.depth += dif
+			runByRootLayer(layer, (l) => l.depth = layer.depth)
 		})
 	})
 	return rule

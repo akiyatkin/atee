@@ -64,7 +64,7 @@ export class Upload {
 	}
 	async receiveProp(prop_title) {
 		const { visitor, options, db } = this.opt
-		return visitor.once('receiveProp', [prop_title], async (prop_title) => {
+		return visitor.relate(Upload).once('receiveProp'+prop_title, async () => {
 			const prop = {
 				prop_title,
 				prop_nick: nicked(prop_title)

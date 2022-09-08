@@ -85,7 +85,9 @@ export const loadTEXT = (src, visitor) => {
 	return load(src, visitor, 'txt')
 }
 const load = (src, visitor, ext) => {
-	return visitor.once('router load', [src, ext], async (src, ext) => {
+	const store = visitor.relate(load)
+	const name = src+':'+ext
+	return store.once(name, async () => {
 		let res = { ans: '', status: 200, nostore: false } //, headers: { }, ext: ext
 		
 		const {
