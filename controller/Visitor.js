@@ -14,7 +14,7 @@ export default class Visitor {
 	}
 	constructor (request) {
 		this.client = {
-			cookie: request.headers.cookie, 
+			cookie: request.headers.cookie || '', 
 			host: request.headers.host, 
 			ip: request.headers['x-forwarded-for'] || request.socket.remoteAddress
 		}
