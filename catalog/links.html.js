@@ -4,7 +4,8 @@ import common from "/-catalog/common.html.js"
 const links = {}
 export default links
 
-links.model = (mod) => `/catalog/${mod.brand_nick}/${mod.model_nick}`
+links.model = (data, mod) => `/catalog/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}`
+links.brand = (data, mod) => `/catalog/${mod.brand_nick}${links.setm(data)}`
 links.search = (val) => `/catalog/${nicked(val)}`
 
 //links.amodel = (mod) => `<a href="/catalog/${mod.brand_nick}/${mod.model_nick}">${mod.brand_title} ${mod.model_title}</a>`

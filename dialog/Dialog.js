@@ -12,6 +12,7 @@ document.addEventListener('keydown', async e => {
 })
 export const Dialog = {
 	frame: async (parent, html) => {
+
 		parent = parent.tagName ? parent : document.getElementById(parent)
 		const popobj = await import('/-dialog/layout.html.js')
 		const { htmltodiv } = await import('/-controller/htmltodiv.js')
@@ -29,6 +30,7 @@ export const Dialog = {
 				Dialog.hide(parent)
 			})
 		}
+
 		const body = cls('dialogbody', dialog)[0]
 		dialog.addEventListener('click', async e => {
 			if (!dialog.classList.contains('show')) return
@@ -51,9 +53,11 @@ export const Dialog = {
 		const i = Dialog.parents.indexOf(parent)
 		if (~i) Dialog.parents.splice(i, 1)
 		Dialog.parents.push(parent)
+		
 		dialog.classList.add('show')
 		dialog.lastfocus = document.activeElement
-		document.activeElement.blur()
+		document.activeElement.blur()	
+		
 	},
 	hide: parent => {
 		//document.getElementsByTagName('html')[0].style.overscrollY = ''

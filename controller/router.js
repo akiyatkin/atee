@@ -99,7 +99,7 @@ const load = (src, visitor, ext) => {
 	    if (!rest) throw { status: 500, src, ext }
 	    
 		res = {...res, ...(await rest(query, get, visitor))}
-	    if (res.status != 200) throw { status: res.status, src, res, ext }
+	    if (res.status != 200) throw { status: res.status, src, res, ext, from:'router.load', toString: () => query + ' ' + res.status}
 		let data = res.ans
 		if (data instanceof ReadStream) {
 			data = await readTextStream(data)

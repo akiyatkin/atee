@@ -17,8 +17,11 @@ export const evalScripts = div => {
 			p = new Promise((resolve, reject) => {
 				const fresh = document.createElement("script");
 				fresh.type = old.type
+				fresh.id = 'evalScripts_'+i+'_'+Date.now()
 				fresh.addEventListener('ready', resolve)
-				fresh.textContent = old.textContent + ';document.getElementById("'+div.id+'").getElementsByTagName("script")['+i+'].dispatchEvent(new Event("ready"))'
+				fresh.textContent = old.textContent + `
+					document.getElementById("${fresh.id}").dispatchEvent(new Event("ready"))
+				`	
 				old.replaceWith(fresh)
 			})
 		}

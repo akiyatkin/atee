@@ -12,7 +12,9 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums afte
 	const db = await new Db().connect()
 	const options = await Catalog.getOptions()
 	const models = await db.all(`SELECT 
-		m.model_id, m.model_nick, m.model_title, b.brand_title, b.brand_nick, g.group_nick, g.group_title, g.group_id
+		m.model_id, 
+		m.model_nick, m.model_title, b.brand_title, b.brand_nick, g.group_nick, g.group_title, g.group_id, 
+		g.parent_id
 		FROM showcase_models m, showcase_brands b, showcase_groups g
 
 		WHERE m.brand_id = b.brand_id and m.group_id = g.group_id
@@ -417,18 +419,21 @@ Catalog.getTree = Access.cache(async () => {
 	}
 	return tree
 })
-Catalog.getModel = async (db, brand_nick, model_nick, partner) => {
-	const moditem_ids = await db.all(`
-		SELECT m.model_id, GROUP_CONCAT(i.item_num separator ',') as item_nums
-		FROM 
-			showcase_items i
-			LEFT JOIN showcase_models m on m.model_id = i.model_id
-			LEFT JOIN showcase_brands b on m.brand_id = b.brand_id
-		WHERE b.brand_nick = :brand_nick and m.model_nick = :model_nick
-		GROUP BY m.model_id
-	`, {model_nick, brand_nick})
-	const models = await Catalog.getModelsByItems(moditem_ids, partner)
-	return models[0]
+Catalog.getModelByNick = async (db, visitor, brand_nick, model_nick, partner = '') => {
+	const key = 'getModelByNick' + brand_nick + ':' + model_nick + ':' + partner
+	return visitor.relate(Catalog).once(key, async () => {
+		const moditem_ids = await db.all(`
+			SELECT m.model_id, GROUP_CONCAT(i.item_num separator ',') as item_nums
+			FROM 
+				showcase_items i
+				LEFT JOIN showcase_models m on m.model_id = i.model_id
+				LEFT JOIN showcase_brands b on m.brand_id = b.brand_id
+			WHERE b.brand_nick = :brand_nick and m.model_nick = :model_nick
+			GROUP BY m.model_id
+		`, {model_nick, brand_nick})
+		const models = await Catalog.getModelsByItems(moditem_ids, partner)
+		return models[0]
+	})
 }
 Catalog.getmdwhere = (db, visitor, md) => {
 	return visitor.relate(Catalog).once('getmdwhere' + md.m, async () => {
@@ -458,9 +463,10 @@ Catalog.getmdwhere = (db, visitor, md) => {
 				const prop = await Catalog.getProp(prop_nick)
 				const values = md.more[prop_nick]
 				for (const value in values) {
-					if (prop.type == 'number') prop_number_ids.push(prop.prop_id+','+value)
+					const value_nick = nicked(value)
+					if (prop.type == 'number') prop_number_ids.push(prop.prop_id+','+value_nick)
 					if (prop.type == 'value') {
-						let value_id = await Catalog.getValueId(db, visitor, value)
+						let value_id = await Catalog.getValueId(db, visitor, value_nick)
 						if (!value_id) value_id = 0
 						prop_value_ids.push(prop.prop_id+','+value_id)
 					}
@@ -513,9 +519,14 @@ Catalog.getCommonChilds = async (group_ids) => {
 		group_ids.forEach(group_id => {
 			rootpath = rootpath.filter(id => ~tree[group_id].path.indexOf(id) || id == group_id)
 		})
-		const root = tree[rootpath.at(-1)] //Общий корень
-
-		const level_group_ids = unique(group_ids.filter(group_id => tree[group_id].path.length >= root.path.length).map(group_id => {
+		let root = tree[rootpath.at(-1)] //Общий корень
+		if (!root) {
+			root = {path:[]}
+		}
+		const level_group_ids = unique(group_ids
+		.filter(group_id => {
+			return tree[group_id].parent_id && tree[group_id].path.length >= root.path.length
+		}).map(group_id => {
 			return tree[group_id].path[root.path.length + 1] || group_id
 		}))
 		groups = level_group_ids.map(id => tree[id])
@@ -534,6 +545,13 @@ Catalog.getMainGroup = async md => {
 		}
 	}
 	return group
+}
+Catalog.getMainBrand = async md => {
+	if (!md.brand) return
+	const brand_nicks = Object.keys(md.brand)
+	if (brand_nicks.length != 1) return
+	const brandnicks = await Catalog.getBrands()
+	return brandnicks[brand_nicks[0]]
 }
 // Catalog.search = async (db, group, partner) => {
 // 	const opt = await Catalog.getGroupOptions(group.group_id)

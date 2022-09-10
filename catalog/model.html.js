@@ -8,20 +8,47 @@ const model = {}
 export default model
 
 model.ROOT = (data, env, { mod } = data) => `
-	<div style="float:left; margin-top:1rem"><a href="${env.bread.crumbs[1]}/${mod.group_nick}${links.setm(data)}">${mod.group_title}</a></div>
-	<h1 style="clear:both">${cards.name(mod)}</h1>
+	<div style="float:left; margin-top:1rem"><a href="${env.crumb.parent.parent}${mod.parent_id ? '/'+mod.group_nick : ''}${links.setm(data)}">${mod.group_title}</a></div>
+	<h1 style="clear:both">${cards.name(data, mod)}</h1>
 	
-	${model.common(data, mod)}
+	${model.common(data, env, mod)}
+	
 	${model.props(data, mod)}
 	${mod.item_rows.length ? model.items(data, mod) : ''}
 	<!-- <pre>${JSON.stringify(mod, "\n", 2)}</pre> -->
 `
-model.common = (data, mod) => `
-	${model.showprop('Бренд', mod.brand_title)}
+const showimage = (src) => `
+	<img load="lazy" src="${src}">
+`
+const brandlink = (data, env, mod) => `
+	<a href="${env.crumb.parent}${links.setm(data)}">${mod.brand_title}</a>
+`
+model.common = (data, env, mod) => `
+	${cards.badgecss(data, env)}
+	<div style="float: right;">${mod.Наличие ? cards.badgenalichie(data, mod) : ''}</div>
+	${model.showprop('Бренд', brandlink(data, env, mod))}
 	${model.showprop('Модель', mod.model_title)}
+	${cards.basket(data, mod)}
+
+	${mod.images? '<p>'+mod.images.map(showimage)+'</p>' : ''}
 	<p>
-		<i>${mod.Описание}</i>
+		<i>${mod.Описание || ''}</i>
 	</p>
+	<p><button id="makeorder">Сделать заказ</button></p>
+	<div id="popuporder"></div>
+	<script type="module">
+		import { Dialog } from '/-dialog/Dialog.js'
+		const btn = document.getElementById('makeorder')
+		const tplobj = await import('/-catalog/order.html.js')
+		const html = tplobj.ROOT(${JSON.stringify(data)}, 'popuporder', "${env.theme.partner ?? ''}")
+		//const { Dialog } = await import('/-dialog/Dialog.js')
+		await Dialog.frame('popuporder', html)
+		btn.addEventListener('click', async () => {
+			btn.disabled = true
+			await Dialog.show('popuporder')	
+			btn.disabled = false
+		})	
+	</script>
 `
 model.items = (data, mod) => `
 	<table class="table">
@@ -49,7 +76,7 @@ model.props = (data, mod) => `
 		${mod.model_rows.map(pr => {
 			const val = common.prtitle(mod, pr)
 			if (val == null) return ''
-			return cards.prop[pr.tplprop ?? 'default'](data, mod, pr, pr.prop_title, val)
+			return cards.prop.wrap(data, mod, pr, pr.prop_title, val)
 		}).join('')}
 	</div>
 `

@@ -210,35 +210,35 @@ const collectHead = async (visitor, rule, timings, bread, root, interpolate, the
 		const ts = layer.ts
 		if (!rule.head || !rule.head[ts]) return
 		const crumb = bread.getCrumb(layer.depth)
-		head = rule.head[ts]
+		head = {...rule.head[ts]}
 		head.layer = layer
 		head.crumb = crumb
-	})		
+	})
+
 	if (head.jsontpl) {
 		head.json = interpolate(head.jsontpl, timings, head.layer, bread, head.crumb, theme)
 	}
-	
 	if (head.json) {
-		const data = await loadJSON(head.json, visitor).then(({data}) => {
-			if (!Array.isArray(data)) data = [data]
-			return data.find(data => {
-				if (data.child == head.crumb.name) return data
-			})
-		}).catch(e => {
+		const {data} = await loadJSON(head.json, visitor).catch(e => {
 			console.log(e)
-			return {}
+			return {data:{result:0}}
 		})
+		if (!data.result) {
+			console.log(head.json, data)
+		}
 		head = {...head, ...data}
 	}
 	delete head.layer
 	delete head.crumb
+
 	return head
 }
+
 meta.addAction('sitemap', async view => {
 	const { root, host } = await view.gets(['root','host'])
 	const rule = await getRule(root)
 	if (!rule) return view.err()
-	const list = []
+	
 	const date = new Date(Access.getUpdateTime())
 	let dd = date.getDate();
 	if (dd < 10) dd = '0' + dd;
@@ -246,56 +246,50 @@ meta.addAction('sitemap', async view => {
 	if (mm < 10) mm = '0' + mm;
 	const modified = date.getFullYear() + '-' + mm + '-' + dd
 	const visitor = await view.get('visitor')
-	runByIndex(rule, async (index, path) => {
+	const sitemap = {}
+	if (!rule.head) return view.err('Требуется секция head')
+	runByIndex(rule, (index, path) => {
 		if (~path.indexOf(false)) return
-		if (~['404','403','500'].indexOf(path[0])) return
-		const bread = new Bread(path.join('/'), {}, path.join('/'), index.root)
 		let head = {}
+		path = path.join('/')
 		runByRootLayer(index.root, layer => {
 			const ts = layer.ts
-			if (!rule.head || !rule.head[ts]) return
-			const crumb = bread.getCrumb(layer.depth)
+			if (!rule.head[ts]) return
 			head = rule.head[ts]
-			head.layer = layer
-			head.crumb = crumb
 		})
 		if (head.hidden) return
-		if (head.jsontpl) {
-			head.json = new Function(
-				"host", "layer", "bread", "crumb", 
-				'return `'+head.jsontpl+'`'
-			)(
-				host, layer, bread, crumb
-			)
-		}
-		delete head.layer
-		delete head.crumb
-		if (head.json) {
-			const json = head.json
-			const res = await loadJSON(json, visitor).then(({data}) => {
-				if (!Array.isArray(data)) data = [data]
-				let h = path.join('/')
-				data.forEach(data => {
-					const href = data.child ? h + '/' + data.child : h
-					index.ready_head = {...index.ready_head, ...data}
-					list.push({
-						...head,
-						modified,
-						href
-					})
-				})
-			})
-			list.push(res)
-		} else {
-			list.push({
-				...head,
-				modified,
-				href: path.join('/')
-			})
+		sitemap.childs ??= {}
+		sitemap.childs[path] = {
+			modified,
+			...head
 		}
 	})
-	return list
+	const list = []
+	const headings = []
+	
+	for (const href in sitemap.childs) {
+		const head = sitemap.childs[href]
+		
+		const json = head.json || head.sitemap || false
+		const res = json ? await loadJSON(json, visitor).catch(e => console.log('head', href, e)) : false
+		if (res && res.data) Object.assign(head, res.data)
+
+		if (head.name || head.title) {
+			list.push({...head, href})
+		}
+		if (!head.headings) continue
+
+		for (const i in head.headings) {
+			const heading = head.headings[i]
+			heading.modified ??= modified
+			heading.href = href
+			headings.push(heading)
+		}
+	}
+
+	return {list, headings}
 })
+
 const fromCookie = (cookie) => {
 	let name = cookie.match('(^|;)?theme=([^;]*)(;|$)')
 	if (!name) return ''
@@ -405,6 +399,7 @@ const getDiff = (players, nlayers, reloaddivs, reloadtss, layers = []) => {
 			return nlayer.div == player.div 
 			&& nlayer.ts == player.ts 
 			&& nlayer.json == player.json 
+			&& nlayer.html == player.html 
 			&& nlayer.parsed == player.parsed 
 			&& !~reloaddivs.indexOf(player.div)
 			&& !~reloadtss.indexOf(player.ts)
@@ -438,9 +433,18 @@ const getIndex = (rule, timings, bread, interpolate, theme) => {
 	runByRootLayer(index.root, layer => {
 		const crumb = bread.getCrumb(layer.depth)
 		const ts = layer.ts
+
+		
 		if (layer.name) {
+			if (rule.htmltpl && rule.htmltpl[layer.name]) {
+				layer.html = interpolate(rule.htmltpl[layer.name], timings, layer, bread, crumb, theme)
+			} else {
+				if (rule.html) layer.html = rule.html[layer.name]
+			}
+
 			if (rule.tpl) layer.tpl = rule.tpl[layer.name]
-			if (rule.html) layer.html = rule.html[layer.name]
+
+			
 		}
 		if (rule.parsedtpl && rule.parsedtpl[ts]) {
 			layer.parsed = interpolate(rule.parsedtpl[ts], timings, layer, bread, crumb, theme)
@@ -450,13 +454,27 @@ const getIndex = (rule, timings, bread, interpolate, theme) => {
 		} else {
 			if (rule.json && rule.json[ts]) layer.json = rule.json[ts]
 		}
+
 	})
 	return { index, status }
 }
 
 meta.addAction('sitemap.xml', async view => {
-	const { sitemap, host } = await view.gets(['sitemap','host'])
-	return SITEMAP_XML( sitemap, { host } )
+	const { sitemap: {list, headings}, host } = await view.gets(['sitemap','host'])
+	const res = [...list]
+	for (const i in headings) {
+		const heading = headings[i]
+		const href = heading.href
+		const modified = heading.modified
+		for (const next in heading.childs) {
+			res.push({
+				modified, 
+				...heading.childs[next],
+				href: href + (href ? '/'+next : next)
+			})
+		}
+	}
+	return SITEMAP_XML( res, { host } )
 })
 meta.addAction('robots.txt', async view => {
 	const { host } = await view.gets(['host'])

@@ -18,5 +18,4 @@ export const animate = (tag, a, promise, animate = '') => {
 			requestNextAnimationFrame(() => list.replace(tag + '-animate' + animate + '-before', tag + '-animate' + animate + '-after'))
 		}).catch(e => null)
 	}, 100)
-	
 }

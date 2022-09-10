@@ -38,7 +38,11 @@ cards.badgecss = (data, env) => `
 	</style>
 `
 cards.card = (data, mod) => `
-	<div style="border-radius: var(--radius); position:relative; display:flex; flex-direction: column; justify-content: space-between; box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)" 
+	<div style="
+		min-width: 0; /*fix overflow-text ellipsis*/
+		border-radius: var(--radius); 
+		position:relative; 
+		display:flex; flex-direction: column; justify-content: space-between; box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)" 
  		class="shadow">
  		${cards.data(data, mod)}
  	</div>	
@@ -46,13 +50,13 @@ cards.card = (data, mod) => `
 cards.data = (data, mod) => `
 	<div>
 		<div style="margin: 0.5rem 1rem;">
-			${cards.image(mod)}
-			${cards.name(mod)}
+			${cards.image(data, mod)}
+			${cards.name(data, mod)}
 			${mod.props.length ? cards.props(data, mod) : ''}
 		</div>
 	</div>
 	<div style="margin: 0.5rem 0.9rem 1rem 0.9rem">	
-		${cards.basket(mod)}
+		${cards.basket(data, mod)}
 	</div>
 `
 cards.props = (data, mod) => `
@@ -68,7 +72,21 @@ cards.prop = {
 	default: (data, mod, pr, title, val) => `
 		<div style="margin: 0.25rem 0; display: flex">
 			<div style="padding-right: 0.5rem">${title}:</div>
-			<div title="${common.prtitle(mod, pr)}" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${val}</div>
+			<div title="${common.prtitle(mod, pr)}" 
+				style="
+					overflow: hidden; 
+					text-overflow: ellipsis; 
+					white-space: nowrap;">
+				${val}
+			</div>
+		</div>
+	`,
+	wrap: (data, mod, pr, title, val) => `
+		<div style="margin: 0.25rem 0; display: flex">
+			<div style="padding-right: 0.5rem">${title}:</div>
+			<div>
+				${val}
+			</div>
 		</div>
 	`,
 	bold: (data, mod, pr, title, val) => cards.prop.default(data, mod, pr, title, `<b>${val}</b>`),
@@ -93,20 +111,38 @@ cards.prop = {
 			</div>
 		</div>
 	`,
-	justlink: (data, mod, pr, title, val) => cards.prop.just(data, mod, pr, title, 
-		`<a href="/catalog/${links.addm(data)}more.${pr.prop_nick}::.${nicked(val)}=1">${val}</a>`
+	justwrap: (data, mod, pr, title, val) => `
+		<div style="margin: 0.25rem 0;">
+			${val}
+		</div>
+	`,
+	justlinknowrap: (data, mod, pr, title, val) => cards.prop.just(data, mod, pr, title, 
+		val.split(', ').map(val => 
+			data.md.more && data.md.more[pr.prop_nick] && data.md.more[pr.prop_nick][val] 
+			? `<b>${val}</b>` : `<a href="/catalog/${links.addm(data)}more.${pr.prop_nick}::.${val}=1">${val}</a>`
+		).join(', ')
 	),
-	amodel: (data, mod, pr, title, val) => cards.prop.just(data, mod, pr, title, 
-		`<a href="/catalog/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${mod.brand_title} ${mod.model_title}</a>`
+	justlink: (data, mod, pr, title, val) => cards.prop.justwrap(data, mod, pr, title, 
+		val.split(', ').map(val => 
+			data.md.more && data.md.more[pr.prop_nick] && data.md.more[pr.prop_nick][val] 
+			? `<b>${val}</b>` : `<a href="/catalog/${links.addm(data)}more.${pr.prop_nick}::.${val}=1">${val}</a>`
+		).join(', ')
 	),
+	brandart: (data, mod, pr, title, val) => cards.prop.just(data, mod, pr, title, `
+		${data.brand?.brand_nick != mod.brand_nick ? cards.brandlink(data, mod) : '<b>' + mod.brand_title + '</b>'}
+		<a href="/catalog/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${mod.model_title}</a>
+	`),
 	p: (data, mod, pr, title, val) => `<div style="margin: 0.25rem 0;">${val}</div>`,
 	empty: () => '',
 	filter: (data, mod, pr, title, val) => cards.prop.default(data, mod, pr, title, 
 		val.split(',').filter(r => r).map(value => `<a rel="nofollow" href="${links.val(data, mod, pr, value)}">${value}</a>`).join(', ')
 	)
-
 }
-cards.basket = (mod) => {
+
+cards.brandlink = (data, mod) => `
+	<a href="/catalog/${mod.brand_nick}${links.setm(data)}">${mod.brand_title}</a>
+`
+cards.basket = (data, mod) => {
 	if (mod.min || mod.max) {
 		return `
 			От&nbsp;<b>${cost(mod.min)}</b> 
@@ -114,18 +150,18 @@ cards.basket = (mod) => {
 		`
 	} else if (mod.Цена) {
 		return `
-			<div style="float: right"><b>${cost(mod.Цена)}${common.unit()}</b></div>
+			<b>${cost(mod.Цена)}${common.unit()}</b>
 		`
 	}
 	return ''
 }
-cards.name = (mod) => `
-	<a style="padding: 0; color: inherit; border: none; white-space: normal;" href="${links.model(mod)}">${mod.Наименование || mod.model_title}</a>
+cards.name = (data, mod) => `
+	<a style="padding: 0; color: inherit; border: none; white-space: normal;" href="${links.model(data, mod)}">${mod.Наименование || mod.model_title}</a>
 `
-cards.image = (mod) => `
+cards.image = (data, mod) => `
 	<div style="min-height: 2.7rem">
-		${mod.Наличие ? cards.nalichie(mod) : ''}
-		${mod.images?.length ? cards.img(mod) : ''}
+		${mod.Наличие ? cards.nalichie(data, mod) : ''}
+		${mod.images?.length ? cards.img(data, mod) : ''}
 	</div>
 `
 cards.nal = nicked('Наличие')
@@ -137,17 +173,17 @@ cards.badges = {
 	"На заказ":"badge-info",
 	"Мало":"badge-warning"
 }
-cards.nalichie = mod => `
-	<div style="position:absolute; right: 0px; z-index:1; margin: 1rem; top:0">${cards.badgenalichie(mod)}</div>
+cards.nalichie = (data, mod) => `
+	<div style="position:absolute; right: 0px; z-index:1; margin: 1rem; top:0">${cards.badgenalichie(data, mod)}</div>
 `
-cards.badgenalichie = (mod) => `
-	<a rel="nofollow" href="/catalog/${links.addm()}more.${cards.nal}::.${nicked(mod.Наличие)}=1" 
+cards.badgenalichie = (data, mod) => `
+	<a rel="nofollow" href="/catalog/${links.addm(data)}more.${cards.nal}::.${mod.Наличие}=1" 
 		class="badge badge_${nicked(mod['Наличие'])}">
 		${mod['Старая цена'] ? ('-' + mod.discount + '%') : mod.Наличие}
 	</a>
 `
-cards.img = (mod) => `
-	<a style="border: none; display: block; text-align: center;" href="${links.model(mod)}">
+cards.img = (data, mod) => `
+	<a style="border: none; display: block; text-align: center;" href="${links.model(data, mod)}">
 		<img loading="lazy" style="max-width: 100%; margin: 0 auto" src="${mod.images[0]}">
 	</a>
 `

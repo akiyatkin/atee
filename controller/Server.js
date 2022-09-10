@@ -64,7 +64,6 @@ export const Server = {
 					console.error(e)
 					res = false
 				}
-
 				if (!res?.ans) return error(404, 'There is no suitable answer')
 
 				const { 
@@ -138,8 +137,8 @@ export const Server = {
 	}
 }
 
-const errmsg = (layer, e) => `
-	<pre><code>${layer.ts}<br>${e.toString()}${console.log(e) || ''}</code></pre>
+const errmsg = (layer, e, msg = '') => `
+	<pre>${msg}<code>${layer.ts}<br>${e.toString()}${console.log(e) || ''}</code></pre>
 `
 const getHTML = async (layer, { head, visitor, bread, timings, theme }) => {
 	const crumb = bread.getCrumb(layer.depth)
@@ -149,9 +148,11 @@ const getHTML = async (layer, { head, visitor, bread, timings, theme }) => {
 	let data
 	
 	let html = ''
+	
 	if (layer.html) {
 		const ans = await loadTEXT(layer.html, visitor).catch(e => { 
-			return {data: errmsg(layer, e), nostore: true} 
+			status = 404
+			throw {status, data: errmsg(layer, e), nostore: true, from: 'Server.getHTML'} 
 		})
 		html = ans.data
 		nostore = nostore || ans.nostore

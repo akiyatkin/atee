@@ -7,6 +7,11 @@ import { Db } from "/-db/Db.js"
 import common from "/-catalog/common.html.js"
 import { rest_live } from './rest_live.js'
 import { parse } from '/-controller/Spliter.js'
+import { UTM } from '/-form/UTM.js'
+
+import recdata from '/data/.recaptcha.json' assert {type: "json"}
+const SECRET = recdata.secret
+const SITEKEY = recdata.sitekey
 
 export const meta = new Meta()
 rest_live(meta)
@@ -27,11 +32,15 @@ meta.addVariable('db', async view => {
 })
 
 meta.addFunction('int', (view, n) => Number(n))
+meta.addFunction('int1', (view, n) => {
+	return Number(n) || 1
+})
 meta.addFunction('string', (view, n) => n!=null ? String(n) : '')
 
 meta.addFunction('array', (view, n) => n ? n.split(',') : [])
 meta.addFunction('nicks', ['array'], (view, ns) => ns.map(v => nicked(v)).filter(v => v).sort())
 meta.addArgument('value',['string'])
+meta.addArgument('page',['int1'])
 
 meta.addVariable('lim', ['array'], (view, lim) => {
 	lim = lim.filter(v => v !== '')
@@ -189,6 +198,17 @@ meta.addVariable('md', async (view) => {
 		}
 		if (!Object.keys(md.more).length) delete md.more
 	}
+	// if (md.more) {
+	// 	for (const prop_nick in md.more) {
+	// 		const more = {}
+	// 		const objsvals = md.more[prop_nick]
+	// 		for (const value_nick of objsvals) {
+	// 			const value = await Catalog.getProp(prop_nick)
+	// 			more[prop.prop_title] = md.more[prop_nick]
+	// 		}
+			
+	// 	}
+	// }
 	m = makemark(md).join(':')
 	view.ans.m = m
 	md.m = m
@@ -206,6 +226,9 @@ const makemark = (md, ar = [], path = []) => {
 	}
 	return ar
 }
+meta.addVariable('SITEKEY', (view) => {
+	view.ans.SITEKEY = SITEKEY
+})
 meta.addArgument('model_nick', (view, model_nick) => {
 	return nicked(model_nick)
 })
@@ -214,16 +237,18 @@ meta.addArgument('brand_nick', (view, model_nick) => {
 })
 
 meta.addAction('get-model-head', async (view) => {
-	const { db, brand_nick, model_nick, m, partner } = await view.gets(['db','brand_nick','model_nick','m','partner'])
-	const model = await Catalog.getModel(db, brand_nick, model_nick, partner)	
+	const { db, brand_nick, model_nick, visitor, partner} = await view.gets(['db','visitor', 'brand_nick','model_nick','partner'])
+	const model = await Catalog.getModelByNick(db, visitor, brand_nick, model_nick, partner)
 	view.ans.mod = model
 	view.ans.child = model_nick
 	view.ans.title = `${model.brand_title} ${model.model_title} ${common.propval(model,'Наименование')}`
 	return view.ret()		
 })
+
 meta.addAction('get-model', async (view) => {
-	const { md, db, brand_nick, model_nick, m, partner } = await view.gets(['md', 'db','brand_nick','model_nick','partner'])
-	const model = await Catalog.getModel(db, brand_nick, model_nick, partner)	
+	view.gets(['SITEKEY'])
+	const { md, db, brand_nick, model_nick, visitor, partner } = await view.gets(['md', 'db', 'visitor', 'brand_nick','model_nick','partner'])
+	const model = await Catalog.getModelByNick(db, visitor, brand_nick, model_nick, partner)	
 	view.ans.mod = model
 	return view.ret()		
 })
@@ -247,14 +272,8 @@ meta.addAction('get-search-groups', async (view) => {
 	if (!md.search && md.group && !md.brand) type = 'Группа'
 	if (type && md.more) type += ' с фильтром'
 	if (!type && md.more) type += 'Фильтр'
-	let brand = false
-	if (md.brand) {
-		const brand_nicks = Object.keys(md.brand)
-		if (brand_nicks.length == 1) {
-			const brands = await Catalog.getBrands()
-			brand = brands[brand_nicks[0]]
-		}
-	}
+
+	const brand = await Catalog.getMainBrand(md)
 	const groupnicks = await Catalog.getGroups()
 	const tree = await Catalog.getTree()
 	const group = await Catalog.getMainGroup(md)
@@ -272,34 +291,98 @@ meta.addAction('get-search-groups', async (view) => {
 	return view.ret()
 })
 meta.addAction('get-search-list', async (view) => {
-	const { db, value, md, partner, visitor} = await view.gets(['db','value','md','partner','visitor'])
+	const { page, db, value, md, partner, visitor} = await view.gets(['page', 'db','value','md','partner','visitor'])
 	const group_ids = Catalog.searchGroups(db, visitor, md)
 	const where = await Catalog.getmdwhere(db, visitor, md)
 	const group = await Catalog.getMainGroup(md)
 	const opt = await Catalog.getGroupOptions(group.group_id)
+	const countonpage = opt.limit
+	const start = (page - 1) * countonpage
 	let moditem_ids
 	if (where.length) {
 		moditem_ids = await db.all(`
-			SELECT ip.model_id, GROUP_CONCAT(distinct ip.item_num separator ',') as item_nums
+			SELECT SQL_CALC_FOUND_ROWS ip.model_id, GROUP_CONCAT(distinct ip.item_num separator ',') as item_nums
 			FROM showcase_models m
 			LEFT JOIN showcase_iprops ip on ip.model_id = m.model_id
 			WHERE ${where.join(' and ')}
 			GROUP BY m.model_id
-			LIMIT ${opt.limit}
+			LIMIT ${start},${opt.limit}
 		`)
 	} else {
 		moditem_ids = await db.all(`
-			SELECT ip.model_id, GROUP_CONCAT(distinct ip.item_num separator ',') as item_nums
+			SELECT SQL_CALC_FOUND_ROWS ip.model_id, GROUP_CONCAT(distinct ip.item_num separator ',') as item_nums
 			FROM showcase_models m
 			LEFT JOIN showcase_iprops ip on ip.model_id = m.model_id
 			GROUP BY m.model_id
-			LIMIT ${opt.limit}
+			LIMIT ${start},${opt.limit}
 		`)
 	}
+	const count = await db.col('SELECT FOUND_ROWS()')
 	const list = await Catalog.getModelsByItems(moditem_ids, partner)
+	const brand = await Catalog.getMainBrand(md)
+	
+	
+	let last = count <= countonpage ? 1 : Math.floor(count / countonpage)
 
-	const res = { list }
+	if (last < page) page = last
+
+	const pagination = {
+		last: last,
+		page: page
+	}
+	const res = { list, brand, pagination, count, countonpage }
 	Object.assign(view.ans, res)
+	return view.ret()
+})
+meta.addAction('get-search-sitemap', async (view) => {
+	const { db, value } = await view.gets(['db'])
+	
+	view.ans.title = 'Каталог'
+	view.ans.headings = []
+
+	const brands = await Catalog.getBrands()
+	let childs = {}
+	for (const brand_nick in brands) {
+		const brand = brands[brand_nick]
+		childs[brand_nick] = {
+			name: brand.brand_title
+		}
+	}
+	view.ans.headings.push({
+		title:'Бренды',
+		childs:childs
+	})
+	const groups = await Catalog.getGroups()
+	childs = {}
+	for (const group_nick in groups) {
+		const group = groups[group_nick]
+		if (!group.parent_id) continue
+		childs[group_nick] = {
+			name: group.group_title
+		}
+	}
+	view.ans.headings.push({
+		title:'Группы',
+		childs:childs
+	})
+
+	
+	const models = await db.all(`
+		SELECT m.model_nick, m.model_title, b.brand_nick, b.brand_title
+		FROM showcase_models m, showcase_brands b
+		WHERE m.brand_id = b.brand_id
+	`)
+	childs = {}
+	models.forEach(mod => {
+		const key = mod.brand_nick+'/'+mod.model_nick
+		childs[key] = {
+			"name": mod.brand_title + ' '+mod.model_title
+		}
+	})
+	view.ans.headings.push({
+		title:'Модели',
+		childs:childs
+	})
 	return view.ret()
 })
 meta.addAction('get-search-head', async (view) => {
@@ -316,9 +399,6 @@ meta.addAction('get-search-head', async (view) => {
 		}
 	}
 	view.ans.title ??= 'Каталог'
-	
-	
-
 	return view.ret()
 })
 meta.addAction('get-catalog', async (view) => {
@@ -368,6 +448,77 @@ meta.addArgument('partner', ['string'], async (view, partner) => {
 // })
 
 meta.addArgument('visitor')
+
+
+
+
+
+
+
+
+
+
+meta.addArgument('g-recaptcha-response')
+meta.addVariable('recaptcha', async (view) => {
+	const gresponse = await view.get('g-recaptcha-response')
+    const visitor = await view.get('visitor')
+    const ip = visitor.client.ip
+    const result = await fetch('https://www.google.com/recaptcha/api/siteverify', { 
+        method: 'POST',
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+            'secret': SECRET, 
+            'response': gresponse,
+            'remoteip': ip
+        })
+    }).then(res => res.json())
+    //view.ans.recaptcha = result;
+    if (!result || !result['success']) return view.err('Не пройдена защита от спама')
+    return true
+})
+const emailreg = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+meta.addArgument('email', (view, email) => {
+    if (!String(email).toLowerCase().match(emailreg)) return view.err('Уточните Ваш Email')
+    return email
+})
+meta.addArgument('phone', (view, phone) => {
+    phone = phone.replace(/\D/g,'')
+    phone = phone.replace(/^8/,'7')
+    if (phone[0] != 7) return view.err("Уточните ваш телефон, номер должен начинаться с 7, мы работаем в России")
+    if (phone.length != 11) return view.err("Уточните ваш телефон для связи, должно быть 11 цифр ("+phone+")")
+    return phone
+})
+meta.addArgument('host')
+meta.addArgument('text')
+meta.addFunction('checkbox', (view, n) => !!n)
+meta.addArgument('terms',['checkbox'], (terms) => {
+	if (!terms) return view.err('Требуется согласие на обработку персональных данных')
+})
+import { MAIL } from './order.mail.html.js'
+meta.addArgument('utms', (view, utms) => UTM.parse(utms))
+meta.addAction('set-order', async (view) => {
+	await view.gets(['recaptcha','terms'])
+	const { db, visitor } = await view.gets(['db','visitor'])
+	
+    const user = await view.gets(['text', 'email', 'phone', 'brand_nick','model_nick', 'utms', 'partner'])
+    user.host = visitor.client.host
+    user.model = await Catalog.getModelByNick(db, visitor, user.brand_nick, user.model_nick, user.partner)
+    const html = MAIL(user)
+    
+    const { Mail } = await import('/-mail/Mail.js')
+    const r = await Mail.send(`Заявка ${user.host} ${user.email}`, html, user.email)
+    if (!r) return view.err('Сообщение не отправлено из-за ошибки на сервере')
+
+
+	return view.ret()
+})
+
+
+
+
+
+
+
 export const rest = async (query, get, visitor) => {
 	const ans = await meta.get(query, {...get, visitor})
 	return { ans, 
