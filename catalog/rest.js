@@ -86,7 +86,6 @@ const getNalichie = Access.cache(async (partner) => {
 		LIMIT 120
 	`, { prop_id })
 	const models = await Catalog.getModelsByItems(moditem_ids, partner)
-	
 	return models
 })
 meta.addArgument('m', (view, m) => {
@@ -129,7 +128,7 @@ const prepareValue = async (value) => {
 	return addm
 }
 const makemd = (m) => {
-	m = m.replaceAll(/:([^:]+)::\./ug, ":$1:$1.")
+	m = m.replaceAll(/([^:]+)::\./ug, ":$1:$1.")
 	const mds = m.split(':').filter(s => s).map((item) => {
         item = item.replace(/\+/g, '%20')
         const r = item.split('=')
@@ -160,7 +159,6 @@ meta.addVariable('md', async (view) => {
 	let { m, db, value, visitor } = await view.gets(['m','db','value','visitor'])
 	const addm = await prepareValue(value)
 	m += addm
-	
 	let md = makemd(m)
 	if (md.search) {
 		const addm = await prepareValue(md.search)
@@ -194,7 +192,7 @@ meta.addVariable('md', async (view) => {
 		for (const prop_nick in md.more) {
 			const prop = await Catalog.getProp(prop_nick)
 			if (!prop) delete md.more[prop_nick]
-			if (prop.type == 'text') delete md.more[prop_nick]
+			else if (prop.type == 'text') delete md.more[prop_nick]
 		}
 		if (!Object.keys(md.more).length) delete md.more
 	}
@@ -386,18 +384,16 @@ meta.addAction('get-search-sitemap', async (view) => {
 	return view.ret()
 })
 meta.addAction('get-search-head', async (view) => {
-	const { db, value } = await view.gets(['db','value'])
-	const value_nick = nicked(value)
-	view.ans.child = value
-	const group = await Catalog.getGroupByNick(value_nick)
+	const { db, md } = await view.gets(['db','md'])
+	const group = await Catalog.getMainGroup(md)
+	const brand = await Catalog.getMainBrand(md)
 	if (group) {
 		view.ans.title = group.group_title
-	} else {
-		const brand = await Catalog.getBrandByNick(value_nick)
-		if (brand) {
-			view.ans.title = brand.brand_title
-		}
+	} else if (brand) {
+		view.ans.title = brand.brand_title
 	}
+	view.ans.canonical = group?.parent_id ? group.group_nick : (brand ? brand.brand_nick : '') 
+	if (view.ans.canonical) view.ans.canonical = '/' + view.ans.canonical
 	view.ans.title ??= 'Каталог'
 	return view.ret()
 })

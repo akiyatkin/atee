@@ -7,6 +7,7 @@ export const HEAD = (data, env) =>
 		<meta name="description" content="${env.head.description??''}">
 		<meta property="og:image" content="${env.head.image_src??''}">
 		<link rel="image_src" href="${env.head.image_src??''}">
+		<link rel="canonical" href="https://${env.host}${env.head.canonical??''}"/>
 		<script type="module">
 			const isSuitable = a => {
 				const search = a.getAttribute('href')
@@ -20,14 +21,10 @@ export const HEAD = (data, env) =>
 				const a = event.target.closest('a')
 				if (!a || !isSuitable(a)) return
 				event.preventDefault()
-				getClient().then(Client => {
-					Client.click(a)
-				})
+				getClient().then(Client => Client.click(a))
 			}
 			const popstate = event => {
-				getClient().then(Client => {
-					Client.popstate(event)
-				})
+				getClient().then(Client => Client.popstate(event))
 			}
 			window.getClient = () => {
 				const promise = new Promise((resolve, reject) => {

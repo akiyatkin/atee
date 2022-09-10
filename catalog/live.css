@@ -1,8 +1,11 @@
 .liveform {
 	position: relative;
 }
-
-
+/*
+.liveform .suggestion:hover,
+.liveform .suggestion:hover + div {
+	background-color: #eee;
+}*/
 
 
 .liveform .livemenu {

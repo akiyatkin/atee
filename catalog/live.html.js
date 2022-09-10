@@ -22,23 +22,25 @@ export const BODY = data => `
 	${data.ans.result ? BODYshow(data) : ''}
 `
 const BODYshow = data => `
-	<div style="padding-top: 4px; display: grid; grid-template-columns: 1fr max-content; grid-gap: 5px 5px; align-items:flex-end">
-		${data.ans.groups.map(group => suggestionGroup(group, data)).join('')}
-		${data.ans.list.map(mod => suggestion(mod, data)).join('')}
-	</div>
+	
+	${data.ans.groups.map(group => suggestionGroup(group, data)).join('')}
+	${data.ans.list.map(mod => suggestion(mod, data)).join('')}
 `
 export const suggestion = (mod, data) => `
-	<div>
-		<a draggable="false" href="${links.model(mod)}">
-			${mod.Наименование}
-		</a> ${mod.brand_title} ${mod.model_title}
-	</div>
-	<div style="text-align:right">${mod.Цена?cost(mod.Цена):''}</div>
+	<a draggable="false" href="/catalog/${mod.brand_nick}/${mod.model_nick}?m=search=${data.query}" 
+		style="white-space: normal; padding-top: 4px; display: grid; grid-template-columns: 1fr max-content; grid-gap: 5px 5px;">
+		<span>
+			${mod.Наименование} ${mod.brand_title} ${mod.model_title}
+		</span>
+		<span style="text-align:right">${mod.Цена?cost(mod.Цена):''}</span>
+	</a>
 `
  const cost = Цена => `
  	${Цена}${common.unit()}
 `
 const suggestionGroup = (group, data) => `
-	<a draggable="false" href="/catalog/${group.group_nick}${links.addm(data)}search=${data.query}"><b>${group.group_title}</b></a>
-	<div></div>
+	<a draggable="false" href="/catalog/${group.group_nick}?m=search=${data.query}" 
+		style="display: block; padding-top: 4px; font-weight:bold">
+		${group.group_title}
+	</a>
 `

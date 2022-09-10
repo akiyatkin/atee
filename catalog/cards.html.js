@@ -102,7 +102,7 @@ cards.prop = {
 		<span onclick="this.style.display = 'none'; this.previousElementSibling.style.display = ''" style="display: none">${val}</span>
 	`),
 	link: (data, mod, pr, title, val) => cards.prop.default(data, mod, pr, title, 
-		`<a href="/catalog/${links.addm(data)}more.${pr.prop_nick}::.${nicked(val)}=1">${val}</a>`
+		`<a href="/catalog/${links.addm(data)}more.${pr.prop_nick}::.${val}=1">${val}</a>`
 	),
 	just: (data, mod, pr, title, val) => `
 		<div style="margin: 0.25rem 0; display: flex">
@@ -124,7 +124,7 @@ cards.prop = {
 	),
 	justlink: (data, mod, pr, title, val) => cards.prop.justwrap(data, mod, pr, title, 
 		val.split(', ').map(val => 
-			data.md.more && data.md.more[pr.prop_nick] && data.md.more[pr.prop_nick][val] 
+			data.md?.more && data.md.more[pr.prop_nick] && data.md.more[pr.prop_nick][val] 
 			? `<b>${val}</b>` : `<a href="/catalog/${links.addm(data)}more.${pr.prop_nick}::.${val}=1">${val}</a>`
 		).join(', ')
 	),

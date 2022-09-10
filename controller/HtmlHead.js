@@ -13,6 +13,9 @@ export const HtmlHead = {
 		image_src: src => {
 			qs('meta[property="og:image"]').content = src
 			qs('link[rel=image_src]').href = src
+		},
+		canonical: src => {
+			qs('link[rel="canonical"]').href = src
 		}
 	},
 	accept: obj => {

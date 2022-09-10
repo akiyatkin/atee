@@ -228,8 +228,15 @@ const collectHead = async (visitor, rule, timings, bread, root, interpolate, the
 		}
 		head = {...head, ...data}
 	}
+	if (!head.canonical) {
+		const src = [bread.root, bread.path].filter(p => p).join('/')
+		if (src) head.canonical = '/' + src
+	} else {
+		head.canonical = head.crumb + head.canonical
+	}
 	delete head.layer
 	delete head.crumb
+
 
 	return head
 }
