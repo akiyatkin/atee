@@ -20,18 +20,17 @@ export const action = (btn, callback, name = '') => {
 		btn.classList.add('ready')
 		
 		const src = '/-showcase/'+btn.name + (name ? '?name='+name : '')
-		const ans = await fetch(src).then(res => res.json()).catch(e => {msg:'Ошибка на сервере'})
-
+		const ans = await fetch(src).then(res => res.json()).catch(e => {return {name, msg:'500 на сервере'}})
+		const { Dialog } = await import('/-dialog/Dialog.js')
 		const sub = btn.name.replaceAll('-','_')
 		const tplobj = await import('/-showcase/popups.html.js')
 		if (tplobj[sub]) {
 			const html = tplobj[sub](ans, {div:pops[key].id})
-			const { Dialog } = await import('/-dialog/Dialog.js')
+			
 			await Dialog.frame(pop, html)
 			Dialog.show(pop)
 		} else if (!ans.result) {
 			const html = tplobj['msg'](ans, {div:pops[key].id})
-			const { Dialog } = await import('/-dialog/Dialog.js')
 			await Dialog.frame(pop, html)
 			Dialog.show(pop)
 		}

@@ -498,6 +498,7 @@ meta.addAction('set-order', async (view) => {
 	
     const user = await view.gets(['text', 'email', 'phone', 'brand_nick','model_nick', 'utms', 'partner'])
     user.host = visitor.client.host
+    user.ip = visitor.client.ip
     user.model = await Catalog.getModelByNick(db, visitor, user.brand_nick, user.model_nick, user.partner)
     const html = MAIL(user)
     

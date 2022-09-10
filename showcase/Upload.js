@@ -724,7 +724,9 @@ export class Upload {
 		const props = {}
 		const table_title = name
 		const table_nick = nicked(name)
-
+		
+		
+								
 		for (const sheet_title in sheets) {
 			const { descr, heads, indexes } = sheets[sheet_title]
 			heads.head_titles.forEach((prop_title, i) => {
@@ -815,47 +817,25 @@ export class Upload {
 		`, { table_id })
 
 		for (const brandmod in models) {
-			
-		}
-
-		for (const brandmod in models) {
-			
 			const items = models[brandmod]
+
 			const item = items[0]
 			const sheet_title = item[item.length - 1] //Последняя запись это имя листа sheet_title
-			const { descr, heads, indexes } = sheets[sheet_title]
-			const model_title = item[indexes.model_title]
-			const model_nick = item[indexes.model_nick]
-			const brand_nick = item[indexes.brand_nick]
-			const group_nick = item[indexes.group_nick]
+			const first_indexes = sheets[sheet_title].indexes 
+			const model_title = item[first_indexes.model_title]
+			const model_nick = item[first_indexes.model_nick]
+			const brand_nick = item[first_indexes.brand_nick]
+			const group_nick = item[first_indexes.group_nick]
 			const brand_id = brands[brand_nick].brand_id
 			const group_id = groups[group_nick].group_id
 
-			let search = []
-			items.forEach(async (item) => {
-				search.push(item.join('-'))
-			})
-			heads.head_titles.forEach((prop_title, i) => {
-				if (~[
-					indexes.model_title, 
-					indexes.model_nick, 
-					indexes.brand_title, 
-					indexes.brand_nick,
-					indexes.group_nick
-					//, indexes.sheet_title 
-				].indexOf(i)) return
-				search.push(prop_title)
-			})
-			search = upload.prepareSearch(search)
-			
 
-			
-			for (const item of items) {
+			let search = []
+			items.forEach((item) => {
 				const sheet_title = item[item.length - 1] //Последняя запись это имя листа sheet_title
 				const { descr, heads, indexes } = sheets[sheet_title]
-				for (const i in item) {
-					const value_title = item[i]
-					if (value_title === null) continue
+				search.push(item.join('-'))
+				heads.head_titles.forEach((prop_title, i) => {
 					if (~[
 						indexes.model_title, 
 						indexes.model_nick, 
@@ -863,32 +843,11 @@ export class Upload {
 						indexes.brand_nick,
 						indexes.group_nick
 						//, indexes.sheet_title 
-					].indexOf(Number(i))) continue
-					
-					if (~options.text_nicks.indexOf(heads.head_nicks[i])) continue
-					item[i] = String(value_title).split(',').map(v => v.trim()).filter(v => !!v)
-					if (~options.number_nicks.indexOf(heads.head_nicks[i])) continue
-					for (const v_title of item[i]) {
-						if (values[v_title]) continue
-						const value_nick = nicked(v_title)
-						values[v_title] = { 
-							value_title:v_title,
-							value_nick 
-						}
-						values[v_title].value_id = await db.insertId(`
-							INSERT INTO 
-								showcase_values
-							SET
-								value_title = :value_title,
-								value_nick = :value_nick
-							ON DUPLICATE KEY UPDATE
-							 	value_id = LAST_INSERT_ID(value_id)
-						`, values[v_title])
-						//console.log(values[v_title])
-					}
-				}
-			}
-
+					].indexOf(i)) return
+					search.push(prop_title)
+				})
+			})
+			search = upload.prepareSearch(search)
 
 			const model_id = await db.insertId(`
 				INSERT INTO 
@@ -910,10 +869,56 @@ export class Upload {
 				FROM showcase_items
 				WHERE model_id = :model_id
 			`, { model_id }) || 0
-			await Promise.all(items.map(async (item, ordain) => {
+
+			for (const i in items) {
+				const item = items[i]
+				const ordain = i + 1
+			
+				const sheet_title = item[item.length - 1] //Последняя запись это имя листа sheet_title
+				const { descr, heads, indexes } = sheets[sheet_title]
+				const sysitem = (item, i) => {
+					const value_title = item[i]
+					if (value_title === null) return true
+					if (value_title === '') return true
+					if (Array.isArray(value_title) && !value_title.length) return true
+					
+					if (~[
+						indexes.model_title, 
+						indexes.model_nick, 
+						indexes.brand_title, 
+						indexes.brand_nick,
+						indexes.group_nick
+						//, indexes.sheet_title 
+					].indexOf(Number(i))) return true
+					return false
+				}
 				quantity++
 				const myitem_num = ++item_num
-				ordain++
+				for (const i in item) {
+					if (sysitem(item,i)) continue
+					const value_title = item[i]
+					
+					if (~options.text_nicks.indexOf(heads.head_nicks[i])) continue
+					item[i] = String(value_title).split(',').map(v => v.trim()).filter(v => v)
+					if (~options.number_nicks.indexOf(heads.head_nicks[i])) continue
+					for (const v_title of item[i]) {
+						if (values[v_title]) continue
+						const value_nick = nicked(v_title)
+						values[v_title] = { 
+							value_title:v_title,
+							value_nick 
+						}
+						values[v_title].value_id = await db.insertId(`
+							INSERT INTO 
+								showcase_values
+							SET
+								value_title = :value_title,
+								value_nick = :value_nick
+							ON DUPLICATE KEY UPDATE
+							 	value_id = LAST_INSERT_ID(value_id)
+						`, values[v_title])
+					}
+				}
 				await db.exec(`
 					INSERT INTO 
 						showcase_items
@@ -928,16 +933,10 @@ export class Upload {
 				// `item_num` SMALLINT unsigned NOT NULL COMMENT '',
 				// `ordain` SMALLINT unsigned COMMENT 'Порядковый номер строки в таблице',
 				// `table_id` SMALLINT unsigned COMMENT '',
-				await Promise.all(item.map(async (value_title, i) => {
-					if (value_title === null || !value_title.length) return
-					if (~[
-						indexes.brand_title, 
-						indexes.brand_nick,
-						indexes.model_title, 
-						indexes.model_nick,
-						indexes.group_nick
-						//, indexes.sheet_title
-					].indexOf(i)) return
+				for (const i in item) {
+					const value_title = item[i]
+					if (sysitem(item,i)) continue
+					
 					const prop_nick = heads.head_nicks[i]
 					const {prop_id, type} = props[prop_nick]
 					
@@ -956,7 +955,6 @@ export class Upload {
 					}
 					if (type == 'value' || type == 'number') {
 						for (const v_title of value_title) {
-
 							if (type == 'value') {
 								const value_id = values[v_title].value_id
 								await save(null, null, value_id)
@@ -970,8 +968,9 @@ export class Upload {
 						const text = value_title
 						await save(text, null, null)
 					}
-				}))
-			}))
+				}
+				
+			}
 		}
 		
 		duration = Date.now() - duration

@@ -79,7 +79,7 @@ export const Excel = {
 				row[indexes.brand_title] = row[indexes.brand_title] || brand
 				row[indexes.brand_nick] = nicked(row[indexes.brand_title])
 				row[indexes.model_nick] = onicked(row[indexes.model_title])
-				row[indexes.sheet_row] = i
+				row[indexes.sheet_row] = i + 1
 				row[indexes.sheet_title] = sheet
 				brands[row[indexes.brand_nick]] = { brand_title:row[indexes.brand_title], brand_nick:row[indexes.brand_nick] }
 			})
