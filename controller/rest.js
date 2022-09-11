@@ -1,12 +1,8 @@
 import { files, file } from "./files.js"
 import path from 'path'
 import { readFile, utimes } from "fs/promises"
-
 import { Meta } from "./Meta.js"
-import { parse, explode, split } from './Spliter.js'
-
 import { Bread } from './Bread.js'
-
 import { loadJSON, router } from './router.js'
 import { Access } from '@atee/controller/Access.js'
 import { Once } from './Once.js'
@@ -73,17 +69,28 @@ meta.addArgument('rd', ['array']) //reloaddivs
 meta.addArgument('rt', ['array']) //reloadts
 
 
+//const fi = (before, after) => before && after ? before + after : {toString:() => ''}
+//const fi = (...args) => args.some(a => !a) ? '' : args.join('')
+const fin = (before, after) => before ? before + after : ''
+const lin = (before, after) => after ? before + after : ''
 
+const split = (sep, str) => {
+    if (!str) return []
+    const i = str.indexOf(sep)
+    return ~i ? [str.slice(0, i), str.slice(i + 1)] : [str]
+}
 const wakeup = (rule, depth = 0) => {
-	if (!rule) return
+	if (!rule) return 
 	if (!rule.layout) return
 	for (const pts in rule.layout) {
 		for (const div in rule.layout[pts]) {
 			const tsf = rule.layout[pts][div]
-			const [name, subframe] = tsf ? split(':', tsf) : ['','ROOT']
-			const [sub, frame = ''] = split('.', subframe)
-			const ts = tsf ? name + ':' + sub : ''
+			const [name = '', subframe = ''] = tsf ? split(':', tsf) : []
+			const [sub = '', frame = ''] = split('.', subframe)
+			const ts = fin(name, lin(':', sub))
+			//const ts = fi(name, ':' + sub)
 			const layer = { ts, tsf, name, sub, div, depth, tpl:null, html: null, json:null, layers: null}
+			
 			if (frame) {
 				layer.frame = frame
 				layer.frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
@@ -168,10 +175,13 @@ const getRule = Once.proxy( async root => {
 	spread(rule) //childs самодостаточный
 	
 	const tsf = rule.index
-	const [name, subframe] = split(':', tsf)
-	const [sub, frame = ''] = split('.', subframe)
+	const [name = '', subframe = ''] = split(':', tsf)
+	const [sub = '', frame = ''] = split('.', subframe)
 	const frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
-	const ts = tsf ? name + ':' + sub : ''
+	//const ts = tsf ? name + ':' + sub : ''
+	//const ts = fi(name, fi(':', sub))
+	const ts = fin(name, lin(':', sub))
+	//const ts = fi(name, ':' + sub)
 	runByIndex(rule, (r,path) => { //строим дерево root по дивам		
 		r.root = { tsf, ts, name, sub, frame, frameid, depth: 0, tpl:null, html: null, json:null, layers:null }
 		//Object.seal(r.root) debug test
@@ -180,7 +190,7 @@ const getRule = Once.proxy( async root => {
 		runByRootLayer(r.root, layer => {
 			const ts = layer.ts
 			if (rule.animate && rule.animate[ts]) layer.animate = rule.animate[ts]
-			if (!rule.depth || !rule.depth[ts]) return
+			if (!rule.depth || rule.depth[ts] == null) return
 			const dif = rule.depth[ts] - layer.depth
 			layer.depth += dif
 			runByRootLayer(layer, (l) => l.depth = layer.depth)
@@ -302,6 +312,16 @@ const fromCookie = (cookie) => {
 	if (!name) return ''
 	if (name == 'deleted') return ''
 	return decodeURIComponent(name[2])
+}
+const parse = (string, sep = '; ') => {
+    const obj = string?.split(sep).reduce((res, item) => {
+        if (!item) return res
+        item = item.replace(/\+/g, '%20')
+        const data = item.split('=')
+        res[decodeURIComponent(data.shift())] = data.length ? decodeURIComponent(data.join('=')) : ''
+        return res
+    }, {})
+    return obj || {}
 }
 const getTheme = (get, cookie) => {
 	const name = get.theme != null ? get.theme : fromCookie(cookie)
