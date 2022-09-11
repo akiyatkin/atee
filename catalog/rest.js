@@ -237,8 +237,12 @@ meta.addArgument('brand_nick', (view, model_nick) => {
 meta.addAction('get-model-head', async (view) => {
 	const { db, brand_nick, model_nick, visitor, partner} = await view.gets(['db','visitor', 'brand_nick','model_nick','partner'])
 	const model = await Catalog.getModelByNick(db, visitor, brand_nick, model_nick, partner)
+	if (!model) {
+		view.ans.brand = await Catalog.getBrandByNick(brand_nick)
+		view.ans.title = `${view.ans.brand?.brand_title ?? brand_nick} ${model_nick}`
+		return view.ret()
+	}
 	view.ans.mod = model
-	view.ans.child = model_nick
 	view.ans.title = `${model.brand_title} ${model.model_title} ${common.propval(model,'Наименование')}`
 	return view.ret()		
 })
@@ -247,6 +251,8 @@ meta.addAction('get-model', async (view) => {
 	view.gets(['SITEKEY'])
 	const { md, db, brand_nick, model_nick, visitor, partner } = await view.gets(['md', 'db', 'visitor', 'brand_nick','model_nick','partner'])
 	const model = await Catalog.getModelByNick(db, visitor, brand_nick, model_nick, partner)	
+	view.ans.brand = await Catalog.getBrandByNick(brand_nick)
+	if (!model) return view.err()
 	view.ans.mod = model
 	return view.ret()		
 })

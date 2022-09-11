@@ -8,6 +8,16 @@ const model = {}
 export default model
 
 model.ROOT = (data, env, { mod } = data) => `
+	${data.mod?showmodel(data, env, data):showerror(data, env)}
+`
+const showerror = (data, env) => `
+	<div style="float:left; margin-top:1rem">
+		<a href="${env.crumb.parent}${links.setm(data)}">${data.brand?.brand_title ?? env.crumb.parent.name}</a>
+	</div>
+	<h1 style="clear:both">Модель <b>${env.crumb.parent.name} ${env.crumb.name}</b> не найдена</h1>
+`
+const showmodel = (data, env, { mod } = data) =>
+`
 	<div style="float:left; margin-top:1rem"><a href="${env.crumb.parent.parent}${mod.parent_id ? '/'+mod.group_nick : ''}${links.setm(data)}">${mod.group_title}</a></div>
 	<h1 style="clear:both">${cards.name(data, mod)}</h1>
 	

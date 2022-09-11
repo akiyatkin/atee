@@ -42,7 +42,7 @@ search.LIST = (data, env) => html`
 		}
 	</style>
 	
-	${!data.list.length || search.list(data, env)}
+	${data.list.length ? search.list(data, env) : 'К сожалению, ничего не найдено.'}
 	${data.countonpage == data.list.length ? search.pag(data, env) : ''}
 `
 search.pag = (data, env, scroll) => `

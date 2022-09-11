@@ -1,6 +1,6 @@
 import { mapobj } from '/-nicked/mapobj.js'
 export const ROOT = (data, env) => `
-	${data.model?showmodel(data.model):'<h1>Модель'+ env.crumb.name +' не найдена</h1>'}
+	${data.model?showmodel(data.model):'<h1>Модель '+ env.crumb.name +' не найдена</h1>'}
 	
 `
 const showmodel = (mod) => `
