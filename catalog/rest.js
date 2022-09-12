@@ -295,7 +295,8 @@ meta.addAction('get-search-groups', async (view) => {
 	return view.ret()
 })
 meta.addAction('get-search-list', async (view) => {
-	const { page, db, value, md, partner, visitor} = await view.gets(['page', 'db','value','md','partner','visitor'])
+	let { page } = await view.gets(['page'])
+	const { db, value, md, partner, visitor} = await view.gets(['db','value','md','partner','visitor'])
 	const group_ids = Catalog.searchGroups(db, visitor, md)
 	const where = await Catalog.getmdwhere(db, visitor, md)
 	const group = await Catalog.getMainGroup(md)
@@ -326,8 +327,8 @@ meta.addAction('get-search-list', async (view) => {
 	const brand = await Catalog.getMainBrand(md)
 	
 	
-	let last = count <= countonpage ? 1 : Math.floor(count / countonpage)
-
+	let last = count <= countonpage ? 1 : Math.ceil(count / countonpage)
+	
 	if (last < page) page = last
 
 	const pagination = {
