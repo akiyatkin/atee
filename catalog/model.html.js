@@ -44,7 +44,7 @@ model.common = (data, env, mod) => `
 	<p>
 		<i>${mod.Описание || ''}</i>
 	</p>
-	<p><button id="makeorder">Сделать заказ</button></p>
+	<p><button style="font-size:1.4rem; margin:1rem 0" id="makeorder">Сделать заказ</button></p>
 	<div id="popuporder"></div>
 	<script type="module">
 		import { Dialog } from '/-dialog/Dialog.js'

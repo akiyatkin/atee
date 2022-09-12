@@ -643,14 +643,14 @@ export class Upload {
 			}
 		}
 
-		part = 'folders'
+		part = 'brands'
 		parts[part] = await Files.readdirDeep(visitor, config[part])
 		for (const dirinfo of parts[part].dirs) { //Бренды
 			const brand_nick = nicked(dirinfo.name)
 			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
 			if (!brand_id) continue
 			for (const subinfo of dirinfo.dirs) { //Модели
-				const res = await Files.getRelations(db, subinfo.name, brand_id, [props.art.prop_id]) //Папка может быть привязана к Art
+				const res = await Files.getRelations(db, subinfo.name+'/models', brand_id, [props.art.prop_id]) //Папка может быть привязана к Art
 				for (const fileinfo of subinfo.files) { //Файлы
 					const src = nicked(subinfo.dir + fileinfo.file)
 					const ext = fileinfo.ext

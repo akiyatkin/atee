@@ -7,18 +7,6 @@ const search = {}
 export default search
 
 search.ROOT = () => html`
-	<div id="CATGROUPS"></div>
-	<div id="page"><div id="CATPAG"></div></div>
-	<div id="CATLIST"></div>
-`
-search.GROUPS = (data, env) => html`
-	${search.title(data, env)}
-	${!data.childs.length || search.groups(data, env)}
-`
-search.PAGINATION = (data, env) => `
-	${search.pag(data, env, 'none')}
-`
-search.LIST = (data, env) => html`
 	<style>
 		#{env.layer.div} .pagination {
 			user-select: none;
@@ -41,6 +29,18 @@ search.LIST = (data, env) => html`
 			}
 		}
 	</style>
+	<div id="CATGROUPS"></div>
+	<div id="page"><div id="CATPAG"></div></div>
+	<div id="CATLIST"></div>
+`
+search.GROUPS = (data, env) => html`
+	${search.title(data, env)}
+	${!data.childs.length || search.groups(data, env)}
+`
+search.PAGINATION = (data, env) => `
+	${search.pag(data, env, 'none')}
+`
+search.LIST = (data, env) => html`
 	
 	${data.list.length ? search.list(data, env) : 'К сожалению, ничего не найдено.'}
 	${data.countonpage == data.list.length ? search.pag(data, env) : ''}
