@@ -453,7 +453,8 @@ Catalog.getmdwhere = (db, visitor, md) => {
 		if (md.search) {
 			const hashs = unique(nicked(md.search).split('-').filter(val => !!val)).sort()
 			if (hashs.length) {
-				where.push(`m.search like "%${hashs.join('%" and m.search like "%')}%"`)
+				where.push(`m.search like "% ${hashs.join('%" and m.search like "% ')}%"`)
+				//console.log(`m.search like "% ${hashs.join('%" and m.search like "% ')}%"`)
 			}
 		}
 		if (md.more) {
@@ -492,7 +493,9 @@ Catalog.searchGroups = (db, visitor, md) => {
 			const tree = await Catalog.getTree()
 			const options = await Catalog.getOptions()
 			const groupnicks = await Catalog.getGroups()
-			res_ids = groupnicks[nicked(options.root_nick)].groups.filter(id => tree[id].inside)
+			const root = groupnicks[nicked(options.root_nick)]
+			if (!root) return []
+			res_ids = root.groups.filter(id => tree[id].inside)
 		} else {
 			if (md.more) {
 				res_ids = await db.colAll(`

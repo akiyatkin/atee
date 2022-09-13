@@ -435,7 +435,7 @@ export class Upload {
 		`, { price_id: price.price_id })
 		for (const {search, model_id} of searches) {
 			if (!mvalues[model_id]) continue
-			const newsearch = upload.prepareSearch([mvalues[model_id], search])
+			const newsearch = upload.prepareSearch([mvalues[model_id].join('-'), search])
 			if (newsearch == search) continue
 			await db.changedRows(`
 				UPDATE

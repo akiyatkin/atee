@@ -281,6 +281,7 @@ meta.addAction('get-search-groups', async (view) => {
 	const groupnicks = await Catalog.getGroups()
 	const tree = await Catalog.getTree()
 	const group = await Catalog.getMainGroup(md)
+	if (!group) return view.err('Нет данных')
 	const group_ids = await Catalog.searchGroups(db, visitor, md)
 	let groups = await Catalog.getCommonChilds(group_ids)
 	if (groups.length == 1 && group.group_id == groups[0].group_id) groups = []
@@ -300,6 +301,9 @@ meta.addAction('get-search-list', async (view) => {
 	const group_ids = Catalog.searchGroups(db, visitor, md)
 	const where = await Catalog.getmdwhere(db, visitor, md)
 	const group = await Catalog.getMainGroup(md)
+	if (!group) {
+		return view.err('Нет данных')
+	}
 	const opt = await Catalog.getGroupOptions(group.group_id)
 	const countonpage = opt.limit
 	const start = (page - 1) * countonpage

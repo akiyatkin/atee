@@ -37,7 +37,7 @@ export const rest_live = (meta) => {
 		// 		and m.search like "%${hashs.join('%" and m.search like "%')}%"
 		// `
 		// const childs = await db.colAll(sql)
-		if (!childs.length) {
+		if (!group_ids.length) {
 			view.ans.list = []
 			view.ans.groups = []
 			view.ans.gcount = 0
@@ -73,12 +73,12 @@ export const rest_live = (meta) => {
 		const where = await Catalog.getmdwhere(db, visitor, md)
 		where.push(`m.group_id in (${group_ids.join(',')})`)
 		const list = []
-
 		const models = await db.all(`
 			SELECT SQL_CALC_FOUND_ROWS m.model_id, m.model_nick, m.model_title, m.brand_id
 			FROM 
 				showcase_models m
 			WHERE ${where.join(' and ')}
+			ORDER BY RAND()
 			LIMIT 12
 		`)
 

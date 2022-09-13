@@ -2,6 +2,7 @@ import cards from "/-catalog/cards.html.js"
 import html from "/-words/html.js"
 import dataenv from "/-words/dataenv.js"
 import {words} from "/-words/words.js"
+import ti from "/-words/ti.js"
 import links from "/-catalog/links.html.js"
 const search = {}
 export default search
@@ -33,18 +34,17 @@ search.ROOT = () => html`
 	<div id="page"><div id="CATPAG"></div></div>
 	<div id="CATLIST"></div>
 `
-search.GROUPS = (data, env) => html`
+search.GROUPS = (data, env) => data.result ? `
 	${search.title(data, env)}
-	${!data.childs.length || search.groups(data, env)}
-`
-search.PAGINATION = (data, env) => `
+	${ti.fi(data.childs.length, search.groups(data, env))}
+` : '<h1>Каталог</h1>'
+search.PAGINATION = (data, env) => ti.bs(data.result) && `
 	${search.pag(data, env, 'none')}
 `
-search.LIST = (data, env) => html`
-	
+search.LIST = (data, env) => data.result ? `
 	${data.list.length ? search.list(data, env) : 'К сожалению, ничего не найдено.'}
 	${data.countonpage == data.list.length ? search.pag(data, env) : ''}
-`
+` : 'Данные не найдены'
 search.pag = (data, env, scroll) => `
 	<div class="pagination">
 		<div class="begin">${search.pag[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'В начало', 1)}</div>
