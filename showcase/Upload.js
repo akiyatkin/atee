@@ -69,6 +69,10 @@ export class Upload {
 				prop_title,
 				prop_nick: nicked(prop_title)
 			}
+			if (prop.prop_nick == 'model' || prop.prop_nick == 'artikul') {
+				prop.type = 'model'
+				return prop
+			}
 			prop.type = 'value'
 			if (~options.number_nicks.indexOf(prop.prop_nick)) prop.type = 'number'
 			if (~options.text_nicks.indexOf(prop.prop_nick)) prop.type = 'text'
@@ -322,6 +326,24 @@ export class Upload {
 								and ip.value_id = :value_id
 								and m.brand_id = :brand_id
 						`, {brand_id, keyprop_id: catalogprop.prop_id, value_id})
+					}
+				} else if (catalogprop.type == 'model') {
+					if (!brand_id) {
+						item = await db.fetch(`
+							SELECT m.model_id, i.item_num 
+							FROM showcase_models m
+							LEFT JOIN showcase_items i on i.model_id = m.model_id
+							WHERE m.model_nick = :model_nick and i.item_num is not null
+						`, {model_nick: key_nick})
+					} else {
+						item = await db.fetch(`
+							SELECT m.model_id, i.item_num 
+							FROM showcase_models m
+							LEFT JOIN showcase_items i on i.model_id = m.model_id
+							WHERE 
+								m.model_nick = :model_nick and i.item_num is not null
+								and m.brand_id = :brand_id
+						`, {model_nick: key_nick})
 					}
 				} else if (catalogprop.type == 'number') {
 					if (!brand_id) {
@@ -649,18 +671,22 @@ export class Upload {
 			const brand_nick = nicked(dirinfo.name)
 			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
 			if (!brand_id) continue
-			for (const subinfo of dirinfo.dirs) { //Модели
-				const res = await Files.getRelations(db, subinfo.name+'/models', brand_id, [props.art.prop_id]) //Папка может быть привязана к Art
+			const minfo = dirinfo.dirs.find(info => info.name == 'models')
+			for (const subinfo of minfo.dirs) { //Модели
+				const res = await Files.getRelations(db, subinfo.name, brand_id, [props.art.prop_id]) //Папка может быть привязана к Art
+				let i = 0
 				for (const fileinfo of subinfo.files) { //Файлы
-					const src = nicked(subinfo.dir + fileinfo.file)
+					i++
+					const src = subinfo.dir + fileinfo.file
+					
 					const ext = fileinfo.ext
-					const ordain = fileinfo.num
+
+					const ordain = fileinfo.num || i
 					//const value = await upload.receiveValue(src)
 					part = 'files'
 					if (~Files.exts.images.indexOf(ext)) part = 'images'
 					if (~Files.exts.texts.indexOf(ext)) part = 'texts'
 					if (~Files.exts.videos.indexOf(ext)) part = 'videos'
-
 					for (const item of res) { //Позиции
 						const affectedRows = await db.affectedRows(`
 							INSERT IGNORE INTO
@@ -678,7 +704,7 @@ export class Upload {
 							prop_id: props[part].prop_id
 						})
 						count += affectedRows
-						if (!affectedRows) doublepath.push(dirinfo.dir + fileinfo.file) //Встретилось имя у которого nick одинаковый и сработало исключение при повторной записи
+						if (!affectedRows) doublepath.push(minfo.dir + fileinfo.file) //Встретилось имя у которого nick одинаковый и сработало исключение при повторной записи
 					}
 				}
 			}

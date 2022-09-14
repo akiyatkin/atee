@@ -78,6 +78,7 @@ export const rest_live = (meta) => {
 			FROM 
 				showcase_models m
 			WHERE ${where.join(' and ')}
+			and (select i.item_num from showcase_items i where i.model_id = m.model_id limit 1) is not null
 			ORDER BY RAND()
 			LIMIT 12
 		`)

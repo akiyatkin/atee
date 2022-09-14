@@ -1,18 +1,19 @@
+const evalScriptsInNode = {}
 export const evalScripts = div => {
 	const scripts = []
 	let i = 0
 	for (const old of div.getElementsByTagName("script")) {
 		let p
 		if (old.src) {
-			if (!evalScriptsInNode[old.src]) {
-				evalScriptsInNode[src] = new Promise((resolve, reject) => {
+			//if (!evalScriptsInNode[old.src]) {
+				evalScriptsInNode[old.src] = new Promise((resolve, reject) => {
 					const fresh = document.createElement("script");					
 					fresh.src = old.src
 					document.head.append(fresh)
 					resolve()
 				})
-			}
-			p = evalScriptsInNode[src]
+			//}
+			p = evalScriptsInNode[old.src]
 		} else {
 			p = new Promise((resolve, reject) => {
 				const fresh = document.createElement("script");

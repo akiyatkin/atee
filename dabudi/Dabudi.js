@@ -37,7 +37,7 @@ export const Dabudi = {
 	},
 	getColIndexOrRename: ({head_titles, head_nicks}, name, oldname) => {
 		let index = head_titles.indexOf(name)
-		if (!index) return index
+		if (~index) return index
 		index = head_titles.indexOf(oldname)
 		if (~index) {
 			head_titles[index] = name

@@ -7,8 +7,9 @@ import { Db } from "/-db/Db.js"
 import common from "/-catalog/common.html.js"
 import { rest_live } from './rest_live.js'
 import { parse } from '/-controller/Spliter.js'
+import { map } from '/-nicked/map.js'
 import { UTM } from '/-form/UTM.js'
-
+import { loadTEXT } from '/-controller/router.js'
 import recdata from '/data/.recaptcha.json' assert {type: "json"}
 const SECRET = recdata.secret
 const SITEKEY = recdata.sitekey
@@ -253,6 +254,12 @@ meta.addAction('get-model', async (view) => {
 	const model = await Catalog.getModelByNick(db, visitor, brand_nick, model_nick, partner)	
 	view.ans.brand = await Catalog.getBrandByNick(brand_nick)
 	if (!model) return view.err()
+	if (model.texts) {
+		model.texts = await map(model.texts, async src => {
+			const {data} = await loadTEXT('/'+src, visitor)
+			return data || ''
+		})
+	}
 	view.ans.mod = model
 	return view.ret()		
 })
@@ -308,6 +315,7 @@ meta.addAction('get-search-list', async (view) => {
 	const countonpage = opt.limit
 	const start = (page - 1) * countonpage
 	let moditem_ids
+	where.push('ip.item_num is not null')
 	if (where.length) {
 		moditem_ids = await db.all(`
 			SELECT SQL_CALC_FOUND_ROWS ip.model_id, GROUP_CONCAT(distinct ip.item_num separator ',') as item_nums

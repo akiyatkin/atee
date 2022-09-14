@@ -289,7 +289,7 @@ Catalog.getGroupOptions = Access.cache(async (group_id) => {
 	return opt
 })
 
-Catalog.getMainGroups = Access.cache(async (prop_title = 'Тип') => {
+Catalog.getMainGroups = Access.cache(async (prop_title = '') => {
 	const db = await new Db().connect()
 	const tree = structuredClone(await Catalog.getTree())
 	
@@ -297,29 +297,34 @@ Catalog.getMainGroups = Access.cache(async (prop_title = 'Тип') => {
 	const root = groups.find(g => !g.parent_id)
 	const childs = groups.filter(g => g.parent_id == root.group_id && g.icon)
 
-	const prop = await Catalog.getProp(prop_title)
-	for (const group of childs) {
-		group.types = await db.all(`
-			SELECT distinct v.value_title, v.value_nick
-			FROM 
-				showcase_values v, showcase_iprops ip, showcase_items i, showcase_models m,
-				showcase_props p
-			WHERE v.value_id = ip.value_id and i.model_id = ip.model_id and i.item_num = ip.item_num
-			and ip.prop_id = :prop_id
-			and i.model_id = m.model_id and m.group_id in (${group.groups.join(',')})
-			and p.prop_id = ip.prop_id
-			order by p.ordain
-		`, prop)
-	
+	if (prop_title) {
+		const prop = await Catalog.getProp(prop_title)
+		for (const group of childs) {
+			group.types = await db.all(`
+				SELECT distinct v.value_title, v.value_nick
+				FROM 
+					showcase_values v, showcase_iprops ip, showcase_items i, showcase_models m,
+					showcase_props p
+				WHERE v.value_id = ip.value_id and i.model_id = ip.model_id and i.item_num = ip.item_num
+				and ip.prop_id = :prop_id
+				and i.model_id = m.model_id and m.group_id in (${group.groups.join(',')})
+				and p.prop_id = ip.prop_id
+				order by p.ordain
+			`, prop)
+		
 
-		group.childs = group.childs.map(group_id => {
-			return {
-				group_title: tree[group_id].group_title,
-				group_nick: tree[group_id].group_nick
-			}
-		})
+			group.childs = group.childs.map(group_id => {
+				return {
+					group_title: tree[group_id].group_title,
+					group_nick: tree[group_id].group_nick
+				}
+			})
+		}
+		return {childs, prop}
+	} else {
+		return {childs}
 	}
-	return {childs, prop}
+	
 })
 Catalog.getAllCount = Access.cache(async () => {
 	const tree = await Catalog.getTree()

@@ -14,7 +14,10 @@ const showerror = (data, env) => `
 	<div style="float:left; margin-top:1rem">
 		<a href="${env.crumb.parent}${links.setm(data)}">${data.brand?.brand_title ?? env.crumb.parent.name}</a>
 	</div>
-	<h1 style="clear:both">Модель <b>${env.crumb.parent.name} ${env.crumb.name}</b> не найдена</h1>
+	<h1 style="clear:both"><b>${env.crumb.parent.name} ${env.crumb.name}</b></h1>
+	<p>
+		Модель в магазине не найдена
+	</p>
 `
 const showmodel = (data, env, { mod } = data) =>
 `
@@ -26,9 +29,10 @@ const showmodel = (data, env, { mod } = data) =>
 	${model.props(data, mod)}
 	${mod.item_rows.length ? model.items(data, mod) : ''}
 	<!-- <pre>${JSON.stringify(mod, "\n", 2)}</pre> -->
+	${mod.texts?.join('')}
 `
 const showimage = (src) => `
-	<img load="lazy" src="${src}">
+	<div style="display: inline-block;max-width: 500px"><img load="lazy" src="${src}"></div>
 `
 const brandlink = (data, env, mod) => `
 	<a href="${env.crumb.parent}${links.setm(data)}">${mod.brand_title}</a>
@@ -40,7 +44,7 @@ model.common = (data, env, mod) => `
 	${model.showprop('Модель', mod.model_title)}
 	${cards.basket(data, mod)}
 
-	${mod.images? '<p>'+mod.images.map(showimage)+'</p>' : ''}
+	${mod.images? '<p>'+mod.images.map(showimage).join('')+'</p>' : ''}
 	<p>
 		<i>${mod.Описание || ''}</i>
 	</p>

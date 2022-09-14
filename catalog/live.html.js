@@ -1,6 +1,7 @@
 import links from '/-catalog/links.html.js'
 import common from '/-catalog/common.html.js'
 import { words } from '/-words/words.js'
+import ti from '/-words/ti.js'
 export const MENU = () => `
 	<div class="livemenu">
 		<div class="livetitle"></div>
@@ -30,7 +31,7 @@ export const suggestion = (mod, data) => `
 	<a draggable="false" href="/catalog/${mod.brand_nick}/${mod.model_nick}?m=search=${data.query}" 
 		style="white-space: normal; padding-top: 4px; display: grid; grid-template-columns: 1fr max-content; grid-gap: 5px 5px;">
 		<span>
-			${mod.Наименование} ${mod.brand_title} ${mod.model_title}
+			${ti.fin(mod.Наименование,' ')} ${mod.brand_title} ${mod.model_title}
 		</span>
 		<span style="text-align:right">${mod.Цена?cost(mod.Цена):''}</span>
 	</a>

@@ -12,7 +12,8 @@ export const HEAD = (data, env) =>
 			const isSuitable = a => {
 				const search = a.getAttribute('href')
 				if (search == null) return
-				if (/^\w+:/.test(search)) return
+				if (/^\\w+:/.test(search)) return
+				if (/^\\/data\\//.test(search)) return
 				//if (~search.lastIndexOf('.')) return
 				if (search[1] == '-') return
 				return true

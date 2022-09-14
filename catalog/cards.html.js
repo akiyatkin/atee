@@ -12,7 +12,7 @@ cards.LIST = (data, env) => `
 		@media (max-width:767px) {
 			.${env.layer.sub} { grid-template-columns: 1fr 1fr }
 		}
-		@media (max-width:400px) {
+		@media (max-width:360px) {
 			.${env.layer.sub} { grid-template-columns: 1fr }
 		}
 	</style>
@@ -21,11 +21,13 @@ cards.LIST = (data, env) => `
 		${data.list.map(mod => cards.card(data, mod)).join('')}
 	</div>
 `
+
 cards.badgecss = (data, env) => `
 	<style>
 		#${env.layer.div} .badge {
 			border-radius: 8px;
 			border: solid 1px currentColor;
+			background-color: rgba(255,255,255,.9);
 			padding: 2px 8px;
 			font-size: 0.9rem;
 		}
@@ -128,9 +130,9 @@ cards.prop = {
 			? `<b>${val}</b>` : `<a href="/catalog/${links.addm(data)}more.${pr.prop_nick}::.${val}=1">${val}</a>`
 		).join(', ')
 	),
-	brandart: (data, mod, pr, title, val) => cards.prop.just(data, mod, pr, title, `
+	brandart: (data, mod, pr, title, val) => cards.prop.p(data, mod, pr, title, `
 		${data.brand?.brand_nick != mod.brand_nick ? cards.brandlink(data, mod) : '<b>' + mod.brand_title + '</b>'}
-		<a href="/catalog/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${mod.model_title}</a>
+		<a style="white-space: normal" href="/catalog/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${mod.model_title}</a>
 	`),
 	p: (data, mod, pr, title, val) => `<div style="margin: 0.25rem 0;">${val}</div>`,
 	empty: () => '',
@@ -165,14 +167,7 @@ cards.image = (data, mod) => `
 	</div>
 `
 cards.nal = nicked('Наличие')
-cards.badges = {
-	"Новинка":"badge-green",
-	"В наличии":"badge-primary",
-	"Акция":"badge-danger",
-	"Распродажа":"badge-success",
-	"На заказ":"badge-info",
-	"Мало":"badge-warning"
-}
+
 cards.nalichie = (data, mod) => `
 	<div style="position:absolute; right: 0px; z-index:1; margin: 1rem; top:0">${cards.badgenalichie(data, mod)}</div>
 `

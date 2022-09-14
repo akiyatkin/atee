@@ -1,6 +1,7 @@
 import { Access } from "/-controller/Access.js"
 import { Files } from "/-showcase/Files.js"
 import { nicked } from '/-nicked/nicked.js'
+import { filter } from '/-nicked/filter.js'
 import fs from "fs/promises"
 
 export const restget = (meta) => {
@@ -363,23 +364,26 @@ export const restget = (meta) => {
 			}
 		}
 
-		part = 'folders'
+		part = 'brands'
 		parts[part] = await Files.readdirDeep(visitor, config[part])
 		for (const dirinfo of parts[part].dirs) { //Бренды
 			const brand_nick = nicked(dirinfo.name)
 			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
 			if (!brand_id) continue
 			for (const subinfo of dirinfo.dirs) { //Модели
-				for (const fileinfo of subinfo.files) { //Файлы
+				subinfo.files = await filter(subinfo.files, async (fileinfo) => {
 					//В папке любой файл должен быть связан вне зависимости от расширения
 					const src = nicked(dirinfo.dir + fileinfo.file)
 					const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
 					if (is) return false
 					return ++count
-				}
+				})
+				// for (const fileinfo of subinfo.files) { //Файлы
+					
+				// }
 			}
 		}
-		for (const root of parts[part].dirs) {
+		for (const dirinfo of parts[part].dirs) {
 			for (const subinfo of dirinfo.dirs) {
 				count += subinfo.files.length
 			}
