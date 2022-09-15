@@ -194,20 +194,11 @@ meta.addVariable('md', async (view) => {
 			const prop = await Catalog.getProp(prop_nick)
 			if (!prop) delete md.more[prop_nick]
 			else if (prop.type == 'text') delete md.more[prop_nick]
+			if (!Object.keys(md.more[prop_nick]).length) delete md.more[prop_nick]
 		}
 		if (!Object.keys(md.more).length) delete md.more
 	}
-	// if (md.more) {
-	// 	for (const prop_nick in md.more) {
-	// 		const more = {}
-	// 		const objsvals = md.more[prop_nick]
-	// 		for (const value_nick of objsvals) {
-	// 			const value = await Catalog.getProp(prop_nick)
-	// 			more[prop.prop_title] = md.more[prop_nick]
-	// 		}
-			
-	// 	}
-	// }
+	
 	m = makemark(md).join(':')
 	view.ans.m = m
 	md.m = m

@@ -3,6 +3,7 @@ import { nicked } from "/-nicked/nicked.js"
 import { cost } from "/-words/cost.js"
 import links from "/-catalog/links.html.js"
 import common from "/-catalog/common.html.js"
+import ti from "/-words/ti.js"
 
 const model = {}
 export default model
@@ -29,7 +30,7 @@ const showmodel = (data, env, { mod } = data) =>
 	${model.props(data, mod)}
 	${mod.item_rows.length ? model.items(data, mod) : ''}
 	<!-- <pre>${JSON.stringify(mod, "\n", 2)}</pre> -->
-	${mod.texts?.join('')}
+	${ti.ar(mod.texts).join('')}
 `
 const showimage = (src) => `
 	<div style="display: inline-block;max-width: 500px"><img load="lazy" src="${src}"></div>

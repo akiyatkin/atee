@@ -78,7 +78,7 @@ search.group = (data, env, group) => html`
 
 search.title = (data, env) => html`
 	<div style="float:right; margin-top:1rem">${data.type}</div>
-	${(!data.path.length && !env.bread.get.m) || search.parenttitle(data, env)}
+	${(!data.path.length && !data.md.m) || search.parenttitle(data, env)}
 	<style>
 		a.clearlink {
 			white-space: normal; 
