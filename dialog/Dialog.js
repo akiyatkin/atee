@@ -53,7 +53,8 @@ export const Dialog = {
 		const i = Dialog.parents.indexOf(parent)
 		if (~i) Dialog.parents.splice(i, 1)
 		Dialog.parents.push(parent)
-		
+		const body = cls('dialogbody', dialog)[0]
+		if (body.show) body.show()
 		dialog.classList.add('show')
 		dialog.lastfocus = document.activeElement
 		document.activeElement.blur()	

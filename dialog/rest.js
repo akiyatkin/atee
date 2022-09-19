@@ -56,15 +56,11 @@ meta.addAction('set-contacts', async (view) => {
     user.host = visitor.client.host
     user.ip = visitor.client.ip
     const html = mailtpl.CALLBACK(user)
-    
     const { Mail } = await import('/-mail/Mail.js')
-    const r = await Mail.send(`Заказ звонка ${user.host} ${user.email}`, html)
+    const r = await Mail.send(`Заказ звонка ${user.host} ${user.phone}`, html)
     if (!r) return view.err('Сообщение не отправлено из-за ошибки на сервере')
-
-
 	return view.ret()
 })
-
 
 
 meta.addAction('get-contacts', (view) => {
