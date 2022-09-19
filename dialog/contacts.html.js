@@ -67,7 +67,7 @@ cont.CALLBACK = (data, env, {layer:{div}} = env) => `
 				utms.value = JSON.stringify(res)
 			}
 			
-			const tplobj = await import('/-catalog/order.html.js')
+			const tplobj = await import('/-dialog/contacts.html.js')
 			await Dialog.frame(popup_success, tplobj.SUCCESS())
 			await Dialog.frame(popup_error, tplobj.ERROR())
 			form.addEventListener('submit', async e => {
@@ -107,4 +107,14 @@ cont.CALLBACK = (data, env, {layer:{div}} = env) => `
 			})		
 		</script>
 	</div>
+`
+export const SUCCESS = () => `
+	<h1>Готово</h1>
+	<p style="font-size: 1rem; line-height: 140%; margin-left:auto; margin-right:auto">
+		Менеджер свяжется с&nbsp;Вами<br>в&nbsp;рабочее&nbsp;время, как&nbsp;можно&nbsp;быстрее!
+	</p>
+`
+export const ERROR = () => `
+	<h1 style="opacity:0.5">Ошибка</h1>
+	<div style="max-width: 300px; position: relative; z-index:1"><p style="font-weight: 500;" class="msg"></p></div>
 `

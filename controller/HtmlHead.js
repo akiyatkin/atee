@@ -21,7 +21,9 @@ export const HtmlHead = {
 	accept: obj => {
 		for (const i in obj) {
 			if (!HtmlHead.rules[i]) continue
-			HtmlHead.rules[i](obj[i])
+			const div = document.createElement('div')
+			div.innerHTML = obj[i]
+			HtmlHead.rules[i](div.innerText)
 		}
 	}
 }
