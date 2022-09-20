@@ -40,7 +40,7 @@ const brandlink = (data, env, mod) => `
 `
 model.common = (data, env, mod) => `
 	${cards.badgecss(data, env)}
-	<div style="float: right;">${mod.Наличие ? cards.badgenalichie(data, mod) : ''}</div>
+	<div style="float: right;">${mod.Наличие || mod.discount ? cards.badgenalichie(data, mod) : ''}</div>
 	${model.showprop('Бренд', brandlink(data, env, mod))}
 	${model.showprop('Модель', mod.model_title)}
 	${cards.basket(data, mod)}

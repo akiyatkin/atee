@@ -90,6 +90,9 @@
 .float-label.icon.name > input {
 	background-image: url('icons/name.svg');
 }
+.float-label.icon.lock > input {
+	background-image: url('icons/lock.svg');
+}
 .float-label.icon.geo > input {
 	background-image: url('icons/geo.svg');
 }

@@ -34,13 +34,13 @@
 	transition: opacity 0.3s, transform 0.3s;
 }
 .div-animate-opacity-before {
-	visibility: hidden;
+	/*visibility: hidden;*/
 	will-change: content;
 	opacity: 0;
 	transition: none;
 }
 .div-animate-opacity-after {
-	visibility: visible;
+	/*visibility: visible;*/
 	transition: opacity 0.2s;
 }
 .div-animate-none-before {

@@ -182,13 +182,13 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums afte
 					if (item[oldcost.prop_title]) continue
 					if (!item[cost.prop_title]) continue
 					item[oldcost.prop_title] = item[cost.prop_title]
-					item[cost.prop_title] = Math.round(item[oldcost.prop_title] * (1 - partner.discount))
+					item[cost.prop_title] = Math.round(item[oldcost.prop_title] * (100 - partner.discount) / 100)
 					item.discount = partner.discount
 				}
 				continue
 			}
 			model[oldcost.prop_title] = model[cost.prop_title]
-			model[cost.prop_title] = Math.round(model[oldcost.prop_title] * (1 - partner.discount))
+			model[cost.prop_title] = Math.round(model[oldcost.prop_title] * (100 - partner.discount) / 100)
 			model.discount = partner.discount
 		}
 	}

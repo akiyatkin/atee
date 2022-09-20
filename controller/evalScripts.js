@@ -20,9 +20,10 @@ export const evalScripts = div => {
 				fresh.type = old.type
 				fresh.id = 'evalScripts_'+i+'_'+Date.now()
 				fresh.addEventListener('ready', resolve)
-				fresh.textContent = old.textContent + `
-					document.getElementById("${fresh.id}").dispatchEvent(new Event("ready"))
-				`	
+				fresh.textContent = old.textContent + `;(script => {
+					script.id = null
+					script.dispatchEvent(new Event("ready"))
+				})(document.getElementById("${fresh.id}"))`	
 				old.replaceWith(fresh)
 			})
 		}

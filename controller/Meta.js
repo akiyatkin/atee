@@ -51,7 +51,8 @@ export class View {
 
 		if (opt.func) {
 			const r = await opt.func(view, res, forname, opt.replaced)
-			if (r != null) res = r;
+			//if (r != null) res = r
+			res = r
 		}
         for (const n of opt['after'] || []) {
             const r = await view.get(n, res, pname);

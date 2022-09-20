@@ -37,6 +37,14 @@ cards.badgecss = (data, env) => `
 		#${env.layer.div} .badge_novinka {
 			color: green;
 		}
+		#${env.layer.div} .badge_discount {
+			color: var(--red);
+		}
+		/*.badge_lider-prodaj {
+			background-color: black!important;
+			border-color: white!important;
+			color: white!important;
+		}*/
 	</style>
 `
 cards.card = (data, mod) => `
@@ -145,24 +153,29 @@ cards.brandlink = (data, mod) => `
 	<a href="/catalog/${mod.brand_nick}${links.setm(data)}">${mod.brand_title}</a>
 `
 cards.basket = (data, mod) => {
+	let html = ''
+	if (mod['Старая цена']) {
+		html += ` <s style="opacity: .5;">${cost(mod['Старая цена'])}${common.unit()}</s>`
+	}
 	if (mod.min || mod.max) {
-		return `
+		html += `
 			От&nbsp;<b>${cost(mod.min)}</b> 
 			до&nbsp;<b>${cost(mod.max)}${common.unit()}</b>
 		`
 	} else if (mod.Цена) {
-		return `
+		html += `
 			<b>${cost(mod.Цена)}${common.unit()}</b>
 		`
 	}
-	return ''
+	
+	return html
 }
 cards.name = (data, mod) => `
 	<a style="padding: 0; color: inherit; border: none; white-space: normal;" href="${links.model(data, mod)}">${mod.Наименование || mod.model_title}</a>
 `
 cards.image = (data, mod) => `
 	<div style="min-height: 2.7rem">
-		${mod.Наличие ? cards.nalichie(data, mod) : ''}
+		${mod.Наличие || mod.discount ? cards.nalichie(data, mod) : ''}
 		${mod.images?.length ? cards.img(data, mod) : ''}
 	</div>
 `
@@ -171,11 +184,15 @@ cards.nal = nicked('Наличие')
 cards.nalichie = (data, mod) => `
 	<div style="position:absolute; right: 0px; z-index:1; margin: 1rem; top:0">${cards.badgenalichie(data, mod)}</div>
 `
-cards.badgenalichie = (data, mod) => `
+cards.badgenalichie = (data, mod) => mod.Наличие ? `
 	<a rel="nofollow" href="/catalog/${links.addm(data)}more.${cards.nal}::.${mod.Наличие}=1" 
-		class="badge badge_${nicked(mod['Наличие'])}">
+		class="badge badge_${nicked(mod['Наличие'] || 'discount')}">
 		${mod['Старая цена'] ? ('-' + mod.discount + '%') : mod.Наличие}
 	</a>
+` : `
+	<span class="badge badge_${nicked(mod['Наличие'] || 'discount')}">
+		${mod['Старая цена'] ? ('-' + mod.discount + '%') : mod.Наличие}
+	</span>
 `
 cards.img = (data, mod) => `
 	<a style="border: none; display: block; text-align: center;" href="${links.model(data, mod)}">

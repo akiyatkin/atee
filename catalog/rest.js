@@ -431,27 +431,21 @@ meta.addAction('get-catalog', async (view) => {
 	return view.ret()
 })
 meta.addAction('get-nalichie', async (view) => {
-	const { db } = await view.gets(['db','partner'])
-	view.ans.list = await getNalichie()
+	const { partner } = await view.gets(['partner'])
+	view.ans.list = await getNalichie(partner)
 	return view.ret()
 })
-meta.addArgument('partner', ['string'], async (view, partner) => {
+meta.addArgument('partner', async (view, partner) => {
 	const options = await Catalog.getOptions()
-	return options.partners[partner]
+	const data = options.partners[partner]
+	if (data) view.ans.partner = partner
+	return data
 })
-// meta.addAction('get-partner', async (view) => {
-// 	const { db, value } = await view.gets(['db','value'])
-// 	const options = await Catalog.getOptions()
-// 	const data =  options.partners[value]
-// 	if (!data) {
-// 		view.ans.data = {}
-// 		view.ans.value = ''
-// 		return view.err()
-// 	}
-// 	view.ans.value = value
-// 	view.ans.data = data
-// 	return view.ret()
-// })
+meta.addAction('get-partner', async (view) => {
+	const { partner } = await view.gets(['partner'])
+	
+	return partner ? view.ret() : view.err()
+})
 
 meta.addArgument('visitor')
 

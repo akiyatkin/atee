@@ -32,7 +32,7 @@ cont.CALLBACK = (data, env, {layer:{div}} = env) => `
 			
 			
 			const { Autosave } = await import("/-form/Autosave.js")
-			await Autosave.init(form)	
+			await Autosave.init(form)
 			
 			//await new Promise(resolve => setTimeout(resolve, 50))
 			const SITEKEY = "${data.SITEKEY}"

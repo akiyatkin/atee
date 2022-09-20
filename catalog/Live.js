@@ -199,8 +199,8 @@ export const Live = {
 				if (path.find(el => el == input)) return; //Клик по форме не сворачивает
 				if (path.find(el => el == menu)) return; //Клик по меню не сворачивает
 			}
-			//e.stopPropagation()
-			//e.preventDefault()
+			e.stopPropagation()
+			e.preventDefault()
 			menu.classList.remove('show') //Скрываем меню
 		}, true)
 	}
