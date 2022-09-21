@@ -12,9 +12,9 @@ document.addEventListener('keydown', async e => {
     Dialog.hide(parent)
 })
 export const Dialog = {
-	open: async ({div, tpl, sub, json}) => {
+	open: async ({div, tpl, sub, json, data}) => {
 		const tplobj = await import(tpl)
-		const data = !json ? null : await fetch(json).then(res => res.json())
+		data = !json ? data : await fetch(json).then(res => res.json())
 		const id = 'dialog-'+nicked([tpl,sub,json].join('-'))
 		let popup = document.getElementById(id)
 		if (!popup) {
@@ -22,7 +22,7 @@ export const Dialog = {
 			popup.id = id
 			document.body.append(popup)
 		}
-		await Dialog.frame(popup, tplobj[sub](data))
+		await Dialog.frame(popup, tplobj[sub](data, {layer:{tpl, sub, json, div:id}}))
 		Dialog.show(popup)
 		return popup
 	},
