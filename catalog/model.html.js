@@ -30,10 +30,18 @@ const showmodel = (data, env, { mod } = data) =>
 	${model.props(data, mod)}
 	${mod.item_rows.length ? model.items(data, mod) : ''}
 	<!-- <pre>${JSON.stringify(mod, "\n", 2)}</pre> -->
-	${ti.ar(mod.texts).join('')}
+	<div class="modtext">
+		<style>
+			#${env.layer.div} .modtext img {
+				max-width: 100%;
+				height: auto;
+			}
+		</style>
+		${ti.ar(mod.texts).join('')}
+	</div>
 `
 const showimage = (src) => `
-	<div style="display: inline-block;max-width: 500px"><img load="lazy" src="${src}"></div>
+	<div style="display: inline-block;max-width: 500px; margin-bottom:1rem"><img style="max-width: 100%" src="${src}"></div>
 `
 const brandlink = (data, env, mod) => `
 	<a href="${env.crumb.parent}${links.setm(data)}">${mod.brand_title}</a>
