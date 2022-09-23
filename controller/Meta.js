@@ -96,6 +96,9 @@ export class View {
 		}
 		return res
 	}
+	end () {
+		throw new ViewException()
+	}
     err (msg) {
         const view = this
         view.ans.result = 0

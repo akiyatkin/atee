@@ -196,6 +196,6 @@ cards.badgenalichie = (data, mod) => mod.Наличие ? `
 `
 cards.img = (data, mod) => `
 	<a style="border: none; display: block; text-align: center;" href="${links.model(data, mod)}">
-		<img loading="lazy" style="max-width: 100%; margin: 0 auto" src="${mod.images[0]}">
+		<img width="330" height="220" loading="lazy" style="max-width: 100%; margin: 0 auto; height:auto" src="/-imager/webp?w=330&h=220&src=${mod.images[0]}">
 	</a>
 `

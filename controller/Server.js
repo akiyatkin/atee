@@ -2,6 +2,8 @@ import { router, readTextStream, loadJSON, loadTEXT } from './router.js'
 import http from 'http'
 import fs from 'fs/promises'
 import { ReadStream } from 'fs'
+import { pipeline } from 'stream/promises'
+import { Duplex } from 'stream'
 import { Access } from '@atee/controller/Access.js'
 import { meta } from './rest.js'
 import { Bread } from './Bread.js'
@@ -76,6 +78,10 @@ export const Server = {
 						response.writeHead(status, headers)
 						ans.pipe(response)
 					});
+					return ans.on('error', () => error(404, 'Not found'))
+				} else if (ans instanceof Duplex) {
+					response.writeHead(status, headers)
+					ans.pipe(response)
 					return ans.on('error', () => error(404, 'Not found'))
 				} else {
 					response.writeHead(status, headers)

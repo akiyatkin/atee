@@ -13,6 +13,7 @@ export default class Visitor {
 		return res
 	}
 	constructor (request) {
+		//this.request нельзя сохранять, чтобы отдельный view не решил что может что-то отправить и закрыть request
 		this.client = {
 			cookie: request.headers.cookie || '', 
 			host: request.headers.host, 

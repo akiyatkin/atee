@@ -11,7 +11,7 @@ svg, img {
 	vertical-align: middle;
 }
 img, iframe, object, embed, video {
-    max-width: 100%;
+    /*max-width: 100%;*/
     /*height: auto;*/
 }
 button, input {
