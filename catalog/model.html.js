@@ -41,7 +41,7 @@ const showmodel = (data, env, { mod } = data) =>
 	</div>
 `
 const showimage = (src) => `
-	<div style="display: inline-block;max-width: 500px; margin-bottom:1rem"><img style="max-width: 100%" src="${src}"></div>
+	<div style="display: inline-block;max-width: 500px; margin-bottom:1rem"><img style="max-width: 100%; height:auto" src="${src}"></div>
 `
 const brandlink = (data, env, mod) => `
 	<a href="${env.crumb.parent}${links.setm(data)}">${mod.brand_title}</a>
