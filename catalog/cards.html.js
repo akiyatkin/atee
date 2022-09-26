@@ -37,9 +37,7 @@ cards.badgecss = (data, env) => `
 		#${env.layer.div} .badge_novinka {
 			color: green;
 		}
-		#${env.layer.div} .badge_discount {
-			color: var(--red);
-		}
+		
 		/*.badge_lider-prodaj {
 			background-color: black!important;
 			border-color: white!important;

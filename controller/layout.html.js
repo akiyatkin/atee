@@ -55,13 +55,11 @@ export const HEAD = (data, env) =>
 		<script type="module">
 			const check = async () => {
 				let search = location.search
-				if (/[&\?]t[=&\?]/.test(search)) return
-				if (/[&\?]t$/.test(search)) return
+				if (/[&\?]t[=&\?]/.test(location.search)) return
+				if (/[&\?]t$/.test(location.search)) return
 				const timings = await fetch('/-controller/get-access').then(data => data.json()).catch(() => false)
 				const new_access_time = timings.access_time
 				if (new_access_time == ${env.timings.access_time}) return
-				search += (search ? '&' : '?') + 't'
-				if (new_access_time) search += '=' + new_access_time
 				if (navigator.serviceWorker) {
 					const sw = navigator.serviceWorker
 					const swr = await sw.ready
@@ -70,6 +68,9 @@ export const HEAD = (data, env) =>
 					}
 					if (sw.controller) sw.controller.postMessage(timings)
 				}
+				search = location.search
+				search += (search ? '&' : '?') + 't'
+				if (new_access_time) search += '=' + new_access_time
 				location.href = location.pathname + search + location.hash
 			}
 			check() //чтобы были return
@@ -86,17 +87,17 @@ export const HEAD = (data, env) =>
 				let name = location.search.match('[\?|&]theme=([^&]*)')
 				if (name) return decodeURIComponent(name[1])
 			}
-			const check = async (name) => { //template name
+			const check = async (tplname) => { //template name
 				const getname = fromGET()
 				if (getname != null) return
 				const cookiename = fromCookie()
-				if (name == cookiename) return
-				const Client = await window.getClient()
-				if (name) {
-					document.cookie = "theme=" + encodeURIComponent(name) + "; path=/; SameSite=Strict ";
+				if (tplname == cookiename) return
+				if (getname) {
+					document.cookie = "theme=" + encodeURIComponent(getname) + "; path=/; SameSite=Strict ";
 				} else {
 					document.cookie = "theme=; path=/; SameSite=Strict ";
 				}
+				const Client = await window.getClient()
 				if (cookiename) {
 					await Client.replaceState(location.href + (location.search ? '&' : '?') + 'theme=' + cookiename)	
 				} else {

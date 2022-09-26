@@ -8,28 +8,6 @@ const search = {}
 export default search
 
 search.ROOT = () => html`
-	<style>
-		#{env.layer.div} .pagination {
-			user-select: none;
-			margin: 2rem 0; margin-left: auto; width: max-content;align-items: center; display: grid; 
-			grid-template-columns: repeat(5, max-content); 
-			gap:1rem
-		}
-		#{env.layer.div} .pagination .page {
-			padding:0 1rem; border: solid 1px #aaa; color: white; font-size: 1.3rem; background-color: gray;
-		}
-		#{env.layer.div} .pagination .disabled {
-			opacity: 0.5;
-		}
-		@media (max-width: 380px) {
-			#{env.layer.div} .pagination {
-				grid-template-columns: repeat(4, max-content); 
-			}
-			#{env.layer.div} .pagination .paglong {
-				display: none;
-			}
-		}
-	</style>
 	<div id="CATGROUPS"></div>
 	<div id="page"><div id="CATPAG"></div></div>
 	<div id="CATLIST"></div>
@@ -47,6 +25,28 @@ search.LIST = (data, env) => data.result ? `
 ` : 'Данные не найдены'
 search.pag = (data, env, scroll) => `
 	<div class="pagination">
+		<style>
+			#{env.layer.div} .pagination {
+				user-select: none;
+				margin: 2rem 0; margin-left: auto; width: max-content;align-items: center; display: grid; 
+				grid-template-columns: repeat(5, max-content); 
+				gap:1rem
+			}
+			#{env.layer.div} .pagination .page {
+				padding:0 1rem; border: solid 1px #aaa; color: white; font-size: 1.3rem; background-color: gray;
+			}
+			#{env.layer.div} .pagination .disabled {
+				opacity: 0.5;
+			}
+			@media (max-width: 380px) {
+				#{env.layer.div} .pagination {
+					grid-template-columns: repeat(4, max-content); 
+				}
+				#{env.layer.div} .pagination .paglong {
+					display: none;
+				}
+			}
+		</style>
 		<div class="begin">${search.pag[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'В начало', 1)}</div>
 		<div class="backward">${search.pag[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'Назад', data.pagination.page - 1)}</div>
 		<div class="page" style="${data.pagination.last == 1 ? 'opacity:0.3' : ''}">${data.pagination.page}</div>

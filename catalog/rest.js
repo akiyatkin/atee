@@ -438,7 +438,10 @@ meta.addAction('get-nalichie', async (view) => {
 meta.addArgument('partner', async (view, partner) => {
 	const options = await Catalog.getOptions()
 	const data = options.partners[partner]
-	if (data) view.ans.partner = partner
+	if (data) {
+		view.ans.partner = partner
+		view.ans.nostore = true
+	}
 	return data
 })
 meta.addAction('get-partner', async (view) => {
@@ -525,6 +528,6 @@ export const rest = async (query, get, visitor) => {
 	return { ans, 
 		ext: 'json', 
 		status: ans.status ?? 200, 
-		nostore: false 
+		nostore: ans.nostore ?? false 
 	}
 }
