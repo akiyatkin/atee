@@ -326,16 +326,16 @@ const parse = (string, sep = '; ') => {
 const getTheme = (get, cookie) => {
 	const name = get.theme != null ? get.theme : fromCookie(cookie)
 	const theme = parse(name,':')
-	const value = []
+	//const value = []
 	for (const key in theme) {
 		const val = theme[key]
 		if (!val) {
 			delete theme[key]
 			continue
 		}
-		value.push(`${key}=${val}`)
+		//value.push(`${key}=${val}`)
 	}
-	theme.value = value.join(':')
+	//theme.value = value.join(':')
 	return theme
 }
 meta.addArgument('client')
@@ -372,16 +372,21 @@ meta.addAction('get-layers', async view => {
 	const theme = getTheme(bread.get, cookie)
 
 	if (bread.get.theme != null) {
-		if (theme.value) {
-			view.ans.headers['Set-Cookie'] = 'theme=' + encodeURIComponent(theme.value) + '; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT'
+		const themevalue = Object.entries(bread.env.theme).map(a => a.join("=")).join(":")
+		if (themevalue) {
+			view.ans.headers['Set-Cookie'] = 'theme=' + encodeURIComponent(themevalue) + '; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT'
 		} else {
 			view.ans.headers['Set-Cookie'] = 'theme=; path=/; SameSite=Strict; Max-Age=-1;'
 		}
 	}
-	const interpolate = (val, timings, layer, bread, crumb, theme, head) => new Function(
-		"host","timings", "layer", "bread", "crumb", "theme", "head",
-		'return `'+val+'`'
-	)(host, timings, layer, bread, crumb, theme, head)
+
+	const interpolate = (val, timings, layer, bread, crumb, theme, head) => {
+		const env = {timings, layer, bread, crumb, theme, head}
+		return new Function(
+			'env', 'host', 'timings', 'layer', 'bread', 'crumb', 'theme', 'head',
+			'return `'+val+'`'
+		)(env, host, timings, layer, bread, crumb, theme, head)
+	}
 
 	const { index: nopt, status } = getIndex(rule, timings, bread, interpolate, theme) //{ index: {head, push, root}, status }
 	if (!nopt?.root) return view.err()
@@ -460,26 +465,23 @@ const getIndex = (rule, timings, bread, interpolate, theme) => {
 	runByRootLayer(index.root, layer => {
 		const crumb = bread.getCrumb(layer.depth)
 		const ts = layer.ts
-
-		
+		if (rule.replacetpl) layer.replacetpl = rule.replacetpl[layer.ts]
 		if (layer.name) {
-			if (rule.htmltpl && rule.htmltpl[layer.name]) {
+			if (rule.htmltpl?.[layer.name]) {
 				layer.html = interpolate(rule.htmltpl[layer.name], timings, layer, bread, crumb, theme)
 			} else {
 				if (rule.html) layer.html = rule.html[layer.name]
 			}
-
 			if (rule.tpl) layer.tpl = rule.tpl[layer.name]
-
 			
 		}
-		if (rule.parsedtpl && rule.parsedtpl[ts]) {
+		if (rule.parsedtpl?.[ts]) {
 			layer.parsed = interpolate(rule.parsedtpl[ts], timings, layer, bread, crumb, theme)
 		}
-		if (rule.jsontpl && rule.jsontpl[ts]) {
+		if (rule.jsontpl?.[ts]) {
 			layer.json = interpolate(rule.jsontpl[ts], timings, layer, bread, crumb, theme)
 		} else {
-			if (rule.json && rule.json[ts]) layer.json = rule.json[ts]
+			if (rule.json) layer.json = rule.json[ts]
 		}
 
 	})

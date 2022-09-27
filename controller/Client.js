@@ -228,7 +228,7 @@ const applyCrossing = async () => {
 		}
 		for (const layer of json.layers) {
 			layer.sys.template = document.createElement('template')
-			addHtml(layer.sys.template, layer, bread, timings, json.theme, json.head)
+			await addHtml(layer.sys.template, layer, bread, timings, json.theme, json.head)
 		}
 		
 		const scripts = []
@@ -264,22 +264,30 @@ const errmsg = (layer, e) => {
 	console.log(layer, e)
 	return `<pre><code>${layer.ts}<br>${e.toString()}</code></pre>`
 }
-const addHtml = (template, layer, bread, timings, theme, head) => {
+const interpolate = (val, data, env) => new Function('data', 'env', 'return `'+val+'`')(data, env)
+
+const addHtml = async (template, layer, bread, timings, theme, head) => {
 	const crumb = bread.getCrumb(layer.depth)
 	let html = ''
+	const env = {
+		layer, 
+		crumb,
+		bread, 
+		host:location.host, 
+		timings,
+		head,
+		theme
+	}
+	if (layer.replacetpl) {
+		const tpl = interpolate(layer.replacetpl, layer.sys.data, env)
+		layer.sys.tplobj = await import(tpl).then(res => res.default || res).catch(e => {
+			console.log('replacetpl', e)
+			location.reload()
+		})
+	}
 	if (layer.sys.html) {
 		html = layer.sys.html
 	} else if (layer.sys.tplobj) {
-		const env = {
-			layer, 
-			crumb,
-			bread, 
-			host:location.host, 
-			timings,
-			head,
-			theme
-		}
-		delete env.sys
 		//cookie:document.cookie, 
 		const data = layer.sys.data
 		try {
@@ -295,11 +303,11 @@ const addHtml = (template, layer, bread, timings, theme, head) => {
 		template.innerHTML = html
 	}
 	if (layer.layers) for (const l of layer.layers) {
-		addHtml(template, l, bread, timings, theme, head)
+		await addHtml(template, l, bread, timings, theme, head)
 	}
 }
+
 const loadAll = (layers, promises = []) => {
-	
 	if (!layers) return promises
 
 	const jsons = {}
@@ -315,7 +323,7 @@ const loadAll = (layers, promises = []) => {
 			if (~type.indexOf('text/html')) return res.text()
 			return res.json()
 		})
-	}	
+	}
 	for (const layer of layers) {
 		if (!layer.sys) layer.sys = {}
 		if (layer.tpl) {

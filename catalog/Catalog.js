@@ -199,8 +199,13 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums afte
 	// }
 	return list
 }
-Catalog.getOptions = Access.cache(async () => {
+Catalog.getConfig = Access.cache(async () => {
 	const {default: config} = await import('/showcase.json', {assert:{type:"json"}})
+	config.tpls ??= "data/catalog/tpls/"
+	return config
+})
+Catalog.getOptions = Access.cache(async () => {
+	const config = await Catalog.getConfig()
 	const { options } = await import('/'+config.options)
 	const db = await new Db().connect()
 	options.groups ??= {}
@@ -344,6 +349,19 @@ Catalog.getProp = Access.cache(async (prop_title) => {
 	const prop = await db.fetch('SELECT type, prop_nick, prop_title, prop_id from showcase_props where prop_nick = :prop_nick', { prop_nick })
 	return prop
 })
+Catalog.getPathNickByGroupId = async id => {
+	const group = await Catalog.getGroupById(id)
+	const path = [...group.path]
+	path.push(id)
+	return Promise.all(path.map(async (id) => {
+		const group = await Catalog.getGroupById(id)
+		return group.group_nick
+	}))
+}
+Catalog.getGroupById = async (id) => {
+	const groups = await Catalog.getTree()
+	return groups[id]
+}
 Catalog.getGroupByNick = async (nick) => {
 	const groups = await Catalog.getGroups()
 	return groups[nick]

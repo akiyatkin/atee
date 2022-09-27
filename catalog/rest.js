@@ -1,5 +1,8 @@
 import { Meta } from "/-controller/Meta.js"
-import { nicked } from "/-nicked/nicked.js"
+
+import fs from "fs/promises"
+import { nicked } from '/-nicked/nicked.js'
+
 import { unique } from "/-nicked/unique.js"
 import { Access } from "/-controller/Access.js"
 import { Catalog } from "/-catalog/Catalog.js"
@@ -239,6 +242,27 @@ meta.addAction('get-model-head', async (view) => {
 	return view.ret()		
 })
 
+
+const getTpls = Access.cache(async () => {
+	const config = await Catalog.getConfig()
+	if (!config.tpls) return {}
+	let files = await fs.readdir(config.tpls).catch(() => [])
+	files = files.map((file) => {
+		const i = file.lastIndexOf('.')
+		const name = ~i ? file.slice(0, i) : file
+		const ext = (~i ? file.slice(i + 1) : '').toLowerCase()
+		const secure = file[0] == '.' || file[0] == '~'
+		return {file, name, ext, secure}
+	})
+	files = files.filter(({secure}) => !secure)
+	files.forEach(of => {
+		delete of.secure
+	})
+	return files.reduce((ak, f) => {
+		ak[f.name] = f.file
+		return ak
+	}, {})
+})
 meta.addAction('get-model', async (view) => {
 	view.gets(['SITEKEY'])
 	const { md, db, brand_nick, model_nick, visitor, partner } = await view.gets(['md', 'db', 'visitor', 'brand_nick','model_nick','partner'])
@@ -251,6 +275,16 @@ meta.addAction('get-model', async (view) => {
 			return data || ''
 		})
 	}
+	const config = await Catalog.getConfig()
+
+	const tpls = await getTpls()
+	const path = await Catalog.getPathNickByGroupId(model.group_id)
+	let tpl = false
+	for (const group_nick of path.reverse()) {
+		tpl = tpls['model-' + group_nick+'.html']
+		if (tpl) break
+	}
+	view.ans.tpl =  tpl ? '/' + config.tpls + tpl : "/-catalog/model.html.js"
 	view.ans.mod = model
 	return view.ret()		
 })

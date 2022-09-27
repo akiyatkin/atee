@@ -146,15 +146,26 @@ export const Server = {
 const errmsg = (layer, e, msg = '') => `
 	<pre>${msg}<code>${layer.ts}<br>${e.toString()}${console.log(e) || ''}</code></pre>
 `
-const getHTML = async (layer, { head, visitor, bread, timings, theme }) => {
-	const crumb = bread.getCrumb(layer.depth)
-	const { tpl, json, sub, div } = layer
+const getHTML = async (layer, look, visitor) => {
+	const env = {layer, ...look}
+	env.crumb = look.bread.getCrumb(layer.depth)
 	let nostore = false
     let status = 200
 	let data
-	
 	let html = ''
+
 	
+
+	if (layer.json) {
+		const ans = await loadJSON(layer.json, visitor)
+		data = ans.data
+		nostore = nostore || ans.nostore
+	}
+
+	const interpolate = (val, data, env) => new Function('data', 'env', 'return `'+val+'`')(data, env)
+	if (layer.replacetpl) layer.tpl = interpolate(layer.replacetpl, data, env)
+	
+
 	if (layer.html) {
 		const ans = await loadTEXT(layer.html, visitor).catch(e => { 
 			status = 404
@@ -162,29 +173,14 @@ const getHTML = async (layer, { head, visitor, bread, timings, theme }) => {
 		})
 		html = ans.data
 		nostore = nostore || ans.nostore
-	} else if (tpl) {
-		if (json) {
-			const ans = await loadJSON(json, visitor)
-			data = ans.data
-			nostore = nostore || ans.nostore
-		}
-		let tplobj = await import(tpl).catch(e => {
-    		e.tpl = tpl
+	} else if (layer.tpl) {
+		let tplobj = await import(layer.tpl).catch(e => {
+    		e.tpl = layer.tpl
     		throw e
     	})
     	if (tplobj.default) tplobj = tplobj.default
         try {
-        	const env = {
-        		layer, 
-        		crumb,
-        		bread,
-        		host: visitor.client.host, 
-        		head, //только этим отличается от interpolate в get-layers
-        		timings,
-        		theme
-        	}
-        	//cookie: visitor.client.cookie, 
-            html = tplobj[sub](data, env)
+            html = tplobj[layer.sub](data, env)
         } catch(e) {
             html = errmsg(layer, e)
             status = 500
@@ -208,11 +204,12 @@ export const controller = async ({ vt, st, ut, layers, head, theme }, visitor, b
 		nostore: false
 	}
 	const timings = {view_time:vt, access_time:st, update_time:ut}
-	const look = {head, visitor, bread, timings, theme}
+	const host = visitor.client.host
+	const look = {head, bread, timings, theme, host} //head - этим отличается env в interpolate в get-layers
 	const doc = new Doc()
 	await runLayers(layers, async layer => {
 		
-		const { nostore, html, status } = await getHTML(layer, look)
+		const { nostore, html, status } = await getHTML(layer, look, visitor)
 		ans.nostore = Math.max(ans.nostore, nostore)
         ans.status = Math.max(ans.status, status)
 		doc.insert(html, layer.div, layer.layers?.length)

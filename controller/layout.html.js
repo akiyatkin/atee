@@ -59,6 +59,7 @@ export const HEAD = (data, env) =>
 				if (/[&\?]t$/.test(location.search)) return
 				const timings = await fetch('/-controller/get-access').then(data => data.json()).catch(() => false)
 				const new_access_time = timings.access_time
+				if (!new_access_time) return
 				if (new_access_time == ${env.timings.access_time}) return
 				if (navigator.serviceWorker) {
 					const sw = navigator.serviceWorker
@@ -105,7 +106,7 @@ export const HEAD = (data, env) =>
 				}
 				
 			}
-			check('${env.theme.value}')
+			check('${Object.entries(env.theme).map(a => a.join("=")).join(":")}')
 		</script>
 `
 
