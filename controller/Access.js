@@ -26,6 +26,20 @@ export const Access = {
 	},
 	getAccessTime: () => ACCESS_TIME,
 	getUpdateTime: () => UPDATE_TIME,
+
+	map: new Map(), //Кэшировать стоит то что может повториться в рамках сборки контроллера иначе бессмыслено
+	relate: (obj, fn) => {
+		if (Access.map.has(obj)) return Access.map.get(obj)
+		const res = {}
+		res.once = (name, fn) => {
+			if (res[name]) return res[name].result
+			res[name] = {}
+			res[name].result = fn()
+			return res[name].result
+		}
+		Access.map.set(obj, res)
+		return res
+	},
 	cache: fn => {
 		fn.store = {}
 		return (...args) => {

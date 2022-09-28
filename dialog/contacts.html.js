@@ -4,7 +4,7 @@ cont.CALLBACK = (data, env, {layer:{div}} = env) => `
 	<div style="max-width:500px">
 		<h1>Заказать звонок</h1>
 		<p>
-			Оставьте телефон, менеджер перезвонит в&nbsp;рабочее&nbsp;время!
+			Оставьте телефон, менеджер перезвонит в&nbsp;рабочее&nbsp;время.
 		</p>
 		<form action="/-dialog/set-contacts">
 			<div class="float-label icon phone">
