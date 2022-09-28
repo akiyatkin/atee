@@ -248,13 +248,13 @@ const getTpls = Access.cache(async () => {
 	if (!config.tpls) return {}
 	let files = await fs.readdir(config.tpls).catch(() => [])
 	files = files.map((file) => {
-		const i = file.lastIndexOf('.')
+		const i = file.indexOf('.')
 		const name = ~i ? file.slice(0, i) : file
 		const ext = (~i ? file.slice(i + 1) : '').toLowerCase()
 		const secure = file[0] == '.' || file[0] == '~'
 		return {file, name, ext, secure}
 	})
-	files = files.filter(({secure}) => !secure)
+	files = files.filter(({secure, ext}) => !secure || ext != 'html.js')
 	files.forEach(of => {
 		delete of.secure
 	})
@@ -275,17 +275,30 @@ meta.addAction('get-model', async (view) => {
 			return data || ''
 		})
 	}
-	const config = await Catalog.getConfig()
+	view.ans.mod = model
 
+
+
+
+	const config = await Catalog.getConfig()
 	const tpls = await getTpls()
 	const path = await Catalog.getPathNickByGroupId(model.group_id)
+	path.reverse()
 	let tpl = false
-	for (const group_nick of path.reverse()) {
-		tpl = tpls['model-' + group_nick+'.html']
+
+	if (!tpl) for (const group_nick of path) {
+		tpl = tpls[`model-${model.brand_nick}-${group_nick}`]
 		if (tpl) break
 	}
+	if (!tpl) tpl = tpls[`model-${model.brand_nick}.html`]
+	if (!tpl) for (const group_nick of path) {
+		tpl = tpls[`model-${group_nick}`]
+		if (tpl) break
+	}
+	
 	view.ans.tpl =  tpl ? '/' + config.tpls + tpl : "/-catalog/model.html.js"
-	view.ans.mod = model
+	
+
 	return view.ret()		
 })
 const isSome = (obj, p) => {

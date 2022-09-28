@@ -13,7 +13,7 @@ document.addEventListener('keydown', async e => {
 })
 export const Dialog = {
 	open: async ({div, tpl, sub, json, data}) => {
-		const tplobj = await import(tpl)
+		const tplobj = await import(tpl).then(res => res.default || res)
 		data = !json ? data : await fetch(json).then(res => res.json())
 		const id = 'dialog-'+nicked([tpl,sub,json].join('-'))
 		let popup = document.getElementById(id)
@@ -34,7 +34,7 @@ export const Dialog = {
 	},
 	frame: async (popup, html) => {
 		popup = popup.tagName ? popup : document.getElementById(popup)
-		const popobj = await import('/-dialog/layout.html.js')
+		const popobj = await import('/-dialog/layout.html.js').then(res => res.default || res)
 		const { evalScripts } = await import('/-controller/evalScripts.js')
 		popup.innerHTML = popobj['ROOT']()
 		await evalScripts(popup)

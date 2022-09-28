@@ -9,7 +9,7 @@ const model = {}
 export default model
 
 model.ROOT = (data, env, { mod } = data) => `
-	${data.mod?model.showmodel(data, env, data):model.showerror(data, env)}
+	${data.result ? model.showmodel(data, env, data) : model.showerror(data, env)}
 `
 model.showerror = (data, env) => `
 	<div style="float:left; margin-top:1rem">
