@@ -22,7 +22,7 @@ model.showerror = (data, env) => `
 `
 model.showmodel = (data, env, { mod } = data) =>
 `
-	<div style="float:left; margin-top:1rem"><a href="${env.crumb.parent.parent}${mod.parent_id ? '/'+mod.group_nick : ''}${links.setm(data)}">${mod.group_title}</a></div>
+	<div style="float:left; margin-top:1rem; margin-bottom:1rem"><a href="${env.crumb.parent.parent}${mod.parent_id ? '/'+mod.group_nick : ''}${links.setm(data)}">${mod.group_title}</a></div>
 	<h1 style="clear:both">${cards.name(data, mod)}</h1>
 	
 	${model.common(data, env, mod)}
@@ -40,7 +40,7 @@ model.showmodel = (data, env, { mod } = data) =>
 		${ti.ar(mod.texts).join('')}
 	</div>
 `
-const showimage = (src) => `
+model.showimage = (src) => `
 	<div style="display: inline-block;max-width: 500px; margin-bottom:1rem"><img style="max-width: 100%; height:auto" src="${src}"></div>
 `
 const brandlink = (data, env, mod) => `
@@ -53,7 +53,7 @@ model.common = (data, env, mod) => `
 	${model.showprop('Модель', mod.model_title)}
 	${cards.basket(data, mod)}
 
-	${mod.images? '<p>'+mod.images.map(showimage).join('')+'</p>' : ''}
+	${mod.images? '<p>'+mod.images.map(model.showimage).join('')+'</p>' : ''}
 	<p>
 		<i>${mod.Описание || ''}</i>
 	</p>

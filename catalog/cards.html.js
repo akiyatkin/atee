@@ -138,7 +138,7 @@ cards.prop = {
 	),
 	brandart: (data, mod, pr, title, val) => cards.prop.p(data, mod, pr, title, `
 		${data.brand?.brand_nick != mod.brand_nick ? cards.brandlink(data, mod) : '<b>' + mod.brand_title + '</b>'}
-		<a style="white-space: normal" href="/catalog/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${mod.model_title}</a>
+		<br><a style="white-space: normal" href="/catalog/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${mod.model_title}</a>
 	`),
 	p: (data, mod, pr, title, val) => `<div style="margin: 0.25rem 0;">${val}</div>`,
 	empty: () => '',
