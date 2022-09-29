@@ -504,7 +504,7 @@ export class Upload {
 		parts[part] = await Files.readdirDeep(visitor, config[part])
 		await Files.filterDeep(parts[part], async (dirinfo, fileinfo, level) => {
 			if (!~Files.exts.images.indexOf(fileinfo.ext)) return false
-			const src = dirinfo.dir+fileinfo.file	
+			const src = dirinfo.dir + fileinfo.file	
 			const group_nick = nicked(fileinfo.name)
 			const is = await db.changedRows(`
 				UPDATE

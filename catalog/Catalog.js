@@ -35,7 +35,7 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums afte
 		FROM showcase_props p, showcase_iprops ip
 			LEFT JOIN showcase_values v on v.value_id = ip.value_id
 		WHERE p.prop_id = ip.prop_id and (ip.model_id, ip.item_num) in (${modids.map(it => '(' + it.model_id + ',' + it.item_num + ')').join(',')})
-		order by p.ordain DESC
+		order by p.ordain DESC, ip.ordain
 	`)
 	
 	let list = {}
