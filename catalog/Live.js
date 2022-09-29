@@ -100,15 +100,6 @@ export const Live = {
 		title.innerHTML = tplobj.TITLEBODY({ ...need, ans })
 		body.innerHTML = tplobj.BODY({ ...need, ans })
 	},
-	getNeed: (input) => {
-		let query = input.value
-		query = query.replace(/<\/?[^>]*(>|$)/g, " ")
-		query = query.replace(/[\s\-\"\'\&\?\:\.\,\!\*]+/g, " ")
-		let hash = query.toLowerCase()
-		hash = nicked(hash).split('-').join('-')
-		//const hash = nicked(query).split('-').filter(val => val.length > 1).join('-')
-		return {query, hash}
-	},
 	init: form => {
 		const state = Live.getState(form)
 		const input = form.elements.search
@@ -118,7 +109,8 @@ export const Live = {
 		const searchfrominput = async () => {
 			const menu = await Live.getMenu(form)
 			menu.classList.add('show')
-			const need = Live.getNeed(input)
+			const { default:getNeed } = await import('/-nicked/getNeed.js')
+			const need = getNeed(input)
 			if (state.hash != need.hash) {
 				const title = cls(menu, 'livetitle')[0]
 				const body = cls(menu, 'livebody')[0]
@@ -132,7 +124,8 @@ export const Live = {
 
 		form.addEventListener('submit', async e => {
 			e.preventDefault()
-			const need = Live.getNeed(input)
+			const { default:getNeed } = await import('/-nicked/getNeed.js')
+			const need = getNeed(input)
 			const Client = await window.getClient()
 			const url = new URL(location)
 			const m = url.searchParams.get('m')

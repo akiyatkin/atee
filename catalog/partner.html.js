@@ -1,7 +1,7 @@
 export const POPUP = (data, env) => `
 	<h1>Вход для партнёра</h1>
 	${data.result
-		? '<p>Активный ключ <b>'+data.partner+'</b>. <br>Для Вас действуют более выгодные цены.</p>'
+		? '<p>Активный ключ <b>'+data.partner+'</b>. <br>Для Вас действуют более <a href="/catalog">выгодные цены</a>.</p>'
 		: '<p>Нет активного ключа</p>'
 	}
 	<form>
@@ -22,13 +22,27 @@ export const POPUP = (data, env) => `
 					let theme = new URL(location).searchParams.get('theme') ?? ''
 					if (theme) theme = theme + ':'
 					const Client = await window.getClient()
-					Client.pushState('?theme='+theme+'partner='+inp.value)
+					const { default:getNeed } = await import('/-nicked/getNeed.js')
+					const need = getNeed(inp)
+					Client.pushState('?theme=' + theme + 'partner=' + need.hash)
 					const { Dialog } = await import('/-dialog/Dialog.js')
-					const popup = Dialog.findPopup(form)
-					Dialog.hide(popup)
+					Dialog.hide(Dialog.findPopup(form))
+					fetch('/-catalog/get-partner?partner=' + need.hash).then(e => e.json()).then(ans => {
+						Dialog.open({
+							tpl:'/-catalog/partner.html.js', 
+							sub:ans.result ? 'SUCCESS' : 'ERROR'
+						})
+					}).catch(e => console.log(e))
 				})
 			})(document.currentScript.parentElement)
 		</script>
 	</form>
-	
+`
+export const SUCCESS = () => `
+	<h1>Хорошо</h1>
+	<p>Теперь для Вас действуют более <a href="/catalog">выгодные цены.</a></p>
+`
+export const ERROR = () => `
+	<h1>Ключ неточный</h1>
+	<p>Ключ мог устареть или введён с ошибкой.</p>
 `

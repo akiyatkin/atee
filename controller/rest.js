@@ -372,7 +372,7 @@ meta.addAction('get-layers', async view => {
 	const theme = getTheme(bread.get, cookie)
 
 	if (bread.get.theme != null) {
-		const themevalue = Object.entries(bread.env.theme).map(a => a.join("=")).join(":")
+		const themevalue = Object.entries(theme).map(a => a.join("=")).join(":")
 		if (themevalue) {
 			view.ans.headers['Set-Cookie'] = 'theme=' + encodeURIComponent(themevalue) + '; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT'
 		} else {
