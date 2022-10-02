@@ -29,6 +29,9 @@ table td, table th {
 table th {
 	text-align: left;
 }
+a {
+	-webkit-tap-highlight-color: transparent;
+}
 .a {
 	cursor: pointer;
 	border-bottom: dashed 1px currentColor;
