@@ -11,8 +11,9 @@ document.addEventListener('keydown', async e => {
 	const parent = Dialog.parents[l-1]
     Dialog.hide(parent)
 })
+const hides = new WeakMap()
 export const Dialog = {
-	open: async ({tpl, sub, json, data}) => {
+	open: async ({tpl, sub, json, data}, onhide) => {
 		const tplobj = await import(tpl).then(res => res.default || res)
 		data = !json ? data : await fetch(json).then(res => res.json())
 		const id = 'dialog-'+nicked([tpl,sub,json].join('-'))
@@ -21,6 +22,11 @@ export const Dialog = {
 			popup = document.createElement('div')
 			popup.id = id
 			document.body.append(popup)
+			if (onhide) {
+				const list = hides.get(popup) || []
+				list.push(onhide)
+				hides.set(popup, list)
+			}
 		}
 		await Dialog.frame(popup, tplobj[sub](data, {layer:{tpl, sub, json, div:id}}))
 		Dialog.show(popup)
@@ -96,6 +102,13 @@ export const Dialog = {
 		if (~i) Dialog.parents.splice(i, 1)
 		dialog.classList.remove('show')
 		if (!Dialog.parents.length) dialog.lastfocus.focus({ preventScroll: true })
+
+		const list = hides.get(popup)
+		if (list) {
+			list.forEach((onhide) => {
+				onhide(popup)
+			})
+		}
 	}
 }
 window.Dialog = Dialog
