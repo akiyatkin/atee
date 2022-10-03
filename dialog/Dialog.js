@@ -67,7 +67,7 @@ export const Dialog = {
 			let el = e.target
 			const path = [el]
 			while (el && el.parentElement) path.push(el = el.parentElement)
-			if (path.some(el => el.tagName == 'A')) return Dialog.hide(popup) //Клик по ссылке закрываем
+			if (path.some(el => ~['A'].indexOf(el.tagName))) return Dialog.hide(popup) //Клик по ссылке закрываем
 			//if (over) return
 			if (path.some(el => el == body)) return //Клик внутри, окно не сворачивает
 			if (!path.some(el => el == dialog)) return //Клик где-то вообще вне окна, по чему-то, что сверху например
