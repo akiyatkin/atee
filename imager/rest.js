@@ -48,7 +48,7 @@ meta.addArgument('h',['int'])
 // })
 meta.addArgument('fit', ['string'], (view, fit) => {
 	if (~['cover','contain','outside','fill'].indexOf(fit)) return fit
-	return 'contain'
+	return 'cover'
 })
 const isFreshCache = Access.cache(async (src, store) => {
 	const cstat = await fs.lstat(store).catch(e => null)
@@ -69,7 +69,7 @@ meta.addAction('webp', async view => {
 		height: h || null,
 		fit: sharp.fit[fit],
 		position: 'centre',
-		withoutEnlargement: true,
+		withoutEnlargement: false, //Пропорции недолжны меняться размеров оригинала не зватает
 		background: { r: 255, g: 255, b: 255, alpha: 0 }
 	}).webp({
 		quality: 80,

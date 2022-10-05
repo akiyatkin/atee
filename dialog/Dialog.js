@@ -13,10 +13,10 @@ document.addEventListener('keydown', async e => {
 })
 const hides = new WeakMap()
 export const Dialog = {
-	open: async ({tpl, sub, json, data}, onhide) => {
+	open: async ({tpl, sub, parsed, json, data}, onhide, onshow) => {
 		const tplobj = await import(tpl).then(res => res.default || res)
 		data = !json ? data : await fetch(json).then(res => res.json())
-		const id = 'dialog-'+nicked([tpl,sub,json].join('-'))
+		const id = 'dialog-'+nicked([tpl,sub,json,parsed].join('-'))
 		let popup = document.getElementById(id)
 		if (!popup) {
 			popup = document.createElement('div')
@@ -27,9 +27,9 @@ export const Dialog = {
 				list.push(onhide)
 				hides.set(popup, list)
 			}
+			await Dialog.frame(popup, tplobj[sub](data, {layer:{tpl, sub, json, div:id}}))
 		}
-		await Dialog.frame(popup, tplobj[sub](data, {layer:{tpl, sub, json, div:id}}))
-		Dialog.show(popup)
+		Dialog.show(popup, onshow)
 		return popup
 	},
 	findPopup: el => el.closest('.dialogframe').parentElement,
@@ -80,7 +80,7 @@ export const Dialog = {
 		return popup
 	},
 	parents:[],
-	show: popup => {
+	show: (popup, onshow) => {
 		//document.getElementsByTagName('html')[0].style.overscrollY = 'hidden'
 		popup = popup.tagName ? popup : document.getElementById(popup)
 		const dialog = popup.children[0]
@@ -92,6 +92,7 @@ export const Dialog = {
 		dialog.classList.add('show')
 		dialog.lastfocus = document.activeElement
 		document.activeElement.blur()	
+		if (onshow) onshow(popup)
 		return popup
 	},
 	hide: popup => {

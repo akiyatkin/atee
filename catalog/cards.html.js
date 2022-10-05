@@ -194,6 +194,24 @@ cards.badgenalichie = (data, mod) => mod.Наличие ? `
 `
 cards.img = (data, mod) => `
 	<a style="border: none; display: block; text-align: center;" href="${links.model(data, mod)}">
-		<img width="330" height="220" loading="lazy" style="max-width: 100%; margin: 0 auto; height:auto" src="/-imager/webp?cache&w=330&h=220&src=${mod.images[0]}">
+		<img 
+			loading="lazy" 
+			style="max-width: 100%; margin: 0 auto; height:auto" 
+			${cards.imager(mod.images[0], 330, 220)}
+		>
 	</a>
 `
+cards.imager = (src, w, h) => {
+	const imager = '/-imager/webp?cache'
+	const esrc = encodeURIComponent(src)
+	return `
+		width="${w}" 
+		height="${h}" 
+		srcset="
+			${imager}&w=${w}&h=${h}&src=${esrc} 1x,
+			${imager}&w=${w*2}&h=${h*2}&src=${esrc} 2x,
+			${imager}&w=${w*3}&h=${h*3}&src=${esrc} 3x,
+			${imager}&w=${w*4}&h=${h*4}&src=${esrc} 4x
+		"
+	`
+}
