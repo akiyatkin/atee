@@ -486,6 +486,7 @@ meta.addArgument('partner', async (view, partner) => {
 	const options = await Catalog.getOptions()
 	const data = options.partners[partner]
 	if (data) {
+		data.key = partner
 		view.ans.partner = partner
 		view.ans.nostore = true
 	}
