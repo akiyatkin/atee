@@ -153,7 +153,7 @@ cards.brandlink = (data, mod) => `
 cards.basket = (data, mod) => {
 	let html = ''
 	if (mod['Старая цена']) {
-		html += ` <s style="opacity: .5;">${cost(mod['Старая цена'])}${common.unit()}</s>`
+		html += `<s style="opacity: .5;">${cost(mod['Старая цена'])}${common.unit()}</s>`
 	}
 	if (mod.min || mod.max) {
 		html += `

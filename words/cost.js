@@ -2,9 +2,10 @@ export const cost = (cost) => {
 	if (!cost) return
 	cost = String(cost)
 	const ar = cost.split(/[,\.]/)
-	cost = Number(ar[0]);
+	cost = ar[0];
 	let inp = '&nbsp;'
 	const l = cost.length;
+	//cost = Number(cost)
 	if (l > 4) { //10000 = 10 000
 		if (l > 6) { //1000000 = 1 000 000
 			const last = cost.substr(l - 3, 3)
