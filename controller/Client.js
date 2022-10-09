@@ -1,6 +1,6 @@
 import { animate } from './animate.js'
 import { pathparse } from './Spliter.js'
-import { HtmlHead } from './HtmlHead.js'
+
 import { evalScripts } from './evalScripts.js'
 import { createPromise } from './createPromise.js'
 import { Bread } from './Bread.js'
@@ -19,9 +19,6 @@ export const Client = {
 				}
 				if (sw.controller) sw.controller.postMessage(timings)
 			}
-		})
-		window.addEventListener('crossing', async ({detail: { head }}) => {
-			HtmlHead.accept(head)
 		})
 		window.addEventListener('click', event => {
 			const a = event.target.closest('a')
@@ -228,7 +225,7 @@ const applyCrossing = async () => {
 		}
 		for (const layer of json.layers) {
 			layer.sys.template = document.createElement('template')
-			await addHtml(layer.sys.template, layer, bread, timings, json.theme, json.head)
+			await addHtml(layer.sys.template, layer, bread, timings, json.theme)
 		}
 		
 		const scripts = []
@@ -244,7 +241,7 @@ const applyCrossing = async () => {
 		Client.next = false
 		promise.resolve(search)
 
-		const event = new CustomEvent('crossing', {detail: {timings, bread, head: json.head}})
+		const event = new CustomEvent('crossing', {detail: {timings, bread, theme: json.theme}})
 		window.dispatchEvent(event)
 		if (req.ut && req.ut < timings.update_time) {
 			console.log(2, req, timings)
@@ -266,7 +263,7 @@ const errmsg = (layer, e) => {
 }
 const interpolate = (val, data, env) => new Function('data', 'env', 'return `'+val+'`')(data, env)
 
-const addHtml = async (template, layer, bread, timings, theme, head) => {
+const addHtml = async (template, layer, bread, timings, theme) => {
 	const crumb = bread.getCrumb(layer.depth)
 	let html = ''
 	const env = {
@@ -275,7 +272,6 @@ const addHtml = async (template, layer, bread, timings, theme, head) => {
 		bread, 
 		host:location.host, 
 		timings,
-		head,
 		theme
 	}
 	if (layer.replacetpl) {
@@ -303,7 +299,7 @@ const addHtml = async (template, layer, bread, timings, theme, head) => {
 		template.innerHTML = html
 	}
 	if (layer.layers) for (const l of layer.layers) {
-		await addHtml(template, l, bread, timings, theme, head)
+		await addHtml(template, l, bread, timings, theme)
 	}
 }
 

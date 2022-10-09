@@ -4,7 +4,11 @@ const mysql = require('mysql2/promise')
 
 let pool = false
 let conf = false
-const { default:OPTIONS } = await import('/data/.db.json', {assert: {type: "json"}}).catch(e => console.log(e))
+
+
+const OPTIONS = await import('/data/.db.json', {assert: {type: "json"}}).then(r => r.default).catch(e => false)
+	
+
 if (OPTIONS.config) {
 	// multipleStatements: true,
 	const DEF = {

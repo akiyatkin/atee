@@ -157,7 +157,11 @@ const getHTML = async (layer, look, visitor) => {
 	
 
 	if (layer.json) {
-		const ans = await loadJSON(layer.json, visitor)
+		//const ans = await loadJSON(layer.json, visitor)
+		const ans = await loadJSON(layer.json, visitor).catch(res => {
+			console.log('getHTML loadJSON')
+			throw res
+		})
 		data = ans.data
 		nostore = nostore || ans.nostore
 	}
@@ -208,7 +212,6 @@ export const controller = async ({ vt, st, ut, layers, head, theme }, visitor, b
 	const look = {head, bread, timings, theme, host} //head - этим отличается env в interpolate в get-layers
 	const doc = new Doc()
 	await runLayers(layers, async layer => {
-		
 		const { nostore, html, status } = await getHTML(layer, look, visitor)
 		ans.nostore = Math.max(ans.nostore, nostore)
         ans.status = Math.max(ans.status, status)

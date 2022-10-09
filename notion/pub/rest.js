@@ -10,15 +10,26 @@ meta.addAction('get-list', async (view) => {
 	return view.ret()
 })
 meta.addAction('get-page-sitemap', async (view) => {
-	const list = []
+	const list = {}
 	for (const Nick in Notion.pages) {
 		const page = Notion.pages[Nick]
-		list.push({
-			child: page.Nick,
-			title: page.Name
-		})
+		list[Nick] = {
+			name: page.Name
+		}
 	}
-	return list
+	const ans = {headings:[]}
+	ans.headings.push({
+		title:'Блог',
+		childs: list
+	})
+	return ans
+})
+meta.addAction('get-page-head', async (view) => {
+	const { nick } = await view.gets(['nick'])
+	const page = Notion.pages[nick]
+	return {
+		title: page.Name
+	}
 })
 
 meta.addAction('get-page', async (view) => {

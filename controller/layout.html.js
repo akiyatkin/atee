@@ -1,21 +1,19 @@
-export const HEAD = (data, env) => 
+const controller = {}
+export default controller
+controller.HEAD = (data, env) => 
 `<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>${env.head.title??''}</title>
+
 		<base href="${env.crumb == '/' ? '/' : env.crumb + '/'}">
 		<link rel="stylesheet" href="/-notreset/style.css">
-		<meta name="description" content="${env.head.description??''}">
-		<meta property="og:image" content="${env.head.image_src??''}">
-		<link rel="image_src" href="${env.head.image_src??''}">
-		<link rel="canonical" href="https://${env.host}${env.head.canonical??''}"/>
-		<script type="module">
+
+		<script type="module">//Делаем SPA переходы
 			const isSuitable = a => {
 				const search = a.getAttribute('href')
 				if (search == null) return
+				if (search[1] == '-') return
 				if (/^\\w+:/.test(search)) return
 				if (/^\\/data\\//.test(search)) return
-				//if (~search.lastIndexOf('.')) return
-				if (search[1] == '-') return
 				return true
 			}
 			const click = event => {
@@ -52,7 +50,7 @@ export const HEAD = (data, env) =>
 			window.addEventListener('popstate', popstate)
 		</script>
 		
-		<script type="module">
+		<script type="module">// Проверка что кэш не устарел с последнего входа админа
 			const check = async () => {
 				let search = location.search
 				if (/[&\?]t[=&\?]/.test(location.search)) return
@@ -74,9 +72,9 @@ export const HEAD = (data, env) =>
 				if (new_access_time) search += '=' + new_access_time
 				location.href = location.pathname + search + location.hash
 			}
-			check() //чтобы были return
+			check()
 		</script>
-		<script type="module">
+		<script type="module">// Проверка что получен кэш с нужной темой
 			const fromCookie = () => {
 				let name = document.cookie.match('(^|;)?theme=([^;]*)(;|$)')
 				if (!name) return ''
@@ -110,26 +108,12 @@ export const HEAD = (data, env) =>
 		</script>
 `
 
-
-export const ROBOTS_TXT = (data, env) => `Host: ${env.host}
-Sitemap: https://${env.host}/sitemap.xml`
-
-export const ER500 = (data, env) => `	
+controller.ER500 = (data, env) => `	
 	<p>${env.host}<b>${env.bread.end}</b> &mdash; ошибка на сервере, код 500</p>
 `
-export const ER404 = (data, env) => `
+controller.ER404 = (data, env) => `
 	<p>${env.host}<b>${env.bread.end}</b> &mdash; страница не найдена, код 404</p>
 `
-export const ER403 = (data, env) => `
+controller.ER403 = (data, env) => `
 	<p>${env.host}<b>${env.bread.end}</b> &mdash; доступ закрыт, код 403</p>
 `
-
-export const SITEMAP_XML = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
-	<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-		${data.map(obj => `<url>
-			<loc>https://${env.host}${obj.href ? '/' + obj.href : ''}</loc>
-			<lastmod>${obj.modified}</lastmod>
-			<changefreq>monthly</changefreq>
-			<priority>0.5</priority>
-		</url>`).join('')}
-	</urlset>`

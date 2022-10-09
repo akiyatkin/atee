@@ -36,22 +36,27 @@
 		},
 		"page":{
 			"layout":{
-				"index:ROOT":{
-					"MAIN":"layout:PAGE"
-				}
-			}	
+				"index:ROOT":{}
+			},
+			"child":{
+				"layout":{
+					"index:ROOT":{
+						"MAIN":"layout:PAGE"
+					}
+				}	
+			}
 		}
 
 	},
 	"parsedtpl":{
-		"layout:LIST":"${view_time}"
+		"layout:LIST":"${env.timings.view_time}"
 	},
 	"json":{
 		"layout:ROOT":"/-notion/get-state",
 		"layout:LIST":"/-notion/get-list"
 	},
 	"jsontpl":{
-		"layout:PAGE":"/-notion/get-page?id=${child}"
+		"layout:PAGE":"/-notion/get-page?id=${env.crumb.name}"
 	},
 	"tpl":{
 		"controller":"/-controller/layout.html.js",

@@ -6,7 +6,7 @@ import { Bread } from './Bread.js'
 import { loadJSON, router } from './router.js'
 import { Access } from '@atee/controller/Access.js'
 import { Once } from './Once.js'
-import { SITEMAP_XML, ROBOTS_TXT } from '/-controller/layout.html.js'
+
 import { whereisit } from './whereisit.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
@@ -58,7 +58,6 @@ meta.addFunction('checksearch', (view, n) => {
 meta.addArgument('host')
 
 meta.addArgument('ip')
-meta.addArgument('root', ['checksearch']) //prev
 meta.addArgument('pv', ['checksearch']) //prev
 meta.addArgument('nt', ['checksearch']) //next
 meta.addArgument('vt', ['int']) //view_time
@@ -98,6 +97,7 @@ const wakeup = (rule, depth = 0) => {
 			rule.layout[pts][div] = layer
 		}
 	}
+
 	wakeup(rule.child, depth + 1)
 	if (rule.childs) for (const path in rule.childs) {
 		wakeup(rule.childs[path], depth + 1)
@@ -129,7 +129,7 @@ const maketree = (layer, layout, rule) => {
 	if (!layout) return
 	const tsf = layer.tsf
 	if (!layout[tsf]) return
-	layer.layers = Object.values(layout[layer.tsf])
+	layer.layers = Object.values(layout[tsf])
 	for (const l of layer.layers) {
 		maketree(l, layout, rule)
 	}
@@ -171,8 +171,10 @@ const getRule = Once.proxy( async root => {
 	const { default: rule } = await import('/' + root + '/layers.json', {assert: { type: "json" }})
 	
 	applyframes(rule) //встраиваем фреймы
+	
 	wakeup(rule) //объекты слоёв
 	spread(rule) //childs самодостаточный
+	
 	
 	const tsf = rule.index
 	const [name = '', subframe = ''] = split(':', tsf)
@@ -196,6 +198,7 @@ const getRule = Once.proxy( async root => {
 			runByRootLayer(layer, (l) => l.depth = layer.depth)
 		})
 	})
+	
 	return rule
 })
 const collectPush = (rule, timings, bread, root, interpolate, theme) => {
@@ -214,98 +217,9 @@ const collectPush = (rule, timings, bread, root, interpolate, theme) => {
 	})
 	return push
 }
-const collectHead = async (visitor, rule, timings, bread, root, interpolate, theme) => {
-	let head = {}
-	runByRootLayer(root, layer => {
-		const ts = layer.ts
-		if (!rule.head || !rule.head[ts]) return
-		const crumb = bread.getCrumb(layer.depth)
-		head = {...rule.head[ts]}
-		head.layer = layer
-		head.crumb = crumb
-	})
-
-	if (head.jsontpl) {
-		head.json = interpolate(head.jsontpl, timings, head.layer, bread, head.crumb, theme)
-	}
-	if (head.json) {
-		const {data} = await loadJSON(head.json, visitor).catch(e => {
-			console.log(e)
-			return {data:{result:0}}
-		})
-		if (!data.result) {
-			console.log(head.json, data)
-		}
-		head = {...head, ...data}
-	}
-	if (!head.canonical) {
-		const src = [bread.root, bread.path].filter(p => p).join('/')
-		if (src) head.canonical = '/' + src
-	} else {
-		head.canonical = head.crumb + head.canonical
-	}
-	delete head.layer
-	delete head.crumb
 
 
-	return head
-}
 
-meta.addAction('sitemap', async view => {
-	const { root, host } = await view.gets(['root','host'])
-	const rule = await getRule(root)
-	if (!rule) return view.err()
-	
-	const date = new Date(Access.getUpdateTime())
-	let dd = date.getDate();
-	if (dd < 10) dd = '0' + dd;
-	let mm = date.getMonth() + 1; // месяц 1-12
-	if (mm < 10) mm = '0' + mm;
-	const modified = date.getFullYear() + '-' + mm + '-' + dd
-	const visitor = await view.get('visitor')
-	const sitemap = {}
-	if (!rule.head) return view.err('Требуется секция head')
-	runByIndex(rule, (index, path) => {
-		if (~path.indexOf(false)) return
-		let head = {}
-		path = path.join('/')
-		runByRootLayer(index.root, layer => {
-			const ts = layer.ts
-			if (!rule.head[ts]) return
-			head = rule.head[ts]
-		})
-		if (head.hidden) return
-		sitemap.childs ??= {}
-		sitemap.childs[path] = {
-			modified,
-			...head
-		}
-	})
-	const list = []
-	const headings = []
-	
-	for (const href in sitemap.childs) {
-		const head = sitemap.childs[href]
-		
-		const json = head.json || head.sitemap || false
-		const res = json ? await loadJSON(json, visitor).catch(e => console.log('head', href, e)) : false
-		if (res && res.data) Object.assign(head, res.data)
-
-		if (head.name || head.title) {
-			list.push({...head, href})
-		}
-		if (!head.headings) continue
-
-		for (const i in head.headings) {
-			const heading = head.headings[i]
-			heading.modified ??= modified
-			heading.href = href
-			headings.push(heading)
-		}
-	}
-
-	return {list, headings}
-})
 
 const fromCookie = (cookie) => {
 	let name = cookie.match('(^|;)?theme=([^;]*)(;|$)')
@@ -366,9 +280,12 @@ meta.addAction('get-layers', async view => {
 	
 	if (nroute.rest || nroute.secure) return view.err()
 	const rule = await getRule(nroute.root)
+	
 	if (!rule) return view.err('Bad type layers.json')
+
 	
 	const bread = new Bread(nroute.path, nroute.get, nroute.search, nroute.root)
+	
 	const theme = getTheme(bread.get, cookie)
 
 	if (bread.get.theme != null) {
@@ -380,21 +297,23 @@ meta.addAction('get-layers', async view => {
 		}
 	}
 
-	const interpolate = (val, timings, layer, bread, crumb, theme, head) => {
-		const env = {timings, layer, bread, crumb, theme, head}
+	const interpolate = (val, timings, layer, bread, crumb, theme) => {
+		const env = {timings, layer, bread, crumb, theme}
 		return new Function(
-			'env', 'host', 'timings', 'layer', 'bread', 'crumb', 'theme', 'head',
+			'env', 'host', 'timings', 'layer', 'bread', 'crumb', 'theme',
 			'return `'+val+'`'
-		)(env, host, timings, layer, bread, crumb, theme, head)
+		)(env, host, timings, layer, bread, crumb, theme)
 	}
 
-	const { index: nopt, status } = getIndex(rule, timings, bread, interpolate, theme) //{ index: {head, push, root}, status }
+	const { index: nopt, status } = getIndex(rule, timings, bread, interpolate, theme) //{ index: {push, root}, status }
+
 	if (!nopt?.root) return view.err()
 	view.ans.status = status
 	view.ans.theme = theme
+
+
 	if (!prev) {
 		view.ans.push = collectPush(rule, timings, bread, nopt.root, interpolate, theme)
-		view.ans.head = await collectHead(visitor, rule, timings, bread, nopt.root, interpolate, theme)
 		view.ans.layers = [nopt.root]
 		return view.ret()
 	}
@@ -418,10 +337,6 @@ meta.addAction('get-layers', async view => {
 	view.ans.layers = getDiff(popt.root.layers, nlayers, reloaddivs, reloadtss)
 	if (reloaddivs.length) view.ans.rd = reloaddivs
 	if (reloadtss.length) view.ans.rt = reloadtss
-	
-	if (nroute.search != proute.search) {
-		view.ans.head = await collectHead(visitor, rule, timings, bread, nopt.root, interpolate, theme)
-	}
 	return view.ret()    
 })
 
@@ -449,12 +364,15 @@ const getIndex = (rule, timings, bread, interpolate, theme) => {
 	let status = 200
 	let index = rule
 	let top = bread.top
+	
 	while (top.child) {
 		top = top.child
 		if (index.childs && index.childs[top.name]) {
 			index = index.childs[top.name]
+
 		} else if (index.child) {
 			index = index.child
+			
 		} else {
 			if (!rule.childs[404]) return []
 			index = rule.childs[404]
@@ -462,7 +380,10 @@ const getIndex = (rule, timings, bread, interpolate, theme) => {
 			break
 		}
 	}
+	
+
 	runByRootLayer(index.root, layer => {
+
 		const crumb = bread.getCrumb(layer.depth)
 		const ts = layer.ts
 		if (rule.replacetpl) layer.replacetpl = rule.replacetpl[layer.ts]
@@ -488,27 +409,6 @@ const getIndex = (rule, timings, bread, interpolate, theme) => {
 	return { index, status }
 }
 
-meta.addAction('sitemap.xml', async view => {
-	const { sitemap: {list, headings}, host } = await view.gets(['sitemap','host'])
-	const res = [...list]
-	for (const i in headings) {
-		const heading = headings[i]
-		const href = heading.href
-		const modified = heading.modified
-		for (const next in heading.childs) {
-			res.push({
-				modified, 
-				...heading.childs[next],
-				href: href + (href ? '/'+next : next)
-			})
-		}
-	}
-	return SITEMAP_XML( res, { host } )
-})
-meta.addAction('robots.txt', async view => {
-	const { host } = await view.gets(['host'])
-	return ROBOTS_TXT( true, { host } )
-})
 export const rest = async (query, get, visitor) => {
 	if (query == 'set-admin') {
 		const result = await Access.isAdmin(get.password)
@@ -520,8 +420,7 @@ export const rest = async (query, get, visitor) => {
 	}
 	const req = {root:'', ...get, ...visitor.client, client:visitor.client, visitor}
 	const ans = await meta.get(query, req)
-	if (query == 'robots.txt') return { ans, ext:'txt', nostore: true }
-	if (query == 'sitemap.xml') return { ans, ext:'xml', nostore: true }
+	
 	if (query == 'get-layers') {
 		ans.status = 200
 	}

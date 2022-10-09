@@ -59,7 +59,7 @@ meta.addAction('get-sheet', async view => {
 	return view.ret()
 })
 export const rest = async (query, get, { client }) => {
-    const ans = await meta.get(query, { ...get, ...client } )
-    const status = ans.result ? 200 : 422
-    return { ans, ext: 'json', status, nostore:false }
+	const ans = await meta.get(query, { ...get, ...client } )
+	const status = ans.result ? 200 : 422
+	return { ans, ext: 'json', status, nostore:false }
 }

@@ -5,12 +5,11 @@ export const ROOT = (data) => `
 </p>
 <a href="list">Список статей</a>
 `
-export const LIST = (data, {div, root, host}) => `
+export const LIST = (data, env) => `
 	<h1>Список файлов</h1>
 	${data.pages.map(fileitem).join('')}
 	<script type="module" async>
-		import { Client } from "/-controller/Client.js"
-		const div = document.getElementById('${div}')
+		const div = document.getElementById('${env.layer.div}')
 		div.addEventListener('click', async e => {
 			const button = e.target.closest('.load')
 			if (!button) return
@@ -18,6 +17,7 @@ export const LIST = (data, {div, root, host}) => `
 			const id = button.dataset.id
 			const res = await fetch('/-notion/set-load?id=' + id).then(res => res.json())
 			console.log(res)
+			const Client = await window.getClient()
 			Client.refreshState()
 		})
 		div.addEventListener('click', async e => {
@@ -27,6 +27,7 @@ export const LIST = (data, {div, root, host}) => `
 			const id = button.dataset.id
 			const res = await fetch('/-notion/set-del?id=' + id).then(res => res.json())
 			console.log(res)
+			const Client = await window.getClient()
 			Client.refreshState()
 		})
 	</script>
