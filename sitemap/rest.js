@@ -63,9 +63,6 @@ meta.addAction('head', async view => {
 			console.log(e)
 			return {data:{result:0}}
 		})
-		if (!data.result) {
-			console.log(head.json, data)
-		}
 		head = {...head, ...data}
 	}
 	if (!head.canonical) {
@@ -74,7 +71,6 @@ meta.addAction('head', async view => {
 	} else {
 		head.canonical = head.crumb + head.canonical
 	}
-
 	return head
 })
 
