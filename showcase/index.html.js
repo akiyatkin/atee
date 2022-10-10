@@ -1,8 +1,8 @@
-import { HEAD } from "/-controller/layout.html.js"
+import controller from "/-controller/layout.html.js"
 export const ROOT = (data, env) => `<!DOCTYPE html>
 <html>
 	<head>
-		${HEAD(data, env)}
+		${controller.HEAD(data, env)}
 		<link rel="icon" type="/image/svg+xml" href="/images/favicon.svg">
 		<link rel="stylesheet" href="/style.css">
 		<link rel="stylesheet" href="/-showcase/style.css">

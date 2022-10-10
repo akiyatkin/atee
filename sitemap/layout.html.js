@@ -1,6 +1,5 @@
 const sitemap = {}
 export default sitemap
-
 sitemap.HEAD = (head, env) => `
 	<title>${head.title??''}</title>
 	<meta name="description" content="${head.description??''}">
@@ -30,10 +29,9 @@ sitemap.HEAD = (head, env) => `
 			}
 		}
 		window.addEventListener('crossing', async ({detail: { timings, bread, theme }}) => {
-			const data = await fetch('/-sitemap/page?path=' + bread.path).then(res => res.json())
+			const data = await fetch('/-sitemap/head?path=' + bread.path).then(res => res.json())
 			for (const rule in data) {
-				if (!rules[rule]) continue
-				rules[rule](data[rule])
+				rules[rule]?.(data[rule])
 			}
 		})
 	</script>

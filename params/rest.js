@@ -2,30 +2,34 @@ import { Dabudi } from '/-dabudi/Dabudi.js'
 import { nicked } from "/-nicked/nicked.js"
 import { Access } from '/-controller/Access.js'
 import { Meta } from "/-controller/Meta.js"
-import CONFIG from '/params.json' assert {type: "json"}
-
 import { createRequire } from "module"
 const require = createRequire(import.meta.url)
 const readXlsxFile = require('read-excel-file/node')
 const { readSheetNames } = require('read-excel-file/node')
 
-const sheets = await readSheetNames(CONFIG.src)
-const getList = await Access.mcache(CONFIG.src, async (list, src) => {
-	if (!~sheets.indexOf(list)) return false
-	const	rows_source = await readXlsxFile(src, { sheet: list })
-	const {descr, rows_table} = Dabudi.splitDescr(rows_source)
-	const { heads: { head_titles }, rows_body} = Dabudi.splitHead(rows_table)
-	const data = []
-	rows_body.forEach((row, i) => {
-		const r = {}
-		row.forEach((val, i) => r[head_titles[i]] = val)
-		data.push(r)
+const CONFIG = await import('/params.json', {assert: {type: 'json'}}).then(res => res.default).catch(e => false)
+
+if (CONFIG) {
+	const sheets = await readSheetNames(CONFIG.src)
+	const getList = await Access.mcache(CONFIG.src, async (list, src) => {
+		if (!~sheets.indexOf(list)) return false
+		const	rows_source = await readXlsxFile(src, { sheet: list })
+		const {descr, rows_table} = Dabudi.splitDescr(rows_source)
+		const { heads: { head_titles }, rows_body} = Dabudi.splitHead(rows_table)
+		const data = []
+		rows_body.forEach((row, i) => {
+			const r = {}
+			row.forEach((val, i) => r[head_titles[i]] = val)
+			data.push(r)
+		})
+		return {descr, data, head_titles}
 	})
-	return {descr, data, head_titles}
-})
+}
 
 export const meta = new Meta()
-meta.addArgument('name')
+meta.addArgument('name', (view) => {
+	if (!CONFIG) return view.err('Требуется конфиг params.json')
+})
 meta.addAction('get-menu', async view => {
 	const { name } = await view.gets(['name'])
 	const {descr, data, head_titles} = await getList(name)

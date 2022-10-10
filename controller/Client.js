@@ -3,7 +3,7 @@ import { pathparse } from './Spliter.js'
 
 import { evalScripts } from './evalScripts.js'
 import { createPromise } from './createPromise.js'
-import { Bread } from './Bread.js'
+import Bread from './Bread.js'
 
 export const Client = {
 	search:'',

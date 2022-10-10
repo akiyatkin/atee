@@ -6,7 +6,7 @@ let pool = false
 let conf = false
 
 
-const OPTIONS = await import('/data/.db.json', {assert: {type: "json"}}).then(r => r.default).catch(e => false)
+const OPTIONS = await import('/data/.db.json', {assert: {type: "json"}}).then(r => r.default).catch(e => Object())
 	
 
 if (OPTIONS.config) {

@@ -200,7 +200,7 @@ Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums afte
 	return list
 }
 Catalog.getConfig = Access.cache(async () => {
-	const {default: config} = await import('/showcase.json', {assert:{type:"json"}})
+	const config = await import('/showcase.json', {assert:{type:"json"}}).then(res => res.default).catch(e => Object())
 	config.tpls ??= "data/catalog/tpls/"
 	return config
 })

@@ -1,4 +1,4 @@
-export class Bread {
+export default class Bread {
 	crumbs = []
 	top = null //Верхний уровень контроллера
 	end = null //Последний уровень адресной строки

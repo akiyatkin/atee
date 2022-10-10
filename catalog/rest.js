@@ -13,7 +13,8 @@ import { parse } from '/-controller/Spliter.js'
 import { map } from '/-nicked/map.js'
 import { UTM } from '/-form/UTM.js'
 import { loadTEXT } from '/-controller/router.js'
-import recdata from '/data/.recaptcha.json' assert {type: "json"}
+
+const recdata = await import('/data/.recaptcha.json', {assert: {type:'json'}}).then(res => res.default).catch(e => Object())
 const SECRET = recdata.secret
 const SITEKEY = recdata.sitekey
 

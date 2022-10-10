@@ -6,10 +6,8 @@ import { pipeline } from 'stream/promises'
 import { Duplex } from 'stream'
 import { Access } from '@atee/controller/Access.js'
 import { meta } from './rest.js'
-import { Bread } from './Bread.js'
-
+import Bread from './Bread.js'
 import { Doc } from './Doc.js'
-
 import { parse } from './Spliter.js'
 import { getPost } from './getPost.js'
 import Visitor from './Visitor.js'

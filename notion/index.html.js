@@ -1,8 +1,8 @@
-import { HEAD } from "/-controller/layout.html.js"
+import controller from "/-controller/layout.html.js"
 export const ROOT = (data, env) => `<!DOCTYPE html>
 <html>
 	<head>
-		${HEAD(data, env)}
+		${controller.HEAD(data, env)}
 		<base href="/@atee/notion/">
 		<link rel="icon" type="/image/svg+xml" href="/images/favicon.svg">
 		<link rel="preload" as="style" href="/-modal/style.css" onload="this.onload=null;this.rel='stylesheet'">

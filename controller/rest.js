@@ -2,12 +2,13 @@ import { files, file } from "./files.js"
 import path from 'path'
 import { readFile, utimes } from "fs/promises"
 import { Meta } from "./Meta.js"
-import { Bread } from './Bread.js'
+import Bread from '/-controller/Bread.js'
 import { loadJSON, router } from './router.js'
-import { Access } from '@atee/controller/Access.js'
+import { Access } from '/-controller/Access.js'
 import { Once } from './Once.js'
-
+import Layers from '/-controller/Layers.js'
 import { whereisit } from './whereisit.js'
+import Theme from '/-controller/Theme.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 
@@ -166,14 +167,14 @@ const applyframes = (rule) => {
 }
 const getRule = Once.proxy( async root => {
 	//root должен быть без ведущего слэша и работать с дефисом
-	
-	if (root) root = '-' + root
-	const { default: rule } = await import('/' + root + '/layers.json', {assert: { type: "json" }})
+	const layers = Layers.getInstance(root)
+	const source = await layers.getSource()
+	const rule = structuredClone(source)
 	
 	applyframes(rule) //встраиваем фреймы
 	
 	wakeup(rule) //объекты слоёв
-	spread(rule) //childs самодостаточный
+	spread(rule) //layout в childs самодостаточный
 	
 	
 	const tsf = rule.index
@@ -221,37 +222,9 @@ const collectPush = (rule, timings, bread, root, interpolate, theme) => {
 
 
 
-const fromCookie = (cookie) => {
-	let name = cookie.match('(^|;)?theme=([^;]*)(;|$)')
-	if (!name) return ''
-	if (name == 'deleted') return ''
-	return decodeURIComponent(name[2])
-}
-const parse = (string, sep = '; ') => {
-    const obj = string?.split(sep).reduce((res, item) => {
-        if (!item) return res
-        item = item.replace(/\+/g, '%20')
-        const data = item.split('=')
-        res[decodeURIComponent(data.shift())] = data.length ? decodeURIComponent(data.join('=')) : ''
-        return res
-    }, {})
-    return obj || {}
-}
-const getTheme = (get, cookie) => {
-	const name = get.theme != null ? get.theme : fromCookie(cookie)
-	const theme = parse(name,':')
-	//const value = []
-	for (const key in theme) {
-		const val = theme[key]
-		if (!val) {
-			delete theme[key]
-			continue
-		}
-		//value.push(`${key}=${val}`)
-	}
-	//theme.value = value.join(':')
-	return theme
-}
+
+
+
 meta.addArgument('client')
 meta.addArgument('visitor')
 meta.addAction('get-layers', async view => {
@@ -286,7 +259,7 @@ meta.addAction('get-layers', async view => {
 	
 	const bread = new Bread(nroute.path, nroute.get, nroute.search, nroute.root)
 	
-	const theme = getTheme(bread.get, cookie)
+	const theme = Theme.harvest(bread.get, cookie)
 
 	if (bread.get.theme != null) {
 		const themevalue = Object.entries(theme).map(a => a.join("=")).join(":")
@@ -327,7 +300,7 @@ meta.addAction('get-layers', async view => {
 	const nlayers = structuredClone(nopt.root.layers) //в prev определяются свойства для объектов слоёв которые повторяются
 
 	const pbread = new Bread(proute.path, proute.get, proute.search, proute.root)
-	const ptheme = getTheme(pbread.get, cookie)
+	const ptheme = Theme.harvest(pbread.get, cookie)
 	
 	
 	const { index: popt } = getIndex(rule, ptimings, pbread, interpolate, ptheme)
