@@ -2,7 +2,7 @@ export class Doc {
     exp = /(<\w+.*?id=['"])(([\w\.\-]+?)['"].*?>)([^>]*?)/si
     divs = {}
     insert (html, div = '', childs = false) {
-        if (this.divs[div]) throw `В одном диве ${div} нельзя показать больше одного слоя`
+        if (this.divs[div]) throw `У разных слоёв не может быть одинаковых дивов ${div}`
         const ar = []
         if (childs) {
             const r = html.split(this.exp)

@@ -4,19 +4,25 @@ export default class Layers {
 		if (!Layers.store[root]) Layers.store[root] = new Layers(root)
 		return Layers.store[root]
 	}
-	static getIndex(source, path) { //У path нет ведущий слэш
-		const r = path.split('/')
+	static getIndex(source, bread) { //У path нет ведущий слэш
+		let top = bread.top
+		let status = 200
+		let depth = bread.depth
 		let index = source
-		let name
-		let depth = r.length
-		while (name = r.shift()) {
-			index = index.childs?.[name] || index.child
+		while (top.child) {
+			top = top.child
+			index = index.childs?.[top.name] || index.child
 			if (index) continue
+			status = 404
 			depth = 1
-			index = source.childs?.['404'] || source.childs?.['500']
+			index = source.childs[status]
+			if (index) break
+			status = 500
+			index = source.childs[status]
+			if (!index) depth = null
 			break
 		}
-		return {index, depth}
+		return {index, depth, status}
 	}
 	static runByIndex (rule, fn, path = []) {
 		fn(rule, path)

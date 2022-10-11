@@ -45,8 +45,8 @@ meta.addVariable('timings', async view => {
 })
 const interpolate = (val, env) => new Function('env', 'return `'+val+'`')(env)
 meta.addVariable('env', async view => {
-	const { source, path, bread, theme, timings } = await view.gets(['path', 'source', 'bread', 'theme', 'timings'])
-	const { index, depth } = Layers.getIndex(source, path)
+	const { source, bread, theme, timings } = await view.gets(['source', 'bread', 'theme', 'timings'])
+	const { index, depth } = Layers.getIndex(source, bread)
 	const crumb = bread.getCrumb(depth)
 	return {crumb, bread, theme, timings, index}
 })

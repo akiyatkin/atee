@@ -274,8 +274,6 @@ meta.addAction('get-layers', async view => {
 	}
 
 	const { index: nopt, status } = getIndex(rule, timings, bread, interpolate, theme) //{ index: {push, root}, status }
-	
-	
 
 	if (!nopt?.root) return view.err()
 	view.ans.status = status
@@ -335,29 +333,9 @@ const getDiff = (players, nlayers, reloaddivs, reloadtss, layers = []) => {
 }
 
 const getIndex = (rule, timings, bread, interpolate, theme) => {
-	let status = 200
-	let index = rule
-	let top = bread.top
-	
-	while (top.child) {
-		top = top.child
-		if (index.childs && index.childs[top.name]) {
-			index = index.childs[top.name]
-
-		} else if (index.child) {
-			index = index.child
-			
-		} else {
-			if (!rule.childs[404]) return []
-			index = rule.childs[404]
-			status = 404
-			break
-		}
-	}
-	
-
+	const {index, status, depth} = Layers.getIndex(rule, bread)
+	if (!index) return []
 	runByRootLayer(index.root, layer => {
-
 		const crumb = bread.getCrumb(layer.depth)
 		const ts = layer.ts
 		if (rule.replacetpl) layer.replacetpl = rule.replacetpl[layer.ts]
