@@ -205,6 +205,7 @@ export const controller = async ({ vt, st, ut, layers, head, theme }, visitor, b
         status: 200,
 		nostore: false
 	}
+
 	const timings = {view_time:vt, access_time:st, update_time:ut}
 	const host = visitor.client.host
 	const look = {head, bread, timings, theme, host} //head - этим отличается env в interpolate в get-layers

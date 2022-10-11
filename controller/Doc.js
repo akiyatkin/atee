@@ -2,6 +2,7 @@ export class Doc {
     exp = /(<\w+.*?id=['"])(([\w\.\-]+?)['"].*?>)([^>]*?)/si
     divs = {}
     insert (html, div = '', childs = false) {
+        if (this.divs[div]) throw `В одном диве ${div} нельзя показать больше одного слоя`
         const ar = []
         if (childs) {
             const r = html.split(this.exp)
@@ -31,6 +32,7 @@ export class Doc {
         delete this.divs[div]
         if (!div) for (const div in this.divs) {
             //throw `Не найден div ${div}`
+            //console.log(`Не найден div ${div}`)
             html = html + `Не найден div ${div}`
         }
         return html

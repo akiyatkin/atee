@@ -121,11 +121,6 @@ const spread = (rule, parent) => { //всё что в layout root перенос
 	}
 }
 
-const runByIndex = (rule, fn, path = []) => {
-	fn(rule, path)
-	if (rule.childs) for(const i in rule.childs) runByIndex(rule.childs[i], fn, [...path, i])
-	if (rule.child) runByIndex(rule.child, fn, [...path, false])
-}
 const maketree = (layer, layout, rule) => {
 	if (!layout) return
 	const tsf = layer.tsf
@@ -140,7 +135,7 @@ const runByRootLayer = (root, fn) => {
 	root.layers?.forEach(l => runByRootLayer(l, fn))
 }
 const runByLayer = (rule, fn) => {
-	runByIndex(rule, r => {
+	Layers.runByIndex(rule, r => {
 		runByRootLayer(rule.root, fn)
 	})
 }
@@ -148,7 +143,7 @@ const applyframes = (rule) => {
 	if (!rule.frame) return
 	const frame = rule.frame
 	//Нужно встроить фреймы в вёрстку
-	runByIndex(rule, (root) => {
+	Layers.runByIndex(rule, (root) => {
 		//Показывается ли в каком-то div слой с frame
 		for (const up in root.layout) {
 			for (const div in root.layout[up]) {
@@ -185,7 +180,7 @@ const getRule = Once.proxy( async root => {
 	//const ts = fi(name, fi(':', sub))
 	const ts = fin(name, lin(':', sub))
 	//const ts = fi(name, ':' + sub)
-	runByIndex(rule, (r,path) => { //строим дерево root по дивам		
+	Layers.runByIndex(rule, (r, path) => { //строим дерево root по дивам		
 		r.root = { tsf, ts, name, sub, frame, frameid, depth: 0, tpl:null, html: null, json:null, layers:null }
 		//Object.seal(r.root) debug test
 		maketree(r.root, r.layout, rule)
@@ -279,10 +274,13 @@ meta.addAction('get-layers', async view => {
 	}
 
 	const { index: nopt, status } = getIndex(rule, timings, bread, interpolate, theme) //{ index: {push, root}, status }
+	
+	
 
 	if (!nopt?.root) return view.err()
 	view.ans.status = status
 	view.ans.theme = theme
+
 
 
 	if (!prev) {
@@ -307,6 +305,9 @@ meta.addAction('get-layers', async view => {
 	if (!popt.root) return view.err()
 
 	
+	
+	
+
 	view.ans.layers = getDiff(popt.root.layers, nlayers, reloaddivs, reloadtss)
 	if (reloaddivs.length) view.ans.rd = reloaddivs
 	if (reloadtss.length) view.ans.rt = reloadtss
