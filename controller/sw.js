@@ -1,4 +1,4 @@
-let ACCESS_TIME = UPDATE_TIME = 1 //Версия sw.js
+let ACCESS_TIME = UPDATE_TIME = Date.now() //Версия sw.js
 let ZERO_ACCESS_TIME = ZERO_UPDATE_TIME = 0
 
 this.addEventListener('install', event => {
@@ -18,6 +18,7 @@ this.addEventListener('message', event => {
 		ZERO_ACCESS_TIME = event.data.access_time
 		ZERO_UPDATE_TIME = event.data.update_time
 	} else {
+		console.log('SW update', event.data)
 		ACCESS_TIME = event.data.access_time
 		UPDATE_TIME = event.data.update_time
 	}
