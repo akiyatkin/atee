@@ -72,7 +72,7 @@ search.groups = (data, env) => html`
 `
 search.group = (data, env, group) => html`
 	<div>
-		<a href="${env.crumb.parent}/${group.group_nick}${links.setm(data)}">${group.group_title}</a>
+		<a ${data.md.group?.[group.group_nick] ?' style="font-weight: bold;':''} href="${env.crumb.parent}/${group.group_nick}${links.setm(data)}">${group.group_title}</a>
 	</div>
 `
 

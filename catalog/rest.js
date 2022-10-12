@@ -203,23 +203,13 @@ meta.addVariable('md', async (view) => {
 		if (!Object.keys(md.more).length) delete md.more
 	}
 	
-	m = makemark(md).join(':')
+	m = Catalog.makemark(md).join(':')
 	view.ans.m = m
 	md.m = m
 	view.ans.md = md
 	return md
 })
-const makemark = (md, ar = [], path = []) => {
-	for (const name in md) {
-		const val = md[name]
-		if (typeof(val) == 'object') {
-			makemark(val, ar, [...path, name] )	
-		} else {
-			ar.push([...path, name+'='+val].join('.'))
-		}
-	}
-	return ar
-}
+
 meta.addVariable('SITEKEY', (view) => {
 	view.ans.SITEKEY = SITEKEY
 })

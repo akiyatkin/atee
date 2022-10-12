@@ -458,6 +458,17 @@ Catalog.getModelByNick = async (db, visitor, brand_nick, model_nick, partner = '
 		return models[0]
 	})
 }
+Catalog.makemark = (md, ar = [], path = []) => {
+	for (const name in md) {
+		const val = md[name]
+		if (typeof(val) == 'object') {
+			Catalog.makemark(val, ar, [...path, name] )	
+		} else {
+			ar.push([...path, name+'='+val].join('.'))
+		}
+	}
+	return ar
+}
 Catalog.getmdwhere = (db, visitor, md) => {
 	return visitor.relate(Catalog).once('getmdwhere' + md.m, async () => {
 		const groupnicks = await Catalog.getGroups()
@@ -507,32 +518,47 @@ Catalog.getmdwhere = (db, visitor, md) => {
 		return where
 	})
 }
+const getGroupIds = async (db, md, where) => {
+	let res_ids
+	if (md.more) {
+		res_ids = await db.colAll(`
+			SELECT distinct group_id from showcase_models m
+			left join showcase_iprops ip on ip.model_id = m.model_id
+			WHERE ${where.join(' and ')}
+		`)	
+	} else {
+		res_ids = await db.colAll(`
+			SELECT distinct group_id from showcase_models m
+			WHERE ${where.join(' and ')}
+		`)
+	}
+	return res_ids
+}
 Catalog.searchGroups = (db, visitor, md) => {
 	return visitor.relate(Catalog).once('searchGroups' + md.m, async () => {
 		//const {search = '', group = {}, brand = {}, more = {}} = md
 		const where = await Catalog.getmdwhere(db, visitor, md)
-		let res_ids
+		
 		if (!where.length) {
 			const tree = await Catalog.getTree()
 			const options = await Catalog.getOptions()
 			const groupnicks = await Catalog.getGroups()
 			const root = groupnicks[nicked(options.root_nick)]
 			if (!root) return []
-			res_ids = root.groups.filter(id => tree[id].inside)
-		} else {
-			if (md.more) {
-				res_ids = await db.colAll(`
-					SELECT distinct group_id from showcase_models m
-					left join showcase_iprops ip on ip.model_id = m.model_id
-					WHERE ${where.join(' and ')}
-				`)	
-			} else {
-				res_ids = await db.colAll(`
-					SELECT distinct group_id from showcase_models m
-					WHERE ${where.join(' and ')}
-				`)	
+			const res_ids = root.groups.filter(id => tree[id].inside)
+			return res_ids
+		}
+		let res_ids = await getGroupIds(db, md, where)
+		if (res_ids.length == 1) {
+			const group = await Catalog.getMainGroup(md)
+			if (group.parent_id) { //Есть выбранная группа
+				const nmd = {...md, group: {}}
+				const tree = await Catalog.getTree()
+				nmd.group[tree[group.parent_id].group_nick] = 1
+				nmd.m = Catalog.makemark(nmd).join(':')
+				const nwhere = await Catalog.getmdwhere(db, visitor, nmd)
+				res_ids = await getGroupIds(db, nmd, nwhere)
 			}
-			
 		}
 		return res_ids
 	})
