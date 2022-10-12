@@ -69,7 +69,7 @@ meta.addAction('head', async view => {
 		const src = [bread.root, bread.path].filter(p => p).join('/')
 		if (src) head.canonical = '/' + src
 	} else {
-		head.canonical = head.crumb + head.canonical
+		head.canonical = env.crumb + head.canonical
 	}
 	return head
 })
