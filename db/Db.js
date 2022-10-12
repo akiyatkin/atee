@@ -27,8 +27,10 @@ if (OPTIONS.config) {
 	if (db) {
 
 		const [rows, fields] = await db.query("show variables like 'max_connections'")
-		const connectionLimit = rows[0].Value - 1
-		console.log('db ready - connectionLimit: ' + Math.round(connectionLimit / 2))
+		let connectionLimit = rows[0].Value - 1
+		connectionLimit = Math.round(connectionLimit / 2)
+		//connectionLimit = 10
+		console.log('db ready - connectionLimit: ' + connectionLimit)
 		conf = {
 			...DEF, 
 			connectionLimit,

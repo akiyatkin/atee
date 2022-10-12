@@ -6,10 +6,10 @@ import { filter } from "/-nicked/filter.js"
 
 export const Catalog = {}
 
-Catalog.getModelsByItems = async (moditems_ids, partner) => { //[{item_nums after group_concats, model_id}]
+Catalog.getModelsByItems = async (db, moditems_ids, partner) => { //[{item_nums after group_concats, model_id}]
 	//Заполнили основными данными
 	if (!moditems_ids.length) return []
-	const db = await new Db().connect()
+	//const db = await new Db().connect()
 	const options = await Catalog.getOptions()
 	const models = await db.all(`SELECT 
 		m.model_id, 
@@ -207,7 +207,7 @@ Catalog.getConfig = Access.cache(async () => {
 Catalog.getOptions = Access.cache(async () => {
 	const config = await Catalog.getConfig()
 	const { options } = await import('/'+config.options)
-	const db = await new Db().connect()
+	
 	options.groups ??= {}
 	options.groupids = {}
 	options.partners ??= {}
@@ -218,6 +218,7 @@ Catalog.getOptions = Access.cache(async () => {
 	if (!options.columns) {
 		throw 'Требуется options.columns'
 	}
+	const db = await new Db().connect()
 	options.columns ??= []
 	options.systems ??= []
 	for (const group_title in options.groups) {
@@ -235,6 +236,7 @@ Catalog.getOptions = Access.cache(async () => {
 		//const prop = await Catalog.getProp(p.prop_title)	
 		//p.prop_nick = prop.prop_nick
 	}
+	db.release()
 	return options
 })
 Catalog.getValueId = (db, visitor, value_nick) => {
@@ -295,7 +297,7 @@ Catalog.getGroupOptions = Access.cache(async (group_id) => {
 })
 
 Catalog.getMainGroups = Access.cache(async (prop_title = '') => {
-	const db = await new Db().connect()
+	
 	const tree = structuredClone(await Catalog.getTree())
 	
 	const groups = Object.values(tree)
@@ -304,6 +306,7 @@ Catalog.getMainGroups = Access.cache(async (prop_title = '') => {
 
 	if (prop_title) {
 		const prop = await Catalog.getProp(prop_title)
+		const db = await new Db().connect()
 		for (const group of childs) {
 			group.types = await db.all(`
 				SELECT distinct v.value_title, v.value_nick
@@ -325,6 +328,7 @@ Catalog.getMainGroups = Access.cache(async (prop_title = '') => {
 				}
 			})
 		}
+		db.release()
 		return {childs, prop}
 	} else {
 		return {childs}
@@ -341,12 +345,14 @@ Catalog.getAllCount = Access.cache(async () => {
 Catalog.getPropById = Access.cache(async (prop_id) => {
 	const db = await new Db().connect()
 	const prop = await db.fetch('SELECT type, prop_nick, prop_title, prop_id from showcase_props where prop_id = :prop_id', { prop_id })
+	db.release()
 	return prop
 })
 Catalog.getProp = Access.cache(async (prop_title) => {
 	const db = await new Db().connect()
 	const prop_nick = nicked(prop_title)
 	const prop = await db.fetch('SELECT type, prop_nick, prop_title, prop_id from showcase_props where prop_nick = :prop_nick', { prop_nick })
+	db.release()
 	return prop
 })
 Catalog.getPathNickByGroupId = async id => {
@@ -388,6 +394,7 @@ Catalog.getBrands = Access.cache(async () => {
 		SELECT brand_id, brand_nick, brand_title, logo, ordain
 		FROM showcase_brands ORDER by ordain
 	`,[], ['brand_id'])
+	db.release()
 	return brands
 })
 Catalog.getGroups = Access.cache(async () => {
@@ -419,6 +426,7 @@ Catalog.getTree = Access.cache(async () => {
 		group.groups = [group.group_id]
 		group.childs = []
 	}
+	db.release()
 	for (const group_id in tree) {
 		const group = tree[group_id]
 		group.path.forEach(parent_id => {
@@ -454,7 +462,7 @@ Catalog.getModelByNick = async (db, visitor, brand_nick, model_nick, partner = '
 			WHERE b.brand_nick = :brand_nick and m.model_nick = :model_nick
 			GROUP BY m.model_id
 		`, {model_nick, brand_nick})
-		const models = await Catalog.getModelsByItems(moditem_ids, partner)
+		const models = await Catalog.getModelsByItems(db, moditem_ids, partner)
 		return models[0]
 	})
 }

@@ -17,12 +17,14 @@ meta.addHandler('admin', async (view) => {
 meta.addVariable('db', async view => {
 	const db = await new Db().connect()
 	if (!db) return view.err('Нет соединения с базой данных')
+	view.after(() => db.release())
 	return db
 })
 meta.addAction('get-state', async view => {
 	const { cookie } = await view.gets(['cookie'])
 	view.ans.admin = await Access.isAdmin(cookie)
 	view.ans.db = !!await new Db().connect()
+	db.release()
 	return view.ret()
 })
 meta.addAction('get-tables', async view => {

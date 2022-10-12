@@ -62,7 +62,7 @@ meta.addVariable('lim', ['array'], (view, lim) => {
 })
 meta.addArgument('vals', ['nicks'])
 const getNalichie = Access.cache(async (partner) => {
-	const db = await new Db().connect()
+	
 	const options = await Catalog.getOptions()
 	const lim = 100
 	const vals = options.actions.map(v => nicked(v)).filter(v => v).sort()
@@ -72,13 +72,17 @@ const getNalichie = Access.cache(async (partner) => {
 
 	if (!prop_id) return
 	const value_ids = []
-	
+
+	const db = await new Db().connect()
 	for (const value_nick of vals) {
 		const value_id = await db.col('SELECT value_id from showcase_values where value_nick = :value_nick', { value_nick })
 		if (!value_id) continue
 		value_ids.push(value_id)
 	}
-	if (!value_ids.length) return []
+	if (!value_ids.length) {
+		db.release()
+		return []
+	}
 	
 	const moditem_ids = await db.all(`
 		SELECT distinct ip.model_id, GROUP_CONCAT(distinct ip.item_num separator ',') as item_nums
@@ -90,7 +94,8 @@ const getNalichie = Access.cache(async (partner) => {
 		GROUP BY ip.model_id
 		LIMIT 120
 	`, { prop_id })
-	const models = await Catalog.getModelsByItems(moditem_ids, partner)
+	const models = await Catalog.getModelsByItems(db, moditem_ids, partner)
+	db.release()
 	return models
 })
 meta.addArgument('m', (view, m) => {
@@ -364,7 +369,7 @@ meta.addAction('get-search-list', async (view) => {
 		`)
 	}
 	const count = await db.col('SELECT FOUND_ROWS()')
-	const list = await Catalog.getModelsByItems(moditem_ids, partner)
+	const list = await Catalog.getModelsByItems(db, moditem_ids, partner)
 	const brand = await Catalog.getMainBrand(md)
 	
 	

@@ -72,7 +72,7 @@ search.groups = (data, env) => html`
 `
 search.group = (data, env, group) => html`
 	<div>
-		<a ${data.md.group?.[group.group_nick] ?' style="font-weight: bold;':''} href="${env.crumb.parent}/${group.group_nick}${links.setm(data)}">${group.group_title}</a>
+		<a data-scroll="none" ${data.md.group?.[group.group_nick] ?' style="font-weight: bold;':''} href="${env.crumb.parent}/${group.group_nick}${links.setm(data)}">${group.group_title}</a>
 	</div>
 `
 
@@ -134,7 +134,7 @@ search.titlepart = (data, env, part, value) => `
 `
 search.parenttitle = (data, env) => `
 	<div style="float:left; margin-top:1rem">
-		<a href="${env.crumb.parent}${search.toplink(data, env)}">${data.parent.group_title}</a>
+		<a data-scroll="none" href="${env.crumb.parent}${search.toplink(data, env)}">${data.parent.group_title}</a>
 	</div>
 `
 search.toplink = (data, env) => {
