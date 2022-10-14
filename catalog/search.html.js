@@ -14,15 +14,28 @@ search.ROOT = () => html`
 `
 search.GROUPS = (data, env) => data.result ? `
 	${search.title(data, env)}
-	${ti.fi(data.childs.length, search.groups(data, env))}
-	<!-- <div style="display: grid; grid-gap: 1rem; grid-template-columns: 1fr 1fr;">
+	<div class="grid">
+		<style>
+			#${env.layer.div} > .grid {
+				margin-bottom:2rem;
+				display: grid; 
+				grid-gap: 1rem; 
+				grid-template-columns: 1fr 1fr;
+			}
+			@media (max-width: 768px) {
+				#${env.layer.div} > .grid {
+					display: grid; grid-gap: 1rem; grid-template-columns: 1fr;
+				}
+			}
+		</style>
 		<div>
-			
+			${ti.fi(data.childs.length, search.showgroups(data, env))}
 		</div>
 		<div>
+			${data.filters.map(r => r.prop_id).join('')}
 			<a href="/catalog/svarochnoe-oborudovanie?m=more.Степень%20защиты.IP%2021S=1:group.svarochnoe-oborudovanie-svarka-tig=1">IP 21S</a>
 		</div>
-	</div> -->
+	</div>
 ` : '<h1>Каталог</h1>'
 search.PAGINATION = (data, env) => ti.bs(data.result) && `
 	${search.pag(data, env, 'none')}
@@ -73,10 +86,8 @@ search.list = (data, env) => `
 		${cards.LIST(data, env)}
 	</div>
 `
-search.groups = (data, env) => html`
-	<div style="margin-bottom:2rem">
-		${data.childs.map(g => search.group(data, env, g))}
-	</div>
+search.showgroups = (data, env) => `
+	${data.childs.map(g => search.group(data, env, g)).join('')}
 `
 const weight = (data, env, group) => `${data.md.group?.[group.group_nick] ?' style="font-weight: bold;"':''}`
 search.group = (data, env, group) => `

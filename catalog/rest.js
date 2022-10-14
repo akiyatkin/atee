@@ -333,6 +333,16 @@ meta.addAction('get-search-groups', async (view) => {
 		childs: groups,
 		path: group.path.map(id => tree[id])
 	}
+	const opt = await Catalog.getGroupOpt(group.group_id)
+
+	const filters = []
+	for (const prop_title of opt.filters) {
+		const prop = await Catalog.getProp(prop_title)
+		const filter = await Catalog.getFilterConf(db, prop.prop_id, group.group_id)
+		if (filter) filters.push(filter)
+	}
+	res.filters = filters
+
 	Object.assign(view.ans, res)
 	return view.ret()
 })
@@ -345,7 +355,7 @@ meta.addAction('get-search-list', async (view) => {
 	if (!group) {
 		return view.err('Нет данных')
 	}
-	const opt = await Catalog.getGroupOptions(group.group_id)
+	const opt = await Catalog.getGroupOpt(group.group_id)
 	const countonpage = opt.limit
 	const start = (page - 1) * countonpage
 	where.push('ip.item_num is not null')

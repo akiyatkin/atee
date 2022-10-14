@@ -95,7 +95,7 @@ Catalog.getModelsByItems = async (db, moditems_ids, partner) => { //[{item_nums 
 		
 	}
 	for (const model of list) {
-		const { props } = await Catalog.getGroupOptions(model.group_id)
+		const { props } = await Catalog.getGroupOpt(model.group_id)
 		model.props = [...props]
 		model.props = await filter(model.props, async (pr) => {
 			const p = pr.value_title
@@ -278,7 +278,7 @@ Catalog.getValue = async (db, model, nickortitle, item_num = 1) => {
 	model[nickortitle] = values
 }
 
-Catalog.getGroupOptions = Access.cache(async (group_id) => {
+Catalog.getGroupOpt = Access.cache(async (group_id) => {
 	const options = await Catalog.getOptions()
 	const tree = await Catalog.getTree()
 	const group = tree[group_id]
@@ -335,6 +335,15 @@ Catalog.getMainGroups = Access.cache(async (prop_title = '') => {
 	}
 	
 })
+Catalog.getFilterConf = async (db, prop_id, group_id) => {
+	const prop = await Catalog.getPropById(prop_id)
+	const group = await Catalog.getGroupById(group_id)
+	if (prop.type !== 'value') return false
+	//Нужно найти все возможные значения и упорядочить их по алфавиту и показать количество моделей
+	//db.
+
+	return {prop_id, group_id}
+}
 Catalog.getAllCount = Access.cache(async () => {
 	const tree = await Catalog.getTree()
 	const groups = Object.values(tree)
@@ -617,7 +626,7 @@ Catalog.getMainBrand = async md => {
 	return brandnicks[brand_nicks[0]]
 }
 // Catalog.search = async (db, group, partner) => {
-// 	const opt = await Catalog.getGroupOptions(group.group_id)
+// 	const opt = await Catalog.getGroupOpt(group.group_id)
 	
 // 	const moditem_ids = await db.all(`
 // 		SELECT m.model_id, GROUP_CONCAT(i.item_num separator ',') as item_nums
