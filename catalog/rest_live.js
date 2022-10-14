@@ -26,7 +26,7 @@ export const rest_live = (meta) => {
 		// 	return view.ret()
 		// }
 		const md = {search: hash}
-		const group_ids = await Catalog.searchGroups(db, visitor, md)
+		const { group_ids } = await Catalog.searchGroups(db, visitor, md)
 		const childs = await Catalog.getCommonChilds(group_ids)
 		//hashs.map('search like = ')
 		

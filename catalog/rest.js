@@ -323,12 +323,12 @@ meta.addAction('get-search-groups', async (view) => {
 	const tree = await Catalog.getTree()
 	const group = await Catalog.getMainGroup(md)
 	if (!group) return view.err('Нет данных')
-	const group_ids = await Catalog.searchGroups(db, visitor, md)
+	const {title, group_ids} = await Catalog.searchGroups(db, visitor, md)
 	let groups = await Catalog.getCommonChilds(group_ids)
 	if (groups.length == 1 && group.group_id == groups[0].group_id) groups = []
 
 	const res = {
-		type, group, brand,
+		type, title:group, brand,
 		parent: group.path.length ? tree[group.path.at(-1)] : groupnicks[options.root_nick],
 		childs: groups,
 		path: group.path.map(id => tree[id])
@@ -339,7 +339,7 @@ meta.addAction('get-search-groups', async (view) => {
 meta.addAction('get-search-list', async (view) => {
 	let { page } = await view.gets(['page'])
 	const { db, value, md, partner, visitor} = await view.gets(['db','value','md','partner','visitor'])
-	const group_ids = Catalog.searchGroups(db, visitor, md)
+	const {title, group_ids} = Catalog.searchGroups(db, visitor, md)
 	const where = await Catalog.getmdwhere(db, visitor, md)
 	const group = await Catalog.getMainGroup(md)
 	if (!group) {
@@ -348,35 +348,28 @@ meta.addAction('get-search-list', async (view) => {
 	const opt = await Catalog.getGroupOptions(group.group_id)
 	const countonpage = opt.limit
 	const start = (page - 1) * countonpage
-	let moditem_ids
 	where.push('ip.item_num is not null')
-	if (where.length) {
-		moditem_ids = await db.all(`
-			SELECT SQL_CALC_FOUND_ROWS ip.model_id, GROUP_CONCAT(distinct ip.item_num separator ',') as item_nums
-			FROM showcase_models m
-			LEFT JOIN showcase_iprops ip on ip.model_id = m.model_id
-			WHERE ${where.join(' and ')}
-			GROUP BY m.model_id
-			LIMIT ${start},${opt.limit}
-		`)
-	} else {
-		moditem_ids = await db.all(`
-			SELECT SQL_CALC_FOUND_ROWS ip.model_id, GROUP_CONCAT(distinct ip.item_num separator ',') as item_nums
-			FROM showcase_models m
-			LEFT JOIN showcase_iprops ip on ip.model_id = m.model_id
-			GROUP BY m.model_id
-			LIMIT ${start},${opt.limit}
-		`)
-	}
-	const count = await db.col('SELECT FOUND_ROWS()')
+	
+	const moditem_ids = await db.all(`
+		SELECT ip.model_id, GROUP_CONCAT(distinct ip.item_num separator ',') as item_nums 
+		FROM showcase_models m
+		LEFT JOIN showcase_iprops ip on ip.model_id = m.model_id
+		WHERE ${where.join(' and ')}
+		GROUP BY m.model_id 
+		LIMIT ${start}, ${opt.limit}
+	`)
+	const count = await db.col(`
+		SELECT count(distinct m.model_id)
+		FROM showcase_models m
+		LEFT JOIN showcase_iprops ip on ip.model_id = m.model_id
+		WHERE ${where.join(' and ')}
+	`)
+
 	const list = await Catalog.getModelsByItems(db, moditem_ids, partner)
 	const brand = await Catalog.getMainBrand(md)
 	
-	
 	let last = count <= countonpage ? 1 : Math.ceil(count / countonpage)
-	
 	if (last < page) page = last
-
 	const pagination = {
 		last: last,
 		page: page

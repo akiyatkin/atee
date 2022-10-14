@@ -542,33 +542,48 @@ const getGroupIds = async (db, md, where) => {
 	}
 	return res_ids
 }
+Catalog.getMainGroup = async md => {
+	const groupnicks = await Catalog.getGroups()
+	const options = await Catalog.getOptions()
+	const root = groupnicks[options.root_nick]
+	let group = root
+	if (md.group) {
+		const group_nicks = Object.keys(md.group)
+		if (group_nicks.length == 1) {
+			group = groupnicks[group_nicks[0]]
+		}
+	}
+	return group
+}
 Catalog.searchGroups = (db, visitor, md) => {
 	return visitor.relate(Catalog).once('searchGroups' + md.m, async () => {
 		//const {search = '', group = {}, brand = {}, more = {}} = md
+		let title = await Catalog.getMainGroup(md)
+		if (!title) return {title, group_ids:[]}
 		const where = await Catalog.getmdwhere(db, visitor, md)
-		
 		if (!where.length) {
 			const tree = await Catalog.getTree()
 			const options = await Catalog.getOptions()
 			const groupnicks = await Catalog.getGroups()
 			const root = groupnicks[nicked(options.root_nick)]
-			if (!root) return []
-			const res_ids = root.groups.filter(id => tree[id].inside)
-			return res_ids
+			if (!root) return {title, group_ids:[]}
+			const group_ids = root.groups.filter(id => tree[id].inside)
+			return {title, group_ids}
 		}
-		let res_ids = await getGroupIds(db, md, where)
-		if (res_ids.length == 1) {
-			const group = await Catalog.getMainGroup(md)
-			if (group.parent_id) { //Есть выбранная группа
-				const nmd = {...md, group: {}}
+		let group_ids = await getGroupIds(db, md, where)
+
+		if (group_ids.length == 1) {
+			if (title.parent_id) { //Есть выбранная группа
+				const nmd = {...md, title: {}}
 				const tree = await Catalog.getTree()
-				nmd.group[tree[group.parent_id].group_nick] = 1
+				title = tree[title.parent_id]
+				nmd.group[title.group_nick] = 1
 				nmd.m = Catalog.makemark(nmd).join(':')
 				const nwhere = await Catalog.getmdwhere(db, visitor, nmd)
-				res_ids = await getGroupIds(db, nmd, nwhere)
+				group_ids = await getGroupIds(db, nmd, nwhere)
 			}
 		}
-		return res_ids
+		return {title, group_ids}
 	})
 }
 Catalog.getCommonChilds = async (group_ids) => {
@@ -593,19 +608,7 @@ Catalog.getCommonChilds = async (group_ids) => {
 	}
 	return groups
 }
-Catalog.getMainGroup = async md => {
-	const groupnicks = await Catalog.getGroups()
-	const options = await Catalog.getOptions()
-	const root = groupnicks[options.root_nick]
-	let group = root
-	if (md.group) {
-		const group_nicks = Object.keys(md.group)
-		if (group_nicks.length == 1) {
-			group = groupnicks[group_nicks[0]]
-		}
-	}
-	return group
-}
+
 Catalog.getMainBrand = async md => {
 	if (!md.brand) return
 	const brand_nicks = Object.keys(md.brand)

@@ -15,6 +15,14 @@ search.ROOT = () => html`
 search.GROUPS = (data, env) => data.result ? `
 	${search.title(data, env)}
 	${ti.fi(data.childs.length, search.groups(data, env))}
+	<!-- <div style="display: grid; grid-gap: 1rem; grid-template-columns: 1fr 1fr;">
+		<div>
+			
+		</div>
+		<div>
+			<a href="/catalog/svarochnoe-oborudovanie?m=more.Степень%20защиты.IP%2021S=1:group.svarochnoe-oborudovanie-svarka-tig=1">IP 21S</a>
+		</div>
+	</div> -->
 ` : '<h1>Каталог</h1>'
 search.PAGINATION = (data, env) => ti.bs(data.result) && `
 	${search.pag(data, env, 'none')}
@@ -70,15 +78,14 @@ search.groups = (data, env) => html`
 		${data.childs.map(g => search.group(data, env, g))}
 	</div>
 `
-search.group = (data, env, group) => html`
+const weight = (data, env, group) => `${data.md.group?.[group.group_nick] ?' style="font-weight: bold;"':''}`
+search.group = (data, env, group) => `
 	<div>
-		<a data-scroll="none" ${data.md.group?.[group.group_nick] ?' style="font-weight: bold;':''} href="${env.crumb.parent}/${group.group_nick}${links.setm(data)}">${group.group_title}</a>
+		<a data-scroll="none" ${weight(data, env, group)} href="${env.crumb.parent}/${group.group_nick}${links.setm(data)}">${group.group_title}</a>
 	</div>
 `
 
 search.title = (data, env) => html`
-	<div style="float:right; margin-top:1rem">${data.type}</div>
-	${(!data.path.length && !data.md.m) || search.parenttitle(data, env)}
 	<style>
 		a.clearlink {
 			white-space: normal; 
@@ -104,8 +111,11 @@ search.title = (data, env) => html`
 			/*color: red;*/
 		}
 	</style>
+	<div style="float:right; margin-top:1rem">${data.type}</div>
+	${(!data.path.length && !data.md.m) || search.parenttitle(data, env)}
+	
 	<h1 style="display: flex; clear:both;gap:0 1rem; flex-wrap:wrap">
-		${data.group.group_title}
+		${data.title.group_title}
 		${!data.brand || search.titlepart(data, env, 'brand', data.brand.brand_title)}
 		${!data.md.search || search.titlepart(data, env, 'search', data.md.search)}
 		${!data.md.more || Object.keys(data.md.more).map(prop_nick => {
@@ -141,6 +151,6 @@ search.toplink = (data, env) => {
 	if (data.parent.parent_id) {
 		return '/' + data.parent.group_nick+links.setm(data)
 	} else {
-		return data.group.parent_id ? links.addm(data)+'group' : ''
+		return data.title.parent_id ? links.addm(data)+'group' : ''
 	}
 }
