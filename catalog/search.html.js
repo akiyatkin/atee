@@ -31,10 +31,7 @@ search.GROUPS = (data, env) => data.result ? `
 		<div>
 			${ti.fi(data.childs.length, search.showgroups(data, env))}
 		</div>
-		<div>
-			${data.filters.map(r => r.prop_id).join('')}
-			<a href="/catalog/svarochnoe-oborudovanie?m=more.Степень%20защиты.IP%2021S=1:group.svarochnoe-oborudovanie-svarka-tig=1">IP 21S</a>
-		</div>
+		<div id="FILTERS"></div>
 	</div>
 ` : '<h1>Каталог</h1>'
 search.PAGINATION = (data, env) => ti.bs(data.result) && `
@@ -131,8 +128,8 @@ search.title = (data, env) => html`
 		${!data.md.search || search.titlepart(data, env, 'search', data.md.search)}
 		${!data.md.more || Object.keys(data.md.more).map(prop_nick => {
 			const values = data.md.more[prop_nick]
-			return Object.keys(values).map(value => {
-				return search.choice.just(data, env, prop_nick, value, value)	
+			return Object.keys(values).map(value_nick => {
+				return search.choice.just(data, env, prop_nick, value_nick, data.mdvalues[value_nick].value_title)	
 			}).join(', ')
 		})}
 	</h1>

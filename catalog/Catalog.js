@@ -244,39 +244,44 @@ Catalog.getValueId = (db, visitor, value_nick) => {
 		return db.col('SELECT value_id FROM showcase_values WHERE value_nick = :value_nick',{value_nick})
 	})
 }
-Catalog.getValue = async (db, model, nickortitle, item_num = 1) => {
-	const { model_id } = model
-	const prop = await Catalog.getProp(nickortitle)
-	if (!prop) return
-	let values = []
-	if (prop.type == 'text') {
-		values = await db.colAll(`
-			SELECT ip.text
-			FROM showcase_iprops ip where model_id = :model_id and prop_id = :prop_id and item_num = 1
-			order by ordain
-		`, {model_id, prop_id: prop.prop_id})	
-		
-	} else if (prop.type == 'number') {
-		values = await db.colAll(`
-			SELECT ip.number
-			FROM showcase_iprops ip where model_id = :model_id and prop_id = :prop_id and item_num = 1
-			order by ordain
-		`, {model_id, prop_id: prop.prop_id})
-	} else if (prop.type == 'value') {
-		values = await db.colAll(`
-			SELECT v.value_title
-			FROM showcase_iprops ip, showcase_values v
-			WHERE ip.model_id = :model_id and ip.prop_id = :prop_id and ip.item_num = 1
-			and ip.value_id = v.value_id
-			order by ip.ordain
-		`, {model_id, prop_id: prop.prop_id})
-	}
-	if (!values.length) return
-	if (!~['images'].indexOf(prop.prop_nick)) {
-		values = values.join(', ')
-	}
-	model[nickortitle] = values
+Catalog.getValueByNick = async (db, visitor, value_nick) => {
+	return visitor.relate(Catalog).once('getValueByNick', () => {
+		return db.fetch('SELECT value_id, value_title, value_nick FROM showcase_values WHERE value_nick = :value_nick', { value_nick })
+	})
 }
+// Catalog.getValue = async (db, model, nickortitle, item_num = 1) => {
+// 	const { model_id } = model
+// 	const prop = await Catalog.getProp(nickortitle)
+// 	if (!prop) return
+// 	let values = []
+// 	if (prop.type == 'text') {
+// 		values = await db.colAll(`
+// 			SELECT ip.text
+// 			FROM showcase_iprops ip where model_id = :model_id and prop_id = :prop_id and item_num = 1
+// 			order by ordain
+// 		`, {model_id, prop_id: prop.prop_id})	
+		
+// 	} else if (prop.type == 'number') {
+// 		values = await db.colAll(`
+// 			SELECT ip.number
+// 			FROM showcase_iprops ip where model_id = :model_id and prop_id = :prop_id and item_num = 1
+// 			order by ordain
+// 		`, {model_id, prop_id: prop.prop_id})
+// 	} else if (prop.type == 'value') {
+// 		values = await db.colAll(`
+// 			SELECT v.value_title
+// 			FROM showcase_iprops ip, showcase_values v
+// 			WHERE ip.model_id = :model_id and ip.prop_id = :prop_id and ip.item_num = 1
+// 			and ip.value_id = v.value_id
+// 			order by ip.ordain
+// 		`, {model_id, prop_id: prop.prop_id})
+// 	}
+// 	if (!values.length) return
+// 	if (!~['images'].indexOf(prop.prop_nick)) {
+// 		values = values.join(', ')
+// 	}
+// 	model[nickortitle] = values
+// }
 
 Catalog.getGroupOpt = Access.cache(async (group_id) => {
 	const options = await Catalog.getOptions()
@@ -338,11 +343,22 @@ Catalog.getMainGroups = Access.cache(async (prop_title = '') => {
 Catalog.getFilterConf = async (db, prop_id, group_id) => {
 	const prop = await Catalog.getPropById(prop_id)
 	const group = await Catalog.getGroupById(group_id)
+	const options = await Catalog.getOptions()
+	const filter = {...options.props[prop.prop_title], ...prop}
 	if (prop.type !== 'value') return false
 	//Нужно найти все возможные значения и упорядочить их по алфавиту и показать количество моделей
-	//db.
+	filter.values = await db.all(`
+		SELECT distinct v.value_nick, v.value_title
+		FROM showcase_iprops ip, showcase_models m, showcase_values v
+		WHERE ip.prop_id = :prop_id and m.model_id = ip.model_id 
+		and m.group_id in (${group.groups.join(',')}) and v.value_id = ip.value_id
+		ORDER BY v.value_nick
+	`, {
+		prop_id: prop.prop_id
+	})
+	if (!filter.values.length) return false
 
-	return {prop_id, group_id}
+	return filter
 }
 Catalog.getAllCount = Access.cache(async () => {
 	const tree = await Catalog.getTree()
@@ -364,6 +380,8 @@ Catalog.getProp = Access.cache(async (prop_title) => {
 	db.release()
 	return prop
 })
+Catalog.getPropByNick = Catalog.getProp
+Catalog.getPropByTitle = Catalog.getProp
 Catalog.getPathNickByGroupId = async id => {
 	const group = await Catalog.getGroupById(id)
 	const path = [...group.path]

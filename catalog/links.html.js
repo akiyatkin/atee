@@ -13,5 +13,6 @@ links.search = (val) => `/catalog/${nicked(val)}`
 //links.agroup = (mod) => `<a style="max-width:100%" href="/catalog/${mod.group_nick}"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block">${mod.group_title}</span></a>`
 
 links.val = (data, mod, pr, val) => `/catalog/${links.addm(data)}more.${pr.prop_nick}::.${nicked(val ?? common.prnick(mod, pr))}=1`
+//links.nick = (data, prop_nick, value_nick) => `/catalog/${links.addm(data)}more.${prop_nick}::.${value_nick}=1`
 links.addm = (data) => `?m=${data?.m || ''}:`
 links.setm = (data) => data?.m ? `?m=${data.m}` : ''

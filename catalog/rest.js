@@ -301,6 +301,26 @@ const isSome = (obj, p) => {
 	for (p in obj) return true
 	return false
 };
+meta.addAction('get-filters', async (view) => {
+	const { db, md, partner, visitor} = await view.gets(['db','md','partner', 'visitor'])
+	const group = await Catalog.getMainGroup(md)
+	if (!group) return view.err('Нет данных')
+
+	const res = {}
+	const opt = await Catalog.getGroupOpt(group.group_id)
+	
+	const filters = []
+	for (const prop_title of opt.filters) {
+		const prop = await Catalog.getProp(prop_title)
+		const filter = await Catalog.getFilterConf(db, prop.prop_id, group.group_id)
+		if (!filter) continue
+		filters.push(filter)
+	}
+	res.filters = filters
+	Object.assign(view.ans, res)
+	return view.ret()
+})
+
 meta.addAction('get-search-groups', async (view) => {
 	const { db, value, md, partner, visitor} = await view.gets(['db','value','md','partner', 'visitor'])
 
@@ -333,16 +353,27 @@ meta.addAction('get-search-groups', async (view) => {
 		childs: groups,
 		path: group.path.map(id => tree[id])
 	}
-	const opt = await Catalog.getGroupOpt(group.group_id)
+	// const opt = await Catalog.getGroupOpt(group.group_id)
 
-	const filters = []
-	for (const prop_title of opt.filters) {
-		const prop = await Catalog.getProp(prop_title)
-		const filter = await Catalog.getFilterConf(db, prop.prop_id, group.group_id)
-		if (filter) filters.push(filter)
+	// const filters = []
+	// for (const prop_title of opt.filters) {
+	// 	const prop = await Catalog.getProp(prop_title)
+	// 	const filter = await Catalog.getFilterConf(db, prop.prop_id, group.group_id)
+	// 	if (filter) filters.push(filter)
+	// }
+	// res.filters = filters
+	const mdvalues = {}
+	for (const prop_nick in md.more) {
+		const prop = await Catalog.getPropByNick(prop_nick)
+		for (const value_nick in md.more[prop_nick]) {
+			if (prop.type == 'value') {
+				mdvalues[value_nick] = await Catalog.getValueByNick(db, visitor, value_nick)
+			} else {
+				mdvalues[value_nick] = value_nick
+			}
+		}
 	}
-	res.filters = filters
-
+	res.mdvalues = mdvalues
 	Object.assign(view.ans, res)
 	return view.ret()
 })
