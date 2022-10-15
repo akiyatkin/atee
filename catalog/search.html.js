@@ -95,7 +95,7 @@ search.group = (data, env, group) => `
 
 search.title = (data, env) => html`
 	<style>
-		a.clearlink {
+		#{env.layer.div} a.clearlink {
 			white-space: normal; 
 			gap:5px; 
 			display: flex; 
@@ -103,18 +103,18 @@ search.title = (data, env) => html`
 			border: none; 
 			text-decoration: none
 		}
-		.clearlink .value {
+		#{env.layer.div} .clearlink .value {
 			opacity: 1;
 			transition: color 0.2s, opacity 0.2s;
 		}
-		.clearlink .krest {
+		#{env.layer.div} .clearlink .krest {
 			transition: color 0.2s, opacity 0.2s;
 			opacity: 0.4;
 		}
-		.clearlink:hover .value {
+		#{env.layer.div} .clearlink:hover .value {
 			opacity: 0.5;
 		}
-		.clearlink:hover .krest {
+		#{env.layer.div} .clearlink:hover .krest {
 			opacity: 1;
 			/*color: red;*/
 		}
@@ -136,7 +136,7 @@ search.title = (data, env) => html`
 `
 search.choice = {
 	"just": (data, env, prop_nick, part, value) => `
-		<a data-scroll="none" class="clearlink" 
+		<a title="Отменить выбор" data-scroll="none" class="clearlink" 
 			href="${env.crumb.parent}${links.addm(data)}more.${prop_nick}.${part}">
 			<span class="value">${value}</span>
 			<span class="krest" style="font-size:1rem; line-height: 2rem;">✕</span>

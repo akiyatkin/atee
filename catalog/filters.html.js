@@ -1,35 +1,52 @@
 import links from "/-catalog/links.html.js"
-export const ROOT = (data, env) => `
+
+const filters = {}
+export default filters
+filters.ROOT = (data, env) => `
 	${data.filters.map(filter => showFilter(data, filter, env)).join('')}
 `
-const filters = {}
 const showFilter = (data, filter, env) => `
-	${(filters.props[filter.tplfilter] || filters.props.default)(data, filter, env)}
+	${(filters.props[filter.tplfilter] || filters.props.select)(data, filter, env)}
 `
 
 
 filters.item = (data, filter, v) => data.md.more?.[filter.prop_nick]?.[v.value_nick] ? `
-	<b>${v.value_title}</b>
-` : `
-	<a data-scroll="none" rel="nofollow" href="/catalog/${links.addm(data)}more.${filter.prop_nick}::.${v.value_nick}=1">${v.value_title}</a>
+		<a class="clearlink" title="Отменить выбор" style="display: inline-block; border-color: transparent; color:inherit;" class="a" data-scroll="none" rel="nofollow" href="/catalog/${links.addm(data)}more.${filter.prop_nick}">
+			<span class="value">${v.value_title}</span><sup style="position: absolute; font-size:12px" class="krest">&nbsp;✕</sup>
+		</a>
+	` : `
+		<a title="Выбрать" class="a" data-scroll="none" rel="nofollow" href="/catalog/${links.addm(data)}more.${filter.prop_nick}::.${v.value_nick}=1">${v.value_title}</a>
+`
+filters.option = (data, filter, v) => data.md.more?.[filter.prop_nick]?.[v.value_nick] ? `
+		<option value="${v.value_nick}" selected>${v.value_title}</option>
+	` : `
+		<option value="${v.value_nick}">${v.value_title}</option>
+`
+filters.block = (title, body) => `
+	<div style="margin: 0.25rem 0; display: grid">
+		<div style="font-weight: bold; padding-right: 0.5rem">${title}</div>
+		<div>${body}</div>
+	</div>
 `
 filters.props = {
-	default: (data, filter, env) => `
-		<div style="margin: 0.25rem 0; display: grid">
-			<div style="padding-right: 0.5rem"><b>${filter.prop_title}</b></div>
-			<div>${filter.values.map(v => filters.item(data, filter, v)).join(', ')}</div>
-		</div>
-	`,
 	select: (data, filter, env) => `
-		<div style="margin: 0.25rem 0; display: grid">
-			<div style="padding-right: 0.5rem"><b>${filter.prop_title}</b></div>
-			<div>${filter.values.map(v => filters.item(data, filter, v)).join(', ')}</div>
+		<div style="margin: 0.25rem 0">
+			<select style="width: 100%">
+				<option value="">${filter.prop_title}</option>
+				${filter.values.map(v => filters.option(data, filter, v)).join('')}
+			</select>
+			<script>
+				(select => {
+					select.addEventListener('change', async () => {
+						let n = select.options.selectedIndex
+						let value_nick = select.options[n].value
+						const Client = await window.getClient()
+						const set = value_nick ? '::.'+value_nick+'=1' : ''
+    					Client.pushState('/catalog/${links.addm(data)}more.${filter.prop_nick}' + set)
+					})
+				})(document.currentScript.previousElementSibling)
+			</script>
 		</div>
 	`,
-	row: (data, filter, env) => `
-		<div style="margin: 0.25rem 0; display: grid">
-			<div style="padding-right: 0.5rem"><b>${filter.prop_title}</b></div>
-			<div>${filter.values.map(v => filters.item(data, filter, v)).join(', ')}</div>
-		</div>
-	`
+	row: (data, filter, env) => filters.block(filter.prop_title, filter.values.map(v => filters.item(data, filter, v)).join(',&nbsp; ')),
 }

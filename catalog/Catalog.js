@@ -356,7 +356,7 @@ Catalog.getFilterConf = async (db, prop_id, group_id) => {
 	`, {
 		prop_id: prop.prop_id
 	})
-	if (!filter.values.length) return false
+	if (filter.values.length < 2) return false
 
 	return filter
 }

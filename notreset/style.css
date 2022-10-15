@@ -15,7 +15,7 @@ img, iframe, object, embed, video {
     /*max-width: 100%;*/
     /*height: auto;*/
 }
-button, input {
+select, button, input {
 	line-height: inherit;
 	font-size: inherit;
 	font-family: inherit;

@@ -200,6 +200,9 @@ meta.addVariable('md', async (view) => {
 	}
 	if (md.more) {
 		for (const prop_nick in md.more) {
+			for (const prop_value in md.more[prop_nick]) {
+				if (prop_value === '') delete md.more[prop_nick][prop_value]
+			}
 			const prop = await Catalog.getProp(prop_nick)
 			if (!prop) delete md.more[prop_nick]
 			else if (prop.type == 'text') delete md.more[prop_nick]
@@ -327,7 +330,7 @@ meta.addAction('get-search-groups', async (view) => {
 	
 	const options = await Catalog.getOptions()
 	let type = ''
-	
+
 	if (md.search && md.group && md.brand) type = 'Поиск по группе бренда'
 	if (!md.search && md.group && md.brand) type = 'Группа бренда'
 	if (md.search && !md.group && md.brand) type = 'Поиск по бренду'
