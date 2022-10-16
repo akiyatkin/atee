@@ -206,7 +206,17 @@ meta.addVariable('md', async (view) => {
 			const prop = await Catalog.getProp(prop_nick)
 			if (!prop) delete md.more[prop_nick]
 			else if (prop.type == 'text') delete md.more[prop_nick]
-			if (!Object.keys(md.more[prop_nick]).length) delete md.more[prop_nick]
+			else if (!Object.keys(md.more[prop_nick]).length) delete md.more[prop_nick]
+			//if (!md.more[prop_nick]) continue
+
+			// if (prop.type == 'number') {	
+			// 	const vals = {}
+			// 	for (const value_nick in md.more[prop_nick]) {
+			// 		const n = value_nick.replace('-','.')
+			// 		vals[n] = md.more[prop_nick][value_nick]
+			// 	}
+			// 	md.more[prop_nick] = vals
+			// }
 		}
 		if (!Object.keys(md.more).length) delete md.more
 	}
@@ -315,8 +325,10 @@ meta.addAction('get-filters', async (view) => {
 	const filters = []
 	for (const prop_title of opt.filters) {
 		const prop = await Catalog.getProp(prop_title)
-		const filter = await Catalog.getFilterConf(db, prop.prop_id, group.group_id)
+		//const filter = await Catalog.getGroupFilterConf(db, prop.prop_id, group.group_id)
+		const filter = await Catalog.getFilterConf(db, visitor, prop.prop_id, group.group_id, md)
 		if (!filter) continue
+
 		filters.push(filter)
 	}
 	res.filters = filters
@@ -341,14 +353,21 @@ meta.addAction('get-search-groups', async (view) => {
 	if (type && md.more) type += ' с фильтром'
 	if (!type && md.more) type += 'Фильтр'
 
+
 	const brand = await Catalog.getMainBrand(md)
 	const groupnicks = await Catalog.getGroups()
 	const tree = await Catalog.getTree()
 	const group = await Catalog.getMainGroup(md)
 	if (!group) return view.err('Нет данных')
-	const {title, group_ids} = await Catalog.searchGroups(db, visitor, md)
-	let groups = await Catalog.getCommonChilds(group_ids)
-	if (groups.length == 1 && group.group_id == groups[0].group_id) groups = []
+
+
+	const nmd = {...md}
+	delete nmd.group
+	nmd.m = Catalog.makemark(nmd).join(':')
+
+	const {title, group_ids} = await Catalog.searchGroups(db, visitor, nmd)
+	let groups = await Catalog.getCommonChilds(group_ids, group)
+	//if (groups.length == 1 && group.group_id == groups[0].group_id) groups = []
 
 	const res = {
 		type, title:group, brand,
@@ -356,35 +375,31 @@ meta.addAction('get-search-groups', async (view) => {
 		childs: groups,
 		path: group.path.map(id => tree[id])
 	}
-	// const opt = await Catalog.getGroupOpt(group.group_id)
-
-	// const filters = []
-	// for (const prop_title of opt.filters) {
-	// 	const prop = await Catalog.getProp(prop_title)
-	// 	const filter = await Catalog.getFilterConf(db, prop.prop_id, group.group_id)
-	// 	if (filter) filters.push(filter)
-	// }
-	// res.filters = filters
+	
 	const mdvalues = {}
+	const mdprops = {}
 	for (const prop_nick in md.more) {
 		const prop = await Catalog.getPropByNick(prop_nick)
+		mdprops[prop_nick] = prop
 		for (const value_nick in md.more[prop_nick]) {
 			if (prop.type == 'value') {
 				mdvalues[value_nick] = await Catalog.getValueByNick(db, visitor, value_nick)
 			} else {
-				mdvalues[value_nick] = value_nick
+				mdvalues[value_nick] = {value_nick, value_title:Number(value_nick.replace('-','.'))}
 			}
 		}
 	}
 	res.mdvalues = mdvalues
+	res.mdprops = mdprops
+	
 	Object.assign(view.ans, res)
 	return view.ret()
 })
 meta.addAction('get-search-list', async (view) => {
 	let { page } = await view.gets(['page'])
 	const { db, value, md, partner, visitor} = await view.gets(['db','value','md','partner','visitor'])
-	const {title, group_ids} = Catalog.searchGroups(db, visitor, md)
-	const where = await Catalog.getmdwhere(db, visitor, md)
+	//const {title, group_ids} = Catalog.searchGroups(db, visitor, md)
+	const {from, where} = await Catalog.getmdwhere(db, visitor, md)
 	const group = await Catalog.getMainGroup(md)
 	if (!group) {
 		return view.err('Нет данных')
@@ -392,20 +407,16 @@ meta.addAction('get-search-list', async (view) => {
 	const opt = await Catalog.getGroupOpt(group.group_id)
 	const countonpage = opt.limit
 	const start = (page - 1) * countonpage
-	where.push('ip.item_num is not null')
-	
 	const moditem_ids = await db.all(`
-		SELECT ip.model_id, GROUP_CONCAT(distinct ip.item_num separator ',') as item_nums 
-		FROM showcase_models m
-		LEFT JOIN showcase_iprops ip on ip.model_id = m.model_id
+		SELECT m.model_id, GROUP_CONCAT(distinct i.item_num separator ',') as item_nums 
+		FROM ${from.join(', ')}
 		WHERE ${where.join(' and ')}
 		GROUP BY m.model_id 
 		LIMIT ${start}, ${opt.limit}
 	`)
 	const count = await db.col(`
 		SELECT count(distinct m.model_id)
-		FROM showcase_models m
-		LEFT JOIN showcase_iprops ip on ip.model_id = m.model_id
+		FROM ${from.join(', ')}
 		WHERE ${where.join(' and ')}
 	`)
 
@@ -606,9 +617,13 @@ meta.addAction('set-order', async (view) => {
 
 export const rest = async (query, get, visitor) => {
 	const ans = await meta.get(query, {...get, visitor})
+	const status = ans.status ?? 200
+	const nostore = ans.nostore ?? false
+	delete ans.status
+	delete ans.nostore
 	return { ans, 
 		ext: 'json', 
-		status: ans.status ?? 200, 
-		nostore: ans.nostore ?? false 
+		status,
+		nostore
 	}
 }

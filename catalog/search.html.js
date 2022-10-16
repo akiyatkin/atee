@@ -84,12 +84,31 @@ search.list = (data, env) => `
 	</div>
 `
 search.showgroups = (data, env) => `
+	<style>
+		#{env.layer.div} .mute {
+			opacity: 0.3;
+		}
+		#{env.layer.div} a.selected {
+			opacity: 1;
+			color: inherit;
+			border-color: transparent;
+			font-weight: bold;
+		}
+		#{env.layer.div} .mute.selected {
+			opacity: 0.9;
+		}
+	</style>
 	${data.childs.map(g => search.group(data, env, g)).join('')}
 `
-const weight = (data, env, group) => `${data.md.group?.[group.group_nick] ?' style="font-weight: bold;"':''}`
+const groupclass = (data, env, group) => {
+	const selected = data.md.group?.[group.group_nick]
+	return `class="${selected ? 'selected' :''} ${group.mute ? 'mute' :''}"`
+}
 search.group = (data, env, group) => `
 	<div>
-		<a data-scroll="none" ${weight(data, env, group)} href="${env.crumb.parent}/${group.group_nick}${links.setm(data)}">${group.group_title}</a>
+		<a ${groupclass(data, env, group)}
+			data-scroll="none"
+			href="${env.crumb.parent}/${group.group_nick}${links.setm(data)}">${group.group_title}</a>
 	</div>
 `
 
@@ -128,17 +147,20 @@ search.title = (data, env) => html`
 		${!data.md.search || search.titlepart(data, env, 'search', data.md.search)}
 		${!data.md.more || Object.keys(data.md.more).map(prop_nick => {
 			const values = data.md.more[prop_nick]
+			const prop = data.mdprops[prop_nick]
+			
 			return Object.keys(values).map(value_nick => {
-				return search.choice.just(data, env, prop_nick, value_nick, data.mdvalues[value_nick].value_title)	
+				const value = data.mdvalues[value_nick]
+				return search.choice.just(data, env, prop, value)
 			}).join(', ')
 		})}
 	</h1>
 `
 search.choice = {
-	"just": (data, env, prop_nick, part, value) => `
-		<a title="Отменить выбор" data-scroll="none" class="clearlink" 
-			href="${env.crumb.parent}${links.addm(data)}more.${prop_nick}.${part}">
-			<span class="value">${value}</span>
+	"just": (data, env, prop, value) => `
+		<a title="${prop.prop_title}" data-scroll="none" class="clearlink" 
+			href="${env.crumb.parent}${links.addm(data)}more.${prop.prop_nick}.${value.value_nick}">
+			<span class="value">${value.value_title}</span>
 			<span class="krest" style="font-size:1rem; line-height: 2rem;">✕</span>
 		</a>
 	`

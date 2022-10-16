@@ -13,14 +13,12 @@ const showFilter = (data, filter, env) => `
 filters.item = (data, filter, v) => data.md.more?.[filter.prop_nick]?.[v.value_nick] ? `
 		<a class="clearlink" title="Отменить выбор" style="display: inline-block; border-color: transparent; color:inherit;" class="a" data-scroll="none" rel="nofollow" href="/catalog/${links.addm(data)}more.${filter.prop_nick}">
 			<span class="value">${v.value_title}</span><sup style="position: absolute; font-size:12px" class="krest">&nbsp;✕</sup>
-		</a>
-	` : `
-		<a title="Выбрать" class="a" data-scroll="none" rel="nofollow" href="/catalog/${links.addm(data)}more.${filter.prop_nick}::.${v.value_nick}=1">${v.value_title}</a>
-`
+		</a>` : `
+		<a title="Выбрать" style="opacity: ${v.mute ?'0.3':'1'}" class="a" data-scroll="none" rel="nofollow" href="/catalog/${links.addm(data)}more.${filter.prop_nick}::.${v.value_nick}=1">${v.value_title}</a>`
 filters.option = (data, filter, v) => data.md.more?.[filter.prop_nick]?.[v.value_nick] ? `
 		<option value="${v.value_nick}" selected>${v.value_title}</option>
 	` : `
-		<option value="${v.value_nick}">${v.value_title}</option>
+		<option style="opacity: ${v.mute ?'0.3':'1'}" value="${v.value_nick}">${v.value_title}</option>
 `
 filters.block = (title, body) => `
 	<div style="margin: 0.25rem 0; display: grid">
@@ -48,5 +46,12 @@ filters.props = {
 			</script>
 		</div>
 	`,
-	row: (data, filter, env) => filters.block(filter.prop_title, filter.values.map(v => filters.item(data, filter, v)).join(',&nbsp; ')),
+	row: (data, filter, env) => filters.block(
+		filter.prop_title, 
+		`
+			<span style="white-space:nowrap; margin-right:0.7em;">
+				${filter.values.map(v => filters.item(data, filter, v)).join(',</span> <span style="white-space:nowrap; margin-right:0.7em">')}
+			</span>
+		`
+	)
 }

@@ -27,16 +27,7 @@ export const rest_live = (meta) => {
 		// }
 		const md = {search: hash}
 		const { group_ids } = await Catalog.searchGroups(db, visitor, md)
-		const childs = await Catalog.getCommonChilds(group_ids)
-		//hashs.map('search like = ')
 		
-		// const sql = `
-		// 	SELECT distinct m.group_id
-		// 	FROM showcase_items i, showcase_models m
-		// 	WHERE i.model_id = m.model_id
-		// 		and m.search like "%${hashs.join('%" and m.search like "%')}%"
-		// `
-		// const childs = await db.colAll(sql)
 		if (!group_ids.length) {
 			view.ans.list = []
 			view.ans.groups = []
@@ -44,24 +35,8 @@ export const rest_live = (meta) => {
 			view.ans.count = 0
 			return view.ret()
 		}
-
-		//const tree = await Catalog.getTree()
-		//const some_id = childs[0].group_id
-
-		// const path = childs.reduce((path, group) => {
-		// 	const somepath = group.path
-		// 	const newpath = path.filter(value => somepath.includes(value));
-		// 	return newpath
-		// }, tree[some_id].path)
-		
-		// const showgroups = []
-		// childs.forEach((group) => {
-		// 	const group_id = group.path[path.length] || group.group_id
-		// 	if (~showgroups.indexOf(group_id)) return
-		// 	showgroups.push(tree[group_id])
-		// })
+		const childs = await Catalog.getCommonChilds(group_ids)
 		view.ans.gcount = 0
-		
 		view.ans.groups = childs.reduce((groups, group) => {
 			view.ans.gcount += group.groups.length
 			const g = {}
@@ -70,20 +45,21 @@ export const rest_live = (meta) => {
 			return groups
 		}, [])
 
-		const where = await Catalog.getmdwhere(db, visitor, md)
-		where.push(`m.group_id in (${group_ids.join(',')})`)
+		const {from, where} = await Catalog.getmdwhere(db, visitor, md)
+
 		const list = []
 		const models = await db.all(`
-			SELECT SQL_CALC_FOUND_ROWS m.model_id, m.model_nick, m.model_title, m.brand_id
-			FROM 
-				showcase_models m
+			SELECT m.model_id, m.model_nick, m.model_title, m.brand_id
+			FROM ${from.join(', ')}
 			WHERE ${where.join(' and ')}
-			and (select i.item_num from showcase_items i where i.model_id = m.model_id limit 1) is not null
 			ORDER BY RAND()
 			LIMIT 12
 		`)
-
-		view.ans.count = await db.col('SELECT FOUND_ROWS()')
+		view.ans.count = await db.col(`
+			SELECT count(*)
+			FROM ${from.join(', ')}
+			WHERE ${where.join(' and ')}
+		`)
 
 		const prop = await Catalog.getProp('Наименование')
 		const cost = await Catalog.getProp('Цена')
@@ -92,8 +68,6 @@ export const rest_live = (meta) => {
 			model.brand_nick = brand.brand_nick
 			model.brand_title = brand.brand_title
 			delete model.brand_id
-
-			
 			model['Наименование'] = await db.col(`
 				SELECT ip.text 
 				FROM showcase_iprops ip

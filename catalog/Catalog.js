@@ -245,7 +245,7 @@ Catalog.getValueId = (db, visitor, value_nick) => {
 	})
 }
 Catalog.getValueByNick = async (db, visitor, value_nick) => {
-	return visitor.relate(Catalog).once('getValueByNick', () => {
+	return visitor.relate(Catalog).once('getValueByNick'+value_nick, () => {
 		return db.fetch('SELECT value_id, value_title, value_nick FROM showcase_values WHERE value_nick = :value_nick', { value_nick })
 	})
 }
@@ -340,7 +340,116 @@ Catalog.getMainGroups = Access.cache(async (prop_title = '') => {
 	}
 	
 })
-Catalog.getFilterConf = async (db, prop_id, group_id) => {
+Catalog.getFilterConf = async (db, visitor, prop_id, group_id, md) => {
+	const group = await Catalog.getGroupById(group_id)
+	const prop = await Catalog.getPropById(prop_id)
+	if (prop.type == 'text') return false
+	const options = await Catalog.getOptions()
+	const filter = {...options.props[prop.prop_title], ...prop}
+	if (filter.slider) return false
+
+	if (prop.type == 'value') {
+		filter.values = await db.all(`
+			SELECT distinct v.value_nick, v.value_title
+			FROM showcase_iprops ip, showcase_models m, showcase_values v
+			WHERE m.model_id = ip.model_id
+			and ip.prop_id = :prop_id
+			and v.value_id = ip.value_id
+			and m.group_id in (${group.groups.join(',')})
+			ORDER BY v.value_nick
+		`, {
+			prop_id
+		})
+	} else {
+		filter.values = await db.all(`
+			SELECT distinct ip.number as value_nick
+			FROM showcase_iprops ip, showcase_models m
+			WHERE m.model_id = ip.model_id
+			and ip.prop_id = :prop_id
+			and m.group_id in (${group.groups.join(',')})
+			ORDER BY ip.number
+		`, {
+			prop_id
+		})
+
+	}
+	
+	if (filter.values.length < 1) return false
+
+	const nmd = {...md}
+	nmd.more = {...md.more}
+	const selected = nmd.more?.[prop.prop_nick]
+	delete nmd.more?.[prop.prop_nick]
+	nmd.m = Catalog.makemark(nmd).join(':')
+
+	if (selected) {
+		const values_nicks = Object.keys(selected)
+		for (const value_nick of values_nicks) {
+			if (prop.type == 'value') {
+				if (filter.values.some(v => v.value_nick == value_nick)) continue
+				const value = await Catalog.getValueByNick(db, visitor, value_nick)
+				filter.values.push(value)
+			} else {
+				if (filter.values.some(v => Number(v.value_nick) == Number(value_nick.replace('-','.')))) continue
+				filter.values.push({value_nick})
+			}
+		}
+	}
+	if (!selected && filter.values.length < 2) return false
+
+	const {from, where} = await Catalog.getmdwhere(db, visitor, nmd)
+	if (prop.type == 'value') {
+		filter.remains = await db.all(`
+			SELECT distinct v.value_nick
+			FROM ${from.join(', ')}, showcase_iprops ip, showcase_values v
+			WHERE ${where.join(' and ')}
+			and ip.prop_id = :prop_id
+			and v.value_id = ip.value_id
+			and m.model_id = ip.model_id 
+		`, {
+			prop_id: prop.prop_id
+		})
+	} else {
+		filter.remains = await db.all(`
+			SELECT distinct ip.number as value_nick
+			FROM ${from.join(', ')}, showcase_iprops ip
+			WHERE ${where.join(' and ')}
+			and ip.prop_id = :prop_id
+			and m.model_id = ip.model_id 
+		`, {
+			prop_id: prop.prop_id
+		})
+
+	}
+	filter.values.forEach(row => {
+		row.mute = !filter.remains.some(v => v.value_nick == row.value_nick)
+	})
+	if (prop.type == 'number') {
+		filter.values.forEach(row => {
+			row.value_title = Number(row.value_nick)
+			row.value_nick = nicked(row.value_title)
+		})
+	}
+	return filter
+	// const group = await Catalog.getGroupById(group_id)
+	// const options = await Catalog.getOptions()
+	// const filter = {...options.props[prop.prop_title], ...prop}
+	// if (prop.type !== 'value') return false
+	// //Нужно найти все возможные значения и упорядочить их по алфавиту и показать количество моделей
+	// filter.values = await db.all(`
+	// 	SELECT distinct v.value_nick, v.value_title
+	// 	FROM showcase_iprops ip, showcase_models m, showcase_values v
+	// 	WHERE ip.prop_id = :prop_id and m.model_id = ip.model_id 
+	// 	and m.group_id in (${group.groups.join(',')}) and v.value_id = ip.value_id
+	// 	ORDER BY v.value_nick
+	// `, {
+	// 	prop_id: prop.prop_id
+	// })
+	// if (filter.values.length < 2) return false
+
+	// return filter
+}
+Catalog.getGroupFilterConf = async (db, prop_id, group_id) => {
 	const prop = await Catalog.getPropById(prop_id)
 	const group = await Catalog.getGroupById(group_id)
 	const options = await Catalog.getOptions()
@@ -526,47 +635,57 @@ Catalog.getmdwhere = (db, visitor, md) => {
 				//console.log(`m.search like "% ${hashs.join('%" and m.search like "% ')}%"`)
 			}
 		}
+		const from = ['showcase_models m','showcase_items i']
+		where.push('i.model_id = m.model_id')
+		let iprops_dive = false
 		if (md.more) {
-			const prop_number_ids = []
-			const prop_value_ids = []
+			
+			let i = 0
 			for (const prop_nick in md.more) {
+				
+				i++
+				iprops_dive = true
+				from.push(`showcase_iprops ip${i}`)
+				where.push(`ip${i}.model_id = m.model_id`)
+
 				const prop = await Catalog.getProp(prop_nick)
 				const values = md.more[prop_nick]
-				for (const value in values) {
-					const value_nick = nicked(value)
-					if (prop.type == 'number') prop_number_ids.push(prop.prop_id+','+value_nick)
-					if (prop.type == 'value') {
+				
+				const ids = []
+				if (prop.type == 'number') {
+					for (const value in values) {
+						const value_nick = Number(value.replace('-','.'))
+						ids.push(prop.prop_id+','+value_nick)
+					}
+					where.push(`(ip${i}.prop_id, ip${i}.number) in ((${ids.join('),(')}))`)
+				} else if (prop.type == 'value') {
+					for (const value in values) {
+						const value_nick = nicked(value)
 						let value_id = await Catalog.getValueId(db, visitor, value_nick)
 						if (!value_id) value_id = 0
-						prop_value_ids.push(prop.prop_id+','+value_id)
+						ids.push(prop.prop_id+','+value_id)
 					}
+					where.push(`(ip${i}.prop_id, ip${i}.value_id) in ((${ids.join('),(')}))`)
 				}
-			}
-			if (prop_number_ids.length) {
-				where.push(`(ip.prop_id, ip.number) in ((${prop_number_ids.join('),(')}))`)
-			}
-			if (prop_value_ids.length) {
-				where.push(`(ip.prop_id, ip.value_id) in ((${prop_value_ids.join('),(')}))`)
+				
 			}
 			
+			
 		}
-		return where
+		if (!iprops_dive) where.push('(select i.item_num from showcase_items i where i.model_id = m.model_id limit 1) is not null')	
+		
+		return {where, from}
 	})
 }
-const getGroupIds = async (db, md, where) => {
-	let res_ids
-	if (md.more) {
-		res_ids = await db.colAll(`
-			SELECT distinct group_id from showcase_models m
-			left join showcase_iprops ip on ip.model_id = m.model_id
-			WHERE ${where.join(' and ')}
-		`)	
-	} else {
-		res_ids = await db.colAll(`
-			SELECT distinct group_id from showcase_models m
-			WHERE ${where.join(' and ')}
-		`)
-	}
+const getGroupIds = async (db, visitor, md) => {
+	const {where, from} = await Catalog.getmdwhere(db, visitor, md)
+	
+	const res_ids = await db.colAll(`
+		SELECT distinct group_id 
+		FROM ${from.join(', ')}
+		WHERE ${where.join(' and ')}
+	`)	
+	
 	return res_ids
 }
 Catalog.getMainGroup = async md => {
@@ -587,8 +706,8 @@ Catalog.searchGroups = (db, visitor, md) => {
 		//const {search = '', group = {}, brand = {}, more = {}} = md
 		let title = await Catalog.getMainGroup(md)
 		if (!title) return {title, group_ids:[]}
-		const where = await Catalog.getmdwhere(db, visitor, md)
-		if (!where.length) {
+		
+		if (!Object.keys(md.more ?? {}).length && !md.search) {
 			const tree = await Catalog.getTree()
 			const options = await Catalog.getOptions()
 			const groupnicks = await Catalog.getGroups()
@@ -597,42 +716,44 @@ Catalog.searchGroups = (db, visitor, md) => {
 			const group_ids = root.groups.filter(id => tree[id].inside)
 			return {title, group_ids}
 		}
-		let group_ids = await getGroupIds(db, md, where)
-
+		let group_ids = await getGroupIds(db, visitor, md)
 		if (group_ids.length == 1) {
 			if (title.parent_id) { //Есть выбранная группа
-				const nmd = {...md, title: {}}
+				const nmd = { ...md } //, title: {}
 				const tree = await Catalog.getTree()
 				title = tree[title.parent_id]
 				nmd.group[title.group_nick] = 1
 				nmd.m = Catalog.makemark(nmd).join(':')
-				const nwhere = await Catalog.getmdwhere(db, visitor, nmd)
-				group_ids = await getGroupIds(db, nmd, nwhere)
+				group_ids = await getGroupIds(db, visitor, nmd)
 			}
 		}
 		return {title, group_ids}
 	})
 }
-Catalog.getCommonChilds = async (group_ids) => {
+Catalog.getCommonChilds = async (group_ids, root) => {
+	
 	const tree = await Catalog.getTree()
-	let groups = []
-	if (group_ids.length) {
-		let rootpath = tree[group_ids[0]].path
-		group_ids.forEach(group_id => {
-			rootpath = rootpath.filter(id => ~tree[group_id].path.indexOf(id) || id == group_id)
-		})
-		let root = tree[rootpath.at(-1)] //Общий корень
-		if (!root) {
-			root = {path:[]}
-		}
-		const level_group_ids = unique(group_ids
-		.filter(group_id => {
-			return tree[group_id].parent_id && tree[group_id].path.length >= root.path.length
-		}).map(group_id => {
-			return tree[group_id].path[root.path.length + 1] || group_id
-		}))
-		groups = level_group_ids.map(id => tree[id])
-	}
+	const groupnicks = await Catalog.getGroups()
+	const options = await Catalog.getOptions()
+	
+	let rootpath = tree[group_ids[0]]?.path || root.path
+	group_ids.forEach(group_id => {
+		rootpath = rootpath.filter(id => ~tree[group_id].path.indexOf(id) || id == group_id)
+	})
+	const group = tree[rootpath.at(-1)] || root //Общий корень
+	const level_group_ids = unique(group_ids.filter(group_id => {
+		return tree[group_id].parent_id && tree[group_id].path.length >= group.path.length
+	}).map(group_id => {
+		return tree[group_id].path[group.path.length + 1] || group_id
+	}))
+
+
+	const groups = group.childs.map(id => {
+		const group = {...tree[id]}
+		group.mute = !~level_group_ids.indexOf(id)
+		return group
+	})
+	
 	return groups
 }
 
