@@ -345,8 +345,9 @@ Catalog.getFilterConf = async (db, visitor, prop_id, group_id, md) => {
 	const prop = await Catalog.getPropById(prop_id)
 	if (prop.type == 'text') return false
 	const options = await Catalog.getOptions()
-	const filter = {...options.props[prop.prop_title], ...prop}
-	if (filter.slider) return false
+	if (!options.props[prop.prop_title].filter) return false
+	const filter = {...options.props[prop.prop_title].filter, ...prop}
+	if (filter.data == 'range') return false
 
 	if (prop.type == 'value') {
 		filter.values = await db.all(`
@@ -373,14 +374,16 @@ Catalog.getFilterConf = async (db, visitor, prop_id, group_id, md) => {
 		})
 
 	}
+	const selected = md.more?.[prop.prop_nick]
 	
-	if (filter.values.length < 1) return false
+
+	if (!selected && filter.values.length < 1) return false
 
 	const nmd = {...md}
 	nmd.more = {...md.more}
-	const selected = nmd.more?.[prop.prop_nick]
 	delete nmd.more?.[prop.prop_nick]
 	nmd.m = Catalog.makemark(nmd).join(':')
+	
 
 	if (selected) {
 		const values_nicks = Object.keys(selected)

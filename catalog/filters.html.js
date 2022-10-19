@@ -6,7 +6,7 @@ filters.ROOT = (data, env) => `
 	${data.filters.map(filter => showFilter(data, filter, env)).join('')}
 `
 const showFilter = (data, filter, env) => `
-	${(filters.props[filter.tplfilter] || filters.props.select)(data, filter, env)}
+	${(filters.props[filter.tpl] || filters.props.select)(data, filter, env)}
 `
 
 
@@ -27,6 +27,27 @@ filters.block = (title, body) => `
 	</div>
 `
 filters.props = {
+	slider: (data, filter, env) => `
+		<style>
+			#${env.layer.div} .slider input {
+				position: relative;
+				color: #9a905d;
+				z-index: 1;
+			}
+			#${env.layer.div} .slider input:active {
+				color: red;
+				z-index: 2;
+			}
+		</style>
+		<div class="slider" style="display: grid;">
+			<div style="grid-row: 1 / 1; grid-column: 1 / 1;">
+				<input type="range">
+			</div>
+			<div style="grid-row: 1 / 1; grid-column: 1 / 1;">
+				<input type="range">
+			</div>
+		</div>
+	`,
 	select: (data, filter, env) => `
 		<div style="margin: 0.25rem 0">
 			<select style="width: 100%">
@@ -35,6 +56,7 @@ filters.props = {
 			</select>
 			<script>
 				(select => {
+					console.log(select)
 					select.addEventListener('change', async () => {
 						let n = select.options.selectedIndex
 						let value_nick = select.options[n].value
