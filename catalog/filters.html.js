@@ -29,27 +29,58 @@ filters.block = (title, body) => `
 filters.props = {
 	slider: (data, filter, env) => `
 		<style>
+
 			#${env.layer.div} .slider input {
-				position: relative;
+				/*position: relative;
 				color: #9a905d;
-				z-index: 1;
+				z-index: 1;*/
+				/*pointer-events: none;*/
+				appearance: none;
+				border: none;
+				margin: 0;
+				margin-top: 0.5em;
+				background-color: var(--orange);
+				height: 1px;
+				padding: 0;
 			}
+
 			#${env.layer.div} .slider input:active {
 				color: red;
 				z-index: 2;
 			}
+			/*#${env.layer.div} input[type='range'],
+			#${env.layer.div} input[type='range']::-webkit-slider-runnable-track,
+			#${env.layer.div} input[type='range']::-webkit-slider-thumb {
+			  -webkit-appearance: none;
+			}*/
+			
+			/*#${env.layer.div} input::-webkit-slider-thumb {
+				height: 20px;
+				width: 20px;
+				border-radius: 20px;
+				background-color: red;
+				cursor: pointer;
+				border: none;
+			}*/
+			#${env.layer.div} input::-webkit-slider-runnable-track {
+				/*pointer-events: none;*/
+			}
+
 		</style>
-		<div class="slider" style="display: grid;">
-			<div style="grid-row: 1 / 1; grid-column: 1 / 1;">
-				<input type="range">
+		<div style="margin-bottom: 0.5rem;">
+			<div style="display: flex; gap:5px">
+				<div>Цена, руб. <a class="a">от</a></div>
+				<div>
+					<a class="clearlink" title="Отменить выбор" style="display: inline-block; border-color: transparent; color:inherit;" class="a" data-scroll="none" rel="nofollow" href="/">
+						<span class="value">1200</span><sup style="position: absolute; font-size:12px" class="krest">&nbsp;✕</sup>
+					</a>
+				</div>
 			</div>
-			<div style="grid-row: 1 / 1; grid-column: 1 / 1;">
-				<input type="range">
-			</div>
+			<div class="slider"><input type="range"></div>
 		</div>
 	`,
 	select: (data, filter, env) => `
-		<div style="margin: 0.25rem 0">
+		<div style="margin-bottom: 0.5rem">
 			<select style="width: 100%">
 				<option value="">${filter.prop_title}</option>
 				${filter.values.map(v => filters.option(data, filter, v)).join('')}
