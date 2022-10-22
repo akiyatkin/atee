@@ -88,11 +88,12 @@ export const Client = {
 		search = fixsearch(search)
 		if (~location.href.indexOf(search)) {
 			const a = document.createElement('a')
-			a.href = Client.search
-			const oldahref = a.href
+			const oldahref = location.href
 			a.href = search
 			const newahref = a.href
-			if (oldahref == newahref) return Client.replaceState(search, scroll)
+			if (oldahref == newahref) {
+				return Client.replaceState(search, scroll)
+			}
 		}
 		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 		Client.cursor++

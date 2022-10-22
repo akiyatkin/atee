@@ -206,9 +206,14 @@ meta.addVariable('md', async (view) => {
 			const prop = await Catalog.getProp(prop_nick)
 			if (!prop) delete md.more[prop_nick]
 			else if (prop.type == 'text') delete md.more[prop_nick]
-			else if (!Object.keys(md.more[prop_nick]).length) delete md.more[prop_nick]
-			//if (!md.more[prop_nick]) continue
-
+			
+			if (md.more[prop_nick]) {
+				for (const value_nick in md.more[prop_nick]) {
+					if (typeof(md.more[prop_nick][value_nick]) == 'object') {
+						delete md.more[prop_nick][value_nick]
+					}
+				}
+			}
 			// if (prop.type == 'number') {	
 			// 	const vals = {}
 			// 	for (const value_nick in md.more[prop_nick]) {
@@ -217,6 +222,12 @@ meta.addVariable('md', async (view) => {
 			// 	}
 			// 	md.more[prop_nick] = vals
 			// }
+			if (!Object.keys(md.more[prop_nick]).length) delete md.more[prop_nick]
+			//if (!md.more[prop_nick]) continue
+
+			
+
+			
 		}
 		if (!Object.keys(md.more).length) delete md.more
 	}

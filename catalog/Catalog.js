@@ -656,11 +656,13 @@ Catalog.getmdwhere = (db, visitor, md) => {
 				
 				const ids = []
 				if (prop.type == 'number') {
-					for (const value in values) {
-						const value_nick = Number(value.replace('-','.'))
-						ids.push(prop.prop_id+','+value_nick)
+					for (let value in values) {
+						//value = value.replace('upto','')
+						value = value.replace('-','.')
+						const value_nick = Number(value)
+						if (value_nick == value) ids.push(prop.prop_id+','+value_nick)
 					}
-					where.push(`(ip${i}.prop_id, ip${i}.number) in ((${ids.join('),(')}))`)
+					if (ids.length) where.push(`(ip${i}.prop_id, ip${i}.number) in ((${ids.join('),(')}))`)
 				} else if (prop.type == 'value') {
 					for (const value in values) {
 						const value_nick = nicked(value)
