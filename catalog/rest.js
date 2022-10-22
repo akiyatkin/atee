@@ -405,7 +405,20 @@ meta.addAction('get-search-groups', async (view) => {
 			if (prop.type == 'value') {
 				mdvalues[value_nick] = await Catalog.getValueByNick(db, visitor, value_nick)
 			} else {
-				mdvalues[value_nick] = {value_nick, value_title:Number(value_nick.replace('-','.'))}
+				let unit = ''
+				if (prop_nick == 'cena') unit = common.unit()
+				
+				let value_title
+				if (value_nick == 'upto') {
+					value_title = 'до '+md.more[prop_nick][value_nick].replace('-','.')
+				} else if (value_nick == 'from') {
+					value_title = 'от '+md.more[prop_nick][value_nick].replace('-','.')
+				} else {
+					value_title = Number(value_nick.replace('-','.'))
+				}
+				value_title += unit
+				
+				mdvalues[value_nick] = {value_nick, value_title}
 			}
 		}
 	}
@@ -419,7 +432,7 @@ meta.addAction('get-search-list', async (view) => {
 	let { page } = await view.gets(['page'])
 	const { db, value, md, partner, visitor} = await view.gets(['db','value','md','partner','visitor'])
 	//const {title, group_ids} = Catalog.searchGroups(db, visitor, md)
-	const {from, where} = await Catalog.getmdwhere(db, visitor, md)
+	const {from, where, sort} = await Catalog.getmdwhere(db, visitor, md)
 	const group = await Catalog.getMainGroup(md)
 	if (!group) {
 		return view.err('Нет данных')
@@ -432,6 +445,7 @@ meta.addAction('get-search-list', async (view) => {
 		FROM ${from.join(', ')}
 		WHERE ${where.join(' and ')}
 		GROUP BY m.model_id 
+		ORDER BY ${sort.join(',')}
 		LIMIT ${start}, ${opt.limit}
 	`)
 	const count = await db.col(`

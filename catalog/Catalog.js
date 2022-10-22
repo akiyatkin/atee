@@ -11,6 +11,8 @@ Catalog.getModelsByItems = async (db, moditems_ids, partner) => { //[{item_nums 
 	if (!moditems_ids.length) return []
 	//const db = await new Db().connect()
 	const options = await Catalog.getOptions()
+	const ids = unique(moditems_ids.map(it => it.model_id))
+	
 	const models = await db.all(`SELECT 
 		m.model_id, 
 		m.model_nick, m.model_title, b.brand_title, b.brand_nick, g.group_nick, g.group_title, g.group_id, 
@@ -18,8 +20,10 @@ Catalog.getModelsByItems = async (db, moditems_ids, partner) => { //[{item_nums 
 		FROM showcase_models m, showcase_brands b, showcase_groups g
 
 		WHERE m.brand_id = b.brand_id and m.group_id = g.group_id
-		and m.model_id in (${unique(moditems_ids.map(it => it.model_id)).join(',')})
+		and m.model_id in (${ids.join(',')})
 	`)
+	
+	
 
 	const modids = []
 	for (const mod of moditems_ids) {
@@ -43,6 +47,7 @@ Catalog.getModelsByItems = async (db, moditems_ids, partner) => { //[{item_nums 
 		m.items = {}
 		list[m.model_id] = m
 	}
+
 	for (const im of modids) {
 		list[im.model_id].items[im.item_num] = { item_num:im.item_num }
 	}
@@ -197,6 +202,7 @@ Catalog.getModelsByItems = async (db, moditems_ids, partner) => { //[{item_nums 
 	// 	if (model.items.length != 1) continue
 	// 	delete model.items
 	// }
+	list = ids.map(id => list.find(m => m.model_id == id))
 	return list
 }
 Catalog.getConfig = Access.cache(async () => {
@@ -639,6 +645,7 @@ Catalog.getmdwhere = (db, visitor, md) => {
 			}
 		}
 		const from = ['showcase_models m','showcase_items i']
+		const sort = []
 		where.push('i.model_id = m.model_id')
 		let iprops_dive = false
 		if (md.more) {
@@ -648,29 +655,50 @@ Catalog.getmdwhere = (db, visitor, md) => {
 				
 				i++
 				iprops_dive = true
+				
+				const prop = await Catalog.getProp(prop_nick)
 				from.push(`showcase_iprops ip${i}`)
 				where.push(`ip${i}.model_id = m.model_id`)
+				where.push(`ip${i}.prop_id = ${prop.prop_id}`)
 
-				const prop = await Catalog.getProp(prop_nick)
 				const values = md.more[prop_nick]
 				
 				const ids = []
 				if (prop.type == 'number') {
-					for (let value in values) {
-						//value = value.replace('upto','')
+					for (let name in values) {
+						let value = name
+						if (~['upto','from'].indexOf(name)) {
+							value = values[name]
+						}
 						value = value.replace('-','.')
 						const value_nick = Number(value)
-						if (value_nick == value) ids.push(prop.prop_id+','+value_nick)
+
+						if (~['upto','from'].indexOf(name)) {
+							if (name == 'upto') {
+								where.push(`ip${i}.number <= ${value_nick}`)
+								sort.push(`ip${i}.number DESC`)
+							}
+							if (name == 'from') {
+								where.push(`ip${i}.number >= ${value_nick}`)
+								sort.push(`ip${i}.number ASC`)
+							}
+						} else {
+							if (value_nick == value) ids.push(value_nick)
+							else  ids.push(prop.prop_id + ', false')	
+						}
+						
 					}
-					if (ids.length) where.push(`(ip${i}.prop_id, ip${i}.number) in ((${ids.join('),(')}))`)
+					if (ids.length) where.push(`ip${i}.number in (${ids.join(',')})`)
 				} else if (prop.type == 'value') {
 					for (const value in values) {
 						const value_nick = nicked(value)
 						let value_id = await Catalog.getValueId(db, visitor, value_nick)
 						if (!value_id) value_id = 0
-						ids.push(prop.prop_id+','+value_id)
+						ids.push(value_id)
 					}
-					where.push(`(ip${i}.prop_id, ip${i}.value_id) in ((${ids.join('),(')}))`)
+					where.push(`ip${i}.value_id in (${ids.join(',')})`)
+				} else {
+
 				}
 				
 			}
@@ -679,7 +707,7 @@ Catalog.getmdwhere = (db, visitor, md) => {
 		}
 		if (!iprops_dive) where.push('(select i.item_num from showcase_items i where i.model_id = m.model_id limit 1) is not null')	
 		
-		return {where, from}
+		return {where, from, sort}
 	})
 }
 const getGroupIds = async (db, visitor, md) => {

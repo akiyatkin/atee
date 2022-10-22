@@ -109,9 +109,9 @@ filters.props = {
 					<script>
 						(input => {
 							input.addEventListener('click', async (e) => {
-								const value_nick = input.value
+								const value_nick = input.value.replace('.','-')
 								const Client = await window.getClient()
-								const set = value_nick ? '::.cena=upto'+value_nick : ''
+								const set = value_nick ? '::more.cena.upto='+value_nick : ''
 		    					Client.pushState('/catalog/${links.addm(data)}more.${filter.prop_nick}' + set)
 							})
 							input.addEventListener('change', input.click)
