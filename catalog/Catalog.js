@@ -239,8 +239,9 @@ Catalog.getOptions = Access.cache(async () => {
 		if (!p.value_title) p.value_title = value //Значение свойства в данных
 		if (!p.value_nick) p.value_nick = value //Ник свойства в данных
 		if (!p.prop_nick) p.prop_nick = nicked(p.value_nick)  //Ник самого свойства
-		//const prop = await Catalog.getProp(p.prop_title)	
-		//p.prop_nick = prop.prop_nick
+		if (value == 'Цена' && !p.unit) p.unit = 'руб.'
+		const r = value.split(',')
+		if (r.length > 1) p.unit = r[1].trim()
 	}
 	db.release()
 	return options
@@ -353,8 +354,45 @@ Catalog.getFilterConf = async (db, visitor, prop_id, group_id, md) => {
 	const options = await Catalog.getOptions()
 	if (!options.props[prop.prop_title].filter) return false
 	const filter = {...options.props[prop.prop_title].filter, ...prop}
-	if (filter.data == 'range') return false
+	if (filter.slider) {
+		if (prop.type == 'value') return false
+		const row = await db.fetch(`
+			SELECT min(ip.number) as min, max(ip.number) as max
+			FROM showcase_iprops ip, showcase_models m
+			WHERE m.model_id = ip.model_id
+			and ip.prop_id = :prop_id
+			and m.group_id in (${group.groups.join(',')})
+		`, {
+			prop_id
+		})
+		if (row.min === row.max) return false
+		filter.min = Number(row.min)
+		filter.max = Number(row.max)
+		const spread = filter.max - filter.min
+		
+		const makefilter = (step) => {
+			filter.step = step
+			filter.min = Math.floor(filter.min / step) * step
+			filter.max = Math.ceil(filter.max / step) * step
+		}
+		if (spread > 1000000) {
+			makefilter(50000)
+		} else if (spread > 100000) {
+			makefilter(5000)
+		} else if (spread > 10000) {
+			makefilter(500)
+		} else if (spread > 1000) {
+			makefilter(50)
+		} else if (spread > 100) {
+			makefilter(5)
+		} else {
 
+			makefilter(1)
+		}
+		
+
+		return filter
+	}
 	if (prop.type == 'value') {
 		filter.values = await db.all(`
 			SELECT distinct v.value_nick, v.value_title
@@ -458,26 +496,26 @@ Catalog.getFilterConf = async (db, visitor, prop_id, group_id, md) => {
 
 	// return filter
 }
-Catalog.getGroupFilterConf = async (db, prop_id, group_id) => {
-	const prop = await Catalog.getPropById(prop_id)
-	const group = await Catalog.getGroupById(group_id)
-	const options = await Catalog.getOptions()
-	const filter = {...options.props[prop.prop_title], ...prop}
-	if (prop.type !== 'value') return false
-	//Нужно найти все возможные значения и упорядочить их по алфавиту и показать количество моделей
-	filter.values = await db.all(`
-		SELECT distinct v.value_nick, v.value_title
-		FROM showcase_iprops ip, showcase_models m, showcase_values v
-		WHERE ip.prop_id = :prop_id and m.model_id = ip.model_id 
-		and m.group_id in (${group.groups.join(',')}) and v.value_id = ip.value_id
-		ORDER BY v.value_nick
-	`, {
-		prop_id: prop.prop_id
-	})
-	if (filter.values.length < 2) return false
+// Catalog.getGroupFilterConf = async (db, prop_id, group_id) => {
+// 	const prop = await Catalog.getPropById(prop_id)
+// 	const group = await Catalog.getGroupById(group_id)
+// 	const options = await Catalog.getOptions()
+// 	const filter = {...options.props[prop.prop_title], ...prop}
+// 	if (prop.type !== 'value') return false
+// 	//Нужно найти все возможные значения и упорядочить их по алфавиту и показать количество моделей
+// 	filter.values = await db.all(`
+// 		SELECT distinct v.value_nick, v.value_title
+// 		FROM showcase_iprops ip, showcase_models m, showcase_values v
+// 		WHERE ip.prop_id = :prop_id and m.model_id = ip.model_id 
+// 		and m.group_id in (${group.groups.join(',')}) and v.value_id = ip.value_id
+// 		ORDER BY v.value_nick
+// 	`, {
+// 		prop_id: prop.prop_id
+// 	})
+// 	if (filter.values.length < 2) return false
 
-	return filter
-}
+// 	return filter
+// }
 Catalog.getAllCount = Access.cache(async () => {
 	const tree = await Catalog.getTree()
 	const groups = Object.values(tree)
@@ -488,6 +526,8 @@ Catalog.getAllCount = Access.cache(async () => {
 Catalog.getPropById = Access.cache(async (prop_id) => {
 	const db = await new Db().connect()
 	const prop = await db.fetch('SELECT type, prop_nick, prop_title, prop_id from showcase_props where prop_id = :prop_id', { prop_id })
+	const options = await Catalog.getOptions()
+	prop.opt = options.props[prop.prop_title]
 	db.release()
 	return prop
 })
@@ -495,6 +535,8 @@ Catalog.getProp = Access.cache(async (prop_title) => {
 	const db = await new Db().connect()
 	const prop_nick = nicked(prop_title)
 	const prop = await db.fetch('SELECT type, prop_nick, prop_title, prop_id from showcase_props where prop_nick = :prop_nick', { prop_nick })
+	const options = await Catalog.getOptions()
+	prop.opt = options.props[prop.prop_title]
 	db.release()
 	return prop
 })
@@ -768,12 +810,15 @@ Catalog.getCommonChilds = async (group_ids, root) => {
 	const tree = await Catalog.getTree()
 	const groupnicks = await Catalog.getGroups()
 	const options = await Catalog.getOptions()
-	
 	let rootpath = tree[group_ids[0]]?.path || root.path
+
 	group_ids.forEach(group_id => {
 		rootpath = rootpath.filter(id => ~tree[group_id].path.indexOf(id) || id == group_id)
 	})
-	const group = tree[rootpath.at(-1)] || root //Общий корень
+
+	
+	const group = (group_ids[0] || rootpath.length > 1 ) ? (tree[rootpath.at(-1)] || root) : root //Общий корень
+
 	const level_group_ids = unique(group_ids.filter(group_id => {
 		return tree[group_id].parent_id && tree[group_id].path.length >= group.path.length
 	}).map(group_id => {

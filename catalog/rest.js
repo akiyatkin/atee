@@ -387,6 +387,7 @@ meta.addAction('get-search-groups', async (view) => {
 
 	const {title, group_ids} = await Catalog.searchGroups(db, visitor, nmd)
 	let groups = await Catalog.getCommonChilds(group_ids, group)
+	
 	//if (groups.length == 1 && group.group_id == groups[0].group_id) groups = []
 
 	const res = {
@@ -406,8 +407,7 @@ meta.addAction('get-search-groups', async (view) => {
 				mdvalues[value_nick] = await Catalog.getValueByNick(db, visitor, value_nick)
 			} else {
 				let unit = ''
-				if (prop_nick == 'cena') unit = common.unit()
-				
+				if (prop.opt.unit) unit = '&nbsp'+prop.opt.unit
 				let value_title
 				if (value_nick == 'upto') {
 					value_title = 'до '+md.more[prop_nick][value_nick].replace('-','.')
@@ -445,7 +445,7 @@ meta.addAction('get-search-list', async (view) => {
 		FROM ${from.join(', ')}
 		WHERE ${where.join(' and ')}
 		GROUP BY m.model_id 
-		ORDER BY ${sort.join(',')}
+		${sort.length?`ORDER BY ${sort.join(',')}`:''}
 		LIMIT ${start}, ${opt.limit}
 	`)
 	const count = await db.col(`

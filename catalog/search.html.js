@@ -148,11 +148,20 @@ search.title = (data, env) => html`
 		${!data.md.more || Object.keys(data.md.more).map(prop_nick => {
 			const values = data.md.more[prop_nick]
 			const prop = data.mdprops[prop_nick]
-			
-			return Object.keys(values).map(value_nick => {
-				const value = data.mdvalues[value_nick]
-				return search.choice.just(data, env, prop, value)
-			}).join(', ')
+			if (prop.type == 'value') {
+				return Object.keys(values).map(value_nick => {
+					const value = data.mdvalues[value_nick]
+					return search.choice.just(data, env, prop, value)
+				}).join(', ')
+			} else {
+				return Object.keys(values).map(value_nick => {
+					if (value_nick == 'from' || value_nick == 'upto') {
+						return search.choice.just(data, env, prop, {value_nick, value_title: (value_nick == 'from' ? 'до ' : 'от ') + values[value_nick] + ' ' + (prop.opt.unit)})
+					} else {
+						return search.choice.just(data, env, prop, {value_nick, value_title: value_nick})
+					}
+				}).join(', ')
+			}
 		})}
 	</h1>
 `
