@@ -183,7 +183,7 @@ cards.nalichie = (data, mod) => `
 	<div style="position:absolute; right: 0px; z-index:1; margin: 1rem; top:0">${cards.badgenalichie(data, mod)}</div>
 `
 cards.badgenalichie = (data, mod) => mod.Наличие ? `
-	<a rel="nofollow" href="/catalog/${links.addm(data)}more.${cards.nal}::.${mod.Наличие}=1" 
+	<a rel="nofollow" href="/catalog/${links.addm(data)}more.${cards.nal}::.${nicked(mod.Наличие)}=1" 
 		class="badge badge_${nicked(mod['Наличие'] || 'discount')}">
 		${mod['Старая цена'] ? ('-' + mod.discount + '%') : mod.Наличие}
 	</a>

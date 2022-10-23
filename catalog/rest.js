@@ -207,9 +207,10 @@ meta.addVariable('md', async (view) => {
 			if (!prop) delete md.more[prop_nick]
 			else if (prop.type == 'text') delete md.more[prop_nick]
 			
-			if (md.more[prop_nick]) {
+			if (prop.type == 'value' && md.more[prop_nick]) {
 				for (const value_nick in md.more[prop_nick]) {
-					if (typeof(md.more[prop_nick][value_nick]) == 'object') {
+					const value = await Catalog.getValueByNick(db, visitor, value_nick)
+					if (!value || typeof(md.more[prop_nick][value_nick]) == 'object') {
 						delete md.more[prop_nick][value_nick]
 					}
 				}
@@ -387,7 +388,7 @@ meta.addAction('get-search-groups', async (view) => {
 
 	const {title, group_ids} = await Catalog.searchGroups(db, visitor, nmd)
 	let groups = await Catalog.getCommonChilds(group_ids, group)
-	
+
 	//if (groups.length == 1 && group.group_id == groups[0].group_id) groups = []
 
 	const res = {
