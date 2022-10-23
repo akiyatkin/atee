@@ -156,7 +156,7 @@ search.title = (data, env) => html`
 			} else {
 				return Object.keys(values).map(value_nick => {
 					if (value_nick == 'from' || value_nick == 'upto') {
-						return search.choice.just(data, env, prop, {value_nick, value_title: (value_nick == 'from' ? 'до ' : 'от ') + values[value_nick] + ' ' + (prop.opt.unit)})
+						return search.choice.just(data, env, prop, {value_nick, value_title: (value_nick == 'from' ? 'от ' : 'до ') + values[value_nick] + ' ' + (prop.opt.unit)})
 					} else {
 						return search.choice.just(data, env, prop, {value_nick, value_title: value_nick})
 					}
