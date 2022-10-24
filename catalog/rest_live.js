@@ -35,7 +35,12 @@ export const rest_live = (meta) => {
 			view.ans.count = 0
 			return view.ret()
 		}
-		const childs = await Catalog.getCommonChilds(group_ids)
+		const groupnicks = await Catalog.getGroups()
+		const options = await Catalog.getOptions()
+		const root = groupnicks[options.root_nick]
+
+
+		const childs = await Catalog.getCommonChilds(group_ids, root)
 		view.ans.gcount = 0
 		view.ans.groups = childs.reduce((groups, group) => {
 			view.ans.gcount += group.groups.length

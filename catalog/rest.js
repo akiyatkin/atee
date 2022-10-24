@@ -223,7 +223,7 @@ meta.addVariable('md', async (view) => {
 			// 	}
 			// 	md.more[prop_nick] = vals
 			// }
-			if (!Object.keys(md.more[prop_nick]).length) delete md.more[prop_nick]
+			if (!Object.keys(md.more[prop_nick] || {}).length) delete md.more[prop_nick]
 			//if (!md.more[prop_nick]) continue
 
 			
@@ -340,14 +340,14 @@ meta.addAction('get-filters', async (view) => {
 	// 	console.log(opt.filters)
 	// 	if (~opt.filters.indexOf(prop.prop_title)) continue
 		
-	// 	const filter = await Catalog.getFilterConf(db, visitor, prop.prop_id, group.group_id, md)
+	// 	const filter = await Catalog.getFilterConf(db, visitor, prop, group.group_id, md)
 	// 	if (!filter) continue
 	// 	filters.push(filter)
 	// }
 
 	for (const prop_title of opt.filters) {
 		const prop = await Catalog.getProp(prop_title)
-		const filter = await Catalog.getFilterConf(db, visitor, prop.prop_id, group.group_id, md)
+		const filter = await Catalog.getFilterConf(db, visitor, prop, group.group_id, md)
 		if (!filter) continue
 		filters.push(filter)
 	}
