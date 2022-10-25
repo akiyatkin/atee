@@ -74,7 +74,7 @@ model.showmodel = (data, env, { mod } = data) =>
 
 
 
-const showGallery = (data, env, mod) => `
+model.showGallery = (data, env, mod) => `
 	<style>
 		#${env.layer.div} .imagemin_showgallery {	
 			margin: 1rem;		
@@ -167,7 +167,7 @@ model.common = (data, env, mod) => `
 			}
 		</style>	
 		<div class="imagecontent">
-			${mod.images? showGallery(data, env, mod) : ''}	
+			${mod.images? model.showGallery(data, env, mod) : ''}	
 		</div>
 		<div class="textcontent">
 			${model.showprop('Модель', mod.model_title)}
