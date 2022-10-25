@@ -69,7 +69,7 @@ search.pag = (data, env, scroll) => `
 		<div class="backward">${search.pag[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'Назад', data.pagination.page - 1)}</div>
 		<div class="page" style="${data.pagination.last == 1 ? 'opacity:0.3' : ''}">${data.pagination.page}</div>
 		<div class="forward">${search.pag[data.pagination.last > data.pagination.page ? 'link' : 'disabled'](data, env, scroll, 'Дальше', data.pagination.page + 1)}</div>
-		<div class="paglong">${data.count} ${words(data.count,'моделя','модели','моделей')}</div>
+		<div class="paglong">${data.count} ${words(data.count,'модель','модели','моделей')}</div>
 	</div>
 `
 search.pag.link = (data, env, scroll = '', title, page) => `
@@ -141,7 +141,7 @@ search.title = (data, env) => html`
 	<div style="float:right; margin-top:1rem">${data.type}</div>
 	${(!data.path.length && !data.md.m) || search.parenttitle(data, env)}
 	
-	<h1 style="display: flex; clear:both;gap:0 1rem; flex-wrap:wrap">
+	<h1 style="display: flex; clear:both; gap:0 0.6ch; flex-wrap:wrap">
 		${data.title.group_title}
 		${!data.brand || search.titlepart(data, env, 'brand', data.brand.brand_title)}
 		${!data.md.search || search.titlepart(data, env, 'search', data.md.search)}

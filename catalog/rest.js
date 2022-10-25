@@ -305,8 +305,8 @@ meta.addAction('get-model', async (view) => {
 	const tpls = await getTpls()
 	const path = await Catalog.getPathNickByGroupId(model.group_id)
 	path.reverse()
+	
 	let tpl = false
-
 	if (!tpl) for (const group_nick of path) {
 		tpl = tpls[`model-${model.brand_nick}-${group_nick}`]
 		if (tpl) break
@@ -316,7 +316,6 @@ meta.addAction('get-model', async (view) => {
 		tpl = tpls[`model-${group_nick}`]
 		if (tpl) break
 	}
-	
 	view.ans.tpl =  tpl ? '/' + config.tpls + tpl : "/-catalog/model.html.js"
 	
 
@@ -381,13 +380,43 @@ meta.addAction('get-search-groups', async (view) => {
 	const group = await Catalog.getMainGroup(md)
 	if (!group) return view.err('Нет данных')
 
-
+	const {title, group_ids} = await Catalog.searchGroups(db, visitor, md)
+	/*
 	const nmd = {...md}
-	delete nmd.group
+	nmd.group = {...md.group}
+	if (!group.parent_id) {
+		delete nmd.group
+	} else {
+		delete nmd.group[group.group_nick]
+		nmd.group[tree[group.parent_id].group_nick] = 1
+	}
 	nmd.m = Catalog.makemark(nmd).join(':')
-
 	const {title, group_ids} = await Catalog.searchGroups(db, visitor, nmd)
-	let groups = await Catalog.getCommonChilds(group_ids, group)
+	*/
+
+
+	
+	/*
+	const nmd = {}
+	nmd.group = {}
+	if (!group.parent_id) {
+		delete nmd.group
+	} else {
+		nmd.group[tree[group.parent_id].group_nick] = 1
+	}
+
+	nmd.m = Catalog.makemark(nmd).join(':')
+	const {title, group_ids} = await Catalog.searchGroups(db, visitor, nmd)
+	*/
+
+	/*
+	// const title = !group.parent_id ? group : tree[group.parent_id]
+	// const group_ids = [...title.groups]
+	// group_ids.shift()
+	*/
+
+	
+	let groups = await Catalog.getCommonChilds(group_ids, group)	
 
 	//if (groups.length == 1 && group.group_id == groups[0].group_id) groups = []
 
@@ -456,6 +485,7 @@ meta.addAction('get-search-list', async (view) => {
 	`)
 
 	const list = await Catalog.getModelsByItems(db, moditem_ids, partner)
+
 	const brand = await Catalog.getMainBrand(md)
 	
 	let last = count <= countonpage ? 1 : Math.ceil(count / countonpage)

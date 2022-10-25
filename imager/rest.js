@@ -69,7 +69,7 @@ meta.addAction('webp', async view => {
 		height: h || null,
 		fit: sharp.fit[fit],
 		position: 'centre',
-		withoutEnlargement: false, //Пропорции недолжны меняться размеров оригинала не зватает
+		withoutEnlargement: true, //Пропорции недолжны меняться размеров оригинала не зватает
 		background: { r: 255, g: 255, b: 255, alpha: 0 }
 	}).webp({
 		quality: 80,

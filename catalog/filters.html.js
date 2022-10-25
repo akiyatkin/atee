@@ -14,20 +14,17 @@ const showFilter = (data, filter, env) => `
 `
 
 
-filters.item = (data, filter, v) => getp(data, filter.prop_nick)[v.value_nick] ? `
-	<a class="clearlink" title="Отменить выбор" style="display: inline-block; border-color: transparent; color:inherit;" 
+filters.item = (data, filter, v) => getp(data, filter.prop_nick)[v.value_nick] ? 
+	`<a class="clearlink" title="Отменить выбор" style="display: inline-block; border-color: transparent; color:inherit;" 
 		class="a" data-scroll="none" rel="nofollow" 
 		href="/catalog${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}">
-		<span class="value">${v.value_title}</span><sup style="position: absolute; font-size:12px" class="krest">&nbsp;✕</sup>
-	</a>
-` : 
-`
-	<a title="Выбрать" style="opacity: ${v.mute ?'0.3':'1'}" 
+		<span class="value">${v.value_title}</span><sup style="position: absolute; font-size:12px; margin-left:-2px; margin-top:-4px" class="krest">&nbsp;✕</sup>
+	</a>` : 
+	`<a title="Выбрать" style="opacity: ${v.mute ?'0.3':'1'}" 
 		class="a" data-scroll="none" rel="nofollow" 
 		href="/catalog${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}::.${v.value_nick}=1">
 		${v.value_title}
-	</a>
-`
+	</a>`
 
 filters.option = (data, filter, v) => getp(data, filter.prop_nick)[v.value_nick] ? `
 		<option value="${v.value_nick}" selected>${v.value_title}</option>
@@ -48,7 +45,7 @@ const sliderval = (data, filter) => {
 const changelink = (data, filter) => {
 	const p = getp(data, filter.prop_nick)
 	let val = sliderval(data, filter) || filter.max
-	let direction = p.upto ? 'from' : 'upto'
+	let direction = (!p.upto && !p.from) ? 'upto' : (p.upto ? 'from' : 'upto')
 	if (val) {
 		if (val <= filter.min) {
 			val = filter.max
@@ -212,9 +209,7 @@ filters.props = {
 	row: (data, filter, env) => filters.block(
 		filter.prop_title, 
 		`
-			<span style="white-space:nowrap; margin-right:0.7em;">
-				${filter.values.map(v => filters.item(data, filter, v)).join(',</span> <span style="white-space:nowrap; margin-right:0.7em">')}
-			</span>
+			<span style="white-space:nowrap; margin-right:0.7em;">${filter.values.map(v => filters.item(data, filter, v)).join(',</span> <span style="white-space:nowrap; margin-right:0.7em">')}</span>
 		`
 	)
 }

@@ -149,8 +149,17 @@ Catalog.getModelsByItems = async (db, moditems_ids, partner) => { //[{item_nums 
 			
 		}
 	}
-	
-	
+	for (const model of list) {
+		if (model.images) continue
+		const images = []
+		for (const item of model.items) {
+			if (!item.images) continue
+			images.push(...item.images)
+		}
+		if (images.length) model.images = unique(images)
+	}
+
+
 	const cost = await Catalog.getProp('Цена')
 	const oldcost = await Catalog.getProp('Старая цена')
 	for (const model of list) {
@@ -392,7 +401,6 @@ Catalog.getFilterConf = async (db, visitor, prop, group_id, md) => {
 		} else if (spread > 100) {
 			makefilter(5)
 		} else {
-
 			makefilter(1)
 		}
 		
@@ -437,10 +445,7 @@ Catalog.getFilterConf = async (db, visitor, prop, group_id, md) => {
 
 	if (!selected && filter.values.length < 1) return false
 
-	const nmd = {...md}
-	nmd.more = {...md.more}
-	delete nmd.more?.[prop.prop_nick]
-	nmd.m = Catalog.makemark(nmd).join(':')
+	
 	
 
 	if (selected) {
@@ -461,6 +466,16 @@ Catalog.getFilterConf = async (db, visitor, prop, group_id, md) => {
 		}
 	}
 	if (!selected && filter.values.length < 2) return false
+
+	
+	const nmd = {...md}
+	if (prop.type == 'brand') {
+		delete nmd.brand
+	} else {
+		nmd.more = {...md.more}
+		delete nmd.more?.[prop.prop_nick]
+	}
+	nmd.m = Catalog.makemark(nmd).join(':')
 
 	const {from, where} = await Catalog.getmdwhere(db, visitor, nmd)
 	if (prop.type == 'value') {
@@ -682,7 +697,9 @@ Catalog.getModelByNick = async (db, visitor, brand_nick, model_nick, partner = '
 		return models[0]
 	})
 }
+
 Catalog.makemark = (md, ar = [], path = []) => {
+	if (!path.length) delete md.m
 	for (const name in md) {
 		const val = md[name]
 		if (typeof(val) == 'object') {
@@ -729,7 +746,8 @@ Catalog.getmdwhere = (db, visitor, md) => {
 				
 				const prop = await Catalog.getProp(prop_nick)
 				from.push(`showcase_iprops ip${i}`)
-				where.push(`ip${i}.model_id = m.model_id`)
+				where.push(`ip${i}.model_id = i.model_id`)
+				where.push(`ip${i}.item_num = i.item_num`)
 				where.push(`ip${i}.prop_id = ${prop.prop_id}`)
 
 				const values = md.more[prop_nick]
@@ -813,11 +831,11 @@ Catalog.searchGroups = (db, visitor, md) => {
 		
 		if (!Object.keys(md.more ?? {}).length && !md.search) {
 			const tree = await Catalog.getTree()
-			const options = await Catalog.getOptions()
-			const groupnicks = await Catalog.getGroups()
-			const root = groupnicks[nicked(options.root_nick)]
-			if (!root) return {title, group_ids:[]}
-			const group_ids = root.groups.filter(id => tree[id].inside)
+			// const options = await Catalog.getOptions()
+			// const groupnicks = await Catalog.getGroups()
+			// const root = groupnicks[nicked(options.root_nick)]
+			// if (!root) return {title, group_ids:[]}
+			const group_ids = title.groups.filter(id => tree[id].inside)
 			return {title, group_ids}
 		}
 		let group_ids = await getGroupIds(db, visitor, md)
@@ -844,8 +862,9 @@ Catalog.getCommonChilds = async (group_ids, root) => {
 	group_ids.forEach(group_id => {
 		rootpath = rootpath.filter(id => ~tree[group_id].path.indexOf(id) || id == group_id)
 	})
-	
-	const group = (group_ids[0] || rootpath.length > 1 ) ? (tree[rootpath.at(-1)] || root) : root //Общий корень
+
+	const parent = root.parent_id ? tree[root.parent_id] : root
+	const group = root.childs.length ? root : parent
 
 	const level_group_ids = unique(group_ids.filter(group_id => {
 		return tree[group_id].parent_id && tree[group_id].path?.length >= group.path?.length
