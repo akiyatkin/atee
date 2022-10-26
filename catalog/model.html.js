@@ -95,12 +95,16 @@ model.showGallery = (data, env, mod) => `
 		}
 		#${env.layer.div} .imagemax_gallery {
 			overflow:hidden; 
-			aspect-ratio: 3 / 2; 
+			/*aspect-ratio: 3 / 2; */
 			display:grid; 
-			justify-content: center; cursor: pointer;
+			justify-content: center; 
+		
+		}
+		#${env.layer.div} .pointer {
+			cursor: pointer;
 		}
 	</style>
-	<div class="imagemax_gallery" style="">
+	<div class="imagemax_gallery ${mod.images.length>1?'pointer':''}" style="">
 		<img alt="" style="max-width: 100%; max-height: 100%" 
 			srcset="
 				/-imager/webp?cache&h=500&src=${encodeURIComponent(mod.images[0])} 1x,
@@ -111,7 +115,7 @@ model.showGallery = (data, env, mod) => `
 	</div>
 	<div class="imagemin_showgallery">
 		<div class="imagemin_gallery">
-			${mod.images.map(model.showimage).join('')}
+			${mod.images.length > 1 ? mod.images.map(model.showimage).join('') : ''}
 		</div>
 	</div>
 
@@ -132,6 +136,7 @@ model.showGallery = (data, env, mod) => `
 		bigimg.addEventListener('click', () => {
 			const selected = div.querySelector('.selected')
 			const next = selected.nextElementSibling || div.querySelector('.imagemin')
+			if (!next) return
 			next.click()
 		})
 	</script>

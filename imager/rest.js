@@ -48,6 +48,7 @@ meta.addArgument('h',['int'])
 // })
 meta.addArgument('fit', ['string'], (view, fit) => {
 	if (~['cover','contain','outside','fill'].indexOf(fit)) return fit
+	return 'contain'
 	return 'cover'
 })
 const isFreshCache = Access.cache(async (src, store) => {
