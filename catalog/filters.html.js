@@ -15,12 +15,12 @@ const showFilter = (data, filter, env) => `
 
 
 filters.item = (data, filter, v) => getp(data, filter.prop_nick)[v.value_nick] ? 
-	`<a class="clearlink" title="Отменить выбор" style="display: inline-block; border-color: transparent; color:inherit;" 
+	`<a class="clearlink" title="Отменить выбор" style="display: inline-block; border-color: transparent; color:inherit; margin-top:0.5em" 
 		class="a" data-scroll="none" rel="nofollow" 
 		href="/catalog${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}">
-		<span class="value">${v.value_title}</span><sup style="position: absolute; font-size:12px; margin-left:-2px; margin-top:-4px" class="krest">&nbsp;✕</sup>
+		<span class="value">${v.value_title}</span><sup style="position: absolute; font-size:12px; margin-left:-2px; margin-top:-2px" class="krest">&nbsp;✕</sup>
 	</a>` : 
-	`<a title="Выбрать" style="opacity: ${v.mute ?'0.3':'1'}" 
+	`<a title="Выбрать" style="opacity: ${v.mute ?'0.3':'1'}; margin-top:0.5em" 
 		class="a" data-scroll="none" rel="nofollow" 
 		href="/catalog${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}::.${v.value_nick}=1">
 		${v.value_title}

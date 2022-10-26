@@ -481,32 +481,28 @@ Catalog.getFilterConf = async (db, visitor, prop, group_id, md) => {
 	if (prop.type == 'value') {
 		filter.remains = await db.all(`
 			SELECT distinct v.value_nick
-			FROM ${from.join(', ')}, showcase_iprops ip, showcase_values v
+			FROM (${from.join(', ')}) 
+				left join showcase_iprops ip on (ip.prop_id = :prop_id and ip.model_id = i.model_id and ip.item_num = i.item_num) 
+				left join showcase_values v on (v.value_id = ip.value_id)
 			WHERE ${where.join(' and ')}
-			and ip.prop_id = :prop_id
-			and ip.model_id = i.model_id
-			and ip.item_num = i.item_num
-			and v.value_id = ip.value_id
 		`, {
 			prop_id: prop.prop_id
 		})
 	} else if (prop.type == 'number') {
 		filter.remains = await db.all(`
 			SELECT distinct ip.number as value_nick
-			FROM ${from.join(', ')}, showcase_iprops ip
+			FROM (${from.join(', ')})
+				left join showcase_iprops ip on (ip.prop_id = :prop_id and ip.model_id = i.model_id and ip.item_num = i.item_num) 
 			WHERE ${where.join(' and ')}
-			and ip.prop_id = :prop_id
-			and ip.model_id = i.model_id
-			and ip.item_num = i.item_num
 		`, {
 			prop_id: prop.prop_id
 		})
 	} else if (prop.type == 'brand') {
 		filter.remains = await db.all(`
 			SELECT distinct b.brand_nick as value_nick
-			FROM ${from.join(', ')}, showcase_brands b
+			FROM (${from.join(', ')}) 
+				left join showcase_brands b on (b.brand_id = m.brand_id)
 			WHERE ${where.join(' and ')}
-			and b.brand_id = m.brand_id
 		`)
 	}
 	filter.values.forEach(row => {
