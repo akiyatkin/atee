@@ -496,7 +496,8 @@ Catalog.getFilterConf = async (db, visitor, prop, group_id, md) => {
 			FROM ${from.join(', ')}, showcase_iprops ip
 			WHERE ${where.join(' and ')}
 			and ip.prop_id = :prop_id
-			and m.model_id = ip.model_id 
+			and ip.model_id = i.model_id
+			and ip.item_num = i.item_num
 		`, {
 			prop_id: prop.prop_id
 		})
@@ -505,7 +506,7 @@ Catalog.getFilterConf = async (db, visitor, prop, group_id, md) => {
 			SELECT distinct b.brand_nick as value_nick
 			FROM ${from.join(', ')}, showcase_brands b
 			WHERE ${where.join(' and ')}
-			and m.brand_id = b.brand_id
+			and b.brand_id = m.brand_id
 		`)
 	}
 	filter.values.forEach(row => {
