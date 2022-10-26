@@ -380,45 +380,32 @@ meta.addAction('get-search-groups', async (view) => {
 	const group = await Catalog.getMainGroup(md)
 	if (!group) return view.err('Нет данных')
 
-	const {title, group_ids} = await Catalog.searchGroups(db, visitor, md)
-	/*
-	const nmd = {...md}
-	nmd.group = {...md.group}
-	if (!group.parent_id) {
-		delete nmd.group
-	} else {
-		delete nmd.group[group.group_nick]
-		nmd.group[tree[group.parent_id].group_nick] = 1
-	}
+	const parent = group.parent_id ? tree[group.parent_id] : group
+	const nmd = { ...md } //, title: {}
+	nmd.group = { ...md.group }
+	nmd.group[parent.group_nick] = 1
 	nmd.m = Catalog.makemark(nmd).join(':')
-	const {title, group_ids} = await Catalog.searchGroups(db, visitor, nmd)
-	*/
+	const group_ids = await Catalog.getGroupIds(db, visitor, nmd)
 
+
+	let rootpath = tree[group_ids[0]]?.path || group.path
+	group_ids.forEach(group_id => {
+		rootpath = rootpath.filter(id => ~tree[group_id].path.indexOf(id) || id == group_id)
+	})
 
 	
-	/*
-	const nmd = {}
-	nmd.group = {}
-	if (!group.parent_id) {
-		delete nmd.group
-	} else {
-		nmd.group[tree[group.parent_id].group_nick] = 1
-	}
-
-	nmd.m = Catalog.makemark(nmd).join(':')
-	const {title, group_ids} = await Catalog.searchGroups(db, visitor, nmd)
-	*/
-
-	/*
-	// const title = !group.parent_id ? group : tree[group.parent_id]
-	// const group_ids = [...title.groups]
-	// group_ids.shift()
-	*/
-
+	const work = group.childs.length ? group : parent
+	const level_group_ids = unique(group_ids.filter(group_id => {
+		return tree[group_id].parent_id && tree[group_id].path?.length >= work.path?.length
+	}).map(group_id => {
+		return tree[group_id].path[work.path.length + 1] || group_id
+	}))
+	const groups = work.childs.map(id => {
+		const group = {...tree[id]}
+		group.mute = !~level_group_ids.indexOf(id)
+		return group
+	})
 	
-	let groups = await Catalog.getCommonChilds(group_ids, group)	
-
-	//if (groups.length == 1 && group.group_id == groups[0].group_id) groups = []
 
 	const res = {
 		type, title:group, brand,

@@ -28,7 +28,7 @@ search.GROUPS = (data, env) => data.result ? `
 				}
 			}
 		</style>
-		<div>
+		<div style="display: grid; height: max-content; gap: 0.5em;">
 			${ti.fi(data.childs.length, search.showgroups(data, env))}
 		</div>
 		<div id="FILTERS"></div>

@@ -16,7 +16,7 @@ export const TITLEBODY = data => data.ans.result ? `
 	<a href="/catalog${links.addm(data)}search=${data.query}">${countmodels(data.ans.count)}</a> 
 	в ${countgroups(data.ans.gcount)}
 ` : 'Ошибка на сервере'
-const countmodels = (count) => `${count} ${words(count,'позиция','позиции','позиций')}`
+const countmodels = (count) => `${count} ${words(count,'модель','модели','моделей')}`
 const countgroups = (count) => `${count} ${words(count,'группе','группах','группах')}`
 const pquery = (data) => `<i>${data.query}</i>, найдено`
 export const BODY = data => `

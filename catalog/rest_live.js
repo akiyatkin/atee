@@ -26,7 +26,15 @@ export const rest_live = (meta) => {
 		// 	return view.ret()
 		// }
 		const md = {search: hash}
-		const { group_ids } = await Catalog.searchGroups(db, visitor, md)
+
+		// const parent = group.parent_id ? tree[group.parent_id] : group
+		// const nmd = { ...md } //, title: {}
+		// nmd.group = { ...md.group }
+		// nmd.group[parent.group_nick] = 1
+		// nmd.m = Catalog.makemark(nmd).join(':')
+		const group_ids = await Catalog.getGroupIds(db, visitor, md)
+		
+
 		
 		if (!group_ids.length) {
 			view.ans.list = []
@@ -35,33 +43,52 @@ export const rest_live = (meta) => {
 			view.ans.count = 0
 			return view.ret()
 		}
+
 		const groupnicks = await Catalog.getGroups()
 		const options = await Catalog.getOptions()
 		const root = groupnicks[options.root_nick]
 
 
-		const childs = await Catalog.getCommonChilds(group_ids, root)
-		view.ans.gcount = 0
-		view.ans.groups = childs.reduce((groups, group) => {
-			view.ans.gcount += group.groups.length
+		const tree = await Catalog.getTree()		
+	
+		let rootpath = group_ids[0] ? [...tree[group_ids[0]].path, group_ids[0]] : []		
+
+
+		group_ids.forEach(group_id => {
+			rootpath = rootpath.filter(id => ~tree[group_id].path.indexOf(id) || id == group_id)
+		})
+
+		const group = {...tree[rootpath.pop()]} //общий родитель
+		let childs = group.childs.filter(id => {
+			return group_ids.some(inid => {
+				return ~tree[id].groups.indexOf(inid)
+			})
+		}).map(id => {
+			const group = {...tree[id]}
+			return group
+		})
+		if (!childs.length) childs = [group]
+
+		view.ans.gcount = group_ids.length
+
+		view.ans.groups = childs.map(group => {
 			const g = {}
 			for (const prop of ['group_nick','group_title']) g[prop] = group[prop]
-			groups.push(g)
-			return groups
-		}, [])
+			return g
+		})
 
 		const {from, where} = await Catalog.getmdwhere(db, visitor, md)
 
 		const list = []
 		const models = await db.all(`
-			SELECT m.model_id, m.model_nick, m.model_title, m.brand_id
+			SELECT distinct m.model_id, m.model_nick, m.model_title, m.brand_id
 			FROM ${from.join(', ')}
 			WHERE ${where.join(' and ')}
 			ORDER BY RAND()
 			LIMIT 12
 		`)
 		view.ans.count = await db.col(`
-			SELECT count(*)
+			SELECT count(distinct m.model_id)
 			FROM ${from.join(', ')}
 			WHERE ${where.join(' and ')}
 		`)

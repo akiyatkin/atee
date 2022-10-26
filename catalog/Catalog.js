@@ -797,7 +797,7 @@ Catalog.getmdwhere = (db, visitor, md) => {
 		return {where, from, sort}
 	})
 }
-const getGroupIds = async (db, visitor, md) => {
+Catalog.getGroupIds = async (db, visitor, md) => {
 	const {where, from} = await Catalog.getmdwhere(db, visitor, md)
 	
 	const res_ids = await db.colAll(`
@@ -821,64 +821,54 @@ Catalog.getMainGroup = async md => {
 	}
 	return group
 }
-Catalog.searchGroups = (db, visitor, md) => {
+/*Catalog.searchGroups = (db, visitor, md) => {
 	return visitor.relate(Catalog).once('searchGroups' + md.m, async () => {
 		//const {search = '', group = {}, brand = {}, more = {}} = md
 		let title = await Catalog.getMainGroup(md)
 		if (!title) return {title, group_ids:[]}
+		const tree = await Catalog.getTree()
 		
-		if (!Object.keys(md.more ?? {}).length && !md.search) {
-			const tree = await Catalog.getTree()
-			// const options = await Catalog.getOptions()
-			// const groupnicks = await Catalog.getGroups()
-			// const root = groupnicks[nicked(options.root_nick)]
-			// if (!root) return {title, group_ids:[]}
-			const group_ids = title.groups.filter(id => tree[id].inside)
-			return {title, group_ids}
-		}
-		let group_ids = await getGroupIds(db, visitor, md)
-		if (group_ids.length == 1) {
-			if (title.parent_id) { //Есть выбранная группа
-				const nmd = { ...md } //, title: {}
-				const tree = await Catalog.getTree()
-				title = tree[title.parent_id]
-				nmd.group[title.group_nick] = 1
-				nmd.m = Catalog.makemark(nmd).join(':')
-				group_ids = await getGroupIds(db, visitor, nmd)
-			}
-		}
-		return {title, group_ids}
+		const parent = title.parent_id ? tree[title.parent_id] : title
+		const nmd = { ...md } //, title: {}
+		nmd.group = { ...md.group }
+		nmd.group[parent.group_nick] = 1
+		nmd.m = Catalog.makemark(nmd).join(':')
+
+		const group_ids = await Catalog.getGroupIds(db, visitor, nmd)
+		
+		return {title: parent, group_ids}
 	})
-}
-Catalog.getCommonChilds = async (group_ids, root) => {
+}*/
+// Catalog.getCommonChilds = async (group_ids, root) => {
 	
-	const tree = await Catalog.getTree()
-	const groupnicks = await Catalog.getGroups()
-	const options = await Catalog.getOptions()
-	let rootpath = tree[group_ids[0]]?.path || root.path
+// 	const tree = await Catalog.getTree()
+// 	const groupnicks = await Catalog.getGroups()
+// 	const options = await Catalog.getOptions()
+// 	let rootpath = tree[group_ids[0]]?.path || root.path
 
-	group_ids.forEach(group_id => {
-		rootpath = rootpath.filter(id => ~tree[group_id].path.indexOf(id) || id == group_id)
-	})
+// 	group_ids.forEach(group_id => {
+// 		rootpath = rootpath.filter(id => ~tree[group_id].path.indexOf(id) || id == group_id)
+// 	})
 
-	const parent = root.parent_id ? tree[root.parent_id] : root
-	const group = root.childs.length ? root : parent
+// 	const parent = root.parent_id ? tree[root.parent_id] : root
+// 	const group = root.childs.length ? root : parent
 
-	const level_group_ids = unique(group_ids.filter(group_id => {
-		return tree[group_id].parent_id && tree[group_id].path?.length >= group.path?.length
-	}).map(group_id => {
-		return tree[group_id].path[group.path.length + 1] || group_id
-	}))
+// 	const level_group_ids = unique(group_ids.filter(group_id => {
+// 		return tree[group_id].parent_id && tree[group_id].path?.length >= group.path?.length
+// 	}).map(group_id => {
+// 		return tree[group_id].path[group.path.length + 1] || group_id
+// 	}))
 
 
-	const groups = group.childs.map(id => {
-		const group = {...tree[id]}
-		group.mute = !~level_group_ids.indexOf(id)
-		return group
-	})
+
+// 	const groups = group.childs.map(id => {
+// 		const group = {...tree[id]}
+// 		group.mute = !~level_group_ids.indexOf(id)
+// 		return group
+// 	})
 	
-	return groups
-}
+// 	return groups
+// }
 
 Catalog.getMainBrand = async md => {
 	if (!md.brand) return
