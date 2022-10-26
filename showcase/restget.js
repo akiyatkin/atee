@@ -33,6 +33,7 @@ export const restget = (meta) => {
 	meta.addAction('get-state', async view => {
 		const { isdb, visitor } = await view.gets(['isdb', 'visitor'])
 		view.ans.admin = await Access.isAdmin(visitor.client.cookie)
+		view.ans.nostore = true
 		view.ans.isdb = !!isdb
 		return view.ret()
 	})
