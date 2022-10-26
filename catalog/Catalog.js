@@ -408,24 +408,14 @@ Catalog.getFilterConf = async (db, visitor, prop, group_id, md) => {
 		return filter
 	}
 	if (prop.type == 'value') {
-		// filter.values = await db.all(`
-		// 	SELECT distinct v.value_nick, v.value_title
-		// 	FROM showcase_iprops ip, showcase_models m, showcase_values v
-		// 	WHERE m.model_id = ip.model_id
-		// 	and ip.prop_id = :prop_id
-		// 	and v.value_id = ip.value_id
-		// 	and m.group_id in (${group.groups.join(',')})
-		// 	ORDER BY v.value_title
-		// `, {
-		// 	prop_id
-		// })
 		filter.values = await db.all(`
 			SELECT distinct v.value_nick, v.value_title
 			FROM showcase_iprops ip, showcase_models m, showcase_values v
-			WHERE ip.prop_id = :prop_id
-			and m.model_id = ip.model_id
+			WHERE m.model_id = ip.model_id
+			and ip.prop_id = :prop_id
 			and v.value_id = ip.value_id
 			and m.group_id in (${group.groups.join(',')})
+			ORDER BY v.value_title
 		`, {
 			prop_id
 		})
@@ -494,8 +484,9 @@ Catalog.getFilterConf = async (db, visitor, prop, group_id, md) => {
 			FROM ${from.join(', ')}, showcase_iprops ip, showcase_values v
 			WHERE ${where.join(' and ')}
 			and ip.prop_id = :prop_id
+			and ip.model_id = i.model_id
+			and ip.item_num = i.item_num
 			and v.value_id = ip.value_id
-			and m.model_id = ip.model_id 
 		`, {
 			prop_id: prop.prop_id
 		})
