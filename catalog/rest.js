@@ -334,23 +334,23 @@ meta.addAction('get-filters', async (view) => {
 	const opt = await Catalog.getGroupOpt(group.group_id)
 	
 	const filters = []
-	// if (md.more) for (const prop_nick in md.more) {
-	// 	const prop = await Catalog.getPropByNick(prop_nick)
-	// 	console.log(opt.filters)
-	// 	if (~opt.filters.indexOf(prop.prop_title)) continue
-		
-	// 	const filter = await Catalog.getFilterConf(db, visitor, prop, group.group_id, md)
-	// 	if (!filter) continue
-	// 	filters.push(filter)
-	// }
 
-	for (const prop_title of opt.filters) {
-		const prop = await Catalog.getProp(prop_title)
+	if (md.more) for (const prop_nick in md.more) {
+		const prop = await Catalog.getPropByNick(prop_nick)
+		if (~opt.filters.indexOf(prop.prop_title)) continue
+		
 		const filter = await Catalog.getFilterConf(db, visitor, prop, group.group_id, md)
 		if (!filter) continue
 		filters.push(filter)
 	}
 
+	for (const prop_title of opt.filters) {
+		const prop = await Catalog.getPropByTitle(prop_title)
+		const filter = await Catalog.getFilterConf(db, visitor, prop, group.group_id, md)
+		if (!filter) continue
+		filters.push(filter)
+	}
+	
 	res.filters = filters
 	Object.assign(view.ans, res)
 	return view.ret()

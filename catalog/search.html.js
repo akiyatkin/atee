@@ -128,7 +128,7 @@ search.title = (data, env) => html`
 		}
 		#{env.layer.div} .clearlink .krest {
 			transition: color 0.2s, opacity 0.2s;
-			opacity: 0.4;
+			opacity: 0.6;
 		}
 		#{env.layer.div} .clearlink:hover .value {
 			opacity: 0.5;

@@ -568,6 +568,7 @@ Catalog.getPropById = Access.cache(async (prop_id) => {
 	db.release()
 	return prop
 })
+
 Catalog.getProp = Access.cache(async (prop_title) => {
 	if (prop_title == 'Бренд') {
 		const prop_nick = 'brand'
@@ -583,7 +584,10 @@ Catalog.getProp = Access.cache(async (prop_title) => {
 	return prop
 })
 Catalog.getPropByNick = Catalog.getProp
-Catalog.getPropByTitle = Catalog.getProp
+Catalog.getPropByTitle = prop_title => {
+	const prop_nick = nicked(prop_title)
+	return Catalog.getPropByNick(prop_nick)
+}
 Catalog.getPathNickByGroupId = async id => {
 	const group = await Catalog.getGroupById(id)
 	const path = [...group.path]
