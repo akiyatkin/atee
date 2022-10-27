@@ -161,7 +161,7 @@ model.common = (data, env, mod) => `
 			}
 			@media (max-width: 900px){
 				#${env.layer.div} .mod_content {
-					font-size: 14px;
+					
 				}
 			}
 			@media (max-width: 705px){

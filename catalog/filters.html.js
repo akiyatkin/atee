@@ -65,9 +65,16 @@ const showkrest = (data, filter) => `
 filters.props = {
 	slider: (data, filter, env) => `
 		<div class="bodyslider" style="margin-bottom: 1rem;">
+			<style>
+				#${env.layer.div} .slider {
+					--thumb-active-color: var(--orange, black);
+					--thumb-static-color: var(--blue, gray);
+					/*--radius: var(--radius, 0);*/
+				}
+			</style>
 			<div style="display: flex; gap:5px; align-items: center">
 				<div><b>${filter.prop_title}${filter.prop_nick == 'cena' ? ', ' + filter.opt.unit : ''}</b></div>
-				<div>
+				<div style="flex-grow:1">
 					<a data-scroll="none" rel="nofollow"
 						href="/catalog${changelink(data,filter)}" 
 						style="width: 2ch; text-align:center" 
@@ -83,6 +90,7 @@ filters.props = {
 							width:${String(filter.max).length + 2}ch;
 							padding:0 1ch;
 					" class="valueplace" type="text" value="${sliderval(data, filter)}">
+					${sliderval(data, filter)? showkrest(data, filter) : ''}
 					<script>
 						(input => {
 							import('/-catalog/range.js').then(o => o.default).then(range => {
@@ -102,7 +110,6 @@ filters.props = {
 							})
 						})(document.currentScript.previousElementSibling)
 					</script>
-					${sliderval(data, filter)? showkrest(data, filter) : ''}
 				</div>
 			</div>
 			<div class="slider">
@@ -120,8 +127,9 @@ filters.props = {
 						appearance: none;
 						border: none;
 						margin: 0;
-						background-color: currentColor;
+						background-color: rgba(0,0,0,0.1);
 						height: 1px;
+						margin-top: 1em;
 						padding: 0;
 						margin-bottom: calc(1em - 1px);
 					}
@@ -131,32 +139,44 @@ filters.props = {
 						border: none;
 						cursor: ew-resize;
 						cursor: pointer;
-						height: 1em;
-						width: 0.5em;
+						height: 1.3em;
+						width: 0.6em;
+						border-radius: var(--radius);
 						background-color: currentColor;
-						background-color: var(--blue);
+						background-color: var(--thumb-static-color, gray);
+						transition: background-color 0.3s;
 					}
+					
 					
 					#${env.layer.div} .slider input[type=range]::-moz-range-thumb {
 						border: none;
+						border: none;
 						cursor: ew-resize;
-						height: 1em;
-						width: 0.5em;
+						cursor: pointer;
+						height: 1.3em;
+						width: 0.6em;
+						border-radius: var(--radius);
 						background-color: currentColor;
-						background-color: var(--blue);
+						background-color: var(--thumb-static-color, gray);
+						transition: background-color 0.3s;
 					}
-					#${env.layer.div} .slider input[type=range]::-ms-thumb {
+
+					#${env.layer.div} .slider input[type=range]::-webkit-slider-thumb:hover,
+					#${env.layer.div} .slider input[type=range]::-webkit-slider-thumb:active {
+						background-color: var(--thumb-active-color);
+					}
+					/*#${env.layer.div} .slider input[type=range]::-ms-thumb {
 						border: none;
 						cursor: ew-resize;
 						cursor: pointer;
 						height: 1em;
 						width: 0.5em;
 						background-color: currentColor;
-						background-color: var(--blue);
-					}
+						background-color: var(--thumb-static-color);
+					}*/
 				</style>
-				<div style="grid-column: 1 / 2; grid-row: 1 / 1; opacity: 0.5; font-size:14px">${filter.min}</div>
-				<div style="grid-column: 3 / 4; grid-row: 1 / 1; text-align: right; opacity: 0.5; font-size:14px">${filter.max}</div>
+				<div style="grid-column: 1 / 2; grid-row: 1 / 1; opacity: 0.5;">${filter.min}</div>
+				<div style="grid-column: 3 / 4; grid-row: 1 / 1; text-align: right; opacity: 0.5;">${filter.max}</div>
 				<div style="grid-column: 2 / 3; grid-row: 1 / 1">
 					<input type="range" step="${filter.step}" 
 						value="${sliderval(data, filter)||filter.min}" max="${filter.max}" min="${filter.min}">
