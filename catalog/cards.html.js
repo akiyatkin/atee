@@ -20,7 +20,7 @@ cards.LIST = (data, env) => `
 	<div class="listcards" style="display: grid;  grid-gap: 20px">	
 		${data.list.map(mod => cards.card(data, mod)).join('')}
 	</div>
-	${(data.pagination.page == 1 && data.pagination.last > 1) ? cards.scriptRemoveSuperfluous() : ''}
+	${(data.pagination?.page == 1 && data.pagination?.last > 1) ? cards.scriptRemoveSuperfluous() : ''}
 `
 cards.scriptRemoveSuperfluous = () => `<script>
 		(listcards => {
