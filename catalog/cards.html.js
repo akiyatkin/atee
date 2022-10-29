@@ -20,15 +20,16 @@ cards.LIST = (data, env) => `
 	<div class="listcards" style="display: grid;  grid-gap: 20px">	
 		${data.list.map(mod => cards.card(data, mod)).join('')}
 	</div>
-	<script>
+	${(data.pagination.page == 1 && data.pagination.last > 1) ? cards.scriptRemoveSuperfluous() : ''}
+`
+cards.scriptRemoveSuperfluous = () => `<script>
 		(listcards => {
 			//Надо чтобы всегда было 2 ряда, не больше
 			let count = getComputedStyle(listcards).getPropertyValue("grid-template-columns").split(' ').length * 2
 			if (count <= 4) count = 6
 			while (listcards.children.length > count) listcards.children[count-1].remove()
 		})(document.currentScript.previousElementSibling)
-	</script>
-`
+	</script>`
 
 cards.badgecss = (data, env) => `
 	<style>
