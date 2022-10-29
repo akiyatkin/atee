@@ -46,6 +46,8 @@ meta.addFunction('array', (view, n) => n ? n.split(',') : [])
 meta.addFunction('nicks', ['array'], (view, ns) => ns.map(v => nicked(v)).filter(v => v).sort())
 meta.addArgument('value',['string'])
 meta.addArgument('page',['int1'])
+meta.addArgument('count',['int'])
+
 
 meta.addVariable('lim', ['array'], (view, lim) => {
 	lim = lim.filter(v => v !== '')
@@ -446,7 +448,8 @@ meta.addAction('get-search-groups', async (view) => {
 	return view.ret()
 })
 meta.addAction('get-search-list', async (view) => {
-	let { page } = await view.gets(['page'])
+	let { page, count } = await view.gets(['page', 'count'])
+
 	const { db, value, md, partner, visitor} = await view.gets(['db','value','md','partner','visitor'])
 	//const {title, group_ids} = Catalog.searchGroups(db, visitor, md)
 	const {from, where, sort} = await Catalog.getmdwhere(db, visitor, md)
@@ -455,17 +458,23 @@ meta.addAction('get-search-list', async (view) => {
 		return view.err('Нет данных')
 	}
 	const opt = await Catalog.getGroupOpt(group.group_id)
-	const countonpage = opt.limit
+	const countonpage = count || opt.limit
 	const start = (page - 1) * countonpage
+	// let countonpage = opt.limit
+	// let start = (page - 1) * countonpage
+	// if (page > 1) {
+	// 	start = (page - 2) * countonpage + opt.limit
+	// 	countonpage = count || opt.limit
+	// }
 	const moditem_ids = await db.all(`
 		SELECT m.model_id, GROUP_CONCAT(distinct i.item_num separator ',') as item_nums 
 		FROM ${from.join(', ')}
 		WHERE ${where.join(' and ')}
 		GROUP BY m.model_id 
 		${sort.length?`ORDER BY ${sort.join(',')}`:''}
-		LIMIT ${start}, ${opt.limit}
+		LIMIT ${start}, ${countonpage}
 	`)
-	const count = await db.col(`
+	const total = await db.col(`
 		SELECT count(distinct m.model_id)
 		FROM ${from.join(', ')}
 		WHERE ${where.join(' and ')}
@@ -475,13 +484,13 @@ meta.addAction('get-search-list', async (view) => {
 
 	const brand = await Catalog.getMainBrand(md)
 	
-	let last = count <= countonpage ? 1 : Math.ceil(count / countonpage)
+	let last = total <= countonpage ? 1 : Math.ceil(total / countonpage)
 	if (last < page) page = last
 	const pagination = {
 		last: last,
 		page: page
 	}
-	const res = { list, brand, pagination, count, countonpage }
+	const res = { list, brand, pagination, count:total, countonpage }
 	Object.assign(view.ans, res)
 	return view.ret()
 })

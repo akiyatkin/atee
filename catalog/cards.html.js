@@ -8,18 +8,26 @@ export default cards
 
 cards.LIST = (data, env) => `
 	<style>
-		.${env.layer.sub} { grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)) }
+		#${env.layer.div} .listcards { grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)) }
 		@media (max-width:767px) {
-			.${env.layer.sub} { grid-template-columns: 1fr 1fr }
+			#${env.layer.div} .listcards { grid-template-columns: 1fr 1fr }
 		}
 		@media (max-width:360px) {
-			.${env.layer.sub} { grid-template-columns: 1fr }
+			#${env.layer.div} .listcards { grid-template-columns: 1fr }
 		}
 	</style>
 	${cards.badgecss(data, env)}
-	<div class="${env.layer.sub}" style="display: grid;  grid-gap: 20px">	
+	<div class="listcards" style="display: grid;  grid-gap: 20px">	
 		${data.list.map(mod => cards.card(data, mod)).join('')}
 	</div>
+	<script>
+		(listcards => {
+			//Надо чтобы всегда было 2 ряда, не больше
+			let count = getComputedStyle(listcards).getPropertyValue("grid-template-columns").split(' ').length * 2
+			if (count <= 4) count = 6
+			while (listcards.children.length > count) listcards.children[count-1].remove()
+		})(document.currentScript.previousElementSibling)
+	</script>
 `
 
 cards.badgecss = (data, env) => `

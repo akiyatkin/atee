@@ -85,27 +85,25 @@ filters.props = {
 						${data.md.more?.[filter.prop_nick]?.from ? 'от' : 'до'}
 					</a>
 					<input style="
-							border-radius: 0; border:none; 
-							border: 1px solid rgba(0,0,0,0.1);
-							margin-left: 4px;
-							border-radius: var(--radius);
-							min-width: 8ch;
-							width:${String(filter.max).length + 2}ch;
-							padding:0 1ch;
+						border-radius: 0; border:none; 
+						border: 1px solid rgba(0,0,0,0.1);
+						margin-left: 4px;
+						border-radius: var(--radius);
+						min-width: 8ch;
+						width:${String(filter.max).length + 2}ch;
+						padding:0 1ch;
 					" class="valueplace" type="text" value="${sliderval(data, filter)}">
-					${sliderval(data, filter)? showkrest(data, filter) : ''}
 					<script>
 						(input => {
 							import('/-catalog/range.js').then(o => o.default).then(range => {
 								const div = input.closest('.bodyslider')
 								const inputrange = div.querySelector('input[type=range]')
-								
-								input.addEventListener('change', async () => {
+								input.addEventListener('change', () => {
 									const { value_nick, direction, click } = range.getValue(input, ${filter.min}, ${filter.max}, ${data.md.more?.[filter.prop_nick]?.from ? '"from"' : '"upto"'}, ${sliderval(data, filter)})
 									const set = value_nick ? '::.'+direction+'=' + value_nick : ''
-
-									const Client = await window.getClient()
-									Client.pushState('/catalog${links.addm(data)}more.${filter.prop_nick}' + set, false)
+									window.getClient().then(Client => {
+										Client.pushState('/catalog${links.addm(data)}more.${filter.prop_nick}' + set, false)	
+									})
 								})
 								input.addEventListener('input', () => {
 									inputrange.value = Number(input.value) || 0
@@ -113,6 +111,7 @@ filters.props = {
 							})
 						})(document.currentScript.previousElementSibling)
 					</script>
+					${sliderval(data, filter)? showkrest(data, filter) : ''}
 				</div>
 			</div>
 			<div class="slider">

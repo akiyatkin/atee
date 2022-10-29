@@ -38,63 +38,102 @@ search.PAGINATION = (data, env) => ti.bs(data.result) && `
 	${search.pag(data, env, 'none')}
 `
 search.LIST = (data, env) => data.result ? `
-	${data.list.length ? search.list(data, env) : 'К сожалению, ничего не найдено.'}
+	${data.list.length ? search.listcards(data, env) : 'К сожалению, ничего не найдено.'}
 	${data.countonpage == data.list.length ? search.pag(data, env) : ''}
 ` : 'Данные не найдены'
 search.pag = (data, env, scroll) => `
 	<div class="pagination">
 		<style>
-			#{env.layer.div} .pagination {
+			#${env.layer.div} .pagination {
 				user-select: none;
 				margin: 2rem 0; margin-left: auto; width: max-content;align-items: center; display: grid; 
 				grid-template-columns: repeat(5, max-content); 
 				gap:1rem
 			}
-			#{env.layer.div} .pagination .page {
+			#${env.layer.div} .pagination .page {
 				padding:0 1rem; border: solid 1px #aaa; color: white; font-size: 1.3rem; background-color: gray;
 			}
-			#{env.layer.div} .pagination .disabled {
+			#${env.layer.div} .pagination .disabled {
 				opacity: 0.5;
 			}
 			@media (max-width: 380px) {
-				#{env.layer.div} .pagination {
+				#${env.layer.div} .pagination {
 					grid-template-columns: repeat(4, max-content); 
 				}
-				#{env.layer.div} .pagination .paglong {
+				#${env.layer.div} .pagination .paglong {
 					display: none;
 				}
 			}
 		</style>
 		<div class="begin">${search.pag[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'В начало', 1)}</div>
 		<div class="backward">${search.pag[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'Назад', data.pagination.page - 1)}</div>
-		<div class="page" style="${data.pagination.last == 1 ? 'opacity:0.3' : ''}">${data.pagination.page}</div>
+		<div class="page" style="display: none; ${data.pagination.last == 1 ? 'opacity:0.3' : ''}">${data.pagination.page}</div>
 		<div class="forward">${search.pag[data.pagination.last > data.pagination.page ? 'link' : 'disabled'](data, env, scroll, 'Дальше', data.pagination.page + 1)}</div>
 		<div class="paglong">${data.count} ${words(data.count,'модель','модели','моделей')}</div>
 	</div>
 `
+
+search.getreq = (m, page) => {
+	const reqs = []
+	if (m) reqs.push('m=' + m)
+	if (page > 1) reqs.push('page=' + page)
+	if (!reqs.length) return ''
+	return '?' + reqs.join('&')
+}
 search.pag.link = (data, env, scroll = '', title, page) => `
-	<a data-scroll="${scroll}" href="${env.crumb}${env.bread.get.m ? '?m='+env.bread.get.m : ''}${page > 1 ? ((env.bread.get.m ? '&':'?') + 'page=' + page) : ''}${!scroll?'#page':''}">${title}</a>
+	<a data-scroll="${scroll}" href="${env.crumb}${search.getreq(env.bread.get.m, page)}${!scroll?'#page':''}">${title}</a>
+	${page > 1 ? search.linkscript(env, scroll, page) : ''}
+`
+search.linkscript = (env, scroll, page) => `
+	<script>
+		(a => {
+			const onload = (fn) => {
+				if (document.readyState === "complete") fn()
+				else window.addEventListener('load', fn)	
+			}
+			const getreq = (m, page) => {
+				const reqs = []
+				if (m) reqs.push('m=' + m)
+				if (page > 1) reqs.push('page=' + page)
+				try {
+					const listcards = document.getElementsByClassName('listcards')[0]
+					//Надо чтобы всегда было 2 ряда, не больше
+					let count = getComputedStyle(listcards).getPropertyValue("grid-template-columns").split(' ').length * 2
+					if (count <= 4) count = 6
+					reqs.push('count=' + count)
+				} catch(e) {
+					console.log(e)
+				}
+				if (!reqs.length) return ''
+				return '?' + reqs.join('&')
+			}
+
+			onload(() => {
+				a.href = "${env.crumb}" + getreq('${env.bread.get.m}', '${page}') + "${!scroll?'#page':''}"	
+			})
+		})(document.currentScript.previousElementSibling)
+	</script>
 `
 search.pag.disabled = (data, env, scroll, title) => `
 	<span style="opacity: 0.3">${title}</span>
 `
-search.list = (data, env) => `	
+search.listcards = (data, env) => `	
 	<div style="margin-top:1rem">
 		${cards.LIST(data, env)}
 	</div>
 `
 search.showgroups = (data, env) => `
 	<style>
-		#{env.layer.div} .mute {
+		#${env.layer.div} .mute {
 			opacity: 0.3;
 		}
-		#{env.layer.div} a.selected {
+		#${env.layer.div} a.selected {
 			opacity: 1;
 			color: inherit;
 			border-color: transparent;
 			font-weight: bold;
 		}
-		#{env.layer.div} .mute.selected {
+		#${env.layer.div} .mute.selected {
 			opacity: 0.9;
 		}
 	</style>
@@ -114,7 +153,7 @@ search.group = (data, env, group) => `
 
 search.title = (data, env) => html`
 	<style>
-		#{env.layer.div} a.clearlink {
+		#${env.layer.div} a.clearlink {
 			white-space: normal; 
 			gap:5px; 
 			display: flex; 
@@ -122,18 +161,18 @@ search.title = (data, env) => html`
 			border: none; 
 			text-decoration: none
 		}
-		#{env.layer.div} .clearlink .value {
+		#${env.layer.div} .clearlink .value {
 			opacity: 1;
 			transition: color 0.2s, opacity 0.2s;
 		}
-		#{env.layer.div} .clearlink .krest {
+		#${env.layer.div} .clearlink .krest {
 			transition: color 0.2s, opacity 0.2s;
 			opacity: 0.6;
 		}
-		#{env.layer.div} .clearlink:hover .value {
+		#${env.layer.div} .clearlink:hover .value {
 			opacity: 0.5;
 		}
-		#{env.layer.div} .clearlink:hover .krest {
+		#${env.layer.div} .clearlink:hover .krest {
 			opacity: 1;
 			/*color: red;*/
 		}
