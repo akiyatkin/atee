@@ -47,7 +47,8 @@ meta.addArgument('h',['int'])
 // 	return ext
 // })
 meta.addArgument('fit', ['string'], (view, fit) => {
-	if (~['cover','contain','outside','fill'].indexOf(fit)) return fit
+	if (~['cover','contain','outside','fill','inside'].indexOf(fit)) return fit
+	return 'inside'
 	return 'contain'
 	return 'cover'
 })

@@ -1,5 +1,4 @@
-const onload = (fn) => {
+export default (fn) => {
 	if (document.readyState === "complete") fn()
 	else window.addEventListener('load', fn)	
 }
-export { onload }

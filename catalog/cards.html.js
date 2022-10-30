@@ -20,16 +20,18 @@ cards.LIST = (data, env) => `
 	<div class="listcards" style="display: grid;  grid-gap: 20px">	
 		${data.list.map(mod => cards.card(data, mod)).join('')}
 	</div>
-	${(data.pagination?.page == 1 && data.pagination?.last > 1) ? cards.scriptRemoveSuperfluous() : ''}
+	${(data.pagination?.page == 1 && data.pagination?.last > 1) ? cards.scriptRemoveSuperfluous(data) : ''}
 `
-cards.scriptRemoveSuperfluous = () => `<script>
-		(listcards => {
+cards.scriptRemoveSuperfluous = (data) => `
+	<script>
+		(async listcards => {
+			const numberOfCards = await import('/-catalog/numberOfCards.js').then(r => r.default)
 			//Надо чтобы всегда было 2 ряда, не больше
-			let count = getComputedStyle(listcards).getPropertyValue("grid-template-columns").split(' ').length * 2
-			if (count <= 4) count = 6
-			while (listcards.children.length > count) listcards.children[count-1].remove()
+			const count = numberOfCards(${data.limit})
+			while (listcards.children.length > count) listcards.children[count - 1].remove()
 		})(document.currentScript.previousElementSibling)
-	</script>`
+	</script>
+`
 
 cards.badgecss = (data, env) => `
 	<style>
@@ -65,10 +67,17 @@ cards.card = (data, mod) => `
  	</div>	
 `
 cards.data = (data, mod) => `
-	<div>
-		<div style="margin: 0.5rem 1rem;">
+	<div style="margin: 0.5rem 1rem; flex-grow:1; display:flex; flex-direction: column; justify-content: space-between">
+		${mod.Наличие || mod.discount ? cards.nalichie(data, mod) : ''}
+		<a href="${links.model(data, mod)}"
+			style="
+				padding: 0; color: inherit; border: none; 
+				white-space: normal; display: block; flex-grow:1
+		">
 			${cards.image(data, mod)}
 			${cards.name(data, mod)}
+		</a>
+		<div>
 			${mod.props.length ? cards.props(data, mod) : ''}
 		</div>
 	</div>
@@ -178,13 +187,17 @@ cards.basket = (data, mod) => {
 	return html
 }
 cards.name = (data, mod) => `
-	<a style="padding: 0; color: inherit; border: none; white-space: normal;" href="${links.model(data, mod)}">${mod.Наименование || mod.model_title}</a>
+	${mod.Наименование || mod.model_title}
 `
 cards.image = (data, mod) => `
-	<div style="min-height: 2.7rem">
-		${mod.Наличие || mod.discount ? cards.nalichie(data, mod) : ''}
-		${mod.images?.length ? cards.img(data, mod) : ''}
-	</div>
+	${mod.images?.length 
+		? (
+			mod.images?.length > 1 
+				? cards.imgs(data, mod) 
+				: cards.img(data, mod, mod.images[0])
+		) 
+		: '<div style="margin-bottom: 0.5rem"></div>'
+	}
 `
 cards.nal = nicked('Наличие')
 
@@ -201,24 +214,42 @@ cards.badgenalichie = (data, mod) => mod.Наличие ? `
 		${mod['Старая цена'] ? ('-' + mod.discount + '%') : mod.Наличие}
 	</span>
 `
-cards.img = (data, mod) => `
-	<a style="border: none; display: block; text-align: center;" href="${links.model(data, mod)}">
-		<img 
-			loading="lazy" 
-			style="max-width: 100%; margin: 0 auto; height:auto" 
-			${cards.imager(mod.images[0], 330, 220)}
-		>
-	</a>
+cards.imgs = (data, mod) => `
+	<div style="position: relative; margin-bottom:0.5em">
+		<div style="color: rgba(0,0,0,0.3); pointer-events: none; opacity: 0; position: absolute; height: 100%; display: flex; align-items: center;" class="left">
+			&nbsp;←&nbsp;
+		</div>
+		<div style="color: rgba(0,0,0,0.3); pointer-events: none; position: absolute; height: 100%; right: 0px; display: flex; align-items: center; opacity: 1;" class="right">
+			&nbsp;→&nbsp;
+		</div>
+		<div class="sliderNeo" style="cursor: pointer; overflow:hidden; white-space: nowrap; font-size:0">
+			${mod.images.map(src => cards.img(data, mod, src)).join('')}
+		</div>
+	</div>
+	<script>
+		(async div => {
+			const sliderNeo = await import('/-imager/sliderNeo.js').then(o => o.default)
+			sliderNeo(div)
+		})(document.currentScript.parentElement)
+	</script>
+
+`
+cards.img = (data, mod, src) => `
+	<img 
+		loading="lazy" 
+		style="max-width: 100%; margin: 0 auto; height:auto" 
+		${cards.imager(src, 330, 220)}
+	>	
 `
 cards.imager = (src, w, h) => {
-	const imager = '/-imager/webp?cache'
+	const imager = '/-imager/webp?cache&fit=contain'
 	const esrc = encodeURIComponent(src)
 	return `
 		width="${w}" 
 		height="${h}" 
 		srcset="
 			${imager}&w=${w}&h=${h}&src=${esrc} 1x,
-			${imager}&w=${w*2}&h=${h*2}&src=${esrc} 2x,
+			${imager}&w=${w*2}&h=${h*2}&src=${esrc} 1.5x,
 			${imager}&w=${w*3}&h=${h*3}&src=${esrc} 3x,
 			${imager}&w=${w*4}&h=${h*4}&src=${esrc} 4x
 		"

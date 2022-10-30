@@ -67,49 +67,43 @@ search.pag = (data, env, scroll) => `
 		</style>
 		<div class="begin">${search.pag[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'В начало', 1)}</div>
 		<div class="backward">${search.pag[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'Назад', data.pagination.page - 1)}</div>
-		<div class="page" style="display: none; ${data.pagination.last == 1 ? 'opacity:0.3' : ''}">${data.pagination.page}</div>
+		<div class="page" title="" style="${data.pagination.last == 1 ? 'opacity:0.3' : ''}">${data.pagination.page}</div>
+		<script>
+			(async page => {
+				//Передаём с кликом количество нужных карточек
+				const numberOfCards = await import('/-catalog/numberOfCards.js').then(r => r.default)
+				const words = await import('/-words/words.js').then(r => r.words)
+				const count = numberOfCards(${data.limit})		
+				page.title = "По "	+ count + ' ' + words(count, 'модели','модели','моделей') + ' на странице'
+				
+			})(document.currentScript.previousElementSibling)
+		</script>
 		<div class="forward">${search.pag[data.pagination.last > data.pagination.page ? 'link' : 'disabled'](data, env, scroll, 'Дальше', data.pagination.page + 1)}</div>
 		<div class="paglong">${data.count} ${words(data.count,'модель','модели','моделей')}</div>
 	</div>
 `
 
-search.getreq = (m, page) => {
-	const reqs = []
-	if (m) reqs.push('m=' + m)
-	if (page > 1) reqs.push('page=' + page)
-	if (!reqs.length) return ''
-	return '?' + reqs.join('&')
-}
+
 search.pag.link = (data, env, scroll = '', title, page) => `
-	<a data-scroll="${scroll}" href="${env.crumb}${search.getreq(env.bread.get.m, page)}${!scroll?'#page':''}">${title}</a>
-	${page > 1 ? search.linkscript(env, scroll, page) : ''}
-`
-search.linkscript = (env, scroll, page) => `
+	<a data-scroll="${scroll}">${title}</a>
 	<script>
-		(a => {
-			const onload = (fn) => {
-				if (document.readyState === "complete") fn()
-				else window.addEventListener('load', fn)	
-			}
+		(async a => {
+			//Передаём с кликом количество нужных карточек
+			const numberOfCards = await import('/-catalog/numberOfCards.js').then(r => r.default)
+			const onload = await import('/-words/onload.js').then(r => r.default)
 			const getreq = (m, page) => {
 				const reqs = []
 				if (m) reqs.push('m=' + m)
-				if (page > 1) reqs.push('page=' + page)
-				try {
-					const listcards = document.getElementsByClassName('listcards')[0]
-					//Надо чтобы всегда было 2 ряда, не больше
-					let count = getComputedStyle(listcards).getPropertyValue("grid-template-columns").split(' ').length * 2
-					if (count <= 4) count = 6
-					reqs.push('count=' + count)
-				} catch(e) {
-					console.log(e)
+				if (page > 1) {
+					reqs.push('page=' + page)
+					const count = numberOfCards(${data.limit})
+					if (count) reqs.push('count=' + count)
 				}
 				if (!reqs.length) return ''
 				return '?' + reqs.join('&')
 			}
-
 			onload(() => {
-				a.href = "${env.crumb}" + getreq('${env.bread.get.m}', '${page}') + "${!scroll?'#page':''}"	
+				a.href = "${env.crumb}" + getreq('${env.bread.get.m || ''}', '${page}') + "${!scroll?'#page':''}"	
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>

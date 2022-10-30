@@ -1,0 +1,34 @@
+.sliderNeo {
+	overflow-x: scroll;
+	-webkit-overflow-scrolling: touch;
+	user-select: none;
+	scroll-behavior: smooth;
+
+	/*scroll-snap-type: x proximity;*/
+	/*scroll-snap-type: x mandatory;*/
+}
+.sliderNeo > * {
+	 /*scroll-snap-align: start;*/
+}
+.sliderNeo::-webkit-scrollbar {
+    width: 0px;
+}
+.sliderNeo {
+	cursor: move;
+	scrollbar-width: none;
+}
+/*ширина и паддинг контейнера на начале которого прекращается скролл*/
+@media(min-width: calc(1600px)) {
+	.sliderNeo.page {
+		padding-left: calc(100vw / 2 - 1600px / 2 + var(--space))!important;
+	}	
+}
+/*
+
+.sliderNeo .block {
+	transition: 0.6s;
+	transform-origin: center;
+}
+.sliderNeo .block:focus {
+	transform: scale(1.5);
+}*/

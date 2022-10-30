@@ -49,11 +49,12 @@ meta.addArgument('page',['int1'])
 meta.addArgument('count',['int'])
 
 
-meta.addVariable('lim', ['array'], (view, lim) => {
+meta.addVariable('lim', ['array'], async (view, lim) => {
 	lim = lim.filter(v => v !== '')
+	const option = await Catalog.getOptions()
 	if (lim.length == 1) lim.unshift(0)
 	if (lim.length == 0) {
-		lim = [0,12] //Дефолт
+		lim = [0, option.limit] //Дефолт
 	} else {
 		lim[0] = Number(lim[0])
 		lim[1] = Number(lim[1])
@@ -94,7 +95,7 @@ const getNalichie = Access.cache(async (partner) => {
 			ip.prop_id = :prop_id
 			and ip.value_id in (${value_ids.join(',')})
 		GROUP BY ip.model_id
-		LIMIT 120
+		LIMIT 100
 	`, { prop_id })
 	const models = await Catalog.getModelsByItems(db, moditem_ids, partner)
 	db.release()
@@ -457,8 +458,10 @@ meta.addAction('get-search-list', async (view) => {
 	if (!group) {
 		return view.err('Нет данных')
 	}
+	const option = await Catalog.getOptions()
 	const opt = await Catalog.getGroupOpt(group.group_id)
-	const countonpage = count || opt.limit
+	view.ans.limit = option.limit
+	const countonpage = count || option.limit
 	const start = (page - 1) * countonpage
 	// let countonpage = opt.limit
 	// let start = (page - 1) * countonpage

@@ -224,6 +224,7 @@ Catalog.getOptions = Access.cache(async () => {
 	const { options } = await import('/'+config.options)
 	
 	options.groups ??= {}
+	options.limit ??= 10
 	options.groupids = {}
 	options.partners ??= {}
 	options.props ??= []
@@ -304,7 +305,6 @@ Catalog.getGroupOpt = Access.cache(async (group_id) => {
 	const tree = await Catalog.getTree()
 	const group = tree[group_id]
 	let opt = {}
-	opt.limit ??= 12
 	group.path.forEach(parent_id => {
 		if (!options.groupids[parent_id]) return
 		opt = {...opt, ...options.groupids[parent_id]}
@@ -881,18 +881,3 @@ Catalog.getMainBrand = async md => {
 	const brandnicks = await Catalog.getBrands()
 	return brandnicks[brand_nicks[0]]
 }
-// Catalog.search = async (db, group, partner) => {
-// 	const opt = await Catalog.getGroupOpt(group.group_id)
-	
-// 	const moditem_ids = await db.all(`
-// 		SELECT m.model_id, GROUP_CONCAT(i.item_num separator ',') as item_nums
-// 		FROM 
-// 			showcase_items i
-// 			LEFT JOIN showcase_models m on m.model_id = i.model_id
-// 		WHERE m.group_id in (${group.groups.join(',')})
-// 		GROUP BY m.model_id
-// 		LIMIT ${opt.limit}
-// 	`)
-// 	const models = await Catalog.getModelsByItems(moditem_ids, partner)
-// 	return models
-// }

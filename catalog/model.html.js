@@ -107,9 +107,9 @@ model.showGallery = (data, env, mod) => `
 	<div class="imagemax_gallery ${mod.images.length>1?'pointer':''}" style="">
 		<img alt="" style="max-width: 100%; max-height: 100%" 
 			srcset="
-				/-imager/webp?cache&h=500&src=${encodeURIComponent(mod.images[0])} 1x,
-				/-imager/webp?cache&h=1000&src=${encodeURIComponent(mod.images[0])} 1.5x,
-				/-imager/webp?cache&h=1500&src=${encodeURIComponent(mod.images[0])} 3x
+				/-imager/webp?cache&h=500&fit=inside&src=${encodeURIComponent(mod.images[0])} 1x,
+				/-imager/webp?cache&h=1000&fit=inside&src=${encodeURIComponent(mod.images[0])} 1.5x,
+				/-imager/webp?cache&h=1500&fit=inside&src=${encodeURIComponent(mod.images[0])} 3x
 			"
 		>
 	</div>
@@ -172,7 +172,7 @@ model.common = (data, env, mod) => `
 			}
 		</style>	
 		<div class="imagecontent">
-			${mod.images? model.showGallery(data, env, mod) : ''}	
+			${mod.images ? model.showGallery(data, env, mod) : ''}	
 		</div>
 		<div class="textcontent">
 			${model.showprop('Модель', mod.model_title)}
