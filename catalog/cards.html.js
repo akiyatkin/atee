@@ -215,14 +215,14 @@ cards.badgenalichie = (data, mod) => mod.Наличие ? `
 	</span>
 `
 cards.imgs = (data, mod) => `
-	<div style="position: relative; margin-bottom:0.5em">
+	<div style="position: relative; margin-bottom:0.5em; transition: opacity 0.3s; opacity: 0">
 		<div style="color: rgba(0,0,0,0.3); pointer-events: none; opacity: 0; position: absolute; height: 100%; display: flex; align-items: center;" class="left">
 			&nbsp;←&nbsp;
 		</div>
 		<div style="color: rgba(0,0,0,0.3); pointer-events: none; position: absolute; height: 100%; right: 0px; display: flex; align-items: center; opacity: 1;" class="right">
 			&nbsp;→&nbsp;
 		</div>
-		<div class="sliderNeo" style="cursor: pointer; overflow:hidden; white-space: nowrap; font-size:0">
+		<div class="sliderNeo" style="cursor: pointer; overflow-x: scroll; white-space: nowrap; font-size:0">
 			${mod.images.map(src => cards.img(data, mod, src)).join('')}
 		</div>
 	</div>
@@ -230,7 +230,8 @@ cards.imgs = (data, mod) => `
 		(async div => {
 			const sliderNeo = await import('/-imager/sliderNeo.js').then(o => o.default)
 			sliderNeo(div)
-		})(document.currentScript.parentElement)
+			div.style.opacity = 1
+		})(document.currentScript.previousElementSibling)
 	</script>
 
 `

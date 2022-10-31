@@ -65,13 +65,16 @@ meta.addAction('webp', async view => {
 		store = `cache/imager/${nicked([src,h,w,fit].join('-'))}.webp`
 		if (await isFreshCache(src, store)) return createReadStream(store)
 	}
-	const inStream = createReadStream(src)	
+	const inStream = createReadStream(src)
+
+	const withoutEnlargement = (w && h && fit == 'contain') ? false : true
 	const transform = sharp().resize({ 
 		width: w || null, 
 		height: h || null,
 		fit: sharp.fit[fit],
 		position: 'centre',
-		withoutEnlargement: true, //Пропорции недолжны меняться размеров оригинала не зватает
+		withoutReduction: false,
+		withoutEnlargement: withoutEnlargement, //Пропорции недолжны меняться размеров оригинала не зватает
 		background: { r: 255, g: 255, b: 255, alpha: 0 }
 	}).webp({
 		quality: 80,

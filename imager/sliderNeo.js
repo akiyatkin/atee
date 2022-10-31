@@ -1,12 +1,23 @@
+
+await new Promise(resolve => {
+	const link = document.createElement('link')
+	link.rel = 'stylesheet'
+	link.onload = resolve
+	link.href = '/-imager/sliderNeo.css'	
+	document.head.prepend(link)
+})
+
+
 export default div => {
 	const cls = cls => div.getElementsByClassName(cls)
 	const el = cls('sliderNeo')[0] || div
 	const left = cls('left')[0]
 	const right = cls('right')[0]
-	const check = (scrollLeft = el.scrollLeft) => {
+	const width = el.scrollWidth
+	const check = (scrollLeft = el.scrollLeft) => requestAnimationFrame(() => {
 		if (left) left.style.opacity = scrollLeft < 1 ? 0 : 1
-		if (right) right.style.opacity = el.clientWidth + scrollLeft >= el.scrollWidth ? 0 : 1
-	}
+		if (right) right.style.opacity = length + scrollLeft >= width ? 0 : 1
+	})
 
 	const child = el.children[0]
 	if (!child) return
@@ -53,7 +64,9 @@ export default div => {
 
 
 
-	el.addEventListener('mouseover', () => {
+	
+	el.addEventListener('scroll', () => check)
+	el.addEventListener('pointerover', () => {
 		clearInterval(timer)
 		el.style.scrollBehavior = "smooth";
 		check(0)
@@ -82,6 +95,7 @@ export default div => {
 		diffx = 0
 		diffy = 0
 		drag = true
+		console.log('down')
 	})
 	window.addEventListener('mousemove', e => {
 		if (!drag) return

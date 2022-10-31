@@ -3,32 +3,26 @@
 	-webkit-overflow-scrolling: touch;
 	user-select: none;
 	scroll-behavior: smooth;
-
 	/*scroll-snap-type: x proximity;*/
 	/*scroll-snap-type: x mandatory;*/
+	scrollbar-width: thin;
 }
-.sliderNeo > * {
-	 /*scroll-snap-align: start;*/
-}
+
 .sliderNeo::-webkit-scrollbar {
-    width: 0px;
+	height: 2px;
+	width: 2px;
 }
-.sliderNeo {
-	cursor: move;
-	scrollbar-width: none;
+.sliderNeo::-webkit-scrollbar-thumb {
+	/*background-color: rgba(0,0,0,0.3);*/
+	/*background-color: #2f6ea4;*/
+	background-color: var(--orange, rgba(0,0,0,0.3));
+	border-radius: 5px;
+	/*border: 3px solid transparent;*/
 }
+
 /*ширина и паддинг контейнера на начале которого прекращается скролл*/
-@media(min-width: calc(1600px)) {
-	.sliderNeo.page {
+/*@media(min-width: calc(1600px)) {
+	.sliderNeo.page { 
 		padding-left: calc(100vw / 2 - 1600px / 2 + var(--space))!important;
 	}	
-}
-/*
-
-.sliderNeo .block {
-	transition: 0.6s;
-	transform-origin: center;
-}
-.sliderNeo .block:focus {
-	transform: scale(1.5);
 }*/
