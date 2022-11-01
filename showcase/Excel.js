@@ -46,6 +46,7 @@ export const Excel = {
 		const sheets = {}
 		const brands = {}
 		for (const sheet of listsheets) {
+			if (sheet[0] == '.') continue
 			const rows_source = await readXlsxFile(src, { sheet })
 			const {descr, rows_table} = Dabudi.splitDescr(rows_source)
 			const {heads, rows_body} = Dabudi.splitHead(rows_table)
