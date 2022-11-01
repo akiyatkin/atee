@@ -348,7 +348,6 @@ meta.addAction('get-filters', async (view) => {
 
 	for (const prop_title of opt.filters) {
 		const prop = await Catalog.getPropByTitle(prop_title)
-		console.log(prop)
 		const filter = await Catalog.getFilterConf(db, visitor, prop, group.group_id, md)
 		if (!filter) continue
 		filters.push(filter)

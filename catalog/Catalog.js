@@ -552,7 +552,7 @@ Catalog.getPropById = Access.cache(async (prop_id) => {
 
 Catalog.getPropByNick = Access.cache(async (prop_nick) => {
 	let prop
-	if (prop_nick == 'brend') {
+	if (prop_nick == 'brand') {
 		prop = {prop_title:'Бренд', prop_nick, type:'brand'}
 	} else {
 		const db = await new Db().connect()
@@ -566,7 +566,9 @@ Catalog.getPropByNick = Access.cache(async (prop_nick) => {
 })
 
 Catalog.getPropByTitle = prop_title => {
-	const prop_nick = nicked(prop_title)
+	const prop_nick =  {
+		'Бренд':'brand'
+	}[prop_title] || nicked(prop_title)
 	return Catalog.getPropByNick(prop_nick)
 }
 Catalog.getPathNickByGroupId = async id => {
