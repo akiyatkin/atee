@@ -886,6 +886,7 @@ export class Upload {
 					search = :search
 				ON DUPLICATE KEY UPDATE
 					search = :search,
+					group_id = :group_id,
 				 	model_id = LAST_INSERT_ID(model_id)
 			`, {model_title, model_nick, brand_id, group_id, search})
 

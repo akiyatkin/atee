@@ -123,7 +123,6 @@ model.showGallery = (data, env, mod) => `
 		const div = document.getElementById('${env.layer.div}')
 		const bigimg = div.querySelector('.imagemax_gallery img')
 		const imgmins = div.querySelectorAll('.imagemin')
-
 		for (const imgmin of imgmins) {
 			imgmin.addEventListener('click', () => {
 				div.querySelector('.selected').classList.remove('selected')
@@ -132,8 +131,7 @@ model.showGallery = (data, env, mod) => `
 				bigimg.srcset = '/-imager/webp?h=500&src='+file+' 1x,/-imager/webp?h=750&src='+file+' 1.5x,/-imager/webp?h=1000&src='+file+' 2x,/-imager/webp?h=1500&src='+file+' 3x,/-imager/webp?h=2000&src='+file+' 4x'
 			})
 		}
-
-		bigimg.addEventListener('click', () => {
+		if (imgmins.length) bigimg.addEventListener('click', () => {
 			const selected = div.querySelector('.selected')
 			const next = selected.nextElementSibling || div.querySelector('.imagemin')
 			if (!next) return

@@ -95,7 +95,6 @@ export default div => {
 		diffx = 0
 		diffy = 0
 		drag = true
-		console.log('down')
 	})
 	window.addEventListener('mousemove', e => {
 		if (!drag) return

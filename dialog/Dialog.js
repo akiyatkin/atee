@@ -112,4 +112,5 @@ export const Dialog = {
 		}
 	}
 }
+export default Dialog
 window.Dialog = Dialog

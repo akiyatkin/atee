@@ -666,7 +666,7 @@ meta.addAction('set-order', async (view) => {
     const html = MAIL(user)
     
     const { Mail } = await import('/-mail/Mail.js')
-    const r = await Mail.send(`Заявка ${user.host} ${user.email}`, html, user.email)
+    const r = await Mail.toAdmin(`Заявка ${user.host} ${user.email}`, html, user.email)
     if (!r) return view.err('Сообщение не отправлено из-за ошибки на сервере')
 
 
