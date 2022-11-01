@@ -69,7 +69,7 @@ const getNalichie = Access.cache(async (partner) => {
 	const options = await Catalog.getOptions()
 	const lim = 100
 	const vals = options.actions.map(v => nicked(v)).filter(v => v).sort()
-	const p = await Catalog.getProp('Наличие')
+	const p = await Catalog.getPropByTitle('Наличие')
 	if (!p) return []
 	const { prop_id } = p
 
@@ -113,7 +113,7 @@ const prepareValue = async (value) => {
 	if (nick) {
 		if (nick == 'actions') {
 			const vals = options.actions.map(v => nicked(v)).filter(v => v).sort()
-			const p = await Catalog.getProp('Наличие')
+			const p = await Catalog.getPropByTitle('Наличие')
 			if (p) {
 				vals.forEach(v => () => addm += `:more.${p.prop_nick}.${v}=1`)
 			}
@@ -206,7 +206,7 @@ meta.addVariable('md', async (view) => {
 			for (const prop_value in md.more[prop_nick]) {
 				if (prop_value === '') delete md.more[prop_nick][prop_value]
 			}
-			const prop = await Catalog.getProp(prop_nick)
+			const prop = await Catalog.getPropByNick(prop_nick)
 			if (!prop) delete md.more[prop_nick]
 			else if (prop.type == 'text') delete md.more[prop_nick]
 			
@@ -339,9 +339,8 @@ meta.addAction('get-filters', async (view) => {
 	const filters = []
 
 	if (md.more) for (const prop_nick in md.more) {
-		const prop = await Catalog.getPropByNick(prop_nick)
+		const prop = await Catalog.getPropByNick(prop_nick);
 		if (~opt.filters.indexOf(prop.prop_title)) continue
-		
 		const filter = await Catalog.getFilterConf(db, visitor, prop, group.group_id, md)
 		if (!filter) continue
 		filters.push(filter)
@@ -349,6 +348,7 @@ meta.addAction('get-filters', async (view) => {
 
 	for (const prop_title of opt.filters) {
 		const prop = await Catalog.getPropByTitle(prop_title)
+		console.log(prop)
 		const filter = await Catalog.getFilterConf(db, visitor, prop, group.group_id, md)
 		if (!filter) continue
 		filters.push(filter)

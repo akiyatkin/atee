@@ -93,8 +93,8 @@ export const rest_live = (meta) => {
 			WHERE ${where.join(' and ')}
 		`)
 
-		const prop = await Catalog.getProp('Наименование')
-		const cost = await Catalog.getProp('Цена')
+		const prop = await Catalog.getPropByTitle('Наименование')
+		const cost = await Catalog.getPropByTitle('Цена')
 		for (const model of models) {
 			const brand = await Catalog.getBrandById(model.brand_id)
 			model.brand_nick = brand.brand_nick

@@ -106,7 +106,7 @@ Catalog.getModelsByItems = async (db, moditems_ids, partner) => { //[{item_nums 
 			const p = pr.value_title
 			if (model[p] != null) return true
 			
-			const ppp = await Catalog.getProp(p)
+			const ppp = await Catalog.getPropByTitle(p)
 			let ar = []
 
 			for (const item of model.items) {
@@ -160,8 +160,8 @@ Catalog.getModelsByItems = async (db, moditems_ids, partner) => { //[{item_nums 
 	}
 
 
-	const cost = await Catalog.getProp('Цена')
-	const oldcost = await Catalog.getProp('Старая цена')
+	const cost = await Catalog.getPropByTitle('Цена')
+	const oldcost = await Catalog.getPropByTitle('Старая цена')
 	for (const model of list) {
 		if (model[cost.prop_title]) { //80
 			if (model[oldcost.prop_title]) {		//100
@@ -256,6 +256,18 @@ Catalog.getOptions = Access.cache(async () => {
 	db.release()
 	return options
 })
+// Catalog.getPropOpt = async (value) => {
+// 	const options = await Catalog.getOptions()
+// 	const p = options.props[value] || {}
+// 	if (!p.prop_title) p.prop_title = value //Название свойства на карточке
+// 	if (!p.value_title) p.value_title = value //Значение свойства в данных
+// 	if (!p.value_nick) p.value_nick = value //Ник свойства в данных
+// 	if (!p.prop_nick) p.prop_nick = nicked(p.value_nick)  //Ник самого свойства
+// 	if (value == 'Цена' && !p.unit) p.unit = 'руб.'
+// 	const r = value.split(',')
+// 	if (r.length > 1) p.unit = r[1].trim()
+// 	return p
+// }
 Catalog.getValueId = (db, visitor, value_nick) => {
 	return visitor.relate(Catalog).once('getValueId' + value_nick, () => {
 		return db.col('SELECT value_id FROM showcase_values WHERE value_nick = :value_nick',{value_nick})
@@ -266,39 +278,7 @@ Catalog.getValueByNick = async (db, visitor, value_nick) => {
 		return db.fetch('SELECT value_id, value_title, value_nick FROM showcase_values WHERE value_nick = :value_nick', { value_nick })
 	})
 }
-// Catalog.getValue = async (db, model, nickortitle, item_num = 1) => {
-// 	const { model_id } = model
-// 	const prop = await Catalog.getProp(nickortitle)
-// 	if (!prop) return
-// 	let values = []
-// 	if (prop.type == 'text') {
-// 		values = await db.colAll(`
-// 			SELECT ip.text
-// 			FROM showcase_iprops ip where model_id = :model_id and prop_id = :prop_id and item_num = 1
-// 			order by ordain
-// 		`, {model_id, prop_id: prop.prop_id})	
-		
-// 	} else if (prop.type == 'number') {
-// 		values = await db.colAll(`
-// 			SELECT ip.number
-// 			FROM showcase_iprops ip where model_id = :model_id and prop_id = :prop_id and item_num = 1
-// 			order by ordain
-// 		`, {model_id, prop_id: prop.prop_id})
-// 	} else if (prop.type == 'value') {
-// 		values = await db.colAll(`
-// 			SELECT v.value_title
-// 			FROM showcase_iprops ip, showcase_values v
-// 			WHERE ip.model_id = :model_id and ip.prop_id = :prop_id and ip.item_num = 1
-// 			and ip.value_id = v.value_id
-// 			order by ip.ordain
-// 		`, {model_id, prop_id: prop.prop_id})
-// 	}
-// 	if (!values.length) return
-// 	if (!~['images'].indexOf(prop.prop_nick)) {
-// 		values = values.join(', ')
-// 	}
-// 	model[nickortitle] = values
-// }
+
 
 Catalog.getGroupOpt = Access.cache(async (group_id) => {
 	const options = await Catalog.getOptions()
@@ -316,7 +296,7 @@ Catalog.getGroupOpt = Access.cache(async (group_id) => {
 	})
 	// for (const prop_user of opt.filters) {
 	// 	const prop_title = opt.props[prop_user].tplprop
-	// 	const prop = await Catalog.getProp(prop_title)
+	// 	const prop = await Catalog.getPropByTitle(prop_title)
 	// 	console.log(prop)
 	// }
 	return opt
@@ -331,7 +311,7 @@ Catalog.getMainGroups = Access.cache(async (prop_title = '') => {
 	const childs = groups.filter(g => g.parent_id == root.group_id && g.icon)
 
 	if (prop_title) {
-		const prop = await Catalog.getProp(prop_title)
+		const prop = await Catalog.getPropByTitle(prop_title)
 		const db = await new Db().connect()
 		for (const group of childs) {
 			group.types = await db.all(`
@@ -569,21 +549,22 @@ Catalog.getPropById = Access.cache(async (prop_id) => {
 	return prop
 })
 
-Catalog.getProp = Access.cache(async (prop_title) => {
-	if (prop_title == 'Бренд') {
-		const prop_nick = 'brand'
-		return {prop_title, prop_nick, type:'brand'}
+
+Catalog.getPropByNick = Access.cache(async (prop_nick) => {
+	let prop
+	if (prop_nick == 'brend') {
+		prop = {prop_title:'Бренд', prop_nick, type:'brand'}
+	} else {
+		const db = await new Db().connect()
+		prop = await db.fetch('SELECT type, prop_nick, prop_title, prop_id from showcase_props where prop_nick = :prop_nick', { prop_nick })
+		if (!prop) return false
+		db.release()
 	}
-	const db = await new Db().connect()
-	const prop_nick = nicked(prop_title)
-	const prop = await db.fetch('SELECT type, prop_nick, prop_title, prop_id from showcase_props where prop_nick = :prop_nick', { prop_nick })
-	if (!prop) return false
 	const options = await Catalog.getOptions()
 	prop.opt = options.props[prop.prop_title]
-	db.release()
 	return prop
 })
-Catalog.getPropByNick = Catalog.getProp
+
 Catalog.getPropByTitle = prop_title => {
 	const prop_nick = nicked(prop_title)
 	return Catalog.getPropByNick(prop_nick)
@@ -746,7 +727,7 @@ Catalog.getmdwhere = (db, visitor, md) => {
 				i++
 				iprops_dive = true
 				
-				const prop = await Catalog.getProp(prop_nick)
+				const prop = await Catalog.getPropByNick(prop_nick)
 				from.push(`showcase_iprops ip${i}`)
 				where.push(`ip${i}.model_id = i.model_id`)
 				where.push(`ip${i}.item_num = i.item_num`)
