@@ -36,6 +36,15 @@ a {
 	cursor: pointer;
 	border-bottom: dashed 1px currentColor;
 }
+a:hover:has(svg),
+a:has(svg),
+a:hover:has(img),
+a:has(img) {
+	text-decoration: none;
+	border: none;
+	padding: 0;
+}
+
 table {
 	border-collapse: collapse;
 }

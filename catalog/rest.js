@@ -674,7 +674,42 @@ meta.addAction('set-order', async (view) => {
 
 
 
+meta.addAction('get-maingroups', async (view) => {
+	const { db } = await view.gets(['db'])
+	const tree = await Catalog.getTree()
+	const options = Catalog.getOptions()
+	const groupnicks = await Catalog.getGroups()
+	const root = groupnicks[options.root_nick]
+	if (!root) return view.err('Не найдена верняя группа')
 
+	const imgprop = await Catalog.getProp('images')
+	view.ans.childs = await map(root.childs, async group_id => {
+		const group = tree[group_id]
+		const where = []
+		where.push(`m.group_id in (${group.groups.join(',')})`)
+		where.push(`(ip.prop_id = ${imgprop.prop_id} and ip.text is not null and ip.ordain = 1)`)
+		const sql = `
+			SELECT distinct ip.text as image, m.model_nick, b.brand_nick, m.model_title, b.brand_title
+			FROM 
+				showcase_models m, 
+				showcase_brands b,
+				showcase_iprops ip
+			WHERE 
+				b.brand_id = m.brand_id
+				and ip.model_id = m.model_id 
+				and ${where.join(' and ')}
+			LIMIT 12
+		`
+		const images = await db.all(sql)
+		return {
+			images,
+			group_title: group.group_title,
+			group_nick: group.group_nick
+		}
+	})
+	view.ans.childs = view.ans.childs.filter(g => g.images.length)
+	return view.ret()
+})
 
 
 

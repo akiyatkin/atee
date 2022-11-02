@@ -295,7 +295,9 @@ const addHtml = async (template, layer, bread, timings, theme) => {
 	}
 	if (template.content.children.length) {
 		const div = template.content.getElementById(layer.div)
-		div.innerHTML = html
+		if (!div) template.content.innerHTML += 'Не найден div ' + layer.div
+		if (div) div.innerHTML = html
+		//if (!div) throw 'Не найден div '+layer.div
 	} else {
 		template.innerHTML = html
 	}

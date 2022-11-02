@@ -6,7 +6,7 @@ const getp = (data, prop_nick) => {
 
 const filters = {}
 export default filters
-filters.ROOT = (data, env) => `
+filters.ROOT = (data, env) => !data.result ? '': `
 	${data.filters.map(filter => showFilter(data, filter, env)).join('')}
 `
 const showFilter = (data, filter, env) => `
