@@ -677,12 +677,12 @@ meta.addAction('set-order', async (view) => {
 meta.addAction('get-maingroups', async (view) => {
 	const { db } = await view.gets(['db'])
 	const tree = await Catalog.getTree()
-	const options = Catalog.getOptions()
+	const options = await Catalog.getOptions()
 	const groupnicks = await Catalog.getGroups()
 	const root = groupnicks[options.root_nick]
 	if (!root) return view.err('Не найдена верняя группа')
-
-	const imgprop = await Catalog.getProp('images')
+	const imgprop = await Catalog.getPropByNick('images')
+	
 	view.ans.childs = await map(root.childs, async group_id => {
 		const group = tree[group_id]
 		const where = []
@@ -691,12 +691,11 @@ meta.addAction('get-maingroups', async (view) => {
 		const sql = `
 			SELECT distinct ip.text as image, m.model_nick, b.brand_nick, m.model_title, b.brand_title
 			FROM 
-				showcase_models m, 
-				showcase_brands b,
+				(showcase_models m
+				left join showcase_brands b on b.brand_id = m.brand_id),
 				showcase_iprops ip
 			WHERE 
-				b.brand_id = m.brand_id
-				and ip.model_id = m.model_id 
+				ip.model_id = m.model_id
 				and ${where.join(' and ')}
 			LIMIT 12
 		`

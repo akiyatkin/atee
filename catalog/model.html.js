@@ -90,7 +90,7 @@ model.showGallery = (data, env, mod) => `
 			text-align: center;
 		}
 		#${env.layer.div} .imagemin.selected {
-			border: solid 1px var(--orange);
+			border: solid 1px var(--main, orange);
 			padding: 4px;
 		}
 		#${env.layer.div} .imagemax_gallery {

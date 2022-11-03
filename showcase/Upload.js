@@ -248,7 +248,6 @@ export class Upload {
 		
 
 		const { sheets } = await Excel.loadPrice(dir + file, conf)
-		
 		const price = {price_title, price_nick}
 		price.price_id = await db.insertId(`
 			INSERT INTO 
@@ -279,10 +278,9 @@ export class Upload {
 
 		const mvalues = {}
 		for (const {sheet, heads: {head_titles, head_nicks}, rows} of sheets) {
-
 			//Ищем ключ который есть в прайсе и по нему будем брать значение для связи
 			const priceprop_title = conf.synonyms[conf.priceprop].find(prop => ~head_titles.indexOf(prop))
-			if (!priceprop_title) break
+			if (!priceprop_title) continue
 			const priceprop_nick = nicked(priceprop_title)
 			const priceprop_index = head_nicks.indexOf(priceprop_nick)
 			
@@ -582,6 +580,7 @@ export class Upload {
 				for (const finfo of root.files) {
 					const ext = finfo.ext
 					const ordain = finfo.num
+
 					const part = 'files'
 					if (~Files.exts.images.indexOf(ext)) part = 'images'
 					if (~Files.exts.texts.indexOf(ext)) part = 'texts'
@@ -639,7 +638,7 @@ export class Upload {
 					if (!~Files.exts.images.indexOf(fileinfo.ext)) return false
 					const res = await Files.getRelations(db, name, brand_id, [props.art.prop_id,props.photo.prop_id])
 					const src = dirinfo.dir + fileinfo.file
-					const ordain = fileinfo.num
+					const ordain = fileinfo.num || 1
 					//const value = await upload.receiveValue(src)
 					for (const item of res) {
 						const affectedRows = await db.affectedRows(`
@@ -672,6 +671,7 @@ export class Upload {
 			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
 			if (!brand_id) continue
 			const minfo = dirinfo.dirs.find(info => info.name == 'models')
+			if (!minfo) continue
 			for (const subinfo of minfo.dirs) { //Модели
 				const res = await Files.getRelations(db, subinfo.name, brand_id, [props.art.prop_id]) //Папка может быть привязана к Art
 				let i = 0
@@ -682,6 +682,7 @@ export class Upload {
 					const ext = fileinfo.ext
 
 					const ordain = fileinfo.num || i
+
 					//const value = await upload.receiveValue(src)
 					part = 'files'
 					if (~Files.exts.images.indexOf(ext)) part = 'images'
@@ -723,7 +724,7 @@ export class Upload {
 					UPDATE showcase_iprops ip
 					SET ordain = :ordain
 					WHERE prop_id=:prop_id and value_id = :value_id
-				`, {prop_id, value_id: file.value_id, ordain: i})
+				`, {prop_id, value_id: file.value_id, ordain: i+1})
 			}
 		}
 		return {doublepath, count}
@@ -768,7 +769,7 @@ export class Upload {
 				props[prop_nick] = { 
 					prop_nick, 
 					prop_title, 
-					ordain: i
+					ordain: i + 1
 				}
 			})
 		}
