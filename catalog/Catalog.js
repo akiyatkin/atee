@@ -252,6 +252,7 @@ Catalog.getOptions = Access.cache(async () => {
 		if (value == 'Цена' && !p.unit) p.unit = 'руб.'
 		const r = value.split(',')
 		if (r.length > 1) p.unit = r[1].trim()
+		else p.unit = p.unit || ''
 	}
 	db.release()
 	return options
