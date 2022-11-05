@@ -746,6 +746,8 @@ export class Upload {
 		const dir = config.tables
 		const file = await Files.getFileName(visitor, dir, name, ['xlsx'])
 		if (!file) return false
+
+		
 		const {groups, models, sheets, brands} = await Excel.loadTable(dir + file, name)
 		const values = {}
 		const props = {}
@@ -798,8 +800,6 @@ export class Upload {
 
 		
 		
-		
-
 
 
 		let ordain = 1
@@ -832,6 +832,7 @@ export class Upload {
 					group_nick = :group_nick, 
 					ordain = :ordain
 				ON DUPLICATE KEY UPDATE
+					parent_id = :parent_id, 
 				 	group_id = LAST_INSERT_ID(group_id)
 			`, group) //group_title, ordain, group_id не меняются. Сохраняются при очистке базы данных. 
 		}
@@ -842,7 +843,8 @@ export class Upload {
 			DELETE i, ip FROM showcase_items i, showcase_iprops ip 
 			WHERE i.model_id = ip.model_id and i.item_num = ip.item_num and i.table_id = :table_id
 		`, { table_id })
-
+		
+		
 		for (const brandmod in models) {
 			const items = models[brandmod]
 
@@ -931,6 +933,7 @@ export class Upload {
 					if (~options.number_nicks.indexOf(heads.head_nicks[i])) continue
 					for (const v_title of item[i]) {
 						if (values[v_title]) continue
+						
 						const value_nick = nicked(v_title)
 						values[v_title] = { 
 							value_title:v_title,

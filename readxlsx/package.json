@@ -1,0 +1,22 @@
+{
+	"name": "@atee/readxlsx",
+	"version": "1.0.0",
+	"type": "module",
+	"description": "",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/akiyatkin/atee.git"
+	},
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/akiyatkin/atee/issues"
+	},
+	"homepage": "https://github.com/akiyatkin/atee#readme",
+	"dependencies": {
+		"node-xlsx": "^0.21"
+	}
+}

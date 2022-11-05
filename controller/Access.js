@@ -54,7 +54,7 @@ export const Access = {
 			return store.result
 		}
 	},
-	mcache: (src, fn) => {
+	mcache: (src, fn, check = false) => {
 		fn.store = {}
 		return (...args) => {
 			args.push(src)
@@ -63,7 +63,7 @@ export const Access = {
 			fn.store[hash] = store
 			
 			
-			if (store.executed && store.executed >= Access.getAccessTime()) return store.result
+			if (!check && store.executed && store.executed >= Access.getAccessTime()) return store.result
 			if (store.promise) return store.promise
 
 			store.promise = new Promise(async resolve => {

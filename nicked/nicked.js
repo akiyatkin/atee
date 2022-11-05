@@ -26,3 +26,4 @@ export const nicked = str => {
  	str = str.replace(/\-+/g, '-')
 	return str
 }
+export default nicked

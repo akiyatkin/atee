@@ -682,6 +682,7 @@ meta.addAction('get-maingroups', async (view) => {
 	const root = groupnicks[options.root_nick]
 	if (!root) return view.err('Не найдена верняя группа')
 	const imgprop = await Catalog.getPropByNick('images')
+	if (!imgprop) return view.err('Нет картинок')
 	
 	view.ans.childs = await map(root.childs, async group_id => {
 		const group = tree[group_id]

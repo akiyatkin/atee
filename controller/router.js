@@ -87,6 +87,7 @@ export const loadTEXT = (src, visitor) => {
 const load = (src, visitor, ext) => {
 	const store = visitor.relate(load)
 	const name = src+':'+ext
+
 	return store.once(name, async () => {
 		let res = { ans: '', status: 200, nostore: false } //, headers: { }, ext: ext
 		
@@ -94,12 +95,10 @@ const load = (src, visitor, ext) => {
 			search, secure, get,
 			rest, query, restroot
 		} = await router(src)
-		
-		
 	    if (!rest) throw { status: 500, src, ext }
-	    
 		res = {...res, ...(await rest(query, get, visitor))}
 	    if (res.status != 200) throw { status: res.status, src, res, ext, from:'router.load', toString: () => query + ' ' + res.status}
+
 		let data = res.ans
 		if (data instanceof ReadStream) {
 			data = await readTextStream(data)
