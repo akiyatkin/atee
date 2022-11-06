@@ -287,6 +287,7 @@ export const restset = (meta) => {
 		const { upload, name } = await view.gets(['upload','name'])
 		view.ans.name = name
 		const row = await upload.loadTable(name)
+		if (!row) return view.err('Неизвестная ошибка с таблицей, проверьте конфиг')
 		row.ready = true
 		view.ans.row = row
 		return view.ret('Внесено ' + row.quantity)
@@ -306,38 +307,30 @@ export const restset = (meta) => {
 		const { upload, name } = await view.gets(['upload','name'])
 		view.ans.name = name
 		const row = await upload.loadPrice(name)
+		if (!row) return view.err('Неизвестная ошибка с прайсом, проверьте конфиг')
 		row.ready = true
 		view.ans.row = row
 		return view.ret('Внесено ' + row.quantity)
 	})
 
-
+	//Для ручного перехода, при сохранении ссылки
+	meta.addAction('load', async view => {
+		await view.gets(['start'])
+		const { upload } = await view.gets(['upload'])
+		const res = await upload.applyall()
+		const Location = '/?showcase=' + encodeURIComponent(res.msg)
+		view.ans.status = 301
+		view.ans.headers = {
+			Location
+		}
+		return view.ret()
+	})
 	meta.addAction('set-applyall', async view => {
 		await view.gets(['admin','start'])
 		const { db, upload } = await view.gets(['db','upload'])
-		
-		let count = 0
-		
-		await (async () => {
-			const files = await upload.getNewTables()
-			await Promise.all(files.map(async of => {
-				const { quantity = 0 } = await upload.loadTable(of.name)
-				count += quantity
-			}))
-		})()
-		await (async () => {
-			const files = await upload.getNewPrices()
-			await Promise.all(files.map(async of => {
-				const { quantity = 0 } = await upload.loadPrice(of.name)
-				count += quantity
-			}))
-		})()
-
-		const {doublepath, count:countfiles} = await upload.loadAllFiles()		
-
-		
-		view.ans.count = count + countfiles
-		return view.ret('Внесено ' + count + ', файлов ' + countfiles)
+		const res = await upload.applyall()
+		Object.assign(view.ans, res)
+		return view.ret(res.msg)
 	})
 	meta.addAction('set-prices-loadall', async view => {
 		await view.gets(['admin','start'])

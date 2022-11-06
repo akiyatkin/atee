@@ -26,10 +26,11 @@ if (OPTIONS.config) {
 	}).catch(e => console.log(e))
 	if (db) {
 
-		// const [rows, fields] = await db.query("show variables like 'max_connections'")
-		// let connectionLimit = rows[0].Value - 1
+		const [rows, fields] = await db.query("show variables like 'max_connections'")
+		let connectionLimit = rows[0].Value - 1
 		// connectionLimit = Math.round(connectionLimit / 2)
-		const connectionLimit = 10
+		const limit = 20
+		connectionLimit = connectionLimit < limit ? connectionLimit : limit
 		console.log('db ready - connectionLimit: ' + connectionLimit)
 		conf = {
 			...DEF, 

@@ -3,7 +3,7 @@ import { passed } from "/-words/passed.js"
 import { words } from "/-words/words.js"
 
 export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
-	<h1>Данные</h1>
+	<h1>Таблицы</h1>
 	<table style="border-spacing: 0 0.5rem">
 		${data.files.map(itemrow).join('')}
 	</table>

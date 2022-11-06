@@ -43,3 +43,4 @@ export const action = (btn, callback, name = '') => {
 		proc = false
 	})
 }
+export default action

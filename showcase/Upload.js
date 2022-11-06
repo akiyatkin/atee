@@ -2,16 +2,31 @@ import { Files } from "/-showcase/Files.js"
 import { Access } from "/-controller/Access.js"
 import { Excel } from "/-showcase/Excel.js"
 import fs from "fs/promises"
-import { nicked } from '/-nicked/nicked.js'
-import { unique } from '/-nicked/unique.js'
+import nicked from '/-nicked/nicked.js'
+import unique from '/-nicked/unique.js'
 
 export class Upload {
 	constructor (opt) {
 		this.opt = opt //{ visitor, options, view, db, config }
+		opt.upload = this
+	}
+	async getAll(what) {
+		const { visitor, config } = this.opt
+		let files = await Files.readdirext(visitor, config[what], ['xlsx']) //{ name, ext, file }
+		const dir = config[what]
+		await Promise.all(files.map(async (of) => {
+			const stat = await fs.stat(dir + of.file)
+			of.size = Math.round(stat.size / 1024 / 1024 * 100) / 100
+			of.mtime = new Date(stat.mtime).getTime()
+		}))
+		return files
+	}
+	async getAllTables() {
+		return this.getAll('tables')
 	}
 	async getNewTables() {
 		const { visitor, options, view, db, config } = this.opt
-		let files = await Files.readdirext(visitor, config['tables'], ['xlsx']) //{ name, ext, file }
+		let files = await this.getAll('tables')
 		const rows = await db.all(`
 			SELECT 
 				table_nick,
@@ -19,6 +34,7 @@ export class Upload {
 			FROM showcase_tables
 			WHERE loaded = 1
 		`)
+
 		files = files.filter(of => {
 			const row = rows.find(row => row.table_nick == nicked(of.name))
 			if (!row) return true
@@ -27,9 +43,12 @@ export class Upload {
 		})
 		return files
 	}
+	async getAllPrices() {
+		return await this.getAll('prices')
+	}
 	async getNewPrices() {
 		const { visitor, options, view, db, config } = this.opt
-		let files = await Files.readdirext(visitor, config['prices'], ['xlsx']) //{ name, ext, file }
+		let files = await this.getAll('prices')
 		const rows = await db.all(`
 			SELECT 
 				price_nick,
@@ -99,7 +118,7 @@ export class Upload {
 			DELETE i, ip FROM showcase_items i
 			LEFT JOIN showcase_iprops ip on (i.model_id = ip.model_id and i.item_num = ip.item_num)
 		`)
-		const dir = config.tables
+		const dir = config['tables']
 		await db.changedRows(`
 			UPDATE
 				showcase_tables
@@ -127,7 +146,7 @@ export class Upload {
 			DELETE i, ip FROM showcase_items i, showcase_iprops ip 
 			WHERE i.model_id = ip.model_id and i.item_num = ip.item_num and i.table_id = :table_id
 		`, { table_id })
-		const dir = config.tables
+		const dir = config['tables']
 		const file = await Files.getFileName(visitor, dir, table_title, ['xlsx'])
 		if (file) {
 			await db.changedRows(`
@@ -174,7 +193,7 @@ export class Upload {
 			DELETE ip FROM showcase_iprops ip 
 			WHERE ip.price_id = :price_id
 		`, { price_id })
-		const dir = config.prices
+		const dir = config['prices']
 		const file = await Files.getFileName(visitor, dir, price_title, ['xlsx'])
 		if (file) {
 			await db.changedRows(`
@@ -231,7 +250,7 @@ export class Upload {
 		let count = 0
 		let omissions = {}
 
-		const dir = config.prices
+		const dir = config['prices']
 		const file = await Files.getFileName(visitor, dir, price_title, ['xlsx'])
 		const conf = options.prices[price_title] || { }
 		conf.synonyms ??= {}
@@ -247,7 +266,7 @@ export class Upload {
 		conf.synonyms[conf.priceprop].push(conf.priceprop)
 		
 
-		const { sheets } = await Excel.loadPrice(dir + file, conf)
+		const { sheets } = await Excel.loadPrice(visitor, dir + file, conf)
 		const price = {price_title, price_nick}
 		price.price_id = await db.insertId(`
 			INSERT INTO 
@@ -264,14 +283,14 @@ export class Upload {
 		await db.changedRows(`
 			DELETE ip FROM showcase_iprops ip 
 			WHERE ip.price_id = :price_id
-		`, price)
-		
+		`, price)		
 		const brand_id = false
 		if (conf.brand) {
 			const brand_nick = nicked(conf.brand)
 			const brand_id = await db.col('SELECT brand_id FROM showcase_brands WHERE brand_nick = :brand_nick', {brand_nick})
 			if (!brand_id) return false
 		}
+		
 
 		const catalogprop = await upload.receiveProp(conf.catalogprop)
 		if (catalogprop.type == 'text') return false //Соединение только по типу value или number
@@ -484,12 +503,61 @@ export class Upload {
 		duration = Date.now() - duration
 		return { omissions, count, quantity, duration, loadtime:Date.now(), loaded:1 }
 	}
+	async applyall() {
+		const { upload, visitor, db, config } = this.opt
+		let tables = 0
+		let counttables = 0
+		await (async () => {
+			const files = await upload.getNewTables()
+			counttables = files.length
+			await Promise.all(files.map(async of => {
+				const { quantity = 0 } = await upload.loadTable(of.name)
+				tables += quantity
+			}))
+		})()
+		let res
+		if (counttables) {
+			let prices = 0
+			let countprices = 0
+			await (async () => {
+				const files = await upload.getAllPrices()
+				countprices = files.length
+				await Promise.all(files.map(async of => {
+					const { quantity = 0 } = await upload.loadPrice(of.name)
+					prices += quantity
+				}))
+			})()
+			const {doublepath, count:files} = await upload.loadAllFiles()
+			res = { tables, prices, files }
+			res.msg = `Внесено из таблиц(${counttables}) ${tables}, прайсы принудительно внесены все(${countprices}) ${prices}, файлов ${files}`
+		} else {
+			let prices = 0
+			let countprices = 0
+			await (async () => {
+				const files = await upload.getNewPrices()
+				countprices = files.length
+				await Promise.all(files.map(async of => {
+					const { quantity = 0 } = await upload.loadPrice(of.name)
+					prices += quantity
+				}))
+			})()
+			const {doublepath, count:files} = await upload.loadAllFiles()
+			res = { tables, prices, files }
+			if (countprices) {
+				res.msg = `Таблицы без изменений, внесено из прайсов(${countprices}) ${prices}, файлов ${files}`
+			} else {
+				res.msg = `В данных изменния не обнаружены, файлов привязано ${files}`
+			}
+			
+		}
+		
+		return res
+	}
 	async loadAllFiles() {
-		const { visitor, db, config } = this.opt
+		const { upload, visitor, db, config } = this.opt
 		const parts = {}
 		const doublepath = []
 		let part, count = 0
-		const upload = this
 		
 		
 		part = 'groupicons'
@@ -743,12 +811,12 @@ export class Upload {
 		const upload = this
 		const oldcost = await upload.receiveProp('Старая цена')
 		const cost = await upload.receiveProp('Цена')
-		const dir = config.tables
+		const dir = config['tables']
 		const file = await Files.getFileName(visitor, dir, name, ['xlsx'])
 		if (!file) return false
 
 		
-		const {groups, models, sheets, brands} = await Excel.loadTable(dir + file, name)
+		const {groups, models, sheets, brands} = await Excel.loadTable(visitor, dir + file, name)
 		const values = {}
 		const props = {}
 		const table_title = name

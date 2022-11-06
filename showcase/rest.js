@@ -60,6 +60,13 @@ meta.addArgument('before_id', ['int'])
 meta.addArgument('after_id', ['int'])
 meta.addArgument('id', ['int'])
 
+meta.addArgument('go', (view, e) => e || false) //Ссылка куда перейти. Как есть попадает в заголовок Location 301
+/*
+response.writeHead(301, {
+  Location: `go`
+}).end();
+*/
+
 meta.addVariable('start', async view => {
 	const { db } = await view.gets(['db'])
 	await db.start()
@@ -80,8 +87,8 @@ export const rest = async (query, get, visitor) => {
 		Access.setAccessTime()
 	}
 	if (typeof(ans) == 'string') return { ans, status: 200, nostore:true, ext: 'html' }
-	const { status = 200, nostore = false } = ans
+	const { status = 200, nostore = false, headers } = ans
 	delete ans.status
 	delete ans.nostore	
-	return { ans, status, nostore, ext: 'json' }
+	return { ans, status, nostore, ext: 'json', headers }
 }

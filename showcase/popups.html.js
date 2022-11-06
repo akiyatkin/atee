@@ -33,13 +33,14 @@ export const set_applyall = (ans) => `
 	<h1>Все изменения применены</h1>
 	`+ (checherror(ans) || `
 		<p>
-			Загружены данные, прайсы, файлы
+			${ans.msg}
 		</p>
+		<blockquote>Быстрая ссылка для внесения новых данных<br><a href="/-showcase/load">${location.host}/-showcase/load</a></blockquote>
 	`)
 
 const checherror = (ans) => ans.result ? '' : `
-	<p>
-		Ошибка ${ans.msg}
+	<p style="background-color: #ffdddd; padding:1rem">
+		${ans.msg}
 	</p>
 `
 export const msg = (ans) => `
@@ -59,7 +60,7 @@ export const set_prices_load = (ans, {div}) => `
 			font-size:12px
 		}
 		#${div} table td {
-			max-width: 80px;
+			max-width: 140px;
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
@@ -73,18 +74,18 @@ export const set_prices_load = (ans, {div}) => `
 		${run(ans.row.omissions, excellist).join('')}
 	`)
 const excellist = (data, key) => `
-	<h3>${key}</h3>
+	<h3>Лист: ${key}</h3>
 	<h4>Строки без связи</h4>
 	<table>
 		<tr><th>${data.head_titles.join('</th><th>')}</th></tr>
 		${data.notconnected.map(table).join('')}
 	</table>
-	<h4>Строки без совпадений</h4>
+	<h4>Связь есть, а совпадений нет</h4>
 	<table>
 		<tr><th>${data.head_titles.join('</th><th>')}</th></tr>
 		${data.notfinded.map(table).join('')}
 	</table>
-	<h4>Строки без изменений</h4>
+	<h4>Связь есть, совпадения есть, а менять нечего</h4>
 	
 	${run(data.emptyprops,(rows, name) => showprops(rows,name,data)).join('')}
 	

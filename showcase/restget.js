@@ -1,8 +1,9 @@
 import { Access } from "/-controller/Access.js"
 import { Files } from "/-showcase/Files.js"
-import { nicked } from '/-nicked/nicked.js'
-import { filter } from '/-nicked/filter.js'
+import nicked from '/-nicked/nicked.js'
+import filter from '/-nicked/filter.js'
 import fs from "fs/promises"
+import xlsx from "/-xlsx/xlsx.js"
 
 export const restget = (meta) => {
 	meta.addAction('get-settings', async view => {
@@ -75,6 +76,7 @@ export const restget = (meta) => {
 			const stat = await fs.stat(dir + of.file)
 			of.size = Math.round(stat.size / 1024 / 1024 * 100) / 100
 			of.mtime = new Date(stat.mtime).getTime()
+			xlsx.cache(visitor, dir + of.file)
 		}))
 
 		const rows = await db.all(`
@@ -115,6 +117,7 @@ export const restget = (meta) => {
 			const stat = await fs.stat(dir + of.file)
 			of.size = Math.round(stat.size / 1024 / 1024 * 100) / 100
 			of.mtime = new Date(stat.mtime).getTime()
+			xlsx.cache(visitor, dir + of.file)
 		}))
 
 		const rows = await db.all(`

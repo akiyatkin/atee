@@ -1,38 +1,34 @@
 import { Dabudi } from '/-dabudi/Dabudi.js'
-import { nicked } from "/-nicked/nicked.js"
+import nicked from "/-nicked/nicked.js"
 
-import { createRequire } from "module"
-const require = createRequire(import.meta.url)
-const readXlsxFile = require('read-excel-file/node')
-const { readSheetNames } = require('read-excel-file/node')
+import xlsx from "/-xlsx/xlsx.js"
 
+// import { createRequire } from "module"
+// const require = createRequire(import.meta.url)
+// const readXlsxFile = require('read-excel-file/node')
+// const { readSheetNames } = require('read-excel-file/node')
+const onicked = str => {
+	if (onicked[str]) return onicked[str]
+	onicked[str] = nicked(str)
+	return onicked[str]
+}
 export const Excel = {
-	loadPrice: async (src, {start = 0, starts = {}}) => {
-		const listsheets = await readSheetNames(src)
-		const onicked = str => {
-			if (onicked[str]) return onicked[str]
-			onicked[str] = nicked(str)
-			return onicked[str]
-		}
+	loadPrice: async (visitor, src, {start = 0, starts = {}}) => {
+		const listsheets = await xlsx.read(visitor, src)
 		const sheets = []
 		for (const sheet of listsheets) {
-			let rows_source = await readXlsxFile(src, { sheet })
-			rows_source.slice(starts[sheet] ?? start)
+			if (sheet.name[0] == '.') continue
+			let rows_source = sheet.data
+			rows_source.slice(starts[sheet.name] ?? start)
 			const {descr, rows_table} = Dabudi.splitDescr(rows_source)
 			const {heads, rows_body} = Dabudi.splitHead(rows_table)
 			const rows_items = rows_body.filter(row => row.filter(cel => cel).length)
-			sheets.push({ sheet, descr, heads, rows:rows_items})
+			sheets.push({ sheet: sheet.name, descr, heads, rows:rows_items})
 		}
-		
-		return {sheets}
+		return { sheets }
 	},
-	loadTable: async (src, brand) => {
-		const listsheets = await readSheetNames(src)
-		const onicked = str => {
-			if (onicked[str]) return onicked[str]
-			onicked[str] = nicked(str)
-			return onicked[str]
-		}
+	loadTable: async (visitor, src, brand) => {
+		const listsheets = await xlsx.read(visitor, src)
 		const models = {}
 		const group_nick = nicked('Каталог')
 		const groups = {}
@@ -46,8 +42,8 @@ export const Excel = {
 		const sheets = {}
 		const brands = {}
 		for (const sheet of listsheets) {
-			if (sheet[0] == '.') continue
-			const rows_source = await readXlsxFile(src, { sheet })
+			if (sheet.name[0] == '.') continue
+			const rows_source = sheet.data
 			const {descr, rows_table} = Dabudi.splitDescr(rows_source)
 			const {heads, rows_body} = Dabudi.splitHead(rows_table)
 			
@@ -61,7 +57,7 @@ export const Excel = {
 			indexes.sheet_row = Dabudi.getColIndex(heads, 'sheet_row')
 			indexes.sheet_title = Dabudi.getColIndex(heads, 'sheet_title') //Обязательно последний
 
-			sheets[sheet] = { descr, heads, indexes }
+			sheets[sheet.name] = { descr, heads, indexes }
 
 			
 			let {rows_items} = Dabudi.splitGroups(rows_body, heads, root, indexes.group_nick, groups)
@@ -81,7 +77,7 @@ export const Excel = {
 				row[indexes.brand_nick] = nicked(row[indexes.brand_title])
 				row[indexes.model_nick] = onicked(row[indexes.model_title])
 				row[indexes.sheet_row] = i + 1
-				row[indexes.sheet_title] = sheet
+				row[indexes.sheet_title] = sheet.name
 				brands[row[indexes.brand_nick]] = { brand_title:row[indexes.brand_title], brand_nick:row[indexes.brand_nick] }
 			})
 			rows_items.forEach(row => {

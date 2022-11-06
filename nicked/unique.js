@@ -5,3 +5,4 @@ export const unique = ar => {
     }
     return a
 }
+export default unique

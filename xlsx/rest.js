@@ -1,6 +1,6 @@
-import { Meta } from "/-controller/Meta.js"
+import Meta from "/-controller/Meta.js"
 export const meta = new Meta()
-import readxlsx from '/-readxlsx/readxlsx.js'
+import xlsx from '/-xlsx/xlsx.js'
 
 
 meta.addArgument('src', async (view, src) => {
@@ -9,11 +9,10 @@ meta.addArgument('src', async (view, src) => {
 	return src
 })
 meta.addFunction('isset', (view, v) => v !== null)
-meta.addArgument('re',['isset'])
 meta.addArgument('visitor')
 meta.addAction('get-sheets', async view => {
 	const { src, visitor } = await view.gets(['src','visitor'])
-	const data = await readxlsx(visitor, src)
+	const data = await xlsx.read(visitor, src)
 	view.ans.data = data
 	return view.ret()
 })

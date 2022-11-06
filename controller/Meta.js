@@ -225,3 +225,4 @@ export class Meta {
 		opt['required'] = false
 	}
 }
+export default Meta
