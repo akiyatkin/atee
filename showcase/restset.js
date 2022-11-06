@@ -314,7 +314,7 @@ export const restset = (meta) => {
 	})
 
 	//Для ручного перехода, при сохранении ссылки
-	meta.addAction('load', async view => {
+	meta.addAction('set-load', async view => {
 		await view.gets(['start'])
 		const { upload } = await view.gets(['upload'])
 		const res = await upload.applyall()

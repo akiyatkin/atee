@@ -35,7 +35,7 @@ export const set_applyall = (ans) => `
 		<p>
 			${ans.msg}
 		</p>
-		<blockquote>Быстрая ссылка для внесения новых данных<br><a href="/-showcase/load">${location.host}/-showcase/load</a></blockquote>
+		<blockquote>Быстрая ссылка для внесения новых данных<br><a href="/-showcase/set-load">${location.host}/-showcase/set-load</a></blockquote>
 	`)
 
 const checherror = (ans) => ans.result ? '' : `
