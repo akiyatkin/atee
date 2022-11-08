@@ -1,6 +1,6 @@
 import Meta from "/-controller/Meta.js"
 export const meta = new Meta()
-import xlsx from '/-xlsx/xlsx.js'
+import xlsx from '/-xlsx'
 
 
 meta.addArgument('src', async (view, src) => {

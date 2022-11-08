@@ -3,7 +3,7 @@ import { Files } from "/-showcase/Files.js"
 import nicked from '/-nicked/nicked.js'
 import filter from '/-nicked/filter.js'
 import fs from "fs/promises"
-import xlsx from "/-xlsx/xlsx.js"
+import xlsx from "@atee/xlsx"
 
 export const restget = (meta) => {
 	meta.addAction('get-settings', async view => {

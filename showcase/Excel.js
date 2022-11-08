@@ -1,7 +1,7 @@
 import { Dabudi } from '/-dabudi/Dabudi.js'
 import nicked from "/-nicked/nicked.js"
 
-import xlsx from "/-xlsx/xlsx.js"
+import xlsx from "@atee/xlsx"
 
 // import { createRequire } from "module"
 // const require = createRequire(import.meta.url)
