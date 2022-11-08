@@ -44,7 +44,7 @@ meta.addAction('get-yandex', async view => {
 	const data = {}
 	data.groups = await yml.groups()
 	poss.forEach(pos => {
-		if (pos.images) pos.images = pos.images.map(src => host + encodeURI(src));
+		if (pos.images) pos.images = pos.images.map(src => 'https://' + host + '/' + encodeURI(src));
 		['Описание', 'Наименование', 'model_title'].forEach(name => pos[name] = tostr(pos[name]))
 		if (pos.more) for (const name in pos.more) pos.more[name] = tostr(pos.more[name])
 	})

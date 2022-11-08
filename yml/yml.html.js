@@ -25,7 +25,7 @@ yml.category = (group) => `
  		
 yml.pos = (pos, env) => `
  	<offer type="vendor.model" id="${pos.model_id}" available="true">
-		<url>${env.host}/catalog/${pos.brand_nick}/${pos.model_nick}</url>
+		<url>https://${env.host}/catalog/${pos.brand_nick}/${pos.model_nick}</url>
 		<model>${pos.Наименование}</model>
 		<price>${pos.Цена}</price>
 		<currencyId>RUB</currencyId>
