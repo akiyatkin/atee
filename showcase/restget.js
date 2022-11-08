@@ -207,7 +207,7 @@ export const restget = (meta) => {
 				item.more[prop_title].value = item.more[prop_title].value.join(', ')
 			}
 		})
-		const more = {...model.items[0].more}
+		const more = {...model.items[0]?.more}
 		model.items.forEach(item => {
 			for (const prop_title in item.more) {
 				if (more[prop_title]?.value == item.more[prop_title].value) continue

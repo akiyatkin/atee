@@ -3,7 +3,7 @@ import path from 'path'
 import { readFile, utimes } from "fs/promises"
 import { Meta } from "./Meta.js"
 import Bread from '/-controller/Bread.js'
-import { loadJSON, router } from './router.js'
+import { router } from './router.js'
 import { Access } from '/-controller/Access.js'
 import { Once } from './Once.js'
 import Layers from '/-controller/Layers.js'

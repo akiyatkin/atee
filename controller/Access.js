@@ -1,10 +1,15 @@
 import fs from 'fs/promises'
+import cproc from '@atee/cproc'
+import config from '@atee/config'
 
+import times from '@atee/controller/times.js'
+
+const CONF = await config('controller')
 const STORE = {}
 export const Access = {
-	isAdmin: async (cookie) => {
+	isAdmin: (cookie) => {
 		try {
-			const {default:{access:PASS}} = await import('/data/.controller.json', {assert: {type: "json"}})
+			const { access:PASS } = CONF
 			if (cookie === PASS) return true
 			let pass = cookie.match('(^|;)?\-controller=([^;]*)(;|$)')
 			if (!pass) return false
@@ -21,26 +26,27 @@ export const Access = {
 		return STORE[name][hash]
 	},
 	setAccessTime: () => {
-		ACCESS_TIME = Date.now()
+		times.ACCESS_TIME = Date.now()
+		console.log('new access time', Date())
 		for (const i in STORE) delete STORE[i]
 	},
-	getAccessTime: () => ACCESS_TIME,
-	getUpdateTime: () => UPDATE_TIME,
+	getAccessTime: () => times.ACCESS_TIME,
+	getUpdateTime: () => times.UPDATE_TIME,
 
 	map: new Map(), //Кэшировать стоит то что может повториться в рамках сборки контроллера иначе бессмыслено
 	relate: (obj, fn) => {
 		if (Access.map.has(obj)) return Access.map.get(obj)
 		const res = {}
-		res.once = (name, fn) => {
+		res.once = (name, fn) => cproc(res, name, () => {
 			if (res[name]) return res[name].result
 			res[name] = {}
 			res[name].result = fn()
 			return res[name].result
-		}
+		})
 		Access.map.set(obj, res)
 		return res
 	},
-	cache: fn => {
+	cache: fn => { //depricated
 		fn.store = {}
 		return (...args) => {
 			const hash = JSON.stringify(args)
@@ -81,5 +87,4 @@ export const Access = {
 		}
 	}
 }
-const UPDATE_TIME = Date.now()
-let ACCESS_TIME = Date.now()
+export default Access

@@ -1,0 +1,13 @@
+{
+	"name":"",
+	"company":"",
+	"feeds":{
+		"main":{
+			"more": {
+				"cena": {
+					"from": 0
+				}
+			}
+		}
+	}
+}

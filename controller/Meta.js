@@ -105,6 +105,12 @@ export class View {
 		if (msg) view.ans.msg = msg
 		throw new ViewException(msg);
 	}
+	fail (ext = {}) {
+		ext.result = 0
+        const view = this
+    	Object.assign(view.ans, ext)
+		throw new ViewException(view.ans.msg);
+	}
     ret (msg) {
         const view = this
         view.ans.result = 1

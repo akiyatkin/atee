@@ -78,6 +78,7 @@ const getRoot = (str) => {
 	return ~i ? str.slice(1, i) : ''
 }
 
+//Подходит только если json нужен через rest.js
 export const loadJSON = (src, visitor) => {
 	return load(src, visitor, 'json')
 }
@@ -139,7 +140,7 @@ export const router = async (search) => {
 		if (src) { //найден файл
 			if (ext == 'json') { //json файлы возвращаются объектом, //с хранением в оперативной памяти
 				rest = async () => {
-					const { default: ans } = await import(search, {assert: { type: "json" }})
+					const ans = await import(search, {assert: { type: "json" }}).then(r => r.default)
 					return { ans, ext }
 				}
 			} else { //файлы передаются стримом

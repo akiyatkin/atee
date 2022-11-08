@@ -89,8 +89,8 @@ filters.props = {
 						border: 1px solid rgba(0,0,0,0.1);
 						margin-left: 4px;
 						border-radius: var(--radius);
-						min-width: 8ch;
-						width:${String(filter.max).length + 2}ch;
+						min-width: 6ch;
+						width: ${String(filter.max).length + 2.2}ch;
 						padding:0 1ch;
 					" class="valueplace" type="text" value="${sliderval(data, filter)}">
 					<script>

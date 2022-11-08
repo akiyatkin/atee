@@ -89,6 +89,7 @@ export const rest = async (query, get, visitor) => {
 	if (typeof(ans) == 'string') return { ans, status: 200, nostore:true, ext: 'html' }
 	const { status = 200, nostore = false, headers } = ans
 	delete ans.status
-	delete ans.nostore	
+	delete ans.nostore
+	delete ans.headers
 	return { ans, status, nostore, ext: 'json', headers }
 }

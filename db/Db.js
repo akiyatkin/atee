@@ -1,15 +1,14 @@
 import { createRequire } from "module"
+import config from "@atee/config"
 const require = createRequire(import.meta.url)
 const mysql = require('mysql2/promise')
 
 let pool = false
 let conf = false
 
-
-const OPTIONS = await import('/data/.db.json', {assert: {type: "json"}}).then(r => r.default).catch(e => Object())
+const CONF = await config('db')
 	
-
-if (OPTIONS.config) {
+if (CONF.config) {
 	// multipleStatements: true,
 	const DEF = {
 		namedPlaceholders: true,
@@ -22,7 +21,7 @@ if (OPTIONS.config) {
 	}
 	const db = await mysql.createConnection({
 		...DEF,
-		...OPTIONS.config
+		...CONF.config
 	}).catch(e => console.log(e))
 	if (db) {
 
@@ -35,7 +34,7 @@ if (OPTIONS.config) {
 		conf = {
 			...DEF, 
 			connectionLimit,
-			...OPTIONS.config
+			...CONF.config
 		}
 		pool = mysql.createPool(conf)
 	}
@@ -125,12 +124,5 @@ export class Db {
 	async query(sql, values) { //for client
 		const [rows, fields] = await this.db.query({ sql, values })
 		return rows.changedRows
-	}
-	
+	}	
 }
-// export const Db = {
-// 	getConnection: () => {
-// 		if (!pool) return false
-// 		return pool.getConnection()
-// 	}
-// }

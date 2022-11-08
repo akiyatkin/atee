@@ -31,9 +31,9 @@ const checkAccessMark = (src) => {
     //./data
 }
 const checkfromroot = async (path, context, defaultResolve) => {
-    const { Access } = await import('@atee/controller/Access.js')
     if (isExt(path) && path.indexOf('./data/') === 0) {
-        path = path + (~path.indexOf('?') ? '&' : '?') + 't=' + Access.getAccessTime()
+        const times = await import('@atee/controller/times.js').then(r => r.default)
+        path = path + (~path.indexOf('?') ? '&' : '?') + 't=' + times.ACCESS_TIME
     }
     const res = defaultResolve(path, {
         ...context,

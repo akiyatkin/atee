@@ -14,10 +14,10 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 	</body>
 </html>
 `
-export const HEADER = (data, {root, host}) => `
+export const HEADER = (data, env) => `
 	<div style="display: flex; justify-content: space-between;">
-		<a href="/${root}">Controller</a>
-		<a href="/">${host}</a>
+		<a href="/${env.bread.root}">Controller</a>
+		<a href="/">${env.host}</a>
 	</div>
 `
 

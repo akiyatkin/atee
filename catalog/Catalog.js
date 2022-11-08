@@ -5,6 +5,7 @@ import { unique } from "/-nicked/unique.js"
 import { filter } from "/-nicked/filter.js"
 
 export const Catalog = {}
+export default Catalog
 
 Catalog.getModelsByItems = async (db, moditems_ids, partner) => { //[{item_nums after group_concats, model_id}]
 	//Заполнили основными данными
@@ -745,7 +746,7 @@ Catalog.getmdwhere = (db, visitor, md) => {
 						if (~['upto','from'].indexOf(name)) {
 							value = values[name]
 						}
-						value = value.replace('-','.')
+						if (typeof(value) == 'string') value = value.replace('-','.')
 						const value_nick = Number(value)
 
 						if (~['upto','from'].indexOf(name)) {

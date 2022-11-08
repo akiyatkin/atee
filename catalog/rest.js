@@ -454,9 +454,7 @@ meta.addAction('get-search-list', async (view) => {
 	//const {title, group_ids} = Catalog.searchGroups(db, visitor, md)
 	const {from, where, sort} = await Catalog.getmdwhere(db, visitor, md)
 	const group = await Catalog.getMainGroup(md)
-	if (!group) {
-		return view.err('Нет данных')
-	}
+	if (!group) return view.err('Нет данных')
 	const option = await Catalog.getOptions()
 	const opt = await Catalog.getGroupOpt(group.group_id)
 	view.ans.limit = option.limit
