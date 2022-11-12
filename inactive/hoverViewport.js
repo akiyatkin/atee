@@ -33,5 +33,5 @@ const hoverViewport = (el, over, out) => {
 		handler()
 	})
 }
-
+export default hoverViewport
 export { hoverViewport }

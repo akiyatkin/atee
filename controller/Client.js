@@ -233,7 +233,9 @@ const applyCrossing = async () => {
 		for (const layer of json.layers) {
 			const elements = layer.sys.template.content
 			layer.sys.div.replaceChildren(elements)
-			const promise = evalScripts(layer.sys.div)
+			waitClient.stack.push(evalScripts(layer.sys.div))
+			const promise = Promise.all(waitClient.stack)
+			waitClient.stack = []
 			promise.then(() => layer.sys.execute.resolve()).catch(e => null) //Покажется когда выполнятся скрипты
 			scripts.push(promise)
 		}

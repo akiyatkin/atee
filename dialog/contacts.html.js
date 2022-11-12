@@ -31,8 +31,7 @@ cont.CALLBACK = (data, env, {layer:{div}} = env) => `
 			document.body.append(popup_error)
 			
 			
-			const { Autosave } = await import("/-form/Autosave.js")
-			await Autosave.init(form)
+			import("/-form/Autosave.js").then(({ Autosave }) => Autosave.init(form))
 			
 			//await new Promise(resolve => setTimeout(resolve, 50))
 			const SITEKEY = "${data.SITEKEY}"
@@ -104,7 +103,7 @@ cont.CALLBACK = (data, env, {layer:{div}} = env) => `
 				} finally {
 					setTimeout(() => button.disabled = false, 1000);
 				}
-			})		
+			})
 		</script>
 	</div>
 `

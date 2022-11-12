@@ -1,19 +1,18 @@
 const map = new Map()
-const cproc = async (obj, key, fn) => {
-	if (!map.has(obj)) map.set(obj, new Map())
-	const store = map.get(obj)
-	if (store.has(key)) return store.get(key)
-	const promise = fn()
-	store.set(key, promise)
-	await promise
-	store.delete(key)
-	if (!store.size) map.delete(obj)
-	return promise
-}
 /*
-	//параллельного асинхронное выполнение исключается, результат общий первый
-	cproc(obj, key, () => {
-	
-	})
+	Последовательное выполнение функций с замещением на группу
 */
+const cproc = (obj, key, fn, group = '') => {
+	if (!map.has(obj)) map.set(obj, {})
+	const store = map.get(obj)
+	if (!store.hasOwn(key)) store[key] = {}
+	if (store[key].hasOwn(group)) return Promise.all(Object.values(store[key]))
+	const promise = new Promise(resolve => resolve(fn(group))).then(() => {
+		delete store[key][group]
+		if (!Object.keys(store[key]).length) delete store[key]
+		if (!Object.keys(store).length) map.delete(obj)	
+	})
+	store[key][group] = promise
+	return Promise.all(Object.values(store[key]))
+}
 export default cproc

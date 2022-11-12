@@ -154,5 +154,5 @@ const Autosave = {
 		return Promise.all(Autosave.proc).then(() => Autosave.proc = [])
 	}
 }
-
+export default Autosave
 export { Autosave }

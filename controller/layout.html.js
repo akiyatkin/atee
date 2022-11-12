@@ -7,7 +7,7 @@ controller.HEAD = (data, env) =>
 		<base href="${env.crumb == '/' ? '/' : env.crumb + '/'}">
 		<link rel="stylesheet" href="/-notreset/style.css">
 
-		<script type="module">//Делаем SPA переходы
+		<script>//Делаем SPA переходы
 			const isSuitable = a => {
 				const search = a.getAttribute('href')
 				if (search == null) return
@@ -25,6 +25,9 @@ controller.HEAD = (data, env) =>
 			const popstate = event => {
 				getClient().then(Client => Client.popstate(event))
 			}
+			window.waitClient = promise => waitClient.stack.push(promise)
+			window.waitClient.stack = []
+			
 			window.getClient = () => {
 				const promise = new Promise((resolve, reject) => {
 					window.removeEventListener('popstate', popstate)

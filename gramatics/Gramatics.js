@@ -30,3 +30,4 @@ export const Gramatics = {
 		})
 	}
 }
+export default Gramatics

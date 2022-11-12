@@ -91,5 +91,5 @@ const UTM = {
 		})
 	}).catch(() => null)
 }
-
+export default UTM
 export { UTM }
