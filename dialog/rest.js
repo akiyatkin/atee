@@ -1,11 +1,10 @@
 import { Meta } from "/-controller/Meta.js"
 import { UTM } from '/-form/UTM.js'
 import mailtpl from '/-dialog/mail.html.js'
+import mail from '/-mail'
+import config from '/-config'
 
-import recdata from '/data/.recaptcha.json' assert {type: "json"}
-const SECRET = recdata.secret
-const SITEKEY = recdata.sitekey
-
+const conf = await config('recaptcha')
 
 export const meta = new Meta()
 meta.addArgument('g-recaptcha-response')
@@ -17,7 +16,7 @@ meta.addVariable('recaptcha', async (view) => {
         method: 'POST',
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
-            'secret': SECRET, 
+            'secret': conf.secret, 
             'response': gresponse,
             'remoteip': ip
         })
@@ -56,15 +55,15 @@ meta.addAction('set-contacts', async (view) => {
     user.host = visitor.client.host
     user.ip = visitor.client.ip
     const html = mailtpl.CALLBACK(user)
-    const { Mail } = await import('/-mail/Mail.js')
-    const r = await Mail.toAdmin(`Заказ звонка ${user.host} ${user.phone}`, html)
+    
+    const r = await mail.toAdmin(`Заказ звонка ${user.host} ${user.phone}`, html)
     if (!r) return view.err('Сообщение не отправлено из-за ошибки на сервере')
 	return view.ret()
 })
 
 
 meta.addAction('get-contacts', (view) => {
-	view.ans.SITEKEY = SITEKEY
+	view.ans.SITEKEY = conf.sitekey
 	return view.ret()
 })
 

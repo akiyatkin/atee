@@ -5,7 +5,6 @@ document.body.append(popup_error)
 const forms = new WeakSet()
 let addinputs = async (form) => {
 	if (forms.has(form)) return
-
 	forms.add(form)
 	const utms = document.createElement("input")
 	utms.type = "hidden"
@@ -29,6 +28,11 @@ let addinputs = async (form) => {
 		s.src = src
 		document.head.append(s)
 	})
+	
+}
+const recaptcha = async form => {
+	const captha = document.forms[0].elements["g-recaptcha-response"]
+	const conf = await import('/-config/get?name=recaptcha',{assert:{type:'json'}}).then(r => r.default.conf)
 	captha.value = await grecaptcha.execute(conf.sitekey, { action: 'dialog' })	
 }
 
@@ -41,14 +45,19 @@ let globalonceafter = async () => {
 }
 
 export default async (form, submit, goal = 'contacts') => {
-	for (const inp of form.elements) inp.disabled = true
+	for (const inp of form.elements) if (inp.tagName == 'button') inp.disabled = true
 	await addinputs(form)
+	await recaptcha()
+	const body = new URLSearchParams(new FormData(form))
+	for (const inp of form.elements) inp.disabled = true
 	const response = await fetch(submit, {
 		method: 'POST',
 		headers: { "Content-Type": "application/x-www-form-urlencoded" },
-		body: new URLSearchParams(new FormData(form))
+		body
 	}).catch(e => console.error(e))
 	await globalonceafter()
+	
+
 	const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 	const error_msg = popup_error.getElementsByClassName('msg')[0]
 	try {

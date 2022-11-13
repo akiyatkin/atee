@@ -5,8 +5,8 @@ const map = new Map()
 const cproc = (obj, key, fn, group = '') => {
 	if (!map.has(obj)) map.set(obj, {})
 	const store = map.get(obj)
-	if (!store.hasOwn(key)) store[key] = {}
-	if (store[key].hasOwn(group)) return Promise.all(Object.values(store[key]))
+	if (!Object.hasOwn(store, key)) store[key] = {}
+	if (Object.hasOwn(store[key], group)) return Promise.all(Object.values(store[key]))
 	const promise = new Promise(resolve => resolve(fn(group))).then(() => {
 		delete store[key][group]
 		if (!Object.keys(store[key]).length) delete store[key]

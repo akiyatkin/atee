@@ -17,7 +17,7 @@ export const getPost = (request, limit = 1e7) => {
                 }
             });
             request.on('end', () => {
-                const formData = parse(requestBody,'&');
+                const formData = parse(requestBody,'&')
                 resolve(formData)
             });
         } else {

@@ -13,6 +13,7 @@ import { parse } from '/-controller/Spliter.js'
 import { map } from '/-nicked/map.js'
 import { UTM } from '/-form/UTM.js'
 import { loadTEXT } from '/-controller/router.js'
+import mail from '/-mail'
 
 const recdata = await import('/data/.recaptcha.json', {assert: {type:'json'}}).then(res => res.default).catch(e => Object())
 const SECRET = recdata.secret
@@ -662,8 +663,8 @@ meta.addAction('set-order', async (view) => {
     user.model = await Catalog.getModelByNick(db, visitor, user.brand_nick, user.model_nick, user.partner)
     const html = MAIL(user)
     
-    const { Mail } = await import('/-mail/Mail.js')
-    const r = await Mail.toAdmin(`Заявка ${user.host} ${user.email}`, html, user.email)
+    
+    const r = await mail.toAdmin(`Заявка ${user.host} ${user.email}`, html, user.email)
     if (!r) return view.err('Сообщение не отправлено из-за ошибки на сервере')
 
 

@@ -10,12 +10,7 @@ import { createRequire } from "module"
 const require = createRequire(import.meta.url)
 const sharp = require('sharp')
 
-
-const mkdir = async (dir) => {
-	if (await fs.access(dir).then(e => true).catch(e => false)) return
-	await fs.mkdir(dir, { recursive: true })
-}
-await mkdir('cache/imager/')
+await fs.mkdir('cache/imager/', { recursive: true }).catch(e => null)
 
 export const meta = new Meta()
 meta.addFunction('string', (view, n) => n || '')
