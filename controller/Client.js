@@ -30,19 +30,25 @@ export const Client = {
 			Client.popstate(event)
 		})
 	},
+	lastpop: Date.now(),	
 	popstate: (event) => {
-		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
+		const moment = Date.now()
+		if (Client.lastpop + 1000 * 2 < moment) { //Прошлый переход должен закончиться как 2 секунды.
+			//На практике назад может нажиматься несколько раз и соранится прокрутка до восстановления прошлого значения, тоесть собьётся
+			Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
+		}
+		Client.lastpop = moment
 		const search = Client.getSearch()
 		const promise = Client.crossing(search)
 		if (event.state?.view == Client.view) { //Вперёд
 			const { cursor } = event.state
 			Client.cursor = cursor
-			promise.then(() => window.scrollTo(...Client.history[Client.cursor].scroll)).catch(() => null)
 		} else {
 			Client.start--
 			Client.cursor = Client.start
-			history.replaceState({cursor:Client.cursor, view:Client.view}, null, search)
+			history.replaceState({cursor:Client.cursor, view:Client.view}, null, search)//Нужно сделать replace чтобы появился event.state
 		}
+		promise.then(() => window.scrollTo(...Client.history[Client.cursor].scroll)).catch(() => null)
 	},
 	click: (a) => {
 		const search = a.getAttribute('href')

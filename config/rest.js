@@ -13,7 +13,7 @@ meta.addAction('get-private', async view => {
 	view.ans.conf = conf
 	return view.ret()
 })
-meta.addAction('get-public', async view => {
+meta.addAction('get', async view => {
 	const { name } = await view.gets(['name'])
 	const conf = await config(name, true)
 	view.ans.conf = conf

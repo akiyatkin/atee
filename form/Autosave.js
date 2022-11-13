@@ -53,19 +53,15 @@ const Autosave = {
 	// },
 	//-----------
 	getVal: function (inp) {
-		if (inp.type == 'checkbox') {
-			return inp.checked
-		} else if (inp.type == 'radio') {
-			return inp.form.elements[inp.name].value
-		} else if (inp.tagName == 'SELECT') {
+		if (inp.type == 'checkbox') return inp.checked
+		if (inp.type == 'radio') return inp.form.elements[inp.name].value
+		if (inp.tagName == 'SELECT') {
 			let val = [...inp.options].filter(option => option.selected).map(option => option.value)
 			if (!inp.multiple) val = val[0]
 			return val
-		} else if (inp.classList.contains('autosaveblock')) {
-			return inp.innerHTML
-		} else {
-			return inp.value
 		}
+		if (inp.classList.contains('autosaveblock')) return inp.innerHTML
+		return inp.value
 	},
 	setVal: function (inp, valsave) {
 		if (inp.type == 'checkbox') {
