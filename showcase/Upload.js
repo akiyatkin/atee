@@ -815,7 +815,6 @@ export class Upload {
 		const file = await Files.getFileName(visitor, dir, name, ['xlsx'])
 		if (!file) return false
 
-		
 		const {groups, models, sheets, brands} = await Excel.loadTable(visitor, dir + file, name)
 		const values = {}
 		const props = {}
