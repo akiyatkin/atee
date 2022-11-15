@@ -12,6 +12,7 @@ export const xlsx = {
 	cache: (visitor, src) => visitor.relate(xlsx).once(src, () => cproc(xlsx, src, async () => {
 		const cachename = nicked(src)
 		const cachesrc = dir + cachename + '.json'
+
 		const { mtime: mtimesrc } = await fs.stat(src).catch(e => false)
 		if (!mtimesrc) return false
 		const { mtime: mtimecache } = await fs.stat(cachesrc).catch(e => false)
@@ -23,8 +24,9 @@ export const xlsx = {
 	})),
 	read: async (visitor, src) => {
 		const cachesrc = await xlsx.cache(visitor, src)
-		const ans = await readJSON(cachesrc, visitor)
-		return cachesrc ? ans.data : false
+		if (!cachesrc) return false
+		const ans = await readJSON(cachesrc)
+		return ans
 	}
 }
 export default xlsx
