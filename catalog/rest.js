@@ -13,7 +13,9 @@ import { parse } from '/-controller/Spliter.js'
 import { map } from '/-nicked/map.js'
 import { UTM } from '/-form/UTM.js'
 import { loadTEXT } from '/-controller/router.js'
-import mail from '/-mail'
+
+import mail from '@atee/mail'
+import config from '@atee/config'
 
 const recdata = await import('/data/.recaptcha.json', {assert: {type:'json'}}).then(res => res.default).catch(e => Object())
 const SECRET = recdata.secret
@@ -269,9 +271,9 @@ meta.addAction('get-model-head', async (view) => {
 
 
 const getTpls = Access.cache(async () => {
-	const config = await Catalog.getConfig()
-	if (!config.tpls) return {}
-	let files = await fs.readdir(config.tpls).catch(() => [])
+	const conf = config('showcase')
+	if (!conf.tpls) return {}
+	let files = await fs.readdir(conf.tpls).catch(() => [])
 	files = files.map((file) => {
 		const i = file.indexOf('.')
 		const name = ~i ? file.slice(0, i) : file
@@ -305,7 +307,7 @@ meta.addAction('get-model', async (view) => {
 
 
 
-	const config = await Catalog.getConfig()
+	const conf = await config('showcase')
 	const tpls = await getTpls()
 	const path = await Catalog.getPathNickByGroupId(model.group_id)
 	path.reverse()
@@ -320,7 +322,7 @@ meta.addAction('get-model', async (view) => {
 		tpl = tpls[`model-${group_nick}`]
 		if (tpl) break
 	}
-	view.ans.tpl =  tpl ? '/' + config.tpls + tpl : "/-catalog/model.html.js"
+	view.ans.tpl =  tpl ? '/' + conf.tpls + tpl : "/-catalog/model.html.js"
 	
 
 	return view.ret()		
@@ -333,10 +335,8 @@ meta.addAction('get-filters', async (view) => {
 	const { db, md, partner, visitor} = await view.gets(['db','md','partner', 'visitor'])
 	const group = await Catalog.getMainGroup(md)
 	if (!group) return view.err('Нет данных')
-
 	const res = {}
 	const opt = await Catalog.getGroupOpt(group.group_id)
-	
 	const filters = []
 
 	if (md.more) for (const prop_nick in md.more) {

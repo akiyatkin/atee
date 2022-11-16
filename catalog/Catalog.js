@@ -3,6 +3,8 @@ import { Db } from "/-db/Db.js"
 import { nicked } from "/-nicked/nicked.js"
 import { unique } from "/-nicked/unique.js"
 import { filter } from "/-nicked/filter.js"
+import fs from 'fs/promises'
+import config from '@atee/config'
 
 export const Catalog = {}
 export default Catalog
@@ -215,15 +217,19 @@ Catalog.getModelsByItems = async (db, moditems_ids, partner) => { //[{item_nums 
 	list = ids.map(id => list.find(m => m.model_id == id))
 	return list
 }
-Catalog.getConfig = Access.cache(async () => {
-	const config = await import('/showcase.json', {assert:{type:"json"}}).then(res => res.default).catch(e => Object())
-	config.tpls ??= "data/catalog/tpls/"
-	return config
-})
-Catalog.getOptions = Access.cache(async () => {
-	const config = await Catalog.getConfig()
-	const { options } = await import('/'+config.options)
+
+// Catalog.getConfig = Access.cache(async () => {
+// 	const config = await import('/showcase.json', {assert:{type:"json"}}).then(res => res.default).catch(e => Object())
 	
+// 	return config
+// })
+
+
+const readJSON = async src => JSON.parse(await fs.readFile(src))
+
+Catalog.getOptions = Access.cache(async () => {
+	const conf = await config('showcase')
+	const options = await readJSON(conf.options)
 	options.groups ??= {}
 	options.limit ??= 10
 	options.groupids = {}
@@ -349,8 +355,9 @@ Catalog.getFilterConf = async (db, visitor, prop, group_id, md) => {
 	
 	if (prop.type == 'text') return false
 	const options = await Catalog.getOptions()
-	if (!options.props[prop.prop_title]?.filter) return false
-	const filter = {...options.props[prop.prop_title].filter, ...prop}
+	//if (!options.props[prop.prop_title]?.filter) return false
+	const filter = {...(options.props[prop.prop_title]?.filter || {}), ...prop}
+	filter.tpl ??= 'select'
 	if (filter.slider) {
 		if (prop.type != 'number') return false
 		const row = await db.fetch(`
@@ -401,6 +408,7 @@ Catalog.getFilterConf = async (db, visitor, prop, group_id, md) => {
 		`, {
 			prop_id
 		})
+
 	} else if (prop.type == 'number') {
 		filter.values = await db.all(`
 			SELECT distinct ip.number as value_nick
@@ -563,7 +571,7 @@ Catalog.getPropByNick = Access.cache(async (prop_nick) => {
 		db.release()
 	}
 	const options = await Catalog.getOptions()
-	prop.opt = options.props[prop.prop_title]
+	prop.opt = options.props[prop.prop_title] || {}
 	return prop
 })
 

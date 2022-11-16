@@ -485,6 +485,7 @@ export class Upload {
 				 	model_id = :model_id
 			`, {model_id, newsearch})
 		}
+		duration = Date.now() - duration
 		
 		await db.changedRows(`
 			UPDATE
@@ -500,7 +501,9 @@ export class Upload {
 			price_id:price.price_id,
 			quantity
 		})
-		duration = Date.now() - duration
+
+		
+
 		return { omissions, count, quantity, duration, loadtime:Date.now(), loaded:1 }
 	}
 	async applyall() {

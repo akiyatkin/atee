@@ -5,7 +5,9 @@ import { restset } from './restset.js'
 import { restget } from './restget.js'
 import { Upload } from "/-showcase/Upload.js"
 import { nicked } from '/-nicked/nicked.js'
-
+import config from '@atee/config'
+import fs from 'fs/promises'
+const readJSON = async src => JSON.parse(await fs.readFile(src))
 export const meta = new Meta()
 
 meta.addHandler('admin', async (view) => {
@@ -17,12 +19,12 @@ meta.addHandler('admin', async (view) => {
 	}
 })
 meta.addVariable('config', async view => {
-	const {default: config} = await import('/showcase.json', {assert:{type:"json"}})
-	return config
+	return config('showcase')
 })
 meta.addVariable('options', async view => {
-	const { config: {options: src} } = await view.gets(['config'])
-	const { options } = await import('/'+src)
+	const conf = await config('showcase')
+	const options = await readJSON(conf.options)
+
 	options.numbers ??= []
 	options.texts ??= []
 
@@ -35,7 +37,8 @@ meta.addVariable('options', async view => {
 })
 
 meta.addVariable('upload', async view => {	
-	const opt = await view.gets(['db','config','options', 'visitor'])
+	const opt = await view.gets(['db','options', 'visitor'])
+	opt.config = await config('showcase')
 	return new Upload(opt)
 })
 

@@ -1,9 +1,9 @@
-import { readFile } from 'fs/promises'
+import fs from 'fs/promises'
 import { pathToFileURL, fileURLToPath } from 'url'
 const webresolve = search => import.meta.resolve(search, pathToFileURL('./').href).then(src => fileURLToPath(src))
+const searchJSON = async src => JSON.parse(await fs.readFile(await webresolve(src)))
 const importJSON = src => import(src, {assert:{type:'json'}}).then(e => e.default)
-const searchJSON = async src => JSON.parse(await readFile(await webresolve(src)))
-const readJSON = async src => JSON.parse(await readFile(src))
+const readJSON = async src => JSON.parse(await fs.readFile(src))
 //router loadJSON отличается тем, что поддерживает rest.js обработки
 
 const store = {}

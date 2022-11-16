@@ -10,5 +10,6 @@
 	"groupicons":"data/catalog/groupicons/",
 	"brandlogos":"data/catalog/brandlogos/",
 	"grouptexts":"data/catalog/grouptexts/",
-	"options":"/data/catalog/.showcase.js"
+	"options":"data/catalog/.options.json",
+	"tpls": "data/catalog/tpls/"
 }
