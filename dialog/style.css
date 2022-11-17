@@ -22,19 +22,26 @@
 	pointer-events: auto;
 	opacity: 1;
 }
-
+.dialogframe {
+	--krestsize: 36px;
+}
 .dialogframe .dialogclose {
-	right: 0;
-	padding-right: 6px;
-    padding-left: 6px;
+	
 	display: inline-block;
-	top: 0;
+
 	opacity:  0.6;
+	margin-top:-0.4ch;
+	margin-right:-0.4ch;
+	right: 0.3rem;
+	top: 0.3rem;
 	cursor: pointer;
-	line-height: 36px;
-	height: 36px;
+	line-height: var(--krestsize);
+	height: var(--krestsize);
+	font-size: var(--krestsize);
+	width: var(--krestsize);
+	text-align:center;
 	overflow: hidden;
-	font-size: 36px;
+	
 	position: absolute;
 	transition: opacity 0.3s;
 	background-color: transparent;
