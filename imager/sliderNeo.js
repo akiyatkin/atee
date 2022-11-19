@@ -1,4 +1,3 @@
-
 await new Promise(resolve => {
 	const link = document.createElement('link')
 	link.rel = 'stylesheet'
@@ -10,68 +9,82 @@ await new Promise(resolve => {
 
 export default div => {
 	const cls = cls => div.getElementsByClassName(cls)
-	const el = cls('sliderNeo')[0] || div
+	const slider = cls('sliderNeo')[0] || div
+	const gap = parseInt(getComputedStyle(slider).rowGap) || 0
+	//const count = (child.offsetWidth + gap) / (slider.scrollWidth + gap)
 	const left = cls('left')[0]
 	const right = cls('right')[0]
-	const width = el.scrollWidth
-	const check = (scrollLeft = el.scrollLeft) => requestAnimationFrame(() => {
-		if (left) left.style.opacity = scrollLeft < 1 ? 0 : 1
-		if (right) right.style.opacity = length + scrollLeft >= width ? 0 : 1
-	})
-
-	const child = el.children[0]
+	const child = slider.children[0]
 	if (!child) return
-	const length = child.offsetWidth
+	const length = child.offsetWidth + gap
+	const width = slider.scrollWidth
+
+	//scrollWidth - полная ширина
+	//offsetWidth - видимая ширина
+	//scrollLeft - прокручено слева
+
+	const check = (scrollLeft = slider.scrollLeft) => requestAnimationFrame(() => {
+		if (left) left.style.opacity = scrollLeft < 1 ? 0 : 1
+		if (right) right.style.opacity = slider.offsetWidth + scrollLeft >= slider.scrollWidth ? 0 : 1
+	})
+	
+
 
 	let direction = true
 	const set = (newval) => {
 		check(newval)
-		el.style.scrollBehavior = "smooth";
-		el.scrollLeft = newval
-		el.style.scrollBehavior = "auto";
+		slider.style.scrollBehavior = "smooth";
+		slider.scrollLeft = newval
+		slider.style.scrollBehavior = "auto";
 	}
 	const prev = () => {
-		if (direction) return next()
-		
-		let len = (el.scrollLeft % length) || length
-		let newval = el.scrollLeft - len
-		if (newval < 0) {
+		const length = child.offsetWidth + gap
+		let len = length - ((slider.scrollLeft) % length)
+		if (len < length * 1 / 2) len = length - len
+		else len = 2 * length - len
+		let newval = slider.scrollLeft - len
+		if (newval <= 0) {
+			newval = 0
 			direction = true
-			return next()
 		}
 		set(newval)
 	}
 	const next = () => {
-		if (!direction) return prev()
-		if (!el.closest('body')) return clearInterval(timer)
-
-		let len = (((el.scrollWidth - length) - el.scrollLeft) % length)
-		
-		if (!len) len = length
-		
-
-		let newval = el.scrollLeft + len
-		if (newval > el.scrollWidth - length) {
+		const length = child.offsetWidth + gap
+		let len = ((slider.scrollWidth - slider.offsetWidth + slider.scrollLeft) % length)
+		/*
+			slider.scrollWidth = 1000
+			slider.offsetWidth = 200
+			slider.scrollLeft = 10
+			length || child.offsetWidth + gap = 100
+			let = 1000 - 200 + 10 % 100 = 810 % 100 = 10
+		*/
+		if (len < length * 1 / 2) len = length - len
+		else len = 2 * length - len
+		let newval = slider.scrollLeft + len
+		if (newval >= slider.scrollWidth - slider.offsetWidth) {
 			direction = false
-			return prev()
+			newval = slider.scrollWidth - slider.offsetWidth
 		}
 		set(newval)
 	}
+	const go = () => {
+		if (!slider.closest('body')) return clearInterval(timer)
+		return direction ? next() : prev()
+	}
+	
+	if (left) left.addEventListener('click', prev)
+	if (right) right.addEventListener('click', next)
 
-	const timer = setInterval(next, 5000)
-	setTimeout(next, 1000)
+	const timer = setInterval(go, 5000)
+	setTimeout(go, 1000)
+
 	let startx, starty, diffx, diffy, drag, lastfocus, scrollLeft, scrollTop;
 
-
-
-	
-	el.addEventListener('scroll', () => check)
-	el.addEventListener('pointerover', () => {
+	slider.addEventListener('scroll', () => check)
+	slider.addEventListener('pointerover', () => {
 		clearInterval(timer)
-		el.style.scrollBehavior = "smooth";
-		check(0)
-		el.scrollLeft = 0
-		el.style.scrollBehavior = "auto";
+		set(0)
 	}, {once: true})
 
 	const isTouch = (e) => {
@@ -79,29 +92,29 @@ export default div => {
 		const bigdiffy = (starty - (e.clientY + scrollTop))
 		return Math.abs(bigdiffx) > 0 || Math.abs(bigdiffy) > 0
 	}
-	el.addEventListener('click', e => {
+	slider.addEventListener('click', e => {
 		if (!isTouch(e)) return
 		e.stopPropagation()
 		e.preventDefault()
 		//next()
 	})
-	el.addEventListener('mousedown', e => {
+	slider.addEventListener('mousedown', e => {
 		clearInterval(timer)
 		if (e.target.nodeName === 'IMG') e.preventDefault();
-		scrollLeft = el.scrollLeft
-		scrollTop = el.scrollTop
-		startx = e.clientX + el.scrollLeft
-		starty = e.clientY + el.scrollTop
+		scrollLeft = slider.scrollLeft
+		scrollTop = slider.scrollTop
+		startx = e.clientX + slider.scrollLeft
+		starty = e.clientY + slider.scrollTop
 		diffx = 0
 		diffy = 0
 		drag = true
 	})
 	window.addEventListener('mousemove', e => {
 		if (!drag) return
-		diffx = (startx - (e.clientX + el.scrollLeft))
-		diffy = (starty - (e.clientY + el.scrollTop))
-		el.scrollLeft += diffx
-		el.scrollTop += diffy
+		diffx = (startx - (e.clientX + slider.scrollLeft))
+		diffy = (starty - (e.clientY + slider.scrollTop))
+		slider.scrollLeft += diffx
+		slider.scrollTop += diffy
 	})
 	window.addEventListener('mouseup', e => {
 		if (!drag) return
@@ -114,13 +127,13 @@ export default div => {
 				window.cancelAnimationFrame(animate)
 				check()
 			} else {
-				el.scrollLeft += diffx * step
-				el.scrollTop += diffy * step
+				slider.scrollLeft += diffx * step
+				slider.scrollTop += diffy * step
 				start -= 0.02
 				window.requestAnimationFrame(animate)
 			}
 		};
-		check(el.scrollLeft + diffx)
+		check(slider.scrollLeft + diffx)
 		animate()
 	})
 }
