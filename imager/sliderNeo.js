@@ -96,8 +96,8 @@ export default div => {
 		if (!isTouch(e)) return
 		e.stopPropagation()
 		e.preventDefault()
-		//next()
-	})
+	}, true)
+
 	slider.addEventListener('mousedown', e => {
 		clearInterval(timer)
 		if (e.target.nodeName === 'IMG') e.preventDefault();
