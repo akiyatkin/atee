@@ -54,15 +54,14 @@ export const Live = {
 			Live.fetchNow(form)
 		}).catch(e => null)
 	},
-	fetchNow: async (form) => {
+	fetchNow: (form) => {
 		if (Live.fetch_need === null) return
 		if (Live.fetch_promise) return Live.fetch_promise.reject() //Этот облом отменит предыдущий
 		const need = Live.fetch_need
-		const { hash } = need
 		Live.fetch_need = null
-		Live.fetch_promise = Live.fetchCreate(hash)
+		Live.fetch_promise = Live.fetchCreate(need)
 		Live.fetchApply(form, Live.fetch_promise, need)
-		Live.fetch_promise.catch(() => delete Live.fetch_promise[hash])
+		Live.fetch_promise.catch(() => delete Live.fetch_promise[need.hash])
 		Live.fetch_promise.finally(() => Live.wait(form, need)).catch(e => null)
 	},
 	timer: null,
@@ -73,11 +72,11 @@ export const Live = {
 			Live.fetchNow(form)
 		//}, 100)
 	},
-	fetchCreate: (hash = '') => {
+	fetchCreate: ({hash, partner}) => {
 		const fetch_promise = createPromise('live promise ' + hash)
 		const controller = new AbortController()
 		const signal = controller.signal
-		const promise = fetch('/-catalog/get-livemodels?hash='+hash, {signal}).then(res => res.json()).catch(e => null)
+		const promise = fetch('/-catalog/get-livemodels?partner=' + partner + '&hash='+hash, {signal}).then(res => res.json()).catch(e => null)
 		promise.then((ans) => {
 			fetch_promise.resolve(ans)
 		})
@@ -100,6 +99,14 @@ export const Live = {
 		title.innerHTML = tplobj.TITLEBODY({ ...need, ans })
 		body.innerHTML = tplobj.BODY({ ...need, ans })
 	},
+	getNeed: async input => {
+		const { default:getNeed } = await import('/-nicked/getNeed.js')
+		const need = getNeed(input)
+		const Theme = await import('/-controller/Theme.js').then(r => r.default)
+		const theme = Theme.harvest({theme:new URL(location).searchParams.get('theme')}, document.cookie)
+		need.partner = theme.partner || ''
+		return need
+	},
 	init: form => {
 		const state = Live.getState(form)
 		const input = form.elements.search
@@ -109,23 +116,23 @@ export const Live = {
 		const searchfrominput = async () => {
 			const menu = await Live.getMenu(form)
 			menu.classList.add('show')
-			const { default:getNeed } = await import('/-nicked/getNeed.js')
-			const need = getNeed(input)
-			if (state.hash != need.hash) {
+			const need = await Live.getNeed(input)
+			if (state.hash != need.hash || state?.partner != need.partner) {
 				const title = cls(menu, 'livetitle')[0]
 				const body = cls(menu, 'livebody')[0]
 				state.hash = need.hash
+				state.partner = need.partner
 				body.classList.add('mute')
+				Live.fetch(form, need)
 				const tplobj = await import('/-catalog/live.html.js')
 				title.innerHTML = tplobj.TITLE(need)
-				Live.fetch(form, need)
+				
 			}
 		}
 
 		form.addEventListener('submit', async e => {
 			e.preventDefault()
-			const { default:getNeed } = await import('/-nicked/getNeed.js')
-			const need = getNeed(input)
+			const need = await Live.getNeed(input)
 			const Client = await window.getClient()
 			const url = new URL(location)
 			const m = url.searchParams.get('m')
@@ -198,4 +205,4 @@ export const Live = {
 		}, true)
 	}
 }
-window.Live = Live
+export default Live

@@ -15,7 +15,7 @@ export const rest_live = (meta) => {
 		return hashs
 	})
 	meta.addAction('get-livemodels', async (view) => {
-		const { hash, db, visitor } = await view.gets(['db','hash', 'visitor'])
+		const { hash, db, visitor, partner } = await view.gets(['db','hash', 'visitor', 'partner'])
 		//await wait(500)
 		// if (!hashs.length) {
 		// 	const {gcount, count, list, groups} = await Catalog.getAllCount()
@@ -32,7 +32,7 @@ export const rest_live = (meta) => {
 		// nmd.group = { ...md.group }
 		// nmd.group[parent.group_nick] = 1
 		// nmd.m = Catalog.makemark(nmd).join(':')
-		const group_ids = await Catalog.getGroupIds(db, visitor, md)
+		const group_ids = await Catalog.getGroupIds(db, visitor, md, partner)
 		
 
 		
@@ -77,7 +77,7 @@ export const rest_live = (meta) => {
 			return g
 		})
 
-		const {from, where} = await Catalog.getmdwhere(db, visitor, md)
+		const {from, where} = await Catalog.getmdwhere(db, visitor, md, partner)
 
 		const list = []
 		const models = await db.all(`
@@ -111,6 +111,10 @@ export const rest_live = (meta) => {
 				FROM showcase_iprops ip
 				WHERE ip.model_id = :model_id and ip.prop_id = :prop_id
 			`, {prop_id: cost.prop_id, model_id: model.model_id}))
+			
+			if (partner?.discount) {
+				model['Цена'] = Math.round(model['Цена'] * (100 - partner.discount) / 100)
+			}
 
 			list.push(model)
 		}

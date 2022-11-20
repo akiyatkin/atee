@@ -342,14 +342,14 @@ meta.addAction('get-filters', async (view) => {
 	if (md.more) for (const prop_nick in md.more) {
 		const prop = await Catalog.getPropByNick(prop_nick);
 		if (~opt.filters.indexOf(prop.prop_title)) continue
-		const filter = await Catalog.getFilterConf(db, visitor, prop, group.group_id, md)
+		const filter = await Catalog.getFilterConf(db, visitor, prop, group.group_id, md, partner)
 		if (!filter) continue
 		filters.push(filter)
 	}
 
 	for (const prop_title of opt.filters) {
 		const prop = await Catalog.getPropByTitle(prop_title)
-		const filter = await Catalog.getFilterConf(db, visitor, prop, group.group_id, md)
+		const filter = await Catalog.getFilterConf(db, visitor, prop, group.group_id, md, partner)
 		if (!filter) continue
 		filters.push(filter)
 	}
@@ -388,7 +388,7 @@ meta.addAction('get-search-groups', async (view) => {
 	nmd.group = { ...md.group }
 	nmd.group[parent.group_nick] = 1
 	nmd.m = Catalog.makemark(nmd).join(':')
-	const group_ids = await Catalog.getGroupIds(db, visitor, nmd)
+	const group_ids = await Catalog.getGroupIds(db, visitor, nmd, partner)
 
 
 	let rootpath = tree[group_ids[0]]?.path || group.path
@@ -453,7 +453,7 @@ meta.addAction('get-search-list', async (view) => {
 
 	const { db, value, md, partner, visitor} = await view.gets(['db','value','md','partner','visitor'])
 	//const {title, group_ids} = Catalog.searchGroups(db, visitor, md)
-	const {from, where, sort} = await Catalog.getmdwhere(db, visitor, md)
+	const {from, where, sort} = await Catalog.getmdwhere(db, visitor, md, partner)
 	const group = await Catalog.getMainGroup(md)
 	if (!group) return view.err('Нет данных')
 	const option = await Catalog.getOptions()
@@ -467,6 +467,7 @@ meta.addAction('get-search-list', async (view) => {
 	// 	start = (page - 2) * countonpage + opt.limit
 	// 	countonpage = count || opt.limit
 	// }
+
 	const moditem_ids = await db.all(`
 		SELECT m.model_id, GROUP_CONCAT(distinct i.item_num separator ',') as item_nums 
 		FROM ${from.join(', ')}

@@ -226,6 +226,11 @@ export class Upload {
 	async getSearch (model_id) {
 		const upload = this
 		const { db } = upload.opt
+		const row = await db.fetch(`SELECT b.brand_nick, m.model_nick, g.group_nick 
+			FROM showcase_models m, showcase_brands b, showcase_groups g
+			WHERE m.model_id = :model_id and b.brand_id = m.brand_id and g.group_id = m.group_id 
+		`,{ model_id })
+		let search = Object.values(row)
 		const iprops = await db.all(`
 			SELECT distinct ip.number, ip.text, v.value_nick, p.prop_nick
 			FROM showcase_iprops ip
@@ -233,7 +238,7 @@ export class Upload {
 			LEFT JOIN showcase_values v on ip.value_id = v.value_id
 			WHERE ip.model_id = :model_id
 		`, { model_id })
-		let search = []
+		
 		iprops.forEach((props) => {
 			search.push(Object.values(props).filter(val => !!val).join('-'))
 		})
@@ -936,9 +941,9 @@ export class Upload {
 				search.push(item.join('-'))
 				heads.head_titles.forEach((prop_title, i) => {
 					if (~[
-						indexes.model_title, 
+						//indexes.model_title, 
 						indexes.model_nick, 
-						indexes.brand_title, 
+						//indexes.brand_title, 
 						indexes.brand_nick,
 						indexes.group_nick
 						//, indexes.sheet_title 

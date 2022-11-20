@@ -349,7 +349,7 @@ Catalog.getMainGroups = Access.cache(async (prop_title = '') => {
 	}
 	
 })
-Catalog.getFilterConf = async (db, visitor, prop, group_id, md) => {
+Catalog.getFilterConf = async (db, visitor, prop, group_id, md, partner) => {
 	const group = await Catalog.getGroupById(group_id)
 	const prop_id = prop.prop_id
 	
@@ -467,7 +467,7 @@ Catalog.getFilterConf = async (db, visitor, prop, group_id, md) => {
 	}
 	nmd.m = Catalog.makemark(nmd).join(':')
 
-	const {from, where} = await Catalog.getmdwhere(db, visitor, nmd)
+	const {from, where} = await Catalog.getmdwhere(db, visitor, nmd, partner)
 	if (prop.type == 'value') {
 		filter.remains = await db.all(`
 			SELECT distinct v.value_nick
@@ -705,7 +705,7 @@ Catalog.makemark = (md, ar = [], path = []) => {
 	}
 	return ar
 }
-Catalog.getmdwhere = (db, visitor, md) => {
+Catalog.getmdwhere = (db, visitor, md, partner = '') => {
 	return visitor.relate(Catalog).once('getmdwhere' + md.m, async () => {
 		const groupnicks = await Catalog.getGroups()
 		const brandnicks = await Catalog.getBrands()
@@ -724,7 +724,6 @@ Catalog.getmdwhere = (db, visitor, md) => {
 			const hashs = unique(nicked(md.search).split('-').filter(val => !!val)).sort()
 			if (hashs.length) {
 				where.push(`m.search like "% ${hashs.join('%" and m.search like "% ')}%"`)
-				//console.log(`m.search like "% ${hashs.join('%" and m.search like "% ')}%"`)
 			}
 		}
 		const from = ['showcase_models m','showcase_items i']
@@ -732,10 +731,8 @@ Catalog.getmdwhere = (db, visitor, md) => {
 		where.push('i.model_id = m.model_id')
 		let iprops_dive = false
 		if (md.more) {
-			
 			let i = 0
 			for (const prop_nick in md.more) {
-				
 				i++
 				iprops_dive = true
 				
@@ -755,8 +752,11 @@ Catalog.getmdwhere = (db, visitor, md) => {
 							value = values[name]
 						}
 						if (typeof(value) == 'string') value = value.replace('-','.')
-						const value_nick = Number(value)
-
+						
+						let value_nick = Number(value)
+						if (partner?.discount && prop_nick == 'cena') {
+							value_nick = value_nick * (100 + partner.discount) / 100
+						}
 						if (~['upto','from'].indexOf(name)) {
 							if (name == 'upto') {
 								where.push(`ip${i}.number <= ${value_nick}`)
@@ -794,8 +794,8 @@ Catalog.getmdwhere = (db, visitor, md) => {
 		return {where, from, sort}
 	})
 }
-Catalog.getGroupIds = async (db, visitor, md) => {
-	const {where, from} = await Catalog.getmdwhere(db, visitor, md)
+Catalog.getGroupIds = async (db, visitor, md, partner) => {
+	const {where, from} = await Catalog.getmdwhere(db, visitor, md, partner)
 	
 	const res_ids = await db.colAll(`
 		SELECT distinct group_id 
@@ -831,7 +831,7 @@ Catalog.getMainGroup = async md => {
 		nmd.group[parent.group_nick] = 1
 		nmd.m = Catalog.makemark(nmd).join(':')
 
-		const group_ids = await Catalog.getGroupIds(db, visitor, nmd)
+		const group_ids = await Catalog.getGroupIds(db, visitor, nmd, partner)
 		
 		return {title: parent, group_ids}
 	})

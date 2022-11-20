@@ -15,8 +15,7 @@ export const POPUP = (data, env) => `
 		<script>
 			(async form => {
 				const inp = form.elements['partner']
-				const { Autosave } = await import("/-form/Autosave.js")
-				await Autosave.init(form)	
+				import("/-form/Autosave.js").then(r => r.default.init(form))
 				form.addEventListener('submit', async e => {
 					e.preventDefault()
 					let theme = new URL(location).searchParams.get('theme') ?? ''
@@ -24,7 +23,11 @@ export const POPUP = (data, env) => `
 					const Client = await window.getClient()
 					const { default:getNeed } = await import('/-nicked/getNeed.js')
 					const need = getNeed(inp)
-					Client.pushState('?theme=' + theme + 'partner=' + need.hash)
+					
+					let m = new URL(location).searchParams.get('m')
+					m = m ? 'm=' + m + '&' : ''
+					Client.pushState('?'+ m +'theme=' + theme + 'partner=' + need.hash)
+
 					const { Dialog } = await import('/-dialog/Dialog.js')
 					Dialog.hide(Dialog.findPopup(form))
 					fetch('/-catalog/get-partner?partner=' + need.hash).then(e => e.json()).then(ans => {
