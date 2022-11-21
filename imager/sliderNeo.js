@@ -43,7 +43,7 @@ export default div => {
 		if (len < length * 1 / 2) len = length - len
 		else len = 2 * length - len
 		let newval = slider.scrollLeft - len
-		if (newval <= 0) {
+		if (newval <= 10) {
 			newval = 0
 			direction = true
 		}
@@ -62,7 +62,7 @@ export default div => {
 		if (len < length * 1 / 2) len = length - len
 		else len = 2 * length - len
 		let newval = slider.scrollLeft + len
-		if (newval >= slider.scrollWidth - slider.offsetWidth) {
+		if (newval >= slider.scrollWidth - slider.offsetWidth - 10) {
 			direction = false
 			newval = slider.scrollWidth - slider.offsetWidth
 		}
