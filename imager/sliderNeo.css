@@ -7,7 +7,6 @@
 	/*scroll-snap-type: x mandatory;*/
 	scrollbar-width: thin;
 }
-
 .sliderNeo::-webkit-scrollbar {
 	height: 2px;
 	width: 2px;

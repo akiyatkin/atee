@@ -5,7 +5,14 @@ import cproc from '@atee/cproc'
 	Оптимальна запись по одной строке, типа лога.
 	Шапка записывается только когда файла ещё нет.
 */
-const csv = async (file, row) => cproc(csv, file, async () => {
+const csv = async (file, srcrow, musthave = []) => cproc(csv, file, async () => {
+	for (const name of musthave) if (!srcrow[name]) srcrow[name] = ''
+	const keys = Object.keys(srcrow).sort()
+	const row = {}
+	for (const key of keys) row[key] = srcrow[key]
+	const t = new Date()
+	row.date = t.toLocaleDateString()
+	row.time = t.toLocaleTimeString()
 	if (await fs.access(file).then(e => false).catch(e => true)) {
 		const heads = Object.keys(row).join(';')
 		await fs.writeFile(file, '﻿' + heads + "\n").catch(e => console.log(e))

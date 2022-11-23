@@ -12,8 +12,8 @@ export default div => {
 	const slider = cls('sliderNeo')[0] || div
 	const gap = parseInt(getComputedStyle(slider).rowGap) || 0
 	//const count = (child.offsetWidth + gap) / (slider.scrollWidth + gap)
-	const left = cls('left')[0]
-	const right = cls('right')[0]
+	const lefts = cls('left')
+	const rights = cls('right')
 	const child = slider.children[0]
 	if (!child) return
 	const length = child.offsetWidth + gap
@@ -24,8 +24,8 @@ export default div => {
 	//scrollLeft - прокручено слева
 
 	const check = (scrollLeft = slider.scrollLeft) => requestAnimationFrame(() => {
-		if (left) left.style.opacity = scrollLeft < 1 ? 0 : 1
-		if (right) right.style.opacity = slider.offsetWidth + scrollLeft >= slider.scrollWidth ? 0 : 1
+		for (const left of lefts) left.style.opacity = scrollLeft < 1 ? 0 : 1
+		for (const right of rights) right.style.opacity = slider.offsetWidth + scrollLeft >= slider.scrollWidth ? 0 : 1
 	})
 	
 
@@ -73,8 +73,8 @@ export default div => {
 		return direction ? next() : prev()
 	}
 	
-	if (left) left.addEventListener('click', prev)
-	if (right) right.addEventListener('click', next)
+	for (const left of lefts) left.addEventListener('click', prev)
+	for (const right of rights) right.addEventListener('click', next)
 
 	const timer = setInterval(go, 5000)
 	setTimeout(go, 1000)

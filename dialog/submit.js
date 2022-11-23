@@ -31,7 +31,7 @@ let addinputs = async (form) => {
 	
 }
 const recaptcha = async form => {
-	const captha = document.forms[0].elements["g-recaptcha-response"]
+	const captha = form.elements["g-recaptcha-response"]
 	const conf = await import('/-config/get?name=recaptcha',{assert:{type:'json'}}).then(r => r.default.conf)
 	captha.value = await grecaptcha.execute(conf.sitekey, { action: 'dialog' })	
 }
@@ -45,9 +45,9 @@ let globalonceafter = async () => {
 }
 
 export default async (form, submit, goal = 'contacts') => {
-	for (const inp of form.elements) if (inp.tagName == 'button') inp.disabled = true
+	for (const inp of form.elements) if (inp.tagName == 'BUTTON') inp.disabled = true
 	await addinputs(form)
-	await recaptcha()
+	await recaptcha(form)
 	const body = new URLSearchParams(new FormData(form))
 	for (const inp of form.elements) inp.disabled = true
 	const response = await fetch(submit, {

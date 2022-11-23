@@ -92,6 +92,8 @@ export const Dialog = {
 		dialog.classList.add('show')
 		dialog.lastfocus = document.activeElement
 		document.activeElement.blur()
+		const focus = dialog.querySelector('[tabindex="0"]')
+		if (focus) focus.focus()
 		if (onshow) onshow(popup)
 		return popup
 	},

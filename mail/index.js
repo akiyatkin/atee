@@ -11,8 +11,7 @@ await fs.mkdir('data/auto/mail/', { recursive: true }).catch(e => null)
 
 const mail = {
 	saveSend: opt => {
-		opt.date = new Date().toLocaleString()
-		csv('data/auto/mail/mail-v1.csv', opt)
+		csv('data/auto/mail/mail-v2.csv', opt)
 		const info = transport.sendMail(opt).catch(err => console.log('mail.saveSend', err))
 		return info
 	},

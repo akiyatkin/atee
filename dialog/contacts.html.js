@@ -1,6 +1,6 @@
 const cont = {}
 export default cont
-cont.CALLBACK = (data, env, {layer:{div}} = env) => `
+cont.CALLBACK = (data, env) => `
 	<div style="max-width:500px">
 		<h1>Заказать звонок</h1>
 		<p>
@@ -20,7 +20,7 @@ cont.CALLBACK = (data, env, {layer:{div}} = env) => `
 			import { Once } from "/-controller/Once.js"
 			import { Dialog } from '/-dialog/Dialog.js'
 			const id = id => document.getElementById(id)
-			const div = id('${div}')
+			const div = id('${env.layer.div}')
 			const form = div.getElementsByTagName('form')[0]
 			const button = form.getElementsByTagName('button')[0]
 			

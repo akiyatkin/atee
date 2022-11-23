@@ -15,30 +15,32 @@
 	align-items: center;
 	justify-content: center;
 	opacity: 0;
+	visibility: hidden;  /*Надо чтобы там не работал*/
 	transition: opacity 0.3s;
 	pointer-events: none;
 }
 .dialogframe.show {
 	pointer-events: auto;
 	opacity: 1;
+	visibility: visible;
 }
 .dialogframe {
-	--krestsize: 36px;
+	--krestsize: 2em;
 }
 .dialogframe .dialogclose {
 	
 	display: inline-block;
 
 	opacity:  0.6;
-	margin-top:-0.4ch;
-	margin-right:-0.4ch;
+	margin-top:-0.5ch;
+	margin-right:-0.5ch;
 	right: 0.3rem;
 	top: 0.3rem;
 	cursor: pointer;
-	line-height: var(--krestsize);
-	height: var(--krestsize);
+	line-height: 1em;
+	height: 1em;
 	font-size: var(--krestsize);
-	width: var(--krestsize);
+	width: 1em;
 	text-align:center;
 	overflow: hidden;
 	
@@ -65,7 +67,7 @@
 		min-width: auto;
 	}
 }
-@media(max-width: 400px) {
+@media(max-width: 500px) {
 	.dialogframe > .dialogbody {
 		padding: 1em;
 	}
