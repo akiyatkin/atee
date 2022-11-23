@@ -22,7 +22,7 @@ const Autosave = {
 	getInps: function (div) {
 		const nodelist = div.querySelectorAll('select, .autosaveblock, [type=date], [type=search], [type=number], [type=tel], [type=email], [type=password], [type=text], [type=radio], [type=checkbox], textarea')
 		const inps = [...nodelist].filter(inp => {
-			if (inp.dataset.autoasave == 'none') return false
+			if (inp.dataset.autosave == 'none') return false
 			if (inp.closest('.autosavenone')) return false
 			if (!inp.name) return false
 			return true
