@@ -14,7 +14,8 @@ export default div => {
 	//const count = (child.offsetWidth + gap) / (slider.scrollWidth + gap)
 	const lefts = cls('left')
 	const rights = cls('right')
-	const child = slider.children[0]
+	let child = slider.children[0]
+	if (!child.offsetWidth) child = slider.children[1]
 	if (!child) return
 	const length = child.offsetWidth + gap
 	const width = slider.scrollWidth
