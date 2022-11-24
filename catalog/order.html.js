@@ -127,8 +127,9 @@ export const ROOT = (data, div, partner = '') => `
 					Dialog.hide(div)
 					Dialog.show(popup_success)
 					if (window.dataLayer) {
-						console.log('Goal.reach contacts');
-						dataLayer.push({'event': 'callorder'});
+						const goal = 'callorder'
+						console.log('Goal.reach ' + goal);
+						dataLayer.push({'event': goal});
 					}
 				} else {
 					error_msg.innerHTML = res.msg

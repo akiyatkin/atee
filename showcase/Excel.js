@@ -1,6 +1,5 @@
-import { Dabudi } from '/-dabudi/Dabudi.js'
-import nicked from "/-nicked/nicked.js"
-
+import Dabudi from '@atee/dabudi/Dabudi.js'
+import nicked from "@atee/nicked"
 import xlsx from "@atee/xlsx"
 
 // import { createRequire } from "module"

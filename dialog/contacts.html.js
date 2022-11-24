@@ -88,8 +88,9 @@ cont.CALLBACK = (data, env) => `
 						Dialog.hide(div)
 						Dialog.show(popup_success)
 						if (window.dataLayer) {
-							console.log('Goal.reach contacts');
-							dataLayer.push({'event': 'callorder'});
+							const goal = 'callback'
+							console.log('Goal.reach ' + goal);
+							dataLayer.push({'event': goal});
 						}
 					} else {
 						error_msg.innerHTML = res.msg

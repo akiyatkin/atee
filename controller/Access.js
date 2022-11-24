@@ -46,7 +46,7 @@ export const Access = {
 		Access.map.set(obj, res)
 		return res
 	},
-	cache: fn => { //depricated
+	cache: fn => { //depricated (relate?)
 		fn.store = {}
 		return (...args) => {
 			const hash = JSON.stringify(args)

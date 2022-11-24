@@ -1,4 +1,4 @@
-import { nicked } from "/-nicked/nicked.js"
+import nicked from "@atee/nicked"
 
 /*
 	const rows_source = await readXlsxFile(src)
@@ -132,3 +132,5 @@ export const Dabudi = {
 		return {rows_items, groups}
 	}	
 }
+
+export default Dabudi

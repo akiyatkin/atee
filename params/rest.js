@@ -1,56 +1,55 @@
-import { Dabudi } from '/-dabudi/Dabudi.js'
-import { nicked } from "/-nicked/nicked.js"
-import { Access } from '/-controller/Access.js'
-import { Meta } from "/-controller/Meta.js"
-import { createRequire } from "module"
-const require = createRequire(import.meta.url)
-const readXlsxFile = require('read-excel-file/node')
-const { readSheetNames } = require('read-excel-file/node')
+import Dabudi from '@atee/dabudi/Dabudi.js'
+import nicked from "@atee/nicked"
+import Access from '@atee/controller/Access.js'
+import Meta from "@atee/controller/Meta.js"
 
-const CONFIG = await import('/params.json', {assert: {type: 'json'}}).then(res => res.default).catch(e => Object())
+import config from "@atee/config"
+import xlsx from "@atee/xlsx"
 
-
-const sheets = CONFIG.src ? await readSheetNames(CONFIG.src) : []
-const getList = await Access.mcache(CONFIG.src, async (list, src) => {
-	if (!~sheets.indexOf(list)) return false
-	const	rows_source = await readXlsxFile(src, { sheet: list })
-	const {descr, rows_table} = Dabudi.splitDescr(rows_source)
-	const { heads: { head_titles }, rows_body} = Dabudi.splitHead(rows_table)
-	const data = []
-	rows_body.forEach((row, i) => {
-		const r = {}
-		row.forEach((val, i) => r[head_titles[i]] = val)
-		data.push(r)
-	})
-	return {descr, data, head_titles}
-})
-
+const CONFIG = await config('params')
+const lists = await xlsx.read(Access, CONFIG.src)
 
 export const meta = new Meta()
-meta.addArgument('name', (view, val) => {
-	if (!CONFIG) return view.err('Требуется конфиг params.json')
-	return val
-})
+
+meta.addArgument('name')
 meta.addAction('get-menu', async view => {
 	const { name } = await view.gets(['name'])
-	const {descr, data, head_titles} = await getList(name)
-	if (!head_titles) return view.err("Данные не найдены")
-	const root = {'Уровень':false}
-	let prev = root
-	data.forEach(row => {
-		if (!row['Уровень']) row['Уровень'] = 1
-		if (row['Уровень'] < prev['Уровень']) {
-			row.parent = prev.parent.parent
-		} else if (row['Уровень'] > prev['Уровень']) {
-			row.parent = prev
-		} else if (row['Уровень'] == prev['Уровень']) {
-			row.parent = prev.parent
-		}
-		row.parent.childs ??= []
-		row.parent.childs.push(row)
-		prev = row
+	const list = lists.find(d => d.name == name)
+	if (!list) return view.err('Лист не найден')
+	
+	const {descr, rows_table} = Dabudi.splitDescr(list.data)
+	const {heads, rows_body} = Dabudi.splitHead(rows_table)
+	const titles = heads.head_titles
+	const rows = rows_body.filter(row => row.filter(cel => cel).length)
+	const sheet = { descr, heads, rows}
+	if (!titles.length) return view.err("Данные не найдены")
+
+	const data = rows.map(row => {
+		const obj = {}
+		for (const i in row) obj[titles[i]] = row[i]
+		return obj
 	})
-	data.forEach(row => delete row.parent)
+
+	data.forEach(obj => {
+		if (!obj['Уровень']) obj['Уровень'] = 1
+	})
+
+	const root = { "Уровень": 0, parent: false }
+	let prev = root
+	data.forEach(obj => {
+		if (obj['Уровень'] < prev['Уровень']) {
+			obj.parent = prev.parent?.parent || root
+		} else if (obj['Уровень'] > prev['Уровень']) {
+			obj.parent = prev
+		} else { // group['Уровень'] == obj['Уровень']
+			obj.parent = prev.parent
+		}
+		obj.parent.childs ??= []
+		obj.parent.childs.push(obj)
+		prev = obj
+	})
+	
+	data.forEach(obj => delete obj.parent)
 	view.ans.menu = root
 	return view.ret()
 })
