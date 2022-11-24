@@ -126,11 +126,15 @@ export const ROOT = (data, div, partner = '') => `
 				if (res.result) {
 					Dialog.hide(div)
 					Dialog.show(popup_success)
-					if (window.dataLayer) {
+					
+					const metrikaid = window.Ya?._metrika.getCounters()[0].id
+					if (metrikaid) {
 						const goal = 'callorder'
-						console.log('Goal.reach ' + goal);
-						dataLayer.push({'event': goal});
+						console.log('Goal.reach ' + goal)
+						ym(metrikaid, 'reachGoal', goal);
+						
 					}
+					
 				} else {
 					error_msg.innerHTML = res.msg
 					Dialog.show(popup_error)

@@ -64,10 +64,15 @@ export default async (form, submit, goal = 'contacts') => {
 		const res = await response.clone().json()
 		if (res.result) {
 			Dialog.show(popup_success)
-			if (window.dataLayer) {
-				console.log('Goal.reach ' + goal);
-				dataLayer.push({'event': goal});
+			
+			const metrikaid = window.Ya?._metrika.getCounters()[0].id
+			if (metrikaid) {
+				console.log('Goal.reach ' + goal)
+				ym(metrikaid, 'reachGoal', goal);
+				
 			}
+
+
 		} else {
 			error_msg.innerHTML = res.msg
 			Dialog.show(popup_error)
