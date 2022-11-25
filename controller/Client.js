@@ -283,6 +283,8 @@ const addHtml = async (template, layer, bread, timings, theme) => {
 		timings,
 		theme
 	}
+	env.sid = 'sid-' + (layer.div || layer.name) + '-' + layer.sub + '-'
+	env.scope = layer.div ? '#' + layer.div : 'html'
 	if (layer.replacetpl) {
 		const tpl = interpolate(layer.replacetpl, layer.sys.data, env)
 		layer.sys.tplobj = await import(tpl).then(res => res.default || res).catch(e => {

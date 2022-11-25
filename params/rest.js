@@ -1,10 +1,10 @@
 import Dabudi from '@atee/dabudi/Dabudi.js'
-import nicked from "@atee/nicked"
+import nicked from '@atee/nicked'
 import Access from '@atee/controller/Access.js'
-import Meta from "@atee/controller/Meta.js"
+import Meta from '@atee/controller/Meta.js'
 
-import config from "@atee/config"
-import xlsx from "@atee/xlsx"
+import config from '@atee/config'
+import xlsx from '@atee/xlsx'
 
 const CONFIG = await config('params')
 const lists = await xlsx.read(Access, CONFIG.src)
@@ -22,7 +22,7 @@ meta.addAction('get-menu', async view => {
 	const titles = heads.head_titles
 	const rows = rows_body.filter(row => row.filter(cel => cel).length)
 	const sheet = { descr, heads, rows}
-	if (!titles.length) return view.err("Данные не найдены")
+	if (!titles.length) return view.err('Данные не найдены')
 
 	const data = rows.map(row => {
 		const obj = {}

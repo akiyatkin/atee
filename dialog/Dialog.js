@@ -16,7 +16,7 @@ export const Dialog = {
 	open: async ({tpl, sub, parsed, json, data}, div = document.body, onshow, onhide) => {
 		const tplobj = await import(tpl).then(res => res.default || res)
 		data = !json ? data : await fetch(json).then(res => res.json())
-		const id = 'dialog-'+nicked([tpl,sub,json,parsed].join('-'))
+		const id = 'dialog-' + nicked([tpl,sub,json,parsed].join('-'))
 		let popup = document.getElementById(id)
 		if (!popup) {
 			popup = document.createElement('div')
@@ -28,7 +28,13 @@ export const Dialog = {
 				hides.set(popup, list)
 			}
 			const theme = await import('/@atee/controller/Theme.js').then(r => r.default.get())
-			await Dialog.frame(popup, tplobj[sub](data, {layer:{tpl, sub, json, div:id}, theme}))
+			const layer = {tpl, sub, json, div:id}
+			const env = {layer, theme}
+			env.sid = 'sid-' + layer.div + '-' + layer.sub + '-'
+			env.scope = '#' + layer.div
+
+
+			await Dialog.frame(popup, tplobj[sub](data, env))
 		}
 		Dialog.show(popup, onshow)
 		return popup

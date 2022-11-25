@@ -10,9 +10,11 @@ sitemap.HEAD = (head, env) => `
 	<script type="module">//Независимая обработка metatags и sitemap
 		//При переходах нужно это всё обновлять
 		const qs = q => document.head.querySelector(q) || {}
+		const temp = document.createElement('div')
 		const rules = {
 			title: title => {
-				document.title = title
+				temp.innerHTML = title
+				document.title = temp.innerText
 			},
 			description: descr => {
 				qs('meta[name=description]').content = descr

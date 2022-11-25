@@ -144,9 +144,13 @@ export const Server = {
 const errmsg = (layer, e, msg = '') => `
 	<pre>${msg}<code>${layer.ts}<br>${e.toString()}${console.log(e) || ''}</code></pre>
 `
+
+const interpolate = (val, data, env) => new Function('data', 'env', 'return `'+val+'`')(data, env)
 const getHTML = async (layer, look, visitor) => {
 	const env = {layer, ...look}
 	env.crumb = look.bread.getCrumb(layer.depth)
+	env.sid = 'sid-' + (layer.div || layer.name) + '-' + layer.sub + '-'
+	env.scope = layer.div ? '#' + layer.div : 'html'
 	let nostore = false
     let status = 200
 	let data
@@ -164,10 +168,9 @@ const getHTML = async (layer, look, visitor) => {
 		nostore = nostore || ans.nostore
 	}
 
-	const interpolate = (val, data, env) => new Function('data', 'env', 'return `'+val+'`')(data, env)
+	
 	if (layer.replacetpl) layer.tpl = interpolate(layer.replacetpl, data, env)
 	
-
 	if (layer.html) {
 		const ans = await loadTEXT(layer.html, visitor).catch(e => { 
 			status = 404

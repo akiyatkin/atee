@@ -3,3 +3,4 @@ export const years = start => {
 	if (y == start) return y
 	return start + '&ndash;' + y
 }
+export default years

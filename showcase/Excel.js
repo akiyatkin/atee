@@ -2,10 +2,6 @@ import Dabudi from '@atee/dabudi/Dabudi.js'
 import nicked from "@atee/nicked"
 import xlsx from "@atee/xlsx"
 
-// import { createRequire } from "module"
-// const require = createRequire(import.meta.url)
-// const readXlsxFile = require('read-excel-file/node')
-// const { readSheetNames } = require('read-excel-file/node')
 const onicked = str => {
 	if (onicked[str]) return onicked[str]
 	onicked[str] = nicked(str)

@@ -88,8 +88,9 @@ const wakeup = (rule, depth = 0) => {
 			const [name = '', subframe = ''] = tsf ? split(':', tsf) : []
 			const [sub = '', frame = ''] = split('.', subframe)
 			const ts = fin(name, lin(':', sub))
+			const sid = [div, name, sub, frame].join('-')
 			//const ts = fi(name, ':' + sub)
-			const layer = { ts, tsf, name, sub, div, depth, tpl:null, html: null, json:null, layers: null}
+			const layer = { sid, ts, tsf, name, sub, div, depth, tpl:null, html: null, json:null, layers: null}
 			
 			if (frame) {
 				layer.frame = frame
@@ -176,12 +177,12 @@ const getRule = Once.proxy( async root => {
 	const [name = '', subframe = ''] = split(':', tsf)
 	const [sub = '', frame = ''] = split('.', subframe)
 	const frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
-	//const ts = tsf ? name + ':' + sub : ''
-	//const ts = fi(name, fi(':', sub))
 	const ts = fin(name, lin(':', sub))
+	
 	//const ts = fi(name, ':' + sub)
 	Layers.runByIndex(rule, (r, path) => { //строим дерево root по дивам		
-		r.root = { tsf, ts, name, sub, frame, frameid, depth: 0, tpl:null, html: null, json:null, layers:null }
+		const layer = { tsf, ts, name, sub, frame, frameid, depth: 0, tpl:null, html: null, json:null, layers:null }
+		r.root = layer
 		//Object.seal(r.root) debug test
 		maketree(r.root, r.layout, rule)
 		delete r.layout
@@ -267,6 +268,8 @@ meta.addAction('get-layers', async view => {
 
 	const interpolate = (val, timings, layer, bread, crumb, theme) => {
 		const env = {timings, layer, bread, crumb, theme}
+		env.sid = 'sid-' + (layer.div || layer.name) + '-' + layer.sub + '-'
+		env.scope = layer.div ? '#' + layer.div : 'html'
 		return new Function(
 			'env', 'host', 'timings', 'layer', 'bread', 'crumb', 'theme',
 			'return `'+val+'`'

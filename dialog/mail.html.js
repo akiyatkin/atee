@@ -2,15 +2,30 @@ import { UTMS } from "/-form/layout.html.js"
 
 const tpl = {}
 export default tpl 
-tpl.CALLBACK = (user) => `
+tpl.CALLBACK = user => `
 	<p>
 		Телефон: ${user.phone}<br>
 	</p>
-	${ip(user.ip)}
-	${user.utms.length ? UTMS(user.utms) : ''}
+
+	${signature(user)}
 `
-const ip = (ip) => `
+
+tpl.CONTACTS = user => `
 	<p>
-		IP: ${ip} (<a href="https://ip2geolocation.com/?ip=${ip}">GEO</a>)
+		Имя: ${user.name}<br>
+		Организация: ${user.org}<br>
+		Email: ${user.email}<br>
+		Телефон: ${user.phone}
 	</p>
+
+	<pre>${user.text}</pre>
+
+	${signature(user)}
+`
+
+const signature = user => `
+	<p>
+		IP: ${user.ip} (<a href="https://ip2geolocation.com/?ip=${user.ip}">GEO</a>)
+	</p>
+	${user.utms.length ? UTMS(user.utms) : ''}
 `
