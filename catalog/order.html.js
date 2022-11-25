@@ -27,7 +27,7 @@ const checkbox = (name, title, checked) => `
 		<label for="contacts_${name}">${title}</label>
 	</div>
 `
-export const ROOT = (data, div, partner = '') => `
+export const ROOT = (data, env) => `
 	<link rel="stylesheet" href="/-float-label/style.css">
 	<p>
 		Заказать <b>${data.mod.brand_title} ${data.mod.model_title}</b>
@@ -38,7 +38,7 @@ export const ROOT = (data, div, partner = '') => `
 	<form action="/-catalog/set-order">
 		<input name="brand_nick" type="hidden" value="${data.mod.brand_nick}">
 		<input name="model_nick" type="hidden" value="${data.mod.model_nick}">
-		<input name="partner" type="hidden" value="${partner}">
+		<input name="partner" type="hidden" value="${data.partner}">
 		<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem">
 			${input('tel', 'phone','Телефон *', true)}
 			${input('email', 'email','Email *', true)}
@@ -58,7 +58,7 @@ export const ROOT = (data, div, partner = '') => `
 		import { Once } from "/-controller/Once.js"
 		import { Dialog } from '/-dialog/Dialog.js'
 		const id = id => document.getElementById(id)
-		const div = id('${div}')
+		const div = id('${env.layer.div}')
 		const form = div.getElementsByTagName('form')[0]
 		const button = form.getElementsByTagName('button')[0]
 		
@@ -69,7 +69,7 @@ export const ROOT = (data, div, partner = '') => `
 		document.body.append(popup_error)
 		
 		
-		const { Autosave } = await import("/-form/Autosave.js")
+		const { Autosave } = await import("/@atee/form/Autosave.js")
 		await Autosave.init(form)	
 		
 		//await new Promise(resolve => setTimeout(resolve, 50))

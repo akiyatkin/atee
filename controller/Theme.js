@@ -18,7 +18,7 @@ const fromCookie = (cookie) => {
 	if (name == 'deleted') return ''
 	return decodeURIComponent(name[2])
 }
-
+Theme.get = () => Theme.harvest({theme:new URL(location).searchParams.get('theme')}, document.cookie) //only for browser
 Theme.harvest = (get, cookie) => {
 	const name = get.theme != null ? get.theme : fromCookie(cookie)
 	const theme = parse(name,':')

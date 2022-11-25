@@ -12,34 +12,34 @@ export const POPUP = (data, env) => `
 		<p align="right">
 			<button type="submit">Активировать</button>
 		</p>
-		<script>
-			(async form => {
-				const inp = form.elements['partner']
-				import("/-form/Autosave.js").then(r => r.default.init(form))
-				form.addEventListener('submit', async e => {
-					e.preventDefault()
-					let theme = new URL(location).searchParams.get('theme') ?? ''
-					if (theme) theme = theme + ':'
-					const Client = await window.getClient()
-					const { default:getNeed } = await import('/-nicked/getNeed.js')
-					const need = getNeed(inp)
-					
-					let m = new URL(location).searchParams.get('m')
-					m = m ? 'm=' + m + '&' : ''
-					Client.pushState('?'+ m +'theme=' + theme + 'partner=' + need.hash)
-
-					const { Dialog } = await import('/-dialog/Dialog.js')
-					Dialog.hide(Dialog.findPopup(form))
-					fetch('/-catalog/get-partner?partner=' + need.hash).then(e => e.json()).then(ans => {
-						Dialog.open({
-							tpl:'/-catalog/partner.html.js', 
-							sub:ans.result ? 'SUCCESS' : 'ERROR'
-						})
-					}).catch(e => console.log(e))
-				})
-			})(document.currentScript.parentElement)
-		</script>
 	</form>
+	<script>
+		(async form => {
+			const inp = form.elements['partner']
+			import("/@atee/form/Autosave.js").then(r => r.default.init(form))
+			form.addEventListener('submit', async e => {
+				e.preventDefault()
+
+				const url = new URL(location)
+				let theme = url.searchParams.get('theme')
+				theme = theme ? theme + ':' : ''
+				
+				let m = url.searchParams.get('m')
+				m = m ? 'm=' + m + '&' : ''
+
+				const need = await import('/@atee/nicked/getNeed.js').then(r => r.default(inp))
+
+				await window.getClient().then(r => r.pushState('?'+ m +'theme=' + theme + 'partner=' + need.hash))
+				
+				const Dialog = await import('/@atee/dialog/Dialog.js').then(r => r.default)
+				Dialog.hide(Dialog.findPopup(form))
+				fetch('/-catalog/get-partner?partner=' + need.hash).then(e => e.json()).then(ans => Dialog.open({
+					tpl:'/@atee/catalog/partner.html.js', 
+					sub:ans.result ? 'SUCCESS' : 'ERROR'
+				})).catch(e => console.log(e))
+			})
+		})(document.currentScript.previousElementSibling)
+	</script>
 `
 export const SUCCESS = () => `
 	<h1>Хорошо</h1>

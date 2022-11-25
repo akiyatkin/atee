@@ -1,5 +1,5 @@
-import { nicked } from "/-nicked/nicked.js"
-import { createPromise } from "/-controller/createPromise.js"
+import { nicked } from "/@atee/nicked/nicked.js"
+import { createPromise } from "/@atee/controller/createPromise.js"
 
 
 const link = document.createElement('link')
@@ -100,10 +100,9 @@ export const Live = {
 		body.innerHTML = tplobj.BODY({ ...need, ans })
 	},
 	getNeed: async input => {
-		const { default:getNeed } = await import('/-nicked/getNeed.js')
+		const { default:getNeed } = await import('/@atee/nicked/getNeed.js')
 		const need = getNeed(input)
-		const Theme = await import('/-controller/Theme.js').then(r => r.default)
-		const theme = Theme.harvest({theme:new URL(location).searchParams.get('theme')}, document.cookie)
+		const theme = await import('/@atee/controller/Theme.js').then(r => r.default.get())
 		need.partner = theme.partner || ''
 		return need
 	},

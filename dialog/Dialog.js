@@ -21,13 +21,14 @@ export const Dialog = {
 		if (!popup) {
 			popup = document.createElement('div')
 			popup.id = id
-			div.append(popup)
+			div.append(popup) //div может оказаться выше запланированных окон отправи формы успех или ошибка
 			if (onhide) {
 				const list = hides.get(popup) || []
 				list.push(onhide)
 				hides.set(popup, list)
 			}
-			await Dialog.frame(popup, tplobj[sub](data, {layer:{tpl, sub, json, div:id}}))
+			const theme = await import('/@atee/controller/Theme.js').then(r => r.default.get())
+			await Dialog.frame(popup, tplobj[sub](data, {layer:{tpl, sub, json, div:id}, theme}))
 		}
 		Dialog.show(popup, onshow)
 		return popup
