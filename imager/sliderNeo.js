@@ -88,6 +88,18 @@ export default div => {
 		set(0)
 	}, {once: true})
 
+	slider.addEventListener('touchstart', () => {
+		check()
+		setTimeout(check, 100)
+		setTimeout(check, 500)
+		setTimeout(check, 1000)
+	})
+	slider.addEventListener('touchend', () => {
+		check()
+		setTimeout(check, 100)
+		setTimeout(check, 500)
+		setTimeout(check, 1000)
+	})
 	const isTouch = (e) => {
 		const bigdiffx = (startx - (e.clientX + scrollLeft))
 		const bigdiffy = (starty - (e.clientY + scrollTop))
