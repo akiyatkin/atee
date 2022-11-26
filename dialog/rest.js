@@ -16,6 +16,7 @@ meta.addFunction('escape', (view, text) => text.replace(/[&<>]/g, tag => ({
     '>': '&gt;'
 }[tag])))
 
+meta.addFunction('int', (view, n) => Number(n) || 0)
 
 meta.addArgument('g-recaptcha-response')
 meta.addVariable('recaptcha', async (view) => {
@@ -49,7 +50,14 @@ meta.addArgument('phone', (view, phone) => {
 })
 
 meta.addArgument('visitor')
-meta.addArgument('host')
+meta.addVariable('ip', async view => {
+    const { visitor } = await view.gets(['visitor'])
+    return visitor.client.ip
+})
+meta.addVariable('host', async view => {
+    const { visitor } = await view.gets(['visitor'])
+    return visitor.client.host
+})
 meta.addArgument('text', ['escape'])
 meta.addArgument('org', ['escape'])
 meta.addArgument('name', ['escape'])
@@ -62,24 +70,16 @@ meta.addArgument('utms', (view, utms) => UTM.parse(utms))
 
 meta.addAction('set-callback', async (view) => {
 	await view.gets(['recaptcha','terms'])
-	const { visitor } = await view.gets(['visitor'])
-    const user = await view.gets(['phone', 'utms'])
-    user.host = visitor.client.host
-    user.ip = visitor.client.ip
+    const user = await view.gets(['phone', 'utms', 'host', 'ip'])
     const html = mailtpl.CALLBACK(user)
-    
     const r = await mail.toAdmin(`Заказ звонка ${user.host} ${user.phone}`, html)
     if (!r) return view.err('Сообщение не отправлено из-за ошибки на сервере')
 	return view.ret()
 })
 meta.addAction('set-contacts', async (view) => {
     await view.gets(['recaptcha','terms'])
-    const { visitor } = await view.gets(['visitor'])
-    const user = await view.gets(['name', 'text','email', 'org', 'phone', 'utms'])
-    user.host = visitor.client.host
-    user.ip = visitor.client.ip
+    const user = await view.gets(['name', 'text','email', 'org', 'phone', 'utms', 'host', 'ip'])
     const html = mailtpl.CONTACTS(user)
-    
     const r = await mail.toAdmin(`Форма контактов ${user.host}`, html)
     if (!r) return view.err('Сообщение не отправлено из-за ошибки на сервере')
     return view.ret()

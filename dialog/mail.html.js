@@ -7,7 +7,7 @@ tpl.CALLBACK = user => `
 		Телефон: ${user.phone}<br>
 	</p>
 
-	${signature(user)}
+	${tpl.signature(user)}
 `
 
 tpl.CONTACTS = user => `
@@ -20,10 +20,10 @@ tpl.CONTACTS = user => `
 
 	<pre>${user.text}</pre>
 
-	${signature(user)}
+	${tpl.signature(user)}
 `
 
-const signature = user => `
+tpl.signature = user => `
 	<p>
 		IP: ${user.ip} (<a href="https://ip2geolocation.com/?ip=${user.ip}">GEO</a>)
 	</p>

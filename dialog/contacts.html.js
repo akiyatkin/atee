@@ -6,6 +6,11 @@ cont.CALLBACK = (data, env) => `
 		<p>
 			Оставьте телефон, менеджер перезвонит в&nbsp;рабочее&nbsp;время.
 		</p>
+		<style>
+			${env.scope} .float-label {
+				margin-bottom: 1rem;
+			}
+		</style>
 		<form action="/-dialog/set-callback">
 			<div class="float-label icon phone">
 				<input required id="contacts_phone" name="phone" type="tel" placeholder="Телефон">
@@ -37,6 +42,9 @@ cont.CONTACTS = (data, env) => `
 				display: grid; 
 				grid-template-columns: 1fr 1fr; 
 				column-gap: 1rem;
+			}
+			${env.scope} .float-label {
+				margin-bottom: 1rem;
 			}
 		</style>
 		<form action="/-dialog/set-contacts">

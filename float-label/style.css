@@ -1,6 +1,5 @@
 .float-label {
 	position: relative;
-	margin-bottom: 1rem;
 }
 .float-label > * {
 	box-sizing: border-box;
