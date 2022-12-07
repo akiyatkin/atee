@@ -600,11 +600,11 @@ rest.addResponse('get-maingroups', async (view) => {
 	const tree = await Catalog.getTree()
 	const options = await Catalog.getOptions()
 	const groupnicks = await Catalog.getGroups()
-	const root = groupnicks[options.root_nick]
+	let root = groupnicks[options.root_nick]
 	if (!root) return view.err('Не найдена верняя группа')
 	const imgprop = await Catalog.getPropByNick('images')
 	if (!imgprop) return view.err('Нет картинок')
-	
+	if (root.childs.length == 1) root = tree[root.childs[0]] //fix для hugong когда есть одна общая группа верхнего уровня
 	view.ans.childs = await map(root.childs, async group_id => {
 		const group = tree[group_id]
 		const where = []
