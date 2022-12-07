@@ -22,3 +22,5 @@ export const createPromise = (payload) => {
 	promise.catch(e => null)
 	return promise
 }
+
+export default createPromise

@@ -1,10 +1,10 @@
 import { Access } from "/-controller/Access.js"
 import { Db } from "/-db/Db.js"
-import { nicked } from "/-nicked/nicked.js"
+import nicked from "/-nicked"
 import { unique } from "/-nicked/unique.js"
 import { filter } from "/-nicked/filter.js"
 import fs from 'fs/promises'
-import config from '@atee/config'
+import config from '/-config'
 
 export const Catalog = {}
 export default Catalog

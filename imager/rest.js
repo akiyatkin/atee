@@ -1,6 +1,6 @@
-import { nicked } from "/-nicked/nicked.js"
-import { Meta } from "/-controller/Meta.js"
-import { Access } from '/-controller/Access.js'
+import nicked from "/-nicked"
+import Rest from "/-rest"
+import Access from '/-controller/Access.js'
 import fs from 'fs/promises'
 import { ReadStream, createReadStream, createWriteStream } from 'fs'
 import { pipeline, Duplex, Readable } from 'stream'
@@ -12,27 +12,24 @@ const sharp = require('sharp')
 
 await fs.mkdir('cache/imager/', { recursive: true }).catch(e => null)
 
-export const meta = new Meta()
-meta.addFunction('string', (view, n) => n || '')
-meta.addFunction('int', (view, n) => Number(n) || 0)
-meta.addFunction('isset', (view, v) => v !== null)
-meta.addArgument('src', (view, src) => {
+const rest = new Rest()
+rest.addFunction('string', (view, n) => n || '')
+rest.addFunction('int', (view, n) => Number(n) || 0)
+rest.addFunction('isset', (view, v) => v !== null)
+rest.addArgument('src', (view, src) => {
 	if (/^https?:\/\//i.test(src)) {
-		view.ans.status = 404
-		return view.end()
+		return view.end({status:404})
 	}
 	if (!!~src.indexOf('/.') || src[0] == '.' || src[0] == '/') {
-		view.ans.status = 404
-		return view.end()
+		return view.end({status:404})
 	}
-	
 	return src
 })
-meta.addArgument('w',['int'])
-meta.addArgument('cache', ['isset'])
-meta.addArgument('h',['int'])
-//meta.addArgument('type',['string'])
-// meta.addArgument('ext', ['string'], (view, ext) => {
+rest.addArgument('w',['int'])
+rest.addArgument('cache', ['isset'])
+rest.addArgument('h',['int'])
+//rest.addArgument('type',['string'])
+// rest.addArgument('ext', ['string'], (view, ext) => {
 // 	if (!ext) {
 // 		const { src } = await view.gets(['src'])
 // 		const i = src.lastIndexOf('.')
@@ -41,11 +38,9 @@ meta.addArgument('h',['int'])
 // 	}
 // 	return ext
 // })
-meta.addArgument('fit', ['string'], (view, fit) => {
+rest.addArgument('fit', ['string'], (view, fit) => {
 	if (~['cover','contain','outside','fill','inside'].indexOf(fit)) return fit
-	return 'inside'
-	return 'contain'
-	return 'cover'
+	return 'inside'	
 })
 const isFreshCache = Access.cache(async (src, store) => {
 	const cstat = await fs.lstat(store).catch(e => null)
@@ -53,12 +48,13 @@ const isFreshCache = Access.cache(async (src, store) => {
 	const ostat = await fs.stat(src).catch(e => null)
 	return cstat.mtime > ostat.mtime
 })
-meta.addAction('webp', async view => {
+rest.addResponse('webp', async view => {
 	const { src, h, w, fit, cache } = await view.gets(['src','h','w','fit','cache'])
+	const ext = 'webp'
 	let store
 	if (cache) {
 		store = `cache/imager/${nicked([src,h,w,fit].join('-'))}.webp`
-		if (await isFreshCache(src, store)) return createReadStream(store)
+		if (await isFreshCache(src, store)) return {ext, ans:createReadStream(store)}
 	}
 	const inStream = createReadStream(src)
 
@@ -77,7 +73,7 @@ meta.addAction('webp', async view => {
 	})
 	const duplex = inStream.pipe(transform)
 	inStream.on('error', e => duplex.destroy(e))
-	if (!cache) return duplex;
+	if (!cache) return {ext, ans:duplex};
 	(async () => {
 		const chunks = []
 		duplex.on('data', chunk => {
@@ -87,22 +83,7 @@ meta.addAction('webp', async view => {
 			createWriteStream(store).write(Buffer.concat(chunks))
 		})
 	})()
-	return duplex
+	return {ext, ans:duplex}
 })
 
-
-export const rest = async (query, get, visitor) => {
-    let ans = await meta.get(query, { ...get, visitor } )
-    let ext = 'json'
-    let status = 200
-    if (ans instanceof ReadStream) {
-    	ext = query
-    } else if (ans instanceof Duplex) {
-    	ext = query
-    } else {
-    	status = ans.status || status
-    	ans = ''
-    	
-    }
-    return { ans, ext, status, nostore: false }
-}
+export default rest

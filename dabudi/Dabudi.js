@@ -1,4 +1,4 @@
-import nicked from "@atee/nicked"
+import nicked from "/-nicked"
 
 /*
 	const rows_source = await readXlsxFile(src)

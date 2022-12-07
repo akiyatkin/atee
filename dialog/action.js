@@ -6,7 +6,7 @@ document.body.after(popup_error)
 let globalonceafter = async () => {
 	globalonceafter = () => ({})
 	const tplobj = await import('/-dialog/contacts.html.js').then(r => r.default)
-	const Dialog = await import('/@atee/dialog/Dialog.js').then(r => r.default)
+	const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 	await Dialog.frame(popup_success, tplobj.SUCCESS())
 	await Dialog.frame(popup_error, tplobj.ERROR())
 }
@@ -23,7 +23,7 @@ export default async (form, submit, goal) => {
 	await globalonceafter()
 	
 
-	const Dialog = await import('/@atee/dialog/Dialog.js').then(r => r.default)
+	const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 	const error_msg = popup_error.getElementsByClassName('msg')[0]
 	try {
 		const res = await response.clone().json()

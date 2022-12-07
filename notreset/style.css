@@ -36,11 +36,9 @@ a {
 	cursor: pointer;
 	border-bottom: dashed 1px currentColor;
 }
-a:hover:has(svg),
-a:has(svg),
-a:hover:has(img),
-a:has(img) {
-	text-decoration: none;
+
+a:hover:has(:is(svg, img)),
+a:has(:is(svg, img)) {
 	border: none;
 	padding: 0;
 }

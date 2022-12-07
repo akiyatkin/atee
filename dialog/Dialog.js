@@ -1,4 +1,4 @@
-import { nicked } from "/-nicked/nicked.js"
+import nicked from "/-nicked"
 const cls = (cls, el) => el.getElementsByClassName(cls)
 const link = document.createElement('link')
 link.rel = 'stylesheet'
@@ -27,9 +27,10 @@ export const Dialog = {
 				list.push(onhide)
 				hides.set(popup, list)
 			}
-			const theme = await import('/@atee/controller/Theme.js').then(r => r.default.get())
+			const theme = await import('/-controller/Theme.js').then(r => r.default.get())
 			const layer = {tpl, sub, json, div:id}
-			const env = {layer, theme}
+			const look = { theme }
+			const env = { layer, ...look }
 			env.sid = 'sid-' + layer.div + '-' + layer.sub + '-'
 			env.scope = '#' + layer.div
 
@@ -37,6 +38,18 @@ export const Dialog = {
 			await Dialog.frame(popup, tplobj[sub](data, env))
 		}
 		Dialog.show(popup, onshow)
+		return popup
+	},
+	alert: async (html) => {
+		const id = 'dialog-alert'
+		let popup = document.getElementById(id)
+		if (!popup) {
+			popup = document.createElement('div')
+			popup.id = id
+			document.body.after(popup)
+		}
+		await Dialog.frame(popup, html)
+		Dialog.show(popup)
 		return popup
 	},
 	findPopup: el => el.closest('.dialogframe').parentElement,

@@ -3,8 +3,8 @@ import { readdir } from 'fs/promises'
 
 
 // const MAP = {
-//     '-controller/server.js': '@atee/controller/server.js',
-//     //'controller/server.js': '@atee/controller/server.js',
+//     '/-controller/server.js': '/-controller/server.js',
+//     //'controller/server.js': '/-controller/server.js',
 //     '-index.html.js': 'index.html.js',
 // }
 
@@ -32,7 +32,7 @@ const checkAccessMark = (src) => {
 }
 const checkfromroot = async (path, context, defaultResolve) => {
     if (isExt(path) && path.indexOf('./data/') === 0) {
-        const times = await import('@atee/controller/times.js').then(r => r.default)
+        const times = await import('/-controller/times.js').then(r => r.default)
         path = path + (~path.indexOf('?') ? '&' : '?') + 't=' + times.ACCESS_TIME
     }
     const res = defaultResolve(path, {

@@ -23,3 +23,4 @@ const inViewport = (el, cb) => {
 }
 
 export { inViewport }
+export default inViewport

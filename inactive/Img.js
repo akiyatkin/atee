@@ -30,3 +30,4 @@ const Img = {
 }
 
 export { Img }
+export default Img

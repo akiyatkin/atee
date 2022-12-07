@@ -1,11 +1,12 @@
-import { parse } from './Spliter.js'
+import Theme from './Theme.js'
 
 export const getPost = (request, limit = 1e7) => {
-    if (request.method != 'POST') return
+    if (request.method != 'POST') return {}
     return new Promise((resolve, reject) => {
         const r = request.headers['content-type'].split(';')
         if (r[0] === 'multipart/form-data') {
-            reject('multipart/form-data')
+            console.log('getPost ERROR multipart/form-data')
+            resolve({})
         } else if (r[0] === 'application/x-www-form-urlencoded') {
             let requestBody = '';
             request.on('data', data => {
@@ -17,11 +18,13 @@ export const getPost = (request, limit = 1e7) => {
                 }
             });
             request.on('end', () => {
-                const formData = parse(requestBody,'&')
+                const formData = Theme.parse(requestBody,'&')
                 resolve(formData)
             });
         } else {
-            reject(request.headers['content-type'])
+            console.log('getPost ERROR '+request.headers['content-type'])
+            resolve({})
         }
     })
 }
+export default getPost

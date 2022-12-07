@@ -1,9 +1,8 @@
 import { animate } from './animate.js'
-import { pathparse } from './Spliter.js'
-
 import { evalScripts } from './evalScripts.js'
 import { createPromise } from './createPromise.js'
-import Bread from './Bread.js'
+import Bread from '/-controller/Bread.js'
+import Theme from '/-controller/Theme.js'
 
 export const Client = {
 	search:'',
@@ -151,9 +150,23 @@ const fixsearch = search => {
 		else if (search[0] == '?') search = location.pathname + search
 		else if (search[0] == '#') search = location.pathname + location.search + search
 	}
+	search = search.replace(/\/+/,'/').replace(/\/$/,'')
 	return search
 }
-
+const explode = (sep, str) => {
+    if (!str) return []
+    const i = str.indexOf(sep)
+    return ~i ? [str.slice(0, i), str.slice(i + 1)] : [str]
+}
+const userpathparse = (search) => {
+    //У request всегда есть ведущий /слэш
+	search = search.slice(1)
+    try { search = decodeURI(search) } catch { }
+    let [path = '', params = ''] = explode('?', search)
+    const get = Theme.parse(params, '&')
+    const secure = !!~path.indexOf('/.') || path[0] == '.'
+    return {secure, path, get}
+}
 const applyCrossing = async () => {
 	if (!Client.next) return
 	let {search, promise} = Client.next
@@ -211,8 +224,8 @@ const applyCrossing = async () => {
 			if (hash && anim != 'none') anim = 'opacity'
 			animate('div', div, layer.sys.execute, anim)
 		}
-		
-		const {path, get} = pathparse(search.slice(json.root.length)) //Останется ведущий слэш
+		const usersearch = search.slice(json.root.length)
+		const {path, get} = userpathparse(usersearch) //Останется ведущий слэш
 		const bread = new Bread(path, get, search, json.root) //root+path+get = search
 
 		await Promise.all(promises)
@@ -275,14 +288,8 @@ const interpolate = (val, data, env) => new Function('data', 'env', 'return `'+v
 const addHtml = async (template, layer, bread, timings, theme) => {
 	const crumb = bread.getCrumb(layer.depth)
 	let html = ''
-	const env = {
-		layer, 
-		crumb,
-		bread, 
-		host:location.host, 
-		timings,
-		theme
-	}
+	const look = { bread, timings, theme, host:location.host }
+	const env = { layer, crumb, ...look }
 	env.sid = 'sid-' + (layer.div || layer.name) + '-' + layer.sub + '-'
 	env.scope = layer.div ? '#' + layer.div : 'html'
 	if (layer.replacetpl) {
@@ -323,7 +330,7 @@ const loadAll = (layers, promises = []) => {
 	for (const layer of layers) {
 		if (!layer.json) continue
 		jsons[layer.json] = fetch(layer.json).then(res => {
-			if (res.status != 200) {
+			if (res.status != 200 && res.status != 422) {
 				console.log(4, res)
 				location.reload()
 				return new Promise(() => {})//reload сразу не происходит, надо зависнуть

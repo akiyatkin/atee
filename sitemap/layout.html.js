@@ -31,7 +31,7 @@ sitemap.HEAD = (head, env) => `
 			}
 		}
 		window.addEventListener('crossing', async ({detail: { timings, bread, theme }}) => {
-			const data = await fetch('/-sitemap/head?path=' + bread.path).then(res => res.json())
+			const data = await fetch('/-sitemap/get-head?path=' + bread.path).then(res => res.json())
 			for (const rule in data) {
 				rules[rule]?.(data[rule])
 			}

@@ -823,7 +823,10 @@ export class Upload {
 		const file = await Files.getFileName(visitor, dir, name, ['xlsx'])
 		if (!file) return false
 
-		const {groups, models, sheets, brands} = await Excel.loadTable(visitor, dir + file, name)
+		const brand = options.tables?.[name]?.brand || name
+		console.log(name, options.tables)
+
+		const {groups, models, sheets, brands} = await Excel.loadTable(visitor, dir + file, brand)
 		const values = {}
 		const props = {}
 		const table_title = name
@@ -1098,3 +1101,4 @@ export class Upload {
 		return { quantity, duration, loadtime:Date.now(), loaded:1 }
 	}
 }
+export default Upload

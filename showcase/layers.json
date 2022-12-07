@@ -111,7 +111,9 @@
 			}
 		}
 	},
-	
+	"head":{
+		"title":"Управление каталогом"
+	},
 	"parsedtpl":{
 		"index:HEADER":"${theme.value}",
 		"controller:ER404":"${bread.path}"

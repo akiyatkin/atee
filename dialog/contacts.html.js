@@ -1,5 +1,15 @@
 const cont = {}
 export default cont
+
+const href = '/-float-label/style.css'
+if (!document.head.querySelector('link[href="'+href+'"]')) {
+	const link = document.createElement('link')
+	link.rel = 'stylesheet'
+	link.href = href
+	document.head.prepend(link)
+}
+
+
 cont.CALLBACK = (data, env) => `
 	<div style="max-width:500px">
 		<h1>Заказать звонок</h1>
@@ -22,10 +32,10 @@ cont.CALLBACK = (data, env) => `
 		</form>
 		<script>
 			(form => {
-				import("/@atee/form/Autosave.js").then(r => r.default.init(form))
+				import("/-form/Autosave.js").then(r => r.default.init(form))
 				form.addEventListener('submit', e => {
 					e.preventDefault()
-					import('/@atee/dialog/submit.js').then(r => r.default(form, form.action, 'callback'))
+					import('/-dialog/submit.js').then(r => r.default(form, form.action, 'callback'))
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>
@@ -76,10 +86,10 @@ cont.CONTACTS = (data, env) => `
 		</form>
 		<script>
 			(form => {
-				import("/@atee/form/Autosave.js").then(r => r.default.init(form))
+				import("/-form/Autosave.js").then(r => r.default.init(form))
 				form.addEventListener('submit', e => {
 					e.preventDefault()
-					import('/@atee/dialog/submit.js').then(r => r.default(form, form.action, 'contacts'))
+					import('/-dialog/submit.js').then(r => r.default(form, form.action, 'contacts'))
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>

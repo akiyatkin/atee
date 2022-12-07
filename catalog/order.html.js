@@ -1,3 +1,12 @@
+const addCSS = href => { //файл этот нельзя использовать на сервере
+	if (document.head.querySelector('link[href="'+href+'"]')) return
+	const link = document.createElement('link')
+	link.rel = 'stylesheet'
+	link.href = href
+	document.head.prepend(link)
+}
+addCSS('/-float-label/style.css')
+
 export const SUCCESS = () => `
 	<h1>Заявка отправлена</h1>
 	<p style="font-size: 1rem; line-height: 140%; margin-left:auto; margin-right:auto">
@@ -28,7 +37,6 @@ const checkbox = (name, title, checked) => `
 	</div>
 `
 export const ROOT = (data, env) => `
-	<link rel="stylesheet" href="/-float-label/style.css">
 	<p>
 		Заказать <b>${data.mod.brand_title} ${data.mod.model_title}</b>
 	</p>
@@ -39,7 +47,7 @@ export const ROOT = (data, env) => `
 		<input name="brand_nick" type="hidden" value="${data.mod.brand_nick}">
 		<input name="model_nick" type="hidden" value="${data.mod.model_nick}">
 		<input name="partner" type="hidden" value="${data.partner}">
-		<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem">
+		<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom:1rem">
 			${input('tel', 'phone','Телефон *', true)}
 			${input('email', 'email','Email *', true)}
 		</div>
@@ -51,102 +59,13 @@ export const ROOT = (data, env) => `
 			<button type="submit">Отправить</button>
 		</p>
 	</form>
-	<div id="modalFormSuccess"></div>
-	<div id="modalFormError"></div>
-	<script type="module">
-		import { UTM }  from '/-form/UTM.js'
-		import { Once } from "/-controller/Once.js"
-		import { Dialog } from '/-dialog/Dialog.js'
-		const id = id => document.getElementById(id)
-		const div = id('${env.layer.div}')
-		const form = div.getElementsByTagName('form')[0]
-		const button = form.getElementsByTagName('button')[0]
-		
-
-		const popup_success = id('modalFormSuccess')
-		document.body.append(popup_success)
-		const popup_error = id('modalFormError')
-		document.body.append(popup_error)
-		
-		
-		const { Autosave } = await import("/@atee/form/Autosave.js")
-		await Autosave.init(form)	
-		
-		//await new Promise(resolve => setTimeout(resolve, 50))
-		const SITEKEY = "${data.SITEKEY}"
-		const RNAME = "g-recaptcha-response"
-		const captha = document.createElement("input")
-		captha.type = "hidden"
-        captha.name = RNAME
-        form.appendChild(captha)
-		const recaptcha = Once.proxy(() => {
-			return new Promise(async resolve => {
-				const src = 'https://www.google.com/recaptcha/api.js?render=' + SITEKEY
-				const s = document.createElement("SCRIPT")
-			    s.type = "text/javascript"
-			    s.async = true
-				s.defer = true
-				s.crossorigin = "anonymous"
-			    s.onload = () => grecaptcha.ready(resolve)
-			    s.src = src
-			    document.head.append(s)
+	<script>
+		(form => {
+			import("/-form/Autosave.js").then(r => r.default.init(form))
+			form.addEventListener('submit', e => {
+				e.preventDefault()
+				import('/-dialog/submit.js').then(r => r.default(form, form.action, 'callorder'))
 			})
-	    })
-		const addcaptcha = async () => {
-			await recaptcha()
-			captha.value = await grecaptcha.execute(SITEKEY, { action: 'contacts' })
-		}
-	    const utms = document.createElement("input")
-	    utms.type = "hidden"
-		utms.name = "utms"
-		form.appendChild(utms)
-		const addutm = async () => {
-			const res = await UTM.get()
-			utms.value = JSON.stringify(res)
-		}
-		
-		const tplobj = await import('/-catalog/order.html.js')
-		await Dialog.frame(popup_success, tplobj.SUCCESS())
-		await Dialog.frame(popup_error, tplobj.ERROR())
-		form.addEventListener('submit', async e => {
-			e.preventDefault()
-			button.disabled = true
-			await Promise.all([addcaptcha(), addutm()])
-			const response = await fetch(form.action, {
-				method: 'POST',
-				headers: { "Content-Type": "application/x-www-form-urlencoded" },
-				body: new URLSearchParams(new FormData(form))
-			}).catch(e => {
-				console.error(e)
-			})
-
-			const error_msg = popup_error.getElementsByClassName('msg')[0]
-			try {
-				const res = await response.clone().json()
-				if (res.result) {
-					Dialog.hide(div)
-					Dialog.show(popup_success)
-					
-					const metrikaid = window.Ya?._metrika.getCounters()[0].id
-					if (metrikaid) {
-						const goal = 'callorder'
-						console.log('Goal.reach ' + goal)
-						ym(metrikaid, 'reachGoal', goal);
-						
-					}
-					
-				} else {
-					error_msg.innerHTML = res.msg
-					Dialog.show(popup_error)
-				}
-			} catch (e) {
-				let text = await response.text()
-				console.error(e, text)
-				error_msg.innerHTML = 'Произошла ошибка на сервере. Попробуйте позже'
-				Dialog.show(popup_error)
-			} finally {
-				setTimeout(() => button.disabled = false, 1000);
-			}
-		})		
+		})(document.currentScript.previousElementSibling)
 	</script>
 `

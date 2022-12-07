@@ -69,10 +69,9 @@ filters.props = {
 	slider: (data, filter, env) => `
 		<div class="bodyslider" style="margin-bottom: 1rem;">
 			<style>
-				#${env.layer.div} .slider {
-					--thumb-active-color: var(--orange, black);
-					--thumb-static-color: var(--blue, gray);
-					/*--radius: var(--radius, 0);*/
+				${env.scope} .slider {
+					--thumb-active-color: var(--primary, black);
+					--thumb-static-color: var(--color-link, gray);
 				}
 			</style>
 			<div style="display: flex; gap:5px; align-items: center">

@@ -1,18 +1,16 @@
-import { rest as controller } from './rest.js'
+import controller from './rest.js'
 import { file, files, filesw } from './files.js'
 import { whereisit } from './whereisit.js'
-import { pathparse, split } from "./Spliter.js" 
 import { ReadStream } from 'fs'
 import { pathToFileURL, fileURLToPath } from 'url'
 
+import Theme from '/-controller/Theme.js'
 
+import config from '/-config'
 import path from 'path'
 import fs from 'fs/promises'
 
-const getExt = (str) => {
-	const i = str.lastIndexOf('.')
-	return ~i ? str.slice(i + 1) : ''
-}
+
 const searchRest = async (source, file, RESTS, parent = source, innodemodules = false) => {
 	const src = path.posix.join(source, file)
 	if (await fs.access(src).then(() => true).catch(() => false)) {
@@ -72,12 +70,6 @@ const webresolve = async search => {
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 
-
-const getRoot = (str) => {
-	const i = str.indexOf('/',1)
-	return ~i ? str.slice(1, i) : ''
-}
-
 //Подходит только если json нужен через rest.js
 export const loadJSON = (src, visitor) => {
 	return load(src, visitor, 'json')
@@ -90,22 +82,25 @@ const load = (src, visitor, ext) => {
 	const name = src+':'+ext
 
 	return store.once(name, async () => {
-		let res = { ans: '', status: 200, nostore: false } //, headers: { }, ext: ext
+		let reans = { ans: '', status: 200, nostore: false } //, headers: { }, ext: ext
 		
-		const {
-			search, secure, get,
-			rest, query, restroot
-		} = await router(src)
-	    if (!rest) throw { status: 500, src, ext }
-		res = {...res, ...(await rest(query, get, visitor))}
-	    if (res.status != 200) throw { status: res.status, src, res, ext, from:'router.load', toString: () => query + ' ' + res.status}
+		// const {
+		// 	search, secure, get,
+		// 	rest, query, restroot
+		// } = await router(src)
+		//404, 422, 200, 500, 501 method not emplimented, 403 
+		const route = await router(src)
+	    if (!route.rest) throw { status: 500, src, ext }
+	    const r = typeof(route.rest) == 'function' ? route.rest(route.query, route.get, visitor) : route.rest.get(route.query, route.get, visitor)
+		reans = {...reans, ...(await r)}
+	    if (reans.status != 200 && reans.status != 422) throw { status: reans.status, src, reans, ext, from:'router.load', toString: () => route.query + ' ' + reans.status}
 
-		let data = res.ans
-		if (data instanceof ReadStream) {
-			data = await readTextStream(data)
-			if (ext == 'json') data = JSON.parse(data)
+		let ans = reans.ans
+		if (ans instanceof ReadStream) {
+			ans = await readTextStream(ans)
+			if (ext == 'json') ans = JSON.parse(ans)
 		}
-		return {data, nostore:res.nostore}
+		return {...reans, ans}
 	})
 }
 
@@ -125,37 +120,66 @@ export const readTextStream = stream => {
 }
 
 
-
+const getSrcName = (str) => {
+    const i = str.lastIndexOf(path.sep)
+    const name = ~i ? str.slice(i + 1) : ''
+    return ~i && !name ? true : name
+}
+const getExt = (str) => {
+	const i = str.lastIndexOf('.')
+	return ~i ? str.slice(i + 1) : ''
+}
+const conf = await config('controller')
+const explode = (sep, str) => {
+    if (!str) return []
+    const i = str.indexOf(sep)
+    return ~i ? [str.slice(0, i), str.slice(i + 1)] : [str]
+}
+const userpathparse = (search) => {
+    //У request всегда есть ведущий /слэш
+	search = search.slice(1)
+    try { search = decodeURI(search) } catch { }
+    let [path = '', params = ''] = explode('?', search)
+    const get = Theme.parse(params, '&')
+    const secure = !!~path.indexOf('/.') || path[0] == '.'
+    return {secure, path, get}
+}
 export const router = async (search) => {
 	//У search всегда есть ведущий /слэш
 	//if (search.indexOf('/-') === 0) search = search.slice(1)
-	let { secure, path, ext, get} = pathparse(search)
+	let { secure, path, get} = userpathparse(search)
 	let query = false
 	let restroot = ''
 	let root = ''
 	let rest = false
 	let cont = false
-	if (ext) {
-		const src = await webresolve(search)
-		if (src) { //найден файл
-			if (ext == 'json') { //json файлы возвращаются объектом, //с хранением в оперативной памяти
-				rest = async () => {
-					const ans = await import(search, {assert: { type: "json" }}).then(r => r.default)
-					return { ans, ext }
-				}
-			} else { //файлы передаются стримом
-				if (search == '/-controller/sw.js') rest = filesw(src, ext)
-				else rest = file(src, ext)
+
+	//if (ext) {
+	const src = await webresolve('/'+path)
+	if (src) { //найден файл
+		const ext = getExt(src)
+		const name = getSrcName(src)
+		if (~conf['403']['indexOf'].indexOf(name)) secure = true
+	    if (conf['403']['search'].some(pattern => ~name.search(pattern))) secure = true
+
+		if (ext == 'json') { //json файлы возвращаются объектом, //с хранением в оперативной памяти
+			rest = async () => {
+				const ans = await import(search, {assert: { type: "json" }}).then(r => r.default)
+				return { ans, ext }
 			}
-			const query = ''
-			return {
-				search, secure, get, path, ext,
-				rest, query, restroot,
-				cont, root
-			}
+		} else { //файлы передаются стримом
+			if (search == '/-controller/sw.js') rest = filesw(src, ext)
+			else rest = file(src, ext)
+		}
+		const query = ''
+		return {
+			search, secure, get, path, ext,
+			rest, query, restroot,
+			cont, root
 		}
 	}
-
+	//}
+	const ext = getExt(path)
 	if (path[0] == '-') { //Обязательный rest и без контроллера
 		for (const v of REST_HYPHENS) {
 			if (path.indexOf(v.part) === 1 || !v.part) {
@@ -163,8 +187,7 @@ export const router = async (search) => {
 						(path == '-' + v.part)  //-params = params
 						|| path[v.part.length + 1] == '/' || !v.part //-params-list != params, -params/list = params
 				) { 
-					if (v.innodemodules) rest = (await import(v.rest)).rest
-					else rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest                
+					rest = await import(v.innodemodules ? v.rest : IMPORT_APP_ROOT + '/' + v.rest).then(r => r.default || r.rest)
 					restroot = v.part
 					query = path.slice(v.part.length + (v.part ? 2 : 1)) //Отрезаем - и последний /
 					break;
@@ -173,13 +196,13 @@ export const router = async (search) => {
 		}
 
 	} else {
+
 		if (ext) { //Без дефиса подходит только rest в корне для файлов
 			for (const v of REST_DIRECTS) {
 				//if (!v.part && !ext) continue //rest в корне только при наличии расширения
 				if (v.part) continue
 				if (path.indexOf(v.part) === 0) {
-					if (v.innodemodules) rest = (await import(v.rest)).rest
-					else rest = (await import(IMPORT_APP_ROOT + '/' + v.rest)).rest
+					rest = await import(v.innodemodules ? v.rest : IMPORT_APP_ROOT + '/' + v.rest).then(r => r.default || r.rest)
 					restroot = v.part
 					query = path.slice(v.part.length)
 					break;

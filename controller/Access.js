@@ -1,8 +1,8 @@
 import fs from 'fs/promises'
 import cproc from '@atee/cproc'
-import config from '@atee/config'
+import config from '/-config'
 
-import times from '@atee/controller/times.js'
+import times from '/-controller/times.js'
 
 const CONF = await config('controller')
 const STORE = {}

@@ -1,5 +1,5 @@
 import cards from "/-catalog/cards.html.js"
-import { nicked } from "/-nicked/nicked.js"
+import nicked from "/-nicked"
 import { cost } from "/-words/cost.js"
 import links from "/-catalog/links.html.js"
 import common from "/-catalog/common.html.js"
@@ -32,7 +32,7 @@ model.showmodel = (data, env, { mod } = data) =>
 	<!-- <pre>${JSON.stringify(mod, "\n", 2)}</pre> -->
 	<div class="modtext">
 		<style>
-			#${env.layer.div} .modtext img {
+			${env.scope} .modtext img {
 				max-width: 100%;
 				height: auto;
 			}
@@ -41,103 +41,72 @@ model.showmodel = (data, env, { mod } = data) =>
 	</div>
 `
 
-// model.showimage = (src) => `
-// 	<div style="display: inline-block;max-width: 500px; margin-bottom:1rem"><img style="max-width: 100%; height:auto" src="${src}"></div>
-// `
-// model.common = (data, env, mod) => `
-// 	${cards.badgecss(data, env)}
-// 	<div style="float: right;">${mod.Наличие || mod.discount ? cards.badgenalichie(data, mod) : ''}</div>
-// 	${model.showprop('Бренд', brandlink(data, env, mod))}
-// 	${model.showprop('Модель', mod.model_title)}
-// 	${cards.basket(data, mod)}
-
-// 	${mod.images? '<p>'+mod.images.map(model.showimage).join('')+'</p>' : ''}
-// 	<p>
-// 		<i>${mod.Описание || ''}</i>
-// 	</p>
-// 	<p><button style="font-size:1.4rem; margin:1rem 0" id="makeorder">Сделать заказ</button></p>
-// 	<div id="popuporder"></div>
-// 	<script type="module">
-// 		import { Dialog } from '/-dialog/Dialog.js'
-// 		const btn = document.getElementById('makeorder')
-// 		const tplobj = await import('/-catalog/order.html.js')
-// 		const html = tplobj.ROOT(${JSON.stringify(data)}, 'popuporder', "${env.theme.partner ?? ''}")
-// 		//const { Dialog } = await import('/-dialog/Dialog.js')
-// 		await Dialog.frame('popuporder', html)
-// 		btn.addEventListener('click', async () => {
-// 			btn.disabled = true
-// 			await Dialog.show('popuporder')	
-// 			btn.disabled = false
-// 		})	
-// 	</script>
-// `
-
-
-
 model.showGallery = (data, env, mod) => `
-	<style>
-		#${env.layer.div} .imagemin_showgallery {	
-			margin: 1rem;		
-		}
-		#${env.layer.div} .imagemin_gallery {
-			display: grid;
-	    	grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-	        gap: 1rem;
-		}		
-		#${env.layer.div} .imagemin {
-			border-radius: var(--radius);
-			cursor: pointer;
-			text-align: center;
-		}
-		#${env.layer.div} .imagemin.selected {
-			border: solid 1px var(--main, orange);
-			padding: 4px;
-		}
-		#${env.layer.div} .imagemax_gallery {
-			overflow:hidden; 
-			/*aspect-ratio: 3 / 2; */
-			display:grid; 
-			justify-content: center; 
-		
-		}
-		#${env.layer.div} .pointer {
-			cursor: pointer;
-		}
-	</style>
-	<div class="imagemax_gallery ${mod.images.length>1?'pointer':''}" style="">
-		<img alt="" style="max-width: 100%; max-height: 100%" 
-			srcset="
-				/-imager/webp?cache&h=500&fit=inside&src=${encodeURIComponent(mod.images[0])} 1x,
-				/-imager/webp?cache&h=1000&fit=inside&src=${encodeURIComponent(mod.images[0])} 1.5x,
-				/-imager/webp?cache&h=1500&fit=inside&src=${encodeURIComponent(mod.images[0])} 3x
-			"
-		>
-	</div>
-	<div class="imagemin_showgallery">
-		<div class="imagemin_gallery">
-			${mod.images.length > 1 ? mod.images.map(model.showimage).join('') : ''}
+	<div class="imagecontent">
+		<style>
+			${env.scope} .imagemin_showgallery {	
+				margin: 1rem;		
+			}
+			${env.scope} .imagemin_gallery {
+				display: grid;
+		    	grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+		        gap: 1rem;
+			}		
+			${env.scope} .imagemin {
+				border-radius: var(--radius);
+				cursor: pointer;
+				text-align: center;
+			}
+			${env.scope} .imagemin.selected {
+				border: solid 1px var(--main, orange);
+				padding: 4px;
+			}
+			${env.scope} .imagemax_gallery {
+				overflow:hidden; 
+				/*aspect-ratio: 3 / 2; */
+				display:grid; 
+				justify-content: center; 
+			
+			}
+			${env.scope} .pointer {
+				cursor: pointer;
+			}
+		</style>
+		<div class="imagemax_gallery ${mod.images.length>1?'pointer':''}" style="">
+			<img alt="" style="max-width: 100%; max-height: 100%" 
+				srcset="
+					/-imager/webp?cache&h=500&fit=inside&src=${encodeURIComponent(mod.images[0])} 1x,
+					/-imager/webp?cache&h=1000&fit=inside&src=${encodeURIComponent(mod.images[0])} 1.5x,
+					/-imager/webp?cache&h=1500&fit=inside&src=${encodeURIComponent(mod.images[0])} 3x
+				"
+			>
 		</div>
-	</div>
+		<div class="imagemin_showgallery">
+			<div class="imagemin_gallery">
+				${mod.images.length > 1 ? mod.images.map(model.showimage).join('') : ''}
+			</div>
+		</div>
 
-	<script type="module">
-		const div = document.getElementById('${env.layer.div}')
-		const bigimg = div.querySelector('.imagemax_gallery img')
-		const imgmins = div.querySelectorAll('.imagemin')
-		for (const imgmin of imgmins) {
-			imgmin.addEventListener('click', () => {
-				div.querySelector('.selected').classList.remove('selected')
-				imgmin.classList.add('selected')
-				const file = encodeURIComponent(imgmin.dataset.file)
-				bigimg.srcset = '/-imager/webp?h=500&src='+file+' 1x,/-imager/webp?h=750&src='+file+' 1.5x,/-imager/webp?h=1000&src='+file+' 2x,/-imager/webp?h=1500&src='+file+' 3x,/-imager/webp?h=2000&src='+file+' 4x'
+		<script type="module">
+			const div = document.getElementById('${env.layer.div}')
+			const bigimg = div.querySelector('.imagemax_gallery img')
+			const imgmins = div.querySelectorAll('.imagemin')
+			for (const imgmin of imgmins) {
+				imgmin.addEventListener('click', () => {
+					div.querySelector('.selected').classList.remove('selected')
+					imgmin.classList.add('selected')
+					const file = encodeURIComponent(imgmin.dataset.file)
+					bigimg.srcset = '/-imager/webp?h=500&src='+file+' 1x,/-imager/webp?h=750&src='+file+' 1.5x,/-imager/webp?h=1000&src='+file+' 2x,/-imager/webp?h=1500&src='+file+' 3x,/-imager/webp?h=2000&src='+file+' 4x'
+				})
+			}
+			if (imgmins.length) bigimg.addEventListener('click', () => {
+				const selected = div.querySelector('.selected')
+				const next = selected.nextElementSibling || div.querySelector('.imagemin')
+				if (!next) return
+				next.click()
 			})
-		}
-		if (imgmins.length) bigimg.addEventListener('click', () => {
-			const selected = div.querySelector('.selected')
-			const next = selected.nextElementSibling || div.querySelector('.imagemin')
-			if (!next) return
-			next.click()
-		})
-	</script>
+		</script>
+	</div>
 `
 model.showimage = (src, i) => `	
 	<div data-file="${src}" class="imagemin ${i === 0 ? 'selected' : ''}">
@@ -151,27 +120,27 @@ model.common = (data, env, mod) => `
 	
 	<div class="mod_content">
 		<style>
-			#${env.layer.div} .mod_content {
+			${env.scope} .mod_content {
 				display: grid;
-				grid-template-columns: 1fr 1fr;
+				grid-template-columns: 1fr ${mod.images ? '1fr' : ''};
 				gap: 2rem;
 				padding-bottom: 1rem;
 			}
 			@media (max-width: 900px){
-				#${env.layer.div} .mod_content {
+				${env.scope} .mod_content {
 					
 				}
 			}
 			@media (max-width: 705px){
-				#${env.layer.div} .mod_content {
+				${env.scope} .mod_content {
 					display: grid;
 					grid-template-columns: 1fr;
 				}
 			}
 		</style>	
-		<div class="imagecontent">
+		
 			${mod.images ? model.showGallery(data, env, mod) : ''}	
-		</div>
+
 		<div class="textcontent">
 			${model.showprop('Модель', mod.model_title)}
 			${model.showprop('Бренд', brandlink(data, env, mod))}
@@ -180,21 +149,23 @@ model.common = (data, env, mod) => `
 				<i>${mod.Описание || ''}</i>
 			</p>
 			<p>${cards.basket(data, mod)}</p>
-			<p><button style="font-size:1.4rem; margin:1rem 0" id="makeorder">Сделать заказ</button></p>
-			<div id="popuporder"></div>
-			<script type="module">
-				import { Dialog } from '/-dialog/Dialog.js'
-				const btn = document.getElementById('makeorder')
-				const tplobj = await import('/-catalog/order.html.js')
-				const html = tplobj.ROOT(${JSON.stringify(data)}, 'popuporder', "${env.theme.partner ?? ''}")
-				//const { Dialog } = await import('/-dialog/Dialog.js')
-				await Dialog.frame('popuporder', html)
-				btn.addEventListener('click', async () => {
-					btn.disabled = true
-					await Dialog.show('popuporder')	
-					btn.disabled = false
-				})	
-			</script>
+			<p>
+				<button style="font-size:1.4rem; margin:1rem 0">Сделать заказ</button>
+				<script>
+					(async btn => {
+						btn.addEventListener('click', async () => {
+							btn.disabled = true
+							const { Dialog } = await import('/-dialog/Dialog.js')
+							await Dialog.open({
+								tpl:'/-catalog/order.html.js', 
+								sub:'ROOT',
+								json: '${env.layer.json}'
+							})
+							btn.disabled = false
+						})
+					})(document.currentScript.previousElementSibling)
+				</script>
+			</p>
 		</div>
 	</div>
 `

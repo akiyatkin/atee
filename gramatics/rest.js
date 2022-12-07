@@ -1,16 +1,17 @@
-import { Meta } from "/-controller/Meta.js"
+import Rest from "/-rest"
 import mail from "/-mail"
 
-export const meta = new Meta()
+const rest = new Rest()
 
-meta.addArgument('href')
-meta.addArgument('block')
-meta.addArgument('error')
-meta.addArgument('right')
-meta.addArgument('host')
+rest.addArgument('href')
+rest.addArgument('block')
+rest.addArgument('error')
+rest.addArgument('right')
+rest.addArgument('visitor')
 
-meta.addAction('set-send', async (view) => {
-	const { host, href, block, error, right } = await view.gets(['host', 'href','block','error','right'])
+rest.addResponse('set-send', async (view) => {
+	const { visitor, href, block, error, right } = await view.gets(['visitor', 'href','block','error','right'])
+	const host = visitor.client.host
 	const r = await mail.toSupport(`Орфографическая ошибка ${host}`,`
 			<a href="${href}">${href}</a>
 			<p>Ошибка: ${error}</p>
@@ -21,8 +22,4 @@ meta.addAction('set-send', async (view) => {
 	return view.err()
 })
 
-export const rest = async (query, get, visitor) => {
-	const req = { ...get, ...visitor.client }
-	const ans = await meta.get(query, req)
-	return { ans }
-}
+export default rest

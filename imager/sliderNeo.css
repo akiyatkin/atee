@@ -14,7 +14,7 @@
 .sliderNeo::-webkit-scrollbar-thumb {
 	/*background-color: rgba(0,0,0,0.3);*/
 	/*background-color: #2f6ea4;*/
-	background-color: var(--orange, rgba(0,0,0,0.3));
+	background-color: var(--primary, rgba(0,0,0,0.3));
 	border-radius: 5px;
 	/*border: 3px solid transparent;*/
 }

@@ -1,4 +1,4 @@
-import { nicked } from "/-nicked/nicked.js"
+import nicked from "/-nicked"
 import { cost } from "/-words/cost.js"
 import links from "/-catalog/links.html.js"
 import common from "/-catalog/common.html.js"
@@ -8,17 +8,17 @@ export default cards
 
 cards.LIST = (data, env) => `
 	<style>
-		#${env.layer.div} .listcards { grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)) }
+		${env.scope} .listcards { grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)) }
 		@media (max-width:767px) {
-			#${env.layer.div} .listcards { grid-template-columns: 1fr 1fr }
+			${env.scope} .listcards { grid-template-columns: 1fr 1fr }
 		}
 		@media (max-width:360px) {
-			#${env.layer.div} .listcards { grid-template-columns: 1fr }
+			${env.scope} .listcards { grid-template-columns: 1fr }
 		}
 	</style>
 	${cards.badgecss(data, env)}
 	<div class="listcards" style="display: grid;  grid-gap: 20px">	
-		${data.list.map(mod => cards.card(data, mod)).join('')}
+		${data.list?.map(mod => cards.card(data, mod)).join('')}
 	</div>
 	${(data.pagination?.page == 1 && data.pagination?.last > 1) ? cards.scriptRemoveSuperfluous(data) : ''}
 `
@@ -35,25 +35,27 @@ cards.scriptRemoveSuperfluous = (data) => `
 
 cards.badgecss = (data, env) => `
 	<style>
-		#${env.layer.div} .badge {
+		${env.scope} .badge {
 			border-radius: 8px;
 			border: solid 1px currentColor;
 			background-color: rgba(255,255,255,.9);
 			padding: 2px 8px;
 			font-size: 0.9rem;
 		}
-		#${env.layer.div} .badge:hover {
+		${env.scope} .badge:hover {
 			background-color: white;
 		}
-		#${env.layer.div} .badge_novinka {
+		${env.scope} .badge_novinka {
 			color: green;
 		}
-		
-		/*.badge_lider-prodaj {
+		${env.scope} .badge_discount {
+			color: var(--color-partner, green);
+		}
+		${env.scope} .badge_lider-prodaj {
 			background-color: black!important;
 			border-color: white!important;
 			color: white!important;
-		}*/
+		}
 	</style>
 `
 cards.card = (data, mod) => `

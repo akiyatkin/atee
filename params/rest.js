@@ -1,18 +1,18 @@
-import Dabudi from '@atee/dabudi/Dabudi.js'
-import nicked from '@atee/nicked'
-import Access from '@atee/controller/Access.js'
-import Meta from '@atee/controller/Meta.js'
+import Dabudi from '/-dabudi/Dabudi.js'
+import nicked from '/-nicked'
+import Access from '/-controller/Access.js'
+import Rest from "/-rest"
 
-import config from '@atee/config'
-import xlsx from '@atee/xlsx'
+import config from '/-config'
+import xlsx from '/-xlsx'
 
 const CONFIG = await config('params')
 const lists = await xlsx.read(Access, CONFIG.src)
 
-export const meta = new Meta()
+const rest = new Rest()
 
-meta.addArgument('name')
-meta.addAction('get-menu', async view => {
+rest.addArgument('name')
+rest.addResponse('get-menu', async view => {
 	const { name } = await view.gets(['name'])
 	const list = lists.find(d => d.name == name)
 	if (!list) return view.err('Лист не найден')
@@ -57,13 +57,10 @@ meta.addAction('get-menu', async view => {
 
 
 
-meta.addAction('get-sheet', async view => {
+rest.addResponse('get-sheet', async view => {
 	const { name } = await view.gets(['name'])
 	view.ans.sheet = await getList(name)
 	return view.ret()
 })
-export const rest = async (query, get, { client }) => {
-	const ans = await meta.get(query, { ...get, ...client } )
-	const status = ans.result ? 200 : 422
-	return { ans, ext: 'json', status, nostore:false }
-}
+
+export default rest

@@ -163,3 +163,4 @@ export const Files = {
 		return res
 	}
 }
+export default Files

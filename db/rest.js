@@ -1,33 +1,33 @@
-import { Meta } from "/-controller/Meta.js"
+import Rest from "/-rest"
 import { Db } from "/-db/Db.js"
 
 import { Access } from "/-controller/Access.js"
 
 
-export const meta = new Meta()
+const rest = new Rest()
 
-meta.addHandler('admin', async (view) => {
-	const { cookie } = await view.gets(['cookie'])
-	if (!await Access.isAdmin(cookie)) {
-		view.ans.status = 403
-		view.ans.nostore = true
+rest.addHandler('admin', async (view) => {
+	const { visitor } = await view.gets(['visitor'])
+	if (!await Access.isAdmin(visitor.client.cookie)) {
+		view.status = 403
+		view.nostore = true
 		return view.err('Access denied')
 	}
 })
-meta.addVariable('db', async view => {
+rest.addVariable('db', async view => {
 	const db = await new Db().connect()
 	if (!db) return view.err('Нет соединения с базой данных')
 	view.after(() => db.release())
 	return db
 })
-meta.addAction('get-state', async view => {
-	const { cookie } = await view.gets(['cookie'])
-	view.ans.admin = await Access.isAdmin(cookie)
+rest.addResponse('get-state', async view => {
+	const { visitor } = await view.gets(['visitor'])
+	view.ans.admin = await Access.isAdmin(visitor.client.cookie)
 	view.ans.db = !!await new Db().connect()
 	db.release()
 	return view.ret()
 })
-meta.addAction('get-tables', async view => {
+rest.addResponse('get-tables', async view => {
 	const { db } = await view.gets(['db','admin'])
 	const rows = await db.all(`
 		SELECT 
@@ -41,14 +41,7 @@ meta.addAction('get-tables', async view => {
 	view.ans.list = rows
 	return view.ret()
 })
-meta.addArgument('cookie')
+rest.addArgument('visitor')
 
 
-export const rest = async (query, get, visitor) => {
-	const req = {...get, ...visitor.client}
-	const ans = await meta.get(query, req)
-	const { status = 200, nostore = true} = ans
-	delete ans.status
-	delete ans.nostore
-	return { ans, status, nostore, ext: 'json' }
-}
+export default rest

@@ -1,4 +1,4 @@
-import { nicked } from "/-nicked/nicked.js"
+import nicked from "/-nicked"
 export default input => {
 	let query = input.value
 	query = query.replace(/<\/?[^>]*(>|$)/g, " ")

@@ -337,3 +337,5 @@ export const Notion = {
 	}
 }
 await Notion.init()
+
+export default Notion

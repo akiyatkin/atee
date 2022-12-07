@@ -1,7 +1,7 @@
 // const id = id => document.getElementById(id)
 // const tag = (tag, el) => el.getElementsByTagName(tag)
 // const cls = (cls, el) => el.getElementsByClassName(cls)
-import { nicked } from "/-nicked/nicked.js"
+import nicked from "/-nicked"
 const pops = {}
 export const action = (btn, callback, name = '') => {
 	const key = name + btn.name
@@ -25,12 +25,12 @@ export const action = (btn, callback, name = '') => {
 		const sub = btn.name.replaceAll('-','_')
 		const tplobj = await import('/-showcase/popups.html.js')
 		if (tplobj[sub]) {
-			const html = tplobj[sub](ans, {div:pops[key].id})
+			const html = tplobj[sub](ans, {div:pops[key].id, scope:'#'+pops[key].id})
 			
 			await Dialog.frame(pop, html)
 			Dialog.show(pop)
 		} else if (!ans.result) {
-			const html = tplobj['msg'](ans, {div:pops[key].id})
+			const html = tplobj['msg'](ans, {div:pops[key].id, scope:'#'+pops[key].id})
 			await Dialog.frame(pop, html)
 			Dialog.show(pop)
 		}

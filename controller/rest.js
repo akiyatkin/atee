@@ -1,7 +1,7 @@
 import { files, file } from "./files.js"
 import path from 'path'
 import { readFile, utimes } from "fs/promises"
-import { Meta } from "./Meta.js"
+import Rest from "/-rest"
 import Bread from '/-controller/Bread.js'
 import { router } from './router.js'
 import { Access } from '/-controller/Access.js'
@@ -12,37 +12,29 @@ import Theme from '/-controller/Theme.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 
+const rest = new Rest()
 
-export const meta = new Meta()
-
-// meta.addArgument('cookie', (view, cookie) => {
-// 	return parse(cookie, '; ')
-// })
-meta.addArgument('cookie')
-meta.addVariable('admin', async (view) => {
-	const { cookie } = await view.gets(['cookie'])
-	view.ans.nostore = true
-	if (!await Access.isAdmin(cookie)) {
-		view.ans.status = 403
-		return view.err('Access denied')
-	}
+rest.addHandler('admin', async (view) => {
+	const { visitor } = await view.gets(['visitor'])
+	if (await Access.isAdmin(visitor.client.cookie)) return
+	return view.err('Access denied', 403)
 })
 
-meta.addAction('get-access', async view => {
-	const { cookie } = await view.gets(['cookie'])
+rest.addResponse('get-access', async view => {
+	const { visitor } = await view.gets(['visitor'])
+	const cookie = visitor.client.cookie
 	view.ans['admin'] = await Access.isAdmin(cookie)
 	view.ans['update_time'] = Access.getUpdateTime()
 	view.ans['access_time'] = Access.getAccessTime()
 	view.ans['view_time'] = Date.now()
-	view.ans.nostore = true
-	return view.ret()
+	return view.ret('OK', 200, true)
 })
-meta.addAction('set-access', async view => {
+rest.addResponse('set-access', async view => {
 	await view.gets(['admin'])
 	Access.setAccessTime()
 	return view.ret()
 })
-meta.addAction('set-update', async view => {
+rest.addResponse('set-update', async view => {
 	await view.gets(['admin'])
 	const time = new Date();
 	await utimes('../reload', time, time)
@@ -50,23 +42,21 @@ meta.addAction('set-update', async view => {
 })
 
 
-meta.addFunction('int', (view, n) => Number(n))
-meta.addFunction('array', (view, n) => n ? n.split(',') : [])
-meta.addFunction('checksearch', (view, n) => {
+rest.addFunction('int', (view, n) => Number(n))
+rest.addFunction('array', (view, n) => n ? n.split(',') : [])
+rest.addFunction('checksearch', (view, n) => {
 	if (n && n[0] != '/') return view.err()
 	return n
 })
-meta.addArgument('host')
 
-meta.addArgument('ip')
-meta.addArgument('pv', ['checksearch']) //prev
-meta.addArgument('nt', ['checksearch']) //next
-meta.addArgument('vt', ['int']) //view_time
-meta.addArgument('ut', ['int']) //update_time
-meta.addArgument('st', ['int']) //access_time
-meta.addArgument('gs', ['array']) //globals
-meta.addArgument('rd', ['array']) //reloaddivs
-meta.addArgument('rt', ['array']) //reloadts
+rest.addArgument('pv', ['checksearch']) //prev
+rest.addArgument('nt', ['checksearch']) //next
+rest.addArgument('vt', ['int']) //view_time
+rest.addArgument('ut', ['int']) //update_time
+rest.addArgument('st', ['int']) //access_time
+rest.addArgument('gs', ['array']) //globals
+rest.addArgument('rd', ['array']) //reloaddivs
+rest.addArgument('rt', ['array']) //reloadts
 
 
 //const fi = (before, after) => before && after ? before + after : {toString:() => ''}
@@ -220,15 +210,15 @@ const collectPush = (rule, timings, bread, root, interpolate, theme) => {
 
 
 
-
-meta.addArgument('client')
-meta.addArgument('visitor')
-meta.addAction('get-layers', async view => {
-	view.ans.nostore = true
-	view.ans.headers = {}
+rest.addArgument('visitor')
+rest.addResponse('get-layers', async view => {
+	view.nostore = true
+	view.headers = {}
 	const {
-		visitor, rt:reloadtss, rd:reloaddivs, pv: prev, nt: next, host, cookie, st: access_time, ut: update_time, vt: view_time, gs: globals 
-	} = await view.gets(['visitor', 'rt', 'rd', 'pv', 'ip', 'nt', 'host', 'cookie', 'st', 'ut', 'gs', 'vt'])
+		visitor, rt:reloadtss, rd:reloaddivs, pv: prev, nt: next, st: access_time, ut: update_time, vt: view_time, gs: globals 
+	} = await view.gets(['visitor', 'rt', 'rd', 'pv', 'nt', 'st', 'ut', 'gs', 'vt'])
+	const host = visitor.client.host
+	const cookie = visitor.client.cookie
 	const ptimings = { access_time, update_time, view_time }
 	const timings = {
 		update_time: Access.getUpdateTime(),
@@ -238,6 +228,7 @@ meta.addAction('get-layers', async view => {
 	view.ans.ut = timings.update_time
 	view.ans.st = timings.access_time
 	view.ans.vt = timings.view_time
+
 	if (!next) return view.err()
 	if (globals.length) {
 		return view.err() //Ну или перезагрузиться	
@@ -260,14 +251,15 @@ meta.addAction('get-layers', async view => {
 	if (bread.get.theme != null) {
 		const themevalue = Object.entries(theme).map(a => a.join("=")).join(":")
 		if (themevalue) {
-			view.ans.headers['Set-Cookie'] = 'theme=' + encodeURIComponent(themevalue) + '; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT'
+			view.headers['Set-Cookie'] = 'theme=' + encodeURIComponent(themevalue) + '; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT'
 		} else {
-			view.ans.headers['Set-Cookie'] = 'theme=; path=/; SameSite=Strict; Max-Age=-1;'
+			view.headers['Set-Cookie'] = 'theme=; path=/; SameSite=Strict; Max-Age=-1;'
 		}
 	}
 
 	const interpolate = (val, timings, layer, bread, crumb, theme) => {
-		const env = {timings, layer, bread, crumb, theme}
+		const look = { bread, timings, theme }
+		const env = { layer, crumb, ...look }
 		env.sid = 'sid-' + (layer.div || layer.name) + '-' + layer.sub + '-'
 		env.scope = layer.div ? '#' + layer.div : 'html'
 		return new Function(
@@ -279,10 +271,8 @@ meta.addAction('get-layers', async view => {
 	const { index: nopt, status } = getIndex(rule, timings, bread, interpolate, theme) //{ index: {push, root}, status }
 
 	if (!nopt?.root) return view.err()
-	view.ans.status = status
+	view.status = status
 	view.ans.theme = theme
-
-
 
 	if (!prev) {
 		view.ans.push = collectPush(rule, timings, bread, nopt.root, interpolate, theme)
@@ -312,6 +302,7 @@ meta.addAction('get-layers', async view => {
 	view.ans.layers = getDiff(popt.root.layers, nlayers, reloaddivs, reloadtss)
 	if (reloaddivs.length) view.ans.rd = reloaddivs
 	if (reloadtss.length) view.ans.rt = reloadtss
+
 	return view.ret()    
 })
 
@@ -363,28 +354,16 @@ const getIndex = (rule, timings, bread, interpolate, theme) => {
 	})
 	return { index, status }
 }
+rest.addArgument('password')
+rest.addResponse('set-admin', async (view) => {
+	const { password } = await view.gets(['password'])
+	const result = await Access.isAdmin(password)
+	return { 
+		ans:{result}, 
+		headers: {
+			'Set-Cookie':'-controller=' + encodeURIComponent(password ?? '') + '; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT'
+		}
+	}
+})
 
-export const rest = async (query, get, visitor) => {
-	if (query == 'set-admin') {
-		const result = await Access.isAdmin(get.password)
-		return { ans:{result}, status: 200, nostore: true, ext: 'json', 
-			headers: {
-				'Set-Cookie':'-controller=' + encodeURIComponent(get.password ?? '') + '; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT'
-			}
-		}	
-	}
-	const req = {root:'', ...get, ...visitor.client, client:visitor.client, visitor}
-	const ans = await meta.get(query, req)
-	
-	if (query == 'get-layers') {
-		ans.status = 200
-	}
-	const { ext = 'json', status = 200, nostore = ~query.indexOf('set-'), headers = {}} = ans
-	delete ans.status
-	delete ans.nostore
-	delete ans.ext
-	delete ans.push
-	delete ans.headers
-	return { ans, status, nostore, ext, headers}
-	
-}
+export default rest

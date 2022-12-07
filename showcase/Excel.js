@@ -1,6 +1,6 @@
-import Dabudi from '@atee/dabudi/Dabudi.js'
-import nicked from "@atee/nicked"
-import xlsx from "@atee/xlsx"
+import Dabudi from '/-dabudi/Dabudi.js'
+import nicked from "/-nicked"
+import xlsx from "/-xlsx"
 
 const onicked = str => {
 	if (onicked[str]) return onicked[str]
@@ -85,3 +85,4 @@ export const Excel = {
 		return {groups, models, sheets, brands}
 	}
 }
+export default Excel

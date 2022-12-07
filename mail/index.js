@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer'
 import fs from 'fs/promises'
-import config from '@atee/config'
+import config from '/-config'
 import csv from '@atee/csv'
 
 const conf = await config('mail')
@@ -11,7 +11,7 @@ await fs.mkdir('data/auto/mail/', { recursive: true }).catch(e => null)
 
 const mail = {
 	saveSend: opt => {
-		csv('data/auto/mail/mail-v2.csv', opt)
+		csv('data/auto/mail/.mail-v1.csv', opt)
 		const info = transport.sendMail(opt).catch(err => console.log('mail.saveSend', err))
 		return info
 	},

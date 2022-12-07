@@ -126,3 +126,5 @@ export class Db {
 		return rows.changedRows
 	}	
 }
+
+export default Db

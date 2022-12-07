@@ -1,58 +1,35 @@
-import { Meta } from "/-controller/Meta.js"
+import Rest from "/-rest"
 
 import fs from "fs/promises"
-import { nicked } from '/-nicked/nicked.js'
+import nicked from '/-nicked'
 
-import { unique } from "/-nicked/unique.js"
-import { Access } from "/-controller/Access.js"
-import { Catalog } from "/-catalog/Catalog.js"
-import { Db } from "/-db/Db.js"
+import unique from "/-nicked/unique.js"
+import Access from "/-controller/Access.js"
+import Catalog from "/-catalog/Catalog.js"
+import Db from "/-db/Db.js"
 import common from "/-catalog/common.html.js"
-import { rest_live } from './rest_live.js'
-import { parse } from '/-controller/Spliter.js'
+import live from '/-catalog/rest.live.js'
+import funcs from '/-rest/funcs.js'
 import { map } from '/-nicked/map.js'
-import { UTM } from '/-form/UTM.js'
+
 import { loadTEXT } from '/-controller/router.js'
 
-import mail from '@atee/mail'
-import config from '@atee/config'
+import mail from '/-mail'
+import config from '/-config'
+import vars_mail from '/-mail/vars.js'
+import vars_db from '/-db/vars.js'
 
-const recdata = await import('/data/.recaptcha.json', {assert: {type:'json'}}).then(res => res.default).catch(e => Object())
-const SECRET = recdata.secret
-const SITEKEY = recdata.sitekey
-
-export const meta = new Meta()
-rest_live(meta)
-
-//const wait = delay => new Promise(resolve => setTimeout(resolve, delay))
+const rest = new Rest(live, funcs, vars_mail, vars_db)
 
 
-meta.addVariable('isdb', async view => {
-	const db = await new Db().connect()
-	if (!db) return false
-	view.after(() => db.release())
-	return db
-})
-meta.addVariable('db', async view => {
-	const { isdb } = await view.gets(['isdb'])
-	if (isdb) return isdb
-	return view.err('Нет соединения с базой данных')
-})
+rest.addFunction('nicks', ['array'], (view, ns) => ns.map(v => nicked(v)).filter(v => v).sort())
 
-meta.addFunction('int', (view, n) => Number(n))
-meta.addFunction('int1', (view, n) => {
-	return Number(n) || 1
-})
-meta.addFunction('string', (view, n) => n!=null ? String(n) : '')
-
-meta.addFunction('array', (view, n) => n ? n.split(',') : [])
-meta.addFunction('nicks', ['array'], (view, ns) => ns.map(v => nicked(v)).filter(v => v).sort())
-meta.addArgument('value',['string'])
-meta.addArgument('page',['int1'])
-meta.addArgument('count',['int'])
+rest.addArgument('value', ['string'])
+rest.addArgument('page', ['int'], (view, n) => n || 1)
+rest.addArgument('count', ['int'])
 
 
-meta.addVariable('lim', ['array'], async (view, lim) => {
+rest.addVariable('lim', ['array'], async (view, lim) => {
 	lim = lim.filter(v => v !== '')
 	const option = await Catalog.getOptions()
 	if (lim.length == 1) lim.unshift(0)
@@ -66,9 +43,8 @@ meta.addVariable('lim', ['array'], async (view, lim) => {
 	if (lim[1] - lim[0] > 200) return view.err('Некорректный lim')
 	return lim
 })
-meta.addArgument('vals', ['nicks'])
+rest.addArgument('vals', ['nicks'])
 const getNalichie = Access.cache(async (partner) => {
-	
 	const options = await Catalog.getOptions()
 	const lim = 100
 	const vals = options.actions.map(v => nicked(v)).filter(v => v).sort()
@@ -104,8 +80,8 @@ const getNalichie = Access.cache(async (partner) => {
 	db.release()
 	return models
 })
-meta.addArgument('m', (view, m) => {
-	if (m) view.ans.nostore = true
+rest.addArgument('m', (view, m) => {
+	if (m) view.nostore = true //безчисленное количество комбинаций, браузеру не нужно запоминать
 	return m
 })
 const prepareValue = async (value) => {
@@ -171,7 +147,7 @@ const makemd = (m) => {
 	return newmd
 }
 
-meta.addVariable('md', async (view) => {
+rest.addVariable('md', async (view) => {
 	let { m, db, value, visitor } = await view.gets(['m','db','value','visitor'])
 	const addm = await prepareValue(value)
 	m += addm
@@ -246,17 +222,13 @@ meta.addVariable('md', async (view) => {
 	return md
 })
 
-meta.addVariable('SITEKEY', (view) => {
-	view.ans.SITEKEY = SITEKEY
-})
-meta.addArgument('model_nick', (view, model_nick) => {
-	return nicked(model_nick)
-})
-meta.addArgument('brand_nick', (view, model_nick) => {	
-	return nicked(model_nick)
-})
+// rest.addVariable('SITEKEY', (view) => {
+// 	view.ans.SITEKEY = SITEKEY
+// })
+rest.addArgument('model_nick', ['nicked'])
+rest.addArgument('brand_nick', ['nicked'])
 
-meta.addAction('get-model-head', async (view) => {
+rest.addResponse('get-model-head', async (view) => {
 	const { db, brand_nick, model_nick, visitor, partner} = await view.gets(['db','visitor', 'brand_nick','model_nick','partner'])
 	const model = await Catalog.getModelByNick(db, visitor, brand_nick, model_nick, partner)
 	if (!model) {
@@ -271,7 +243,7 @@ meta.addAction('get-model-head', async (view) => {
 
 
 const getTpls = Access.cache(async () => {
-	const conf = config('showcase')
+	const conf = await config('showcase')
 	if (!conf.tpls) return {}
 	let files = await fs.readdir(conf.tpls).catch(() => [])
 	files = files.map((file) => {
@@ -290,21 +262,18 @@ const getTpls = Access.cache(async () => {
 		return ak
 	}, {})
 })
-meta.addAction('get-model', async (view) => {
-	view.gets(['SITEKEY'])
+rest.addResponse('get-model', async (view) => {
 	const { md, db, brand_nick, model_nick, visitor, partner } = await view.gets(['md', 'db', 'visitor', 'brand_nick','model_nick','partner'])
 	const model = await Catalog.getModelByNick(db, visitor, brand_nick, model_nick, partner)	
 	view.ans.brand = await Catalog.getBrandByNick(brand_nick)
 	if (!model) return view.err()
 	if (model.texts) {
 		model.texts = await map(model.texts, async src => {
-			const {data} = await loadTEXT('/'+src, visitor)
+			const {ans:data} = await loadTEXT('/'+src, visitor)
 			return data || ''
 		})
 	}
 	view.ans.mod = model
-
-
 
 
 	const conf = await config('showcase')
@@ -331,7 +300,7 @@ const isSome = (obj, p) => {
 	for (p in obj) return true
 	return false
 };
-meta.addAction('get-filters', async (view) => {
+rest.addResponse('get-filters', async (view) => {
 	const { db, md, partner, visitor} = await view.gets(['db','md','partner', 'visitor'])
 	const group = await Catalog.getMainGroup(md)
 	if (!group) return view.err('Нет данных')
@@ -359,7 +328,7 @@ meta.addAction('get-filters', async (view) => {
 	return view.ret()
 })
 
-meta.addAction('get-search-groups', async (view) => {
+rest.addResponse('get-search-groups', async (view) => {
 	const { db, value, md, partner, visitor} = await view.gets(['db','value','md','partner', 'visitor'])
 
 	
@@ -448,7 +417,7 @@ meta.addAction('get-search-groups', async (view) => {
 	Object.assign(view.ans, res)
 	return view.ret()
 })
-meta.addAction('get-search-list', async (view) => {
+rest.addResponse('get-search-list', async (view) => {
 	let { page, count } = await view.gets(['page', 'count'])
 
 	const { db, value, md, partner, visitor} = await view.gets(['db','value','md','partner','visitor'])
@@ -496,7 +465,7 @@ meta.addAction('get-search-list', async (view) => {
 	Object.assign(view.ans, res)
 	return view.ret()
 })
-meta.addAction('get-search-sitemap', async (view) => {
+rest.addResponse('get-search-sitemap', async (view) => {
 	const { db, value } = await view.gets(['db'])
 	
 	view.ans.title = 'Каталог'
@@ -547,7 +516,7 @@ meta.addAction('get-search-sitemap', async (view) => {
 	})
 	return view.ret()
 })
-meta.addAction('get-search-head', async (view) => {
+rest.addResponse('get-search-head', async (view) => {
 	const { db, md } = await view.gets(['db','md'])
 	const group = await Catalog.getMainGroup(md)
 	const brand = await Catalog.getMainBrand(md)
@@ -561,7 +530,7 @@ meta.addAction('get-search-head', async (view) => {
 	view.ans.title ??= 'Каталог'
 	return view.ret()
 })
-meta.addAction('get-catalog', async (view) => {
+rest.addResponse('get-catalog', async (view) => {
 	const { db } = await view.gets(['db','partner'])
 	
 	const tree = await Catalog.getTree()
@@ -584,77 +553,26 @@ meta.addAction('get-catalog', async (view) => {
 	view.ans.childs = childs
 	return view.ret()
 })
-meta.addAction('get-nalichie', async (view) => {
+rest.addResponse('get-nalichie', async (view) => {
 	const { partner } = await view.gets(['partner'])
 	view.ans.list = await getNalichie(partner)
 	return view.ret()
 })
-meta.addArgument('partner', async (view, partner) => {
+rest.addArgument('partner', async (view, partner) => {
 	const options = await Catalog.getOptions()
 	const data = options.partners[partner]
-	if (data) {
-		data.key = partner
-		view.ans.partner = partner
-		view.ans.nostore = true
-	}
+	view.ans.partner = partner
+	if (!data) return false
+	data.key = partner
 	return data
 })
-meta.addAction('get-partner', async (view) => {
+rest.addResponse('get-partner', async (view) => {
 	const { partner } = await view.gets(['partner'])
-	
-	return partner ? view.ret() : view.err()
+	return partner ? view.ret() : view.nope()
 })
 
-meta.addArgument('visitor')
-
-
-
-
-
-
-
-
-
-
-meta.addArgument('g-recaptcha-response')
-meta.addVariable('recaptcha', async (view) => {
-	const gresponse = await view.get('g-recaptcha-response')
-    const visitor = await view.get('visitor')
-    const ip = visitor.client.ip
-    const result = await fetch('https://www.google.com/recaptcha/api/siteverify', { 
-        method: 'POST',
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-            'secret': SECRET, 
-            'response': gresponse,
-            'remoteip': ip
-        })
-    }).then(res => res.json())
-    //view.ans.recaptcha = result;
-    if (!result || !result['success']) return view.err('Не пройдена защита от спама')
-    return true
-})
-const emailreg = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-meta.addArgument('email', (view, email) => {
-    if (!String(email).toLowerCase().match(emailreg)) return view.err('Уточните Ваш Email')
-    return email
-})
-meta.addArgument('phone', (view, phone) => {
-    phone = phone.replace(/\D/g,'')
-    phone = phone.replace(/^8/,'7')
-    if (phone[0] != 7) return view.err("Уточните ваш телефон, номер должен начинаться с 7, мы работаем в России")
-    if (phone.length != 11) return view.err("Уточните ваш телефон для связи, должно быть 11 цифр ("+phone+")")
-    return phone
-})
-meta.addArgument('host')
-meta.addArgument('text')
-meta.addFunction('checkbox', (view, n) => !!n)
-meta.addArgument('terms',['checkbox'], (terms) => {
-	if (!terms) return view.err('Требуется согласие на обработку персональных данных')
-})
 import { MAIL } from './order.mail.html.js'
-meta.addArgument('utms', (view, utms) => UTM.parse(utms))
-meta.addAction('set-order', async (view) => {
+rest.addResponse('set-order', async (view) => {
 	await view.gets(['recaptcha','terms'])
 	const { db, visitor } = await view.gets(['db','visitor'])
 	
@@ -674,7 +592,10 @@ meta.addAction('set-order', async (view) => {
 
 
 
-meta.addAction('get-maingroups', async (view) => {
+
+
+
+rest.addResponse('get-maingroups', async (view) => {
 	const { db } = await view.gets(['db'])
 	const tree = await Catalog.getTree()
 	const options = await Catalog.getOptions()
@@ -712,16 +633,4 @@ meta.addAction('get-maingroups', async (view) => {
 })
 
 
-
-export const rest = async (query, get, visitor) => {
-	const ans = await meta.get(query, {...get, visitor})
-	const status = ans.status ?? 200
-	const nostore = ans.nostore ?? false
-	delete ans.status
-	delete ans.nostore
-	return { ans, 
-		ext: 'json', 
-		status,
-		nostore
-	}
-}
+export default rest

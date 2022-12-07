@@ -1,0 +1,7 @@
+{ 
+	"access": "",
+	"403":{
+		"indexOf":["package.json","layers.json","package-lock.json","nodemon.json"],
+		"search":["rest\\..*js"]
+	}
+}

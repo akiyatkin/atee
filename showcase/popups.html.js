@@ -53,13 +53,13 @@ const run = (obj, call) => {
 	for (const key in obj) res.push(call(obj[key], key))
 	return res
 }
-export const set_prices_load = (ans, {div}) => `
+export const set_prices_load = (ans, env) => `
 	<h1>${ans.name}</h1>
 	<style>
-		#${div} table {
+		${env.scope} table {
 			font-size:12px
 		}
-		#${div} table td {
+		${env.scope} table td {
 			max-width: 140px;
 			white-space: nowrap;
 			overflow: hidden;

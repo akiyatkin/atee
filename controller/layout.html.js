@@ -12,7 +12,9 @@ controller.HEAD = (data, env) =>
 				const search = a.getAttribute('href')
 				if (search == null) return
 				if (search[1] == '-') return
+				if (a.target) return
 				if (/^\\w+:/.test(search)) return
+				if (/^\\/cache\\//.test(search)) return
 				if (/^\\/data\\//.test(search)) return
 				return true
 			}
