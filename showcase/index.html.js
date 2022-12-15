@@ -43,7 +43,7 @@ export const HEADER = (data, env) => `
 			<a href="${env.crumb}">SHOWCASE</a> 
 			<span id="STAT"></span>
 		</div>
-		<a href="/">${env.host}</a>
+		<a href="/../../">${env.host}</a>
 	</div>
 	<div style="display: flex; justify-content: space-between; flex-wrap:wrap">
 		<p>

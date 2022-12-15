@@ -62,13 +62,13 @@ export const Client = {
 	reloaddiv: (div) => {
 		if (~Client.reloaddivs.indexOf(div)) return
 		Client.reloaddivs.push(div)
-		return Client.replaceState(location.href, false)
+		return Client.replaceState('', false)
 	},
 	reloadtss:[],
 	reloadts: (ts) => {
 		if (~Client.reloadtss.indexOf(ts)) return
 		Client.reloadtss.push(ts)
-		return Client.replaceState(location.href, false)
+		return Client.replaceState('', false)
 	},
 	view:Date.now(), //Метка сеанса в котором актуальна Client.history
 	history:[],
@@ -76,7 +76,7 @@ export const Client = {
 	cursor:history.length - 1,
 	
 	refreshState: () => { //depricated
-		Client.replaceState(location.href)
+		Client.replaceState('')
 	},
 	scroll: promise => {
 		const go = () => {
@@ -143,6 +143,7 @@ export const Client = {
 	}
 }
 const fixsearch = search => {
+
 	if (search[0] != '/') {
 		if (search == '?' ) search = location.pathname
 		else if (search == '?#' ) search = location.pathname
@@ -275,7 +276,6 @@ const applyCrossing = async () => {
 		Client.next = false
 		promise.started.reject()
 		promise.reject()
-		//return location.href = search
 	}
 
 }

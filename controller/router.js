@@ -123,7 +123,7 @@ export const readTextStream = stream => {
 const getSrcName = (str) => {
     const i = str.lastIndexOf(path.sep)
     const name = ~i ? str.slice(i + 1) : ''
-    return ~i && !name ? true : name
+    return ~i && !name ? '' : name
 }
 const getExt = (str) => {
 	const i = str.lastIndexOf('.')
@@ -156,9 +156,9 @@ export const router = async (search) => {
 
 	//if (ext) {
 	const src = await webresolve('/'+path)
-	if (src) { //найден файл
+	const name = src ? getSrcName(src) : ''
+	if (src && name) { //найден файл
 		const ext = getExt(src)
-		const name = getSrcName(src)
 		if (~conf['403']['indexOf'].indexOf(name)) secure = true
 	    if (conf['403']['search'].some(pattern => ~name.search(pattern))) secure = true
 
