@@ -143,7 +143,6 @@ export const Client = {
 	}
 }
 const fixsearch = search => {
-
 	if (search[0] != '/') {
 		if (search == '?' ) search = location.pathname
 		else if (search == '?#' ) search = location.pathname

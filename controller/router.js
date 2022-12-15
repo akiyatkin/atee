@@ -155,7 +155,7 @@ export const router = async (search) => {
 	let cont = false
 
 	//if (ext) {
-	const src = await webresolve('/'+path)
+	const src = await webresolve('/' + path)
 	const name = src ? getSrcName(src) : ''
 	if (src && name) { //найден файл
 		const ext = getExt(src)
@@ -180,6 +180,7 @@ export const router = async (search) => {
 	}
 	//}
 	const ext = getExt(path)
+
 	if (path[0] == '-') { //Обязательный rest и без контроллера
 		for (const v of REST_HYPHENS) {
 			if (path.indexOf(v.part) === 1 || !v.part) {
@@ -196,7 +197,6 @@ export const router = async (search) => {
 		}
 
 	} else {
-
 		if (ext) { //Без дефиса подходит только rest в корне для файлов
 			for (const v of REST_DIRECTS) {
 				//if (!v.part && !ext) continue //rest в корне только при наличии расширения
@@ -209,6 +209,7 @@ export const router = async (search) => {
 				}
 			}
 		}
+
 		if (!rest) {
 			for (const v of CONT_DIRECTS) {
 				if (path.indexOf(v.part) === 0) {
@@ -220,7 +221,6 @@ export const router = async (search) => {
 				}
 
 			}
-			
 		}
 	}
 	return {

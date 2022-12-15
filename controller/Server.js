@@ -43,7 +43,7 @@ export const Server = {
 				return error(501, 'Method not implemented')
 			}
 			const usersearch = request.url.replace(/\/+/,'/').replace(/\/$/,'')//Дубли и слешей не ломают путь, но это плохо...
-			const route = await router(usersearch)
+			const route = await router(usersearch || '/')
 			if (route.secure) return error(403, 'Forbidden')
 			// const {
 			// 	search, secure, get, path, ext,
@@ -107,7 +107,6 @@ export const Server = {
 					pv: false,
 					nt: route.search
 				}
-
 				const a = await meta.get('get-layers', req, visitor)
 				let json = a.ans
 				let status = a.status
@@ -213,7 +212,6 @@ export const controller = async ({ vt, st, ut, layers, head, theme }, visitor, b
         status: 200,
 		nostore: false
 	}
-
 	const timings = {view_time:vt, access_time:st, update_time:ut}
 	const host = visitor.client.host
 	const look = {head, bread, timings, theme, host} //head - этим отличается look в interpolate в get-layers head нет
