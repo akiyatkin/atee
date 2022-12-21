@@ -3,5 +3,24 @@
 	"403":{
 		"indexOf":["package.json","layers.json","package-lock.json","nodemon.json"],
 		"search":["rest\\..*js"]
+	},
+	"types": {
+		"txt": "text/plain",
+		"json": "application/json",
+		"js": "application/javascript",
+		"woff2": "font/woff2",
+		"webm": "video/webm",
+		"xml": "application/xml",
+		"html": "text/html",
+		"css": "text/css",
+		"ico": "image/x-icon",
+		"jpg": "image/jpeg",
+		"png": "image/png",
+		"gif": "image/gif",
+		"jpeg": "image/jpeg",
+		"webp": "image/webp",
+		"avif": "image/avif",
+		"svg": "image/svg+xml",
+		"pdf": "application/pdf"
 	}
 }

@@ -10,26 +10,10 @@ import Bread from './Bread.js'
 import Doc from './Doc.js'
 //import Theme from './Theme.js'
 import getPost from './getPost.js'
+import config from '/-config'
 import Visitor from './Visitor.js'
 
-const TYPES = {
-	txt: 'text/plain',
-	json: 'application/json',
-	js: 'application/javascript',
-	woff2: 'font/woff2',
-	webm: 'video/webm',
-	xml: 'application/xml',
-	html: 'text/html',
-	css: 'text/css',
-	ico: 'image/x-icon',
-	jpg: 'image/jpeg',
-	png: 'image/png',
-	jpeg: 'image/jpeg',
-	webp: 'image/webp',
-	avif: 'image/avif',
-	svg: 'image/svg+xml',
-	pdf: 'application/pdf'
-}
+const conf = await config('controller')
 
 export const Server = {
 	follow: (PORT = 8888, IP = "127.0.0.1") => {
@@ -69,7 +53,7 @@ export const Server = {
 				if (!reans?.ans) return error(404, 'Not a suitable answer')
 
 				const headers = {}
-				if (TYPES[reans.ext]) headers['Content-Type'] = TYPES[reans.ext] + '; charset=utf-8'
+				if (conf.types[reans.ext]) headers['Content-Type'] = conf.types[reans.ext] + '; charset=utf-8'
 				else return error(501, 'Wrong content type, ext not found')
 				headers['Cache-Control'] = reans.nostore ? 'no-store' : 'public, max-age=31536000'
 				Object.assign(headers, reans.headers)
@@ -131,7 +115,7 @@ export const Server = {
                 }
 				if (json.push.length) response.setHeader('Link', json.push.join(','));
 				response.writeHead(status, {
-					'Content-Type': TYPES['html'] + '; charset=utf-8',
+					'Content-Type': conf.types['html'] + '; charset=utf-8',
 					'Cache-Control': info.nostore ? 'no-store' : 'public, max-age=31536000',
 					...json.headers
 				})

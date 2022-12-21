@@ -108,7 +108,7 @@ export const Client = {
 		if (scroll)	Client.scroll(promise)
 		return promise
 	},
-	replaceState: (search, scroll = true) => {
+	replaceState: (search = '', scroll = true) => {
 		search = fixsearch(search)
 		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 		history.replaceState({cursor:Client.cursor, view:Client.view}, null, search)

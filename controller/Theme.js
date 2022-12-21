@@ -5,9 +5,13 @@ export default Theme
 Theme.parse = (string, sep = '; ') => {
     const obj = string?.split(sep).reduce((res, item) => {
         if (!item) return res
-        item = item.replace(/\+/g, '%20')
+        //item = item.replace(/\+/g, '%20')
         const data = item.split('=')
-        res[decodeURIComponent(data.shift())] = data.length ? decodeURIComponent(data.join('=')) : ''
+        try {
+        	res[decodeURIComponent(data.shift())] = data.length ? decodeURIComponent(data.join('=')) : ''
+        } catch(e) {
+        	console.log('Ошибка в ' + item, 'Вся строка ' + string, e)
+        }
         return res
     }, {})
     return obj || {}
