@@ -262,6 +262,8 @@ export class Upload {
 		conf.props ??= ['Цена']
 		conf.priceprop ??= 'Артикул'
 		conf.catalogprop ??= 'Модель'
+		conf.start ??= 0
+		conf.starts ??= {}
 		
 		conf.props.slice().reverse().forEach(prop => {
 			conf.synonyms[prop] ??= []
@@ -700,7 +702,7 @@ export class Upload {
 			}
 		}
 
-		for (const part of ['slides','files','images','texts','videos']) {
+		for (const part of Object.keys(Files.exts)) { //['slides','files','images','texts','videos']
 			await db.affectedRows(`
 				DELETE FROM showcase_iprops
 				WHERE prop_id = :prop_id
@@ -711,7 +713,7 @@ export class Upload {
 				const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
 				if (!brand_id) continue
 				await Files.filterDeepSplit(root, async (dirinfo, name, fileinfo, level) => {
-					if (!~Files.exts.images.indexOf(fileinfo.ext)) return false
+					if (!~Files.exts[part].indexOf(fileinfo.ext)) return false
 					const res = await Files.getRelations(db, name, brand_id, [props.art.prop_id,props.photo.prop_id])
 					const src = dirinfo.dir + fileinfo.file
 					const ordain = fileinfo.num || 1
@@ -740,15 +742,14 @@ export class Upload {
 			}
 		}
 
-		part = 'brands'
+		part = 'folders'
 		parts[part] = await Files.readdirDeep(visitor, config[part])
 		for (const dirinfo of parts[part].dirs) { //Бренды
 			const brand_nick = nicked(dirinfo.name)
 			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
 			if (!brand_id) continue
 			const minfo = dirinfo.dirs.find(info => info.name == 'models')
-			if (!minfo) continue
-			for (const subinfo of minfo.dirs) { //Модели
+			if (minfo) for (const subinfo of minfo.dirs) { //Модели
 				const res = await Files.getRelations(db, subinfo.name, brand_id, [props.art.prop_id]) //Папка может быть привязана к Art
 				let i = 0
 				for (const fileinfo of subinfo.files) { //Файлы
@@ -785,6 +786,36 @@ export class Upload {
 					}
 				}
 			}
+			for (const subpart of Object.keys(Files.exts)) { //['slides','files','images','texts','videos']
+				const root = await Files.readdirDeep(visitor, config[part] + subpart + '/')
+				await Files.filterDeepSplit(root, async (dirinfo, name, fileinfo, level) => {
+					if (!~Files.exts[subpart].indexOf(fileinfo.ext)) return false
+					const res = await Files.getRelations(db, name, brand_id, [props.art.prop_id,props.photo.prop_id])
+					const src = dirinfo.dir + fileinfo.file
+					const ordain = fileinfo.num || 1
+					//const value = await upload.receiveValue(src)
+					for (const item of res) {
+						const affectedRows = await db.affectedRows(`
+							INSERT IGNORE INTO
+								showcase_iprops
+							SET
+								ordain = :ordain,
+								text = :src,
+								model_id = :model_id,
+								item_num = :item_num,
+								prop_id = :prop_id
+						`, {
+							ordain, src,
+							item_num: item.item_num,
+							model_id: item.model_id, 
+							prop_id: props[part].prop_id
+						})
+						count += affectedRows
+						if (!affectedRows) doublepath.push(dirinfo.dir + fileinfo.file) //Встретилось имя у которого nick одинаковый и сработало исключение при повторной записи
+					}
+					return false
+				})
+			}
 		}
 		for (const part of ['slides','files','images','texts','videos']) {
 			const { prop_id } = props[part]
@@ -813,7 +844,7 @@ export class Upload {
 		search = search.join(' ')
 		return search
 	}
-	async loadTable (name) {
+	async loadTable (name, msgs = []) {
 		const { visitor, options, view, db, config } = this.opt
 		let duration = Date.now()
 		const upload = this
@@ -824,7 +855,6 @@ export class Upload {
 		if (!file) return false
 
 		const brand = options.tables?.[name]?.brand || name
-		console.log(name, options.tables)
 
 		const {groups, models, sheets, brands} = await Excel.loadTable(visitor, dir + file, brand)
 		const values = {}
@@ -980,7 +1010,7 @@ export class Upload {
 
 			for (const i in items) {
 				const item = items[i]
-				const ordain = i + 1
+				const ordain = 1 + i
 			
 				const sheet_title = item[item.length - 1] //Последняя запись это имя листа sheet_title
 				const { descr, heads, indexes } = sheets[sheet_title]
@@ -1012,11 +1042,16 @@ export class Upload {
 					for (const v_title of item[i]) {
 						if (values[v_title]) continue
 						
-						const value_nick = nicked(v_title)
-						values[v_title] = { 
-							value_title:v_title,
-							value_nick 
+						if (v_title.length > 255) {
+							msgs.push(`В колонке "${heads.head_titles[i]}" слишком длинное значение. Должно быть не больше 255. Строка ${ordain}. Файл ${name}. ${v_title}`)
+							console.log(msgs[msgs.length - 1])
 						}
+						const value_title = v_title.substring(0,255)
+						const value_nick = nicked(value_title).substring(0,255)
+
+						values[v_title] = { value_title, value_nick }
+
+						
 						values[v_title].value_id = await db.insertId(`
 							INSERT INTO 
 								showcase_values
@@ -1026,6 +1061,7 @@ export class Upload {
 							ON DUPLICATE KEY UPDATE
 							 	value_id = LAST_INSERT_ID(value_id)
 						`, values[v_title])
+						
 					}
 				}
 				await db.exec(`
@@ -1098,7 +1134,7 @@ export class Upload {
 			quantity
 		})	
 		
-		return { quantity, duration, loadtime:Date.now(), loaded:1 }
+		return { quantity, duration, loadtime:Date.now(), loaded:1, msgs }
 	}
 }
 export default Upload

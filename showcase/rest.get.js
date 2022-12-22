@@ -112,6 +112,7 @@ rest.addResponse('get-prices', async view => {
 	view.ans.rows = rows
 	return view.ret()
 })
+
 rest.addResponse('get-tables', async view => {
 	await view.get('admin')
 	const { visitor, db, config, options } = await view.gets(['visitor', 'db', 'config','options'])
@@ -123,7 +124,6 @@ rest.addResponse('get-tables', async view => {
 		of.mtime = new Date(stat.mtime).getTime()
 		xlsx.cache(visitor, dir + of.file)
 	}))
-
 	const rows = await db.all(`
 		SELECT 
 			table_id,
@@ -135,6 +135,7 @@ rest.addResponse('get-tables', async view => {
 			duration
 		FROM showcase_tables
 	`)
+
 	files.forEach(of => {
 		const index = rows.findIndex(row => row.table_nick == nicked(of.name))
 		if (!~index) return
@@ -369,7 +370,7 @@ rest.addResponse('get-files', async view => {
 		}
 	}
 
-	part = 'brands'
+	part = 'folders'
 	parts[part] = await Files.readdirDeep(visitor, config[part])
 	for (const dirinfo of parts[part].dirs) { //Бренды
 		const brand_nick = nicked(dirinfo.name)

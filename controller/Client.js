@@ -149,6 +149,7 @@ const fixsearch = search => {
 		else if (search == '#' ) search = location.pathname + location.search
 		else if (search[0] == '?') search = location.pathname + search
 		else if (search[0] == '#') search = location.pathname + location.search + search
+		else if (search == '') search = location.pathname + location.search
 	}
 	search = search.replace(/\/+/,'/').replace(/\/$/,'')
 	return search

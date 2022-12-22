@@ -29,11 +29,14 @@ export const PANEL = (data, env, { layer:{div} } = env) => `
 		<button name="set-files-loadall" class="${data.ready?.files ? 'ready' : ''}">Связать всё с файлами</button>
 		<!-- при загрузке файлов на сервер, нет никаких событий. Мы никогда не знает есть новые файлы или нет -->
 	</div>
-	<script type="module" async>
-		import { action } from "/-showcase/action.js"
-		const div = document.getElementById('${div}')
-		const tag = tag => div.getElementsByTagName(tag)
-		for (const btn of tag('button')) action(btn)
+	<script>
+		(div => {
+			import("/-showcase/action.js").then(r => r.action).then(action => {
+				for (const btn of div.getElementsByTagName('button')) {
+					action(btn)
+				}	
+			})
+		})(document.currentScript.previousElementSibling)
 	</script>
 `
 

@@ -237,14 +237,17 @@ rest.addResponse('set-tables-loadall', async view => {
 	const { db, upload } = await view.gets(['db', 'upload'])
 	
 	const files = await upload.getNewTables()
+	
+
 	let count = 0
+	const msgs = []
 	await Promise.all(files.map(async of => {
-		const { quantity = 0 } = await upload.loadTable(of.name)
+		const { quantity = 0 } = await upload.loadTable(of.name, msgs)
 		count += quantity
 	}))
 	view.ans.count = count
 	
-	return view.ret('Внесено ' + count)
+	return view.ret('Внесено ' + count + '<p>'+msgs.join('</p><p>')+'</p>')
 })
 
 rest.addResponse('set-prices-clearall', async view => {

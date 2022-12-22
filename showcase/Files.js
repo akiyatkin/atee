@@ -117,21 +117,22 @@ export const Files = {
 	},
 	readdirext: async (visitor, dir, exts) => {
 		let files = await Files.readdir(visitor, dir)
-
 		files = files.filter(({ext}) => ~exts.indexOf(ext))
 		files.sort((a, b) => {
-			if (a.num && b.num) return a.num - b.num
-			if (!a.num && b.num) return 1
-			if (a.num && !b.num) return -1
+			if (a.num != b.num) {
+				if (a.num && b.num) return a.num - b.num
+				if (a.num && !b.num) return -1
+				if (!a.num && b.num) return 1
+			}
 			const nameA = a.name.toLowerCase()
 			const nameB = b.name.toLowerCase()
 			if (nameA < nameB) return -1
 			if (nameA > nameB) return 1
 			return 0
 		})
-		files.forEach(of => {
-			delete of.num
-		})
+		// files.forEach(of => {
+		// 	delete of.num
+		// })
 		return files
 	},
 	//,

@@ -66,17 +66,11 @@ export const Dabudi = {
 		const head_titles = rows_table[0]
 		
 		for (let i = head_titles.length - 1; i >= 0; i--) {
-			const col = head_titles[i]
-			if (col != null) head_titles[i] = col.trim()
-
-
-			if (col && col != null && col.at(0) != '.') continue
-			
+			const col = String(head_titles[i] || '')
+			if (col) head_titles[i] = col.trim()
+			if (col.at(0) != '.') continue
 			head_titles.splice(i, 1)
-			rows_body.forEach(row => {
-				return row.splice(i, 1)
-			})
-			
+			rows_body.forEach(row => row.splice(i, 1))
 		}
 		
 		const head_nicks = head_titles.map(h => nicked(h))
@@ -98,7 +92,7 @@ export const Dabudi = {
 		}
 		let wasitems = false
 		const rows_items = rows_body.filter((row, i) => {
-			const group_title = Dabudi.getOne(rows_body[i])
+			const group_title = String(Dabudi.getOne(rows_body[i]) || '')
 			const group_orig = group_title
 			if (!group_title) {
 				wasitems = true

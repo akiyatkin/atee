@@ -8,11 +8,12 @@ const onicked = str => {
 	return onicked[str]
 }
 export const Excel = {
-	loadPrice: async (visitor, src, {start = 0, starts = {}}) => {
+	loadPrice: async (visitor, src, {start = 0, starts = {}, ignore = []}) => {
 		const listsheets = await xlsx.read(visitor, src)
 		const sheets = []
 		for (const sheet of listsheets) {
 			if (sheet.name[0] == '.') continue
+			if (~ignore.indexOf(sheet.name)) continue
 			let rows_source = sheet.data
 			rows_source.slice(starts[sheet.name] ?? start)
 			const {descr, rows_table} = Dabudi.splitDescr(rows_source)
