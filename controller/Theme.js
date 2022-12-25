@@ -10,7 +10,8 @@ Theme.parse = (string, sep = '; ') => {
         try {
         	res[decodeURIComponent(data.shift())] = data.length ? decodeURIComponent(data.join('=')) : ''
         } catch(e) {
-        	console.log('Ошибка в ' + item, 'Вся строка ' + string, e)
+        	//console.log('Ошибка в ' + item, 'Вся строка ' + string, e)
+        	console.log('Пропущен аргумент в запросе decodeURIComponent error ' + item)
         }
         return res
     }, {})
