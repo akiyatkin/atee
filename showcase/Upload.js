@@ -274,6 +274,7 @@ export class Upload {
 		
 
 		const { sheets } = await Excel.loadPrice(visitor, dir + file, conf)
+
 		const price = {price_title, price_nick}
 		price.price_id = await db.insertId(`
 			INSERT INTO 
@@ -297,12 +298,15 @@ export class Upload {
 			const brand_id = await db.col('SELECT brand_id FROM showcase_brands WHERE brand_nick = :brand_nick', {brand_nick})
 			if (!brand_id) return false
 		}
+
+
 		
 
 		const catalogprop = await upload.receiveProp(conf.catalogprop)
 		if (catalogprop.type == 'text') return false //Соединение только по типу value или number
 
 		const mvalues = {}
+
 		for (const {sheet, heads: {head_titles, head_nicks}, rows} of sheets) {
 			//Ищем ключ который есть в прайсе и по нему будем брать значение для связи
 			const priceprop_title = conf.synonyms[conf.priceprop].find(prop => ~head_titles.indexOf(prop))
@@ -322,8 +326,9 @@ export class Upload {
 					}
 				}
 			}
-			omissions[sheet] = {notconnected:[], notfinded:[], emptyprops:{}, head_titles}
+			omissions[sheet] = {keyrepeated:[], notconnected:[], notfinded:[], emptyprops:{}, head_titles}
 			count += rows.length
+
 			for (const row of rows) {
 				const key_title = row[priceprop_index]
 				if (!key_title) {
@@ -393,8 +398,11 @@ export class Upload {
 					omissions[sheet].notfinded.push(row)
 					continue
 				}
+				if (mvalues[item.model_id]) {
+					omissions[sheet].keyrepeated.push(row)
+					continue
+				}
 				mvalues[item.model_id] ??= []
-				
 				for (const {prop_title, index} of props) {
 					//Свойства которые нужно записать ищем их по синонимам
 					const prop = await upload.receiveProp(prop_title)
@@ -441,7 +449,7 @@ export class Upload {
 							const numbers = value_title.split(",")	
 							for (const num of numbers) {
 								number = nicked(num)
-								if (number === '') {
+								if (number === '' || !(number - 0)) {
 									omissions[sheet].emptyprops[prop_title] ??= []
 									omissions[sheet].emptyprops[prop_title].push(row)
 									continue
@@ -449,7 +457,7 @@ export class Upload {
 								fillings.push({value_id, text, number})
 							}
 						} else {
-							number = value_title - 0	
+							number = value_title
 							fillings.push({value_id, text, number})
 						}
 						
@@ -702,7 +710,8 @@ export class Upload {
 			}
 		}
 
-		for (const part of Object.keys(Files.exts)) { //['slides','files','images','texts','videos']
+		//['slides','files','images','texts','videos']
+		for (const part of Object.keys(Files.exts)) { 
 			await db.affectedRows(`
 				DELETE FROM showcase_iprops
 				WHERE prop_id = :prop_id
@@ -755,7 +764,7 @@ export class Upload {
 				for (const fileinfo of subinfo.files) { //Файлы
 					i++
 					const src = subinfo.dir + fileinfo.file
-					
+
 					const ext = fileinfo.ext
 
 					const ordain = fileinfo.num || i
@@ -787,13 +796,12 @@ export class Upload {
 				}
 			}
 			for (const subpart of Object.keys(Files.exts)) { //['slides','files','images','texts','videos']
-				const root = await Files.readdirDeep(visitor, config[part] + subpart + '/')
+				const root = await Files.readdirDeep(visitor, dirinfo.dir + subpart + '/')
 				await Files.filterDeepSplit(root, async (dirinfo, name, fileinfo, level) => {
 					if (!~Files.exts[subpart].indexOf(fileinfo.ext)) return false
 					const res = await Files.getRelations(db, name, brand_id, [props.art.prop_id,props.photo.prop_id])
 					const src = dirinfo.dir + fileinfo.file
 					const ordain = fileinfo.num || 1
-					//const value = await upload.receiveValue(src)
 					for (const item of res) {
 						const affectedRows = await db.affectedRows(`
 							INSERT IGNORE INTO

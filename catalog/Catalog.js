@@ -235,6 +235,7 @@ Catalog.getOptions = Access.cache(async () => {
 	options.groupids = {}
 	options.partners ??= {}
 	options.props ??= []
+	options.justonevalue ??= []
 	options.root_title ??= 'Каталог'
 	options.root_nick = nicked(options.root_title)
 	options.actions ??= ['Новинка','Распродажа']

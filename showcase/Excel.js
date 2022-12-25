@@ -15,7 +15,7 @@ export const Excel = {
 			if (sheet.name[0] == '.') continue
 			if (~ignore.indexOf(sheet.name)) continue
 			let rows_source = sheet.data
-			rows_source.slice(starts[sheet.name] ?? start)
+			rows_source = rows_source.slice(((starts[sheet.name] ?? start) || 1) - 1)
 			const {descr, rows_table} = Dabudi.splitDescr(rows_source)
 			const {heads, rows_body} = Dabudi.splitHead(rows_table)
 			const rows_items = rows_body.filter(row => row.filter(cel => cel).length)

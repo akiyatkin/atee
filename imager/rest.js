@@ -40,6 +40,7 @@ rest.addArgument('h',['int'])
 // })
 rest.addArgument('fit', ['string'], (view, fit) => {
 	if (~['cover','contain','outside','fill','inside'].indexOf(fit)) return fit
+	//return 'contain'
 	return 'inside'	
 })
 const isFreshCache = Access.cache(async (src, store) => {

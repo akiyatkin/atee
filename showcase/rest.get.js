@@ -16,6 +16,7 @@ rest.addResponse('get-settings', async view => {
 	const { db } = await view.gets(['db'])
 	const tables = [
 		'showcase_groups',
+		'showcase_files',
 		'showcase_prices',
 		'showcase_tables',
 		'showcase_brands',
@@ -347,52 +348,18 @@ rest.addResponse('get-files', async view => {
 		if (is) return false
 		return ++count
 	})
-
-	for (const part of ['slides','files','images','texts','videos']) {
+	const run = async dirinfo => {
+		for (const subinfo of dirinfo.dirs) await run(subinfo)
+		dirinfo.files = await filter(dirinfo.files, async (fileinfo) => {
+			const src = dirinfo.dir + fileinfo.file
+			const is = await db.col('SELECT 1 FROM showcase_iprops where text = :src LIMIT 1', {src})
+			if (is) return false
+			return ++count
+		})
+	}
+	for (const part of ['folders', ...Object.keys(Files.exts)]) {
 		parts[part] = await Files.readdirDeep(visitor, config[part])
-		for (const root of parts[part].dirs) {
-			const brand_nick = nicked(root.name)
-			const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
-			if (!brand_id) continue
-			await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
-				if (!~Files.exts[part].indexOf(fileinfo.ext)) return true
-				const src = nicked(dirinfo.dir + fileinfo.file)
-				const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
-				if (is) return false
-				return true
-			})
-		}
-		for (const root of parts[part].dirs) {
-			await Files.filterDeep(root, async (dirinfo, fileinfo, level) => {
-				count++
-				return true
-			})
-		}
-	}
-
-	part = 'folders'
-	parts[part] = await Files.readdirDeep(visitor, config[part])
-	for (const dirinfo of parts[part].dirs) { //Бренды
-		const brand_nick = nicked(dirinfo.name)
-		const brand_id = await db.col('SELECT brand_id FROM showcase_brands where brand_nick = :brand_nick', {brand_nick})
-		if (!brand_id) continue
-		for (const subinfo of dirinfo.dirs) { //Модели
-			subinfo.files = await filter(subinfo.files, async (fileinfo) => {
-				//В папке любой файл должен быть связан вне зависимости от расширения
-				const src = nicked(dirinfo.dir + fileinfo.file)
-				const is = await db.col('SELECT 1 FROM showcase_values where value_nick = :src LIMIT 1', {src})
-				if (is) return false
-				return ++count
-			})
-			// for (const fileinfo of subinfo.files) { //Файлы
-				
-			// }
-		}
-	}
-	for (const dirinfo of parts[part].dirs) {
-		for (const subinfo of dirinfo.dirs) {
-			count += subinfo.files.length
-		}
+		await run(parts[part])
 	}
 
 	view.ans.count = count

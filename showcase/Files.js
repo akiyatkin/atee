@@ -26,10 +26,11 @@ export const Files = {
 			'dirs':[]
 		}
 		for (const dirent of dirents) {
-			const info = Files.nameInfo(dirent.name)
+			const isFile = dirent.isFile()
+			const info = Files.nameInfo(dirent.name, isFile)
 			if (info.secure) continue
 			delete info.secure
-			if (dirent.isFile()) {
+			if (isFile) {
 				root.files.push(info)
 				continue
 			}
@@ -71,11 +72,16 @@ export const Files = {
 		info.dir = dir
 		return info
 	},
-	nameInfo: (file) => {
+	nameInfo: (file, isFile = true) => {
 		let i, name, ext, num = 0, secure, match
-		i = file.lastIndexOf('.')
-		name = ~i ? file.slice(0, i) : file
-		ext = (~i ? file.slice(i + 1) : '').toLowerCase()
+		if (isFile) {
+			i = file.lastIndexOf('.')
+			name = ~i ? file.slice(0, i) : file
+			ext = (~i ? file.slice(i + 1) : '').toLowerCase()
+		} else {
+			name = file
+			ext = ''
+		}
 		secure = file[0] == '.' || file[0] == '~'
 
 		//Цифры в конце в скобках
