@@ -1,10 +1,11 @@
 import Rest from "/-rest"
-import { Db } from "/-db/Db.js"
+import Db from "/-db/Db.js"
+import db_vars from "/-db/vars.js"
 
-import { Access } from "/-controller/Access.js"
+import Access from "/-controller/Access.js"
 
 
-const rest = new Rest()
+const rest = new Rest(db_vars)
 
 rest.addHandler('admin', async (view) => {
 	const { visitor } = await view.gets(['visitor'])
@@ -14,12 +15,7 @@ rest.addHandler('admin', async (view) => {
 		return view.err('Access denied')
 	}
 })
-rest.addVariable('db', async view => {
-	const db = await new Db().connect()
-	if (!db) return view.err('Нет соединения с базой данных')
-	view.after(() => db.release())
-	return db
-})
+
 rest.addResponse('get-state', async view => {
 	const { visitor } = await view.gets(['visitor'])
 	view.ans.admin = await Access.isAdmin(visitor.client.cookie)
