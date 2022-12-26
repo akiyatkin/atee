@@ -53,7 +53,8 @@ export const Client = {
 		const search = a.getAttribute('href')
 		const scroll = a.dataset.scroll != 'none'
 		
-		const promise = search == Client.search ? Client.replaceState(search, scroll) : Client.pushState(search, scroll)
+		//const promise = search == Client.search ? Client.replaceState(search, scroll) : Client.pushState(search, scroll)
+		const promise = Client.pushState(search, scroll)
 		animate('a', a, promise, a.dataset.animate)
 		return true
 	},
@@ -90,7 +91,9 @@ export const Client = {
 		promise.started.then(go).catch(() => null)
 	},
 	pushState: (search, scroll = true) => {
+
 		search = fixsearch(search)
+
 		if (~location.href.indexOf(search)) {
 			const a = document.createElement('a')
 			const oldahref = location.href
@@ -151,7 +154,8 @@ const fixsearch = search => {
 		else if (search[0] == '#') search = location.pathname + location.search + search
 		else if (search == '') search = location.pathname + location.search
 	}
-	search = search.replace(/\/+/,'/').replace(/\/$/,'')
+	search = search.replace(/\/+/,'/')
+	if (search != '/') search = search.replace(/\/$/,'')
 	return search
 }
 const explode = (sep, str) => {
@@ -201,7 +205,6 @@ const applyCrossing = async () => {
 		}).then(res => res.json())
 		if (promise.rejected) return
 		if (!json || !json.st || !json.ut || !json.result || !json.layers) {
-			console.log(1, json)
 			return location.reload()
 		}
 		const timings = {

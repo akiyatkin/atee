@@ -1,8 +1,8 @@
 import Rest from "/-rest"
+import funcs from '/-rest/funcs.js'
 import Notion from "/-notion/Notion.js"
 import Access from "/-controller/Access.js"
-
-const rest = new Rest()
+const rest = new Rest(funcs)
 
 rest.addArgument('nick')
 rest.addArgument('id')
@@ -44,6 +44,6 @@ rest.addResponse('get-state', async view => {
 	view.ans.notion = !!await Notion.getConfig()
 	return view.ret()
 })
-meta.after(reans => reans.nostore = true)
+rest.after(reans => reans.nostore = true)
 
 export default rest
