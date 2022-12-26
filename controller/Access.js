@@ -1,5 +1,5 @@
 import fs from 'fs/promises'
-import cproc from '@atee/cproc'
+import cproc from '/-cproc'
 import config from '/-config'
 
 import times from '/-controller/times.js'

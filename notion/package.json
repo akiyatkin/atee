@@ -18,6 +18,7 @@
 	"homepage": "https://github.com/akiyatkin/atee#readme",
 	"dependencies": {
 		"probe-image-size": "^7.2.3",
-		"@notionhq/client": "^1.0.4"
+		"@notionhq/client": "^1.0.4",
+		"@atee/rest": "https://gitpkg.now.sh/akiyatkin/atee/rest?main"
 	}
 }

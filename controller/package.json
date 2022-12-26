@@ -1,20 +1,24 @@
 {
-  "name": "@atee/controller",
-  "version": "1.0.14",
-  "type": "module",
-  "description": "",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/akiyatkin/atee.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/akiyatkin/atee/issues"
-  },
-  "homepage": "https://github.com/akiyatkin/atee#readme",
-  "dependencies": {}
+	"name": "@atee/controller",
+	"version": "1.0.14",
+	"type": "module",
+	"description": "",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/akiyatkin/atee.git"
+	},
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/akiyatkin/atee/issues"
+	},
+	"homepage": "https://github.com/akiyatkin/atee#readme",
+	"dependencies": {
+		"@atee/rest": "https://gitpkg.now.sh/akiyatkin/atee/rest?main",
+		"@atee/cproc": "https://gitpkg.now.sh/akiyatkin/atee/cproc?main",
+		"@atee/config": "https://gitpkg.now.sh/akiyatkin/atee/config?main"
+	}
 }
