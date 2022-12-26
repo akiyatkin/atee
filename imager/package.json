@@ -17,6 +17,7 @@
 	},
 	"homepage": "https://github.com/akiyatkin/atee#readme",
 	"dependencies": {
-		"sharp": "^0.31"
+		"sharp": "^0.31",
+		"@atee/nicked": "https://gitpkg.now.sh/akiyatkin/atee/nicked?main"
 	}
 }

@@ -1,21 +1,17 @@
 import nicked from "/-nicked"
 import Rest from "/-rest"
+import funcs from "/-rest/funcs.js"
 import Access from '/-controller/Access.js'
 import fs from 'fs/promises'
 import { ReadStream, createReadStream, createWriteStream } from 'fs'
-import { pipeline, Duplex, Readable } from 'stream'
-import https from 'https'
-
 import { createRequire } from "module"
 const require = createRequire(import.meta.url)
 const sharp = require('sharp')
 
 await fs.mkdir('cache/imager/', { recursive: true }).catch(e => null)
 
-const rest = new Rest()
-rest.addFunction('string', (view, n) => n || '')
-rest.addFunction('int', (view, n) => Number(n) || 0)
-rest.addFunction('isset', (view, v) => v !== null)
+const rest = new Rest(funcs)
+
 rest.addArgument('src', (view, src) => {
 	if (/^https?:\/\//i.test(src)) {
 		return view.end({status:404})
@@ -28,16 +24,7 @@ rest.addArgument('src', (view, src) => {
 rest.addArgument('w',['int'])
 rest.addArgument('cache', ['isset'])
 rest.addArgument('h',['int'])
-//rest.addArgument('type',['string'])
-// rest.addArgument('ext', ['string'], (view, ext) => {
-// 	if (!ext) {
-// 		const { src } = await view.gets(['src'])
-// 		const i = src.lastIndexOf('.')
-// 		if (!~i) return view.err('Некорректное расширение файла')
-// 		ext = src.slice(i + 1).toLowerCase()
-// 	}
-// 	return ext
-// })
+
 rest.addArgument('fit', ['string'], (view, fit) => {
 	if (~['cover','contain','outside','fill','inside'].indexOf(fit)) return fit
 	//return 'contain'
