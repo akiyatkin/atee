@@ -1,4 +1,4 @@
-export const Gramatics = {
+export const Grammar = {
 	ask: async () => {
 		const selection = window.getSelection()
 		if (!selection.anchorNode) return
@@ -17,7 +17,7 @@ export const Gramatics = {
 	    }[tag]))
 	    
 	    const data = {href, block, error, right}
-	    await fetch('/-gramatics/set-send', {
+	    await fetch('/-grammar/set-send', {
 			method: 'POST',
 			headers: { "Content-Type": "application/x-www-form-urlencoded" },
 			body: new URLSearchParams(data)
@@ -30,4 +30,4 @@ export const Gramatics = {
 		})
 	}
 }
-export default Gramatics
+export default Grammar
