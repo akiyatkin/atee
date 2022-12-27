@@ -82,7 +82,7 @@ export default div => {
 
 	let startx, starty, diffx, diffy, drag, lastfocus, scrollLeft, scrollTop;
 
-	slider.addEventListener('scroll', () => check)
+	slider.addEventListener('scroll', () => check, { passive: true })
 	slider.addEventListener('pointerover', () => {
 		clearInterval(timer)
 		set(0)
