@@ -15,10 +15,10 @@ export default class Layers {
 			if (index) continue
 			status = 404
 			depth = 1
-			index = source.childs[status]
+			index = source.childs?.[status]
 			if (index) break
 			status = 500
-			index = source.childs[status]
+			index = source.childs?.[status]
 			if (!index) depth = null
 			break
 		}

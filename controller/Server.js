@@ -110,6 +110,7 @@ export const Server = {
                 	const root = bread.root ? '/' + bread.root + '/' : '/'
                     req.nt = root + status
                     const a = await meta.get('get-layers', req, visitor)
+                    if (!a.result) console.log(a)
                     json = a.ans
                     info = await controller(json, visitor, bread)
                 }
