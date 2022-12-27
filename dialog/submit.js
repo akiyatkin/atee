@@ -1,4 +1,4 @@
-import action from "/@atee/dialog/action.js"
+import action from "/-dialog/action.js"
 
 const forms = new WeakSet()
 
@@ -11,7 +11,7 @@ let addinputs = async (form) => {
 	utms.type = "hidden"
 	utms.name = "utms"
 	form.appendChild(utms)
-	const UTM = await import('/@atee/form/UTM.js').then(r => r.default)
+	const UTM = await import('/-form/UTM.js').then(r => r.default)
 	const res = await UTM.get()
 	utms.value = JSON.stringify(res)
 	const captha = document.createElement("input")

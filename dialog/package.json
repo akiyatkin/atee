@@ -1,20 +1,26 @@
 {
-  "name": "@atee/dialog",
-  "version": "1.0.0",
-  "type": "module",
-  "description": "",
-  "main": "Dialog.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/akiyatkin/atee.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/akiyatkin/atee/issues"
-  },
-  "homepage": "https://github.com/akiyatkin/atee#readme"
+	"name": "@atee/dialog",
+	"version": "1.0.0",
+	"type": "module",
+	"description": "",
+	"main": "Dialog.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/akiyatkin/atee.git"
+	},
+	"bugs": {
+		"url": "https://github.com/akiyatkin/atee/issues"
+	},
+	"homepage": "https://github.com/akiyatkin/atee#readme",
+	"dependencies":{
+		"@atee/config": "https://gitpkg.now.sh/akiyatkin/atee/config?main",
+		"@atee/mail": "https://gitpkg.now.sh/akiyatkin/atee/mail?main",
+		"@atee/rest": "https://gitpkg.now.sh/akiyatkin/atee/rest?main",
+		"@atee/form": "https://gitpkg.now.sh/akiyatkin/atee/form?main",
+		"@atee/nicked": "https://gitpkg.now.sh/akiyatkin/atee/nicked?main",
+		"@atee/float-label": "https://gitpkg.now.sh/akiyatkin/atee/float-label?main"
+	}
 }
