@@ -19,6 +19,7 @@
 	"dependencies": {
 		"@atee/rest": "https://gitpkg.now.sh/akiyatkin/atee/rest?main",
 		"@atee/cproc": "https://gitpkg.now.sh/akiyatkin/atee/cproc?main",
+		"@atee/notreset": "https://gitpkg.now.sh/akiyatkin/atee/notreset?main",
 		"@atee/config": "https://gitpkg.now.sh/akiyatkin/atee/config?main"
 	}
 }
