@@ -86,20 +86,20 @@ export default div => {
 	slider.addEventListener('pointerover', () => {
 		clearInterval(timer)
 		set(0)
-	}, {once: true})
+	}, {once: true, passive: true})
 
 	slider.addEventListener('touchstart', () => {
 		check()
 		setTimeout(check, 100)
 		setTimeout(check, 500)
 		setTimeout(check, 1000)
-	})
+	}, { passive: true })
 	slider.addEventListener('touchend', () => {
 		check()
 		setTimeout(check, 100)
 		setTimeout(check, 500)
 		setTimeout(check, 1000)
-	})
+	}, { passive: true })
 	const isTouch = (e) => {
 		const bigdiffx = (startx - (e.clientX + scrollLeft))
 		const bigdiffy = (starty - (e.clientY + scrollTop))
