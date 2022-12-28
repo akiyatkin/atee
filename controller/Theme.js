@@ -5,7 +5,7 @@ export default Theme
 Theme.parse = (string, sep = '; ') => {
     const obj = string?.split(sep).reduce((res, item) => {
         if (!item) return res
-        //item = item.replace(/\+/g, '%20')
+        item = item.replace(/\+/g, '%20')
         const data = item.split('=')
         try {
         	res[decodeURIComponent(data.shift())] = data.length ? decodeURIComponent(data.join('=')) : ''
