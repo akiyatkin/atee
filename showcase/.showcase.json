@@ -1,6 +1,6 @@
 {
 	"prices":"data/catalog/.prices/",
-	"tables":"data/catalog/tables/",
+	"tables":"data/catalog/.tables/",
 	"images":"data/catalog/images/",
 	"folders":"data/catalog/folders/",
 	"texts":"data/catalog/texts/",

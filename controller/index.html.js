@@ -3,8 +3,7 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 <html>
 	<head>
 		${controller.HEAD(...args)}
-		<base href="/@atee/showcase/">
-		<link rel="icon" type="/image/svg+xml" href="/images/favicon.svg">
+		<link rel="icon" type="image/x-icon" href="/favicon.ico">
 		<link rel="stylesheet" href="/style.css">
 	</head>
 	<body style="padding:10px; max-width: 1200px">

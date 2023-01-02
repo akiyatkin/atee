@@ -1,10 +1,9 @@
-import { HEAD } from "/-controller/layout.html.js"
+import controller from "/-controller/layout.html.js"
 export const ROOT = (...args) => `<!DOCTYPE html>
 <html>
 	<head>
-		${HEAD(...args)}
-		<base href="/@atee/db/">
-		<link rel="icon" type="/image/svg+xml" href="/images/favicon.svg">
+		${controller.HEAD(...args)}
+		<link rel="icon" type="image/x-icon" href="/favicon.ico">
 		<link rel="stylesheet" href="/style.css">
 		<link rel="stylesheet" href="/-db/style.css">
 	</head>

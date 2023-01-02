@@ -3,17 +3,11 @@ import { Client } from "@notionhq/client"
 import fs from 'fs/promises'
 import { whereisit } from '/-controller/whereisit.js'
 import probe from 'probe-image-size';
+import config from '/-config';
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 export const Notion = {
-	getConfig: async () => {
-		try {
-			const { default: CONFIG } = await import('/data/.notion.json', {assert: {type: "json"}})
-			return CONFIG
-		} catch (e) {
-			return false
-		}
-	},
+	getConfig: async () => config('notion'),
 	getConnect: async () => {
 		const CONFIG = await Notion.getConfig()
 		if (!CONFIG) return false

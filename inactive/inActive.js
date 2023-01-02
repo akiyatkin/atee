@@ -27,3 +27,4 @@ const inActive = new Promise(resolve => {
 })
 
 export { inActive }
+export default inActive

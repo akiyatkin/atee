@@ -3,8 +3,7 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 <html>
 	<head>
 		${controller.HEAD(data, env)}
-		<base href="/@atee/notion/">
-		<link rel="icon" type="/image/svg+xml" href="/images/favicon.svg">
+		<link rel="icon" type="image/x-icon" href="/favicon.ico">
 		<link rel="preload" as="style" href="/-modal/style.css" onload="this.onload=null;this.rel='stylesheet'">
 		<link rel="stylesheet" href="/-notion/style.css">
 		<link rel="stylesheet" href="/style.css">

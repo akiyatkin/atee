@@ -19,7 +19,8 @@ rest.addHandler('admin', async (view) => {
 rest.addResponse('get-state', async view => {
 	const { visitor } = await view.gets(['visitor'])
 	view.ans.admin = await Access.isAdmin(visitor.client.cookie)
-	view.ans.db = !!await new Db().connect()
+	const db = await new Db().connect()
+	view.ans.db = !!db
 	db.release()
 	return view.ret()
 })
