@@ -6,7 +6,7 @@
 		"@atee/controller": "https://gitpkg.now.sh/akiyatkin/atee/controller?main",
 		"@atee/config": "https://gitpkg.now.sh/akiyatkin/atee/config?main",
 		"@atee/db": "https://gitpkg.now.sh/akiyatkin/atee/db?main",
-		"@atee/form": "https://gitpkg.now.sh/akiyatkin/atee/config?form",
+		"@atee/form": "https://gitpkg.now.sh/akiyatkin/atee/form?main",
 		"@atee/float-label": "https://gitpkg.now.sh/akiyatkin/atee/float-label?main",
 		"@atee/mail": "https://gitpkg.now.sh/akiyatkin/atee/mail?main",
 		"@atee/nicked": "https://gitpkg.now.sh/akiyatkin/atee/nicked?main",
