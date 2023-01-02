@@ -31,3 +31,4 @@ export const ago = (mtime) => {
 	dif = dif / 12 //лет
 	return format(dif, 'years')
 }
+export default ago

@@ -1,7 +1,5 @@
 import Rest from "/-rest"
 import tpl from "/-yml/yml.html.js"
-import Db from "/-db/Db.js"
-
 import yml from '/-yml'
 import config from '/-config'
 

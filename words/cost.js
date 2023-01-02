@@ -22,3 +22,4 @@ export const cost = (cost) => {
 	return cost;
 
 }
+export default cost

@@ -1,20 +1,17 @@
 {
 	"name": "@atee/catalog",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"type": "module",
-	"description": "",
-	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/akiyatkin/atee.git"
-	},
-	"author": "",
-	"license": "ISC",
-	"bugs": {
-		"url": "https://github.com/akiyatkin/atee/issues"
-	},
-	"homepage": "https://github.com/akiyatkin/atee#readme",
-	"dependencies": {}
+	"dependencies": {
+		"@atee/controller": "https://gitpkg.now.sh/akiyatkin/atee/controller?main",
+		"@atee/config": "https://gitpkg.now.sh/akiyatkin/atee/config?main",
+		"@atee/db": "https://gitpkg.now.sh/akiyatkin/atee/db?main",
+		"@atee/form": "https://gitpkg.now.sh/akiyatkin/atee/config?form",
+		"@atee/float-label": "https://gitpkg.now.sh/akiyatkin/atee/float-label?main",
+		"@atee/mail": "https://gitpkg.now.sh/akiyatkin/atee/mail?main",
+		"@atee/nicked": "https://gitpkg.now.sh/akiyatkin/atee/nicked?main",
+		"@atee/rest": "https://gitpkg.now.sh/akiyatkin/atee/rest?main",
+		"@atee/showcase": "https://gitpkg.now.sh/akiyatkin/atee/showcase?main",
+		"@atee/words": "https://gitpkg.now.sh/akiyatkin/atee/words?main"
+	}
 }

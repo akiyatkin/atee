@@ -1,4 +1,4 @@
-import { words } from "/-words/words.js"
+import words from "/-words/words.js"
 const format = (dif, a, b, c) => {
 	dif = Math.round(dif)
 	return dif + ' ' + words(dif, a, b, c)
@@ -26,3 +26,4 @@ export const passed = (dif) => {
 	dif = dif / 12 //лет
 	return format(dif, 'год','года','лет')
 }
+export default passed

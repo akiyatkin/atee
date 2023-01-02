@@ -14,3 +14,4 @@ export const words = (count, one, two, five) => {
 		return five
 	}
 }
+export default words
