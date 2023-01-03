@@ -123,7 +123,7 @@ export class View {
 		//Только 404, 403, 500, 422
 		//422 - пользователь может исправить, 
 		//500 - пользователь исправить ошибку не сможет
-		return this.#ready(msg, status, 0)
+		return this.#ready(msg, status, 0, nostore)
 	}
 	nope (msg, status = 200, nostore = null) { //result 0, но вообще ок, такое бывает
 		return this.#ready(msg, status, 0, nostore)

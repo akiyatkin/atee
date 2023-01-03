@@ -11,14 +11,10 @@ import { whereisit } from './whereisit.js'
 import Theme from '/-controller/Theme.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
+import rest_admin from '/-controller/rest.admin.js'
+import rest_funcs from '/-rest/funcs.js'
 
-const rest = new Rest()
-
-rest.addHandler('admin', async (view) => {
-	const { visitor } = await view.gets(['visitor'])
-	if (await Access.isAdmin(visitor.client.cookie)) return
-	return view.err('Access denied', 403)
-})
+const rest = new Rest(rest_admin, rest_funcs)
 
 rest.addResponse('get-access', async view => {
 	const { visitor } = await view.gets(['visitor'])
@@ -41,9 +37,6 @@ rest.addResponse('set-update', async view => {
 	return view.ret()
 })
 
-
-rest.addFunction('int', (view, n) => Number(n))
-rest.addFunction('array', (view, n) => n ? n.split(',') : [])
 rest.addFunction('checksearch', (view, n) => {
 	if (n && n[0] != '/') return view.err()
 	return n
@@ -206,11 +199,6 @@ const collectPush = (rule, timings, bread, root, interpolate, theme) => {
 }
 
 
-
-
-
-
-rest.addArgument('visitor')
 rest.addResponse('get-layers', async view => {
 	view.nostore = true
 	view.headers = {}
