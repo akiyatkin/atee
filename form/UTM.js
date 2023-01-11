@@ -2,13 +2,13 @@ const UTM = {
 	write: async () => {
 		UTM.write = () => {}
 		const referrer = document.referrer
-		//const referrer = 'https://mail.yandex.ru/?uid=253223934&q=Тест<h1>ыва</h2>'
-		if (!referrer) return
-		const ref = new URL(referrer)
-		if (ref.host == location.host) return
+		if (referrer) {
+			const ref = new URL(referrer)
+			if (ref.host == location.host) return
+		} //Нет referrer - возможно только при первом прямом посещении за сессию. Такое посещение нужно зафиксировать.
 		const time = new Date().getTime()
 		const href = location.href
-		return UTM.update({ time, referrer, href })
+		return UTM.update({ time, referrer: referrer || location.host, href })
 	},
 	get: async () => UTM.read().then(store => {
 		const request = store.getAll()

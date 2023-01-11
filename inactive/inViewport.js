@@ -1,6 +1,6 @@
-import { CallFrame } from "./CallFrame.js"
-import { isViewport } from "./isViewport.js"
-import { inActive } from "./inActive.js"
+import CallFrame from "./CallFrame.js"
+import isViewport from "./isViewport.js"
+import inActive from "./inActive.js"
 
 
 const inViewport = (el, cb) => {

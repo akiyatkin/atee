@@ -1,5 +1,7 @@
 import nicked from "/-nicked"
 import Rest from "/-rest"
+import http from "http"
+import https from "https"
 import config from "/-config"
 import Access from '/-controller/Access.js'
 import fs from 'fs/promises'
@@ -13,29 +15,40 @@ import rest_admin from '/-controller/rest.admin.js'
 import rest_funcs from '/-rest/funcs.js'
 const rest = new Rest(rest_admin, rest_funcs)
 
-rest.addArgument('src', (view, src, prop) => {
-	if (/^https?:\/\//i.test(src)) {
-		return view.end({status:404})
-	}
-	if (!!~src.indexOf('/.') || src[0] == '.' || src[0] == '/') {
-		return view.end({status:404})
-	}
-	if (!conf.constraint || conf.constraint[prop].some(s => src.indexOf(s) === 0)) return src //Адрес начинается с разрешённого начала
-	const m = 'Imager constraint worked for '+prop
+const forbidden = (view, m) => {
 	console.log(m, view.req.src, 'referer:', view.req.visitor.client.referer)
 	return view.err(m, 403)
+}
+rest.addArgument('src', (view, src, prop) => {
+	const remote = /^https?:\/\//i.test(src)
+	if (/^\//.test(src)) {
+		return forbidden(view, 'Imager constraint worked for a src starting with a slash')
+	}
+	if (remote && !conf.constraint?.remote) {
+		return forbidden(view, 'Imager constraint worked for remote src')
+	}
+	if (remote && conf.constraint?.hosts && !~conf.constraint.hosts.indexOf(new URL(src).hostname)) {
+		return forbidden(view, 'Imager constraint worked for host in src')
+	}
+	if (!remote && !!~src.indexOf('/.') || src[0] == '.' || src[0] == '/') {
+		return forbidden(view, 'Imager constraint worked for hidden src')
+	}
+	if (!remote && conf.constraint && !conf.constraint[prop].some(s => src.indexOf(s) === 0)) {
+		return forbidden(view, 'Imager constraint worked for a start src')
+	}
+	return src
 })
 rest.addArgument('w',['int'], (view, v, prop) => {
-	if (!conf.constraint || ~conf.constraint[prop].indexOf(v)) return v
-	const m = 'Imager constraint worked for '+prop+'='+v
-	console.log(m, view.req.src, 'referer:', view.req.visitor.client.referer)
-	return view.err(m, 403)
+	if (conf.constraint?.[prop] && !~conf.constraint[prop].indexOf(v)) {
+		return forbidden(view, 'Imager constraint worked for ' + prop + '=' + v)
+	}
+	return v
 })
 rest.addArgument('h',['int'], (view, v, prop) => {
-	if (!conf.constraint || ~conf.constraint[prop].indexOf(v)) return v
-	const m = 'Imager constraint worked for '+prop+'='+ v
-	console.log(m, view.req.src, 'referer:', view.req.visitor.client.referer)
-	return view.err(m, 403)
+	if (conf.constraint?.[prop] && !~conf.constraint[prop].indexOf(v)) {
+		return forbidden(view, 'Imager constraint worked for ' + prop + '=' + v)
+	}
+	return v
 })
 rest.addArgument('cache', ['isset'])
 
@@ -45,32 +58,48 @@ rest.addArgument('fit', ['string'], (view, fit) => {
 	//return 'contain'
 	return 'inside'	
 })
-const isFreshCache = Access.cache(async (src, store) => {
-	const cstat = await fs.lstat(store).catch(e => null)
-	if (!cstat) return false
-	const ostat = await fs.stat(src).catch(e => null)
-	return cstat.mtime > ostat.mtime
-})
-const STAT = {h:{},w:{}}
+
+const STAT = {h:{},w:{}, hosts: {}}
+const AccessCache = Access.relate(STAT)
 rest.addResponse('get-stat', async view => {
 	const { admin } = await view.gets(['admin'])
 	const w = Object.keys(STAT.w).map(v => Number(v))
 	const h = Object.keys(STAT.h).map(v => Number(v))
-	view.ans.stat = {w, h}
+	const hosts = Object.keys(STAT.hosts)
+	view.ans.stat = {w, h, hosts}
 	return view.ret()
 })
 rest.addResponse('webp', async view => {
+	const ext = 'webp'
 	const { src, h, w, fit, cache } = await view.gets(['src','h','w','fit','cache'])
 	STAT.h[h] = true
 	STAT.w[w] = true
-
-	const ext = 'webp'
+	const remote = /^https?:\/\//i.test(src)
+	const hostname = remote ? new URL(src).hostname : ''
+	if (remote) STAT.hosts[hostname] = true
+	
 	let store
-	if (cache) {
-		store = `cache/imager/${nicked([src,h,w,fit].join('-'))}.webp`
-		if (await isFreshCache(src, store)) return {ext, ans:createReadStream(store)}
+	const iscache = cache||conf.constraint?.alwayscache
+
+	if (iscache) {
+		store = `cache/imager/${nicked([src,h,w,fit].join('-'))}.webp`	
+		const is = await AccessCache.once('isFreshCache' + store, async () => {
+			const cstat = await fs.lstat(store).catch(e => null)
+			if (!cstat) return false
+			if (remote) return true //для remote кэш всегда свежий. Чтобы сбросить нужно вручную удалить папку cache
+			const ostat = await fs.stat(src).catch(e => null)
+			return cstat.mtime > ostat.mtime
+		})
+		if (is) return {ext, ans:createReadStream(store)}
 	}
-	const inStream = createReadStream(src)
+
+	let inStream
+	if (remote) {
+		const provider = /^https:\/\//i.test(src) ? https : http
+		inStream = await new Promise((resolve, reject) => provider.get(src, resolve))
+	} else {
+		inStream = createReadStream(src)
+	}
 
 	const withoutEnlargement = (w && h && fit == 'contain') ? false : true
 	const transform = sharp().resize({ 
@@ -87,14 +116,22 @@ rest.addResponse('webp', async view => {
 	})
 	const duplex = inStream.pipe(transform)
 	inStream.on('error', e => duplex.destroy(e))
-	if (!cache) return {ext, ans:duplex};
+	if (!iscache) return {ext, ans:duplex};
+
 	(async () => {
+		
 		const chunks = []
 		duplex.on('data', chunk => {
 			chunks.push(chunk)
 		})
 		duplex.on('data', chunk => {
 			createWriteStream(store).write(Buffer.concat(chunks))
+		})
+		duplex.on('error', chunk => {
+			console.log('Imager stream error', src, view.req.visitor.client.referer)
+		})
+		duplex.on('end', chunk => {
+			AccessCache.set('isFreshCache' + store, true)
 		})
 	})()
 	return {ext, ans:duplex}

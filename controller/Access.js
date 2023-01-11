@@ -36,17 +36,11 @@ export const Access = {
 	map: new Map(), //Кэшировать стоит то что может повториться в рамках сборки контроллера иначе бессмыслено
 	relate: (obj, fn) => {
 		if (Access.map.has(obj)) return Access.map.get(obj)
-		const res = {}
-		res.once = (name, fn) => cproc(res, name, () => {
-			if (res[name]) return res[name].result
-			res[name] = {}
-			res[name].result = fn()
-			return res[name].result
-		})
+		const res = new Relate()
 		Access.map.set(obj, res)
 		return res
 	},
-	cache: fn => { //depricated (relate?)
+	cache: fn => { //depricated (relate ^)
 		fn.store = {}
 		return (...args) => {
 			const hash = JSON.stringify(args)
@@ -86,5 +80,27 @@ export const Access = {
 			return store.promise
 		}
 	}
+}
+class Relate {
+	store = {}
+	once (name, fn) {
+		return cproc(Relate, name, () => { //Защита от параллельного обращения к файлам, параллельные запросы будут ждать
+			if (this.store[name]) return this.store[name].result
+			this.store[name] = {}
+			this.store[name].result = fn()
+			return this.store[name].result
+		})
+	}
+	get (name) {
+		return this.store[name]?.result
+	}
+	set (name, val) {
+		if (!this.store[name]) this.store[name] = {}
+		this.store[name].result = val
+	} 
+	clear (name) {
+		if (name) delete this.store[name]	
+		else this.store = {}
+	} 
 }
 export default Access

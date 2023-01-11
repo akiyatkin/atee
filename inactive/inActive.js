@@ -1,6 +1,6 @@
 
 const inActive = new Promise(resolve => {
-    const base = document.activeElement
+    //const base = document.activeElement
     const init = () => {
         // document.body.removeEventListener('click', init)
         // document.body.removeEventListener('mouseover', init)

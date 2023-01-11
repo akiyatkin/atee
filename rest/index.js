@@ -105,7 +105,7 @@ export class View {
 	}
 	end (ext = {}) {
 		const reans = new ViewException()
-		Object.assign(reans, ext)
+		Object.assign(this, ext)
 		throw reans
 	}
 	#ready (msg, status, result, nostore = null) {

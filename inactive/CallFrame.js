@@ -21,4 +21,4 @@ let CallFrame = (callback, t = 200) => {
 CallFrame.store = new Map()
 
 export default CallFrame
-export {CallFrame}
+export { CallFrame }

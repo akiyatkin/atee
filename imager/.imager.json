@@ -1,5 +1,8 @@
 {
-	"*constraint":{
+	"constraint":{
+		"remote":false,
+		"hosts":[],
+		"alwayscache":true,
 		"src":["images/","data/"],
 		"h":[0, 500, 90],
 		"w":[0, 90]
