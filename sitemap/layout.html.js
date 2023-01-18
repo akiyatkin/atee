@@ -30,11 +30,12 @@ sitemap.HEAD = (head, env) => `
 				qs('link[rel="canonical"]').href = src
 			}
 		}
-		window.addEventListener('crossing', async ({detail: { timings, bread, theme }}) => {
+		window.addEventListener('crossing', async ({detail: env}) => {
+			const { timings, bread, theme } = env
 			const data = await fetch('/-sitemap/get-head?path=' + bread.path).then(res => res.json())
-			for (const rule in data) {
-				rules[rule]?.(data[rule])
-			}
+			for (const rule in data) rules[rule]?.(data[rule])
+			const event = new CustomEvent('crossing-sitemap-headready', {detail: env})
+			window.dispatchEvent(event)
 		})
 	</script>
 `
