@@ -76,7 +76,7 @@ rest.addResponse('webp', async view => {
 	const file = (i => ~i ? src.slice(i + 1) : src)(src.lastIndexOf('/'))
 	const name = (i => ~i ? file.slice(0, i) : file)(file.lastIndexOf('.'))
 	const headers = {
-		'Content-Disposition': `filename=${name}.webp`,
+		'Content-Disposition': `filename=${encodeURIComponent(name)}.webp`,
 	}
 	
 	STAT.h[h] = true
