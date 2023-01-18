@@ -62,17 +62,24 @@ const UTM = {
 		utms = utms.filter(utm => {
 			if (!utm.href) return false
 			if (!utm.referrer) return false
+			
 			try {
 				utm.ref = new URL(utm.referrer)
 				utm.url = new URL(utm.href)
 				if (!utm.url.host) return false
 				if (!utm.ref.host) return false
+			} catch (e) {
+				return false
+			}
+			
+			try {	
 				utm.q = utm.ref.searchParams.get('q') || ''
 				utm.q = utm.q.replace(/<\/?[^>]+>/gi, "")
 			} catch(e) {
-				console.error(e)
+				console.error(e, utm)
 				return false
 			}
+
 			return true
 		})
 		return utms
