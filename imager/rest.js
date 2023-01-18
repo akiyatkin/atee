@@ -72,6 +72,13 @@ rest.addResponse('get-stat', async view => {
 rest.addResponse('webp', async view => {
 	const ext = 'webp'
 	const { src, h, w, fit, cache } = await view.gets(['src','h','w','fit','cache'])
+
+	const file = (i => ~i ? src.slice(i + 1) : src)(src.lastIndexOf('/'))
+	const name = (i => ~i ? file.slice(0, i) : file)(file.lastIndexOf('.'))
+	const headers = {
+		'Content-Disposition': `filename=${name}.webp`,
+	}
+	
 	STAT.h[h] = true
 	STAT.w[w] = true
 	const remote = /^https?:\/\//i.test(src)
@@ -90,7 +97,7 @@ rest.addResponse('webp', async view => {
 			const ostat = await fs.stat(src).catch(e => null)
 			return cstat.mtime > ostat.mtime
 		})
-		if (is) return {ext, ans:createReadStream(store)}
+		if (is) return {ext, ans:createReadStream(store), headers}
 	}
 
 	let inStream
@@ -116,7 +123,7 @@ rest.addResponse('webp', async view => {
 	})
 	const duplex = inStream.pipe(transform)
 	inStream.on('error', e => duplex.destroy(e))
-	if (!iscache) return {ext, ans:duplex};
+	if (!iscache) return {ext, ans:duplex, headers};
 
 	(async () => {
 		
@@ -134,7 +141,7 @@ rest.addResponse('webp', async view => {
 			AccessCache.set('isFreshCache' + store, true)
 		})
 	})()
-	return {ext, ans:duplex}
+	return {ext, ans:duplex, headers}
 })
 
 export default rest
