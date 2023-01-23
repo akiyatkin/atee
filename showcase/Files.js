@@ -9,11 +9,11 @@ export const Files = {
 		files: ['zip','pdf','rar'],
 		videos: ['avi','ogv','mp4','swf']
 	},
-	getFileName: async(visitor, dir, name, exts) => {
+	getFileInfo: async(visitor, dir, name, exts) => {
 		let files = await Files.readdir(visitor, dir)
 		files = files.filter(({ext}) => ~exts.indexOf(ext))
-		const { file } = files.find(of => of.name == name) || {}
-		return file
+		const info = files.find(of => of.name == name) || {}
+		return info
 	},
 	readdirDeep: async (visitor, dir) => {
 		const dirents = await visitor.relate(Files).once('readdirDeep'+dir, () => {

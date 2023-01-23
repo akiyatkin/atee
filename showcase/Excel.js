@@ -1,6 +1,7 @@
 import Dabudi from '/-dabudi/Dabudi.js'
 import nicked from "/-nicked"
 import xlsx from "/-xlsx"
+import Files from "./Files.js"
 
 const onicked = str => {
 	if (onicked[str]) return onicked[str]
@@ -8,8 +9,20 @@ const onicked = str => {
 	return onicked[str]
 }
 export const Excel = {
+	read: async (visitor, src) => {
+		const info = Files.nameInfo(src)
+		if (info.ext == 'xlsx') return await xlsx.read(visitor, src)
+		if (info.ext == 'js') {
+			const rest = await import('/' + src).then(r => r.default)
+			if (rest.list['get-data']) {
+				const reans = await rest.get('get-data', {}, visitor)
+				return reans.ans || []
+			}
+		}
+		return []
+	},
 	loadPrice: async (visitor, src, {start = 0, starts = {}, ignore = []}) => {
-		const listsheets = await xlsx.read(visitor, src)
+		const listsheets = await Excel.read(visitor, src)
 		const sheets = []
 		for (const sheet of listsheets) {
 			if (sheet.name[0] == '.') continue
@@ -24,7 +37,7 @@ export const Excel = {
 		return { sheets }
 	},
 	loadTable: async (visitor, src, brand) => {
-		const listsheets = await xlsx.read(visitor, src)
+		const listsheets = await Excel.read(visitor, src)
 		const models = {}
 		const group_nick = nicked('Каталог')
 		const groups = {}

@@ -147,7 +147,7 @@ export class Upload {
 			WHERE i.model_id = ip.model_id and i.item_num = ip.item_num and i.table_id = :table_id
 		`, { table_id })
 		const dir = config['tables']
-		const file = await Files.getFileName(visitor, dir, table_title, ['xlsx'])
+		const { file } = await Files.getFileInfo(visitor, dir, table_title, ['xlsx'])
 		if (file) {
 			await db.changedRows(`
 				UPDATE
@@ -194,7 +194,7 @@ export class Upload {
 			WHERE ip.price_id = :price_id
 		`, { price_id })
 		const dir = config['prices']
-		const file = await Files.getFileName(visitor, dir, price_title, ['xlsx'])
+		const { file } = await Files.getFileInfo(visitor, dir, price_title, ['xlsx'])
 		if (file) {
 			await db.changedRows(`
 				UPDATE
@@ -256,7 +256,7 @@ export class Upload {
 		let omissions = {}
 
 		const dir = config['prices']
-		const file = await Files.getFileName(visitor, dir, price_title, ['xlsx'])
+		const { file } = await Files.getFileInfo(visitor, dir, price_title, ['xlsx'])
 		const conf = options.prices[price_title] || { }
 		conf.synonyms ??= {}
 		conf.props ??= ['Цена']
@@ -859,7 +859,7 @@ export class Upload {
 		const oldcost = await upload.receiveProp('Старая цена')
 		const cost = await upload.receiveProp('Цена')
 		const dir = config['tables']
-		const file = await Files.getFileName(visitor, dir, name, ['xlsx'])
+		const { file } = await Files.getFileInfo(visitor, dir, name, ['xlsx','js'])
 		if (!file) return false
 
 		const brand = options.tables?.[name]?.brand || name

@@ -7,7 +7,7 @@ import links from "/-catalog/links.html.js"
 const search = {}
 export default search
 
-search.ROOT = () => html`
+search.ROOT = () => `
 	<div id="CATGROUPS"></div>
 	<div id="page"><div id="CATPAG"></div></div>
 	<div id="CATLIST"></div>
@@ -28,7 +28,7 @@ search.GROUPS = (data, env) => data.result ? `
 				}
 			}
 		</style>
-		<div style="display: grid; height: max-content; gap: 0.5em;">
+		<div style="display: grid; height: max-content; gap: 0.4em;">
 			${ti.fi(data.childs.length, search.showgroups(data, env))}
 		</div>
 		<div id="FILTERS"></div>
