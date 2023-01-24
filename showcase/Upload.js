@@ -256,7 +256,7 @@ export class Upload {
 		let omissions = {}
 
 		const dir = config['prices']
-		const { file } = await Files.getFileInfo(visitor, dir, price_title, ['xlsx'])
+		const { file } = await Files.getFileInfo(visitor, dir, price_title, ['xlsx','js'])
 		const conf = options.prices[price_title] || { }
 		conf.synonyms ??= {}
 		conf.props ??= ['Цена']
@@ -634,8 +634,37 @@ export class Upload {
 		props.slides = await upload.receiveProp('slides')
 		props.art = await upload.receiveProp('Арт')
 		props.photo = await upload.receiveProp('Фото')
+		
+		//['slides','files','images','texts','videos']
+		for (const part of Object.keys(Files.exts)) { 
+			await db.affectedRows(`
+				DELETE FROM showcase_iprops
+				WHERE prop_id = :prop_id
+			`, props[part])
+		}
 
-
+		await ( async () => {
+			props.iilus = await upload.receiveProp('Иллюстрации')
+			const search_prop_id = props.iilus.prop_id
+			const vals = await db.all(`
+				SELECT DISTINCT ip.text as src, ip.model_id, ip.item_num, ordain
+				FROM showcase_iprops ip
+				WHERE ip.prop_id = :search_prop_id
+			`, { search_prop_id })
+			for (const val of vals) {
+				console.log(val)
+				await db.affectedRows(`
+					INSERT IGNORE INTO
+						showcase_iprops
+					SET
+						ordain = :ordain,
+						text = :src,
+						model_id = :model_id,
+						item_num = :item_num,
+						prop_id = :prop_id
+				`, {...props.images, ...val})
+			}
+		})()
 
 		props.files = await upload.receiveProp('Файлы')
 		const search_prop_id = props.files.prop_id
@@ -712,10 +741,6 @@ export class Upload {
 
 		//['slides','files','images','texts','videos']
 		for (const part of Object.keys(Files.exts)) { 
-			await db.affectedRows(`
-				DELETE FROM showcase_iprops
-				WHERE prop_id = :prop_id
-			`, props[part])
 			parts[part] = await Files.readdirDeep(visitor, config[part])
 			for (const root of parts[part].dirs) {
 				const brand_nick = nicked(root.name)

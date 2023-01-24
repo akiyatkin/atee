@@ -107,14 +107,9 @@ CREATE TABLE IF NOT EXISTS `showcase_iprops` (
 CREATE TABLE IF NOT EXISTS `showcase_files` (
 	`file_id` MEDIUMINT unsigned NOT NULL AUTO_INCREMENT COMMENT '',
 	
-	`file_brand_title` varchar(255) NULL COMMENT 'Имя, часто в структуре src или при контексте разбора, которое указывает на бренд',
-	`file_brand_nick` varchar(255) COLLATE latin1_bin NOT NULL COMMENT '',
-
-	`file_group_title` varchar(255) NULL COMMENT 'Имя, часто в структуре src или при контексте разбора, которое указывает на группу',
-	`file_group_nick` varchar(255) COLLATE latin1_bin NOT NULL COMMENT '',
-	
-	`file_model_title` varchar(255) NULL COMMENT 'Имя, часто в структуре src или при контексте разбора, которое указывает на модель',
-	`file_model_nick` varchar(255) COLLATE latin1_bin NOT NULL COMMENT '',
+	`file_brand_nick` varchar(255) COLLATE latin1_bin NOT NULL COMMENT 'Имя, часто в структуре src или при контексте разбора, которое указывает на бренд',
+	`file_group_nick` varchar(255) COLLATE latin1_bin NOT NULL COMMENT 'Имя, часто в структуре src или при контексте разбора, которое указывает на группу',
+	`file_model_nick` varchar(255) COLLATE latin1_bin NOT NULL COMMENT 'Имя, часто в структуре src или при контексте разбора, которое указывает на модель',
 
 	`file_width` SMALLINT NULL COMMENT 'Ширина картинки',
 	`file_height` SMALLINT NULL COMMENT 'Высота картинки',
@@ -125,7 +120,7 @@ CREATE TABLE IF NOT EXISTS `showcase_files` (
 	`file_from` ENUM('images','texts','files','videos','slides','models','icons','logos') NULL DEFAULT NULL COMMENT 'Папка в структуре которая указывает на тип или автоматически определённое значение',
 	`file_type` ENUM('images','texts','files','videos') NOT NULL COMMENT 'Расширение файла по которому можно определить тип, может не совпадать с тем что в src',
 	`file_ext` varchar(4) NOT NULL DEFAULT '' COMMENT 'Расширение может понадобиться для иконки',
-	`file_source` ENUM('price','table','local','hand') NOT NULL COMMENT 'Источник. tables записываются в момент внесения данных, local записываются и связываются отдельной обработкой.',
+	`file_source` ENUM('price','table','local','hand') NOT NULL COMMENT 'Источник, кто сообщил о файле. tables записываются в момент внесения данных, local записываются и связываются отдельной обработкой. hand - на будущее.',
 	`file_table_id` SMALLINT unsigned NULL COMMENT 'id источника при внесении, когда source = table',
 	`file_price_id` SMALLINT unsigned NULL COMMENT 'id источника при внесении, когда source = price',
 	`file_ordain` SMALLINT unsigned COMMENT 'Порядок номер в источнике или в локальной папке. Порядок сбрасывается на уровне модели, или null если модели нет.',

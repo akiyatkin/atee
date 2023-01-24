@@ -1,7 +1,13 @@
-html {
-	overflow-y: scroll;	
+:root {
+	--black: #444;
+	--primary: #0b7ace;
+	--success: #e74405;
 }
 
+html {
+	overflow-y: scroll;	
+	color: var(--black);
+}
 body {
 	margin: 0;
 }
@@ -29,14 +35,38 @@ table td, table th {
 table th {
 	text-align: left;
 }
-a {
-	-webkit-tap-highlight-color: transparent;
+
+.a {
+	background-color: transparent;
+	color: inherit;
+	display: inline;
+	padding:0;
+	margin:0;
+	box-shadow: none;
+	border-radius: 0;
+	cursor: pointer;
+	border:none;
+	border-bottom: dashed 1px currentColor;
 }
 .a {
-	cursor: pointer;
+	color: var(--primary);
+}
+.a:active {
+	color: var(--primary);
+	box-shadow: none;
+	border-bottom: dashed 1px currentColor;
+}
+.a:hover {
+	color: var(--primary);
+	box-shadow: none;
 	border-bottom: dashed 1px currentColor;
 }
 
+
+
+a {
+	-webkit-tap-highlight-color: transparent;
+}
 a:hover:has(:is(svg, img)),
 a:has(:is(svg, img)) {
 	border: none;

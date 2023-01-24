@@ -72,17 +72,32 @@ rest.addResponse('get-panel', async view => {
 	}
 	return view.ret()
 })
+const addSizeTime = (visitor, dir, files) => {
+	return Promise.all(files.map(async (of) => {
+		const stat = await fs.stat(dir + of.file)
+		of.size = Math.round(stat.size / 1024 / 1024 * 100) / 100
+		of.mtime = new Date(stat.mtime).getTime()
+		if (of.ext == 'xlsx') {
+			xlsx.cache(visitor, dir + of.file)
+		} else if (of.ext == 'js') {
+			const rest = await import('/' + dir + of.file).then(r => r.default).catch(e => console.log(e))
+			for (const name of ['get-data','get-mtime']) {
+				if (!rest.findopt(name)) console.log(`В обработке ${of.file} не найден ответ ${name}`)
+			}
+			if (rest.list['get-mtime']) {
+				const reans = await rest.get('get-mtime', {}, visitor)
+				const mtime = new Date(reans.ans).getTime()
+				if (mtime > of.mtime) of.mtime = mtime
+			}
+		}
+	}))
+}
 rest.addResponse('get-prices', async view => {
 	await view.get('admin')
 	const { visitor, db, config, options } = await view.gets(['visitor', 'db','config','options'])
 	const dir = config['prices']
-	const files = await Files.readdirext(visitor, dir, ['xlsx']) //{ name, ext, file }
-	await Promise.all(files.map(async (of) => {
-		const stat = await fs.stat(dir + of.file)
-		of.size = Math.round(stat.size / 1024 / 1024 * 100) / 100
-		of.mtime = new Date(stat.mtime).getTime()
-		xlsx.cache(visitor, dir + of.file)
-	}))
+	const files = await Files.readdirext(visitor, dir, ['xlsx','js']) //{ name, ext, file }
+	addSizeTime(visitor, dir, files)
 
 	const rows = await db.all(`
 		SELECT 
@@ -119,24 +134,7 @@ rest.addResponse('get-tables', async view => {
 	const { visitor, db, config, options } = await view.gets(['visitor', 'db', 'config','options'])
 	const dir = config['tables']
 	const files = await Files.readdirext(visitor, dir, ['xlsx','js']) //{ name, ext, file }
-	await Promise.all(files.map(async (of) => {
-		const stat = await fs.stat(dir + of.file)
-		of.size = Math.round(stat.size / 1024 / 1024 * 100) / 100
-		of.mtime = new Date(stat.mtime).getTime()
-		if (of.ext == 'xlsx') {
-			xlsx.cache(visitor, dir + of.file)
-		} else if (of.ext == 'js') {
-			const rest = await import('/' + dir + of.file).then(r => r.default).catch(e => console.log(e))
-			for (const name of ['get-data','get-mtime']) {
-				if (!rest.findopt(name)) console.log(`В обработке ${of.file} не найден ответ ${name}`)
-			}
-			if (rest.list['get-mtime']) {
-				const reans = await rest.get('get-mtime', {}, visitor)
-				const mtime = new Date(reans.ans).getTime()
-				if (mtime > of.mtime) of.mtime = mtime
-			}
-		}
-	}))
+	addSizeTime(visitor, dir, files)
 	const rows = await db.all(`
 		SELECT 
 			table_id,
