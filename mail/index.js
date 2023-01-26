@@ -4,14 +4,13 @@ import config from '/-config'
 import csv from '/-csv'
 
 const conf = await config('mail')
-const transport = nodemailer.createTransport(conf.nodemailer)
-
-await fs.mkdir('data/auto/mail/', { recursive: true }).catch(e => null)
-
-
+const transport = conf.nodemailer ? nodemailer.createTransport(conf.nodemailer) : false
+if (!transport) console.log('nodemailer не настроен в .mail.json')
+if (transport) await fs.mkdir('data/auto/mail/', { recursive: true }).catch(e => null)
 const mail = {
 	saveSend: opt => {
 		csv('data/auto/mail/.mail-v1.csv', opt)
+		if (!transport) return false
 		const info = transport.sendMail(opt).catch(err => console.log('mail.saveSend', err))
 		return info
 	},

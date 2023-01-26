@@ -93,7 +93,8 @@ const load = (src, visitor, ext) => {
 	    if (!route.rest) throw { status: 500, src, ext }
 	    const r = typeof(route.rest) == 'function' ? route.rest(route.query, route.get, visitor) : route.rest.get(route.query, route.get, visitor)
 		reans = {...reans, ...(await r)}
-	    if (reans.status != 200 && reans.status != 422) throw { status: reans.status, src, reans, ext, from:'router.load', toString: () => route.query + ' ' + reans.status}
+	    //if (reans.status != 200 && reans.status != 422 && reans.status != 403) throw { status: reans.status, src, reans, ext, from:'router.load', toString: () => route.query + ' ' + reans.status}
+	    if (reans.status >= 500) throw { status: reans.status, src, reans, ext, from:'router.load', toString: () => route.query + ' ' + reans.status}
 
 		let ans = reans.ans
 		if (ans instanceof ReadStream) {
