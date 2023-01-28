@@ -216,23 +216,34 @@ export class Rest {
 			throw e
 		}
 	}
-	add (pname, a1, a2, a3) {
-		let after, before, func
+	add (pname, a1, a2, a3, a4) {
+		let before, func, after, replace
 		if (a1 instanceof Function) {
 			func = a1
 			after = a2
+			replace = a3
 		} else if (a2 instanceof Function) {
-			func = a2
 			before = a1
+			func = a2
 			after = a3
-		} else if (a2) {
+			replace = a4
+		} else if (a2 || a3) {
 			before = a1
 			after = a2
+			replace = a3
 		} else {
 			before = a1
 		}
+		if (after === true) replace = true
+
+		
 		const opt = this.findopt(pname)
-		if (opt) throw new Error(`Имя обработки уже занято ${pname}`)
+		if (opt) { //replace handler
+			console.log(pname, replace, after, a2)
+			if (!replace) throw new Error(`Имя обработки уже занято ${pname}`)
+		} else {
+			if (replace) throw new Error(`Имя обработки не найдено, невозможно заменить ${pname}`)
+		}
 
 		this.list[pname] = {
 			'name': pname,

@@ -320,25 +320,25 @@ rest.addResponse('set-prices-load', async view => {
 	return view.ret('Внесено ' + row.quantity)
 })
 
-//Для ручного перехода, при сохранении ссылки
-rest.addResponse('set-load', async view => {
-	await view.gets(['start'])
+rest.addResponse('set-load', async view => { //Для ручного перехода, при сохранении ссылки
+	await view.gets(['admin', 'start']) //Нужно подменять в проекте если требуется разрешить неавторизованному пользователю
 	const { upload } = await view.gets(['upload'])
 	const res = await upload.applyall()
 	const Location = '/?showcase=' + encodeURIComponent(res.msg)
 	view.headers = { Location }
 	return view.ret('', 301)
 })
+
 rest.addResponse('set-applyall', async view => {
 	await view.gets(['admin','start'])
-	const { db, upload } = await view.gets(['db','upload'])
+	const { upload } = await view.gets(['upload'])
 	const res = await upload.applyall()
 	Object.assign(view.ans, res)
 	return view.ret(res.msg)
 })
 rest.addResponse('set-prices-loadall', async view => {
 	await view.gets(['admin','start'])
-	const { db, upload } = await view.gets(['db','upload'])
+	const { upload } = await view.gets(['upload'])
 	const files = await upload.getNewPrices()
 	let count = 0
 	await Promise.all(files.map(async of => {
