@@ -239,7 +239,6 @@ export class Rest {
 		
 		const opt = this.findopt(pname)
 		if (opt) { //replace handler
-			console.log(pname, replace, after, a2)
 			if (!replace) throw new Error(`Имя обработки уже занято ${pname}`)
 		} else {
 			if (replace) throw new Error(`Имя обработки не найдено, невозможно заменить ${pname}`)
