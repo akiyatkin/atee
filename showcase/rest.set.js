@@ -23,8 +23,11 @@ rest.addResponse('set-reset', async view => {
 		showcase_tables,
 		showcase_brands,
 		showcase_articles,
+		showcase_files,
+		showcase_filekeys,
 		showcase_props,
 		showcase_values,
+		showcase_bonds,
 		showcase_items,
 		showcase_models,
 		showcase_search,
@@ -66,21 +69,29 @@ rest.addResponse('set-groups-clearempty', async view => {
 			g.group_nick,
 			g.group_id,
 			g.parent_id,
-			count(m.model_id) as models
+			count(m.model_id) as direct
 		FROM showcase_groups g
 		LEFT JOIN showcase_models m on m.group_id = g.group_id
 		GROUP BY g.group_id
 	`)
 	const objgroups = {}
 	for (const group of groups) {
+		group.inside = group.direct
 		objgroups[group.group_id] = group
 	}
-	for (const group of groups) {
-		if (!group.parent_id) continue
-		objgroups[group.parent_id].models += group.models
+	for (let group of groups) {
+		//if (!group.parent_id) continue
+		const direct = group.direct
+		while(group.parent_id) {
+			group = objgroups[group.parent_id]
+			group.inside += direct
+		}
+		
 	}
+
+	
 	for (const group of groups) {
-		if (group.models > 0) continue
+		if (group.inside > 0) continue
 		await db.changedRows(`
 			DELETE g
 			FROM showcase_groups g
@@ -131,18 +142,20 @@ rest.addResponse('set-groups-move', async view => {
 	await db.start()
 	const groups = await db.all(`
 		SELECT 
+			p.parent_id,
 			p.group_id,
 			p.ordain
 		FROM showcase_groups p
 		ORDER by ordain
 	`)
-	let ordain = 0
+	let ordains = {}
 	let before, after
 	groups.forEach(group => {
 		if (group.group_id == after_id) after = group
 		if (group.group_id == before_id) before = group
-		ordain = ordain + 2
-		group.ordain = ordain
+		if (!ordains[group.parent_id || 0]) ordains[group.parent_id || 0] = 0
+		ordains[group.parent_id || 0] += 2
+		group.ordain = ordains[group.parent_id || 0]
 	})
 	if (!before || !after) return view.err('Не найдены свойства')
 	before.ordain = after.ordain - 1
@@ -293,9 +306,11 @@ rest.addResponse('set-tables-load', async view => {
 	await view.gets(['admin','start'])
 	const { upload, name } = await view.gets(['upload','name'])
 	view.ans.name = name
-	const row = await upload.loadTable(name)
+	const msgs = []
+	const row = await upload.loadTable(name, msgs)
 	if (!row) return view.err('Неизвестная ошибка с таблицей, проверьте конфиг')
 	row.ready = true
+	view.ans.msgs = msgs
 	view.ans.row = row
 	return view.ret('Внесено ' + row.quantity)
 })
@@ -310,7 +325,7 @@ rest.addResponse('set-prices-clear', async view => {
 	return view.ret('Очищено')
 })
 rest.addResponse('set-prices-load', async view => {
-	await view.gets(['admin','start'])
+	await view.gets(['admin','start','base'])
 	const { upload, name } = await view.gets(['upload','name'])
 	view.ans.name = name
 	const row = await upload.loadPrice(name)
@@ -349,14 +364,35 @@ rest.addResponse('set-prices-loadall', async view => {
 	view.ans.count = count
 	return view.ret('Внесено ' + count)
 })
-rest.addResponse('set-files-loadall', async view => {
-	await view.gets(['admin','start'])
+// rest.addResponse('set-files-loadall', async view => {
+// 	await view.gets(['admin'])
+// 	const { visitor, db, config, upload } = await view.gets(['visitor', 'db', 'config', 'upload'])
+
+	
+// 	const {doublepath, count} = await upload.loadAllFiles()		
+	
+// 	view.ans.doublepath = doublepath
+// 	view.ans.count = count
+// 	return view.ret('Связано ' + count)
+// })
+rest.addResponse('set-files-indexall', async view => {
+	await view.gets(['admin'])
 	const { visitor, db, config, upload } = await view.gets(['visitor', 'db', 'config', 'upload'])
 
 	
-	const {doublepath, count} = await upload.loadAllFiles()		
+	const {doublepath, count} = await upload.indexAllFiles()		
 	
 	view.ans.doublepath = doublepath
 	view.ans.count = count
-	return view.ret('Связано ' + count)
+	return view.ret('Проиндексировано ' + count)
+})
+rest.addResponse('set-files-connectall', async view => {
+	await view.gets(['admin'])
+	const { visitor, db, config, upload } = await view.gets(['visitor', 'db', 'config', 'upload'])
+
+	
+	const res = await upload.connectAllFiles()		
+	
+	Object.assign(view.ans, res)
+	return view.ret()
 })

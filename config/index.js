@@ -11,7 +11,7 @@ const config = (name = 'config', pub = false) => {
 	store[name] ??= new Promise(async resolve => {	
 		const file = '.' + name + '.json'
 		const conf = await searchJSON('/-' + name + '/' + file).catch(e => ({}))
-		for (const src of [file, 'auto/' + file, './data/' + file]) {
+		for (const src of [file, 'auto/' + file, 'data/' + file]) {
 			let data = await readJSON(src).catch(e => false)
 			if (data) Object.assign(conf, data)
 		}

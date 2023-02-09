@@ -94,7 +94,7 @@ const addSizeTime = (visitor, dir, files) => {
 }
 rest.addResponse('get-prices', async view => {
 	await view.get('admin')
-	const { visitor, db, config, options } = await view.gets(['visitor', 'db','config','options'])
+	const { base, visitor, db, config, options } = await view.gets(['base', 'visitor', 'db','config','options'])
 	const dir = config['prices']
 	const files = await Files.readdirext(visitor, dir, ['xlsx','js']) //{ name, ext, file }
 	addSizeTime(visitor, dir, files)
@@ -109,9 +109,9 @@ rest.addResponse('get-prices', async view => {
 			loaded,
 			duration
 		FROM showcase_prices
-	`)
+	`)	
 	files.forEach(of => {
-		const index = rows.findIndex(row => row.price_nick == nicked(of.name))
+		const index = rows.findIndex(row => row.price_nick == base.onicked(of.name))
 		if (!~index) return
 		const row = rows.splice(index, 1)[0]
 		of.row = row
@@ -131,7 +131,7 @@ rest.addResponse('get-prices', async view => {
 
 rest.addResponse('get-tables', async view => {
 	await view.get('admin')
-	const { visitor, db, config, options } = await view.gets(['visitor', 'db', 'config','options'])
+	const { visitor, db, config, options, base } = await view.gets(['visitor', 'db', 'config','options', 'base'])
 	const dir = config['tables']
 	const files = await Files.readdirext(visitor, dir, ['xlsx','js']) //{ name, ext, file }
 	addSizeTime(visitor, dir, files)
@@ -148,19 +148,20 @@ rest.addResponse('get-tables', async view => {
 	`)
 
 	files.forEach(of => {
-		const index = rows.findIndex(row => row.table_nick == nicked(of.name))
+		const index = rows.findIndex(row => row.table_nick == base.onicked(of.name))
 		if (!~index) return
 		const row = rows.splice(index, 1)[0]
 		of.row = row
 		if (row.loaded && row.loadtime > of.mtime) of.ready = true
 	})
+
 	rows.forEach(row => {
-		files.push({name:row.table_title, row})
+		files.push({name:row.table_title, row, num: 0})
 	})
 	files.forEach(of => {
 		of.options = options.tables[of.name]
 	})
-	
+	//files.sort((b, a) => a.num - b.num)
 	view.ans.files = files
 	view.ans.rows = rows
 	return view.ret()
@@ -197,11 +198,21 @@ rest.addResponse('get-model', async view => {
 	
 	const props = await db.all(`
 		SELECT 
-			ip.model_id, ip.item_num, ip.number, ip.text, v.value_title, p.prop_title, p.type, 
+			ip.model_id, 
+			f.src, 
+			bo.bond_title, 
+			ip.item_num, 
+			ip.number, 
+			ip.text, 
+			v.value_title, 
+			p.prop_title, 
+			p.type, 
 			pr.price_title
 		FROM showcase_iprops ip
 			LEFT JOIN showcase_prices pr on ip.price_id = pr.price_id
 			LEFT JOIN showcase_values v on v.value_id = ip.value_id
+			LEFT JOIN showcase_files f on f.file_id = ip.file_id
+			LEFT JOIN showcase_bonds bo on bo.bond_id = ip.bond_id
 			LEFT JOIN showcase_props p on p.prop_id = ip.prop_id
 		WHERE ip.model_id = :model_id
 	`, {model_id: id})
@@ -212,7 +223,7 @@ rest.addResponse('get-model', async view => {
 			prop.number = Number(prop.number)
 		}
 		model.items[prop.item_num].more[prop.prop_title] ??= {value: [], ...prop}
-		model.items[prop.item_num].more[prop.prop_title].value.push(prop.text ?? prop.value_title ?? prop.number)
+		model.items[prop.item_num].more[prop.prop_title].value.push(prop.text ?? prop.value_title ?? prop.number ?? prop.src ?? prop.bond_title)
 	}
 	model.items = Object.values(model.items).reverse()
 	model.items.forEach(item => {
@@ -336,41 +347,42 @@ rest.addResponse('get-files', async view => {
 	//files по брендам папки [файлы] с файлами по моделям и свободной иерархией
 	//videos по брендам папки [видео] с файлами по моделям и свободной иерархией
 	//slides по брендам папки [картинки] с файлами по моделям и свободной иерархией
+	
 	const parts = {}
 	let part
 	let count = 0
-	part = 'groupicons'
-	parts[part] = await Files.readdirDeep(visitor, config[part])
-	await Files.filterDeep(parts[part], async (dirinfo, fileinfo, level) => {
-		if (!~Files.exts['images'].indexOf(fileinfo.ext)) return ++count
-		const src = dirinfo.dir+fileinfo.file
-		const is = await db.col('SELECT 1 FROM showcase_groups where icon = :src LIMIT 1', {src})
-		if (is) return false
-		return ++count
-	})
+	// part = 'groupicons'
+	// parts[part] = await Files.readdirDeep(visitor, config[part])
+	// await Files.filterDeep(parts[part], async (dirinfo, fileinfo, level) => {
+	// 	if (!~Files.exts['images'].indexOf(fileinfo.ext)) return ++count
+	// 	const src = dirinfo.dir+fileinfo.file
+	// 	const is = await db.col('SELECT 1 FROM showcase_groups where icon = :src LIMIT 1', {src})
+	// 	if (is) return false
+	// 	return ++count
+	// })
 
-	part = 'brandlogos'
-	parts[part] = await Files.readdirDeep(visitor, config[part])
-	await Files.filterDeep(parts[part], async (dirinfo, fileinfo, level) => {
-		if (!~Files.exts['images'].indexOf(fileinfo.ext)) return ++count
-		const src = dirinfo.dir+fileinfo.file
-		const is = await db.col('SELECT 1 FROM showcase_brands where logo = :src LIMIT 1', {src})
-		if (is) return false
-		return ++count
-	})
-	const run = async dirinfo => {
-		for (const subinfo of dirinfo.dirs) await run(subinfo)
-		dirinfo.files = await filter(dirinfo.files, async (fileinfo) => {
-			const src = dirinfo.dir + fileinfo.file
-			const is = await db.col('SELECT 1 FROM showcase_iprops where text = :src LIMIT 1', {src})
-			if (is) return false
-			return ++count
-		})
-	}
-	for (const part of ['folders', ...Object.keys(Files.exts)]) {
-		parts[part] = await Files.readdirDeep(visitor, config[part])
-		await run(parts[part])
-	}
+	// part = 'brandlogos'
+	// parts[part] = await Files.readdirDeep(visitor, config[part])
+	// await Files.filterDeep(parts[part], async (dirinfo, fileinfo, level) => {
+	// 	if (!~Files.exts['images'].indexOf(fileinfo.ext)) return ++count
+	// 	const src = dirinfo.dir+fileinfo.file
+	// 	const is = await db.col('SELECT 1 FROM showcase_brands where logo = :src LIMIT 1', {src})
+	// 	if (is) return false
+	// 	return ++count
+	// })
+	// const run = async dirinfo => {
+	// 	for (const subinfo of dirinfo.dirs) await run(subinfo)
+	// 	dirinfo.files = await filter(dirinfo.files, async (fileinfo) => {
+	// 		const src = dirinfo.dir + fileinfo.file
+	// 		const is = await db.col('SELECT 1 FROM showcase_iprops where text = :src LIMIT 1', {src})
+	// 		if (is) return false
+	// 		return ++count
+	// 	})
+	// }
+	// for (const part of ['folders', ...Object.keys(Files.exts)]) {
+	// 	parts[part] = await Files.readdirDeep(visitor, config[part])
+	// 	await run(parts[part])
+	// }
 
 	view.ans.count = count
 	view.ans.parts = parts
@@ -413,26 +425,40 @@ rest.addResponse('get-groups', async view => {
 			g.group_nick,
 			g.group_id,
 			g.parent_id,
-			count(m.group_id) as models
+			count(m.group_id) as direct
 		FROM showcase_groups g
 		LEFT JOIN showcase_models m on m.group_id = g.group_id
 		GROUP BY g.group_id
-		ORDER by ordain
+		ORDER by g.ordain
 	`)
 	const objgroups = {}
 	for (const group of groups) {
 		objgroups[group.group_id] = group
+		group.inside = group.direct
 	}
-	let root = {childs:[], models:0}
+	let root = {childs:[], direct:0}
 	for (const group of groups) {
 		if (!group.parent_id) {
 			root = group
-			continue
+			break
 		}
+	}
+
+	for (const group of groups) {
+		if (!group.parent_id) continue
 		objgroups[group.parent_id].childs ??= []
 		objgroups[group.parent_id].childs.push(group)
-		objgroups[group.parent_id].models += group.models
-	}		
+	}
+
+	for (let group of groups) {
+		const direct = group.direct
+		while(group.parent_id) {
+			group = objgroups[group.parent_id]
+			group.inside += direct
+		}
+		
+	}
+
 	view.ans.count = groups.length
 	view.ans.root = root
 	return view.ret()

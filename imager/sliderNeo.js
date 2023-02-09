@@ -78,7 +78,7 @@ export default div => {
 	for (const right of rights) right.addEventListener('click', next)
 
 	const timer = setInterval(go, 5000)
-	setTimeout(go, 1000)
+	setTimeout(go, 5000)
 
 	let startx, starty, diffx, diffy, drag, lastfocus, scrollLeft, scrollTop;
 

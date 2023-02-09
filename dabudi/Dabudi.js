@@ -35,50 +35,50 @@ export const Dabudi = {
 		const rows_table = rows_source.slice(index)
 		return {descr, rows_table}
 	},
-	getColIndexOrRename: ({head_titles, head_nicks}, name, oldname) => {
+	recColIndexOrRename: ({head_titles, head_nicks}, name, oldname, base) => {
 		let index = head_titles.indexOf(name)
 		if (~index) return index
 		index = head_titles.indexOf(oldname)
 		if (~index) {
-			head_titles[index] = name
-			head_nicks[index] = nicked(name)
+			head_titles[index] = name.slice(-base.LONG).trim()
+			head_nicks[index] = base.onicked(name)
 			return index
 		}
 		if (!~index) {
 			index = head_titles.length
-			head_titles[index] = name
-			head_nicks[index] = nicked(name)
+			head_titles[index] = name.slice(-base.LONG).trim()
+			head_nicks[index] = base.onicked(name)
 		}
 		return index
 	},
-	getColIndex: ({head_titles, head_nicks}, name) => {
+	recColIndex: ({head_titles, head_nicks}, name, base) => {
 		let index = head_titles.indexOf(name)
 		if (!~index) {
 			index = head_titles.length
-			head_titles[index] = name
-			head_nicks[index] = nicked(name)
+			head_titles[index] = name.slice(-base.LONG).trim()
+			head_nicks[index] = base.onicked(name)
 		}
 		return index
 	},
-	splitHead: (rows_table) => {
+	splitHead: (rows_table, base) => {
 		if (!rows_table.length) return {heads: {head_nicks:[], head_titles:[]}, rows_body:[]}
 		const rows_body = rows_table.slice(1)
 		const head_titles = rows_table[0]
 		
 		for (let i = head_titles.length - 1; i >= 0; i--) {
 			const col = String(head_titles[i] || '')
-			if (col) head_titles[i] = col.trim()
+			if (col) head_titles[i] = col.trim().slice(-base.LONG).trim()
 			if (col && col.at(0) != '.') continue
 			head_titles.splice(i, 1)
 			rows_body.forEach(row => row.splice(i, 1))
 		}
 		
-		const head_nicks = head_titles.map(h => nicked(h))
+		const head_nicks = head_titles.map(h => base.onicked(h))
 		return {heads: {head_nicks, head_titles}, rows_body}
 	},
-	splitGroups: (rows_body, heads, root_title, index_group, groups) => {
-		const root_nick = nicked(root_title) 
-		let group_title = root_title.split('#')[0]
+	splitGroups: (rows_body, heads, root_title, index_group, groups, base) => {
+		const root_nick = base.onicked(root_title)
+		let group_title = root_title.split('#')[0].slice(-base.LONG).trim()
 		let group_nick = root_nick
 		let group_orig = root_title
 		if (!groups) {
@@ -109,9 +109,9 @@ export const Dabudi = {
 
 			wasitems = false
 			if (parent_nick && parent_nick != root_nick) {
-				group_nick = nicked(groups[parent_nick].group_orig) + '-' + nicked(group_title)	
+				group_nick = base.onicked(base.onicked(groups[parent_nick].group_orig) + '-' + base.onicked(group_title))
 			} else {
-				group_nick = nicked(group_title)	
+				group_nick = base.onicked(group_title)
 			}
 
 			
@@ -119,7 +119,7 @@ export const Dabudi = {
 			groups[group_nick] = {
 				group_nick,
 				group_orig,
-				group_title:group_title.split('#')[0], 
+				group_title:group_title.split('#')[0].slice(-base.LONG).trim(), 
 				parent_nick
 			}
 		})

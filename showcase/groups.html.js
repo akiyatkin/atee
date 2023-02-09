@@ -61,6 +61,6 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 const showgroup = (group) => `
 	<div class="${group.group_nick}" style="transition: 0.3s;">
 		<span style="cursor: move">&blk14;</span>
-		<span title="${group.group_nick}">${group.group_title} <small>${group.models}</small></span>
+		<span title="${group.group_nick}">${group.group_title} <small>${group.inside}</small></span>
 	</div>
 `

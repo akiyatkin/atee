@@ -26,7 +26,8 @@ export const PANEL = (data, env, { layer:{div} } = env) => `
 	<div style="display: flex; gap:0.5rem; flex-wrap:wrap;"> 
 		<button name="set-tables-loadall" class="${data.ready?.tables ? 'ready' : ''}">Внести новые таблицы</button>
 		<button name="set-prices-loadall" class="${data.ready?.prices ? 'ready' : ''}">Внести новые прайсы</button>
-		<button name="set-files-loadall" class="${data.ready?.files ? 'ready' : ''}">Связать всё с файлами</button>
+		<button name="set-files-indexall" class="${data.ready?.files ? 'ready' : ''}">Индексировать файлы на диске</button>
+		<button name="set-files-connectall" class="${data.ready?.files ? 'ready' : ''}">Связать индекс с позициями</button>
 		<!-- при загрузке файлов на сервер, нет никаких событий. Мы никогда не знает есть новые файлы или нет -->
 	</div>
 	<script>

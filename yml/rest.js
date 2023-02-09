@@ -5,8 +5,9 @@ import config from '/-config'
 
 import db_vars from "/-db/vars.js"
 import rest_funcs from "/-rest/funcs.js"
+import rest_catalog from '/-catalog/rest.vars.js'
 
-const rest = new Rest(db_vars, rest_funcs)
+const rest = new Rest(db_vars, rest_funcs, rest_catalog)
 
 rest.addArgument('feed')
 
@@ -24,9 +25,10 @@ rest.addResponse('get-feeds', async view => {
 	view.ans.data = Object.keys(conf.feeds)
 	return view.ret()
 })
+
 rest.addResponse('get-yandex', async view => {
-	const { feed, db, visitor } = await view.gets(['db', 'visitor', 'feed'])
-	const poss = await yml.data(db, visitor, feed)
+	const { feed, db, visitor } = await view.gets(['db', 'visitor', 'feed', 'catalog'])
+	const poss = await yml.data(catalog, feed)
 	const conf = await config('yml')
 	const mail = await config('mail')
 	const host = visitor.client.host

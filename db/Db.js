@@ -91,13 +91,14 @@ export class Db {
 	}
 	async alltoint(name, sql, values, ints) {
 		return this.all(sql, values).then(rows => {
-			return rows.reduce((ak, r) => {
+			const ak = {}
+			for (const row of rows) {
 				ints.forEach(n => {
-					r[n] = Number(r[n])	|| 0
+					row[n] = Number(row[n]) || 0
 				})
-				ak[r[name]] = r
-				return ak
-			}, {})
+				ak[row[name]] = row
+			}
+			return ak
 		})
 	}
 

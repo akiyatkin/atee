@@ -5,7 +5,7 @@ import Catalog from "/-catalog/Catalog.js"
 
 await fs.mkdir('cache/yml/', { recursive: true }).catch(e => null)
 
-const CONF = await config('yml')
+
 
 const yml = {
 	groups: async () => {
@@ -17,19 +17,20 @@ const yml = {
 		}
 		return groups
 	},
-	data: (db, visitor, feed) => cproc(yml, '', async () => {
-		const md = CONF.feeds[feed]
+	data: (catalog, feed) => cproc(yml, '', async () => {
+		const config = await config('yml')
+		const md = config.feeds[feed]
 		if (!md) return []
-		const group = await Catalog.getMainGroup(md)
-		if (!group) return view.err('Нет данных')
-		const {from, where} = await Catalog.getmdwhere(db, visitor, md)
-		const moditem_ids = await db.all(`
+		const group = await catalog.getMainGroup(md)
+		if (!group) return []
+		const {from, where} = await catalog.getmdwhere(md)
+		const moditem_ids = await catalog.base.db.all(`
 			SELECT m.model_id, GROUP_CONCAT(distinct i.item_num separator ',') as item_nums 
 			FROM ${from.join(', ')}
 			WHERE ${where.join(' and ')}
 			GROUP BY m.model_id 
 		`)
-		const list = await Catalog.getModelsByItems(db, moditem_ids)
+		const list = await catalog.getModelsByItems(moditem_ids)
 		return list
 	})
 }

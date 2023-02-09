@@ -6,6 +6,21 @@ export const set_files_loadall = (ans) => `
 		Дубликаты файлов: <br>${ans.doublepath?.join(', ')}
 	`)
 
+export const set_files_connectall = (ans) => `
+	<h1>Файлы привязаны</h1>
+	`+ (checherror(ans) || `
+		Связано: ${ans.count} ${words(ans.count, 'файл', 'файла', 'файлов')}<br>
+		Бесхозных: ${ans.free} ${words(ans.free, 'файл', 'файла', 'файлов')}<br>
+	`)
+
+export const set_files_indexall = (ans) => `
+	<h1>Файлов в индексе</h1>
+	`+ (checherror(ans) || `
+		Всего: ${ans.count} ${words(ans.count, 'файл', 'файла', 'файлов')}<br>
+		Дубликатов: ${ans.doublepath.length}<br>${ans.doublepath?.join(',<br>')}
+	`)
+
+
 export const set_tables_clearall = (ans) => `
 	<h1>Данные очищены</h1>
 	${msg(ans)}
@@ -72,23 +87,40 @@ export const set_prices_load = (ans, env) => `
 			Внесено: ${ans.row.quantity} ${words(ans.row.quantity, 'строка', 'строки', 'строк')}
 		</p>
 		${run(ans.row.omissions, excellist).join('')}
+		<pre>${JSON.stringify(ans.row.conf, null, "\t")}</pre>
 	`)
 const excellist = (data, key) => `
 	<h3>Лист: ${key}</h3>
-	<h4>Строки без связи</h4>
-	<table>
-		<tr><th>${data.head_titles.join('</th><th>')}</th></tr>
-		${data.notconnected.map(table).join('')}
-	</table>
-	<h4>Связь есть, а совпадений нет</h4>
+	<p>Успешно загружено строк: ${data.loadedrow}</p>
+	${data.keyrepeated.length ? showRepeat(data, key) : ''}
+	${data.notconnected.length ? showNotconected(data, key) : ''}
+	${data.notfinded.length ? showNotfinded(data, key) : ''}
+	${data.emptyprops.length ? showEmptyprops(data, key) : ''}
+`
+const showEmptyprops = (data, key) => `
+	<h4>Ключи связи есть, совпадения есть, а менять нечего</h4>
+	${run(data.emptyprops,(rows, name) => showprops(rows,name,data)).join('')}
+`
+const showNotfinded = (data, key) => `
+	<h4>Ключи связи есть, а совпадений нет</h4>
 	<table>
 		<tr><th>${data.head_titles.join('</th><th>')}</th></tr>
 		${data.notfinded.map(table).join('')}
 	</table>
-	<h4>Связь есть, совпадения есть, а менять нечего</h4>
-	
-	${run(data.emptyprops,(rows, name) => showprops(rows,name,data)).join('')}
-	
+`
+const showNotconected = (data, key) => `
+	<h4>Строки без ключа связи</h4>
+	<table>
+		<tr><th>${data.head_titles.join('</th><th>')}</th></tr>
+		${data.notconnected.map(table).join('')}
+	</table>
+`
+const showRepeat = (data, key) => `
+	<h4>Повторы ключей, применяется первое совпадение</h4>
+	<table>
+		<tr><th>${data.head_titles.join('</th><th>')}</th></tr>
+		${data.keyrepeated.map(table).join('')}
+	</table>
 `
 const showprops = (rows, name, data) => `
 	<h5>${name}</h5>
@@ -104,4 +136,11 @@ export const set_tables_load = (ans) => `
 		<p>
 			Внесено: ${ans.row.quantity} ${words(ans.row.quantity, 'строка', 'строки', 'строк')}
 		</p>
+		${ans.msgs.length ? showmsgs(ans) : ''}
+		
 	`)
+const showmsgs = ans => `
+	<ul>
+		<li>${ans.msgs.join('</li><li>')}</li>
+	</ul>
+`

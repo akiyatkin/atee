@@ -10,7 +10,7 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 	<table style="border-spacing: 0 0.5rem">
 		${data.files.map(itemrow).join('')}
 	</table>
-	<script type="module" async>
+	<script type="module">
 		import { action } from "/-showcase/action.js"
 		const div = document.getElementById('${env.layer.div}')
 		const tag = (tag, el = div) => el.getElementsByTagName(tag)

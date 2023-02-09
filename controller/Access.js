@@ -3,9 +3,10 @@ import cproc from '/-cproc'
 import config from '/-config'
 
 import times from '/-controller/times.js'
+import Relate from '/-controller/Relate.js'
 
 const CONF = await config('controller')
-const STORE = {}
+
 export const Access = {
 	isAdmin: (cookie) => {
 		try {
@@ -19,27 +20,30 @@ export const Access = {
 			return false
 		}
 	},
-	getStore: (name, args) => {
-		const hash = JSON.stringify(args)
-		if (!STORE[name]) STORE[name] = {}
-		if (!STORE[name][hash]) STORE[name][hash] = {}
-		return STORE[name][hash]
-	},
 	setAccessTime: () => {
 		times.ACCESS_TIME = Date.now()
+		Access.mapate = new Map()
 		console.log('new access time', Date())
-		for (const i in STORE) delete STORE[i]
 	},
 	getAccessTime: () => times.ACCESS_TIME,
 	getUpdateTime: () => times.UPDATE_TIME,
 
-	map: new Map(), //Кэшировать стоит то что может повториться в рамках сборки контроллера иначе бессмыслено
+	mapate: new Map(),
 	relate: (obj, fn) => {
-		if (Access.map.has(obj)) return Access.map.get(obj)
+		if (Access.mapate.has(obj)) return Access.mapate.get(obj)
 		const res = new Relate()
-		Access.map.set(obj, res)
+		Access.mapate.set(obj, res)
 		return res
 	},
+	mapup: new Map(),
+	relup: (obj, fn) => {
+		if (Access.mapup.has(obj)) return Access.mapup.get(obj)
+		const res = new Relate()
+		Access.mapup.set(obj, res)
+		return res
+	},
+
+	
 	cache: fn => { //depricated (relate ^)
 		fn.store = {}
 		return (...args) => {
@@ -54,7 +58,7 @@ export const Access = {
 			return store.result
 		}
 	},
-	mcache: (src, fn, check = false) => {
+	mcache: (src, fn, check = false) => { //update cache, проверяющий дату изменений если с последнего был access
 		fn.store = {}
 		return (...args) => {
 			args.push(src)
@@ -81,26 +85,5 @@ export const Access = {
 		}
 	}
 }
-class Relate {
-	store = {}
-	once (name, fn) {
-		return cproc(Relate, name, () => { //Защита от параллельного обращения к файлам, параллельные запросы будут ждать
-			if (this.store[name]) return this.store[name].result
-			this.store[name] = {}
-			this.store[name].result = fn()
-			return this.store[name].result
-		})
-	}
-	get (name) {
-		return this.store[name]?.result
-	}
-	set (name, val) {
-		if (!this.store[name]) this.store[name] = {}
-		this.store[name].result = val
-	} 
-	clear (name) {
-		if (name) delete this.store[name]	
-		else this.store = {}
-	} 
-}
+
 export default Access

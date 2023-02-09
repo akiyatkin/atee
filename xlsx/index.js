@@ -18,6 +18,11 @@ export const xlsx = {
 		if (mtimesrc && mtimesrc <= mtimecache) return cachesrc
 		console.log('parse', src)
 		const sheets = nxlsx.parse(src)
+		for (const i in sheets) {
+			sheets[i].data = sheets[i].data.map(row => {
+				return row.map(i => typeof(i) == 'string' ? i.trim() : String(i))
+			})
+		}
 		await fs.writeFile(cachesrc, JSON.stringify(sheets))
 		return cachesrc
 	})),

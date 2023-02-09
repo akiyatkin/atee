@@ -64,7 +64,10 @@ CONT_DIRECTS = Object.values(CONT_DIRECTS)
 CONT_DIRECTS.sort(fnsort)
 
 const webresolve = async search => {
-	 return await import.meta.resolve(search, pathToFileURL('./').href).then(src => fileURLToPath(src)).catch(() => false)
+	//return await import.meta.resolve(search, pathToFileURL('./').href).then(src => fileURLToPath(src)).catch(() => false)
+	//В адресах в layers.json относительные пути не поддерживаются
+	//console.log(search)
+	return await import.meta.resolve(search, '').then(src => fileURLToPath(src)).catch(() => false)
 }
 
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)

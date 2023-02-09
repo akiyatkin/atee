@@ -1,7 +1,9 @@
 import Dabudi from '/-dabudi/Dabudi.js'
+import Base from '/-showcase/Base.js'
 import nicked from '/-nicked'
 import Access from '/-controller/Access.js'
 import Rest from "/-rest"
+import funcs from "/-rest/funcs.js"
 
 import config from '/-config'
 import xlsx from '/-xlsx'
@@ -9,16 +11,16 @@ import xlsx from '/-xlsx'
 const CONFIG = await config('params')
 const lists = await xlsx.read(Access, CONFIG.src)
 
-const rest = new Rest()
+const rest = new Rest(funcs)
 
 rest.addArgument('name')
 rest.addResponse('get-menu', async view => {
-	const { name } = await view.gets(['name'])
+	const { name, visitor } = await view.gets(['name', 'visitor'])
 	const list = lists.find(d => d.name == name)
 	if (!list) return view.err('Лист не найден')
-	
+	const base = new Base({ visitor })
 	const {descr, rows_table} = Dabudi.splitDescr(list.data)
-	const {heads, rows_body} = Dabudi.splitHead(rows_table)
+	const {heads, rows_body} = Dabudi.splitHead(rows_table, base)
 	const titles = heads.head_titles
 	const rows = rows_body.filter(row => row.filter(cel => cel).length)
 	const sheet = { descr, heads, rows}

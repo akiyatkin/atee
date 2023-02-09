@@ -1,0 +1,14 @@
+{
+    "to": "",
+    "support":"",
+    "from": "", 
+    "nodemailer":{
+		"host": "smtp.yandex.ru",
+	    "port": 465,
+		"secure": true,
+		"auth": {
+		   "user": "",
+		   "pass": ""
+		}
+	}
+}

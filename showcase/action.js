@@ -21,7 +21,7 @@ export const action = (btn, callback, name = '') => {
 		
 		const src = '/-showcase/'+btn.name + (name ? '?name='+name : '')
 		const ans = await fetch(src).then(res => res.json()).catch(e => {return {name, msg:'500 на сервере'}})
-		const { Dialog } = await import('/-dialog/Dialog.js')
+		const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 		const sub = btn.name.replaceAll('-','_')
 		const tplobj = await import('/-showcase/popups.html.js')
 		if (tplobj[sub]) {

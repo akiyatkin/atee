@@ -3,11 +3,7 @@ import nicked from "/-nicked"
 import xlsx from "/-xlsx"
 import Files from "./Files.js"
 
-const onicked = str => {
-	if (onicked[str]) return onicked[str]
-	onicked[str] = nicked(str)
-	return onicked[str]
-}
+
 export const Excel = {
 	read: async (visitor, src) => {
 		const info = Files.nameInfo(src)
@@ -21,7 +17,7 @@ export const Excel = {
 		}
 		return []
 	},
-	loadPrice: async (visitor, src, {start = 0, starts = {}, ignore = []}) => {
+	loadPrice: async (visitor, src, {start = 0, starts = {}, ignore = []}, base) => {
 		const listsheets = await Excel.read(visitor, src)
 		const sheets = []
 		for (const sheet of listsheets) {
@@ -30,20 +26,21 @@ export const Excel = {
 			let rows_source = sheet.data
 			rows_source = rows_source.slice(((starts[sheet.name] ?? start) || 1) - 1)
 			const {descr, rows_table} = Dabudi.splitDescr(rows_source)
-			const {heads, rows_body} = Dabudi.splitHead(rows_table)
+			const {heads, rows_body} = Dabudi.splitHead(rows_table, base)
 			const rows_items = rows_body.filter(row => row.filter(cel => cel).length)
 			sheets.push({ sheet: sheet.name, descr, heads, rows:rows_items})
 		}
 		return { sheets }
 	},
-	loadTable: async (visitor, src, brand) => {
+	loadTable: async (visitor, src, brand, base) => {
 		const listsheets = await Excel.read(visitor, src)
 		const models = {}
-		const group_nick = nicked('Каталог')
-		const groups = {}
 		const root = 'Каталог'
-		groups[group_nick] = {
-			group_nick: nicked(root), 
+		const root_nick = base.onicked(root)
+		const groups = {}
+		
+		groups[root_nick] = {
+			group_nick: root_nick,
 			group_orig: root,
 			group_title: root,
 			parent_nick: false
@@ -54,22 +51,22 @@ export const Excel = {
 			if (sheet.name[0] == '.') continue
 			const rows_source = sheet.data
 			const {descr, rows_table} = Dabudi.splitDescr(rows_source)
-			const {heads, rows_body} = Dabudi.splitHead(rows_table)
+			const {heads, rows_body} = Dabudi.splitHead(rows_table, base)
 			
 
 			const indexes = {}
-			indexes.brand_title = Dabudi.getColIndexOrRename(heads, 'Бренд','Производитель')
-			indexes.brand_nick = Dabudi.getColIndex(heads, 'brand_nick')
-			indexes.model_title = Dabudi.getColIndexOrRename(heads, 'Модель','Артикул')
-			indexes.model_nick = Dabudi.getColIndex(heads, 'model_nick')
-			indexes.group_nick = Dabudi.getColIndex(heads, 'group_nick')
-			indexes.sheet_row = Dabudi.getColIndex(heads, 'sheet_row')
-			indexes.sheet_title = Dabudi.getColIndex(heads, 'sheet_title') //Обязательно последний
+			indexes.brand_title = Dabudi.recColIndexOrRename(heads, 'Бренд','Производитель', base)
+			indexes.brand_nick = Dabudi.recColIndex(heads, 'brand_nick', base)
+			indexes.model_title = Dabudi.recColIndexOrRename(heads, 'Модель','Артикул', base)
+			indexes.model_nick = Dabudi.recColIndex(heads, 'model_nick', base)
+			indexes.group_nick = Dabudi.recColIndex(heads, 'group_nick', base)
+			indexes.sheet_row = Dabudi.recColIndex(heads, 'sheet_row', base)
+			indexes.sheet_title = Dabudi.recColIndex(heads, 'sheet_title', base) //Обязательно последний
 
 			sheets[sheet.name] = { descr, heads, indexes }
 
 			
-			let {rows_items} = Dabudi.splitGroups(rows_body, heads, root, indexes.group_nick, groups)
+			let {rows_items} = Dabudi.splitGroups(rows_body, heads, root, indexes.group_nick, groups, base)
 			//if (sheet == 'Светодиодные ленты') console.log(1, sheet, groups, indexes.group_nick, root, heads)
 			const {head_titles, head_nicks} = heads
 
@@ -83,10 +80,12 @@ export const Excel = {
 			
 			rows_items.forEach((row, i) => {
 				row[indexes.brand_title] = row[indexes.brand_title] || brand
-				row[indexes.brand_nick] = nicked(row[indexes.brand_title])
-				row[indexes.model_nick] = onicked(row[indexes.model_title])
+				row[indexes.brand_nick] = base.onicked(row[indexes.brand_title])
+				row[indexes.model_nick] = base.onicked(row[indexes.model_title])
+				row[indexes.brand_title] = row[indexes.brand_title].slice(-base.LONG).trim()
+				row[indexes.model_title] = row[indexes.model_title].slice(-base.LONG).trim()
 				row[indexes.sheet_row] = i + 1
-				row[indexes.sheet_title] = sheet.name
+				row[indexes.sheet_title] = sheet.name.slice(-base.LONG).trim()
 				brands[row[indexes.brand_nick]] = { brand_title:row[indexes.brand_title], brand_nick:row[indexes.brand_nick] }
 			})
 			rows_items.forEach(row => {

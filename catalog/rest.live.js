@@ -1,10 +1,9 @@
 import nicked from "/-nicked"
 import Rest from "/-rest"
 import unique from "/-nicked/unique.js"
-import Catalog from "/-catalog/Catalog.js"
-
+import rest_catalog from '/-catalog/rest.vars.js'
 //const wait = delay => new Promise(resolve => setTimeout(resolve, delay))
-const rest = new Rest()
+const rest = new Rest(rest_catalog)
 export default rest
 rest.addArgument('hash', (view, hash) => {
 	hash = nicked(hash)
@@ -16,24 +15,11 @@ rest.addVariable('hashs', async (view) => {
 	return hashs
 })
 rest.addResponse('get-livemodels', async (view) => {
-	const { hash, db, visitor, partner } = await view.gets(['db','hash', 'visitor', 'partner'])
-	//await wait(500)
-	// if (!hashs.length) {
-	// 	const {gcount, count, list, groups} = await Catalog.getAllCount()
-	// 	view.ans.gcount = gcount
-	// 	view.ans.count = count
-	// 	view.ans.list = list
-	// 	view.ans.groups = groups
-	// 	return view.ret()
-	// }
+	const { hash, db, visitor, partner, options, catalog } = await view.gets(['db','hash', 'visitor', 'partner', 'options','catalog'])
+	
 	const md = {search: hash}
 
-	// const parent = group.parent_id ? tree[group.parent_id] : group
-	// const nmd = { ...md } //, title: {}
-	// nmd.group = { ...md.group }
-	// nmd.group[parent.group_nick] = 1
-	// nmd.m = Catalog.makemark(nmd).join(':')
-	const group_ids = await Catalog.getGroupIds(db, visitor, md, partner)
+	const group_ids = await catalog.getGroupIds(md, partner)
 	
 
 	
@@ -45,12 +31,11 @@ rest.addResponse('get-livemodels', async (view) => {
 		return view.ret()
 	}
 
-	const groupnicks = await Catalog.getGroups()
-	const options = await Catalog.getOptions()
+	const groupnicks = await catalog.getGroups()
 	const root = groupnicks[options.root_nick]
 
 
-	const tree = await Catalog.getTree()		
+	const tree = await catalog.getTree()		
 
 	let rootpath = group_ids[0] ? [...tree[group_ids[0]].path, group_ids[0]] : []		
 
@@ -78,7 +63,7 @@ rest.addResponse('get-livemodels', async (view) => {
 		return g
 	})
 
-	const {from, where} = await Catalog.getmdwhere(db, visitor, md, partner)
+	const {from, where} = await catalog.getmdwhere(md, partner)
 
 	const list = []
 	const models = await db.all(`
@@ -94,10 +79,10 @@ rest.addResponse('get-livemodels', async (view) => {
 		WHERE ${where.join(' and ')}
 	`)
 
-	const prop = await Catalog.getPropByTitle('Наименование')
-	const cost = await Catalog.getPropByTitle('Цена')
+	const prop = await catalog.base.getPropByTitle('Наименование')
+	const cost = await catalog.base.getPropByTitle('Цена')
 	for (const model of models) {
-		const brand = await Catalog.getBrandById(model.brand_id)
+		const brand = await catalog.getBrandById(model.brand_id)
 		model.brand_nick = brand.brand_nick
 		model.brand_title = brand.brand_title
 		delete model.brand_id

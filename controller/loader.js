@@ -25,16 +25,12 @@ const isExt = (str) => {
     const ext = ~i ? str.slice(i + 1) : ''
     return ext && ext.length < 5 
 }
-const checkAccessMark = (src) => {
-    //data from root
-    //data
-    //./data
-}
+
 const checkfromroot = async (path, context, defaultResolve) => {
-    if (isExt(path) && path.indexOf('./data/') === 0) {
-        const times = await import('/-controller/times.js').then(r => r.default)
-        path = path + (~path.indexOf('?') ? '&' : '?') + 't=' + times.ACCESS_TIME
-    }
+    // if (isExt(path) && path.indexOf('./data/') === 0) {
+    //     const times = await import('/-controller/times.js').then(r => r.default)
+    //     path = path + (~path.indexOf('?') ? '&' : '?') + 't=' + times.ACCESS_TIME
+    // }
     const res = defaultResolve(path, {
         ...context,
         parentURL: pathToFileURL('./')
@@ -67,7 +63,10 @@ export const resolve = async (specifier, context, defaultResolve) => {
         //Но это решение НЕ захватывает важные имена, например catalog contacts так как применятся только для файлов с расширением (точкой)
         //console.log('resolve', specifier)
         return defaultResolve(specifier, context, defaultResolve) //Проверка относительного адреса
-    })()
+    })().catch(e => {
+        if (isExt(specifier)) console.log('import resolver false', specifier)
+        throw e
+    })
     res.shortCircuit = true
     resolve.cache[key] = res
     return res

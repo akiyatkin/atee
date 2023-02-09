@@ -8,7 +8,7 @@ import Upload from "/-showcase/Upload.js"
 import vars_db from '/-db/vars.js'
 import funcs from '/-rest/funcs.js'
 
-const readJSON = async src => JSON.parse(await fs.readFile(src))
+
 
 const rest = new Rest(vars_db, funcs)
 export default rest
@@ -19,26 +19,23 @@ rest.addHandler('admin', async (view) => {
 	return view.err('Access denied', 403)
 })
 
+rest.addVariable('base', async (view) => {
+	const Base = await import('/-showcase/Base.js').then(r => r.default)
+	let { db, visitor } = await view.gets(['db','visitor'])
+	return new Base({db, visitor}, true)
+})
+
 rest.addVariable('config', async view => {
 	return config('showcase')
 })
+
 rest.addVariable('options', async view => {
-	const conf = await config('showcase')
-	const options = await readJSON(conf.options)
-
-	options.numbers ??= []
-	options.texts ??= []
-
-	options.tables ??= {}
-	options.prices ??= {}
-	
-	options.number_nicks = options.numbers.map(prop => nicked(prop))
-	options.text_nicks = options.texts.map(prop => nicked(prop))
-	return options
+	let { base } = await view.gets(['base'])
+	return base.getOptions('fs reloading') //Админка
 })
 
 rest.addVariable('upload', async view => {	
-	const opt = await view.gets(['db','options', 'visitor'])
+	const opt = await view.gets(['db','options', 'visitor', 'base'])
 	opt.config = await config('showcase')
 	return new Upload(opt)
 })
