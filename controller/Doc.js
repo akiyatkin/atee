@@ -23,7 +23,7 @@ export class Doc {
         this.divs[div] = ar
     }
     get (div = '', empty = '') {
-        if (!this.divs[div]?.length) return empty
+        if (!Object.hasOwn(this.divs, div)) return empty
         let html = ''
         this.divs[div].forEach((el) => {
             if (typeof(el) == 'string') html += el

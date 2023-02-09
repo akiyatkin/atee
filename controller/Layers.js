@@ -11,7 +11,7 @@ export default class Layers {
 		let index = source
 		while (top.child) {
 			top = top.child
-			index = index.childs?.[top.name] || index.child
+			index = Object.hasOwn(index.childs, top.name) ? index.childs[top.name] : index.child
 			if (index) continue
 			status = 404
 			depth = 1
