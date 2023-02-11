@@ -137,9 +137,9 @@ rest.addResponse('set-brands-move', async view => {
 	return view.ret('Перенесено')
 })
 rest.addResponse('set-groups-move', async view => {
-	await view.gets(['admin','start'])
+	await view.gets(['admin'])
 	const { db, before_id, after_id } = await view.gets(['db','before_id','after_id'])
-	await db.start()
+	
 	const groups = await db.all(`
 		SELECT 
 			p.parent_id,
@@ -170,7 +170,6 @@ rest.addResponse('set-groups-move', async view => {
 		`, group)
 	}
 
-	await db.commit()
 	return view.ret('Перенесено')
 })
 rest.addResponse('set-props-move', async view => {

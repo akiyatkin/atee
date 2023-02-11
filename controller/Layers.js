@@ -4,14 +4,14 @@ export default class Layers {
 		if (!Layers.store[root]) Layers.store[root] = new Layers(root)
 		return Layers.store[root]
 	}
-	static getIndex(source, bread) { //У path нет ведущий слэш
+	static getIndex(source, bread) { //У path нет ведущего слэша
 		let top = bread.top
 		let status = 200
 		let depth = bread.depth
 		let index = source
 		while (top.child) {
 			top = top.child
-			index = Object.hasOwn(index.childs, top.name) ? index.childs[top.name] : index.child
+			index = (index.childs && Object.hasOwn(index.childs, top.name)) ? index.childs[top.name] : index.child
 			if (index) continue
 			status = 404
 			depth = 1

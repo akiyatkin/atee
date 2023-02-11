@@ -121,6 +121,7 @@ export class View {
 
 	err (msg, status = 422, nostore = null) {//result 0, но вообще фигня, такое не должно быть
 		//Только 404, 403, 500, 422
+		//403 - forbidden
 		//422 - пользователь может исправить, 
 		//500 - пользователь исправить ошибку не сможет
 		return this.#ready(msg, status, 0, nostore)

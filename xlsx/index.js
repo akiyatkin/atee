@@ -15,7 +15,7 @@ export const xlsx = {
 		const { mtime: mtimesrc } = await fs.stat(src).catch(e => false)
 		if (!mtimesrc) return false
 		const { mtime: mtimecache } = await fs.stat(cachesrc).catch(e => false)
-		if (mtimesrc && mtimesrc <= mtimecache) return cachesrc
+		if (mtimesrc <= mtimecache) return cachesrc
 		console.log('parse', src)
 		const sheets = nxlsx.parse(src)
 		for (const i in sheets) {

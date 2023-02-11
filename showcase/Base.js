@@ -166,9 +166,12 @@ class Base {
 
 	isColumn(brand_title, prop_title, options) {
 		const { base } = this
-		return !~options.systems.indexOf(prop_title)
-			&& !~options.columns.indexOf(prop_title)
-			&& !~options.brands?.[brand_title]?.columns?.indexOf(prop_title)
+		return !~options.systems.indexOf(prop_title) && !~options.columns.indexOf(prop_title)
+		&& !~(options.brands?.[brand_title]?.columns || []).indexOf(prop_title)
+			
+		// return !(!~options.systems.indexOf(prop_title)
+		// 	|| !~options.columns.indexOf(prop_title)
+		// 	|| !~options.brands?.[brand_title]?.columns?.indexOf(prop_title))
 	}
 	SYSTEMNICKS = {
 		'Модель':'model',

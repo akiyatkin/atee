@@ -26,11 +26,11 @@ model.showmodel = (data, env, { mod } = data) =>
 	<h1 style="clear:both">${cards.name(data, mod)}</h1>
 	
 	${model.common(data, env, mod)}
-	
-	${model.props(data, mod)}
-	${mod.item_rows.length ? model.items(data, mod) : ''}
-	<!-- <pre>${JSON.stringify(mod, "\n", 2)}</pre> -->
-	<div class="modtext">
+	<div style="margin-bottom:2rem">
+		${model.props(data, mod)}
+		${mod.item_rows.length ? model.items(data, mod) : ''}
+	</div>
+	<div class="modtext" style="margin-bottom:2rem">
 		<style>
 			${env.scope} .modtext img {
 				max-width: 100%;
@@ -39,8 +39,15 @@ model.showmodel = (data, env, { mod } = data) =>
 		</style>
 		${ti.ar(mod.texts).join('')}
 	</div>
+	<pre>${JSON.stringify(mod.files, "\n", 2)}</pre>
+	<div class="modfiles" style="margin-bottom:2rem">
+		${ti.ar(mod.files).map(filerow).join('<br>')}
+	</div>
+	<!-- <pre>${JSON.stringify(mod, "\n", 2)}</pre> -->
 `
-
+const filerow = f => `
+	<b>${f.ext.toUpperCase()}</b> <a href="${f.dir + f.file}">${f.name}</a> 
+`
 model.showGallery = (data, env, mod) => `
 	<div class="imagecontent">
 		<style>

@@ -10,8 +10,10 @@
 		"@atee/float-label": "https://gitpkg.now.sh/akiyatkin/atee/float-label?main",
 		"@atee/mail": "https://gitpkg.now.sh/akiyatkin/atee/mail?main",
 		"@atee/nicked": "https://gitpkg.now.sh/akiyatkin/atee/nicked?main",
+		"@atee/docx": "https://gitpkg.now.sh/akiyatkin/atee/docx?main",
 		"@atee/rest": "https://gitpkg.now.sh/akiyatkin/atee/rest?main",
 		"@atee/showcase": "https://gitpkg.now.sh/akiyatkin/atee/showcase?main",
-		"@atee/words": "https://gitpkg.now.sh/akiyatkin/atee/words?main"
+		"@atee/words": "https://gitpkg.now.sh/akiyatkin/atee/words?main",
+		"file-icon-vectors": "^1"
 	}
 }

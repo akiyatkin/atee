@@ -1,0 +1,17 @@
+{
+	"name": "@atee/docx",
+	"version": "1.0.0",
+	"type": "module",
+	"main": "index.js",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/akiyatkin/atee.git"
+	},
+	"dependencies": {
+		"@atee/controller": "https://gitpkg.now.sh/akiyatkin/atee/controller?main",
+		"@atee/rest": "https://gitpkg.now.sh/akiyatkin/atee/rest?main",
+		"@atee/nicked": "https://gitpkg.now.sh/akiyatkin/atee/nicked?main",
+		"@atee/cproc": "https://gitpkg.now.sh/akiyatkin/atee/cproc?main",
+		"mammoth": "^1.5.1"
+	}
+}

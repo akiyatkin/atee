@@ -67,7 +67,10 @@ export const Dabudi = {
 		
 		for (let i = head_titles.length - 1; i >= 0; i--) {
 			const col = String(head_titles[i] || '')
-			if (col) head_titles[i] = col.trim().slice(-base.LONG).trim()
+			
+			//if (col) head_titles[i] = col.trim().slice(-base.LONG).trim()
+			if (col) head_titles[i] = col
+
 			if (col && col.at(0) != '.') continue
 			head_titles.splice(i, 1)
 			rows_body.forEach(row => row.splice(i, 1))

@@ -5,13 +5,13 @@ import nicked from '/-nicked'
 
 import unique from "/-nicked/unique.js"
 import Access from "/-controller/Access.js"
+import Files from "/-showcase/Files.js"
 
 import common from "/-catalog/common.html.js"
 import rest_live from '/-catalog/rest.live.js'
 import rest_funcs from '/-rest/funcs.js'
+import docx from '/-docx'
 import map from '/-nicked/map.js'
-
-import { loadTEXT } from '/-controller/router.js'
 
 import mail from '/-mail'
 import config from '/-config'
@@ -223,11 +223,13 @@ rest.addResponse('get-model', async (view) => {
 	view.ans.brand = await catalog.getBrandByNick(brand_nick)
 	if (!model) return view.err()
 	if (model.texts) {
-		model.texts = await map(model.texts, async src => {
-			const {ans:data} = await loadTEXT('/'+src, visitor)
-			return data || ''
-		})
+		model.texts = await Promise.all(model.texts.map(async src => docx.read(Access, src)))
 	}
+
+	if (model.files) {
+		model.files = model.files.map(src => Files.srcInfo(src))
+	}
+
 	view.ans.mod = model
 
 
@@ -327,11 +329,12 @@ rest.addResponse('get-search-groups', async (view) => {
 	}).map(group_id => {
 		return tree[group_id].path[work.path.length + 1] || group_id
 	}))
-	const groups = group_ids.filter(id => ~work.childs.indexOf(id)).map((id) => {
+	
+	const groups = work.childs.map((id) => {
 		const group = {...tree[id]}
 		group.mute = !~level_group_ids.indexOf(id)
 		return group
-	})	
+	})
 
 	const res = {
 		type, title:group, brand,
@@ -353,9 +356,9 @@ rest.addResponse('get-search-groups', async (view) => {
 				if (prop.opt.unit) unit = '&nbsp'+prop.opt.unit
 				let value_title
 				if (value_nick == 'upto') {
-					value_title = 'до '+md.more[prop_nick][value_nick].replace('-','.')
+					value_title = 'до ' + md.more[prop_nick][value_nick].replace('-','.')
 				} else if (value_nick == 'from') {
-					value_title = 'от '+md.more[prop_nick][value_nick].replace('-','.')
+					value_title = 'от ' + md.more[prop_nick][value_nick].replace('-','.')
 				} else {
 					value_title = Number(value_nick.replace('-','.'))
 				}

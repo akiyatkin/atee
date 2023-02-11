@@ -95,21 +95,33 @@ class Catalog {
 				for (const prop in item) {
 					if (model_rows[prop] == null) continue
 					const val = item[prop]
-					if (model_rows[prop] === val) continue
-					item_rows.push(prop)
-					delete model_rows[prop]
+					if (Array.isArray(val)) {
+						const iv = val.join(', ')
+						const mv = model_rows[prop].join(', ')
+						if (iv == mv) continue
+					} else {
+						if (model_rows[prop] === val) continue
+						item_rows.push(prop)
+						delete model_rows[prop]
+					}
 				}
 			}
 			for (const prop in model_rows) {
 				model[prop] = model_rows[prop]
 			}
+
 			for (const item of model.items) {
 				for (const prop in item) {
 					if (model_rows[prop] == null) continue
 					delete item[prop]
 				}
 			}
+
 			model.item_rows = item_rows.filter(prop_title => base.isColumn(model.brand_title, prop_title, options)) //До разделения на common и more
+
+			if (~item_rows.indexOf('Цена')) model.item_rows.push('Цена')
+
+
 			model.model_rows = Object.keys(model_rows).filter(prop_title => base.isColumn(model.brand_title, prop_title, options))
 			/*
 				известные колонки могут попадать в items, как показать вариативность известных колонок если это может быть единственной разницей?
@@ -189,13 +201,12 @@ class Catalog {
 			}
 			let min, max
 			for (const item of model.items) {
-				const val = item[cost.prop_title]
+				const val = Number(item[cost.prop_title])
 				if (!val) continue
 				
 				if (item[oldcost.prop_title]) {
 					item.discount = Math.round((1 - item[cost.prop_title]/item[oldcost.prop_title]) * 100) //20
 				}
-				
 				if (!min || val < min) min = val
 				if (!max || val > max) max = val
 			}
@@ -250,29 +261,37 @@ class Catalog {
 	getTree () {
 		const { base: { db, dbcache: cache }, base, catalog, options } = this
 		return cache.once('getTree', async () => {
-			const tree = await db.alltoint('group_id', `
-				SELECT ordain, group_id, parent_id, group_nick, icon_id, group_title 
+			const tree = {}
+			const rows = await db.all(`
+				SELECT group_id, parent_id, group_nick, icon_id, group_title 
 				FROM showcase_groups 
-				-- ORDER by ordain
-			`,[], ['group_id','parent_id'])
+				ORDER by ordain
+			`)
+
+			for (const name of ['group_id','parent_id']){
+				for (const group of rows) group[name] = Number(group[name])
+			}
+
+
+			for (const group of rows) {
+				tree[group.group_id] = group
+			}
+			
 			//console.log(tree)
-			for (const group_id in tree) {
-				const group = tree[group_id]
+			for (const group of rows) {
 				group.path = []
 				addParents(group, group.parent_id, tree)
 				//if (!group.parent_id) continue
 				//tree[group.parent_id].groups.push(group.group_id)
 			}
-			for (const group_id in tree) {
-				const group = tree[group_id]
-				group.inside = await db.col('SELECT count(*) from showcase_models where group_id = :group_id',{group_id})
+			for (const group of rows) {
+				group.inside = await db.col('SELECT count(*) from showcase_models where group_id = :group_id', group)
 				group.indepth = group.inside
 				group.groups = [group.group_id]
 				group.childs = []
 			}
 			
-			for (const group_id in tree) {
-				const group = tree[group_id]
+			for (const group of rows) {
 				group.path.forEach(parent_id => {
 					const parent = tree[parent_id]
 					parent.indepth += group.inside
@@ -416,8 +435,8 @@ class Catalog {
 		} else if (prop.type == 'brand') {
 			filter.values = await db.all(`
 				SELECT distinct b.brand_nick as value_nick, b.brand_title as value_title
-				FROM showcase_models m, showcase_brands b
-				WHERE m.brand_id = b.brand_id and m.group_id in (${group.groups.join(',')})
+				FROM showcase_models m, showcase_brands b, showcase_items i
+				WHERE i.model_id = m.model_id and i.item_num = 1 and m.brand_id = b.brand_id and m.group_id in (${group.groups.join(',')})
 				ORDER BY b.brand_title
 			`)
 		} else {

@@ -91,8 +91,9 @@ export class Upload {
 	}
 	async receiveProp(prop_title) {
 		const { options, base, base: {db, vicache: cache} } = this
-		return cache.konce('receiveProp', prop_title, async () => {
-			const prop_nick = base.onicked(prop_title)
+		const prop_nick = base.onicked(prop_title)
+		return cache.konce('receiveProp', prop_nick, async () => {
+			prop_title = prop_title.slice(-base.LONG).trim()
 			const type = await base.getPropTypeByNick(prop_nick)
 			const prop = { prop_title, prop_nick, type }
 			prop.ordainforinsert = await db.col('select max(ordain) from showcase_props') || 1
@@ -308,6 +309,8 @@ export class Upload {
 			const priceprop_nick = base.onicked(priceprop_title)
 			const priceprop_index = head_nicks.indexOf(priceprop_nick)
 			
+			//.slice(-base.LONG).trim()
+
 			const props = [] //Нужно найти индексы для тех свойств которые нужно записать
 			for (const prop_title of conf.props) {
 				const prop = { prop_title }
@@ -1228,6 +1231,7 @@ export class Upload {
 				await Files.runDeep(subinfo, async (dirinfo, fileinfo, level) => {
 					const src = dirinfo.dir + fileinfo.file
 					const ext = fileinfo.ext
+
 					const part = Files.getWayByExt(ext) //files, images, texts, videos
 					const file_id = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
 						brand_nick, 

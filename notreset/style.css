@@ -35,7 +35,11 @@ table td, table th {
 table th {
 	text-align: left;
 }
-
+th > p,
+td > p {
+	margin:0;
+	padding:0;
+}
 .a {
 	background-color: transparent;
 	color: inherit;
