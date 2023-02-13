@@ -51,6 +51,8 @@ rest.addVariable('start', async view => {
 	view.after(async () => {
 		if (view.ans.result) {
 			await db.commit()
+		} else {
+			await db.back()
 		}
 	})
 })

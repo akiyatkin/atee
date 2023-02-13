@@ -60,6 +60,9 @@ export class Db {
 	async commit() {
 		await this.db.query('COMMIT')
 	}
+	async back() {
+		await this.db.query('ROLLBACK')
+	}
 
 	//select
 	async fetch(sql, values) {

@@ -19,6 +19,7 @@ export const xlsx = {
 		console.log('parse', src)
 		const sheets = nxlsx.parse(src)
 		for (const i in sheets) {
+			sheets[i].name = sheets[i].name.trim()
 			sheets[i].data = sheets[i].data.map(row => {
 				return row.map(i => typeof(i) == 'string' ? i.trim() : String(i))
 			})

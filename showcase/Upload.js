@@ -5,21 +5,40 @@ import fs from "fs/promises"
 import nicked from '/-nicked/nicked.js'
 import unique from '/-nicked/unique.js'
 import cproc from '/-cproc'
+import xlsx from "/-xlsx"
 
 export class Upload {
 	constructor (opt) {
 		opt.upload = this
 		Object.assign(this, opt)//{ visitor, options, view, db, config, base }
 	}
-	async getAll(what) {
-		const { visitor, config } = this
-		let files = await Files.readdirext(visitor, config[what], ['xlsx']) //{ name, ext, file }
-		const dir = config[what]
-		await Promise.all(files.map(async (of) => {
+
+	addSizeTime (dir, files) {
+		const { visitor } = this
+		return Promise.all(files.map(async (of) => {
 			const stat = await fs.stat(dir + of.file)
 			of.size = Math.round(stat.size / 1024 / 1024 * 100) / 100
 			of.mtime = new Date(stat.mtime).getTime()
+			if (of.ext == 'xlsx') {
+				xlsx.cache(visitor, dir + of.file)
+			} else if (of.ext == 'js') {
+				const rest = await import('/' + dir + of.file).then(r => r.default).catch(e => console.log(e))
+				for (const name of ['get-data','get-mtime']) {
+					if (!rest.findopt(name)) console.log(`В обработке ${of.file} не найден ответ ${name}`)
+				}
+				if (rest.list['get-mtime']) {
+					const reans = await rest.get('get-mtime', {}, visitor)
+					const mtime = new Date(reans.ans).getTime()
+					if (mtime > of.mtime) of.mtime = mtime
+				}
+			}
 		}))
+	}
+	async getAll(what) {
+		const { upload, visitor, config } = this
+		let files = await Files.readdirext(visitor, config[what], ['xlsx', 'js']) //{ name, ext, file }
+		const dir = config[what]
+		await upload.addSizeTime(dir, files)
 		return files
 	}
 	async getAllTables() {
@@ -72,23 +91,21 @@ export class Upload {
 
 
 
-	async receiveValue(value_title) {
-		const { visitor, options, db, base } = this
-		const value = {
-			value_title,
-			value_nick: base.onicked(value_title)
-		}
-		value.value_id = await db.insertId(`
-			INSERT INTO 
-	 			showcase_values
-	 		SET
-	 			value_title = :value_title,
-	 			value_nick = :value_nick
-	 		ON DUPLICATE KEY UPDATE
-	 		 	value_id = LAST_INSERT_ID(value_id)
-	 	`, value)
-	 	return value
-	}
+	// async receiveValue(value_title) {
+	// 	const { visitor, options, db, base } = this
+	// 	const value = {
+	// 		value_title,
+	// 		value_nick: base.onicked(value_title)
+	// 	}
+	// 	value.value_id = await db.col('SELECT value_id from showcase_values where value_nick = :value_nick', value)
+	// 	if (!value.value_id) value.value_id = await db.insertId(`
+	// 		INSERT INTO showcase_values
+	//  		SET
+	//  			value_title = :value_title,
+	//  			value_nick = :value_nick
+	//  	`, value)
+	//  	return value
+	// }
 	async receiveProp(prop_title) {
 		const { options, base, base: {db, vicache: cache} } = this
 		const prop_nick = base.onicked(prop_title)
@@ -97,17 +114,14 @@ export class Upload {
 			const type = await base.getPropTypeByNick(prop_nick)
 			const prop = { prop_title, prop_nick, type }
 			prop.ordainforinsert = await db.col('select max(ordain) from showcase_props') || 1
-			prop.prop_id = await db.insertId(`
+			prop.prop_id = await db.col('SELECT prop_id FROM showcase_props WHERE prop_nick = :prop_nick ', prop)
+			if (!prop.prop_id) prop.prop_id = await db.insertId(`
 				INSERT INTO 
 					showcase_props 
 				SET
-					type = :type,
 					prop_title = :prop_title,
 					prop_nick = :prop_nick,
 					ordain = :ordainforinsert
-				ON DUPLICATE KEY UPDATE
-					type = :type,
-				 	prop_id = LAST_INSERT_ID(prop_id)
 			`, prop)
 			return prop
 		})
@@ -274,17 +288,14 @@ export class Upload {
 		const { sheets } = await Excel.loadPrice(visitor, dir + file, conf, base)
 
 		const price = {price_title, price_nick}
-		price.price_id = await db.insertId(`
+		price.price_id = await db.col('select price_id from showcase_prices where price_nick = :price_nick', price)
+		if (!price.price_id) price.price_id = await db.insertId(`
 			INSERT INTO 
 				showcase_prices 
 			SET
 				price_title = :price_title,
 				price_nick = :price_nick, 
 				loaded = 0
-			ON DUPLICATE KEY UPDATE
-				price_title = :price_title,
-			 	price_id = LAST_INSERT_ID(price_id),
-			 	loaded = 0
 		`, price)
 		await db.changedRows(`
 			DELETE ip FROM showcase_iprops ip 
@@ -410,7 +421,8 @@ export class Upload {
 								and m.brand_id = :brand_id
 						`, {brand_id, keyprop_id: catalogprop.prop_id, number: key_nick})
 					}
-					
+				} else {
+					console.log('wtf prop type')
 				}
 				if (!item) {
 					omissions[sheet].notfinded.push(row)
@@ -453,16 +465,14 @@ export class Upload {
 								omissions[sheet].emptyprops[prop_title] ??= []
 								omissions[sheet].emptyprops[prop_title].push(row)
 								continue
-					
 							}
-							value_id = await db.insertId(`
+							value_id = await db.col('SELECT value_id from showcase_values where value_nick = :value_nick', { value_nick })
+							if (!value_id) value_id = await db.insertId(`
 								INSERT INTO 
 						 			showcase_values
 						 		SET
 						 			value_title = :value_title,
 						 			value_nick = :value_nick
-						 		ON DUPLICATE KEY UPDATE
-						 		 	value_id = LAST_INSERT_ID(value_id)
 						 	`, { value_nick, value_title })
 							fillings.push({value_id, text, number})
 						}
@@ -474,16 +484,14 @@ export class Upload {
 								omissions[sheet].emptyprops[prop_title] ??= []
 								omissions[sheet].emptyprops[prop_title].push(row)
 								continue
-					
 							}
-							bond_id = await db.insertId(`
+							bond_id = await db.col('SELECT bond_id from showcase_bonds where bond_nick = :value_nick', { value_nick })
+							if (!bond_id) bond_id = await db.insertId(`
 								INSERT INTO 
 						 			showcase_bonds
 						 		SET
 						 			bond_title = :value_title,
 						 			bond_nick = :value_nick
-						 		ON DUPLICATE KEY UPDATE
-						 		 	bond_id = LAST_INSERT_ID(bond_id)
 						 	`, { value_nick, value_title })
 							fillings.push({bond_id, value_id, text, number})
 						}
@@ -494,17 +502,17 @@ export class Upload {
 						if (typeof(value_title) == 'string') {
 							const numbers = value_title.split(",")	
 							for (const num of numbers) {
-								number = parseFloat(value_title)
-								if (isNaN(number)) {
+								const number = base.toNumber(num)
+								if (number === false){
 									omissions[sheet].emptyprops[prop_title] ??= []
 									omissions[sheet].emptyprops[prop_title].push(row)
 									continue
 								}
-								number = Math.round(number * 100) / 100
 								fillings.push({bond_id, value_id, text, number})
 							}
 						} else {
-							number = value_title
+							const number = base.toNumber(value_title)
+							if (number === false) continue
 							fillings.push({bond_id, value_id, text, number})
 						}
 						
@@ -596,7 +604,11 @@ export class Upload {
 					prices += quantity
 				}))
 			})()
-			const {doublepath, count:files} = await upload.loadAllFiles()
+
+			const {doublepath, count:files} = await upload.indexAllFiles()
+			const conres = await upload.connectAllFiles()
+
+			//const {doublepath, count:files} = await upload.loadAllFiles()
 			res = { tables, prices, files }
 			res.msg = `Внесено из таблиц(${counttables}) ${tables}, прайсы принудительно внесены все(${countprices}) ${prices}, файлов ${files}`
 		} else {
@@ -610,7 +622,10 @@ export class Upload {
 					prices += quantity
 				}))
 			})()
-			const {doublepath, count:files} = await upload.loadAllFiles()
+			//const {doublepath, count:files} = await upload.loadAllFiles()
+			const {doublepath, count:files} = await upload.indexAllFiles()
+			const conres = await upload.connectAllFiles()
+
 			res = { tables, prices, files }
 			if (countprices) {
 				res.msg = `Таблицы без изменений, внесено из прайсов(${countprices}) ${prices}, файлов ${files}`
@@ -671,18 +686,14 @@ export class Upload {
 			})
 		}
 
-		
-		const table_id = await db.insertId(`
+		let table_id = await db.col('select table_id from showcase_tables where table_nick = :table_nick', { table_nick})
+		if (!table_id) table_id = await db.insertId(`
 			INSERT INTO 
 				showcase_tables 
 			SET
 				table_title = :table_title,
 				table_nick = :table_nick, 
 				loaded = 0
-			ON DUPLICATE KEY UPDATE
-				table_title = :table_title,
-			 	table_id = LAST_INSERT_ID(table_id),
-			 	loaded = 0
 		`, {
 			table_title: table_title,
 			table_nick: table_nick
@@ -700,15 +711,14 @@ export class Upload {
 		let ordain = 1
 		for (const brand_nick in brands) {
 			const brand = brands[brand_nick]
-			brand.brand_id = await db.insertId(`
+			brand.brand_id = await db.col('SELECT brand_id FROM showcase_brands WHERE brand_nick = :brand_nick', brand)
+			if (!brand.brand_id) brand.brand_id = await db.insertId(`
 				INSERT INTO 
 					showcase_brands 
 				SET
 					brand_title = :brand_title,
 					brand_nick = :brand_nick,
 					ordain = 1
-				ON DUPLICATE KEY UPDATE
-				 	brand_id = LAST_INSERT_ID(brand_id)
 			`, brand)
 
 		}
@@ -718,18 +728,18 @@ export class Upload {
 			const group = groups[group_nick]
 			group.ordain = ++ordain;
 			group.parent_id = group.parent_nick ? groups[group.parent_nick].group_id : null
-			group.group_id = await db.insertId(`
-				INSERT INTO 
-					showcase_groups 
-				SET
-					group_title = :group_title,
-					parent_id = :parent_id, 
-					group_nick = :group_nick, 
-					ordain = :ordain
-				ON DUPLICATE KEY UPDATE
-					parent_id = :parent_id, 
-				 	group_id = LAST_INSERT_ID(group_id)
-			`, group) //group_title, ordain, group_id не меняются. Сохраняются при очистке базы данных. 
+			group.group_id = await db.col('SELECT group_id from showcase_groups where group_nick = :group_nick', group)
+			if (!group.group_id) {
+				group.group_id = await db.insertId(`
+					INSERT INTO 
+						showcase_groups 
+					SET
+						group_title = :group_title,
+						parent_id = :parent_id, 
+						group_nick = :group_nick, 
+						ordain = :ordain
+				`, group) //group_title, ordain, group_id не меняются. Сохраняются при очистке базы данных. 
+			}
 		}
 		let quantity = 0
 
@@ -772,8 +782,8 @@ export class Upload {
 				})
 			})
 			search = upload.prepareSearch(search)
-
-			const model_id = await db.insertId(`
+			let model_id = await db.col('select model_id from showcase_models where brand_id = :brand_id and model_nick = :model_nick', {model_nick, brand_id})
+			if (!model_id) model_id = await db.insertId(`
 				INSERT INTO 
 					showcase_models
 				SET
@@ -782,13 +792,16 @@ export class Upload {
 					brand_id = :brand_id,
 					group_id = :group_id,
 					search = :search
-				ON DUPLICATE KEY UPDATE
-					search = :search,
-					group_id = :group_id,
-				 	model_id = LAST_INSERT_ID(model_id)
 			`, {model_title, model_nick, brand_id, group_id, search})
 
-
+			await db.changedRows(`
+				UPDATE
+					showcase_models
+				SET
+					search = :search,
+					group_id = :group_id
+				WHERE model_id = :model_id
+			`, { model_id, search, group_id})	
 			let item_num = await db.col(`
 				SELECT max(item_num) 
 				FROM showcase_items
@@ -886,28 +899,26 @@ export class Upload {
 							const value_title = v_title.slice(-base.LONG).trim()
 							
 							values[v_title] = { value_title, value_nick }
-							values[v_title].value_id = await db.insertId(`
+							values[v_title].value_id = await db.col('SELECT value_id from showcase_values where value_nick = :value_nick', { value_nick })
+							if (!values[v_title].value_id) values[v_title].value_id = await db.insertId(`
 								INSERT INTO 
 									showcase_values
 								SET
 									value_title = :value_title,
 									value_nick = :value_nick
-								ON DUPLICATE KEY UPDATE
-								 	value_id = LAST_INSERT_ID(value_id)
 							`, values[v_title])
 						}
 						if (type == 'bond') {
 							const bonds_title = v_title.slice(-base.LONG).trim()
 							const bond_nick = base.onicked(v_title)
 							bonds[v_title] = { bonds_title, bond_nick }
-							bonds[v_title].bond_id = await db.insertId(`
+							bonds[v_title].bond_id = await db.col('SELECT bond_id from showcase_bonds where bond_nick = :bond_nick', { bond_nick })
+							if (!bonds[v_title].bond_id) bonds[v_title].bond_id = await db.insertId(`
 								INSERT INTO 
 									showcase_bonds
 								SET
 									bond_title = :bonds_title,
 									bond_nick = :bond_nick
-								ON DUPLICATE KEY UPDATE
-								 	bond_id = LAST_INSERT_ID(bond_id)
 							`, bonds[v_title])
 						}
 					}
@@ -1304,14 +1315,13 @@ export class Upload {
 			brand_nick = :brand_nick
 		`
 
-		const file_id = await db.insertId(`
+		let file_id = await db.col('SELECT file_id from showcase_files where src_nick = :src_nick', params)
+		if (!file_id) file_id = await db.insertId(`
 			INSERT INTO 
 	 			showcase_files
 	 		SET ${SET}
-	 		ON DUPLICATE KEY UPDATE
-	 		 	file_id = LAST_INSERT_ID(file_id),
-	 		 	${SET}
 	 	`, params)
+
 	 	if (keys_nick) {
 	 		for (const key_nick of keys_nick) {
 	 			await db.exec(`

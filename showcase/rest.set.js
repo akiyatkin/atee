@@ -328,7 +328,7 @@ rest.addResponse('set-prices-load', async view => {
 	const { upload, name } = await view.gets(['upload','name'])
 	view.ans.name = name
 	const row = await upload.loadPrice(name)
-	if (!row) return view.err('Неизвестная ошибка с прайсом, проверьте конфиг')
+	if (!row) return view.err('Неизвестная ошибка с прайсом, проверьте конфиг. Нет производителя или некорректное соединение.')
 	row.ready = true
 	view.ans.row = row
 	return view.ret('Внесено ' + row.quantity)
@@ -338,7 +338,7 @@ rest.addResponse('set-load', async view => { //Для ручного перех�
 	await view.gets(['admin', 'start']) //Нужно подменять в проекте если требуется разрешить неавторизованному пользователю
 	const { upload } = await view.gets(['upload'])
 	const res = await upload.applyall()
-	const Location = '/?showcase=' + encodeURIComponent(res.msg)
+	const Location = '/catalog?showcase=' + encodeURIComponent(res.msg)
 	view.headers = { Location }
 	return view.ret('', 301)
 })
@@ -390,7 +390,7 @@ rest.addResponse('set-files-connectall', async view => {
 	const { visitor, db, config, upload } = await view.gets(['visitor', 'db', 'config', 'upload'])
 
 	
-	const res = await upload.connectAllFiles()		
+	const res = await upload.connectAllFiles()
 	
 	Object.assign(view.ans, res)
 	return view.ret()

@@ -43,16 +43,16 @@ CREATE TABLE IF NOT EXISTS `showcase_props` (
 	`prop_title` varchar(31) NOT NULL COMMENT 'Ограничение по длине, иначе дизайн неуправляемый.',
 	`prop_nick` varchar(31) NOT NULL COLLATE latin1_bin COMMENT '',
 	`ordain` TINYINT unsigned NOT NULL COMMENT '',
-	`type` ENUM("bond","model","group","brand","value","number","text","file") NOT NULL COMMENT 'В какой колонке и как хранятся значения',
+--	`type` ENUM("bond","model","group","brand","value","number","text","file") NOT NULL COMMENT 'БЕРЁТСЯ ИЗ КОНФИГА В какой колонке и как хранятся значения',
 	PRIMARY KEY (`prop_id`),
 	UNIQUE INDEX (prop_nick)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci AUTO_INCREMENT=1 ;
 INSERT IGNORE INTO showcase_props
-    (prop_title, prop_nick, type)
+    (prop_title, prop_nick)
 VALUES
-    ('Бренд','brand','brand'),
-    ('Модель','model','model'),
-    ('Группа','group','group');
+    ('Бренд','brand'),
+    ('Модель','model'),
+    ('Группа','group');
 
 
 CREATE TABLE IF NOT EXISTS `showcase_values` (
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS `showcase_iprops` (
 	`value_id` MEDIUMINT unsigned NULL COMMENT '16 млн',
 	`bond_id` MEDIUMINT unsigned NULL COMMENT '16 млн',
 	`file_id` MEDIUMINT unsigned NULL COMMENT '16 млн',
-	`number` DECIMAL(8,2) unsigned NULL COMMENT '',
+	`number` DECIMAL(10,2) unsigned NULL COMMENT '',
 	`text` mediumtext NULL COMMENT '',
 	`ordain` TINYINT unsigned COMMENT 'Порядковый номер для порядка значений в одном свойстве',
 	`price_id` SMALLINT unsigned NULL COMMENT '65 тыс',

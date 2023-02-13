@@ -17,6 +17,7 @@ rest.addResponse('get-settings', async view => {
 	const tables = [
 		'showcase_groups',
 		'showcase_files',
+		'showcase_filekeys',
 		'showcase_prices',
 		'showcase_tables',
 		'showcase_brands',
@@ -55,7 +56,7 @@ rest.addResponse('get-stat', async view => {
 	return view.ret()
 })
 rest.addResponse('get-panel', async view => {
-	const { upload } = await view.gets(['upload'])
+	
 	
 	view.ans.ready = {
 		prices: true,
@@ -63,6 +64,7 @@ rest.addResponse('get-panel', async view => {
 		files: false
 	}
 	try {
+		const { upload } = await view.gets(['upload'])
 		const tables = await upload.getNewTables()
 		view.ans.ready.tables = !tables.length
 		const prices = await upload.getNewPrices()
@@ -72,32 +74,12 @@ rest.addResponse('get-panel', async view => {
 	}
 	return view.ret()
 })
-const addSizeTime = (visitor, dir, files) => {
-	return Promise.all(files.map(async (of) => {
-		const stat = await fs.stat(dir + of.file)
-		of.size = Math.round(stat.size / 1024 / 1024 * 100) / 100
-		of.mtime = new Date(stat.mtime).getTime()
-		if (of.ext == 'xlsx') {
-			xlsx.cache(visitor, dir + of.file)
-		} else if (of.ext == 'js') {
-			const rest = await import('/' + dir + of.file).then(r => r.default).catch(e => console.log(e))
-			for (const name of ['get-data','get-mtime']) {
-				if (!rest.findopt(name)) console.log(`В обработке ${of.file} не найден ответ ${name}`)
-			}
-			if (rest.list['get-mtime']) {
-				const reans = await rest.get('get-mtime', {}, visitor)
-				const mtime = new Date(reans.ans).getTime()
-				if (mtime > of.mtime) of.mtime = mtime
-			}
-		}
-	}))
-}
+
 rest.addResponse('get-prices', async view => {
 	await view.get('admin')
-	const { base, visitor, db, config, options } = await view.gets(['base', 'visitor', 'db','config','options'])
-	const dir = config['prices']
-	const files = await Files.readdirext(visitor, dir, ['xlsx','js']) //{ name, ext, file }
-	addSizeTime(visitor, dir, files)
+	const { upload, base, visitor, db, config, options } = await view.gets(['base', 'visitor', 'db','config','options','upload'])
+
+	const files = await upload.getAllPrices()
 
 	const rows = await db.all(`
 		SELECT 
@@ -131,10 +113,9 @@ rest.addResponse('get-prices', async view => {
 
 rest.addResponse('get-tables', async view => {
 	await view.get('admin')
-	const { visitor, db, config, options, base } = await view.gets(['visitor', 'db', 'config','options', 'base'])
-	const dir = config['tables']
-	const files = await Files.readdirext(visitor, dir, ['xlsx','js']) //{ name, ext, file }
-	addSizeTime(visitor, dir, files)
+	const { upload, visitor, db, config, options, base } = await view.gets(['visitor', 'db', 'config','options', 'base', 'upload'])	
+	const files = await upload.getAllTables()
+	
 	const rows = await db.all(`
 		SELECT 
 			table_id,
@@ -206,7 +187,6 @@ rest.addResponse('get-model', async view => {
 			ip.text, 
 			v.value_title, 
 			p.prop_title, 
-			p.type, 
 			pr.price_title
 		FROM showcase_iprops ip
 			LEFT JOIN showcase_prices pr on ip.price_id = pr.price_id
@@ -219,6 +199,7 @@ rest.addResponse('get-model', async view => {
 	
 	
 	for (const prop of props) {
+		prop.type = base.getPropTypeByNick(prop.prop_nick)
 		if (prop.type == 'number') {
 			prop.number = Number(prop.number)
 		}

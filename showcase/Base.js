@@ -163,7 +163,16 @@ class Base {
 		})
 	}
 
-
+	toNumber(number) {
+		number = parseFloat(number)
+		if (isNaN(number)) return false
+		const LIM = 8
+		const test = Math.floor(number)
+		const len = String(test).length
+		if (len > LIM) return false
+		//if (!number) return false //0 не может быть?
+		return number
+	}
 	isColumn(brand_title, prop_title, options) {
 		const { base } = this
 		return !~options.systems.indexOf(prop_title) && !~options.columns.indexOf(prop_title)
@@ -206,8 +215,9 @@ class Base {
 		const { base, base: { db, dbcache: cache} } = this
 		const options = await base.getOptions() //Нельзя включать внутрь, так как тут fscache, а далее dbcache
 		return cache.konce('getPropById', prop_id, async () => {
-			const prop = await db.fetch('SELECT type, prop_nick, prop_title, prop_id from showcase_props where prop_id = :prop_id', { prop_id })
+			const prop = await db.fetch('SELECT prop_nick, prop_title, prop_id from showcase_props where prop_id = :prop_id', { prop_id })
 			if (!prop) return false
+			prop.type = base.getPropTypeByNick(prop.prop_nick)
 			prop.opt = options.props[prop.prop_title]
 			return prop	
 		})
