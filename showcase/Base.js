@@ -217,7 +217,7 @@ class Base {
 		return cache.konce('getPropById', prop_id, async () => {
 			const prop = await db.fetch('SELECT prop_nick, prop_title, prop_id from showcase_props where prop_id = :prop_id', { prop_id })
 			if (!prop) return false
-			prop.type = base.getPropTypeByNick(prop.prop_nick)
+			prop.type = await base.getPropTypeByNick(prop.prop_nick)
 			prop.opt = options.props[prop.prop_title]
 			return prop	
 		})

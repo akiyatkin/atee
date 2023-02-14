@@ -149,7 +149,7 @@ rest.addResponse('get-tables', async view => {
 })
 rest.addResponse('get-model', async view => {
 	await view.get('admin')
-	const { id, db, upload } = await view.gets(['db','upload','id'])
+	const { base, id, db, upload } = await view.gets(['base', 'db','upload','id'])
 	const model = await db.fetch(`
 		SELECT 
 			m.model_id,
@@ -199,7 +199,7 @@ rest.addResponse('get-model', async view => {
 	
 	
 	for (const prop of props) {
-		prop.type = base.getPropTypeByNick(prop.prop_nick)
+		prop.type = await base.getPropTypeByNick(prop.prop_nick)
 		if (prop.type == 'number') {
 			prop.number = Number(prop.number)
 		}

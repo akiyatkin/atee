@@ -82,6 +82,7 @@ class Catalog {
 			for (const item of model.items) {
 				for (const prop_title in item) {
 					const prop = await base.getPropByTitle(prop_title)
+					console.log(prop.type, prop_title)
 					if (prop.type == 'file') continue
 					if (~['item_num'].indexOf(prop_title)) continue
 					item[prop_title] = item[prop_title].join(', ')
