@@ -1316,11 +1316,19 @@ export class Upload {
 		`
 
 		let file_id = await db.col('SELECT file_id from showcase_files where src_nick = :src_nick', params)
-		if (!file_id) file_id = await db.insertId(`
-			INSERT INTO 
-	 			showcase_files
-	 		SET ${SET}
-	 	`, params)
+		if (!file_id) {
+			file_id = await db.insertId(`
+				INSERT INTO 
+		 			showcase_files
+		 		SET ${SET}
+		 	`, params)
+		} else {
+			await db.changedRows(`
+				UPDATE showcase_files
+				SET status = :status
+				WHERE file_id = :file_id
+			`, {file_id, status})
+		}
 
 	 	if (keys_nick) {
 	 		for (const key_nick of keys_nick) {

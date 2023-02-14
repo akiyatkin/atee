@@ -120,8 +120,9 @@ CREATE TABLE IF NOT EXISTS `showcase_iprops` (
 	UNIQUE (model_id, item_num, prop_id, file_id),
 	UNIQUE (model_id, item_num, prop_id, number),
 	INDEX (prop_id, value_id),
+	INDEX (file_id),
 	INDEX (bond_id),
-	INDEX (prop_id, `number`)
+	INDEX (prop_id, number
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 

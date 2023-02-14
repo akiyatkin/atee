@@ -297,9 +297,12 @@ rest.addResponse('get-files', async view => {
 	await view.get('admin')
 	const { visitor, db, config } = await view.gets(['visitor', 'db', 'config'])
 	
-	//Надо показать иерархию. Часто папки объединяются
-	//Содержимое папок под контролем полностью и надо показать что не привязано
+	//Надо показать что не привязано
 
+	const res = {}
+	res['Всего файлов в индексе'] = await db.col('select count(*) from showcase_files where status = "200"')
+	res['Бесхозных'] = 0
+	
 	
 	/*
 		Собираем папку с подсказкой производитель и модель
@@ -332,42 +335,49 @@ rest.addResponse('get-files', async view => {
 	const parts = {}
 	let part
 	let count = 0
-	// part = 'groupicons'
-	// parts[part] = await Files.readdirDeep(visitor, config[part])
-	// await Files.filterDeep(parts[part], async (dirinfo, fileinfo, level) => {
-	// 	if (!~Files.exts['images'].indexOf(fileinfo.ext)) return ++count
-	// 	const src = dirinfo.dir+fileinfo.file
-	// 	const is = await db.col('SELECT 1 FROM showcase_groups where icon = :src LIMIT 1', {src})
-	// 	if (is) return false
-	// 	return ++count
-	// })
+	part = 'groupicons'
+	parts[part] = await db.all(`
+		SELECT f.src from showcase_files f 
+		LEFT JOIN showcase_groups g on f.file_id = g.icon_id
+		WHERE g.icon_id is null and f.destiny=:part
+	`, {part})
+	res['Бесхозных'] += parts[part].length
 
-	// part = 'brandlogos'
-	// parts[part] = await Files.readdirDeep(visitor, config[part])
-	// await Files.filterDeep(parts[part], async (dirinfo, fileinfo, level) => {
-	// 	if (!~Files.exts['images'].indexOf(fileinfo.ext)) return ++count
-	// 	const src = dirinfo.dir+fileinfo.file
-	// 	const is = await db.col('SELECT 1 FROM showcase_brands where logo = :src LIMIT 1', {src})
-	// 	if (is) return false
-	// 	return ++count
-	// })
-	// const run = async dirinfo => {
-	// 	for (const subinfo of dirinfo.dirs) await run(subinfo)
-	// 	dirinfo.files = await filter(dirinfo.files, async (fileinfo) => {
-	// 		const src = dirinfo.dir + fileinfo.file
-	// 		const is = await db.col('SELECT 1 FROM showcase_iprops where text = :src LIMIT 1', {src})
-	// 		if (is) return false
-	// 		return ++count
-	// 	})
-	// }
-	// for (const part of ['folders', ...Object.keys(Files.exts)]) {
-	// 	parts[part] = await Files.readdirDeep(visitor, config[part])
-	// 	await run(parts[part])
-	// }
+	part = 'brandlogos'
+	parts[part] = await db.all(`
+		SELECT f.src from showcase_files f 
+		LEFT JOIN showcase_brands b on f.file_id = b.logo_id
+		WHERE b.logo_id is null and f.destiny=:part
+	`, {part})
+	res['Бесхозных'] += parts[part].length
 
-	view.ans.count = count
-	view.ans.parts = parts
 
+	part = 'images'
+	parts[part] = await db.all(`
+		SELECT f.src from showcase_files f 
+		LEFT JOIN showcase_iprops ip on f.file_id = ip.file_id
+		WHERE ip.file_id is null and f.destiny=:part
+	`, {part})
+	res['Бесхозных'] += parts[part].length
+
+	part = 'files'
+	parts[part] = await db.all(`
+		SELECT f.src from showcase_files f 
+		LEFT JOIN showcase_iprops ip on f.file_id = ip.file_id
+		WHERE ip.file_id is null and f.destiny=:part
+	`, {part})
+	res['Бесхозных'] += parts[part].length
+
+	part = 'texts'
+	parts[part] = await db.all(`
+		SELECT f.src from showcase_files f 
+		LEFT JOIN showcase_iprops ip on f.file_id = ip.file_id
+		WHERE ip.file_id is null and f.destiny=:part
+	`, {part})
+	res['Бесхозных'] += parts[part].length
+
+	view.ans.res = Object.entries(res)
+	view.ans.parts = Object.entries(parts)
 	return view.ret()
 })
 
