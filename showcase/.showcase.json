@@ -11,5 +11,6 @@
 	"brandlogos":"data/catalog/brandlogos/",
 	"grouptexts":"data/catalog/grouptexts/",
 	"options":"data/catalog/.options.json",
-	"tpls": "data/catalog/tpls/"
+	"tpls": "data/catalog/tpls/",
+	"root":"data/catalog/"
 }

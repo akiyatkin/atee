@@ -122,7 +122,7 @@ CREATE TABLE IF NOT EXISTS `showcase_iprops` (
 	INDEX (prop_id, value_id),
 	INDEX (file_id),
 	INDEX (bond_id),
-	INDEX (prop_id, number
+	INDEX (prop_id, number)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 

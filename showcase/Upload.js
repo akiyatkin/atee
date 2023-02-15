@@ -643,7 +643,7 @@ export class Upload {
 		search = search.split('-')
 		search = unique(search)
 		search.sort()
-		search = search.join(' ')
+		search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
 		return search
 	}
 	async loadTable (name, msgs = []) {
@@ -763,23 +763,38 @@ export class Upload {
 			const brand_id = brands[brand_nick].brand_id
 			const group_id = groups[group_nick].group_id
 
+			const sysitem = (item, i, indexes) => {
+				const value_title = item[i]
+				if (value_title === null) return true
+				if (value_title === '') return true
+				if (Array.isArray(value_title) && !value_title.length) return true
+				
+				if (~[
+					indexes.model_title, 
+					indexes.model_nick, 
+					indexes.brand_title, 
+					indexes.brand_nick,
+					indexes.group_nick
+				].indexOf(Number(i))) return true
+				return false
+			}
 
 			let search = []
-			items.forEach((item) => {
+
+			items.forEach((item, j) => {
 				const sheet_title = item[item.length - 1] //Последняя запись это имя листа sheet_title
 				const { descr, heads, indexes } = sheets[sheet_title]
 				search.push(item.join('-'))
 				heads.head_titles.forEach((prop_title, i) => {
+					if (sysitem(item, j, indexes)) return
 					if (~[
-						//indexes.model_title, 
-						indexes.model_nick, 
-						//indexes.brand_title, 
-						indexes.brand_nick,
-						indexes.group_nick
-						//, indexes.sheet_title 
-					].indexOf(i)) return
+						indexes.sheet_title 
+					].indexOf(i)) return //В поиск не надо добавлять следующие заголовки
 					search.push(prop_title)
 				})
+				// search.push(item[indexes.model_nick])
+				// search.push(item[indexes.brand_nick])
+				// search.push(item[indexes.group_nick])
 			})
 			search = upload.prepareSearch(search)
 			let model_id = await db.col('select model_id from showcase_models where brand_id = :brand_id and model_nick = :model_nick', {model_nick, brand_id})
@@ -807,33 +822,18 @@ export class Upload {
 				FROM showcase_items
 				WHERE model_id = :model_id
 			`, { model_id }) || 0
-
+			
 			for (const i in items) {
 				const item = items[i]
 				const ordain = 1 + Number(i)
 			
 				const sheet_title = item[item.length - 1] //Последняя запись это имя листа sheet_title
 				const { descr, heads, indexes } = sheets[sheet_title]
-				const sysitem = (item, i) => {
-					const value_title = item[i]
-					if (value_title === null) return true
-					if (value_title === '') return true
-					if (Array.isArray(value_title) && !value_title.length) return true
-					
-					if (~[
-						indexes.model_title, 
-						indexes.model_nick, 
-						indexes.brand_title, 
-						indexes.brand_nick,
-						indexes.group_nick
-						//, indexes.sheet_title 
-					].indexOf(Number(i))) return true
-					return false
-				}
+				
 				quantity++
 				const myitem_num = ++item_num
 				for (const i in item) {
-					if (sysitem(item,i)) continue
+					if (sysitem(item, i, indexes)) continue
 					const value_title = item[i]
 					const prop_nick = heads.head_nicks[i]
 					const type = await base.getPropTypeByNick(prop_nick)
@@ -939,7 +939,7 @@ export class Upload {
 				// `table_id` SMALLINT unsigned COMMENT '',
 				for (const i in item) {
 					const value_title = item[i]
-					if (sysitem(item,i)) continue
+					if (sysitem(item, i, indexes)) continue
 					
 					const prop_nick = heads.head_nicks[i]
 					const {prop_id, type} = props[prop_nick]
@@ -1063,15 +1063,14 @@ export class Upload {
 		for (const part of Object.keys(Files.destinies)) { //['slides','files','images','texts','videos']
 			destinies[part] = await upload.receiveProp(part)
 		}
-		const listsrc = await db.allto('src', `
+		const listsrc = await db.all(`
 			SELECT ip.text as src, ip.model_id, ip.item_num
 			FROM showcase_iprops ip
 			WHERE ip.prop_id = :files_id
 		`, { files_id })
-		
-		for (const src in listsrc) {
-			const {model_id, item_num} = listsrc[src]
-			const src_nick = nicked(src)
+
+		for (const {model_id, item_num, src} of listsrc) {
+			const src_nick = nicked(src).slice(-255)
 			const files = await db.all(`
 				SELECT f.file_id, f.destiny, f.ordain from showcase_files f
 				where f.src_nick like '${src_nick}%'
@@ -1089,8 +1088,6 @@ export class Upload {
 				`, {model_id, item_num, ordain, file_id, prop_id: destinies[destiny].prop_id})
 			}
 		}
-		
-		
 	}
 	async connectAllFiles() {
 		const { upload, visitor, db, config } = this
@@ -1172,6 +1169,7 @@ export class Upload {
 		const ids = {}
 		let count = 0
 		const tostat = (file_id, src) => {
+			if (!file_id) return
 			if (ids[file_id]) {
 				doublepath.push(src)
 				ids[file_id]++
@@ -1237,20 +1235,33 @@ export class Upload {
 		for (const dirinfo of parts[part].dirs) { //Бренды
 			const brand_nick = base.onicked(dirinfo.name)
 			const minfo = dirinfo.dirs.find(info => info.name == 'models')
-			if (minfo) for (const subinfo of minfo.dirs) { //Модели
-				const keys_title = subinfo.name
-				await Files.runDeep(subinfo, async (dirinfo, fileinfo, level) => {
-					const src = dirinfo.dir + fileinfo.file
-					const ext = fileinfo.ext
+			if (minfo) {
+				for (const subinfo of minfo.dirs) { //Модели
+					const keys_title = subinfo.name
+					await Files.runDeep(subinfo, async (dirinfo, fileinfo, level) => {
+						const src = dirinfo.dir + fileinfo.file
+						const ext = fileinfo.ext
 
-					const part = Files.getWayByExt(ext) //files, images, texts, videos
-					const file_id = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
-						brand_nick, 
-						group_nick: null,
-						keys_title
+						const part = Files.getWayByExt(ext) //files, images, texts, videos
+						const file_id = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
+							brand_nick, 
+							group_nick: null,
+							keys_title
+						})
+						tostat(file_id, src)
 					})
-					tostat(file_id, src)
-				})
+				}
+				// for (const fileinfo of minfo.files) { //Модели
+				// 	const src = minfo.dir + fileinfo.file
+				// 	const ext = fileinfo.ext
+				// 	const part = Files.getWayByExt(ext) //files, images, texts, videos
+				// 	const file_id = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
+				// 		brand_nick, 
+				// 		group_nick: null,
+				// 		keys_title: null
+				// 	})
+				// 	tostat(file_id, src)
+				// }
 			}
 			for (const part of Object.keys(Files.exts)) { //['slides','files','images','texts','videos']
 				const root = await Files.readdirDeep(visitor, dirinfo.dir + part + '/')
@@ -1266,13 +1277,28 @@ export class Upload {
 				})
 			}
 		}
-		
+		part = 'root'
+		list = await Files.readdirDeep(visitor, config[part])
+		await Files.runDeep(list, async (dirinfo, fileinfo, level) => {
+			const src = dirinfo.dir + fileinfo.file
+			const part = Files.getWayByExt(fileinfo.ext) //files, images, texts, videos
+			const file_id = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
+				brand_nick: null, 
+				group_nick: null,
+				keys_title: null
+			})
+			tostat(file_id, src)
+		})
 		return {doublepath, count}
 	}
-	index(src, descr, connect = {}) {
-		const { upload, visitor, db, config } = this
+	async index(src, descr, connect = {}) {
+		const { upload, base: {db, vicache: cache}, config } = this
 		let src_nick = nicked(src).slice(-255)
-		return cproc(Files, src_nick, () => upload.procindex(src, src_nick, descr, connect))
+		let file_id = false
+		await cache.konce('index', src_nick, () => {
+			file_id = cproc(Files, src_nick, () => upload.procindex(src, src_nick, descr, connect))	
+		})
+		return file_id
 	}
 	async procindex (src, src_nick, {fileinfo, destiny, source}, {group_nick = null, brand_nick = null, keys_title = null}) {
 		const { upload, visitor, db, config, base } = this

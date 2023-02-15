@@ -326,13 +326,14 @@ const addHtml = async (template, layer, bread, timings, theme) => {
 	}
 }
 
-const loadAll = (layers, promises = []) => {
+const loadAll = (layers, promises = [], proc = {}) => {
 	if (!layers) return promises
 
 	const jsons = {}
 	for (const layer of layers) {
 		if (!layer.json) continue
-		jsons[layer.json] = fetch(layer.json).then(res => {
+		let promise = proc[layer.json]
+		if (!promise) promise = fetch(layer.json).then(res => {
 			if (res.status != 200 && res.status != 422) {
 				console.log(4, res)
 				location.reload()
@@ -342,6 +343,8 @@ const loadAll = (layers, promises = []) => {
 			if (~type.indexOf('text/html')) return res.text()
 			return res.json()
 		})
+		jsons[layer.json] = promise
+		proc[layer.json] = promise
 	}
 	for (const layer of layers) {
 		if (!layer.sys) layer.sys = {}
@@ -378,7 +381,7 @@ const loadAll = (layers, promises = []) => {
 			})
 			promises.push(promise)
 		}
-		loadAll(layer.layers, promises)
+		loadAll(layer.layers, promises, proc)
 	}
 	return promises
 }
