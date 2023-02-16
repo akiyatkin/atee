@@ -1169,14 +1169,10 @@ export class Upload {
 		const ids = {}
 		let count = 0
 		const tostat = (file_id, src) => {
-			if (!file_id) return
-			if (ids[file_id]) {
-				doublepath.push(src)
-				ids[file_id]++
-			} else {
-				ids[file_id] = 1
+			if (file_id) {
+				return count++
 			}
-			count++
+			doublepath.push(src)
 		}
 		
 		await db.changedRows(`
