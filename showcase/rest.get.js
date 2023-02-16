@@ -50,6 +50,7 @@ rest.addResponse('get-stat', async view => {
 	view.ans.admin = await Access.isAdmin(visitor.client.cookie)
 	if (!view.ans.admin) return view.err('Требуется авторизация', 403)
 	//view.ans.count = await db.col('SELECT count(*) FROM information_schema.innodb_trx')
+	await new Promise(resolve => setTimeout(resolve, 50))
 	let rows = await db.all(`SHOW PROCESSLIST`)
 	rows = rows.filter(row => row.User == db.conf.user && row.Command != "Sleep")
 	view.ans.count = rows.length - 1

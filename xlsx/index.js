@@ -23,6 +23,9 @@ export const xlsx = {
 			sheets[i].data = sheets[i].data.map(row => {
 				return row.map(i => typeof(i) == 'string' ? i.trim() : String(i))
 			})
+			sheets[i].data = sheets[i].data.filter(row => {
+				return !!row.join('')
+			})
 		}
 		await fs.writeFile(cachesrc, JSON.stringify(sheets))
 		return cachesrc

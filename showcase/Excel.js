@@ -43,6 +43,7 @@ export const Excel = {
 			group_nick: root_nick,
 			group_orig: root,
 			group_title: root,
+			indepth:0,
 			parent_nick: false
 		}
 		const sheets = {}
@@ -66,7 +67,7 @@ export const Excel = {
 			sheets[sheet.name] = { descr, heads, indexes }
 
 			
-			let {rows_items} = Dabudi.splitGroups(rows_body, heads, root, indexes.group_nick, groups, base)
+			let {rows_items} = Dabudi.splitGroups(rows_body, heads, root, indexes.group_nick, base, groups)
 			//if (sheet == 'Светодиодные ленты') console.log(1, sheet, groups, indexes.group_nick, root, heads)
 			const {head_titles, head_nicks} = heads
 
@@ -94,7 +95,9 @@ export const Excel = {
 				models[brandmod].push(row)
 			})
 		}
-		
+		for (const group_nick in groups) {
+			if (!groups[group_nick].indepth) delete groups[group_nick]
+		}
 		return {groups, models, sheets, brands}
 	}
 }

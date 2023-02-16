@@ -79,7 +79,7 @@ export const Dabudi = {
 		const head_nicks = head_titles.map(h => base.onicked(h))
 		return {heads: {head_nicks, head_titles}, rows_body}
 	},
-	splitGroups: (rows_body, heads, root_title, index_group, groups, base) => {
+	splitGroups: (rows_body, heads, root_title, index_group, base, groups) => {
 		const root_nick = base.onicked(root_title)
 		let group_title = root_title.split('#')[0].slice(-base.LONG).trim()
 		let group_nick = root_nick
@@ -89,6 +89,7 @@ export const Dabudi = {
 			groups[group_nick] = {
 				group_nick, 
 				group_title,
+				indepth:0,
 				group_orig,
 				parent_nick: false
 			}
@@ -100,6 +101,11 @@ export const Dabudi = {
 			if (!group_title) {
 				wasitems = true
 				row[index_group] = group_nick
+				let group = groups[group_nick]
+				do {
+					group.indepth++
+				} while (group = groups[group.parent_nick])
+
 				return true
 			}
 			if (group_title.length == 1) {
@@ -122,10 +128,12 @@ export const Dabudi = {
 			groups[group_nick] = {
 				group_nick,
 				group_orig,
+				indepth:0,
 				group_title:group_title.split('#')[0].slice(-base.LONG).trim(), 
 				parent_nick
 			}
 		})
+		
 		return {rows_items, groups}
 	}	
 }

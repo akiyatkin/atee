@@ -4,7 +4,7 @@ import Excel from "/-showcase/Excel.js"
 import fs from "fs/promises"
 import nicked from '/-nicked/nicked.js'
 import unique from '/-nicked/unique.js'
-import cproc from '/-cproc'
+import kcproc from '/-cproc/kcproc.js'
 import xlsx from "/-xlsx"
 
 export class Upload {
@@ -705,32 +705,33 @@ export class Upload {
 		}
 
 		
-		
-
-
 		let ordain = 1
 		for (const brand_nick in brands) {
 			const brand = brands[brand_nick]
-			brand.brand_id = await db.col('SELECT brand_id FROM showcase_brands WHERE brand_nick = :brand_nick', brand)
-			if (!brand.brand_id) brand.brand_id = await db.insertId(`
-				INSERT INTO 
-					showcase_brands 
-				SET
-					brand_title = :brand_title,
-					brand_nick = :brand_nick,
-					ordain = 1
-			`, brand)
-
+			brand.brand_id = await kcproc(Upload, 'create_brand', brand_nick, async () => {
+				let brand_id = await db.col('SELECT brand_id FROM showcase_brands WHERE brand_nick = :brand_nick', brand)
+				if (!brand_id) brand_id = await db.insertId(`
+					INSERT INTO 
+						showcase_brands 
+					SET
+						brand_title = :brand_title,
+						brand_nick = :brand_nick,
+						ordain = 1
+				`, brand)
+				return brand_id
+			})
 		}
+		
+
 		
 		ordain = 1
 		for (const group_nick in groups) {
 			const group = groups[group_nick]
 			group.ordain = ++ordain;
 			group.parent_id = group.parent_nick ? groups[group.parent_nick].group_id : null
-			group.group_id = await db.col('SELECT group_id from showcase_groups where group_nick = :group_nick', group)
-			if (!group.group_id) {
-				group.group_id = await db.insertId(`
+			group.group_id = await kcproc(Upload, 'create_group', group_nick, async () => {	
+				let group_id = await db.col('SELECT group_id from showcase_groups where group_nick = :group_nick', group)
+				if (!group_id) group_id = await db.insertId(`
 					INSERT INTO 
 						showcase_groups 
 					SET
@@ -739,18 +740,16 @@ export class Upload {
 						group_nick = :group_nick, 
 						ordain = :ordain
 				`, group) //group_title, ordain, group_id не меняются. Сохраняются при очистке базы данных. 
-			}
-			//  else {
-			// 	await db.changedRows(`
-			// 		UPDATE showcase_groups
-			// 		SET parent_id = :parent_id
-			// 		WHERE group_id = :group_id
-			// 	`, group)
-			// }
-		}
+				return group_id
+			})
+		}	
+		
+		
 		let quantity = 0
 
 		
+
+
 		await db.changedRows(`
 			DELETE i, ip FROM showcase_items i, showcase_iprops ip 
 			WHERE i.model_id = ip.model_id and i.item_num = ip.item_num and i.table_id = :table_id
@@ -804,17 +803,21 @@ export class Upload {
 				// search.push(item[indexes.group_nick])
 			})
 			search = upload.prepareSearch(search)
-			let model_id = await db.col('select model_id from showcase_models where brand_id = :brand_id and model_nick = :model_nick', {model_nick, brand_id})
-			if (!model_id) model_id = await db.insertId(`
-				INSERT INTO 
-					showcase_models
-				SET
-					model_title = :model_title,
-					model_nick = :model_nick,
-					brand_id = :brand_id,
-					group_id = :group_id,
-					search = :search
-			`, {model_title, model_nick, brand_id, group_id, search})
+
+			const model_id = await kcproc(Upload, 'create-model', brandmod, async () => {
+				let model_id = await db.col('select model_id from showcase_models where brand_id = :brand_id and model_nick = :model_nick', {model_nick, brand_id})
+				if (!model_id) model_id = await db.insertId(`
+					INSERT INTO 
+						showcase_models
+					SET
+						model_title = :model_title,
+						model_nick = :model_nick,
+						brand_id = :brand_id,
+						group_id = :group_id,
+						search = :search
+				`, {model_title, model_nick, brand_id, group_id, search})
+				return model_id
+			})
 
 			await db.changedRows(`
 				UPDATE
@@ -823,12 +826,14 @@ export class Upload {
 					search = :search,
 					group_id = :group_id
 				WHERE model_id = :model_id
-			`, { model_id, search, group_id})	
+			`, { model_id, search, group_id})
+
 			let item_num = await db.col(`
 				SELECT max(item_num) 
 				FROM showcase_items
 				WHERE model_id = :model_id
-			`, { model_id }) || 0
+			`, { model_id }) || 0 //позиции моглы быть загружены из другой таблицы
+			//let item_num = 0
 			
 			for (const i in items) {
 				const item = items[i]
@@ -904,29 +909,36 @@ export class Upload {
 						}
 						if (type == 'value') {
 							const value_title = v_title.slice(-base.LONG).trim()
-							
 							values[v_title] = { value_title, value_nick }
-							values[v_title].value_id = await db.col('SELECT value_id from showcase_values where value_nick = :value_nick', { value_nick })
-							if (!values[v_title].value_id) values[v_title].value_id = await db.insertId(`
-								INSERT INTO 
-									showcase_values
-								SET
-									value_title = :value_title,
-									value_nick = :value_nick
-							`, values[v_title])
+							values[v_title].value_id = await kcproc(Upload, 'create-value', value_nick, async () => {
+								let value_id = await db.col('SELECT value_id from showcase_values where value_nick = :value_nick', { value_nick })
+								if (!value_id) value_id = await db.insertId(`
+									INSERT INTO 
+										showcase_values
+									SET
+										value_title = :value_title,
+										value_nick = :value_nick
+								`, values[v_title])	
+								return value_id
+							})
+
+							
 						}
 						if (type == 'bond') {
 							const bonds_title = v_title.slice(-base.LONG).trim()
 							const bond_nick = base.onicked(v_title)
 							bonds[v_title] = { bonds_title, bond_nick }
-							bonds[v_title].bond_id = await db.col('SELECT bond_id from showcase_bonds where bond_nick = :bond_nick', { bond_nick })
-							if (!bonds[v_title].bond_id) bonds[v_title].bond_id = await db.insertId(`
-								INSERT INTO 
-									showcase_bonds
-								SET
-									bond_title = :bonds_title,
-									bond_nick = :bond_nick
-							`, bonds[v_title])
+							bonds[v_title].bond_id = await kcproc(Upload, 'create-bond', bond_nick, async () => {
+								let bond_id = await db.col('SELECT bond_id from showcase_bonds where bond_nick = :bond_nick', { bond_nick })
+								if (!bond_id) bond_id = await db.insertId(`
+									INSERT INTO 
+										showcase_bonds
+									SET
+										bond_title = :bonds_title,
+										bond_nick = :bond_nick
+								`, bonds[v_title])
+								return bond_id
+							})
 						}
 					}
 				}
@@ -1301,7 +1313,7 @@ export class Upload {
 		let src_nick = nicked(src).slice(-255)
 		let file_id = false
 		await cache.konce('index', src_nick, () => {
-			file_id = cproc(Files, src_nick, () => upload.procindex(src, src_nick, descr, connect))	
+			file_id = kcproc(Files, 'index', src_nick, () => upload.procindex(src, src_nick, descr, connect))	
 		})
 		return {file_id, src_nick}
 	}

@@ -600,16 +600,19 @@ rest.addResponse('get-maingroups', async (view) => {
 		const group = tree[group_id]
 		const where = []
 		where.push(`m.group_id in (${group.groups.join(',')})`)
-		where.push(`(ip.prop_id = ${imgprop.prop_id} and ip.text is not null and ip.ordain = 1)`)
+		where.push(`(ip.prop_id = ${imgprop.prop_id} and ip.file_id is not null)`)
 		const sql = `
-			SELECT distinct ip.text as image, m.model_nick, b.brand_nick, m.model_title, b.brand_title
+			SELECT distinct f.src as image, m.model_nick, b.brand_nick, m.model_title, b.brand_title
 			FROM 
 				(showcase_models m
 				left join showcase_brands b on b.brand_id = m.brand_id),
-				showcase_iprops ip
+				showcase_iprops ip,
+				showcase_files f
 			WHERE 
-				ip.model_id = m.model_id
+				f.file_id = ip.file_id
+				and ip.model_id = m.model_id
 				and ${where.join(' and ')}
+			ORDER BY RAND()
 			LIMIT 12
 		`
 		const images = await db.all(sql)
