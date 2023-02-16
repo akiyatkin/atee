@@ -1168,11 +1168,12 @@ export class Upload {
 		const doublepath = []
 		const ids = {}
 		let count = 0
-		const tostat = (file_id, src) => {
+		const tostat = (file_id, src, src_nick) => {
 			if (file_id) {
+				ids[src] = src_nick
 				return count++
 			}
-			doublepath.push(src)
+			if (ids[src] != src_nick) doublepath.push(src)
 		}
 		
 		await db.changedRows(`
@@ -1188,12 +1189,12 @@ export class Upload {
 		await Files.runDeep(list, async (dirinfo, fileinfo, level) => {
 			const src = dirinfo.dir + fileinfo.file	
 			const group_nick = base.onicked(fileinfo.name)
-			const file_id = await upload.index(src, {fileinfo, destiny:part, source:'disk'}, {
+			const {file_id, src_nick} = await upload.index(src, {fileinfo, destiny:part, source:'disk'}, {
 				brand_nick:null, 
 				group_nick, 
 				keys_title:null
 			})
-			tostat(file_id, src)
+			tostat(file_id, src, src_nick)
 		})
 
 		part = 'brandlogos'
@@ -1201,12 +1202,12 @@ export class Upload {
 		await Files.runDeep(list, async (dirinfo, fileinfo, level) => {
 			const src = dirinfo.dir + fileinfo.file	
 			const brand_nick = base.onicked(fileinfo.name)
-			const file_id = await upload.index(src, {fileinfo, destiny:part, source:'disk'}, {
+			const {file_id, src_nick} = await upload.index(src, {fileinfo, destiny:part, source:'disk'}, {
 				brand_nick, 
 				group_nick:null, 
 				keys_title:null
 			})
-			tostat(file_id, src)
+			tostat(file_id, src, src_nick)
 		})
 
 		for (const part of Object.keys(Files.exts)) { //['slides','files','images','texts','videos']
@@ -1216,12 +1217,12 @@ export class Upload {
 				await Files.runDeep(root, async (dirinfo, fileinfo, level) => {
 					const src = dirinfo.dir + fileinfo.file
 					const keys_title = fileinfo.name
-					const file_id = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
+					const {file_id, src_nick} = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
 						brand_nick, 
 						group_nick: null,
 						keys_title
 					})
-					tostat(file_id, src)	
+					tostat(file_id, src, src_nick)	
 				})
 			}
 		}
@@ -1239,24 +1240,24 @@ export class Upload {
 						const ext = fileinfo.ext
 
 						const part = Files.getWayByExt(ext) //files, images, texts, videos
-						const file_id = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
+						const {file_id, src_nick} = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
 							brand_nick, 
 							group_nick: null,
 							keys_title
 						})
-						tostat(file_id, src)
+						tostat(file_id, src, src_nick)
 					})
 				}
 				// for (const fileinfo of minfo.files) { //Модели
 				// 	const src = minfo.dir + fileinfo.file
 				// 	const ext = fileinfo.ext
 				// 	const part = Files.getWayByExt(ext) //files, images, texts, videos
-				// 	const file_id = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
+				// 	const {file_id, src_nick} = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
 				// 		brand_nick, 
 				// 		group_nick: null,
 				// 		keys_title: null
 				// 	})
-				// 	tostat(file_id, src)
+				// 	tostat(file_id, src, src_nick)
 				// }
 			}
 			for (const part of Object.keys(Files.exts)) { //['slides','files','images','texts','videos']
@@ -1264,12 +1265,12 @@ export class Upload {
 				await Files.runDeep(root, async (dirinfo, fileinfo, level) => {
 					const src = dirinfo.dir + fileinfo.file
 					const keys_title = fileinfo.name
-					const file_id = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
+					const {file_id, src_nick} = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
 						brand_nick, 
 						group_nick: null,
 						keys_title
 					})
-					tostat(file_id, src)
+					tostat(file_id, src, src_nick)
 				})
 			}
 		}
@@ -1278,12 +1279,12 @@ export class Upload {
 		await Files.runDeep(list, async (dirinfo, fileinfo, level) => {
 			const src = dirinfo.dir + fileinfo.file
 			const part = Files.getWayByExt(fileinfo.ext) //files, images, texts, videos
-			const file_id = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
+			const {file_id, src_nick} = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
 				brand_nick: null, 
 				group_nick: null,
 				keys_title: null
 			})
-			tostat(file_id, src)
+			tostat(file_id, src, src_nick)
 		})
 		return {doublepath, count}
 	}
@@ -1294,7 +1295,7 @@ export class Upload {
 		await cache.konce('index', src_nick, () => {
 			file_id = cproc(Files, src_nick, () => upload.procindex(src, src_nick, descr, connect))	
 		})
-		return file_id
+		return {file_id, src_nick}
 	}
 	async procindex (src, src_nick, {fileinfo, destiny, source}, {group_nick = null, brand_nick = null, keys_title = null}) {
 		const { upload, visitor, db, config, base } = this
