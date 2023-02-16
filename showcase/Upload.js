@@ -1180,7 +1180,8 @@ export class Upload {
 			UPDATE showcase_files
 			SET status = '404'
 		`)
-		await db.exec(`TRUNCATE showcase_filekeys`)
+		//await db.exec(`TRUNCATE showcase_filekeys`)
+		await db.exec(`DELETE FROM showcase_filekeys`)
 
 		let part, list
 		
