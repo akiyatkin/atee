@@ -740,6 +740,13 @@ export class Upload {
 						ordain = :ordain
 				`, group) //group_title, ordain, group_id не меняются. Сохраняются при очистке базы данных. 
 			}
+			//  else {
+			// 	await db.changedRows(`
+			// 		UPDATE showcase_groups
+			// 		SET parent_id = :parent_id
+			// 		WHERE group_id = :group_id
+			// 	`, group)
+			// }
 		}
 		let quantity = 0
 
