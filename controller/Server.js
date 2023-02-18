@@ -105,12 +105,11 @@ export const Server = {
 				    info = await controller(json, visitor, bread) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
                     status = Math.max(info.status, status)
                 } catch (e) {
-                	console.error(e)
+                	console.error(bread.path, e)
                 	status = e.status || 500
                 	const root = bread.root ? '/' + bread.root + '/' : '/'
                     req.nt = root + status
                     const a = await meta.get('get-layers', req, visitor)
-                    if (!a.result) console.log(a)
                     json = a.ans
                     info = await controller(json, visitor, bread)
                 }
@@ -145,8 +144,6 @@ const getHTML = async (layer, look, visitor) => {
 	let data
 	let html = ''
 
-	
-
 	if (layer.json) {
 		//const ans = await loadJSON(layer.json, visitor)
 		const reans = await loadJSON(layer.json, visitor).catch(res => {
@@ -162,10 +159,13 @@ const getHTML = async (layer, look, visitor) => {
 	
 	if (layer.html) {
 		const reans = await loadTEXT(layer.html, visitor).catch(e => { 
-			status = 404
+			status = 500
 			throw {status, data: errmsg(layer, e), nostore: true, from: 'Server.getHTML'} 
 		})
-		html = reans.ans
+		if (reans.status == 404) throw reans //Выкидываем на стандартную страницу 404
+
+		status = Math.max(reans.status, status)
+		html = typeof(reans.ans) == 'string' ? reans.ans : ''
 		nostore = nostore || reans.nostore
 	} else if (layer.tpl) {
 		let tplobj = await import(layer.tpl).catch(e => {

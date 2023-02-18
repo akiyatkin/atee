@@ -32,7 +32,7 @@ export const Excel = {
 		}
 		return { sheets }
 	},
-	loadTable: async (visitor, src, brand, base) => {
+	loadTable: async (visitor, src, brand, base, msgs = []) => {
 		const listsheets = await Excel.read(visitor, src)
 		const models = {}
 		const root = 'Каталог'
@@ -83,8 +83,24 @@ export const Excel = {
 				row[indexes.brand_title] = row[indexes.brand_title] || brand
 				row[indexes.brand_nick] = base.onicked(row[indexes.brand_title])
 				row[indexes.model_nick] = base.onicked(row[indexes.model_title])
+
+				
+				const len = String(row[indexes.model_title]).length
+				if (len > base.LONG) {
+					msgs.push(`
+						Ошибка <b>${head_titles[indexes.model_title]}</b> model <b>${row[indexes.model_title]}</b>. 
+						Длинна ${len} > ${base.LONG}. Значение обрезано. 
+						${brand}, лист ${sheet.name}. 
+					`)
+				}
+
+
 				row[indexes.brand_title] = row[indexes.brand_title].slice(-base.LONG).trim()
 				row[indexes.model_title] = row[indexes.model_title].slice(-base.LONG).trim()
+
+				
+
+
 				row[indexes.sheet_row] = i + 1
 				row[indexes.sheet_title] = sheet.name.slice(-base.LONG).trim()
 				brands[row[indexes.brand_nick]] = { brand_title:row[indexes.brand_title], brand_nick:row[indexes.brand_nick] }

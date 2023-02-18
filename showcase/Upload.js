@@ -657,7 +657,7 @@ export class Upload {
 
 		const brand = options.tables?.[name]?.brand || name
 
-		const {groups, models, sheets, brands} = await Excel.loadTable(visitor, dir + file, brand, base)
+		const {groups, models, sheets, brands} = await Excel.loadTable(visitor, dir + file, brand, base, msgs)
 		const values = {}
 		const bonds = {}
 		const props = {}
@@ -739,7 +739,7 @@ export class Upload {
 						parent_id = :parent_id, 
 						group_nick = :group_nick, 
 						ordain = :ordain
-				`, group) //group_title, ordain, group_id не меняются. Сохраняются при очистке базы данных. 
+				`, group) //(group_title, ordain, group_id) не меняется для group_nick. Сохраняются при очистке базы данных. 
 				return group_id
 			})
 		}	
@@ -1313,7 +1313,8 @@ export class Upload {
 		let src_nick = nicked(src).slice(-255)
 		let file_id = false
 		await cache.konce('index', src_nick, () => {
-			file_id = kcproc(Files, 'index', src_nick, () => upload.procindex(src, src_nick, descr, connect))	
+			file_id = kcproc(Files, 'index', src_nick, () => upload.procindex(src, src_nick, descr, connect))
+			return file_id
 		})
 		return {file_id, src_nick}
 	}

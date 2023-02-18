@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS `showcase_brands` (
 	`brand_title` varchar(31) NOT NULL COMMENT '',
 	`brand_nick` varchar(31) NOT NULL COLLATE latin1_bin COMMENT '',
 	`logo_id` MEDIUMINT unsigned NULL COMMENT 'file_id',
-	`ordain` TINYINT unsigned COMMENT 'Порядок в списке производителей',
+	`ordain` SMALLINT unsigned COMMENT 'Порядок в списке производителей',
 	PRIMARY KEY (`brand_id`),
 	UNIQUE (`brand_nick`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci AUTO_INCREMENT=1 ;
@@ -155,7 +155,7 @@ CREATE TABLE IF NOT EXISTS `showcase_files` (
 	`destiny` ENUM('images','texts','files','videos','slides','groupicons','brandlogos') NULL DEFAULT NULL COMMENT 'Где использовать, Метка или папка в структуре, которая указывает на предназначение',
 	`way` ENUM('images','texts','files','videos') NOT NULL COMMENT 'Как использовать файл, html, picture, video, download',
 	`ext` ENUM("zip","webp","tpl","svg","html","rar","png","pdf","json","js","jpg","jpeg","gif","docx","doc") NULL DEFAULT NULL COMMENT 'Расширение может понадобиться для иконки и для определения предназначения или способа использования',
-	`ordain` TINYINT unsigned COMMENT 'Номер в src.',
+	`ordain` SMALLINT unsigned COMMENT 'Номер в src.',
 	`status` ENUM('404','200') NOT NULL DEFAULT '200' COMMENT 'При работе с файлами id не удаляются, а делаются неактивными и связи все удаляются. Если файл неактивный',
 
 	PRIMARY KEY (file_id),
