@@ -27,15 +27,16 @@ export const Excel = {
 			rows_source = rows_source.slice(((starts[sheet.name] ?? start) || 1) - 1)
 			const {descr, rows_table} = Dabudi.splitDescr(rows_source)
 			const {heads, rows_body} = Dabudi.splitHead(rows_table, base)
-			const rows_items = rows_body.filter(row => row.filter(cel => cel).length)
+			//const rows_items = rows_body.filter(row => row.filter(cel => cel).length)
+			const rows_items = rows_body.filter(row => row.filter(cel => cel).length > 1)
 			sheets.push({ sheet: sheet.name, descr, heads, rows:rows_items})
 		}
 		return { sheets }
 	},
-	loadTable: async (visitor, src, brand, base, msgs = []) => {
+	loadTable: async (visitor, src, brand, base, msgs = [], root_title) => {
 		const listsheets = await Excel.read(visitor, src)
 		const models = {}
-		const root = 'Каталог'
+		const root = root_title
 		const root_nick = base.onicked(root)
 		const groups = {}
 		

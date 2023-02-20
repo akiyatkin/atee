@@ -301,6 +301,7 @@ rest.addResponse('get-search-groups', async (view) => {
 	if (type && md.more) type += ' с фильтром'
 	if (!type && md.more) type += 'Фильтр'
 
+	view.ans.root_title = options.root_title
 
 	const brand = await catalog.getMainBrand(md)
 	const groupnicks = await catalog.getGroups()
@@ -376,7 +377,7 @@ rest.addResponse('get-search-groups', async (view) => {
 })
 rest.addResponse('get-search-list', async (view) => {
 	const { db, value, md, partner, visitor, catalog, page, count, base, options } = await view.gets(['db','value','md','partner','visitor', 'catalog', 'page', 'count', 'base', 'options'])
-
+	
 	//const {title, group_ids} = Catalog.searchGroups(db, visitor, md)
 	const {from, where, sort} = await catalog.getmdwhere(md, partner)
 	const group = await catalog.getMainGroup(md)
@@ -421,9 +422,9 @@ rest.addResponse('get-search-list', async (view) => {
 	return view.ret()
 })
 rest.addResponse('get-search-sitemap', async (view) => {
-	const { db, value, catalog } = await view.gets(['db','catalog','value'])
+	const { options, db, value, catalog } = await view.gets(['options', 'db','catalog','value'])
 	
-	view.ans.title = 'Каталог'
+	view.ans.title = options.root_title
 	view.ans.headings = []
 
 	const brands = await catalog.getBrands()
@@ -472,7 +473,7 @@ rest.addResponse('get-search-sitemap', async (view) => {
 	return view.ret()
 })
 rest.addResponse('get-search-head', async (view) => {
-	const { db, md, catalog } = await view.gets(['db','md', 'catalog'])
+	const { options, db, md, catalog } = await view.gets(['options', 'db','md', 'catalog'])
 	const group = await catalog.getMainGroup(md)
 	const brand = await catalog.getMainBrand(md)
 	if (group) {
@@ -482,7 +483,7 @@ rest.addResponse('get-search-head', async (view) => {
 	}
 	view.ans.canonical = group?.parent_id ? group.group_nick : (brand ? brand.brand_nick : '') 
 	if (view.ans.canonical) view.ans.canonical = '/' + view.ans.canonical
-	view.ans.title ??= 'Каталог'
+	view.ans.title ??= options.root_title
 	return view.ret()
 })
 rest.addResponse('get-catalog', async (view) => {
@@ -585,44 +586,56 @@ rest.addResponse('set-order', async (view) => {
 
 
 rest.addResponse('get-maingroups', async (view) => {
-	const { db, options, catalog, base } = await view.gets(['db', 'options', 'catalog', 'base'])
-	const tree = await catalog.getTree()
-	const groupnicks = await catalog.getGroups()
-	let root = groupnicks[options.root_nick]
-	if (!root) return view.err('Не найдена верняя группа')
-
+	const { db, options, catalog, base, partner } = await view.gets(['db', 'options', 'catalog', 'base','partner'])
+	const root_id = await base.getGroupIdByNick(options.root_nick)
+	if (!root_id) return view.err('Не найдена верхняя группа')
+	
 	const imgprop = await base.getPropByNick('images')
 	if (!imgprop) return view.err('Нет картинок')
+	const costprop = await base.getPropByTitle('Цена')
+	if (!costprop) return view.err('Нет цен')
 
-	if (root.childs.length == 1) root = tree[root.childs[0]] //fix для hugong когда есть одна общая группа верхнего уровня
-
-	view.ans.childs = await map(root.childs, async group_id => {
-		const group = tree[group_id]
-		const where = []
-		where.push(`m.group_id in (${group.groups.join(',')})`)
-		where.push(`(ip.prop_id = ${imgprop.prop_id} and ip.file_id is not null)`)
-		const sql = `
-			SELECT distinct f.src as image, m.model_nick, b.brand_nick, m.model_title, b.brand_title
-			FROM 
-				(showcase_models m
-				left join showcase_brands b on b.brand_id = m.brand_id),
-				showcase_iprops ip,
-				showcase_files f
-			WHERE 
-				f.file_id = ip.file_id
-				and ip.model_id = m.model_id
-				and ${where.join(' and ')}
-			ORDER BY RAND()
-			LIMIT 12
-		`
-		const images = await db.all(sql)
-		return {
-			images,
-			group_title: group.group_title,
-			group_nick: group.group_nick
-		}
+	const cache = Access.relate(rest)
+	const childs = await cache.konce('get-maingroups', partner.key, async () => {
+		const tree = await catalog.getTree()	
+		const root = tree[root_id]
+		if (root.childs.length == 1) root = tree[root.childs[0]] //fix для hugong когда есть одна общая группа верхнего уровня
+		const childs = await map(root.childs, async group_id => {
+			const group = tree[group_id]
+			const sql = `
+				SELECT distinct f.src as image, m.model_nick, b.brand_nick, m.model_title, b.brand_title, ip_cost.number as cost
+				FROM 
+					showcase_models m,
+					showcase_brands b,
+					showcase_iprops ip_img,
+					showcase_iprops ip_cost,
+					showcase_files f
+				WHERE 
+					m.group_id in (${group.groups.join(',')})
+					and ip_img.prop_id = ${imgprop.prop_id} and ip_img.file_id is not null
+					and ip_cost.prop_id = ${costprop.prop_id} and ip_cost.number is not null
+				 	and b.brand_id = m.brand_id
+					and ip_img.model_id = m.model_id
+					and ip_cost.model_id = m.model_id
+					and ip_img.item_num = ip_cost.item_num
+					and f.file_id = ip_img.file_id
+				ORDER BY RAND()
+				LIMIT 12
+			`
+			const images = await db.all(sql)
+			images.forEach(row => row.cost = Number(row.cost))
+			images.sort((a, b) => {
+				return a.cost - b.cost
+			})
+			return {
+				images,
+				group_title: group.group_title,
+				group_nick: group.group_nick
+			}
+		})
+		return childs
 	})
-	view.ans.childs = view.ans.childs.filter(g => g.images.length)
+	view.ans.childs = childs.filter(g => g.images.length)
 	return view.ret()
 })
 

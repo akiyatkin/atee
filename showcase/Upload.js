@@ -302,8 +302,9 @@ export class Upload {
 			WHERE ip.price_id = :price_id
 		`, price)		
 		let brand_id = false
+		let brand_nick = false
 		if (conf.brand) {
-			const brand_nick = base.onicked(conf.brand)
+			brand_nick = base.onicked(conf.brand)
 			brand_id = await db.col('SELECT brand_id FROM showcase_brands WHERE brand_nick = :brand_nick', {brand_nick})
 			if (!brand_id) return false
 		}
@@ -325,13 +326,27 @@ export class Upload {
 			const props = [] //Нужно найти индексы для тех свойств которые нужно записать
 			for (const prop_title of conf.props) {
 				const prop = { prop_title }
+				let r = false
 				for (const title of conf.synonyms[prop_title]) {
 					const i = head_titles.indexOf(title)
 					if (~i) {
+						r = true
 						prop.index = i
 						props.push(prop)
 						break
 					}
+				}
+				if (!r && conf.comparepropnick) {
+					for (const title of conf.synonyms[prop_title]) {
+						const nick = base.onicked(title)
+						const i = head_nicks.indexOf(nick)
+						if (~i) {
+							prop.index = i
+							props.push(prop)
+							break
+						}
+					}
+
 				}
 			}
 
@@ -344,7 +359,11 @@ export class Upload {
 					omissions[sheet].notconnected.push(row)
 					continue
 				}
-				const key_nick = base.onicked(key_title)
+				
+				let key_nick = base.onicked(key_title)
+				if (brand_nick && conf.priceprop_remove_brand) {
+					key_nick = base.onicked(key_nick.replace(brand_nick, ''))
+				}
 				
 				let item = false
 				if (catalogprop.type == 'value') {
@@ -499,7 +518,24 @@ export class Upload {
 						text = value_title
 						fillings.push({bond_id, value_id, text, number})
 					} else if (prop.type == 'number') {
-						if (typeof(value_title) == 'string') {
+						if (prop.prop_title == 'Цена') {
+
+
+
+							let number = base.toNumber(value_title)
+							if (!number) continue
+							if (conf.usd && conf.usdlist && ~conf.usdlist.indexOf(sheet)) {
+								number = number * conf.usd
+							}
+							if (conf.skidka) {
+								number = number * (100 - conf.skidka) / 100
+							}
+							if (!conf.float) number = Math.round(number)
+
+
+
+							fillings.push({bond_id, value_id, text, number})
+						} else if (typeof(value_title) == 'string') {
 							const numbers = value_title.split(",")	
 							for (const num of numbers) {
 								const number = base.toNumber(num)
@@ -657,7 +693,7 @@ export class Upload {
 
 		const brand = options.tables?.[name]?.brand || name
 
-		const {groups, models, sheets, brands} = await Excel.loadTable(visitor, dir + file, brand, base, msgs)
+		const {groups, models, sheets, brands} = await Excel.loadTable(visitor, dir + file, brand, base, msgs, options.root_title)
 		const values = {}
 		const bonds = {}
 		const props = {}
@@ -730,7 +766,7 @@ export class Upload {
 			group.ordain = ++ordain;
 			group.parent_id = group.parent_nick ? groups[group.parent_nick].group_id : null
 			group.group_id = await kcproc(Upload, 'create_group', group_nick, async () => {	
-				let group_id = await db.col('SELECT group_id from showcase_groups where group_nick = :group_nick', group)
+				let { group_id, parent_id } = await db.fetch('SELECT group_id, parent_id from showcase_groups where group_nick = :group_nick', group)
 				if (!group_id) group_id = await db.insertId(`
 					INSERT INTO 
 						showcase_groups 
@@ -740,6 +776,15 @@ export class Upload {
 						group_nick = :group_nick, 
 						ordain = :ordain
 				`, group) //(group_title, ordain, group_id) не меняется для group_nick. Сохраняются при очистке базы данных. 
+				group.group_id = group_id
+				if (parent_id != group.parent_id) {
+					await db.changedRows(`
+						UPDATE showcase_groups
+						SET parent_id = :parent_id
+						WHERE group_id = :group_id
+					`, group)
+				}
+
 				return group_id
 			})
 		}	

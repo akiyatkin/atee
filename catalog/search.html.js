@@ -33,7 +33,7 @@ search.GROUPS = (data, env) => data.result ? `
 		</div>
 		<div id="FILTERS"></div>
 	</div>
-` : '<h1>Каталог</h1>'
+` : `<h1>${data.root_title}</h1>`
 search.PAGINATION = (data, env) => ti.bs(data.result) && `
 	${search.pag(data, env, 'none')}
 `

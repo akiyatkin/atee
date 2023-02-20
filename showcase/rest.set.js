@@ -302,7 +302,7 @@ rest.addResponse('set-tables-clear', async view => {
 	return view.ret('Очищено')
 })
 rest.addResponse('set-tables-load', async view => {
-	await view.gets(['admin','start'])
+	await view.gets(['admin'])
 	const { upload, name } = await view.gets(['upload','name'])
 	view.ans.name = name
 	const msgs = []
@@ -324,7 +324,7 @@ rest.addResponse('set-prices-clear', async view => {
 	return view.ret('Очищено')
 })
 rest.addResponse('set-prices-load', async view => {
-	await view.gets(['admin','start','base'])
+	await view.gets(['admin','base'])
 	const { upload, name } = await view.gets(['upload','name'])
 	view.ans.name = name
 	const row = await upload.loadPrice(name)
