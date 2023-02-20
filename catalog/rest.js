@@ -598,7 +598,7 @@ rest.addResponse('get-maingroups', async (view) => {
 	const cache = Access.relate(rest)
 	const childs = await cache.konce('get-maingroups', partner.key, async () => {
 		const tree = await catalog.getTree()	
-		const root = tree[root_id]
+		let root = tree[root_id]
 		if (root.childs.length == 1) root = tree[root.childs[0]] //fix для hugong когда есть одна общая группа верхнего уровня
 		const childs = await map(root.childs, async group_id => {
 			const group = tree[group_id]
