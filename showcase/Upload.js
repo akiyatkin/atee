@@ -766,7 +766,7 @@ export class Upload {
 			group.ordain = ++ordain;
 			group.parent_id = group.parent_nick ? groups[group.parent_nick].group_id : null
 			group.group_id = await kcproc(Upload, 'create_group', group_nick, async () => {	
-				let { group_id, parent_id } = await db.fetch('SELECT group_id, parent_id from showcase_groups where group_nick = :group_nick', group)
+				let { group_id, parent_id } = await db.fetch('SELECT group_id, parent_id from showcase_groups where group_nick = :group_nick', group) || {}
 				if (!group_id) group_id = await db.insertId(`
 					INSERT INTO 
 						showcase_groups 
