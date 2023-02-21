@@ -3,7 +3,7 @@
 		"remote":false,
 		"hosts":[],
 		"alwayscache":true,
-		"src":["images/","data/"],
+		"src":["images/","data/","cache/"],
 		"*h":[0, 500, 90],
 		"*w":[0, 90]
 	}

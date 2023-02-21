@@ -33,8 +33,9 @@ rest.addResponse('set-access', async view => {
 rest.addResponse('set-update', async view => {
 	await view.gets(['admin'])
 	const time = new Date();
-	await utimes('../reload', time, time)
-	return view.ret()
+	const r = await utimes('../reload', time, time).catch(r => false)
+	if (r) return view.ret()
+	return view.err()
 })
 
 rest.addFunction('checksearch', (view, n) => {

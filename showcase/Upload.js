@@ -699,8 +699,6 @@ export class Upload {
 		const props = {}
 		const table_title = name
 		const table_nick = base.onicked(name)
-		
-		
 								
 		for (const sheet_title in sheets) {
 			const { descr, heads, indexes } = sheets[sheet_title]

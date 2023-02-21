@@ -156,7 +156,7 @@ const getHTML = async (layer, look, visitor) => {
 
 	
 	if (layer.replacetpl) layer.tpl = interpolate(layer.replacetpl, data, env)
-	
+	if (layer.htmltpl) layer.html = interpolate(layer.htmltpl, data, env)
 	if (layer.html) {
 		const reans = await loadTEXT(layer.html, visitor).catch(e => { 
 			status = 500

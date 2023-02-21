@@ -15,12 +15,32 @@ export const docx = {
 		if (!mtimesrc) return false
 		const { mtime: mtimecache } = await fs.stat(cachesrc).catch(e => false)
 		if (mtimesrc <= mtimecache) return cachesrc
-		console.log('parse', src)
-		const res = await mammoth.convertToHtml({path: src})
+		
+		const res = await mammoth.convertToHtml({path: src},{
+			convertImage: mammoth.images.imgElement(image => {
+				return image.read("base64").then(imageBuffer => {
+					return {
+						style: "max-width:100%; height:auto",
+						src: "data:" + image.contentType + ";base64," + imageBuffer
+					}
+				})
+			})
+		})
 		const text = res.value
-		console.log(res.messages)
+		if (res.messages.length) console.log('parse', src, res.messages)
 		await fs.writeFile(cachesrc, text)
 
+		const im = text.match(/<img[^>]*src="([^"]*)"[^>]*>/iu)
+		if (!im) return cachesrc
+		const img = im[1]
+		const base = img.match(/data:([^;].*);base64,(.*)$/iu)
+		if (!base) return cachesrc
+		const type = base[1]
+		const content = base[2]
+		//const srcimg = dir + cachename + '-' + nicked(finfo.file) + '.' + type.split('/')[1]
+		const srcimg = dir + cachename + '.img'
+		await fs.writeFile(srcimg, Buffer.alloc(content.length, content, "base64"))
+		
 		return cachesrc
 	})),
 	read: async (cache, src) => {
