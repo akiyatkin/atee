@@ -320,7 +320,7 @@ const getIndex = (rule, timings, bread, interpolate, theme) => {
 	if (!index) return []
 	runByRootLayer(index.root, layer => {
 		const crumb = bread.getCrumb(layer.depth)
-		const ts = layer.ts
+		const {ts, tsf} = layer
 		if (rule.replacetpl) layer.replacetpl = rule.replacetpl[layer.ts]
 		if (layer.name) {
 			if (rule.htmltpl?.[layer.name]) {
@@ -334,12 +334,15 @@ const getIndex = (rule, timings, bread, interpolate, theme) => {
 		if (rule.parsedtpl?.[ts]) {
 			layer.parsed = interpolate(rule.parsedtpl[ts], timings, layer, bread, crumb, theme)
 		}
-		if (rule.jsontpl?.[ts]) {
+		if (rule.jsontpl?.[tsf]) {
+			layer.json = interpolate(rule.jsontpl[tsf], timings, layer, bread, crumb, theme)
+		} else if (rule.jsontpl?.[ts]) {
 			layer.json = interpolate(rule.jsontpl[ts], timings, layer, bread, crumb, theme)
-		} else {
-			if (rule.json) layer.json = rule.json[ts]
+		} else if (rule.json?.[tsf]) {
+			layer.json = rule.json[tsf]
+		} else if (rule.json?.[ts]) {
+			layer.json = rule.json[ts]
 		}
-
 	})
 	return { index, status }
 }
