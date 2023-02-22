@@ -901,6 +901,7 @@ export class Upload {
 					}
 					if (type == 'text') continue
 					if (type == 'number') {
+
 						for (const j in item[i]) {
 							const v_title = item[i][j]
 							let number = parseFloat(v_title)
@@ -910,7 +911,7 @@ export class Upload {
 									Несоответствует типу.
 									Файл ${name}, лист ${sheet_title}. 
 								`)
-								item[i].splice(j, 1)
+								item[i][j] = false
 								continue
 							}
 							number = Math.round(number * 100) / 100
@@ -925,8 +926,9 @@ export class Upload {
 								Длинна ${len} > ${LIM}. Значение не сохранено. 
 								Файл ${name}, лист ${sheet_title}. 
 							`)
-							item[i].splice(j, 1)
+							item[i][j] = false
 						}
+						item[i] = item[i].filter( v_title => v_title !== false )
 						continue
 					}
 					if (type == 'file') {
