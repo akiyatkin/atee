@@ -95,12 +95,8 @@ export const Excel = {
 					`)
 				}
 
-
 				row[indexes.brand_title] = row[indexes.brand_title].slice(-base.LONG).trim()
 				row[indexes.model_title] = row[indexes.model_title].slice(-base.LONG).trim()
-
-				
-
 
 				row[indexes.sheet_row] = i + 1
 				row[indexes.sheet_title] = sheet.name.slice(-base.LONG).trim()

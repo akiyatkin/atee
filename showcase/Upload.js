@@ -303,7 +303,7 @@ export class Upload {
 		`, price)		
 		let brand_id = false
 		let brand_nick = false
-		if (conf.brand) {
+		if (conf.brand && conf.brand !== true) {
 			brand_nick = base.onicked(conf.brand)
 			brand_id = await db.col('SELECT brand_id FROM showcase_brands WHERE brand_nick = :brand_nick', {brand_nick})
 			if (!brand_id) return false
@@ -910,7 +910,7 @@ export class Upload {
 									Несоответствует типу.
 									Файл ${name}, лист ${sheet_title}. 
 								`)
-								delete item[i][j]
+								item[i].splice(j, 1)
 								continue
 							}
 							number = Math.round(number * 100) / 100
@@ -925,7 +925,7 @@ export class Upload {
 								Длинна ${len} > ${LIM}. Значение не сохранено. 
 								Файл ${name}, лист ${sheet_title}. 
 							`)
-							delete item[i][j]
+							item[i].splice(j, 1)
 						}
 						continue
 					}
@@ -1007,6 +1007,7 @@ export class Upload {
 					const {prop_id, type} = props[prop_nick]
 					
 					const save = async (text, number, value_id, bond_id) => {
+
 						await db.affectedRows(`
 							INSERT IGNORE INTO 
 								showcase_iprops

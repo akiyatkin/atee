@@ -328,7 +328,7 @@ class Catalog {
 	}
 	getMainGroups (prop_title = '') {
 		const { base: { db, dbcache: cache }, base, catalog, options } = this
-		return cache.once('getMainGroups', async () => {
+		return cache.konce('getMainGroups', prop_title, async () => {
 			const tree = structuredClone(await catalog.getTree())
 			const groups = Object.values(tree)
 			const root = groups.find(g => !g.parent_id)
