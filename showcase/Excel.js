@@ -100,6 +100,7 @@ export const Excel = {
 
 				row[indexes.sheet_row] = i + 1
 				row[indexes.sheet_title] = sheet.name.slice(-base.LONG).trim()
+				row.splice(indexes.sheet_title + 1)
 				brands[row[indexes.brand_nick]] = { brand_title:row[indexes.brand_title], brand_nick:row[indexes.brand_nick] }
 			})
 			rows_items.forEach(row => {
