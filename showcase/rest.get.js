@@ -188,6 +188,7 @@ rest.addResponse('get-model', async view => {
 			ip.text, 
 			v.value_title, 
 			p.prop_title, 
+			p.prop_nick, 
 			pr.price_title
 		FROM showcase_iprops ip
 			LEFT JOIN showcase_prices pr on ip.price_id = pr.price_id
@@ -353,29 +354,20 @@ rest.addResponse('get-files', async view => {
 	res['Бесхозных'] += parts[part].length
 
 
-	part = 'images'
-	parts[part] = await db.all(`
+	for (const part of Object.keys(Files.destinies)) { //['slides','files','images','texts','videos']
+		parts[part] = await db.all(`
+			SELECT f.src from showcase_files f 
+			LEFT JOIN showcase_iprops ip on f.file_id = ip.file_id
+			WHERE ip.file_id is null and f.destiny=:part
+		`, {part})
+		res['Бесхозных'] += parts[part].length	
+	}
+	parts['Без назначения'] = await db.all(`
 		SELECT f.src from showcase_files f 
 		LEFT JOIN showcase_iprops ip on f.file_id = ip.file_id
-		WHERE ip.file_id is null and f.destiny=:part
-	`, {part})
-	res['Бесхозных'] += parts[part].length
-
-	part = 'files'
-	parts[part] = await db.all(`
-		SELECT f.src from showcase_files f 
-		LEFT JOIN showcase_iprops ip on f.file_id = ip.file_id
-		WHERE ip.file_id is null and f.destiny=:part
-	`, {part})
-	res['Бесхозных'] += parts[part].length
-
-	part = 'texts'
-	parts[part] = await db.all(`
-		SELECT f.src from showcase_files f 
-		LEFT JOIN showcase_iprops ip on f.file_id = ip.file_id
-		WHERE ip.file_id is null and f.destiny=:part
-	`, {part})
-	res['Бесхозных'] += parts[part].length
+		WHERE ip.file_id is null and f.destiny is null
+	`)
+	res['Бесхозных'] += parts[part].length	
 
 	view.ans.res = Object.entries(res)
 	view.ans.parts = Object.entries(parts)

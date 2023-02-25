@@ -60,7 +60,7 @@ export const Files = {
 	},
 	runDeep: (root, callback, level = 0) => {
 		const p1 = Promise.all(root.files.map((info, i) => callback(root, info, level, i)))
-		const p2 = Promise.all(root.dirs.map(root => Files.runDeep(root, callback, ++level)))
+		const p2 = Promise.all(root.dirs.map(root => Files.runDeep(root, callback, level + 1)))
 		return Promise.all([p1,p2])
 	},
 	filterDeep: async (root, callback, level = 0) => {

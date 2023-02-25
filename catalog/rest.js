@@ -11,7 +11,6 @@ import common from "/-catalog/common.html.js"
 import rest_live from '/-catalog/rest.live.js'
 import rest_funcs from '/-rest/funcs.js'
 import docx from '/-docx'
-import map from '/-nicked/map.js'
 
 import mail from '/-mail'
 import config from '/-config'
@@ -223,7 +222,11 @@ rest.addResponse('get-model', async (view) => {
 	view.ans.brand = await catalog.getBrandByNick(brand_nick)
 	if (!model) return view.err()
 	if (model.texts) {
-		model.texts = await Promise.all(model.texts.map(async src => docx.read(Access, src)))
+		model.texts = await Promise.all(model.texts.map(src => {
+			const ext = (i => ~i ? src.slice(i + 1) : '')(src.lastIndexOf('.'))
+			if (ext == 'docx') return docx.read(Access, src)
+			return fs.readFile(src, 'utf8')
+		}))
 	}
 
 	if (model.files) {
@@ -558,6 +561,7 @@ rest.addArgument('partner', async (view, partner) => {
 })
 rest.addResponse('get-partner', async (view) => {
 	const { partner } = await view.gets(['partner'])
+	if (partner) view.ans.descr = partner.descr
 	return partner ? view.ret() : view.nope()
 })
 
@@ -600,10 +604,14 @@ rest.addResponse('get-maingroups', async (view) => {
 		const tree = await catalog.getTree()	
 		let root = tree[root_id]
 		if (root.childs.length == 1) root = tree[root.childs[0]] //fix для hugong когда есть одна общая группа верхнего уровня
-		const childs = await map(root.childs, async group_id => {
+		const childs = await Promise.all(root.childs.map(async group_id => {
 			const group = tree[group_id]
 			const sql = `
-				SELECT distinct f.src as image, m.model_nick, b.brand_nick, m.model_title, b.brand_title, ip_cost.number as cost
+				SELECT distinct f.src as image, m.model_nick, b.brand_nick, 
+					m.model_title, 
+					ip_cost.number as cost,
+					GROUP_CONCAT(ip_cost.number separator ',') as arcost,
+					b.brand_title
 				FROM 
 					showcase_models m,
 					showcase_brands b,
@@ -612,18 +620,28 @@ rest.addResponse('get-maingroups', async (view) => {
 					showcase_files f
 				WHERE 
 					m.group_id in (${group.groups.join(',')})
-					and ip_img.prop_id = ${imgprop.prop_id} and ip_img.file_id is not null
-					and ip_cost.prop_id = ${costprop.prop_id} and ip_cost.number is not null
+					and ip_img.prop_id = ${imgprop.prop_id}
+					and ip_cost.prop_id = ${costprop.prop_id}
 				 	and b.brand_id = m.brand_id
 					and ip_img.model_id = m.model_id
 					and ip_cost.model_id = m.model_id
 					and ip_img.item_num = ip_cost.item_num
 					and f.file_id = ip_img.file_id
+				GROUP BY m.model_id
 				ORDER BY RAND()
 				LIMIT 12
 			`
 			const images = await db.all(sql)
-			images.forEach(row => row.cost = Number(row.cost))
+			images.forEach(row => {
+				if (row.arcost) {
+					const arcost = row.arcost.split(',')
+					if (arcost.length > 1) {
+						row.min = Math.min(arcost)
+						row.max = Math.max(arcost)
+					}
+				}
+				row.cost = Number(row.cost)
+			})
 			images.sort((a, b) => {
 				return a.cost - b.cost
 			})
@@ -632,7 +650,7 @@ rest.addResponse('get-maingroups', async (view) => {
 				group_title: group.group_title,
 				group_nick: group.group_nick
 			}
-		})
+		}))
 		return childs
 	})
 	view.ans.childs = childs.filter(g => g.images.length)

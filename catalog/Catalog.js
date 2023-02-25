@@ -285,7 +285,7 @@ class Catalog {
 				//tree[group.parent_id].groups.push(group.group_id)
 			}
 			for (const group of rows) {
-				group.inside = await db.col('SELECT count(*) from showcase_models where group_id = :group_id', group)
+				group.inside = await db.col('SELECT count(*) from showcase_models m, showcase_items i where m.model_id = i.model_id and i.item_num = 1 and m.group_id = :group_id', group)
 				group.indepth = group.inside
 				group.groups = [group.group_id]
 				group.childs = []
@@ -311,6 +311,16 @@ class Catalog {
 					parent.groups.push(group.group_id)
 				})
 			}
+			// for (const group_id in tree) {
+			// 	const group = tree[group_id]
+			// 	if (!group.indepth) delete tree[group_id]
+			// 	if (group.group_nick == 'dopolnitelnye-prinadlejnosti') {
+			// 		console.log(group)
+			// 	}
+			// 	if (group.group_nick == 'telnye-prinadlejnosti-zapchasti') {
+			// 		console.log(group)
+			// 	}
+			// }
 
 			return tree
 		})

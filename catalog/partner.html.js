@@ -13,10 +13,12 @@ export const POPUP = (data, env) => `
 		? '<p>Активный ключ <b>' + data.partner + '</b>. <br>Для Вас действуют более <a href="/catalog">выгодные цены</a>.</p>'
 		: '<p>Нет активного ключа</p>'
 	}
+	${data.descr ? '<p><i>' + data.descr + '</i></p>' : ''}
 	<form>
 		<div class="float-label icon lock">
 			<input id="contacts_partner" name="partner" type="text" placeholder="Укажите ключ">
 			<label for="contacts_partner">Укажите ключ</label>
+			
 		</div>
 		<p align="right">
 			<button type="submit">Активировать</button>
@@ -42,17 +44,20 @@ export const POPUP = (data, env) => `
 				
 				const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 				Dialog.hide(Dialog.findPopup(form))
-				fetch('/-catalog/get-partner?partner=' + need.hash).then(e => e.json()).then(ans => Dialog.open({
+				const ans = await fetch('/-catalog/get-partner?partner=' + need.hash).then(e => e.json()).catch(e => false)
+				Dialog.open({
 					tpl:'/-catalog/partner.html.js', 
+					data:ans,
 					sub:ans.result ? 'SUCCESS' : 'ERROR'
-				})).catch(e => console.log(e))
+				})
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
-export const SUCCESS = () => `
+export const SUCCESS = (data) => `
 	<h1>Хорошо</h1>
 	<p>Теперь для Вас действуют более <a href="/catalog">выгодные цены.</a></p>
+	${data.descr ? '<p><i>' + data.descr + '</i></p>' : ''}
 `
 export const ERROR = () => `
 	<h1>Ключ неточный</h1>

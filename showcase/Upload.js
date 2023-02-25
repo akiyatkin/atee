@@ -284,7 +284,7 @@ export class Upload {
 		conf.synonyms[conf.priceprop] ??= []
 		conf.synonyms[conf.priceprop].push(conf.priceprop)
 		
-
+		
 		const { sheets } = await Excel.loadPrice(visitor, dir + file, conf, base)
 
 		const price = {price_title, price_nick}
@@ -337,6 +337,7 @@ export class Upload {
 					}
 				}
 				if (!r && conf.comparepropnick) {
+				//if (!r) {
 					for (const title of conf.synonyms[prop_title]) {
 						const nick = base.onicked(title)
 						const i = head_nicks.indexOf(nick)
@@ -349,7 +350,7 @@ export class Upload {
 
 				}
 			}
-
+			
 			omissions[sheet] = {loadedrow:0, keyrepeated:[], notconnected:[], notfinded:[], emptyprops:{}, head_titles}
 			count += rows.length
 
@@ -421,6 +422,7 @@ export class Upload {
 								and i.item_num is not null
 								and m.brand_id = :brand_id
 						`, {model_nick: key_nick, brand_id})
+
 					}
 				} else if (catalogprop.type == 'number') {
 					if (!brand_id) {
@@ -457,6 +459,7 @@ export class Upload {
 
 				mvalues[item.model_id] ??= []
 				let somepropsinsert = false
+
 				for (const {prop_title, index} of props) {
 					//Свойства которые нужно записать ищем их по синонимам
 					const prop = await upload.receiveProp(prop_title)
@@ -518,11 +521,13 @@ export class Upload {
 						text = value_title
 						fillings.push({bond_id, value_id, text, number})
 					} else if (prop.type == 'number') {
+
 						if (prop.prop_title == 'Цена') {
 
 
 
 							let number = base.toNumber(value_title)
+
 							if (!number) continue
 							if (conf.usd && conf.usdlist && ~conf.usdlist.indexOf(sheet)) {
 								number = number * conf.usd
@@ -1072,6 +1077,7 @@ export class Upload {
 
 		const art_id = (await upload.receiveProp('Арт')).prop_id
 		const photo_id = (await upload.receiveProp('Фото')).prop_id
+		const fff_id = (await upload.receiveProp('Файл')).prop_id
 
 		const files = await db.all(`
 			SELECT distinct f.destiny, f.file_id, ip.model_id AS imodel_id, ip.item_num AS iitem_num, m.model_id, f.ordain 
@@ -1081,10 +1087,10 @@ export class Upload {
 				LEFT JOIN showcase_brands b on b.brand_nick = f.brand_nick
 				LEFT JOIN showcase_models m ON (m.model_nick = fk.key_nick AND m.brand_id = b.brand_id)
 				LEFT JOIN showcase_bonds bo on bo.bond_nick = fk.key_nick
-				LEFT JOIN showcase_iprops ip ON (ip.bond_id = bo.bond_id AND (ip.prop_id = :art_id OR ip.prop_id = :photo_id))
+				LEFT JOIN showcase_iprops ip ON (ip.bond_id = bo.bond_id AND (ip.prop_id = :art_id OR ip.prop_id = :photo_id OR ip.prop_id = :fff_id))
 				LEFT JOIN showcase_models m2 ON (ip.model_id = m2.model_id AND m2.brand_id = b.brand_id)
 			WHERE fk.key_nick is not null and b.brand_id is not NULL AND (bo.bond_id IS NOT NULL OR m.model_id IS NOT NULL)
-		`, {art_id, photo_id})
+		`, {art_id, photo_id, fff_id})
 		
 		const destinies = {}
 		for (const part of Object.keys(Files.destinies)) { //['slides','files','images','texts','videos']
@@ -1092,6 +1098,9 @@ export class Upload {
 		}
 		for (const file of files) {
 			const {file_id, ordain, destiny, imodel_id, iitem_num, model_id} = file
+
+			
+			if (!destiny) continue; //Может быть непонятное предназначение если файл лежит во вложенной папке папки модели
 			
 			let items = []
 			if (model_id) {
@@ -1114,7 +1123,7 @@ export class Upload {
 			 			prop_id = :prop_id,
 			 			file_id = :file_id,
 			 			ordain = :ordain
-			 	`, {...item, ...file, prop_id: destinies[destiny].prop_id})
+			 	`, {...file, ...item, prop_id: destinies[destiny].prop_id})
 			}
 			
 		}
@@ -1297,6 +1306,27 @@ export class Upload {
 		parts[part] = await Files.readdirDeep(visitor, config[part])
 		for (const dirinfo of parts[part].dirs) { //Бренды
 			const brand_nick = base.onicked(dirinfo.name)
+
+			
+			const sinfo = dirinfo.dirs.find(info => info.name == 'subfolders')
+			if (sinfo) {
+				for (const subinfotop of sinfo.dirs) { //Вложенные папки нужно пропустить
+					for (const subinfo of subinfotop.dirs) { //Вложенные папки с моделями
+						const keys_title = subinfo.name
+						await Files.runDeep(subinfo, async (dirinfo, fileinfo, level) => {
+							const src = dirinfo.dir + fileinfo.file
+							const ext = fileinfo.ext
+							const destiny = !level ? Files.getWayByExt(ext) : null //files, images, texts, videos
+							const {file_id, src_nick} = await upload.index(src, {fileinfo, destiny, source:'disk'}, {
+								brand_nick, 
+								group_nick: null,
+								keys_title
+							})
+							tostat(file_id, src, src_nick)
+						})
+					}
+				}
+			}
 			const minfo = dirinfo.dirs.find(info => info.name == 'models')
 			if (minfo) {
 				for (const subinfo of minfo.dirs) { //Модели
@@ -1305,8 +1335,8 @@ export class Upload {
 						const src = dirinfo.dir + fileinfo.file
 						const ext = fileinfo.ext
 
-						const part = Files.getWayByExt(ext) //files, images, texts, videos
-						const {file_id, src_nick} = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
+						const destiny = !level ? Files.getWayByExt(ext) : null //files, images, texts, videos
+						const {file_id, src_nick} = await upload.index(src, {fileinfo, destiny, source:'disk'}, {
 							brand_nick, 
 							group_nick: null,
 							keys_title
@@ -1314,17 +1344,6 @@ export class Upload {
 						tostat(file_id, src, src_nick)
 					})
 				}
-				// for (const fileinfo of minfo.files) { //Модели
-				// 	const src = minfo.dir + fileinfo.file
-				// 	const ext = fileinfo.ext
-				// 	const part = Files.getWayByExt(ext) //files, images, texts, videos
-				// 	const {file_id, src_nick} = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
-				// 		brand_nick, 
-				// 		group_nick: null,
-				// 		keys_title: null
-				// 	})
-				// 	tostat(file_id, src, src_nick)
-				// }
 			}
 			for (const part of Object.keys(Files.exts)) { //['slides','files','images','texts','videos']
 				const root = await Files.readdirDeep(visitor, dirinfo.dir + part + '/')

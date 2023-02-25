@@ -118,11 +118,17 @@ class Base {
 		})
 	}
 
-	getGroupIdByTitle (title) {
-		const { base } = this
-		const nick = base.onicked(title)
-		return base.getGroupIdByNick(nick)
-	}
+	// getGroupIdByTitle (group_title) { //Нельзя предсказать nick. В этом случае мы уверены что title правильный и запрашиваем как есть
+	// 	const { db, dbcache: cache } = this
+	// 	return cache.konce('getGroupIdByTitle', group_title, () => {
+	// 		return db.col('SELECT group_id from showcase_groups where group_title = :group_title', { group_title })
+	// 	})
+	// }
+	// getGroupIdByTitle (title) {
+	// 	const { base } = this
+	// 	const nick = base.onicked(title)
+	// 	return base.getGroupIdByNick(nick)
+	// }
 	getGroupIdByNick(group_nick) {
 		const { db, dbcache: cache } = this
 		return cache.konce('getGroupIdByNick', group_nick, () => {

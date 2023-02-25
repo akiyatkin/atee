@@ -88,6 +88,10 @@ export const FOOTER = (data, env) => `
 
 		<div style="flex-grow:1;">
 			<a href="/@atee/controller">Вход</a> <a href="settings">Настройки</a>
+			<p>
+				<a href="/-controller/set-access">Изменены файлы</a><br>
+				<a href="/-controller/set-update">Изменены скрипты</a>
+			</p>
 		</div>
 		<div style="display: flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem; align-items:center"> 
 			<button name="set-tables-clearall">Очистить таблицы</button>

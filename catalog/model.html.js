@@ -27,7 +27,7 @@ model.showmodel = (data, env, { mod } = data) =>
 	
 	${model.common(data, env, mod)}
 	<div style="margin-bottom:2rem">
-		${model.props(data, mod)}
+		${mod['Скрыть фильтры'] ? '' : model.props(data, mod)}
 		${mod.item_rows.length ? model.items(data, mod) : ''}
 	</div>
 	<div class="modtext" style="margin-bottom:2rem">
