@@ -360,10 +360,17 @@ export class Upload {
 					omissions[sheet].notconnected.push(row)
 					continue
 				}
-				
-				let key_nick = base.onicked(key_title)
+				//Шлейф для мониторов TANTOS Classic 4х-пиновый
+				//shleyf-classic-5ti-pinovyy
+
+				//Шлейф для мониторов Classic 5ти-пиновый
+				//shleyf-classic-5ti-pinovyy
+				let key_nick
 				if (brand_nick && conf.priceprop_remove_brand) {
+					key_nick = key_title.toLowerCase()
 					key_nick = base.onicked(key_nick.replace(brand_nick, ''))
+				} else {
+					key_nick = base.onicked(key_title)
 				}
 				
 				let item = false
