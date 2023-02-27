@@ -98,7 +98,7 @@ cards.prop = {
 	default: (data, mod, pr, title, val) => `
 		<div style="margin: 0.25rem 0; display: flex">
 			<div style="padding-right: 0.5rem">${title}:</div>
-			<div title="${val}" 
+			<div title="${pr.value}" 
 				style="
 					overflow: hidden; 
 					text-overflow: ellipsis; 
@@ -132,7 +132,7 @@ cards.prop = {
 	),
 	just: (data, mod, pr, title, val) => `
 		<div style="margin: 0.25rem 0; display: flex">
-			<div title="${val}" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+			<div title="${pr.value}" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
 				${val}
 			</div>
 		</div>
