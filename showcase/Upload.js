@@ -115,14 +115,24 @@ export class Upload {
 			const prop = { prop_title, prop_nick, type }
 			prop.ordainforinsert = await db.col('select max(ordain) from showcase_props') || 1
 			prop.prop_id = await db.col('SELECT prop_id FROM showcase_props WHERE prop_nick = :prop_nick ', prop)
-			if (!prop.prop_id) prop.prop_id = await db.insertId(`
-				INSERT INTO 
-					showcase_props 
-				SET
-					prop_title = :prop_title,
-					prop_nick = :prop_nick,
-					ordain = :ordainforinsert
-			`, prop)
+			if (!prop.prop_id) {
+				prop.prop_id = await db.insertId(`
+					INSERT INTO 
+						showcase_props 
+					SET
+						prop_title = :prop_title,
+						prop_nick = :prop_nick,
+						ordain = :ordainforinsert
+				`, prop)
+			} else {
+				await db.changedRows(`
+					UPDATE
+						showcase_props
+					SET
+						prop_title = :prop_title
+					WHERE prop_id = :prop_id
+				`, {...prop, prop_title})
+			}
 			return prop
 		})
 		
@@ -1153,10 +1163,12 @@ export class Upload {
 		for (const {model_id, item_num, src} of listsrc) {
 			const src_nick = nicked(src).slice(-255)
 			const files = await db.all(`
-				SELECT f.file_id, f.destiny, f.ordain from showcase_files f
+				SELECT f.file_id, f.destiny, f.ordain, f.src from showcase_files f
 				where f.src_nick like '${src_nick}%'
 			`)
-			for (const {file_id, destiny, ordain} of files) {
+
+			for (let {file_id, destiny, ordain, ext} of files) {
+				if (!destiny) destiny = Files.getWayByExt(ext)
 				await db.exec(`
 					INSERT IGNORE INTO 
 						showcase_iprops

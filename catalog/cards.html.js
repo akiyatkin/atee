@@ -80,7 +80,7 @@ cards.data = (data, mod) => `
 			${cards.name(data, mod)}
 		</a>
 		<div>
-			${mod.props.length ? cards.props(data, mod) : ''}
+			${mod.card_props.length ? cards.props(data, mod) : ''}
 		</div>
 	</div>
 	<div style="margin: 0.5rem 0.9rem 1rem 0.9rem">	
@@ -89,10 +89,8 @@ cards.data = (data, mod) => `
 `
 cards.props = (data, mod) => `
 	<div>
-		${mod.props.map(pr => {
-			const val = common.prtitle(mod, pr)
-			if (val == null) return ''
-			return cards.prop[pr.tplprop ?? 'default'](data, mod, pr, pr.prop_title, val)
+		${mod.card_props.map(pr => {
+			return cards.prop[pr.tplprop ?? 'default'](data, mod, pr, pr.prop_title, pr.value)
 		}).join('')}
 	</div>
 `
@@ -100,7 +98,7 @@ cards.prop = {
 	default: (data, mod, pr, title, val) => `
 		<div style="margin: 0.25rem 0; display: flex">
 			<div style="padding-right: 0.5rem">${title}:</div>
-			<div title="${common.prtitle(mod, pr)}" 
+			<div title="${val}" 
 				style="
 					overflow: hidden; 
 					text-overflow: ellipsis; 
@@ -134,7 +132,7 @@ cards.prop = {
 	),
 	just: (data, mod, pr, title, val) => `
 		<div style="margin: 0.25rem 0; display: flex">
-			<div title="${common.prtitle(mod, pr)}" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+			<div title="${val}" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
 				${val}
 			</div>
 		</div>
@@ -209,11 +207,11 @@ cards.nalichie = (data, mod) => `
 cards.badgenalichie = (data, mod) => mod.Наличие ? `
 	<a rel="nofollow" href="/catalog/${links.addm(data)}more.${cards.nal}::.${nicked(mod.Наличие)}=1" 
 		class="badge badge_${nicked(mod['Наличие'] || 'discount')}">
-		${mod['Старая цена'] ? ('-' + mod.discount + '%') : mod.Наличие}
+		${mod.discount ? ('-' + mod.discount + '%') : mod.Наличие}
 	</a>
 ` : `
 	<span class="badge badge_${nicked(mod['Наличие'] || 'discount')}">
-		${mod['Старая цена'] ? ('-' + mod.discount + '%') : mod.Наличие}
+		${mod.discount ? ('-' + mod.discount + '%') : mod.Наличие}
 	</span>
 `
 cards.imgs = (data, mod) => `

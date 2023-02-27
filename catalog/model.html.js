@@ -28,7 +28,7 @@ model.showmodel = (data, env, { mod } = data) =>
 	${model.common(data, env, mod)}
 	<div style="margin-bottom:2rem">
 		${mod['Скрыть фильтры'] ? '' : model.props(data, mod)}
-		${mod.item_rows.length ? model.items(data, mod) : ''}
+		${mod.item_props.length ? model.items(data, mod) : ''}
 	</div>
 	<div class="modtext" style="margin-bottom:2rem">
 		<style>
@@ -195,14 +195,14 @@ const brandlink = (data, env, mod) => `
 
 model.items = (data, mod) => `
 	<table class="table" style="margin-top:2em">
-		<tr>${mod.item_rows.map(model.itemhead).join('')}</tr>
+		<tr>${mod.item_props.map(model.itemhead).join('')}</tr>
 		${mod.items.map(item => model.itembody(data, mod, item)).join('')}
 	</table>
 `
-model.itemhead = (prop) => `<td>${prop}</td>`
+model.itemhead = (pr) => `<td>${pr.prop_title}</td>`
 model.itembody = (data, mod, item) => `
 	<tr>
-		${mod.item_rows.map(prop => model.itemprop(item, prop)).join('')}
+		${mod.item_props.map(pr => model.itemprop(item, pr.prop_title)).join('')}
 	</tr>
 `
 model.itemprop = (item, prop) => `
@@ -216,7 +216,7 @@ model.showprop = (prop_title, val) => `
 `
 model.props = (data, mod) => `
 	<div>
-		${mod.model_rows.map(pr => {
+		${mod.model_props.map(pr => {
 			const val = common.prtitle(mod, pr)
 			if (val == null) return ''
 			return cards.prop.wrap(data, mod, pr, pr.prop_title, val)

@@ -26,7 +26,6 @@ class Catalog {
 		
 		
 		const ids = unique(moditems_ids.map(it => it.model_id))
-		
 		const models = await db.all(`SELECT 
 			m.model_id, 
 			m.model_nick, m.model_title, b.brand_title, b.brand_nick, g.group_nick, g.group_title, g.group_id, 
@@ -58,6 +57,9 @@ class Catalog {
 			order by p.ordain DESC, -ip.ordain DESC, f.file_id
 		`)
 		
+
+		//Создаём модели и массив items, значения свойств массивы. 
+		//Некоторых свойств у item может не быть, если пропертиса для именно этой позиции нет
 		let list = {}
 		for (const m of models) {
 			m.items = {}
@@ -78,6 +80,8 @@ class Catalog {
 		for (const model of list) {
 			model.items = Object.values(model.items)
 		}
+
+		//Все повторные пропертисы объединили по запятым, кроме файлов
 		for (const model of list) {
 			for (const item of model.items) {
 				for (const prop_title in item) {
@@ -88,53 +92,61 @@ class Catalog {
 				}
 			}
 		}
+
+		//Все нестандартные отличия по позициям вынесли в item_props остальное в model_props
 		for (const model of list) {
-			const model_rows = {...model.items[0]}
-			const item_rows = []
+			const model_props = {...model.items[0]}
+			const item_props = []
 			for (const item of model.items) {
 				for (const prop in item) {
-					if (model_rows[prop] == null) continue
+					if (model_props[prop] == null) continue
 					const val = item[prop]
 					if (Array.isArray(val)) {
 						const iv = val.join(', ')
-						const mv = model_rows[prop].join(', ')
+						const mv = model_props[prop].join(', ')
 						if (iv == mv) continue
 					} else {
-						if (model_rows[prop] === val) continue
-						item_rows.push(prop)
-						delete model_rows[prop]
+						if (model_props[prop] === val) continue
+						item_props.push(prop)
+						delete model_props[prop]
 					}
 				}
 			}
-			for (const prop in model_rows) {
-				model[prop] = model_rows[prop]
+			for (const prop in model_props) {
+				model[prop] = model_props[prop]
 			}
 
 			for (const item of model.items) {
 				for (const prop in item) {
-					if (model_rows[prop] == null) continue
+					if (model_props[prop] == null) continue
 					delete item[prop]
 				}
 			}
 
-			model.item_rows = item_rows.filter(prop_title => base.isColumn(model.brand_title, prop_title, options)) //До разделения на common и more
-
-			if (~item_rows.indexOf('Цена')) model.item_rows.push('Цена')
-
-
-			model.model_rows = Object.keys(model_rows).filter(prop_title => base.isColumn(model.brand_title, prop_title, options))
+			//Оставляем только нестандартные значения
+			model.item_props = item_props.filter(prop_title => base.isColumn(model.brand_title, prop_title, options)) //До разделения на common и more
+			model.model_props = Object.keys(model_props).filter(prop_title => base.isColumn(model.brand_title, prop_title, options))
 			/*
 				известные колонки могут попадать в items, как показать вариативность известных колонок если это может быть единственной разницей?
 			*/
-			model.model_rows = model.model_rows.map(prop => options.props[prop] ?? {prop_title:prop, prop_nick:nicked(prop), value_title:prop, value_nick:prop})
+			model.model_props = model.model_props.map(prop => base.getPr(options, prop))
+			model.item_props = model.item_props.map(prop => base.getPr(options, prop))
 			
 		}
+
+		
+		//Какие пропертисы надо показать на карточке
 		for (const model of list) {
 			const { props } = await catalog.getGroupOpt(model.group_id)
-			model.props = [...props]
-			model.props = await filter(model.props, async (pr) => {
+			
+			model.card_props = [...props]
+			model.card_props = await filter(model.card_props, async (pr) => {
 				const p = pr.value_title
-				if (model[p] != null) return true
+				
+				if (model[p] != null) {
+					pr.value = model[p]
+					return true
+				}
 				
 				const ppp = await base.getPropByTitle(p)
 				let ar = []
@@ -152,13 +164,32 @@ class Catalog {
 					}
 				}
 				if (!ar.length) return false
-				ar = unique(ar)
-				model[p] = ar.join(', ')
+				pr.value = ar.join(', ')
 				return true
 			})
 
 		}
-		
+		const cost = await base.getPropByTitle('Цена')
+		const oldcost = await base.getPropByTitle('Старая цена')
+		for (const model of list) {
+			await catalog.prepareCost(model, partner)	
+			await catalog.prepareCostMinMax(model)
+
+			let is_item_cost, is_item_oldcost
+			for (const item of model.items) {
+				if (item[cost.prop_title]) is_item_cost = true
+				if (item[oldcost.prop_title]) is_item_oldcost = true
+					
+			}
+			// if (is_item_oldcost) {
+			// 	model.item_props.push(base.getPr(options, oldcost.prop_title))
+			// }
+			if (is_item_cost) {
+				model.item_props.push(base.getPr(options, cost.prop_title))
+			}
+
+		}
+		//Создали массив more
 		for (const model of list) {
 			model.more = {}
 			for (const prop in model) {
@@ -179,6 +210,7 @@ class Catalog {
 				
 			}
 		}
+		//Показали все картинки itemsов у модели
 		for (const model of list) {
 			if (model.images) continue
 			const images = []
@@ -190,58 +222,168 @@ class Catalog {
 		}
 
 
-		const cost = await base.getPropByTitle('Цена')
-		const oldcost = await base.getPropByTitle('Старая цена')
-		for (const model of list) {
-			if (model[cost.prop_title]) { //80
-				if (model[oldcost.prop_title]) {		//100
-					model.discount = Math.round((1 - model[cost.prop_title]/model[oldcost.prop_title]) * 100) //20
-				}
-				continue
-			}
-			let min, max
-			for (const item of model.items) {
-				const val = Number(item[cost.prop_title])
-				if (!val) continue
-				
-				if (item[oldcost.prop_title]) {
-					item.discount = Math.round((1 - item[cost.prop_title]/item[oldcost.prop_title]) * 100) //20
-				}
-				if (!min || val < min) min = val
-				if (!max || val > max) max = val
-			}
-			if (min == max) {
-				model[cost.prop_title] = min
-			} else {
-				model['min'] = min
-				model['max'] = max
-			}
-		}
-		if (partner?.discount) {
-			for (const model of list) {
-				if (model[oldcost.prop_title]) continue
-				if (!model[cost.prop_title]) {
-					for (const item of model.items) {
-						if (item[oldcost.prop_title]) continue
-						if (!item[cost.prop_title]) continue
-						item[oldcost.prop_title] = item[cost.prop_title]
-						item[cost.prop_title] = Math.round(item[oldcost.prop_title] * (100 - partner.discount) / 100)
-						item.discount = partner.discount
-					}
-					continue
-				}
-				model[oldcost.prop_title] = model[cost.prop_title]
-				model[cost.prop_title] = Math.round(model[oldcost.prop_title] * (100 - partner.discount) / 100)
-				model.discount = partner.discount
-			}
-		}
+		
 		// for (const model of list) {
 		// 	//Выбор обязателен если несколько позиций. Но если позиция одна то item_num сразу в моделе есть
 		// 	if (model.items.length != 1) continue
 		// 	delete model.items
 		// }
+
+		//Восстановили сортировку моделей
 		list = ids.map(id => list.find(m => m.model_id == id))
+
+		
 		return list
+	}
+	//if (~item_props.indexOf('Цена')) model.item_props.push('Цена')
+		//if (~item_props.indexOf('Старая цена')) model.item_props.push('Старая цена')
+	async prepareCost(model, partner) {
+		const { base } = this
+		/*
+		Есть items, Цена, Старая цена, discount обычные характеристики, partner не применён.
+		Нет more
+		Все значения объединены по запятым если дублируются. Цена justonevalue и не может дублироваться в одной строке.
+		*/
+		
+		const cost = await base.getPropByTitle('Цена')
+		const oldcost = await base.getPropByTitle('Старая цена')
+
+		//Цена у позиций в item_props не попадает, так как известная колонка. И в model_props не попадает так как известная колонка
+
+		//Цена либо в model[Цена] или в items или ни там ни там. 
+		//Отличие может быть в том, что у какой-то позиции цены нет а у других цена одинаковая, тогда цена в items
+		//partner применяется только если нет своей Старой цены
+
+		let is_model_cost = !!model[cost.prop_title]
+		let is_model_oldcost = !!model[oldcost.prop_title]
+		let is_item_oldcost, is_item_cost
+		for (const item of model.items) {
+			if (item[oldcost.prop_title]) is_item_oldcost = true
+			if (item[cost.prop_title]) is_item_cost = true
+		}
+		let is_some_oldcost = is_item_oldcost || is_model_oldcost
+		let is_some_cost = is_item_cost || is_model_cost
+
+		delete model.discount
+		for (const item of model.items) {
+			delete item.discount
+		}
+		if (!is_some_cost) {
+			delete model[oldcost.prop_title]
+			for (const item of model.items) {
+				delete item[oldcost.prop_title]
+			}
+			return
+		}
+
+		//Рассчитываем
+		if (is_model_cost) {
+			if (is_model_oldcost) {
+				const number = Number(model[cost.prop_title])
+				const oldnumber = Number(model[oldcost.prop_title])
+				if (oldnumber) { //100
+					model.discount = Math.round((1 - oldnumber / number) * 100) //20
+				}
+				return //min max не будет
+			} else if (is_item_oldcost) {
+				const number = Number(model[cost.prop_title])
+				delete model[cost.prop_title]
+				is_model_cost = false
+				is_item_cost = true
+				for (const item of model.items) {
+					item[cost.prop_title] = number
+					const oldnumber = Number(item[oldcost.prop_title])
+					if (oldnumber) {
+						item.discount = Math.round((1 - oldnumber / number) * 100) //20
+					} else {
+						if (partner?.discount) {
+							item[oldcost.prop_title] = number
+							item[cost.prop_title] = Math.round(oldnumber * (100 - partner.discount) / 100)
+							item.discount = partner.discount
+						}
+					}
+				}
+			} else {
+				if (partner?.discount) {
+					model[oldcost.prop_title] = model[cost.prop_title]
+					model[cost.prop_title] = Math.round(model[oldcost.prop_title] * (100 - partner.discount) / 100)
+					model.discount = partner.discount
+				}
+				return //min max не будет
+			}
+		} else if (is_item_cost) {
+			if (is_model_oldcost) {
+				const oldnumber = Number(model[oldcost.prop_title])
+				delete model[oldcost.prop_title]
+				is_model_oldcost = false
+				is_item_oldcost = true
+				for (const item of model.items) {
+					item[oldcost.prop_title] = oldnumber
+					const number = Number(item[cost.prop_title])
+					item.discount = Math.round((1 - oldnumber / number) * 100) //20
+				}
+			} else if (is_item_oldcost) {
+				for (const item of model.items) {
+					const number = Number(item[cost.prop_title])
+					const oldnumber = Number(item[oldcost.prop_title])
+					if (oldnumber) {
+						item.discount = Math.round((1 - oldnumber / number) * 100) //20
+					} else {
+						if (partner?.discount) {
+							item[oldcost.prop_title] = number
+							item[cost.prop_title] = Math.round(number * (100 - partner.discount) / 100)
+							item.discount = partner.discount
+						}
+					}
+				}	
+			} else {
+				for (const item of model.items) {
+					const number = Number(item[cost.prop_title])
+					if (partner?.discount) {
+						item[oldcost.prop_title] = number
+						item[cost.prop_title] = Math.round(number * (100 - partner.discount) / 100)
+						item.discount = partner.discount
+					}
+				}
+			}
+			
+		}
+		
+	}
+	async prepareCostMinMax (model) {
+		const { base } = this
+		const cost = await base.getPropByTitle('Цена')
+		
+		let is_item_cost
+		for (const item of model.items) {
+			if (item[cost.prop_title]) is_item_cost = true
+		}
+		if (!is_item_cost) return
+
+		let min, max
+		for (const item of model.items) {
+			const number = item[cost.prop_title]
+			if (!number) continue
+			if (!min || number < min) min = number
+			if (!max || number > max) max = number
+		}
+		
+		let min_discount, max_discount
+		for (const item of model.items) {
+			if (!item.discount) continue
+			if (!min_discount || item.discount < min_discount) min_discount = item.discount
+			if (!max_discount || item.discount > max_discount) max_discount = item.discount
+		}
+
+		if (min == max) { //Цена не у всех позиций
+			model[cost.prop_title] = min
+		} else {
+			model['min'] = min
+			model['max'] = max
+		}
+		if (max_discount) {
+			model.discount = max_discount
+		}
 	}
 	async getGroupOpt(group_id) {
 		const { catalog, options } = this

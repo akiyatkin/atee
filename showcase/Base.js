@@ -168,7 +168,9 @@ class Base {
 			return db.col('SELECT model_id from showcase_models where brand_id = :brand_id and model_nick = :model_nick', { brand_id, model_nick })
 		})
 	}
-
+	getPr(options, prop_title) {
+		return options.props[prop_title] ?? {prop_title, prop_nick:nicked(prop_title), value_title:prop_title, value_nick:prop_title}
+	}
 	toNumber(number) {
 		number = parseFloat(number)
 		if (isNaN(number)) return false

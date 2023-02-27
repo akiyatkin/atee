@@ -13,7 +13,7 @@ export const POPUP = (data, env) => `
 		? '<p>Активный ключ <b>' + data.partner + '</b>. <br>Для Вас действуют более <a href="/catalog">выгодные цены</a>.</p>'
 		: '<p>Нет активного ключа</p>'
 	}
-	${data.descr ? '<p><i>' + data.descr + '</i></p>' : ''}
+	${data.descr ? '<p style="max-width:600px"><i>' + data.descr + '</i></p>' : ''}
 	<form>
 		<div class="float-label icon lock">
 			<input id="contacts_partner" name="partner" type="text" placeholder="Укажите ключ">
@@ -57,7 +57,7 @@ export const POPUP = (data, env) => `
 export const SUCCESS = (data) => `
 	<h1>Хорошо</h1>
 	<p>Теперь для Вас действуют более <a href="/catalog">выгодные цены.</a></p>
-	${data.descr ? '<p><i>' + data.descr + '</i></p>' : ''}
+	${data.descr ? '<p style="max-width:600px"><i>' + data.descr + '</i></p>' : ''}
 `
 export const ERROR = () => `
 	<h1>Ключ неточный</h1>
