@@ -284,7 +284,6 @@ class Catalog {
 				if (oldnumber) { //100
 					model.discount = Math.round((1 - oldnumber / number) * 100) //20
 				}
-				return //min max не будет
 			} else if (is_item_oldcost) {
 				const number = Number(model[cost.prop_title])
 				delete model[cost.prop_title]
@@ -309,7 +308,6 @@ class Catalog {
 					model[cost.prop_title] = Math.round(model[oldcost.prop_title] * (100 - partner.discount) / 100)
 					model.discount = partner.discount
 				}
-				return //min max не будет
 			}
 		} else if (is_item_cost) {
 			if (is_model_oldcost) {
@@ -345,8 +343,17 @@ class Catalog {
 						item.discount = partner.discount
 					}
 				}
+			}	
+		}
+		if (model[oldcost.prop_title] == model[cost.prop_title]) {
+			delete model[oldcost.prop_title]
+			delete model.discount
+		}
+		for (const item of model.items) {
+			if (item[oldcost.prop_title] == item[cost.prop_title]) {
+				delete item[oldcost.prop_title]
+				delete item.discount
 			}
-			
 		}
 		
 	}
