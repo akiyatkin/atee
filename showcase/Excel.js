@@ -55,7 +55,6 @@ export const Excel = {
 			const {descr, rows_table} = Dabudi.splitDescr(rows_source)
 			const {heads, rows_body} = Dabudi.splitHead(rows_table, base)
 			
-
 			const indexes = {}
 			indexes.brand_title = Dabudi.recColIndexOrRename(heads, 'Бренд','Производитель', base)
 			indexes.brand_nick = Dabudi.recColIndex(heads, 'brand_nick', base)
@@ -69,6 +68,7 @@ export const Excel = {
 
 			
 			let {rows_items} = Dabudi.splitGroups(rows_body, heads, root, indexes.group_nick, base, groups)
+			
 			//if (sheet == 'Светодиодные ленты') console.log(1, sheet, groups, indexes.group_nick, root, heads)
 			const {head_titles, head_nicks} = heads
 

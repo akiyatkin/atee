@@ -62,7 +62,7 @@ export const Dabudi = {
 	},
 	splitHead: (rows_table, base) => {
 		if (!rows_table.length) return {heads: {head_nicks:[], head_titles:[]}, rows_body:[]}
-		const rows_body = rows_table.slice(1)
+		let rows_body = rows_table.slice(1)
 		const head_titles = rows_table[0]
 		
 		for (let i = head_titles.length - 1; i >= 0; i--) {
@@ -77,6 +77,12 @@ export const Dabudi = {
 		}
 		
 		const head_nicks = head_titles.map(h => base.onicked(h))
+		rows_body = rows_body.map(row => {
+			if (row.length > head_titles.length) {
+				return row.splice(0, head_titles.length)
+			}
+			return row
+		})
 		return {heads: {head_nicks, head_titles}, rows_body}
 	},
 	splitGroups: (rows_body, heads, root_title, index_group, base, groups) => {
