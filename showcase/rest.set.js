@@ -139,7 +139,7 @@ rest.addResponse('set-brands-move', async view => {
 rest.addResponse('set-groups-move', async view => {
 	await view.gets(['admin'])
 	const { db, before_id, after_id } = await view.gets(['db','before_id','after_id'])
-	
+	//нужно before поставить перед after
 	const groups = await db.all(`
 		SELECT 
 			p.parent_id,
@@ -148,17 +148,30 @@ rest.addResponse('set-groups-move', async view => {
 		FROM showcase_groups p
 		ORDER by ordain
 	`)
-	let ordains = {}
-	let before, after
-	groups.forEach(group => {
-		if (group.group_id == after_id) after = group
-		if (group.group_id == before_id) before = group
-		if (!ordains[group.parent_id || 0]) ordains[group.parent_id || 0] = 0
-		ordains[group.parent_id || 0] += 2
-		group.ordain = ordains[group.parent_id || 0]
+
+	let before_index, after_index
+	groups.forEach(({group_id}, index) => {
+		if (group_id == before_id) before_index = index
+		if (group_id == after_id) after_index = index
 	})
-	if (!before || !after) return view.err('Не найдены свойства')
-	before.ordain = after.ordain - 1
+
+	//groups.splice(to, 0, this.splice(from, 1)[0]);
+	groups.splice(after_index, 0, groups.splice(before_index, 1)[0]);
+	let ordain = 1
+	groups.forEach(group => {
+		group.ordain = ordain++
+	})
+	// let ordains = {}
+	// let before, after
+	// groups.forEach(group => {
+	// 	if (group.group_id == after_id) after = group
+	// 	if (group.group_id == before_id) before = group
+	// 	if (!ordains[group.parent_id || 0]) ordains[group.parent_id || 0] = 0
+	// 	ordains[group.parent_id || 0] += 2
+	// 	group.ordain = ordains[group.parent_id || 0]
+	// })
+	// if (!before || !after) return view.err('Не найдены свойства')
+	// before.ordain = after.ordain - 1
 
 	for (const group of groups) {
 		await db.changedRows(`

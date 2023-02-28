@@ -409,6 +409,7 @@ rest.addResponse('get-groups', async view => {
 			g.group_nick,
 			g.group_id,
 			g.parent_id,
+			g.ordain,
 			count(m.group_id) as direct
 		FROM showcase_groups g
 		LEFT JOIN showcase_models m on m.group_id = g.group_id

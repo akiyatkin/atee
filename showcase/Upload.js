@@ -761,41 +761,48 @@ export class Upload {
 		}
 
 		
-		let ordain = 1
+		let ordain = await db.col('SELECT max(ordain) from showcase_brands') || 1
 		for (const brand_nick in brands) {
 			const brand = brands[brand_nick]
+
 			brand.brand_id = await kcproc(Upload, 'create_brand', brand_nick, async () => {
 				let brand_id = await db.col('SELECT brand_id FROM showcase_brands WHERE brand_nick = :brand_nick', brand)
-				if (!brand_id) brand_id = await db.insertId(`
-					INSERT INTO 
-						showcase_brands 
-					SET
-						brand_title = :brand_title,
-						brand_nick = :brand_nick,
-						ordain = 1
-				`, brand)
+				if (!brand_id) {
+					brand.ordain = ordain++
+					brand_id = await db.insertId(`
+						INSERT INTO 
+							showcase_brands 
+						SET
+							brand_title = :brand_title,
+							brand_nick = :brand_nick,
+							ordain = :ordain
+					`, brand)
+				}
 				return brand_id
 			})
 		}
 		
 
 		
-		ordain = 1
+		ordain = await db.col('SELECT max(ordain) from showcase_groups') || 1
 		for (const group_nick in groups) {
 			const group = groups[group_nick]
-			group.ordain = ++ordain;
+			
 			group.parent_id = group.parent_nick ? groups[group.parent_nick].group_id : null
 			group.group_id = await kcproc(Upload, 'create_group', group_nick, async () => {	
 				let { group_id, parent_id } = await db.fetch('SELECT group_id, parent_id from showcase_groups where group_nick = :group_nick', group) || {}
-				if (!group_id) group_id = await db.insertId(`
-					INSERT INTO 
-						showcase_groups 
-					SET
-						group_title = :group_title,
-						parent_id = :parent_id, 
-						group_nick = :group_nick, 
-						ordain = :ordain
-				`, group) //(group_title, ordain, group_id) не меняется для group_nick. Сохраняются при очистке базы данных. 
+				if (!group_id) {
+					group.ordain = ordain++;
+					group_id = await db.insertId(`
+						INSERT INTO 
+							showcase_groups 
+						SET
+							group_title = :group_title,
+							parent_id = :parent_id, 
+							group_nick = :group_nick, 
+							ordain = :ordain
+					`, group) //(group_title, ordain, group_id) не меняется для group_nick. Сохраняются при очистке базы данных. 
+				}
 				group.group_id = group_id
 				if (parent_id != group.parent_id) {
 					await db.changedRows(`
