@@ -89,9 +89,15 @@ class Catalog {
 					if (prop.type == 'file') continue
 					if (~['item_num'].indexOf(prop_title)) continue
 					item[prop_title] = item[prop_title].join(', ')
+					// if (prop.type == 'number' && ~options.justonevalue_nicks.indexOf(prop.prop_nick)) {
+					// 	item[prop_title] = Number(item[prop_title])
+					// }
 				}
 			}
 		}
+
+		
+
 
 		//Все нестандартные отличия по позициям вынесли в item_props остальное в model_props
 		for (const model of list) {
@@ -99,17 +105,17 @@ class Catalog {
 			const item_props = []
 			for (const item of model.items) {
 				for (const prop in item) {
-					if (model_props[prop] == null) continue
+					if (model_props[prop] == null) continue //свойство модели остаётся у модели
 					const val = item[prop]
 					if (Array.isArray(val)) {
 						const iv = val.join(', ')
 						const mv = model_props[prop].join(', ')
 						if (iv == mv) continue
 					} else {
-						if (model_props[prop] === val) continue
-						item_props.push(prop)
-						delete model_props[prop]
+						if (model_props[prop] == val) continue
 					}
+					item_props.push(prop)
+					delete model_props[prop]
 				}
 			}
 			for (const prop in model_props) {
@@ -134,7 +140,29 @@ class Catalog {
 			
 		}
 
-		
+
+		//Навели порядок в ценах
+		const cost = await base.getPropByTitle('Цена')
+		const oldcost = await base.getPropByTitle('Старая цена')
+		for (const model of list) {
+			await catalog.prepareCost(model, partner)	
+			await catalog.prepareCostMinMax(model)
+
+			let is_item_cost, is_item_oldcost
+			for (const item of model.items) {
+				if (item[cost.prop_title]) is_item_cost = true
+				if (item[oldcost.prop_title]) is_item_oldcost = true
+					
+			}
+			// if (is_item_oldcost) {
+			// 	model.item_props.push(base.getPr(options, oldcost.prop_title))
+			// }
+			if (is_item_cost) {
+				model.item_props.push(base.getPr(options, cost.prop_title))
+			}
+
+		}
+
 		//Какие пропертисы надо показать на карточке
 		for (const model of list) {
 			const { props } = await catalog.getGroupOpt(model.group_id)
@@ -167,28 +195,9 @@ class Catalog {
 				pr.value = ar.join(', ')
 				return true
 			})
-
 		}
-		const cost = await base.getPropByTitle('Цена')
-		const oldcost = await base.getPropByTitle('Старая цена')
-		for (const model of list) {
-			await catalog.prepareCost(model, partner)	
-			await catalog.prepareCostMinMax(model)
 
-			let is_item_cost, is_item_oldcost
-			for (const item of model.items) {
-				if (item[cost.prop_title]) is_item_cost = true
-				if (item[oldcost.prop_title]) is_item_oldcost = true
-					
-			}
-			// if (is_item_oldcost) {
-			// 	model.item_props.push(base.getPr(options, oldcost.prop_title))
-			// }
-			if (is_item_cost) {
-				model.item_props.push(base.getPr(options, cost.prop_title))
-			}
 
-		}
 		//Создали массив more
 		for (const model of list) {
 			model.more = {}
@@ -254,13 +263,44 @@ class Catalog {
 		//Отличие может быть в том, что у какой-то позиции цены нет а у других цена одинаковая, тогда цена в items
 		//partner применяется только если нет своей Старой цены
 
-		let is_model_cost = !!model[cost.prop_title]
-		let is_model_oldcost = !!model[oldcost.prop_title]
-		let is_item_oldcost, is_item_cost
-		for (const item of model.items) {
-			if (item[oldcost.prop_title]) is_item_oldcost = true
-			if (item[cost.prop_title]) is_item_cost = true
+		if (model[cost.prop_title]) {
+			model[cost.prop_title] = Number(model[cost.prop_title])
 		}
+		if (model[oldcost.prop_title]) {
+			model[oldcost.prop_title] = Number(model[oldcost.prop_title])
+		}
+
+		let is_item_oldcost, is_item_cost, is_model_cost, is_model_oldcost
+		if (model[cost.prop_title]) {
+			is_model_cost = true
+		} else {
+			delete model[cost.prop_title]
+		}
+		if (model[oldcost.prop_title]) {
+			is_model_oldcost = true
+		} else {
+			delete model[oldcost.prop_title]
+		}
+		for (const item of model.items) {
+			if (item[oldcost.prop_title]) {
+				item[oldcost.prop_title] = Number(item[oldcost.prop_title])
+			}
+			if (item[oldcost.prop_title]) {
+				is_item_oldcost = true
+			}
+			if (item[cost.prop_title]) {
+				item[cost.prop_title] = Number(item[cost.prop_title])
+			} else {
+				delete item[cost.prop_title]
+			}
+			if (item[cost.prop_title]) {
+				item[cost.prop_title] = Number(item[cost.prop_title])
+				is_item_cost = true
+			} else {
+				delete item[cost.prop_title]
+			}
+		}
+
 		let is_some_oldcost = is_item_oldcost || is_model_oldcost
 		let is_some_cost = is_item_cost || is_model_cost
 

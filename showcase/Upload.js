@@ -1096,53 +1096,52 @@ export class Upload {
 		const photo_id = (await upload.receiveProp('Фото')).prop_id
 		const fff_id = (await upload.receiveProp('Файл')).prop_id
 
-		const files = await db.all(`
-			SELECT distinct f.destiny, f.file_id, ip.model_id AS imodel_id, ip.item_num AS iitem_num, m.model_id, f.ordain 
+		const files1 = await db.all(`
+			SELECT distinct f.destiny, f.file_id, i.item_num, m.model_id, f.ordain 
 			FROM 
 				showcase_filekeys fk
 				LEFT JOIN showcase_files f on fk.file_id = f.file_id
 				LEFT JOIN showcase_brands b on b.brand_nick = f.brand_nick
 				LEFT JOIN showcase_models m ON (m.model_nick = fk.key_nick AND m.brand_id = b.brand_id)
+				LEFT JOIN showcase_items i on i.model_id = m.model_id
+		`)
+		const files2 = await db.all(`
+			SELECT distinct f.destiny, f.file_id, ip.item_num, ip.model_id, f.ordain, fk.key_nick 
+			FROM 
+				showcase_filekeys fk
+				LEFT JOIN showcase_files f on fk.file_id = f.file_id
+
 				LEFT JOIN showcase_bonds bo on bo.bond_nick = fk.key_nick
 				LEFT JOIN showcase_iprops ip ON (ip.bond_id = bo.bond_id AND (ip.prop_id = :art_id OR ip.prop_id = :photo_id OR ip.prop_id = :fff_id))
-				LEFT JOIN showcase_models m2 ON (ip.model_id = m2.model_id AND m2.brand_id = b.brand_id)
-			WHERE fk.key_nick is not null and b.brand_id is not NULL AND (bo.bond_id IS NOT NULL OR m.model_id IS NOT NULL)
+				
+				
+				LEFT JOIN showcase_brands b on b.brand_nick = f.brand_nick
+				LEFT JOIN showcase_models m on (m.model_id = ip.model_id and m.brand_id = b.brand_id)
+			WHERE m.model_id is not null and f.destiny is not null
 		`, {art_id, photo_id, fff_id})
+		const files = [...files1, ...files2]
+		
+		// const files = [...files2]
+		// console.log(files, {art_id, photo_id, fff_id})
 		
 		const destinies = {}
 		for (const part of Object.keys(Files.destinies)) { //['slides','files','images','texts','videos']
 			destinies[part] = await upload.receiveProp(part)
 		}
 		for (const file of files) {
-			const {file_id, ordain, destiny, imodel_id, iitem_num, model_id} = file
-
-			
+			const {file_id, ordain, destiny, item_num, model_id} = file
 			if (!destiny) continue; //Может быть непонятное предназначение если файл лежит во вложенной папке папки модели
-			
-			let items = []
-			if (model_id) {
-				items = await db.all(`
-					SELECT item_num, model_id 
-					FROM showcase_items 
-					WHERE model_id = :model_id
-				`, { model_id })
-			} else {
-				items = [{item_num:iitem_num, model_id: imodel_id}]
-			}
-			for (const item of items) {
-				//Может быть дубль, если у файла разные keynick и по 1 связь с моделью, по второму связь по Фото. Это будет в двух интерация и без полного хэша все дубли не убрать.
-				await db.exec(`
-					INSERT IGNORE INTO 
-			 			showcase_iprops
-			 		SET
-			 			model_id = :model_id,
-			 			item_num = :item_num,
-			 			prop_id = :prop_id,
-			 			file_id = :file_id,
-			 			ordain = :ordain
-			 	`, {...file, ...item, prop_id: destinies[destiny].prop_id})
-			}
-			
+			//Может быть дубль, если у файла разные keynick и по 1 связь с моделью, по второму связь по Фото или Арт. Это будет в двух интерация и без полного хэша все дубли не убрать.
+			await db.exec(`
+				INSERT IGNORE INTO 
+		 			showcase_iprops
+		 		SET
+		 			model_id = :model_id,
+		 			item_num = :item_num,
+		 			prop_id = :prop_id,
+		 			file_id = :file_id,
+		 			ordain = :ordain
+		 	`, {file_id, ordain, item_num, model_id, prop_id: destinies[destiny].prop_id})
 		}
 	}
 	async connectByFiles() {

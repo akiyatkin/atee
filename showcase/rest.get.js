@@ -367,7 +367,7 @@ rest.addResponse('get-files', async view => {
 		LEFT JOIN showcase_iprops ip on f.file_id = ip.file_id
 		WHERE ip.file_id is null and f.destiny is null
 	`)
-	res['Бесхозных'] += parts[part].length	
+	res['Бесхозных'] += parts['Без назначения'].length	
 
 	view.ans.res = Object.entries(res)
 	view.ans.parts = Object.entries(parts)
