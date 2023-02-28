@@ -332,8 +332,7 @@ rest.addResponse('get-search-groups', async (view) => {
 		return tree[group_id].parent_id && tree[group_id].path?.length >= work.path?.length
 	}).map(group_id => {
 		return tree[group_id].path[work.path.length + 1] || group_id
-	}))
-	
+	}))	
 	const groups = work.childs.map((id) => {
 		const group = {...tree[id]}
 		group.mute = !~level_group_ids.indexOf(id)

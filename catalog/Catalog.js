@@ -426,6 +426,7 @@ class Catalog {
 				tree[group.group_id] = group
 			}
 			
+			
 			//console.log(tree)
 			for (const group of rows) {
 				group.path = []
@@ -446,11 +447,13 @@ class Catalog {
 					parent.indepth += group.inside
 				})
 			}
-			for (const group_id in tree) {
+			for (const group of rows) {
+				const group_id = group.group_id
 				if (!tree[group_id].indepth) delete tree[group_id]
 			}
-			for (const group_id in tree) {
-				const group = tree[group_id]
+			for (const group of rows) {
+				if (!group.indepth) continue
+				const group_id = group.group_id
 				if (group.parent_id) {
 					const parent = tree[group.parent_id]
 					parent.childs.push(group.group_id)
