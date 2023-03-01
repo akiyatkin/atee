@@ -761,14 +761,13 @@ export class Upload {
 		}
 
 		
-		let ordain = await db.col('SELECT max(ordain) from showcase_brands') || 1
+		let ordain = await db.col('SELECT max(ordain) from showcase_brands')
 		for (const brand_nick in brands) {
 			const brand = brands[brand_nick]
-
 			brand.brand_id = await kcproc(Upload, 'create_brand', brand_nick, async () => {
 				let brand_id = await db.col('SELECT brand_id FROM showcase_brands WHERE brand_nick = :brand_nick', brand)
 				if (!brand_id) {
-					brand.ordain = ordain++
+					brand.ordain = ++ordain
 					brand_id = await db.insertId(`
 						INSERT INTO 
 							showcase_brands 
@@ -784,7 +783,7 @@ export class Upload {
 		
 
 		
-		ordain = await db.col('SELECT max(ordain) from showcase_groups') || 1
+		ordain = await db.col('SELECT max(ordain) from showcase_groups')
 		for (const group_nick in groups) {
 			const group = groups[group_nick]
 			
@@ -792,7 +791,7 @@ export class Upload {
 			group.group_id = await kcproc(Upload, 'create_group', group_nick, async () => {	
 				let { group_id, parent_id } = await db.fetch('SELECT group_id, parent_id from showcase_groups where group_nick = :group_nick', group) || {}
 				if (!group_id) {
-					group.ordain = ordain++;
+					group.ordain = ++ordain;
 					group_id = await db.insertId(`
 						INSERT INTO 
 							showcase_groups 

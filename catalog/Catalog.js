@@ -612,6 +612,7 @@ class Catalog {
 			return filter
 		}
 		if (prop.type == 'value') {
+			const order = filter.order || 'v.value_title'
 			filter.values = await db.all(`
 				SELECT distinct v.value_nick, v.value_title
 				FROM showcase_iprops ip, showcase_models m, showcase_values v
@@ -619,27 +620,29 @@ class Catalog {
 				and ip.prop_id = :prop_id
 				and v.value_id = ip.value_id
 				and m.group_id in (${group.groups.join(',')})
-				ORDER BY v.value_title
+				ORDER BY ${order}
 			`, {
 				prop_id
 			})
 		} else if (prop.type == 'number') {
+			const order = filter.order || 'ip.number'
 			filter.values = await db.all(`
 				SELECT distinct ip.number as value_nick
 				FROM showcase_iprops ip, showcase_models m
 				WHERE m.model_id = ip.model_id
 				and ip.prop_id = :prop_id
 				and m.group_id in (${group.groups.join(',')})
-				ORDER BY ip.number
+				ORDER BY ${order}
 			`, {
 				prop_id
 			})
 		} else if (prop.type == 'brand') {
+			const order = filter.order || 'b.ordain'
 			filter.values = await db.all(`
 				SELECT distinct b.brand_nick as value_nick, b.brand_title as value_title
 				FROM showcase_models m, showcase_brands b, showcase_items i
 				WHERE i.model_id = m.model_id and i.item_num = 1 and m.brand_id = b.brand_id and m.group_id in (${group.groups.join(',')})
-				ORDER BY b.brand_title
+				ORDER BY ${order}
 			`)
 		} else {
 			return false

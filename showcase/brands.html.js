@@ -53,6 +53,6 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 const showbrand = (brand) => `
 	<div data-brand_id="${brand.brand_id}" draggable="true" class="item ${brand.brand_nick}" style="transition: 0.3s;">
 		<span style="cursor: move">&blk14;</span>
-		<span title="${brand.brand_nick}">${brand.brand_title} <small>${brand.models}</small></span>
+		<span title="${brand.brand_nick}"><span style="opacity:0.3">${brand.ordain}.</span>${brand.brand_title} <small>${brand.models}</small></span>
 	</div>
 `

@@ -286,11 +286,12 @@ rest.addResponse('get-brands', async view => {
 			b.brand_title,
 			b.brand_nick,
 			b.brand_id,
+			b.ordain,
 			count(m.brand_id) as models
 		FROM showcase_brands b
 		LEFT JOIN showcase_models m on m.brand_id = b.brand_id
 		GROUP BY b.brand_id
-		ORDER by models DESC
+		ORDER by b.ordain
 	`)
 	view.ans.brands = brands
 	return view.ret()
