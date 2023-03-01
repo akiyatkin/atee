@@ -763,7 +763,7 @@ export class Upload {
 		await (async () => { 
 			from.push(`showcase_tables t`)
 			where.push(`t.table_id = i.table_id`)
-			sort.push(`t.table_id`)
+			sort.push(`t.ordain`)
 		})()
 		await (async () => { 
 			const name = 'sheet_index'
@@ -865,7 +865,7 @@ export class Upload {
 					table_title = :table_title,
 					ordain = :ordain
 				WHERE table_id = :table_id
-			`, { ordain, table_title, table_id })
+			`, { ordain:order, table_title, table_id })
 		}
 
 		for (const prop_nick in props) {

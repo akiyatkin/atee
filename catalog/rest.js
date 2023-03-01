@@ -389,7 +389,7 @@ rest.addResponse('get-search-list', async (view) => {
 	const sel_where = [...where]
 	const sel_sort = [...sort]
 	if (!sort.length) {
-		sel_sort.push('i.ordain')
+		sel_sort.push('min(i.ordain)')
 
 		//Когда пересчитывается search надо пересчитать и дефолтный sort, колонка ordain для моделей
 		/*
