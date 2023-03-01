@@ -377,11 +377,69 @@ rest.addResponse('get-search-groups', async (view) => {
 	Object.assign(view.ans, res)
 	return view.ret()
 })
+
+
 rest.addResponse('get-search-list', async (view) => {
 	const { db, value, md, partner, visitor, catalog, page, count, base, options } = await view.gets(['db','value','md','partner','visitor', 'catalog', 'page', 'count', 'base', 'options'])
 	
 	//const {title, group_ids} = Catalog.searchGroups(db, visitor, md)
 	const {from, where, sort} = await catalog.getmdwhere(md, partner)
+	
+	const sel_from = [...from]
+	const sel_where = [...where]
+	const sel_sort = [...sort]
+	if (!sort.length) {
+		sel_sort.push('i.ordain')
+
+		//Когда пересчитывается search надо пересчитать и дефолтный sort, колонка ordain для моделей
+		/*
+		const index_items = sel_from.indexOf('showcase_items i')
+		await (async () => { 
+			const name = 'Цена'
+			const prop_id = await base.getPropIdByTitle(name)
+			sel_from[index_items] = sel_from[index_items] + ` left join showcase_iprops ip_${name} on (ip_${name}.model_id = i.model_id and ip_${name}.item_num = i.item_num and ip_${name}.prop_id = ${prop_id})`
+			sel_sort.push(`IF(ip_${name}.number is null,1,0)`)
+		})()
+
+		await (async () => { 
+			const name = 'images'
+			
+			const prop_id = await base.getPropIdByTitle(name)
+			sel_from[index_items] = sel_from[index_items] + ` left join showcase_iprops ip_${name} on (ip_${name}.model_id = i.model_id and ip_${name}.item_num = i.item_num and ip_${name}.prop_id = ${prop_id})`
+			sel_sort.push(`IF(ip_${name}.file_id is null,1,0)`)
+		})()
+		
+
+		await (async () => { 
+			sel_from.push('showcase_brands b')
+			sel_where.push('b.brand_id = m.brand_id')
+			sel_sort.push('b.ordain')
+		})()
+
+		await (async () => { 
+			sel_from.push(`showcase_tables t`)
+			sel_where.push(`t.table_id = i.table_id`)
+			sel_sort.push(`t.table_id`)
+		})()
+		await (async () => { 
+			const name = 'sheet_index'
+			const prop_id = await base.getPropIdByTitle(name)
+			sel_from.push(`showcase_iprops ip_${name}`)
+			sel_where.push(`ip_${name}.model_id = i.model_id`)
+			sel_where.push(`ip_${name}.item_num = i.item_num`)
+			sel_where.push(`ip_${name}.prop_id = ${prop_id}`)
+			sel_sort.push(`ip_${name}.number`)
+		})()
+		await (async () => { 
+			const name = 'sheet_row'
+			const prop_id = await base.getPropIdByTitle(name)
+			sel_from.push(`showcase_iprops ip_${name}`)
+			sel_where.push(`ip_${name}.model_id = i.model_id`)
+			sel_where.push(`ip_${name}.item_num = i.item_num`)
+			sel_where.push(`ip_${name}.prop_id = ${prop_id}`)
+			sel_sort.push(`ip_${name}.number`)
+		})()*/
+	}
 	const group = await catalog.getMainGroup(md)
 	if (!group) return view.err('Нет данных')
 	const opt = await catalog.getGroupOpt(group.group_id)
@@ -397,10 +455,10 @@ rest.addResponse('get-search-list', async (view) => {
 
 	const moditem_ids = await db.all(`
 		SELECT m.model_id, GROUP_CONCAT(distinct i.item_num separator ',') as item_nums 
-		FROM ${from.join(', ')}
-		WHERE ${where.join(' and ')}
+		FROM ${sel_from.join(', ')}
+		WHERE ${sel_where.join(' and ')}
 		GROUP BY m.model_id 
-		${sort.length?`ORDER BY ${sort.join(',')}`:''}
+		${sel_sort.length?`ORDER BY ${sel_sort.join(',')}`:''}
 		LIMIT ${start}, ${countonpage}
 	`)
 	const total = await db.col(`

@@ -144,7 +144,10 @@ export const Files = {
 			let files = await fs.readdir(dir).catch(() => [])
 			files = files.map((file) => Files.nameInfo(file))
 			files = files.filter(({secure}) => !secure)
+			files.sort(Files.sort)
+			let order = 1
 			files.forEach(of => {
+				of.order = order++
 				delete of.secure
 			})
 			return files

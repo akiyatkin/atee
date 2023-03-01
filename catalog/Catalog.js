@@ -130,8 +130,8 @@ class Catalog {
 			}
 
 			//Оставляем только нестандартные значения
-			model.item_props = item_props.filter(prop_title => base.isColumn(model.brand_title, prop_title, options)) //До разделения на common и more
-			model.model_props = Object.keys(model_props).filter(prop_title => base.isColumn(model.brand_title, prop_title, options))
+			model.item_props = item_props.filter(prop_title => !base.isColumn(model.brand_title, prop_title, options)) //До разделения на common и more
+			model.model_props = Object.keys(model_props).filter(prop_title => !base.isColumn(model.brand_title, prop_title, options))
 			/*
 				известные колонки могут попадать в items, как показать вариативность известных колонок если это может быть единственной разницей?
 			*/
@@ -141,27 +141,7 @@ class Catalog {
 		}
 
 
-		//Навели порядок в ценах
-		const cost = await base.getPropByTitle('Цена')
-		const oldcost = await base.getPropByTitle('Старая цена')
-		for (const model of list) {
-			await catalog.prepareCost(model, partner)	
-			await catalog.prepareCostMinMax(model)
-
-			let is_item_cost, is_item_oldcost
-			for (const item of model.items) {
-				if (item[cost.prop_title]) is_item_cost = true
-				if (item[oldcost.prop_title]) is_item_oldcost = true
-					
-			}
-			// if (is_item_oldcost) {
-			// 	model.item_props.push(base.getPr(options, oldcost.prop_title))
-			// }
-			if (is_item_cost) {
-				model.item_props.push(base.getPr(options, cost.prop_title))
-			}
-
-		}
+		
 
 		//Какие пропертисы надо показать на карточке
 		for (const model of list) {
@@ -197,6 +177,26 @@ class Catalog {
 			})
 		}
 
+		//Навели порядок в ценах
+		const cost = await base.getPropByTitle('Цена')
+		const oldcost = await base.getPropByTitle('Старая цена')
+		for (const model of list) {
+			await catalog.prepareCost(model, partner)	
+			await catalog.prepareCostMinMax(model)
+
+			let is_item_cost, is_item_oldcost
+			for (const item of model.items) {
+				if (item[cost.prop_title]) is_item_cost = true
+				if (item[oldcost.prop_title]) is_item_oldcost = true
+					
+			}
+			// if (is_item_oldcost) {
+			// 	model.item_props.push(base.getPr(options, oldcost.prop_title))
+			// }
+			if (is_item_cost) {
+				model.item_props.push(base.getPr(options, cost.prop_title))
+			}
+		}
 
 		//Создали массив more
 		for (const model of list) {

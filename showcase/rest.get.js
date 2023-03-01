@@ -253,6 +253,8 @@ rest.addResponse('get-models', async view => {
 		LEFT JOIN showcase_items i on i.model_id = m.model_id
 		WHERE m.brand_id = b.brand_id and g.group_id = m.group_id
 		GROUP BY m.model_id
+		ORDER BY i.ordain
+
 	`,{cost_id: cost.prop_id})
 	view.ans.models = models
 	return view.ret()
@@ -359,7 +361,7 @@ rest.addResponse('get-files', async view => {
 		parts[part] = await db.all(`
 			SELECT f.src from showcase_files f 
 			LEFT JOIN showcase_iprops ip on f.file_id = ip.file_id
-			WHERE ip.file_id is null and f.destiny=:part
+			WHERE ip.file_id is null and f.destiny = :part
 		`, {part})
 		res['Бесхозных'] += parts[part].length	
 	}

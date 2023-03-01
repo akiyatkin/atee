@@ -103,6 +103,12 @@ export class View {
 		}
 		return res
 	}
+	fin(result) {
+		const nostore = !result
+		const status = 200
+		const msg = result ? 'Готово' : 'Ошибка'
+		return this.#ready(msg, status, result, nostore)
+	}
 	end (ext = {}) {
 		const reans = new ViewException()
 		Object.assign(this, ext)

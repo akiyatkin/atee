@@ -704,18 +704,118 @@ export class Upload {
 		search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
 		return search
 	}
+	async reorderModels () {
+		const { db, base, upload } = this
+		/*
+			Когда меняются ключевые характеристики нужно пересортировывать все модели для дефолтного вывода
+				1. Цена, есть-нет (у позиций, хотя бы одна)
+				2. Старая цена, есть-нет (у позиций, хотя бы одна)
+				3. Картинка, есть-нет (у позиций, хотя бы одна)
+				4. Бренд, согласно brand.ordain
+				5. Таблица, согласно table.ordain (У бренда может быть несколько таблиц)
+				6. Номер листа, согласно sheet_index
+				7. Номер строки, согласно sheet_row
+
+			Сортируется средствами SQL, и вносится как ordain, типа кэша, чтобы дальше у сортировать по ordain в рабочих запросах.
+		*/
+		const prop_cost = await upload.receiveProp('Цена')
+		const prop_oldcost = await upload.receiveProp('Старая цена')
+		const prop_images = await upload.receiveProp('images')
+		const prop_sheet_index = await upload.receiveProp('sheet_index')
+		const prop_sheet_row = await upload.receiveProp('sheet_row')
+		
+		const from = []
+		const where = []
+		const sort = []
+		
+		const index_items = 0
+		from[index_items] = 'showcase_items i'
+		
+		await (async () => { 
+			const name = 'cost'
+			const prop_id = await base.getPropIdByTitle('Цена')
+			from[index_items] = from[index_items] + ` left join showcase_iprops ip_${name} on (ip_${name}.model_id = i.model_id and ip_${name}.item_num = i.item_num and ip_${name}.prop_id = ${prop_id})`
+			sort.push(`IF(ip_${name}.number is null,1,0)`)
+		})()
+
+		await (async () => { 
+			const name = 'oldcost'
+			const prop_id = await base.getPropIdByTitle('Старая цена')
+			from[index_items] = from[index_items] + ` left join showcase_iprops ip_${name} on (ip_${name}.model_id = i.model_id and ip_${name}.item_num = i.item_num and ip_${name}.prop_id = ${prop_id})`
+			sort.push(`IF(ip_${name}.number is null,1,0)`)
+		})()
+
+		await (async () => { 
+			const name = 'images'
+			const prop_id = await base.getPropIdByTitle(name)
+			from[index_items] = from[index_items] + ` left join showcase_iprops ip_${name} on (ip_${name}.model_id = i.model_id and ip_${name}.item_num = i.item_num and ip_${name}.prop_id = ${prop_id})`
+			sort.push(`IF(ip_${name}.file_id is null,1,0)`)
+		})()
+		
+		await (async () => { 
+			from.push('showcase_models m')
+			where.push('m.model_id = i.model_id')
+			from.push('showcase_brands b')
+			where.push('b.brand_id = m.brand_id')
+			sort.push('b.ordain')
+		})()
+
+		await (async () => { 
+			from.push(`showcase_tables t`)
+			where.push(`t.table_id = i.table_id`)
+			sort.push(`t.table_id`)
+		})()
+		await (async () => { 
+			const name = 'sheet_index'
+			const prop_id = await base.getPropIdByTitle(name)
+			from.push(`showcase_iprops ip_${name}`)
+			where.push(`ip_${name}.model_id = i.model_id`)
+			where.push(`ip_${name}.item_num = i.item_num`)
+			where.push(`ip_${name}.prop_id = ${prop_id}`)
+			sort.push(`ip_${name}.number`)
+		})()
+		await (async () => { 
+			const name = 'sheet_row'
+			const prop_id = await base.getPropIdByTitle(name)
+			from.push(`showcase_iprops ip_${name}`)
+			where.push(`ip_${name}.model_id = i.model_id`)
+			where.push(`ip_${name}.item_num = i.item_num`)
+			where.push(`ip_${name}.prop_id = ${prop_id}`)
+			sort.push(`ip_${name}.number`)
+		})()
+		
+		const sql = `	
+			SELECT i.model_id, i.item_num
+			FROM ${from.join(', ')}
+			WHERE ${where.join(' and ')}
+			GROUP BY i.model_id, i.item_num
+			ORDER BY ${sort.join(',')}
+		`
+		const items = await db.all(sql)
+		let ordain = 1
+		for (const row of items) {
+			row.ordain = ordain++
+			const res = await db.changedRows(`
+		 		UPDATE showcase_items
+		 		SET ordain = :ordain
+			 	WHERE model_id = :model_id and item_num = :item_num
+		 	`, row)
+		}
+
+		return true
+	}
 	async loadTable (name, msgs = []) {
 		const { upload, visitor, options, view, db, config, base } = this
 		let duration = Date.now()
 		const oldcost = await upload.receiveProp('Старая цена')
 		const cost = await upload.receiveProp('Цена')
 		const dir = config['tables']
-		const { file } = await Files.getFileInfo(visitor, dir, name, ['xlsx','js'])
+		const { file, order } = await Files.getFileInfo(visitor, dir, name, ['xlsx','js'])
 		if (!file) return false
 
-		const brand = options.tables?.[name]?.brand || name
+		const brand_title = options.tables?.[name]?.brand || name
 
-		const {groups, models, sheets, brands} = await Excel.loadTable(visitor, dir + file, brand, base, msgs, options.root_title)
+		const {groups, models, sheets, brands} = await Excel.loadTable(visitor, dir + file, brand_title, base, msgs, options.root_title)
 		const values = {}
 		const bonds = {}
 		const props = {}
@@ -743,17 +843,30 @@ export class Upload {
 		}
 
 		let table_id = await db.col('select table_id from showcase_tables where table_nick = :table_nick', { table_nick})
-		if (!table_id) table_id = await db.insertId(`
-			INSERT INTO 
-				showcase_tables 
-			SET
-				table_title = :table_title,
-				table_nick = :table_nick, 
-				loaded = 0
-		`, {
-			table_title: table_title,
-			table_nick: table_nick
-		})
+		if (!table_id) {
+			table_id = await db.insertId(`
+				INSERT INTO 
+					showcase_tables 
+				SET
+					table_title = :table_title,
+					table_nick = :table_nick, 
+					loaded = 0,
+					ordain = :ordain
+			`, {
+				ordain: order,
+				table_title: table_title,
+				table_nick: table_nick
+			})
+		} else {
+			await db.changedRows(`
+				UPDATE
+					showcase_tables
+				SET
+					table_title = :table_title,
+					ordain = :ordain
+				WHERE table_id = :table_id
+			`, { ordain, table_title, table_id })
+		}
 
 		for (const prop_nick in props) {
 			let pr = props[prop_nick]
@@ -889,7 +1002,7 @@ export class Upload {
 				`, {model_title, model_nick, brand_id, group_id, search})
 				return model_id
 			})
-
+			
 			await db.changedRows(`
 				UPDATE
 					showcase_models
@@ -903,12 +1016,12 @@ export class Upload {
 				SELECT max(item_num) 
 				FROM showcase_items
 				WHERE model_id = :model_id
-			`, { model_id }) || 0 //позиции моглы быть загружены из другой таблицы
+			`, { model_id }) || 0 //позиции могли быть загружены из другой таблицы
 			//let item_num = 0
 			
 			for (const i in items) {
 				const item = items[i]
-				const ordain = 1 + Number(i)
+				//const ordain = 1 + Number(i)
 			
 				const sheet_title = item[item.length - 1] //Последняя запись это имя листа sheet_title
 				const { descr, heads, indexes } = sheets[sheet_title]
@@ -919,6 +1032,7 @@ export class Upload {
 					if (sysitem(item, i, indexes)) continue
 					const value_title = item[i]
 					const prop_nick = heads.head_nicks[i]
+					const prop_title = heads.head_titles[i]
 					const type = await base.getPropTypeByNick(prop_nick)
 
 					
@@ -935,7 +1049,7 @@ export class Upload {
 							let number = parseFloat(v_title)
 							if (isNaN(number)) {
 								msgs.push(`
-									Ошибка <b>${heads.head_titles[i]}</b> ${type} <b>${v_title}</b>. 
+									<b>${heads.head_titles[i]}</b> ${type} <b>${v_title}</b>. 
 									Несоответствует типу.
 									Файл ${name}, лист ${sheet_title}. 
 								`)
@@ -950,7 +1064,7 @@ export class Upload {
 							const len = String(test).length
 							if (len <= LIM) continue
 							msgs.push(`
-								Ошибка <b>${heads.head_titles[i]}</b> ${type} <b>${v_title}</b>. 
+								<b>${heads.head_titles[i]}</b> ${type} <b>${v_title}</b>. 
 								Длинна ${len} > ${LIM}. Значение не сохранено. 
 								Файл ${name}, лист ${sheet_title}. 
 							`)
@@ -961,57 +1075,59 @@ export class Upload {
 					}
 					if (type == 'file') {
 						msgs.push(`
-							Ошибка <b>${heads.head_titles[i]}</b> ${type} <b>${v_title}</b>. 
+							<b>${heads.head_titles[i]}</b> ${type} <b>${v_title}</b>. 
 							Значение не сохранено, так как поля типа file определяются отдельно. 
 							Файл ${name}, лист ${sheet_title}. 
 						`)
 						continue
 					}
-					for (const v_title of item[i]) {
-						if (type == 'value' && values[v_title]) continue
-						if (type == 'bond' && bonds[v_title]) continue
-						const value_nick = base.onicked(v_title)
-						if (v_title.length > base.LONG) {
-							msgs.push(`
-								<b>${heads.head_titles[i]}</b> ${type} 
-								<b title="${value_nick}">${v_title.slice(-base.LONG).trim()}</b> из <b>${v_title}</b>. Длинна ${v_title.length} > ${base.LONG}. 
-								Файл ${name}, лист ${sheet_title}. 
-								
-							`)
-							//console.log(msgs[msgs.length - 1])
-						}
-						if (type == 'value') {
-							const value_title = v_title.slice(-base.LONG).trim()
-							values[v_title] = { value_title, value_nick }
-							values[v_title].value_id = await kcproc(Upload, 'create-value', value_nick, async () => {
-								let value_id = await db.col('SELECT value_id from showcase_values where value_nick = :value_nick', { value_nick })
-								if (!value_id) value_id = await db.insertId(`
-									INSERT INTO 
-										showcase_values
-									SET
-										value_title = :value_title,
-										value_nick = :value_nick
-								`, values[v_title])	
-								return value_id
-							})
+					if (~['value','bond'].indexOf(type)) {
+						for (const v_title of item[i]) {
+							if (type == 'value' && values[v_title]) continue
+							if (type == 'bond' && bonds[v_title]) continue
+							const value_nick = base.onicked(v_title)
+							if (v_title.length > base.LONG && !base.isColumn(brand_title, prop_title, options)) {
+								msgs.push(`
+									<b>${heads.head_titles[i]}</b> ${type} 
+									<b title="${value_nick}">${v_title.slice(-base.LONG).trim()}</b> из <b>${v_title}</b>. Длинна ${v_title.length} > ${base.LONG}. 
+									Файл ${name}, лист ${sheet_title}. 
+									
+								`)
+								//console.log(msgs[msgs.length - 1])
+							}
+							if (type == 'value') {
+								const value_title = v_title.slice(-base.LONG).trim()
+								values[v_title] = { value_title, value_nick }
+								values[v_title].value_id = await kcproc(Upload, 'create-value', value_nick, async () => {
+									let value_id = await db.col('SELECT value_id from showcase_values where value_nick = :value_nick', { value_nick })
+									if (!value_id) value_id = await db.insertId(`
+										INSERT INTO 
+											showcase_values
+										SET
+											value_title = :value_title,
+											value_nick = :value_nick
+									`, values[v_title])	
+									return value_id
+								})
 
-							
-						}
-						if (type == 'bond') {
-							const bonds_title = v_title.slice(-base.LONG).trim()
-							const bond_nick = base.onicked(v_title)
-							bonds[v_title] = { bonds_title, bond_nick }
-							bonds[v_title].bond_id = await kcproc(Upload, 'create-bond', bond_nick, async () => {
-								let bond_id = await db.col('SELECT bond_id from showcase_bonds where bond_nick = :bond_nick', { bond_nick })
-								if (!bond_id) bond_id = await db.insertId(`
-									INSERT INTO 
-										showcase_bonds
-									SET
-										bond_title = :bonds_title,
-										bond_nick = :bond_nick
-								`, bonds[v_title])
-								return bond_id
-							})
+								
+							}
+							if (type == 'bond') {
+								const bonds_title = v_title.slice(-base.LONG).trim()
+								const bond_nick = base.onicked(v_title)
+								bonds[v_title] = { bonds_title, bond_nick }
+								bonds[v_title].bond_id = await kcproc(Upload, 'create-bond', bond_nick, async () => {
+									let bond_id = await db.col('SELECT bond_id from showcase_bonds where bond_nick = :bond_nick', { bond_nick })
+									if (!bond_id) bond_id = await db.insertId(`
+										INSERT INTO 
+											showcase_bonds
+										SET
+											bond_title = :bonds_title,
+											bond_nick = :bond_nick
+									`, bonds[v_title])
+									return bond_id
+								})
+							}
 						}
 					}
 				}
@@ -1021,9 +1137,9 @@ export class Upload {
 					SET
 						model_id = :model_id,
 						item_num = :item_num,
-						ordain = :ordain,
+						ordain = 1,
 						table_id = :table_id
-				`, { model_id, item_num, ordain, table_id })
+				`, { model_id, item_num, table_id })
 
 				// `model_id` MEDIUMINT unsigned NOT NULL COMMENT '',
 				// `item_num` SMALLINT unsigned NOT NULL COMMENT '',
@@ -1110,6 +1226,7 @@ export class Upload {
 				LEFT JOIN showcase_brands b on b.brand_nick = f.brand_nick
 				LEFT JOIN showcase_models m ON (m.model_nick = fk.key_nick AND m.brand_id = b.brand_id)
 				LEFT JOIN showcase_items i on i.model_id = m.model_id
+			WHERE m.model_id is not null and f.destiny is not null
 		`)
 		const files2 = await db.all(`
 			SELECT distinct f.destiny, f.file_id, ip.item_num, ip.model_id, f.ordain, fk.key_nick 

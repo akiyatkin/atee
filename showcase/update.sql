@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS `showcase_tables` (
 	`duration` SMALLINT unsigned COMMENT 'Записывается время разбора данных',
 	`ans` mediumtext NULL COMMENT 'Записывается результат обработки',
 	`loaded` int(1) unsigned NULL COMMENT 'Метка загружена ли таблица',
+	`ordain` SMALLINT unsigned NOT NULL COMMENT '',
 	UNIQUE INDEX (`table_nick`),
 	PRIMARY KEY (`table_id`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci AUTO_INCREMENT=1 ;
@@ -33,7 +34,7 @@ CREATE TABLE IF NOT EXISTS `showcase_groups` (
 	`parent_id` SMALLINT unsigned NULL COMMENT '',
 	
 	`icon_id` MEDIUMINT unsigned NULL COMMENT 'file_id',
-	`ordain` SMALLINT unsigned COMMENT 'Порядок этой группы',
+	`ordain` SMALLINT unsigned NOT NULL COMMENT 'Порядок этой группы',
 	PRIMARY KEY (`group_id`),
 	UNIQUE INDEX (`group_nick`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci AUTO_INCREMENT=1 ;
@@ -78,7 +79,7 @@ CREATE TABLE IF NOT EXISTS `showcase_brands` (
 	`brand_title` varchar(31) NOT NULL COMMENT '',
 	`brand_nick` varchar(31) NOT NULL COLLATE latin1_bin COMMENT '',
 	`logo_id` MEDIUMINT unsigned NULL COMMENT 'file_id',
-	`ordain` SMALLINT unsigned COMMENT 'Порядок в списке производителей',
+	`ordain` SMALLINT unsigned NOT NULL COMMENT 'Порядок в списке производителей',
 	PRIMARY KEY (`brand_id`),
 	UNIQUE (`brand_nick`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci AUTO_INCREMENT=1 ;
@@ -92,15 +93,16 @@ CREATE TABLE IF NOT EXISTS `showcase_models` (
 	`search` TEXT NOT NULL COLLATE latin1_bin COMMENT 'латиница после Path::encode слова разделены пробелом',
 	FULLTEXT INDEX (`search`),
 	PRIMARY KEY (`model_id`),
-	UNIQUE INDEX (`brand_id`,`model_nick`),
+	UNIQUE INDEX (`model_nick`, `brand_id`),
 	INDEX (group_id, brand_id)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci AUTO_INCREMENT=1;
 
 CREATE TABLE IF NOT EXISTS `showcase_items` (
 	`model_id` MEDIUMINT unsigned NOT NULL COMMENT '',
 	`item_num` TINYINT unsigned NOT NULL COMMENT '',
-	`ordain` TINYINT unsigned COMMENT 'Порядковый номер строки в таблице',
+	`ordain` MEDIUMINT unsigned NOT NULL COMMENT '',
 	`table_id` SMALLINT unsigned COMMENT '',
+	INDEX (ordain),
 	PRIMARY KEY (`model_id`, `item_num`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 

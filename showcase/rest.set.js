@@ -256,6 +256,13 @@ rest.addResponse('set-props-clearempty', async view => {
 	`)
 	return view.ret('Удалено')
 })
+
+rest.addResponse('set-models-reorder', async view => {
+	await view.gets(['admin','start'])
+	const { upload } = await view.gets(['upload'])
+	const r = await upload.reorderModels()
+	return view.fin(r)
+})
 rest.addResponse('set-models-clearempty', async view => {
 	await view.gets(['admin','start'])
 	const { db } = await view.gets(['db'])

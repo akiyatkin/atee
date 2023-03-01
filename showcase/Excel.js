@@ -49,7 +49,9 @@ export const Excel = {
 		}
 		const sheets = {}
 		const brands = {}
+		let sheet_index = 0
 		for (const sheet of listsheets) {
+			sheet_index++
 			if (sheet.name[0] == '.') continue
 			const rows_source = sheet.data
 			const {descr, rows_table} = Dabudi.splitDescr(rows_source)
@@ -62,6 +64,7 @@ export const Excel = {
 			indexes.model_nick = Dabudi.recColIndex(heads, 'model_nick', base)
 			indexes.group_nick = Dabudi.recColIndex(heads, 'group_nick', base)
 			indexes.sheet_row = Dabudi.recColIndex(heads, 'sheet_row', base)
+			indexes.sheet_index = Dabudi.recColIndex(heads, 'sheet_index', base)
 			indexes.sheet_title = Dabudi.recColIndex(heads, 'sheet_title', base) //Обязательно последний
 
 			sheets[sheet.name] = { descr, heads, indexes }
@@ -89,7 +92,7 @@ export const Excel = {
 				const len = String(row[indexes.model_title]).length
 				if (len > base.LONG) {
 					msgs.push(`
-						Ошибка <b>${head_titles[indexes.model_title]}</b> model <b>${row[indexes.model_title]}</b>. 
+						<b>${head_titles[indexes.model_title]}</b> model <b>${row[indexes.model_title]}</b>. 
 						Длинна ${len} > ${base.LONG}. Значение обрезано. 
 						${brand}, лист ${sheet.name}. 
 					`)
@@ -99,6 +102,7 @@ export const Excel = {
 				row[indexes.model_title] = row[indexes.model_title].slice(-base.LONG).trim()
 
 				row[indexes.sheet_row] = i + 1
+				row[indexes.sheet_index] = sheet_index
 				row[indexes.sheet_title] = sheet.name.slice(-base.LONG).trim()
 				row.splice(indexes.sheet_title + 1)
 				brands[row[indexes.brand_nick]] = { brand_title:row[indexes.brand_title], brand_nick:row[indexes.brand_nick] }

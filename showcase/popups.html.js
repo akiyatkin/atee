@@ -20,7 +20,10 @@ export const set_files_indexall = (ans) => `
 		Дубликатов: ${ans.doublepath.length}<br>${ans.doublepath?.join(',<br>')}
 	`)
 
-
+export const set_models_reorder = (ans) => `
+	<h1>Сортировка</h1>
+	${msg(ans)}
+`
 export const set_tables_clearall = (ans) => `
 	<h1>Данные очищены</h1>
 	${msg(ans)}
