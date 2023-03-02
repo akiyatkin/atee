@@ -120,7 +120,7 @@ const Autosave = {
 
 			inp.addEventListener('change', e => {
 				if (e.autosave) return //мы и инициировали это событие
-				const val = Autosave.getVal(inp);				
+				const val = Autosave.getVal(inp);			
 				Autosave.statusPip(inp, true);
 				Ses.set(autosavename, inp.name, val);
 			})
@@ -129,8 +129,10 @@ const Autosave = {
 			const disabled = inp.disabled
 			inp.disabled = true
 			Autosave.proc.push(Ses.get(autosavename, inp.name, null).then(valsave => {
+
 				inp.disabled = disabled
 				if (valsave == null) return
+				if (valsave === '') return
 				Autosave.setValChange(inp, valsave);
 				Autosave.statusPip(inp, true);
 			}))

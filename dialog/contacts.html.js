@@ -77,7 +77,7 @@ cont.CONTACTS = (data, env) => `
 				</div>
 			</div>
 			<div class="float-label">
-				<textarea id="${env.sid}text" name="text" rows="4" placeholder="Сообщение"></textarea>
+				<textarea id="${env.sid}text" name="text" rows="4" placeholder="Сообщение">${data?.text || ''}</textarea>
 				<label for="${env.sid}text">Сообщение</label>
 			</div>
 			<p>

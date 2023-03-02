@@ -5,6 +5,7 @@
 		"search":["rest\\..*js"]
 	},
 	"types": {
+		"mp4":"video/mp4",
 		"zip":"application/zip",
 		"tpl":"text/plain",
 		"txt": "text/plain",

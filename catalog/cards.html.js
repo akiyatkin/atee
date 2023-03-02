@@ -180,7 +180,7 @@ cards.basket = (data, mod) => {
 		`
 	} else if (mod.Цена) {
 		html += `
-			<b>${cost(mod.Цена)}${common.unit()}</b>
+			<big><b>${cost(mod.Цена)}${common.unit()}</b></big>
 		`
 	}
 	

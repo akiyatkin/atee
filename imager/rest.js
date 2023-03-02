@@ -69,6 +69,17 @@ rest.addResponse('get-stat', async view => {
 	view.ans.stat = {w, h, hosts}
 	return view.ret()
 })
+rest.addResponse('get-size', async view => {
+	const { src } = await view.gets(['src'])
+	const {width, height} = await AccessCache.konce('get-size', src, async () => {
+		const {width, height} = await sharp(src).metadata().catch(e => false)
+		return {width, height}
+	})
+	if (!width) return view.err()
+	view.ans.w = width
+	view.ans.h = height
+	return view.ret()
+})
 rest.addResponse('webp', async view => {
 	const ext = 'webp'
 	const { src, h, w, fit, cache } = await view.gets(['src','h','w','fit','cache'])

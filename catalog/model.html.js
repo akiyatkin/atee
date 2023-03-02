@@ -25,10 +25,10 @@ model.showmodel = (data, env, { mod } = data) =>
 	<div style="float:left; margin-top:1rem; margin-bottom:1rem"><a href="${env.crumb.parent.parent}${mod.parent_id ? '/'+mod.group_nick : ''}${links.setm(data)}">${mod.group_title}</a></div>
 	<h1 style="clear:both">${cards.name(data, mod)}</h1>
 	
-	${model.common(data, env, mod)}
+	${model.maindata(data, env, mod)}
 	<div style="margin-bottom:2rem">
 		${mod['Скрыть фильтры'] ? '' : model.props(data, mod)}
-		${mod.item_props.length ? model.items(data, mod) : ''}
+		${mod.item_props.length ? model.showitems(data, mod) : ''}
 	</div>
 	<div class="modtext" style="margin-bottom:2rem">
 		<style>
@@ -122,7 +122,7 @@ model.showimage = (src, i) => `
 		<img width="150" height="150" loading="lazy" alt="" style="max-width: 100%; height:auto" src="/-imager/webp?cache&w=90&h=90&src=${src}">
 	</div>
 `
-model.common = (data, env, mod) => `
+model.maindata = (data, env, mod) => `
 	
 	${cards.badgecss(data, env)}
 	<div style="float: right;">${mod.Наличие || mod.discount ? cards.badgenalichie(data, mod) : ''}</div>
@@ -193,12 +193,17 @@ const brandlink = (data, env, mod) => `
 	<a href="${env.crumb.parent}${links.setm(data)}">${mod.brand_title}</a>
 `
 
-model.items = (data, mod) => `
-	<table class="table" style="margin-top:2em">
+model.showitems = (data, mod) => `
+	<table style="margin-top:2em">
 		<tr>${mod.item_props.map(model.itemhead).join('')}</tr>
 		${mod.items.map(item => model.itembody(data, mod, item)).join('')}
 	</table>
+	${mod.items.map(model.showItemDescription).join('')}
 `
+model.showItemDescription = item => item['Описание'] ? `
+	<h2>${item.more.Арт || item.more.Код || ''}</h2>
+	<p>${item.Описание}</p>
+` : ''
 model.itemhead = (pr) => `<td>${pr.prop_title}</td>`
 model.itembody = (data, mod, item) => `
 	<tr>

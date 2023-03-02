@@ -229,6 +229,7 @@ class Catalog {
 			}
 			if (images.length) model.images = unique(images)
 		}
+		
 
 
 		
@@ -859,7 +860,7 @@ class Catalog {
 				}
 			}
 			const from = ['showcase_models m','showcase_items i']
-			const sort = []
+			let sort = ['min(i.ordain)']
 			where.push('i.model_id = m.model_id')
 			let iprops_dive = false
 			if (md.more) {
@@ -890,6 +891,7 @@ class Catalog {
 								value_nick = value_nick * (100 + partner.discount) / 100
 							}
 							if (~['upto','from'].indexOf(name)) {
+								sort = []
 								if (name == 'upto') {
 									where.push(`ip${i}.number <= ${value_nick}`)
 									sort.push(`ip${i}.number DESC`)

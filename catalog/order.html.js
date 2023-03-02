@@ -18,16 +18,7 @@ export const ERROR = () => `
 	<div style="max-width: 300px; position: relative; z-index:1"><p style="font-weight: 500;" class="msg"></p></div>
 `
 const textarea = (name, title) => `
-	<div class="float-label">
-		<textarea placeholder="${title}" id="contacts_${name}" name="${name}" style="widtH:100%; box-sizing: border-box; min-height:130px"></textarea>
-		<label for="contacts_${name}">${title}</label>
-	</div>
-`
-const input = (type, name, title, req) => `
-	<div class="float-label">
-		<input ${req?'required ':' '}id="contacts_${name}" name="${name}" type="${type}" placeholder="${title}">
-		<label for="contacts_${name}">${title}</label>
-	</div>
+	
 `
 const checkbox = (name, title, checked) => `
 	<div style="align-items: flex-start; display: grid; grid-template-columns: max-content 1fr;">
@@ -48,10 +39,20 @@ export const ROOT = (data, env) => `
 		<input name="model_nick" type="hidden" value="${data.mod.model_nick}">
 		<input name="partner" type="hidden" value="${data.partner}">
 		<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom:1rem">
-			${input('tel', 'phone','Телефон *', true)}
-			${input('email', 'email','Email *', true)}
+			<div class="float-label icon phone">
+				<input required id="${env.sid}phone" name="phone" type="tel" placeholder="Телефон">
+				<label for="${env.sid}phone">Телефон *</label>
+			</div>
+			<div class="float-label icon mail">
+				<input id="${env.sid}email" name="email" type="email" placeholder="Email">
+				<label for="${env.sid}email">Email</label>
+			</div>
 		</div>
-		${textarea('text','Дополнительная информация')}
+		<div class="float-label">
+			<textarea placeholder="Дополнительная информация" id="${env.sid}text" 
+				name="text" style="widtH:100%; box-sizing: border-box; min-height:130px"></textarea>
+			<label for="${env.sid}text">Дополнительная информация</label>
+		</div>
 		<div style="max-width: 500px; margin-top: 1rem;">
 			${checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Нажимая кнопку «Жду предложения», я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на усфловиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}
 		</div>
