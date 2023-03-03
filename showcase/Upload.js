@@ -927,13 +927,13 @@ export class Upload {
 					`, group) //(group_title, ordain, group_id) не меняется для group_nick. Сохраняются при очистке базы данных. 
 				}
 				group.group_id = group_id
-				if (parent_id != group.parent_id) {
-					await db.changedRows(`
-						UPDATE showcase_groups
-						SET parent_id = :parent_id
-						WHERE group_id = :group_id
-					`, group)
-				}
+				// if (parent_id != group.parent_id) {
+				// 	await db.changedRows(`
+				// 		UPDATE showcase_groups
+				// 		SET parent_id = :parent_id
+				// 		WHERE group_id = :group_id
+				// 	`, group)
+				// }
 
 				return group_id
 			})

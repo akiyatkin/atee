@@ -16,6 +16,7 @@ export const xlsx = {
 		if (!mtimesrc) return false
 		const { mtime: mtimecache } = await fs.stat(cachesrc).catch(e => false)
 		if (mtimesrc <= mtimecache) return cachesrc
+		const t = Date.now()
 		console.log('parse', src)
 		const sheets = nxlsx.parse(src)
 		for (const i in sheets) {
@@ -27,6 +28,7 @@ export const xlsx = {
 			// 	return !!row.join('')
 			// })
 		}
+		console.log((Date.now() - t)+'ms')
 		await fs.writeFile(cachesrc, JSON.stringify(sheets))
 		return cachesrc
 	})),

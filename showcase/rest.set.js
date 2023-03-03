@@ -58,6 +58,23 @@ rest.addResponse('set-brands-clearempty', async view => {
 	`)
 	return view.ret('Удалено')
 })
+rest.addResponse('set-groups-replace', async view => {
+	await view.gets(['admin'])
+	const { id, title, base, db } = await view.gets(['id','title', 'base','db'])
+	const parent_nick = base.onicked(title)
+	if (!parent_nick) return view.err('Требуется имя родительской группы для переноса')
+	const parent_id = await base.getGroupIdByNick(parent_nick)
+	if (!parent_id) return view.err('Родительская группа не найдена')
+	const group_id = await db.col('select group_id from showcase_groups where group_id = :id', { id })
+	if (!group_id) return view.err('Группа не найдена '+id)
+	const r = await db.changedRows(`
+		UPDATE showcase_groups
+		SET parent_id = :parent_id
+		WHERE group_id = :group_id
+	`, {group_id, parent_id})
+	if (!r) return view.err('Что-то пошло не так')
+	return view.ret('Готово '+id + ' ' + title)
+})
 rest.addResponse('set-groups-clearempty', async view => {
 	await view.gets(['admin','start'])
 	const { db } = await view.gets(['db'])

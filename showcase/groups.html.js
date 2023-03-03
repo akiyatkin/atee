@@ -10,7 +10,12 @@ const runGroups = (root) => {
 	return `${html}<div class="childs" style="margin-left:20px">${root.childs.map(runGroups).join('')}</div></div>`
 }
 
-
+const showgroup = (group) => `
+	<div style="transition: 0.3s;">
+		<span style="cursor: move">&blk14;</span>
+		<span title="${group.group_nick}"><span style="opacity:0.3">${group.ordain}.</span> <span data-group_id="${group.group_id}" class="replace" style="cursor: pointer">${group.group_title}</span> <small>${group.inside}</small></span>
+	</div>
+`
 export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 	<h1>Группы</h1>
 	<p>
@@ -24,6 +29,17 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 			const div = id('${env.layer.div}')
 			const cls = cls => div.getElementsByClassName(cls)
 			const btn = cls('botbtn')[0]
+			const repbtns = cls('replace')
+			for(const btn of repbtns) {
+				btn.addEventListener('dblclick', async () => {
+					const group_title = prompt('Укажите новую родительскую группу')
+					const ans = await fetch('/-showcase/set-groups-replace?id=' + btn.dataset.group_id + '&title=' + encodeURIComponent(group_title)).then(res => res.json()).catch(e => ({result:0, msg:'Ошибка '+e}))
+					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+					if (ans?.msg) Dialog.alert(ans.msg)
+					const Client = await window.getClient()
+					Client.reloaddiv('${env.layer.div}')
+				})
+			}
 			btn.addEventListener('click',async () => {
 				if (!confirm('Будут удалены группы без моделей. Эти группы больше не понадобятся? Пропадут group_id. Удалить?')) return
 				btn.innerHTML = 'В процессе...'
@@ -57,10 +73,4 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 			}
 		</script>
 	</p>
-`
-const showgroup = (group) => `
-	<div class="${group.group_nick}" style="transition: 0.3s;">
-		<span style="cursor: move">&blk14;</span>
-		<span title="${group.group_nick}"><span style="opacity:0.3">${group.ordain}.</span> ${group.group_title} <small>${group.inside}</small></span>
-	</div>
 `

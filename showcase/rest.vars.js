@@ -41,6 +41,7 @@ rest.addVariable('upload', async view => {
 })
 
 rest.addArgument('name')
+rest.addArgument('title')
 rest.addArgument('before_id', ['int'])
 rest.addArgument('after_id', ['int'])
 rest.addArgument('id', ['int'])
