@@ -137,7 +137,18 @@ export class Upload {
 		})
 		
 	}
-	async clearAllTable() {
+	async clearAllPrices() {
+		const { db, upload } = this
+		const rows = await db.all(`
+			SELECT
+				price_title
+			FROM showcase_prices
+		`)
+		await Promise.all(rows.map(({price_title}) => {
+			return upload.clearPrice(price_title)
+		}))
+	}
+	async clearAllTables() {
 		const { visitor, options, view, db, config } = this
 		await db.changedRows(`
 			DELETE i, ip FROM showcase_items i
@@ -284,7 +295,7 @@ export class Upload {
 		conf.props ??= ['Цена']
 		conf.priceprop ??= 'Артикул'
 		conf.catalogprop ??= 'Модель'
-		conf.start ??= 0
+		conf.start ??= 1
 		conf.starts ??= {}
 		
 		conf.props.slice().reverse().forEach(prop => {

@@ -299,21 +299,18 @@ rest.addResponse('set-tables-loadall', async view => {
 rest.addResponse('set-prices-clearall', async view => {
 	await view.gets(['admin','start'])
 	const { upload, db } = await view.gets(['upload', 'db'])
-	const rows = await db.all(`
-		SELECT
-			price_title
-		FROM showcase_prices
-	`)
-	await Promise.all(rows.map(({price_title}) => {
-		return upload.clearPrice(price_title)
-	}))
+
+	await upload.clearAllPrices()
+	
 	return view.ret('Прайсы очищены')
 })
 rest.addResponse('set-tables-clearall', async view => {
 	await view.gets(['admin','start'])
 	const { upload, db } = await view.gets(['upload', 'db'])
 	
-	await upload.clearAllTable()
+	await upload.clearAllTables()
+	await upload.clearAllPrices()
+
 	// const rows = await db.all(`
 	// 	SELECT
 	// 		table_title

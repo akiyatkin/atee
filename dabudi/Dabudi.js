@@ -123,11 +123,11 @@ export const Dabudi = {
 
 
 			wasitems = false
-			if (parent_nick && parent_nick != root_nick) {
-				group_nick = base.onicked(base.onicked(groups[parent_nick].group_orig) + '-' + base.onicked(group_title))
-			} else {
+			// if (parent_nick && parent_nick != root_nick) {
+			// 	group_nick = base.onicked(base.onicked(groups[parent_nick].group_orig) + '-' + base.onicked(group_title))
+			// } else {
 				group_nick = base.onicked(group_title)
-			}
+			// }
 
 			
 			if (groups[group_nick]) return
