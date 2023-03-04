@@ -16,14 +16,14 @@ search.GROUPS = (data, env) => data.result ? `
 	${search.title(data, env)}
 	<div class="grid">
 		<style>
-			#${env.layer.div} > .grid {
+			${env.scope} > .grid {
 				margin-bottom:2rem;
 				display: grid; 
 				grid-gap: 1rem; 
 				grid-template-columns: 1fr 1fr;
 			}
 			@media (max-width: 768px) {
-				#${env.layer.div} > .grid {
+				${env.scope} > .grid {
 					display: grid; grid-gap: 1rem; grid-template-columns: 1fr;
 				}
 			}
@@ -44,23 +44,24 @@ search.LIST = (data, env) => data.result ? `
 search.pag = (data, env, scroll) => `
 	<div class="pagination">
 		<style>
-			#${env.layer.div} .pagination {
+			${env.scope} .pagination {
 				user-select: none;
-				margin: 2rem 0; margin-left: auto; width: max-content;align-items: center; display: grid; 
+				padding: 2rem 0; 
+				margin-left: auto; width: max-content;align-items: center; display: grid; 
 				grid-template-columns: repeat(5, max-content); 
 				gap:1rem
 			}
-			#${env.layer.div} .pagination .page {
+			${env.scope} .pagination .page {
 				padding:0 1rem; border: solid 1px #aaa; color: white; font-size: 1.3rem; background-color: gray;
 			}
-			#${env.layer.div} .pagination .disabled {
+			${env.scope} .pagination .disabled {
 				opacity: 0.5;
 			}
 			@media (max-width: 380px) {
-				#${env.layer.div} .pagination {
+				${env.scope} .pagination {
 					grid-template-columns: repeat(4, max-content); 
 				}
-				#${env.layer.div} .pagination .paglong {
+				${env.scope} .pagination .paglong {
 					display: none;
 				}
 			}
@@ -118,16 +119,16 @@ search.listcards = (data, env) => `
 `
 search.showgroups = (data, env) => `
 	<style>
-		#${env.layer.div} .mute {
+		${env.scope} .mute {
 			opacity: 0.3;
 		}
-		#${env.layer.div} a.selected {
+		${env.scope} a.selected {
 			opacity: 1;
 			color: inherit;
 			border-color: transparent;
 			font-weight: bold;
 		}
-		#${env.layer.div} .mute.selected {
+		${env.scope} .mute.selected {
 			opacity: 0.9;
 		}
 	</style>
@@ -147,7 +148,7 @@ search.group = (data, env, group) => `
 
 search.title = (data, env) => html`
 	<style>
-		#${env.layer.div} a.clearlink {
+		${env.scope} a.clearlink {
 			white-space: normal; 
 			gap:5px; 
 			display: flex; 
@@ -155,18 +156,18 @@ search.title = (data, env) => html`
 			border: none; 
 			text-decoration: none
 		}
-		#${env.layer.div} .clearlink .value {
+		${env.scope} .clearlink .value {
 			opacity: 1;
 			transition: color 0.2s, opacity 0.2s;
 		}
-		#${env.layer.div} .clearlink .krest {
+		${env.scope} .clearlink .krest {
 			transition: color 0.2s, opacity 0.2s;
 			opacity: 0.6;
 		}
-		#${env.layer.div} .clearlink:hover .value {
+		${env.scope} .clearlink:hover .value {
 			opacity: 0.5;
 		}
-		#${env.layer.div} .clearlink:hover .krest {
+		${env.scope} .clearlink:hover .krest {
 			opacity: 1;
 			/*color: red;*/
 		}
