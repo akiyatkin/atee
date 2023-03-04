@@ -283,18 +283,19 @@ rest.addResponse('get-values', async view => {
 rest.addResponse('get-brands', async view => {
 	await view.get('admin')
 	const { db } = await view.gets(['db'])
+	// (select i.item_num from showcase_items i where i.model_id = m.model_id limit 1)
 	const brands = await db.all(`
 		SELECT 
 			b.brand_title,
 			b.brand_nick,
 			b.brand_id,
-			b.ordain,
-			count(m.brand_id) as models
+			b.ordain
 		FROM showcase_brands b
-		LEFT JOIN showcase_models m on m.brand_id = b.brand_id
-		GROUP BY b.brand_id
 		ORDER by b.ordain
 	`)
+	for (const brand of brands) {
+		brand.models = await db.col('select count(*) from showcase_models m, showcase_items i where m.model_id = i.model_id and item_num = 1 and m.brand_id = :brand_id', brand)
+	}
 	view.ans.brands = brands
 	return view.ret()
 })
@@ -412,13 +413,13 @@ rest.addResponse('get-groups', async view => {
 			g.group_nick,
 			g.group_id,
 			g.parent_id,
-			g.ordain,
-			count(m.group_id) as direct
+			g.ordain
 		FROM showcase_groups g
-		LEFT JOIN showcase_models m on m.group_id = g.group_id
-		GROUP BY g.group_id
 		ORDER by g.ordain
 	`)
+	for (const group of groups) {
+		group.direct = await db.col('select count(*) from showcase_models m, showcase_items i where m.model_id = i.model_id and item_num = 1 and m.group_id = :group_id', group)
+	}
 	const objgroups = {}
 	for (const group of groups) {
 		objgroups[group.group_id] = group
