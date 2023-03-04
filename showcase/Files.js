@@ -99,7 +99,13 @@ export const Files = {
 		return info
 	},
 	nameInfo: (file, isFile = true) => {
-		let i, name, ext, num = null, secure, match
+		let i, name, ext, num = null, secure, match, anchor
+		
+		i = file.lastIndexOf('#')
+		anchor = ~i ? file.slice(i + 1) : ''
+		file = ~i ? file.slice(0, i) : file
+		
+
 		if (isFile) {
 			i = file.lastIndexOf('.')
 			name = ~i ? file.slice(0, i) : file
@@ -137,7 +143,7 @@ export const Files = {
 		// num = ~i ? name.slice(0, i) : ''
 		// name = ~i ? name.slice(i + 1) : name
 		if (num) num = Number(num.slice(0, 6))
-		return { secure, num, name, ext, file }
+		return { secure, num, name, ext, file, anchor }
 	},
 	readdir: (visitor, dir) => {
 		return visitor.relate(Files).once('readdir'+dir, async () => {

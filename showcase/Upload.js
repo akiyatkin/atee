@@ -106,6 +106,7 @@ export class Upload {
 	//  	`, value)
 	//  	return value
 	// }
+	
 	async receiveProp(prop_title) {
 		const { options, base, base: {db, vicache: cache} } = this
 		const prop_nick = base.onicked(prop_title)
@@ -498,108 +499,118 @@ export class Upload {
 						omissions[sheet].emptyprops[prop_title].push(row)
 						continue //Пустое значение.. с прайсом итак было удалено
 					}
-					mvalues[item.model_id].push(value_title)
-					mvalues[item.model_id].push(prop.prop_nick)
-					
-					const fillings = []
-					let value_id = null
-					let bond_id = null
-					let text = null
-					let number = null
+					let value_titles = []
+					if (~options.justonevalue_nicks.indexOf(prop.prop_nick)) {
+						value_titles = [value_title]
+					} else {
+						value_titles = String(value_title).split(',').map(v => v.trim()).filter(v => v)
+					}
 
-					if (prop.type == 'value') {
-						const values = value_title.split(",")
-						for (const value of values) {
-							const value_nick = base.onicked(value_title)
-							if (!value_nick) {
-								omissions[sheet].emptyprops[prop_title] ??= []
-								omissions[sheet].emptyprops[prop_title].push(row)
-								continue
-							}
-							value_id = await db.col('SELECT value_id from showcase_values where value_nick = :value_nick', { value_nick })
-							if (!value_id) value_id = await db.insertId(`
-								INSERT INTO 
-						 			showcase_values
-						 		SET
-						 			value_title = :value_title,
-						 			value_nick = :value_nick
-						 	`, { value_nick, value_title })
-							fillings.push({value_id, text, number})
-						}
-					} else if (prop.type == 'bond') {
-						const values = value_title.split(",")
-						for (const value of values) {
-							const value_nick = base.onicked(value_title)
-							if (!value_nick) {
-								omissions[sheet].emptyprops[prop_title] ??= []
-								omissions[sheet].emptyprops[prop_title].push(row)
-								continue
-							}
-							bond_id = await db.col('SELECT bond_id from showcase_bonds where bond_nick = :value_nick', { value_nick })
-							if (!bond_id) bond_id = await db.insertId(`
-								INSERT INTO 
-						 			showcase_bonds
-						 		SET
-						 			bond_title = :value_title,
-						 			bond_nick = :value_nick
-						 	`, { value_nick, value_title })
-							fillings.push({bond_id, value_id, text, number})
-						}
-					} else if (prop.type == 'text') {
-						text = value_title
-						fillings.push({bond_id, value_id, text, number})
-					} else if (prop.type == 'number') {
+					for (const value_title of value_titles) {
 
-						if (prop.prop_title == 'Цена') {
+						mvalues[item.model_id].push(value_title)
+						mvalues[item.model_id].push(prop.prop_nick)
+						
+						const fillings = []
+						let value_id = null
+						let bond_id = null
+						let text = null
+						let number = null
 
-
-
-							let number = base.toNumber(value_title)
-
-							if (!number) continue
-							if (conf.usd && conf.usdlist && ~conf.usdlist.indexOf(sheet)) {
-								number = number * conf.usd
-							}
-							if (conf.skidka) {
-								number = number * (100 - conf.skidka) / 100
-							}
-							if (!conf.float) number = Math.round(number)
-
-
-
-							fillings.push({bond_id, value_id, text, number})
-						} else if (typeof(value_title) == 'string') {
-							const numbers = value_title.split(",")	
-							for (const num of numbers) {
-								const number = base.toNumber(num)
-								if (number === false){
+						if (prop.type == 'value') {
+							const values = value_title.split(",")
+							for (const value of values) {
+								const value_nick = base.onicked(value_title)
+								if (!value_nick) {
 									omissions[sheet].emptyprops[prop_title] ??= []
 									omissions[sheet].emptyprops[prop_title].push(row)
 									continue
 								}
+								value_id = await db.col('SELECT value_id from showcase_values where value_nick = :value_nick', { value_nick })
+								if (!value_id) value_id = await db.insertId(`
+									INSERT INTO 
+							 			showcase_values
+							 		SET
+							 			value_title = :value_title,
+							 			value_nick = :value_nick
+							 	`, { value_nick, value_title })
+								fillings.push({value_id, text, number})
+							}
+						} else if (prop.type == 'bond') {
+							const values = value_title.split(",")
+							for (const value of values) {
+								const value_nick = base.onicked(value_title)
+								if (!value_nick) {
+									omissions[sheet].emptyprops[prop_title] ??= []
+									omissions[sheet].emptyprops[prop_title].push(row)
+									continue
+								}
+								bond_id = await db.col('SELECT bond_id from showcase_bonds where bond_nick = :value_nick', { value_nick })
+								if (!bond_id) bond_id = await db.insertId(`
+									INSERT INTO 
+							 			showcase_bonds
+							 		SET
+							 			bond_title = :value_title,
+							 			bond_nick = :value_nick
+							 	`, { value_nick, value_title })
 								fillings.push({bond_id, value_id, text, number})
 							}
-						} else {
-							const number = base.toNumber(value_title)
-							if (number === false) continue
+						} else if (prop.type == 'text') {
+							text = value_title
 							fillings.push({bond_id, value_id, text, number})
+						} else if (prop.type == 'number') {
+
+							if (prop.prop_title == 'Цена') {
+
+
+
+								let number = base.toNumber(value_title)
+
+								if (!number) continue
+								if (conf.usd && conf.usdlist && ~conf.usdlist.indexOf(sheet)) {
+									number = number * conf.usd
+								}
+								if (conf.skidka) {
+									number = number * (100 - conf.skidka) / 100
+								}
+								if (!conf.float) number = Math.round(number)
+
+
+
+								fillings.push({bond_id, value_id, text, number})
+							} else if (typeof(value_title) == 'string') {
+								const numbers = value_title.split(",")	
+								for (const num of numbers) {
+									const number = base.toNumber(num)
+									if (number === false){
+										omissions[sheet].emptyprops[prop_title] ??= []
+										omissions[sheet].emptyprops[prop_title].push(row)
+										continue
+									}
+									fillings.push({bond_id, value_id, text, number})
+								}
+							} else {
+								const number = base.toNumber(value_title)
+								if (number === false) continue
+								fillings.push({bond_id, value_id, text, number})
+							}
+							
 						}
-						
-					}
-					somepropsinsert = true
-					for (const fill of fillings) {
-						await db.exec(`
-							INSERT INTO 
-								showcase_iprops
-							SET
-								model_id = :model_id,
-								item_num = :item_num,
-								prop_id = :prop_id,
-								text = :text,
-								price_id = :price_id,
-								number = :number,
-								value_id = :value_id
-						`, { ...item, prop_id:prop.prop_id, ...fill, price_id:price.price_id })
+						somepropsinsert = true
+						for (const fill of fillings) {
+							await db.exec(`
+								INSERT INTO 
+									showcase_iprops
+								SET
+									model_id = :model_id,
+									item_num = :item_num,
+									prop_id = :prop_id,
+									text = :text,
+									price_id = :price_id,
+									number = :number,
+									value_id = :value_id
+							`, { ...item, prop_id:prop.prop_id, ...fill, price_id:price.price_id })
+						}
 					}
 					
 				}
@@ -1278,6 +1289,69 @@ export class Upload {
 		 	`, {file_id, ordain, item_num, model_id, prop_id: destinies[destiny].prop_id})
 		}
 	}
+	async connectByLinks() {
+		const { base, upload, visitor, db, config } = this
+
+		await (async () => {
+			const prop_id = await base.getPropIdByTitle('Ссылки на картинки')
+			if (!prop_id) return
+			const in_id = await base.getPropIdByTitle('images')
+
+			const destinies = {}
+			for (const part of Object.keys(Files.destinies)) { //['slides','files','images','texts','videos']
+				destinies[part] = await upload.receiveProp(part)
+			}
+			const listsrc = await db.all(`
+				SELECT ip.text as src, ip.model_id, ip.item_num
+				FROM showcase_iprops ip
+				WHERE ip.prop_id = :prop_id
+			`, { prop_id })
+
+			for (const {model_id, item_num, src} of listsrc) {
+				const { file_id, ordain } = await upload.receiveFile(src, {destiny: 'images'})
+				await db.exec(`
+					INSERT IGNORE INTO 
+						showcase_iprops
+					SET
+						model_id = :model_id,
+						item_num = :item_num,
+						ordain = :ordain,
+						prop_id = :prop_id,
+						file_id = :file_id
+				`, {model_id, item_num, ordain, file_id, prop_id:in_id})
+			}
+		})()
+		await (async () => {
+			const prop_id = await base.getPropIdByTitle('Ссылки на файлы')
+			if (!prop_id) return
+			const in_id = await base.getPropIdByTitle('files')
+
+			const destinies = {}
+			for (const part of Object.keys(Files.destinies)) { //['slides','files','images','texts','videos']
+				destinies[part] = await upload.receiveProp(part)
+			}
+			const listsrc = await db.all(`
+				SELECT ip.text as src, ip.model_id, ip.item_num
+				FROM showcase_iprops ip
+				WHERE ip.prop_id = :prop_id
+			`, { prop_id })
+
+			for (const {model_id, item_num, src} of listsrc) {
+				const { file_id, ordain } = await upload.receiveFile(src, {destiny: 'files'})
+				await db.exec(`
+					INSERT IGNORE INTO 
+						showcase_iprops
+					SET
+						model_id = :model_id,
+						item_num = :item_num,
+						ordain = :ordain,
+						prop_id = :prop_id,
+						file_id = :file_id
+				`, {model_id, item_num, ordain, file_id, prop_id:in_id})
+			}
+		})()
+
+	}
 	async connectByFiles() {
 		const { base, upload, visitor, db, config } = this
 		const files_id = await base.getPropIdByTitle('Файлы')
@@ -1350,6 +1424,7 @@ export class Upload {
 
 		await upload.connectByKey()
 		await upload.connectByFiles()
+		await upload.connectByLinks()
 
 		
 		const all = await db.col(`select count(*) from showcase_files`)
@@ -1525,15 +1600,22 @@ export class Upload {
 		})
 		return {doublepath, count}
 	}
+	async receiveFile(src, { fileinfo, destiny, source = 'data'}, connect = {group_nick: null, brand_nick: null, keys_title: null}) {
+		const { upload } = this
+		if (!fileinfo) fileinfo = Files.srcInfo(src)
+		if (!destiny) destiny = Files.getWayByExt(fileinfo.ext) //files, images, texts, videos
+		const {ready_id: file_id, src_nick} = await upload.index(src, {fileinfo, destiny, source}, connect) 
+		return {file_id, destiny, ordain: fileinfo.num || 1}
+	}
 	async index(src, descr, connect = {}) {
 		const { upload, base: {db, vicache: cache}, config } = this
 		let src_nick = nicked(src).slice(-255)
 		let file_id = false
-		await cache.konce('index', src_nick, () => {
+		const ready_id = await cache.konce('index', src_nick, () => {
 			file_id = kcproc(Files, 'index', src_nick, () => upload.procindex(src, src_nick, descr, connect))
 			return file_id
 		})
-		return {file_id, src_nick}
+		return {file_id, src_nick, ready_id}
 	}
 	async procindex (src, src_nick, {fileinfo, destiny, source}, {group_nick = null, brand_nick = null, keys_title = null}) {
 		const { upload, visitor, db, config, base } = this
