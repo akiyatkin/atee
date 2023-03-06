@@ -205,7 +205,7 @@ const applyCrossing = async () => {
 		}).then(res => res.json())
 		if (promise.rejected) return
 		if (!json || !json.st || !json.ut || !json.result || !json.layers) {
-			return location.reload()
+			return setTimeout(location.reload, 200) //Чуть чуть подождать чтобы прокрутка закончилась
 		}
 		const timings = {
 			view_time: json.vt,
