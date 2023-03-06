@@ -108,11 +108,11 @@ const getList = (src) => {
 				if (im) finfo.img = im[1]
 			}
 			
-			const t = html.match(/<h1[^>]*>.*<\/h1>/iu)
+			const t = html.match(/<h1[^>]*>.*?<\/h1>/iu)
 			finfo.heading = t ? t[0].replace(/<\/?[^>]+(>|$)/g, " ").replace(/\s+/," ").trim() : finfo.name
 			let text = html.replace(/<h1[^>]*>.*<\/h1>/iu, "").replace(/<\/?[^>]+(>|$)/g, " ").replace(/\s+/," ").trim()
 			text.replace(/\s\./,'.').replace(/\s\!/,'!').replace(/\s\?/,'?').replace(/\s\:/,':').replace(/\s\;/,';')
-			const r = text.match(/.{10}[^\.!]*[\.!]/u)
+			const r = text.match(/.{25}[^\.!]*[\.!]/u)
 			finfo.preview = r ? r[0] : text
 			const num = String(finfo.num)
 			if (num.length == 6) {//Принимает 6 цифр годмесяцдень

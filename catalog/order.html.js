@@ -50,7 +50,7 @@ export const ROOT = (data, env) => `
 		</div>
 		<div class="float-label">
 			<textarea placeholder="Дополнительная информация" id="${env.sid}text" 
-				name="text" style="widtH:100%; box-sizing: border-box; min-height:130px"></textarea>
+				name="text" style="widtH:100%; box-sizing: border-box; min-height:130px">Добрый день! Интересует ${data.mod.brand_title} ${data.mod.model_title}.</textarea>
 			<label for="${env.sid}text">Дополнительная информация</label>
 		</div>
 		<div style="max-width: 500px; margin-top: 1rem;">

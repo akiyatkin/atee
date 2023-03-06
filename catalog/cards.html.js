@@ -77,15 +77,13 @@ cards.data = (data, mod) => `
 				white-space: normal; display: block; flex-grow:1
 		">
 			${cards.image(data, mod)}
-			${cards.name(data, mod)}
 		</a>
 		<div>
 			${mod.card_props.length ? cards.props(data, mod) : ''}
 		</div>
 	</div>
-	<div style="margin: 0.5rem 0.9rem 1rem 0.9rem">	
-		${cards.basket(data, mod)}
-	</div>
+	
+	${cards.basket(data, mod)}
 `
 cards.props = (data, mod) => `
 	<div>
@@ -119,6 +117,12 @@ cards.prop = {
 	brand: (data, mod, pr, title, val) => cards.prop.default(data, mod, pr, title, 
 		`<a href="/catalog/${mod.brand_nick}">${mod.brand_title}</a>`
 	),
+	model: (data, mod, pr, title, val) => cards.prop.just(data, mod, pr, title, 
+		`<a href="/catalog/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${val}</a>`
+	),
+	modelhidden: (data, mod, pr, title, val) => cards.prop.just(data, mod, pr, title, 
+		`<a style="color:inherit" href="/catalog/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${val}</a>`
+	),
 	group: (data, mod, pr, title, val) => cards.prop.p(data, mod, pr, title, 
 		`<a style="max-width:100%" href="/catalog/${mod.group_nick}"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block">${mod.group_title}</span></a>`
 	),
@@ -132,7 +136,7 @@ cards.prop = {
 	),
 	just: (data, mod, pr, title, val) => `
 		<div style="margin: 0.25rem 0; display: flex">
-			<div title="${pr.value}" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+			<div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
 				${val}
 			</div>
 		</div>
@@ -148,6 +152,7 @@ cards.prop = {
 			? `<b>${val}</b>` : `<a href="/catalog/${links.addm(data)}more.${pr.prop_nick}::.${nicked(val)}=1">${val}</a>`
 		).join(', ')
 	),
+	
 	justlink: (data, mod, pr, title, val) => cards.prop.justwrap(data, mod, pr, title, 
 		val.split(', ').map(val => 
 			data.md?.more?.[pr.prop_nick]?.[nicked(val)] 
@@ -182,8 +187,18 @@ cards.basket = (data, mod) => {
 		html += `
 			<big><b>${cost(mod.Цена)}${common.unit()}</b></big>
 		`
+	} else {
+		if (data.list) {
+			const iscost = data.list.some(mod => mod.Цена || mod.min)
+			if (iscost) {
+				html += `
+					<big>&nbsp;</big>
+				`
+			}
+		}
 	}
-	
+	if (html) html = `<div style="text-align:right; margin: 0rem 0.9rem 1rem 0.9rem">${html}</div>`
+	else  html = `<div style="margin-bottom: 0.3rem"></div>`
 	return html
 }
 cards.name = (data, mod) => `

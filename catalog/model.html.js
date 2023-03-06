@@ -22,7 +22,11 @@ model.showerror = (data, env) => `
 `
 model.showmodel = (data, env, { mod } = data) =>
 `
-	<div style="float:left; margin-top:1rem; margin-bottom:1rem"><a href="${env.crumb.parent.parent}${mod.parent_id ? '/'+mod.group_nick : ''}${links.setm(data)}">${mod.group_title}</a></div>
+	<div style="margin-top:1rem">
+		<div style="float:left"><a href="${env.crumb.parent.parent}${mod.parent_id ? '/'+mod.group_nick : ''}${links.setm(data)}">${mod.group_title}</a></div>
+		${cards.badgecss(data, env)}
+		<div style="float: right">${mod.Наличие || mod.discount ? cards.badgenalichie(data, mod) : ''}</div>
+	</div>
 	<h1 style="clear:both">${cards.name(data, mod)}</h1>
 	
 	${model.maindata(data, env, mod)}
@@ -40,11 +44,11 @@ model.showmodel = (data, env, { mod } = data) =>
 		${ti.ar(mod.texts).join('')}
 	</div>
 	<div class="modfiles" style="margin-bottom:2rem">
-		${ti.ar(mod.files).map(filerow).join('')}
+		${ti.ar(mod.files).map(model.filerow).join('')}
 	</div>
 	<!-- <pre>${JSON.stringify(mod, "\n", 2)}</pre> -->
 `
-const filerow = f => `
+model.filerow = f => `
 	<div style="display: grid; align-items: center; grid-template-columns: max-content 1fr; gap: 0.5rem; margin-bottom:0.5rem">
 		<img width="20" load="lazy" src="/file-icon-vectors/dist/icons/vivid/${f.ext}.svg"> 
 		<a target="about:blank" href="${f.dir + f.file}">${f.anchor || f.name}</a>
@@ -124,8 +128,7 @@ model.showimage = (src, i) => `
 `
 model.maindata = (data, env, mod) => `
 	
-	${cards.badgecss(data, env)}
-	<div style="float: right;">${mod.Наличие || mod.discount ? cards.badgenalichie(data, mod) : ''}</div>
+	
 	
 	<div class="mod_content">
 		<style>
@@ -151,6 +154,7 @@ model.maindata = (data, env, mod) => `
 			${mod.images ? model.showGallery(data, env, mod) : ''}	
 
 		<div class="textcontent">
+			
 			${model.showprop('Модель', mod.model_title)}
 			${model.showprop('Бренд', brandlink(data, env, mod))}
 			

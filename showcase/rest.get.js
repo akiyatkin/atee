@@ -345,7 +345,7 @@ rest.addResponse('get-files', async view => {
 	parts[part] = await db.all(`
 		SELECT f.src from showcase_files f 
 		LEFT JOIN showcase_groups g on f.file_id = g.icon_id
-		WHERE g.icon_id is null and f.destiny=:part
+		WHERE g.icon_id is null and f.destiny=:part and f.status = '200'
 	`, {part})
 	res['Бесхозных'] += parts[part].length
 
@@ -353,7 +353,7 @@ rest.addResponse('get-files', async view => {
 	parts[part] = await db.all(`
 		SELECT f.src from showcase_files f 
 		LEFT JOIN showcase_brands b on f.file_id = b.logo_id
-		WHERE b.logo_id is null and f.destiny=:part
+		WHERE b.logo_id is null and f.destiny=:part and f.status = '200'
 	`, {part})
 	res['Бесхозных'] += parts[part].length
 
@@ -362,14 +362,14 @@ rest.addResponse('get-files', async view => {
 		parts[part] = await db.all(`
 			SELECT f.src from showcase_files f 
 			LEFT JOIN showcase_iprops ip on f.file_id = ip.file_id
-			WHERE ip.file_id is null and f.destiny = :part
+			WHERE ip.file_id is null and f.destiny = :part and f.status = '200'
 		`, {part})
 		res['Бесхозных'] += parts[part].length	
 	}
 	parts['Без назначения'] = await db.all(`
 		SELECT f.src from showcase_files f 
 		LEFT JOIN showcase_iprops ip on f.file_id = ip.file_id
-		WHERE ip.file_id is null and f.destiny is null
+		WHERE ip.file_id is null and f.destiny is null and f.status = '200'
 	`)
 	res['Бесхозных'] += parts['Без назначения'].length	
 

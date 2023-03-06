@@ -20,7 +20,7 @@ class Catalog {
 		opt.catalog = this
 		Object.assign(this, opt)
 	}
-	async getModelsByItems (moditems_ids, partner) { //[{item_nums after group_concats, model_id}]
+	async getModelsByItems (moditems_ids, partner) { //[{item_nums after GROUP_CONCAT(distinct i.item_num separator ','), model_id}]
 		const { catalog, base, options, base: {visitor, db} } = this
 		if (!moditems_ids.length) return []
 		
@@ -145,9 +145,9 @@ class Catalog {
 
 		//Какие пропертисы надо показать на карточке
 		for (const model of list) {
-			const { props } = await catalog.getGroupOpt(model.group_id)
+			let { props } = await catalog.getGroupOpt(model.group_id)
 			
-			model.card_props = [...props]
+			model.card_props = props.map(prop => ({...prop}))
 			model.card_props = await filter(model.card_props, async (pr) => {
 				const p = pr.value_title
 				
@@ -181,7 +181,7 @@ class Catalog {
 		const cost = await base.getPropByTitle('Цена')
 		const oldcost = await base.getPropByTitle('Старая цена')
 		for (const model of list) {
-			await catalog.prepareCost(model, partner)	
+			await catalog.prepareCost(model, partner)
 			await catalog.prepareCostMinMax(model)
 
 			let is_item_cost, is_item_oldcost
@@ -282,7 +282,7 @@ class Catalog {
 		} else {
 			delete model[oldcost.prop_title]
 		}
-		for (const item of model.items) {
+		if (model.items) for (const item of model.items) {
 			if (item[oldcost.prop_title]) {
 				item[oldcost.prop_title] = Number(item[oldcost.prop_title])
 			}
@@ -306,12 +306,12 @@ class Catalog {
 		let is_some_cost = is_item_cost || is_model_cost
 
 		delete model.discount
-		for (const item of model.items) {
+		if (model.items) for (const item of model.items) {
 			delete item.discount
 		}
 		if (!is_some_cost) {
 			delete model[oldcost.prop_title]
-			for (const item of model.items) {
+			if (model.items) for (const item of model.items) {
 				delete item[oldcost.prop_title]
 			}
 			return
@@ -330,7 +330,7 @@ class Catalog {
 				delete model[cost.prop_title]
 				is_model_cost = false
 				is_item_cost = true
-				for (const item of model.items) {
+				if (model.items) for (const item of model.items) {
 					item[cost.prop_title] = number
 					const oldnumber = Number(item[oldcost.prop_title])
 					if (oldnumber) {
@@ -356,13 +356,13 @@ class Catalog {
 				delete model[oldcost.prop_title]
 				is_model_oldcost = false
 				is_item_oldcost = true
-				for (const item of model.items) {
+				if (model.items) for (const item of model.items) {
 					item[oldcost.prop_title] = oldnumber
 					const number = Number(item[cost.prop_title])
 					item.discount = Math.round((1 - oldnumber / number) * 100) //20
 				}
 			} else if (is_item_oldcost) {
-				for (const item of model.items) {
+				if (model.items) for (const item of model.items) {
 					const number = Number(item[cost.prop_title])
 					const oldnumber = Number(item[oldcost.prop_title])
 					if (oldnumber) {
@@ -376,7 +376,7 @@ class Catalog {
 					}
 				}	
 			} else {
-				for (const item of model.items) {
+				if (model.items) for (const item of model.items) {
 					const number = Number(item[cost.prop_title])
 					if (partner?.discount) {
 						item[oldcost.prop_title] = number
@@ -390,7 +390,7 @@ class Catalog {
 			delete model[oldcost.prop_title]
 			delete model.discount
 		}
-		for (const item of model.items) {
+		if (model.items) for (const item of model.items) {
 			if (item[oldcost.prop_title] == item[cost.prop_title]) {
 				delete item[oldcost.prop_title]
 				delete item.discount
@@ -399,6 +399,7 @@ class Catalog {
 		
 	}
 	async prepareCostMinMax (model) {
+		if (!model.items) return
 		const { base } = this
 		const cost = await base.getPropByTitle('Цена')
 		

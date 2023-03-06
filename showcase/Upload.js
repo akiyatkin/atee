@@ -1248,7 +1248,7 @@ export class Upload {
 				LEFT JOIN showcase_brands b on b.brand_nick = f.brand_nick
 				LEFT JOIN showcase_models m ON (m.model_nick = fk.key_nick AND m.brand_id = b.brand_id)
 				LEFT JOIN showcase_items i on i.model_id = m.model_id
-			WHERE m.model_id is not null and f.destiny is not null
+			WHERE m.model_id is not null
 		`)
 		const files2 = await db.all(`
 			SELECT distinct f.destiny, f.file_id, ip.item_num, ip.model_id, f.ordain, fk.key_nick 
@@ -1262,7 +1262,7 @@ export class Upload {
 				
 				LEFT JOIN showcase_brands b on b.brand_nick = f.brand_nick
 				LEFT JOIN showcase_models m on (m.model_id = ip.model_id and m.brand_id = b.brand_id)
-			WHERE m.model_id is not null and f.destiny is not null
+			WHERE m.model_id is not null
 		`, {art_id, photo_id, fff_id})
 		const files = [...files1, ...files2]
 		
@@ -1273,9 +1273,12 @@ export class Upload {
 		for (const part of Object.keys(Files.destinies)) { //['slides','files','images','texts','videos']
 			destinies[part] = await upload.receiveProp(part)
 		}
+		destinies['unknown_files'] = await upload.receiveProp('unknown_files')
+
+
 		for (const file of files) {
 			const {file_id, ordain, destiny, item_num, model_id} = file
-			if (!destiny) continue; //Может быть непонятное предназначение если файл лежит во вложенной папке папки модели
+			//if (!destiny) continue; //Может быть непонятное предназначение если файл лежит во вложенной папке папки модели
 			//Может быть дубль, если у файла разные keynick и по 1 связь с моделью, по второму связь по Фото или Арт. Это будет в двух интерация и без полного хэша все дубли не убрать.
 			await db.exec(`
 				INSERT IGNORE INTO 
@@ -1286,7 +1289,7 @@ export class Upload {
 		 			prop_id = :prop_id,
 		 			file_id = :file_id,
 		 			ordain = :ordain
-		 	`, {file_id, ordain, item_num, model_id, prop_id: destinies[destiny].prop_id})
+		 	`, {file_id, ordain, item_num, model_id, prop_id: destinies[destiny || 'unknown_files'].prop_id})
 		}
 	}
 	async connectByLinks() {
@@ -1403,6 +1406,7 @@ export class Upload {
 			WHERE f.destiny = 'groupicons'
 		`)
 
+
 		await db.changedRows(`
 			UPDATE showcase_brands
 			SET logo_id = null
@@ -1411,7 +1415,7 @@ export class Upload {
 			UPDATE showcase_brands b
 			LEFT JOIN showcase_files f ON f.brand_nick = b.brand_nick
 			SET b.logo_id = f.file_id
-			WHERE f.destiny = 'brandlogos'
+			WHERE f.destiny = 'brandlogos' and f.status = '200'
 		`)
 
 		await db.changedRows(`
@@ -1590,8 +1594,8 @@ export class Upload {
 		list = await Files.readdirDeep(visitor, config[part])
 		await Files.runDeep(list, async (dirinfo, fileinfo, level) => {
 			const src = dirinfo.dir + fileinfo.file
-			const part = Files.getWayByExt(fileinfo.ext) //files, images, texts, videos
-			const {file_id, src_nick} = await upload.index(src, {fileinfo, destiny: part, source:'disk'}, {
+			//const part = Files.getWayByExt(fileinfo.ext) //files, images, texts, videos
+			const {file_id, src_nick} = await upload.index(src, {fileinfo, destiny: null, source:'disk'}, {
 				brand_nick: null, 
 				group_nick: null,
 				keys_title: null
@@ -1600,10 +1604,10 @@ export class Upload {
 		})
 		return {doublepath, count}
 	}
-	async receiveFile(src, { fileinfo, destiny, source = 'data'}, connect = {group_nick: null, brand_nick: null, keys_title: null}) {
+	async receiveFile(src, { fileinfo, destiny = null, source = 'data'}, connect = {group_nick: null, brand_nick: null, keys_title: null}) {
 		const { upload } = this
 		if (!fileinfo) fileinfo = Files.srcInfo(src)
-		if (!destiny) destiny = Files.getWayByExt(fileinfo.ext) //files, images, texts, videos
+		//if (!destiny) destiny = Files.getWayByExt(fileinfo.ext) //files, images, texts, videos
 		const {ready_id: file_id, src_nick} = await upload.index(src, {fileinfo, destiny, source}, connect) 
 		return {file_id, destiny, ordain: fileinfo.num || 1}
 	}
@@ -1668,9 +1672,11 @@ export class Upload {
 		} else {
 			await db.changedRows(`
 				UPDATE showcase_files
-				SET status = :status
+				SET 
+				status = :status,
+				destiny = :destiny
 				WHERE file_id = :file_id
-			`, {file_id, status})
+			`, {file_id, status, destiny})
 		}
 
 	 	if (keys_nick) {

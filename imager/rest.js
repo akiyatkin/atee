@@ -21,8 +21,10 @@ const forbidden = (view, m) => {
 }
 rest.addArgument('src', (view, src, prop) => {
 	const remote = /^https?:\/\//i.test(src)
+	src = src.replace(/^\/\-imager\/webp\?src=/,'')	
 	if (/^\//.test(src)) {
-		return forbidden(view, 'Imager constraint worked for a src starting with a slash')
+		src = src.replace(/^\/+/,'')
+		//return forbidden(view, 'Imager constraint worked for a src starting with a slash')
 	}
 	if (remote && !conf.constraint?.remote) {
 		return forbidden(view, 'Imager constraint worked for remote src')

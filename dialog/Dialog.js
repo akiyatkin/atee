@@ -13,9 +13,10 @@ document.addEventListener('keydown', async e => {
 })
 const hides = new WeakMap()
 export const Dialog = {
-	open: async ({tpl, sub, parsed, json, data}, div = document.body, onshow, onhide) => {
+	open: async (layer, div = document.body, onshow, onhide) => {
+		const {tpl, sub, parsed, json, data} = layer
 		const tplobj = await import(tpl).then(res => res.default || res)
-		data = !json ? data : await fetch(json).then(res => res.json())
+		layer.data = !json ? data : await fetch(json).then(res => res.json())
 		const id = 'dialog-' + nicked([tpl,sub,json,parsed].join('-'))
 		let popup = document.getElementById(id)
 		if (!popup) {
@@ -28,14 +29,13 @@ export const Dialog = {
 				hides.set(popup, list)
 			}
 			const theme = await import('/-controller/Theme.js').then(r => r.default.get())
-			const layer = {tpl, sub, json, div:id}
+			//const layer = {tpl, sub, json, div:id}
+			layer.div = id
 			const look = { theme }
 			const env = { layer, ...look }
 			env.sid = 'sid-' + layer.div + '-' + layer.sub + '-'
 			env.scope = '#' + layer.div
-
-
-			await Dialog.frame(popup, tplobj[sub](data, env))
+			await Dialog.frame(popup, tplobj[sub](layer.data, env))
 		}
 		Dialog.show(popup, onshow)
 		return popup
