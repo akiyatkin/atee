@@ -1,6 +1,6 @@
 import Rest from "/-rest"
 import Access from "/-controller/Access.js"
-import rest_funcs from '/-rest/funcs.js'
+import rest_funcs from '/-rest/rest.funcs.js'
 const rest = new Rest(rest_funcs)
 
 rest.addHandler('admin', async (view) => {

@@ -1,4 +1,3 @@
-import Access from "/-controller/Access.js"
 import nicked from '/-nicked'
 import fs from "fs/promises"
 import Rest from "/-rest"
@@ -6,18 +5,14 @@ import config from '/-config'
 import Upload from "/-showcase/Upload.js"
 
 import vars_db from '/-db/vars.js'
-import funcs from '/-rest/funcs.js'
+import funcs from '/-rest/rest.funcs.js'
 
 
 
 const rest = new Rest(vars_db, funcs)
 export default rest
 
-rest.addHandler('admin', async (view) => {
-	const { visitor } = await view.gets(['visitor'])
-	if (await Access.isAdmin(visitor.client.cookie)) return
-	return view.err('Access denied', 403)
-})
+
 
 rest.addVariable('base', async (view) => {
 	const Base = await import('/-showcase/Base.js').then(r => r.default)

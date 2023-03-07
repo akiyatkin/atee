@@ -6,7 +6,7 @@ import { loadJSON } from '/-controller/router.js'
 import Theme from '/-controller/Theme.js'
 import Bread from '/-controller/Bread.js'
 
-import funcs from '/-rest/funcs.js'
+import funcs from '/-rest/rest.funcs.js'
 
 import pages from "/-sitemap/rest.pages.js"
 import seo from "/-sitemap/rest.seo.js"

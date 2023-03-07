@@ -9,7 +9,7 @@ import Files from "/-showcase/Files.js"
 
 import common from "/-catalog/common.html.js"
 import rest_live from '/-catalog/rest.live.js'
-import rest_funcs from '/-rest/funcs.js'
+import rest_funcs from '/-rest/rest.funcs.js'
 import docx from '/-docx'
 
 import mail from '/-mail'

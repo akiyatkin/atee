@@ -1,5 +1,5 @@
 import Rest from "/-rest"
-import funcs from '/-rest/funcs.js'
+import funcs from '/-rest/rest.funcs.js'
 import Notion from "/-notion/Notion.js"
 import Access from "/-controller/Access.js"
 const rest = new Rest(funcs)

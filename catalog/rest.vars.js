@@ -1,5 +1,5 @@
 import Rest from "/-rest"
-import funcs from '/-rest/funcs.js'
+import funcs from '/-rest/rest.funcs.js'
 import vars_db from '/-db/vars.js'
 
 const rest = new Rest(funcs, vars_db)

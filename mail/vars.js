@@ -1,5 +1,5 @@
 import Rest from "/-rest"
-import funcs from '/-rest/funcs.js'
+import funcs from '/-rest/rest.funcs.js'
 import config from '/-config'
 import UTM from '/-form/UTM.js'
 const rest = new Rest(funcs)

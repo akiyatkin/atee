@@ -12,7 +12,7 @@ const sharp = require('sharp')
 const conf = await config('imager')
 await fs.mkdir('cache/imager/', { recursive: true }).catch(e => null)
 import rest_admin from '/-controller/rest.admin.js'
-import rest_funcs from '/-rest/funcs.js'
+import rest_funcs from '/-rest/rest.funcs.js'
 const rest = new Rest(rest_admin, rest_funcs)
 
 const forbidden = (view, m) => {

@@ -12,7 +12,7 @@ import Theme from '/-controller/Theme.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 import rest_admin from '/-controller/rest.admin.js'
-import rest_funcs from '/-rest/funcs.js'
+import rest_funcs from '/-rest/rest.funcs.js'
 
 const rest = new Rest(rest_admin, rest_funcs)
 

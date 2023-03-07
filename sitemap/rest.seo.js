@@ -4,7 +4,7 @@ import TPL from '/-sitemap/layout.html.js'
 import Access from '/-controller/Access.js'
 import { loadJSON } from '/-controller/router.js'
 
-import funcs from '/-rest/funcs.js'
+import funcs from '/-rest/rest.funcs.js'
 
 const rest = new Rest(funcs)
 

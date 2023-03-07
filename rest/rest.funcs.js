@@ -16,4 +16,6 @@ rest.addFunction('escape', (view, text) => text.replace(/[&<>]/g, tag => ({
     '>': '&gt;'
 }[tag])))
 
+
+
 export default rest

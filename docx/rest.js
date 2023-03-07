@@ -1,7 +1,7 @@
 import Rest from "/-rest"
 import docx from '/-docx'
 import Access from '/-controller/Access.js'
-import rest_funcs from '/-rest/funcs.js'
+import rest_funcs from '/-rest/rest.funcs.js'
 import fs from 'fs/promises'
 import nicked from '/-nicked'
 

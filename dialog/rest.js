@@ -5,7 +5,7 @@ import mail from '/-mail'
 import config from '/-config'
 import nicked from '/-nicked'
 import vars_mail from '/-mail/vars.js'
-import funcs from '/-rest/funcs.js'
+import funcs from '/-rest/rest.funcs.js'
 
 
 const rest = new Rest(funcs, vars_mail)
