@@ -15,7 +15,7 @@ import docx from '/-docx'
 import mail from '/-mail'
 import config from '/-config'
 import rest_mail from '/-mail/vars.js'
-import rest_db from '/-db/vars.js'
+import rest_db from '/-db/rest.db.js'
 import rest_catalog from '/-catalog/rest.vars.js'
 
 const rest = new Rest(rest_live, rest_funcs, rest_mail, rest_db, rest_catalog)

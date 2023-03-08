@@ -1,0 +1,73 @@
+{
+	"index":"index:ROOT",
+	"tpl":{
+		"layout":"/-user/layout.html.js",
+		"settings":"/-user/settings.html.js",
+		"index":"/-controller/index.html.js",
+		"controller":"/-controller/layout.html.js"
+	},
+	"layout":{
+		"index:ROOT":{
+			"BODY":"layout:MAIN",
+			"FOOTER":"layout:FOOTER",
+			"HEADER":"layout:HEADER"
+		},
+		"settings:ROOT":{
+			"DATABASE":"settings:DATABASE"
+		}
+	},
+	"json":{
+		"layout:MAIN":"/-user/get-admin-check",
+		"settings:DATABASE":"/-user/get-admin-settings"
+	},
+	"childs":{
+		"test":{
+			"head":{ "title":"Test" },
+			"layout":{
+				"index:ROOT":{
+					"BODY":"layout:TEST"
+				}
+			}
+		},
+		"settings":{
+			"head":{ "title":"Настройки" },
+			"layout":{
+				"index:ROOT":{
+					"BODY":"settings:ROOT"
+				}
+			}
+		},
+		"list":{
+			"head":{ "title":"Список пользователей" },
+			"layout":{
+				"index:ROOT":{
+					"BODY":"layout:LIST"
+				}
+			}
+		},
+		"403":{
+			"head":{ "hidden":true, "title":"403 - Доступ закрыт" },
+			"layout":{
+				"index:ROOT":{
+					"BODY":"controller:ER403"
+				}
+			}
+		},
+		"404":{
+			"head":{ "hidden":true, "title":"404 - Страница не найдена" },
+			"layout":{
+				"index:ROOT":{
+					"BODY":"controller:ER404"
+				}
+			}
+		},
+		"500":{
+			"head":{ "hidden":true, "title":"500 - Ошибка" },
+			"layout":{
+				"index:ROOT":{
+					"BODY":"controller:ER500"
+				}
+			}
+		}
+	}
+}

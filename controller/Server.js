@@ -53,8 +53,12 @@ export const Server = {
 				if (!reans?.ans) return error(404, 'Not a suitable answer')
 
 				const headers = {}
-				if (conf.types[reans.ext]) headers['Content-Type'] = conf.types[reans.ext] + '; charset=utf-8'
-				else return error(501, 'Wrong content type, ext not found')
+				if (conf.types[reans.ext]) {
+					headers['Content-Type'] = conf.types[reans.ext] + '; charset=utf-8'
+				} else {
+					console.log(route.path, 'Unregistered extension')
+					return error(403, 'Wrong content type, ext not found')
+				}
 				headers['Cache-Control'] = reans.nostore ? 'no-store' : 'public, max-age=31536000'
 				Object.assign(headers, reans.headers)
 				
@@ -96,23 +100,23 @@ export const Server = {
 				let status = a.status
 			
 				if (!json) return error(500, 'layers have bad definition')
-                if (!json.layers) return error(500, 'layers not defined')
+				if (!json.layers) return error(500, 'layers not defined')
 
-                const bread = new Bread(route.path, route.get, route.search, json.root) //root+path+get = search
-                
-                let info
-                try {
-				    info = await controller(json, visitor, bread) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
-                    status = Math.max(info.status, status)
-                } catch (e) {
-                	console.error(bread.path, e)
-                	status = e.status || 500
-                	const root = bread.root ? '/' + bread.root + '/' : '/'
-                    req.nt = root + status
-                    const a = await meta.get('get-layers', req, visitor)
-                    json = a.ans
-                    info = await controller(json, visitor, bread)
-                }
+				const bread = new Bread(route.path, route.get, route.search, json.root) //root+path+get = search
+				
+				let info
+				try {
+					info = await controller(json, visitor, bread) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
+					status = Math.max(info.status, status)
+				} catch (e) {
+					console.error(bread.path, e)
+					status = e.status || 500
+					const root = bread.root ? '/' + bread.root + '/' : '/'
+					req.nt = root + status
+					const a = await meta.get('get-layers', req, visitor)
+					json = a.ans
+					info = await controller(json, visitor, bread)
+				}
 				if (json.push.length) response.setHeader('Link', json.push.join(','));
 				response.writeHead(status, {
 					'Content-Type': conf.types['html'] + '; charset=utf-8',
@@ -140,18 +144,20 @@ const getHTML = async (layer, look, visitor) => {
 	env.sid = 'sid-' + (layer.div || layer.name) + '-' + layer.sub + '-'
 	env.scope = layer.div ? '#' + layer.div : 'html'
 	let nostore = false
-    let status = 200
+	let status = 200
 	let data
 	let html = ''
 
 	if (layer.json) {
-		//const ans = await loadJSON(layer.json, visitor)
 		const reans = await loadJSON(layer.json, visitor).catch(res => {
-			console.log('getHTML loadJSON')
-			throw res
+			console.log('getHTML loadJSON', res)
+			//08.03 throw res. Стандартный ответ только 404
+			return res
 		})
 		data = reans.ans
 		nostore = nostore || reans.nostore
+		//status = Math.max(reans.status, status) 403, 404, 500 статус в данных, обрабатывается в шаблоне, на ответ страницы не влияют
+		//if (reans.status != 200) throw reans //Выкидываем на стандартную страницу ошибки
 	}
 
 	
@@ -160,25 +166,36 @@ const getHTML = async (layer, look, visitor) => {
 	if (layer.html) {
 		const reans = await loadTEXT(layer.html, visitor).catch(e => { 
 			status = 500
-			throw {status, data: errmsg(layer, e), nostore: true, from: 'Server.getHTML'} 
-		})
-		if (reans.status == 404) throw reans //Выкидываем на стандартную страницу 404
 
-		status = Math.max(reans.status, status)
-		html = typeof(reans.ans) == 'string' ? reans.ans : ''
-		nostore = nostore || reans.nostore
+			html = errmsg(layer, e) //Ошибка покажется вместо шаблона
+			nostore = true
+			//08.03 throw {status, data: errmsg(layer, e), nostore: true, from: 'Server.getHTML'} 
+		})
+		if (reans) { //html мог быть получен из htmltpl и страницы нет
+			if (reans.status == 404) throw reans //Выкидываем на стандартную страницу 404, потому что это нельяз обработать в шаблоне
+
+			status = Math.max(reans.status, status)
+			html = typeof(reans.ans) == 'string' ? reans.ans : ''
+			nostore = nostore || reans.nostore
+		}
 	} else if (layer.tpl) {
 		let tplobj = await import(layer.tpl).catch(e => {
-    		e.tpl = layer.tpl
-    		throw e
-    	})
-    	if (tplobj.default) tplobj = tplobj.default
-        try {
-            html = tplobj[layer.sub](data, env)
-        } catch(e) {
-            html = errmsg(layer, e)
-            status = 500
-        }
+			e.tpl = layer.tpl
+
+			html = errmsg(layer, e) //Ошибка покажется вместо шаблона
+			status = 500
+			nostore = true
+			//08.03 throw e
+		})
+		if (tplobj) {
+			if (tplobj.default) tplobj = tplobj.default
+			try {
+				html = tplobj[layer.sub](data, env)
+			} catch(e) {
+				html = errmsg(layer, e) //Ошибка покажется вместо шаблона
+				status = 500
+			}
+		}
 	}
 	return { status, nostore, html }	
 }
@@ -194,7 +211,7 @@ const runLayers = async (layers, fn, parent) => {
 export const controller = async ({ vt, st, ut, layers, head, theme }, visitor, bread) => {
 	const ans = {
 		html: '',
-        status: 200,
+		status: 200,
 		nostore: false
 	}
 	const timings = {view_time:vt, access_time:st, update_time:ut}
@@ -204,7 +221,7 @@ export const controller = async ({ vt, st, ut, layers, head, theme }, visitor, b
 	await runLayers(layers, async layer => {
 		const { nostore, html, status } = await getHTML(layer, look, visitor)
 		ans.nostore = Math.max(ans.nostore, nostore)
-        ans.status = Math.max(ans.status, status)
+		ans.status = Math.max(ans.status, status)
 		doc.insert(html, layer.div, layer.layers?.length)
 	})
 	try {

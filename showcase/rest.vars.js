@@ -4,12 +4,12 @@ import Rest from "/-rest"
 import config from '/-config'
 import Upload from "/-showcase/Upload.js"
 
-import vars_db from '/-db/vars.js'
-import funcs from '/-rest/rest.funcs.js'
+import rest_db from '/-db/rest.db.js'
+import rest_funcs from '/-rest/rest.funcs.js'
 
 
 
-const rest = new Rest(vars_db, funcs)
+const rest = new Rest(rest_db, rest_funcs)
 export default rest
 
 

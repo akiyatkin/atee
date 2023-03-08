@@ -6,9 +6,10 @@ import nicked from '/-nicked/nicked.js'
 import unique from '/-nicked/unique.js'
 
 import Rest from "/-rest"
-import vars from '/-showcase/rest.vars.js'
+import rest_vars from '/-showcase/rest.vars.js'
+import rest_admin from '/-controller/rest.admin.js'
 
-const rest = new Rest(vars)
+const rest = new Rest(rest_vars, rest_admin)
 export default rest
 
 import { whereisit } from '/-controller/whereisit.js'

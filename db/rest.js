@@ -1,11 +1,11 @@
 import Rest from "/-rest"
 import Db from "/-db/Db.js"
-import db_vars from "/-db/vars.js"
+import rest_db from "/-db/rest.db.js"
 
 import Access from "/-controller/Access.js"
 
 
-const rest = new Rest(db_vars)
+const rest = new Rest(rest_db)
 
 rest.addHandler('admin', async (view) => {
 	const { visitor } = await view.gets(['visitor'])

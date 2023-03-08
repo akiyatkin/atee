@@ -1,8 +1,8 @@
 import Rest from "/-rest"
-import funcs from '/-rest/rest.funcs.js'
-import vars_db from '/-db/vars.js'
+import rest_funcs from '/-rest/rest.funcs.js'
+import rest_db from '/-db/rest.db.js'
 
-const rest = new Rest(funcs, vars_db)
+const rest = new Rest(rest_funcs, rest_db)
 
 rest.addVariable('base', async (view) => {
 	const { db, visitor } = await view.gets(['db','visitor'])

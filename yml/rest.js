@@ -3,11 +3,11 @@ import tpl from "/-yml/yml.html.js"
 import yml from '/-yml'
 import config from '/-config'
 
-import db_vars from "/-db/vars.js"
+import rest_vars from "/-db/rest.db.js"
 import rest_funcs from "/-rest/funcs.js"
 import rest_catalog from '/-catalog/rest.vars.js'
 
-const rest = new Rest(db_vars, rest_funcs, rest_catalog)
+const rest = new Rest(rest_vars, rest_funcs, rest_catalog)
 
 rest.addArgument('feed')
 

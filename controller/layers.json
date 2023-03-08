@@ -1,21 +1,23 @@
 {
 	"tpl":{
 		"controller":"/-controller/layout.html.js",
-		"index":"/-controller/index.html.js"
+		"index":"/-controller/index.html.js",
+		"main":"/-controller/main.html.js"
 	},
 	"index":"index:ROOT",
 	"layout":{
 		"index:ROOT":{
-			"MAIN":"index:MAIN"
+			"BODY":"main:ROOT",
+			"HEADER":"main:HEADER"
 		}
 	},
 	"json":{
-		"index:MAIN":"/-controller/get-access"
+		"main:ROOT":"/-controller/get-access"
 	},
 	"animate":{
-		"index:MAIN":"none"
+		"main:ROOT":"none"
 	},
 	"parsedtpl":{
-		"index:MAIN":"${timings.view_time}"
+		"main:ROOT":"${timings.view_time}"
 	}
 }

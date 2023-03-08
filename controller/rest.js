@@ -258,7 +258,7 @@ rest.addResponse('get-layers', async view => {
 	}
 
 	const { index: nopt, status } = getIndex(rule, timings, bread, interpolate, theme) //{ index: {push, root}, status }
-
+	
 	if (!nopt?.root) return view.err()
 	view.status = status
 	view.ans.theme = theme
