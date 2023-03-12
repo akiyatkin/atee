@@ -1,55 +1,77 @@
 {
 	"index":"index:ROOT",
+	
 	"tpl":{
-		"layout":"/-user/layout.html.js",
-		"settings":"/-user/settings.html.js",
-		"index":"/-controller/index.html.js",
-		"controller":"/-controller/layout.html.js"
+		"main":"/-user/main.html.js",
+		"signup":"/-user/signup.html.js",
+		"signin":"/-user/signin.html.js",
+		"logout":"/-user/logout.html.js",
+		"result":"/-user/result.html.js",
+		"index":"/-sitemap/index.html.js",
+		"controller":"/-controller/layout.html.js",
+		"sitemap":"/-sitemap/sitemap.html.js"
 	},
 	"layout":{
 		"index:ROOT":{
-			"BODY":"layout:MAIN",
-			"FOOTER":"layout:FOOTER",
-			"HEADER":"layout:HEADER"
-		},
-		"settings:ROOT":{
-			"DATABASE":"settings:DATABASE"
+			"BODY":"main:ROOT",
+			"FOOTER":"main:FOOTER",
+			"HEADER":"main:HEADER"
 		}
 	},
+	"jsontpl":{
+		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}"
+	},
 	"json":{
-		"layout:MAIN":"/-user/get-admin-check",
-		"settings:DATABASE":"/-user/get-admin-settings"
+		"main:ROOT":"/-user/get-user",
+		"signup:ROOT":"/-user/get-user",
+		"signin:ROOT":"/-user/get-user",
+		"logout:ROOT":"/-user/get-user",
+		"sitemap:ROOT":"/-sitemap/get-data"
+	},
+	"css2":{
+		"float-label":"/-float-label/style.css"
 	},
 	"childs":{
-		"test":{
-			"head":{ "title":"Test" },
+		"signup":{
+			"head":{ "title":"Регистрация", "css2":["float-label"] },
 			"layout":{
 				"index:ROOT":{
-					"BODY":"layout:TEST"
+					"BODY":"signup:ROOT"
 				}
 			}
 		},
-		"settings":{
-			"head":{ "title":"Настройки" },
+		"signin":{
+			"head":{ "title":"Вход", "css2":["float-label"] },
 			"layout":{
 				"index:ROOT":{
-					"BODY":"settings:ROOT"
+					"BODY":"signin:ROOT"
 				}
 			}
 		},
-		"list":{
-			"head":{ "title":"Список пользователей" },
+		"result":{
+			"head":{ "title":"Подтверждение" },
 			"layout":{
 				"index:ROOT":{
-					"BODY":"layout:LIST"
+					"BODY":"result:ROOT"
 				}
 			}
 		},
-		"403":{
-			"head":{ "hidden":true, "title":"403 - Доступ закрыт" },
+		"logout":{
+			"head":{ "title":"Вход" },
 			"layout":{
 				"index:ROOT":{
-					"BODY":"controller:ER403"
+					"BODY":"logout:ROOT"
+				}
+			}
+		},
+		"sitemap":{
+			"head":{
+				"hidden":true,
+				"title":"Карта сайта"
+			},
+			"layout":{
+				"index:ROOT":{
+					"BODY":"sitemap:ROOT"
 				}
 			}
 		},
@@ -60,14 +82,11 @@
 					"BODY":"controller:ER404"
 				}
 			}
-		},
-		"500":{
-			"head":{ "hidden":true, "title":"500 - Ошибка" },
-			"layout":{
-				"index:ROOT":{
-					"BODY":"controller:ER500"
-				}
-			}
 		}
+	},
+	"head":{
+		"title":"Личный кабинет пользователя",
+		"description": "",
+		"image_src": ""
 	}
 }

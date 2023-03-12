@@ -9,7 +9,7 @@ const rest = new Rest(rest_admin)
 export default rest
 
 
-rest.addResponse('set-admin-reset', async view => {
+rest.addResponse('set-reset', async view => {
 	await view.gets(['admin'])
 	const { db } = await view.gets(['db'])
 
@@ -29,5 +29,5 @@ rest.addResponse('set-admin-reset', async view => {
 		return db.exec(sql)
 	}))
 	
-	return view.ret('База пересоздана')
+	return view.ret('База обновлена')
 })

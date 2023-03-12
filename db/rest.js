@@ -1,20 +1,12 @@
 import Rest from "/-rest"
 import Db from "/-db/Db.js"
 import rest_db from "/-db/rest.db.js"
+import rest_admin from "/-controller/rest.admin.js"
 
 import Access from "/-controller/Access.js"
 
 
-const rest = new Rest(rest_db)
-
-rest.addHandler('admin', async (view) => {
-	const { visitor } = await view.gets(['visitor'])
-	if (!await Access.isAdmin(visitor.client.cookie)) {
-		view.status = 403
-		view.nostore = true
-		return view.err('Access denied')
-	}
-})
+const rest = new Rest(rest_db, rest_admin)
 
 rest.addResponse('get-state', async view => {
 	const { visitor } = await view.gets(['visitor'])

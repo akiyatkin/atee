@@ -1,8 +1,8 @@
 import Rest from "/-rest"
 import mail from "/-mail"
-import vars from "/-mail/vars.js"
+import rest_mail from "/-mail/rest.mail.js"
 
-const rest = new Rest(vars)
+const rest = new Rest(rest_mail)
 
 rest.addArgument('href', ['escape'])
 rest.addArgument('block', ['escape'])

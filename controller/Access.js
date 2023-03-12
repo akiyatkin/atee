@@ -12,7 +12,7 @@ export const Access = {
 		try {
 			const { access:PASS } = CONF
 			if (cookie === PASS) return true
-			let pass = cookie.match('(^|;)?\-controller=([^;]*)(;|$)')
+			let pass = cookie.match('(^|;)?-controller=([^;]*)(;|$)')
 			if (!pass) return false
 			pass = decodeURIComponent(pass[2])
 			return pass === PASS

@@ -1,12 +1,11 @@
 const controller = {}
 export default controller
+
 controller.HEAD = (data, env) => 
 `<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-
 		<base href="${env.crumb == '/' ? '/' : env.crumb + '/'}">
-		<link rel="stylesheet" href="/-notreset/style.css?t=${env.timings.update_time}">
-
+		<link rel="stylesheet" href="/-notreset/style.css?t=${env.timings.update_time}">		
 		<script>//Делаем SPA переходы
 			const isSuitable = a => {
 				const search = a.getAttribute('href')

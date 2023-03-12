@@ -26,6 +26,17 @@ const mail = {
 		const info = mail.saveSend(opt)
 		return info
 	},
+	toUser: (subject, html, email) => {
+		const opt = {
+			from: conf.from, 
+			to: email,
+			replyTo: conf.to,
+			subject,
+			html
+		}
+		const info = mail.saveSend(opt)
+		return info
+	},
 	toAdmin: (subject, html, email) => {
 		const opt = {
 			from: conf.from, 

@@ -8,6 +8,7 @@ export default class Visitor {
 		this.#map.set(obj, res)
 		return res
 	}
+	
 	constructor (request) {
 		//this.request нельзя сохранять, чтобы отдельный view не решил что может что-то отправить и закрыть request
 		this.client = {

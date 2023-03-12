@@ -1,3 +1,4 @@
+import unique from '/-nicked/unique.js'
 class ViewException { 
 	status
 	ext
@@ -8,13 +9,97 @@ class ViewException {
 		this.msg = msg
 	}
 }
+class RecView {
+	constructor (view, pproc) {
+		this.view = view
+		this.pproc = pproc
+		this.replaced = pproc.opt.replaced //Может быть только одна подмена в папке проекта
+	}
+	get (name, parentvalue = null, parentname = null) {
+		return this.view.get(name, this.pproc, parentvalue, parentname)
+	}
+	gets (ar) {
+		return this.view.gets(ar, this.pproc)
+	}
+	err (...args) {
+		return this.view.err(...args)
+	}
+	ret (...args) {
+		return this.view.ret(...args)
+	}
+	fin (...args) {
+		return this.view.fin(...args)
+	}
+	nope (...args) {
+		return this.view.nope(...args)
+	}
+	end (...args) {
+		return this.view.end(...args)
+	}
+	reset (...args) {
+		return this.view.reset(...args)
+	}
+	after (...args) {
+		return this.view.after(...args)
+	}
+	setCookie (...args) {
+		return this.view.setCookie(...args)
+	}
+	delCookie (...args) {
+		return this.view.delCookie(...args)
+	}
+	set nostore(value) {
+		this.view.nostore = value
+	}
+	get nostore() {
+		return this.view.nostore
+	}
+	set headers(value) {
+		this.view.headers = value
+	}
+	get headers() {
+		return this.view.headers
+	}
+	set status(value) {
+		this.view.status = value
+	}
+	get status() {
+		return this.view.status
+	}
+	set ext(value) {
+		this.view.ext = value
+	}
+	get ext() {
+		return this.view.ext
+	}
+	set ans(value) {
+		this.view.ans = value
+	}
+	get ans() {
+		return this.view.ans
+	}
+}
 export class View {
-	nostore = false
+	nostore = null
 	status = 200
 	ext = 'json'
 	headers = {}
 	proc = []
 	store = {}
+	setCookie (name, value) {
+		const view = this
+		const cookie = `${name}=${encodeURIComponent(value)}; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT`
+		view.headers['Set-Cookie'] = view.headers['Set-Cookie'] ? view.headers['Set-Cookie'] + ';' + cookie : cookie
+		const client = view.visitor.client
+		client.cookie = client.cookie ? client.cookie + ';' + cookie : cookie
+	}
+	delCookie (name, value) {
+		const view = this
+		const cookie = `${name}=${encodeURIComponent(value)}; path=/; SameSite=Strict; expires=Fri, 31 Dec 2000 23:59:59 GMT`
+		view.headers['Set-Cookie'] = view.headers['Set-Cookie'] ? view.headers['Set-Cookie'] + ';' + cookie : cookie
+		const client = view.visitor.client
+		client.cookie = client.cookie.replace(new RegExp(`(^|;)?${name}=([^;]*)(;|$)`), '')
+	}
 	getStore (name, args) {
 		const hash = JSON.stringify(args)
 		const STORE = this.store
@@ -22,22 +107,69 @@ export class View {
 		if (!STORE[name][hash]) STORE[name][hash] = {}
 		return STORE[name][hash]
 	}
-	once (name, args, callback) {
-		const store = this.getStore(name, args)
-		if (store.ready) return store.promise
-		store.promise = callback(...args)
-		store.ready = true
-		return store.promise
-	}
-	constructor (rest, action, req = {}) {
+	// once (name, args, callback) {
+	// 	const store = this.getStore(name, args)
+	// 	if (store.ready) return store.promise
+	// 	store.promise = callback(...args)
+	// 	store.ready = true
+	// 	return store.promise
+	// }
+	constructor (rest, action, req = {}, opt, visitor) {
 		const view = this
+		view.visitor = visitor
 		view.action = action
 		view.req = req
 		view.rest = rest
 		view.ans = {}
+		view.opt = opt
 	}
-	async getopt (opt, parentvalue = null, parentname = null) { //для выполнения replaced
+	async reset(pname) {
 		const view = this
+		const proc = view.proc[pname]
+		if (!proc) return
+		proc.ready = false
+		for (const pname in proc.parents) {	//Может быть разрыв в родителях если обработчик завершается недожидаясь внутренних своих процессов. setTimeout не поддерживается.
+			this.reset(pname)
+		}
+	}
+
+	async getProc (opt) {
+		const mainview = this
+		const proc = mainview.proc[opt.name]
+		if (proc) return proc
+		if (opt.once && mainview.opt != opt) { //Для главного action запроса раз пришёл ещё один запрос значит есть отличие в реквестах и объединения не должно быть
+			//proc может быть общим или у каждого view свой. Для всех rest в extras view один.
+			//proc общий если у него нет в childs обработки отличающегося request в массиве view.req
+			const views = mainview.rest.getViews(mainview)
+			for (const view of views) {
+				const otherproc = view.proc[opt.name]
+				if (!otherproc) continue
+				if (otherproc.process) { //Другой proc сейчас выполняется и всех детей ещё не собрал, надо его дождаться
+					await otherproc.promise.catch()
+				}
+				const r = mainview.rest.runChilds(otherproc, proc => {
+					const popt = proc.opt
+					if (popt.request && view.req[popt.name] != mainview.req[popt.name]) return true
+				})
+				if (r) continue; //Нельзя объединять так как в зависимостях есть разные request				
+				return otherproc
+			}
+		}
+		mainview.proc[opt.name] = {
+			'opt': opt,
+			'parents': {},
+			'childs': {},
+			'promise': false,
+			'ready': false,
+			'result': false,
+			'process': false
+		}
+		return mainview.proc[opt.name]
+	}	
+	async #exec (proc, parentvalue = null, parentname = null) {
+		const opt = proc.opt
+		const view = this
+		const rest = view.rest //Будет родительский рест, от которого запрос. Но могут быть запросы по другим рестам с использованием вложенных тут рестов.
 		const pname = opt.name
 		const forname = parentname || pname;
 		let res = parentvalue
@@ -49,72 +181,95 @@ export class View {
 				res = null
 			}
 		}
+		
 		for (const n of opt.before || []) {
-			const r = await view.get(n, res, forname);
+			const r = await view.get(n, proc, res, forname);
 			if (r != null) res = r;
 		}
+
 		
 		if (opt['required']) {
-			if (res === null) return view.err(`rest.required ${pname}`);
+			if (res == null) return view.err(`rest.required ${pname}`);
 		}
 
-		if (opt.func) {
-			const r = await opt.func(view, res, forname, opt.replaced)
-			//if (r != null) res = r
-			res = r
+		if (opt.func) {	
+			const rview = new RecView(view, proc)
+			if (opt.nostore && view.nostore == null) view.nostore = true
+			const r = opt.func(rview, res, forname)
+			res = await r
 		}
+
 		for (const n of opt['after'] || []) {
-			const r = await view.get(n, res, pname);
+			const r = await view.get(n, proc, res, pname);
 			if (r != null) res = r;
 		}
 		return res
 	}
 	
-	async get (pname, parentvalue = null, parentname = null) {
+	async get (pname, pproc, parentvalue = null, parentname = null) {
+
+
 		const view = this
 		const rest = view.rest
 		const opt = rest.findopt(pname)
-		if (!opt) return view.err(`rest.notfound ${pname}`, 500)
-		if (!view.proc[pname]) view.proc[pname] = {
-			'ready': false,
-			'result': false,
-			'process': false
+
+		if (!opt) return view.err(`rest.notfound ${pname}`, 404)
+
+		const proc = await view.getProc(opt)
+		if (pproc) {
+			proc.parents[pproc.opt.name] = pproc //Тест рекурсии
+			pproc.childs[proc.opt.name] = proc //Для мёрджа разных view если нет разный request в childs
 		}
-		const proc = view.proc[pname]
-		if (opt['once'] && proc['ready']) return proc['result'];
-		if (proc['process']) return view.err(`rest.recursion ${pname}`);
-		proc['process'] = true;
+
+		if (proc['process']) {
+			const r = rest.runParents(proc, pproc => {
+				if (pproc == proc) return true
+			})
+			if (r) return view.err(`rest.recursion ${pname}`, 500)
+		}
+		//if (opt['nostore'] && !view.opt['nostore']) return view.err(`rest.action required ${pname}`, 500)
+
+		if (opt['once'] && proc['promise']) return proc['promise']
 		
-		const res = await view.getopt(opt, parentvalue, parentname)
-		
-		proc['ready'] = true
-		proc['result'] = res
+		proc['process'] = true
+		proc['promise'] = view.#exec(proc, parentvalue, parentname)
+		proc['result'] = await proc['promise']
+		proc['ready'] = true		
 		proc['process'] = false
 
-		return proc['result'];
+		return proc['result']
 	}
 
-	async gets (pnames) {
+	async gets (pnames, pproc) {
 		const view = this
 		const res = { }
+		const list = []
 		for (const pname of pnames ?? []) {
-			const vname = pname.split(/[\#\*@\?]/)[0]
-			res[vname] = await view.get(pname)
+			//const vname = pname.split(/[\#\*@\?]/)[0]
+			const vname = pname.split(/[\#]/)[0]
+			const promise = view.get(pname, pproc)
+			promise.vname = vname
+			list.push(promise)
 		}
+		const listres = await Promise.all(list)
+		for (const i in list) {
+			const promise = list[i]
+			const r = listres[i]
+			res[promise.vname] = r
+		}
+		
 		return res
 	}
-	fin(result) {
-		const nostore = !result
-		const status = 200
+	fin (result) {
 		const msg = result ? 'Готово' : 'Ошибка'
-		return this.#ready(msg, status, result, nostore)
+		return this.#ready(msg, null, result)
 	}
 	end (ext = {}) {
-		const reans = new ViewException()
+		const reans = new ViewException('end')
 		Object.assign(this, ext)
 		throw reans
 	}
-	#ready (msg, status, result, nostore = null) {
+	#ready (msg, status, result, nostore) {
 		const view = this
 		view.ans.result = result
 		if (msg) view.ans.msg = msg
@@ -122,7 +277,7 @@ export class View {
 		if (nostore != null) view.nostore = nostore
 		else if (view.status == 403) view.nostore = true
 		else if (view.status == 500) view.nostore = true
-		throw new ViewException()
+		throw new ViewException('ready ' + msg)
 	}
 
 	err (msg, status = 422, nostore = null) {//result 0, но вообще фигня, такое не должно быть
@@ -143,6 +298,7 @@ export class View {
 	after(callback) {
 		this.afterlisteners.push(callback)
 	}
+
 }
 export class Rest {
 	afterlisteners = []
@@ -158,15 +314,40 @@ export class Rest {
 			if (this.findextra(m)) continue
 			this.extras.push(m)
 		}
-		this.after((view, reans = {}) => {
-			reans.nostore = ~view.action.indexOf('set-') || reans.nostore
-		})
 	}
-	findextra ( m ) {
+	findextra (m) {
 		for (const e of this.extras) {
 			if (e === m) return true
 			const r = e.findextra(m)
 			if (r) return true
+		}
+	}
+
+	
+	runChilds (proc, fn) { //включая себя
+		const r = fn(proc)
+		if (r != null) return r
+		for (const pname in proc.childs) {
+			const p = proc.childs[pname]
+			const r = this.runChilds(p, fn)
+			if (r != null) return r
+		}
+	}
+	runParents (proc, fn) { //не включая себя
+		for (const p in proc.parents) {
+			const pproc = proc.parents[p]
+			let r = fn(pproc)
+			if (r != null) return r
+			r = this.runParents(pproc, fn)	
+			if (r != null) return r
+		}
+	}
+	runRests (fn) {
+		const r = fn(this)
+		if (r != null) return r
+		for (const rest of this.extras) {
+			const r = rest.runRests(fn)
+			if (r != null) return r
 		}
 	}
 	findopt (pname) {
@@ -177,14 +358,81 @@ export class Rest {
 		}
 		return false
 	}
+
+	getRestStore (visitor) {
+		return visitor.relate(this).once('rest visitor store', () => ({sync:false, views: []}))
+	}
+	// findsync (visitor) {
+	// 	const is = this.getRestStore(visitor)
+	// 	if (is.sync) return is.sync
+	// 	for (const rest of this.extras) {
+	// 		const sync = rest.findsync(visitor)
+	// 		if (sync) return sync
+	// 	}
+	// }
+	// delsync (visitor) {
+	// 	const is = this.getRestStore(visitor)
+	// 	if (is.sync) is.sync = false
+	// 	for (const rest of this.extras) {
+	// 		rest.delsync(visitor)
+	// 	}
+	// }
+	// setsync (visitor, sync) {
+	// 	const is = this.getRestStore(visitor)
+	// 	is.sync = sync
+	// 	for (const rest of this.extras) { //Нужно заблокировать и вложенные, так как они без текущего могут быть где-то использованы
+	// 		rest.setsync(visitor, sync)
+	// 	}
+	// }
+	
+	getViews(view) {
+		const visitor = view.visitor
+		const views = []
+		this.runRests(rest => {
+			const list = rest.getRestStore(visitor).views
+			for (const view of list) views.push(view)
+		})
+		return unique(views)
+	}
+	addViews(view) {
+		const visitor = view.visitor
+		const views = []
+		this.runRests(rest => {
+			const list = rest.getRestStore(visitor).views
+			list.push(view)
+		})
+	}
+
+
+
 	async get (action, req = {}, visitor) {
 		if (visitor) req = {...req, visitor}
 		const rest = this
-		const view = new View(rest, action, req)
+		const opt = rest.findopt(action)
+		const view = new View(rest, action, req, opt, visitor) //Создаётся у родительского реста
+		const views = rest.addViews(view)
+		
 
 		try {
-			const opt = rest.findopt(view.action)
-			if (!opt?.response && !opt?.request) return view.err('rest.badrequest', 404)
+
+			/*
+				Некоторые create обработки могут быть только в самостоятельном set запросе. 
+				Нельзя чтобы считывание было до создание, и гарантировать, что такого запроса в мульти режиме контроллера нельзя
+				даже при правильной последовательности запросов при асинхронном выполнении
+				Таким образом других работ с этим rest в этом visitor не может быть, если выполняется create или любой set
+				Также создание пользователя возможно только в set запросах, тоесть в самостоятельных запросах, хотя set может быть и в контроллере, 
+				но это будет скрытый set в get или когда других работ с этим рестом нет, например - но это трудно представимо
+				ИТОГО Любой set должен блокировать параллельную работу и быть cproc если пользователь жмёт всё подряд
+				Обработка должна сообщить что она только для set режима, просто проверив свой action.
+			*/
+			
+			// visit.counter++
+			// if (/^set\-/.test(action)) visit.sync = true
+			// if (visit.sync && visit.counter > 1) return view.err('rest.badrequest', 500)
+
+			
+			//if (!opt?.response && !opt?.request) return view.err('rest.badrequest', 404)
+			if (!opt?.response) return view.err('rest.badrequest', 404)
 
 			const res = await view.get(action)
 			const reans = res != null ? res : {
@@ -210,15 +458,15 @@ export class Rest {
 				for (const callback of rest.afterlisteners) await callback(view, reans) //постанализ ответа
 				return reans
 			}
-			for (const callback of view.afterlisteners) await callback(view) 
-			//for (const callback of rest.afterlisteners) await callback(view)
+			
+			for (const callback of view.afterlisteners) await callback(view) //выход из базы
+			//for (const callback of rest.afterlisteners) await callback(view) Не делаем, потому что ответ нестандартный и анализировать нельзя
 
 			//Ошибки могут быть 500, когда сервер себя винит и 422, когда сервер винит пользователя
 			//422 возможная ситуация, типа замечание пользователю, почему ты фигню спрашиваешь
 			
 			//Нет соеденинеия с базой данных.. ну что же мы тут поделаем, пользователь бессилен 500
 			//Запрошенного пользователя нет в базе данных 422 - ответить данными пользователя не можем, но проблема не наша.
-
 			//ЗАЧЕМ РАЗЛИЧАТЬ?
 			throw e
 		}
@@ -252,61 +500,126 @@ export class Rest {
 		}
 
 		this.list[pname] = {
+			'replaced': opt,
 			'name': pname,
 			//'process': false,
 			'request': false, //Нужно ли брать из REQUEST
 			'required': false, //Нужно ли выкидывать исключение если нет request
-			'response': false,
+			'response': false, //Без этой метки нельзя обратиться из адресной строки
 			// 'result': null,
 			// 'ready': false,
 			'once': null,
 			'type': null,
+			'nostore': null,
 			'func': func,
 			'after': after,
 			'before': before
 		}
 		return this.list[pname]
 	}
-	addResponse (pname, a1, a2, a3) {
+	// addSet (...args) { //Для всех set- обычно
+	// 	const opt = this.add(...args)
+	// 	opt['type'] = 'set'
+	// 	opt['nostore'] = true 
+	// 	opt['response'] = true
+	// 	opt['request'] = false
+	// 	opt['once'] = true
+	// 	opt['required'] = false
+	// }
+	// addGet (...args) { //Для всех set- обычно
+	// 	const opt = this.add(...args)
+	// 	opt['type'] = 'get'
+	// 	opt['nostore'] = false
+	// 	opt['response'] = true
+	// 	opt['request'] = false
+	// 	opt['once'] = true
+	// 	opt['required'] = false
+	// }
+	addAction (pname, a1, a2, a3) { //Для всех set- обычно
 		const opt = this.add(pname, a1, a2, a3)
 		opt['type'] = 'action'
+		opt['nostore'] = true 
+		/*
+			Параллельный action и response с rest исключается. Сами обработки остаются асинхронынми, но не со своими дублями. 
+			В контроллере будет exception если два action вызова - последовательного выполнения не будет, но response будут ждать и последовательно выполнятся. 
+			При двух запросах вне котроллера будет последовательное выполнение action cproc и последовательное выполнение response?
+		*/
 		opt['response'] = true
 		opt['request'] = false
 		opt['once'] = true
 		opt['required'] = false
-		return opt
 	}
-	addHandler (pname, a1, a2, a3) {
+	addResponse (pname, a1, a2, a3) {
 		const opt = this.add(pname, a1, a2, a3)
-		opt['type'] = 'handler'
-		opt['response'] = false
+		opt['type'] = 'response'
+		opt['nostore'] = false
+		opt['response'] = true
 		opt['request'] = false
 		opt['once'] = true
 		opt['required'] = false
 	}
+	
 	addArgument (pname, a1, a2, a3) {
 		const opt = this.add(pname, a1, a2, a3)
 		opt['type'] = 'argument'
+		opt['nostore'] = false
 		opt['response'] = false
 		opt['request'] = true
 		opt['once'] = true
 		opt['required'] = true
 	}
+
 	addVariable (pname, a1, a2, a3) {
 		const opt = this.add(pname, a1, a2, a3)
 		opt['type'] = 'variable'
+		opt['nostore'] = false
 		opt['response'] = false
 		opt['request'] = false
 		opt['once'] = true
 		opt['required'] = false
 	}
+
 	addFunction (pname, a1, a2, a3) {
 		const opt = this.add(pname, a1, a2, a3)
 		opt['type'] = 'function'
+		opt['nostore'] = false
 		opt['response'] = false
 		opt['request'] = false
 		opt['once'] = false
 		opt['required'] = false
 	}
+
+	// addHandler (pname, a1, a2, a3) {
+	// 	const opt = this.add(pname, a1, a2, a3)
+	// 	opt['type'] = 'handler'
+	// 	opt['nostore'] = true
+	// 	opt['response'] = false
+	// 	opt['request'] = false
+	// 	opt['once'] = true
+	// 	opt['required'] = false
+	// }
+	
+	// addHandler (pname, a1, a2, a3) {
+	// 	const opt = this.add(pname, a1, a2, a3)
+	// 	opt['type'] = 'handler'
+	// 	opt['nostore'] = false
+	// 	opt['response'] = false
+	// 	opt['request'] = false
+	// 	opt['once'] = false
+	// 	opt['required'] = false
+	// }
+
+	// addSetting (pname, a1, a2, a3) {
+	// 	const opt = this.add(pname, a1, a2, a3)
+	// 	opt['type'] = 'setting'
+	// 	opt['nostore'] = true
+	// 	opt['response'] = false
+	// 	opt['request'] = false
+	// 	opt['once'] = true
+	// 	opt['required'] = false
+	// }
+	
+
+	
 }
 export default Rest

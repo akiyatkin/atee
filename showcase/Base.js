@@ -27,7 +27,9 @@ class Base {
 		const { fscache: cache, base, db } = this
 		return cache.once('getOptions', async () => {
 			const conf = await config('showcase')
-			const options = await JSON.parse(await fs.readFile((conf.options)))
+			const options = await JSON.parse(
+				await fs.readFile((conf.options)).catch(e => ('{}'))
+			)
 
 			options.numbers ??= []
 			options.texts ??= []

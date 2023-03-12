@@ -12,9 +12,11 @@ import Theme from '/-controller/Theme.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 import rest_admin from '/-controller/rest.admin.js'
+import rest_path from '/-controller/rest.path.js'
 import rest_funcs from '/-rest/rest.funcs.js'
 
-const rest = new Rest(rest_admin, rest_funcs)
+
+const rest = new Rest(rest_admin, rest_funcs, rest_path)
 
 rest.addResponse('get-access', async view => {
 	const { visitor } = await view.gets(['visitor'])
@@ -38,10 +40,6 @@ rest.addResponse('set-update', async view => {
 	return view.err()
 })
 
-rest.addFunction('checksearch', (view, n) => {
-	if (n && n[0] != '/') return view.err()
-	return n
-})
 
 rest.addArgument('pv', ['checksearch']) //prev
 rest.addArgument('nt', ['checksearch']) //next
@@ -105,6 +103,8 @@ const spread = (rule, parent) => { //всё что в layout root перенос
 		spread(rule.childs[path], rule)
 	}
 }
+
+
 
 const maketree = (layer, layout, rule) => {
 	if (!layout) return
@@ -205,10 +205,11 @@ rest.addResponse('get-layers', async view => {
 	view.headers = {}
 	const {
 		visitor, rt:reloadtss, rd:reloaddivs, pv: prev, nt: next, st: access_time, ut: update_time, vt: view_time, gs: globals 
-	} = await view.gets(['visitor', 'rt', 'rd', 'pv', 'nt', 'st', 'ut', 'gs', 'vt'])
+	} = await view.gets(['visitor', 'rt', 'rd', 'pv', 'nt', 'st', 'ut', 'gs', 'vt'])	
 	const host = visitor.client.host
 	const cookie = visitor.client.cookie
 	const ptimings = { access_time, update_time, view_time }
+
 	const timings = {
 		update_time: Access.getUpdateTime(),
 		view_time: Date.now(),
@@ -262,10 +263,13 @@ rest.addResponse('get-layers', async view => {
 	if (!nopt?.root) return view.err()
 	view.status = status
 	view.ans.theme = theme
-
-	if (!prev) {
+	if (prev === false) {
 		view.ans.push = collectPush(rule, timings, bread, nopt.root, interpolate, theme)
 		view.ans.layers = [nopt.root]
+		return view.ret()
+	}
+	if (prev === '') {
+		view.ans.layers = nopt.root.layers
 		return view.ret()
 	}
 
@@ -295,6 +299,21 @@ rest.addResponse('get-layers', async view => {
 	return view.ret()    
 })
 
+
+
+
+rest.addResponse('get-head', async view => {	
+	let { root, path } = await view.gets(['root', 'path'])	
+	
+	const bread = new Bread(path, {}, path, root)
+
+	const layers = Layers.getInstance(root)
+	const source = await layers.getSource()
+
+	const { index: { head }, depth } = Layers.getIndex(source, bread)
+
+	return {ans:head}
+})
 const getDiff = (players, nlayers, reloaddivs, reloadtss, layers = []) => {
 	nlayers?.forEach(nlayer => {
 		const player = players.find(player => {

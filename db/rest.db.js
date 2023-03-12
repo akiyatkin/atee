@@ -14,5 +14,17 @@ rest.addVariable('db', async view => {
 	return view.err('Нет соединения с базой данных')
 })
 
+rest.addVariable('start', async view => {
+	const { db } = await view.gets(['db'])
+	await db.start()
+	view.after(async () => {
+		if (view.ans.result) {
+			await db.commit()
+		} else {
+			await db.back()
+		}
+	})
+})
+
 
 export default rest

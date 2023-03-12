@@ -11,7 +11,6 @@ export default class Bread {
 		this.href = href
 		this.root = root
 		this.get = get
-		
 		this.path = path
 		path = path.split('/').filter(p => p)
 		this.depth = path.length

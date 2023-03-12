@@ -34,7 +34,7 @@ export const ROOT = (data, env) => `
 	<p>
 		Менеджер перезвонит в рабочее время.
 	</p>
-	<form action="/-catalog/set-order">
+	<form action="/-catalog/set-order" data-goal='callorder'>
 		<input name="brand_nick" type="hidden" value="${data.mod.brand_nick}">
 		<input name="model_nick" type="hidden" value="${data.mod.model_nick}">
 		<input name="partner" type="hidden" value="${data.partner}">
@@ -65,7 +65,7 @@ export const ROOT = (data, env) => `
 			import("/-form/Autosave.js").then(r => r.default.init(form))
 			form.addEventListener('submit', e => {
 				e.preventDefault()
-				import('/-dialog/submit.js').then(r => r.default(form, form.action, 'callorder'))
+				import('/-dialog/submit.js').then(r => r.default(form, {tpl:'-dialog/contacts.html.js', sub:'MSG'}))
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>

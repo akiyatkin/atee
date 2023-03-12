@@ -1,34 +1,21 @@
-const popup_success = document.createElement('div')
-const popup_error = document.createElement('div')
-document.body.after(popup_success)
-document.body.after(popup_error)
+import Dialog from '/-dialog/Dialog.js'
 
-let globalonceafter = async () => {
-	globalonceafter = () => ({})
-	const tplobj = await import('/-dialog/contacts.html.js').then(r => r.default)
-	const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-	await Dialog.frame(popup_success, tplobj.SUCCESS())
-	await Dialog.frame(popup_error, tplobj.ERROR())
-}
 
-export default async (form, submit, goal) => {
+export default async (form, userlayer = {}) => {
+	const goal = form.dataset.goal
+	const submit = form.action
 	for (const inp of form.elements) if (inp.tagName == 'BUTTON') inp.disabled = true
 	const body = new URLSearchParams(new FormData(form))
-	for (const inp of form.elements) inp.disabled = true
 	const response = await fetch(submit, {
 		method: 'POST',
 		headers: { "Content-Type": "application/x-www-form-urlencoded" },
 		body
-	}).catch(e => console.error(e))
-	await globalonceafter()
-	
-
-	const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-	const error_msg = popup_error.getElementsByClassName('msg')[0]
+	}).catch(e => console.error(e))	
+	const layer = {tpl: '/-dialog/msg.html.js', sub: 'MSG'}
+	Object.assign(layer, userlayer)
 	try {
-		const res = await response.clone().json()
-		if (res.result) {
-			Dialog.show(popup_success)
+		layer.data = await response.clone().json()
+		if (layer.data.result) {
 			if (goal) {
 				const metrikaid = window.Ya?._metrika.getCounters()[0].id
 				if (metrikaid) {
@@ -36,20 +23,18 @@ export default async (form, submit, goal) => {
 					ym(metrikaid, 'reachGoal', goal);	
 				}
 			}
-		} else {
-			error_msg.innerHTML = res.msg
-			Dialog.show(popup_error)
 		}
 	} catch (e) {
 		let text = await response.text()
 		console.error(e, text)
-		error_msg.innerHTML = 'Произошла ошибка на сервере. Попробуйте позже'
-		Dialog.show(popup_error)
+		layer.data = {msg:'Произошла ошибка на сервере. Попробуйте позже'}
 	} finally {
 		setTimeout(() => {
-			for (const inp of form.elements) inp.disabled = false
+			for (const inp of form.elements) if (inp.tagName == 'BUTTON') inp.disabled = false
 		}, 2000)
 	}
+	await Dialog.open(layer)
+	return layer.data
 }
 
 

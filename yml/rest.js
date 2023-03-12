@@ -4,7 +4,7 @@ import yml from '/-yml'
 import config from '/-config'
 
 import rest_vars from "/-db/rest.db.js"
-import rest_funcs from "/-rest/funcs.js"
+import rest_funcs from "/-rest/rest.funcs.js"
 import rest_catalog from '/-catalog/rest.vars.js'
 
 const rest = new Rest(rest_vars, rest_funcs, rest_catalog)

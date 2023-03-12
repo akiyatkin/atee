@@ -11,32 +11,43 @@ document.addEventListener('keydown', async e => {
 	const parent = Dialog.parents[l-1]
     Dialog.hide(parent)
 })
+const addCSS = href => { //файл этот нельзя использовать на сервере
+	if (document.head.querySelector('link[href="'+href+'"]')) return
+	const link = document.createElement('link')
+	link.rel = 'stylesheet'
+	link.href = href
+	document.head.prepend(link)
+}
 const hides = new WeakMap()
 export const Dialog = {
 	open: async (layer, div = document.body, onshow, onhide) => {
-		const {tpl, sub, parsed, json, data} = layer
+		const {tpl, sub, parsed = '', json = '', data} = layer
 		const tplobj = await import(tpl).then(res => res.default || res)
 		layer.data = !json ? data : await fetch(json).then(res => res.json())
 		const id = 'dialog-' + nicked([tpl,sub,json,parsed].join('-'))
 		let popup = document.getElementById(id)
 		if (!popup) {
+			if (tplobj.css) {
+				for (const link of tplobj.css) addCSS(link)
+			}
 			popup = document.createElement('div')
 			popup.id = id
 			div.append(popup) //div может оказаться выше запланированных окон отправи формы успех или ошибка
-			if (onhide) {
-				const list = hides.get(popup) || []
-				list.push(onhide)
-				hides.set(popup, list)
-			}
-			const theme = await import('/-controller/Theme.js').then(r => r.default.get())
-			//const layer = {tpl, sub, json, div:id}
-			layer.div = id
-			const look = { theme }
-			const env = { layer, ...look }
-			env.sid = 'sid-' + layer.div + '-' + layer.sub + '-'
-			env.scope = '#' + layer.div
-			await Dialog.frame(popup, tplobj[sub](layer.data, env))
 		}
+		if (onhide) {
+			const list = hides.get(popup) || []
+			list.push(onhide)
+			hides.set(popup, list)
+		}
+		const theme = await import('/-controller/Theme.js').then(r => r.default.get())
+		//const layer = {tpl, sub, json, div:id}
+		layer.div = id
+		const look = { theme }
+		const env = { layer, ...look }
+		env.sid = 'sid-' + layer.div + '-' + layer.sub + '-'
+		env.scope = '#' + layer.div
+		await Dialog.frame(popup, tplobj[sub](layer.data, env))
+		
 		Dialog.show(popup, onshow)
 		return popup
 	},

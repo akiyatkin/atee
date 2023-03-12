@@ -5,7 +5,7 @@ export const HEADER = (data, env) => `
 	</div>
 `
 
-export const MAIN = (data, env) => data.result ? `
+export const ROOT = (data, env) => data.result ? `
 	<ul>
 		<li><a href="list">Список пользователей</a></li>
 		<li><a href="settings">Настройки</a></li>
@@ -14,11 +14,4 @@ export const MAIN = (data, env) => data.result ? `
 
 export const FOOTER = (data, env) => `
 	FOOTER
-`
-export const TEST = (data, env) => `
-	<h1>TEST</h1>
-`
-
-export const LIST = (data, env) => `
-	<h1>Список пользователей</h1>
 `

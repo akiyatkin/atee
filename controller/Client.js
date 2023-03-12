@@ -65,6 +65,10 @@ export const Client = {
 		Client.reloaddivs.push(div)
 		return Client.replaceState('', false)
 	},
+	reload: () => {
+		Client.search = ''
+		return Client.replaceState('', false)
+	},
 	reloadtss:[],
 	reloadts: (ts) => {
 		if (~Client.reloadtss.indexOf(ts)) return
@@ -178,6 +182,7 @@ const applyCrossing = async () => {
 	
 	
 	search = search.split('#')[0]
+
 	const timings = Client.timings
 	/*
 	Допустим 0 это текущие тайминги загрузки и их нужно подменить следующими. 
@@ -205,7 +210,7 @@ const applyCrossing = async () => {
 		}).then(res => res.json())
 		if (promise.rejected) return
 		if (!json || !json.st || !json.ut || !json.result || !json.layers) {
-			return setTimeout(location.reload, 200) //Чуть чуть подождать чтобы прокрутка закончилась
+			return setTimeout(() => location.reload(), 200) //Чуть чуть подождать чтобы прокрутка закончилась
 		}
 		const timings = {
 			view_time: json.vt,
@@ -213,6 +218,7 @@ const applyCrossing = async () => {
 			access_time: json.st
 		}
 		Client.timings = timings
+
 		
 		const promises = loadAll(json.layers)
 		for (const layer of json.layers) {
@@ -228,8 +234,11 @@ const applyCrossing = async () => {
 			if (hash && anim != 'none') anim = 'opacity'
 			animate('div', div, layer.sys.execute, anim)
 		}
-		const usersearch = search.slice(json.root.length)
+
+		const usersearch = json.root ? search.slice(json.root.length + 1) : search
+
 		const {path, get} = userpathparse(usersearch) //Останется ведущий слэш
+
 		const bread = new Bread(path, get, search, json.root) //root+path+get = search
 
 		await Promise.all(promises)

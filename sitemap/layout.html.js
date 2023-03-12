@@ -1,5 +1,6 @@
 const sitemap = {}
 export default sitemap
+const csslink = src => `<link rel="stylesheet" href="${src}">`
 sitemap.HEAD = (head, env) => `
 	<title>${head.title??''}</title>
 	<meta name="description" content="${head.description??''}">
@@ -7,6 +8,7 @@ sitemap.HEAD = (head, env) => `
 	<link rel="image_src" href="${head.image_src??''}">
 	<link rel="canonical" href="https://${env.host}${head.canonical??''}"/>
 	<link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
+	${head?.css?.map(csslink).join('') || ''}
 	<script type="module">//Независимая обработка metatags и sitemap
 		//При переходах нужно это всё обновлять
 		const qs = q => document.head.querySelector(q) || {}
@@ -22,6 +24,15 @@ sitemap.HEAD = (head, env) => `
 			keywords: keys => {
 				qs('meta[name=keywords]').content = keys
 			},
+			css: srcs => {
+				for (const href of srcs) {
+					if (document.head.querySelector('link[href="'+href+'"]')) continue
+					const link = document.createElement('link')
+					link.rel = 'stylesheet'
+					link.href = href
+					document.head.prepend(link)
+				}
+			},
 			image_src: src => {
 				qs('meta[property="og:image"]').content = src
 				qs('link[rel=image_src]').href = src
@@ -32,7 +43,7 @@ sitemap.HEAD = (head, env) => `
 		}
 		window.addEventListener('crossing', async ({detail: env}) => {
 			const { timings, bread, theme } = env
-			const data = await fetch('/-sitemap/get-head?path=' + bread.path).then(res => res.json())
+			const data = await fetch('/-sitemap/get-head?path=' + bread.path + '&root='+bread.root).then(res => res.json())
 			for (const rule in data) rules[rule]?.(data[rule])
 			const event = new CustomEvent('crossing-sitemap-headready', {detail: env})
 			window.dispatchEvent(event)

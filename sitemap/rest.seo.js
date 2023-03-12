@@ -4,12 +4,15 @@ import TPL from '/-sitemap/layout.html.js'
 import Access from '/-controller/Access.js'
 import { loadJSON } from '/-controller/router.js'
 
-import funcs from '/-rest/rest.funcs.js'
+import rest_funcs from '/-rest/rest.funcs.js'
+import rest_path from '/-controller/rest.path.js'
 
-const rest = new Rest(funcs)
+
+const rest = new Rest(rest_funcs, rest_path)
 
 rest.addVariable('source', async view => {
-	const layers = Layers.getInstance('')
+	const { root } = await view.gets(['root'])
+	const layers = Layers.getInstance(root)
 	const source = await layers.getSource()
 	return source
 })

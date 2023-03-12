@@ -3,7 +3,7 @@ import Base from '/-showcase/Base.js'
 import nicked from '/-nicked'
 import Access from '/-controller/Access.js'
 import Rest from "/-rest"
-import funcs from "/-rest/funcs.js"
+import rest_funcs from "/-rest/rest.funcs.js"
 
 import config from '/-config'
 import xlsx from '/-xlsx'
@@ -11,7 +11,7 @@ import xlsx from '/-xlsx'
 const CONFIG = await config('params')
 const lists = await xlsx.read(Access, CONFIG.src)
 
-const rest = new Rest(funcs)
+const rest = new Rest(rest_funcs)
 
 rest.addArgument('name')
 rest.addResponse('get-menu', async view => {

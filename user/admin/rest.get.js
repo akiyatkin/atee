@@ -4,17 +4,23 @@ import rest_db from '/-db/rest.db.js'
 const rest = new Rest(rest_db)
 export default rest
 
-rest.addResponse('get-admin-check', async view => {
+rest.addResponse('get-check', async view => {
 	await view.get('admin')
 	return view.ret()
 })
-rest.addResponse('get-admin-list', async view => {
+rest.addResponse('get-list', async view => {
 	await view.get('admin')
-	view.ans.data = []
+	const { db } = await view.gets(['db'])
+	view.ans.list = await db.all(`
+		SELECT u.*, e.email, p.phone 
+		from user_users u
+		LEFT JOIN user_uemails e on (e.user_id = u.user_id and e.ordain = 1)
+		LEFT JOIN user_uphones p on (p.user_id = u.user_id and e.ordain = 1)
+	`)
 	return view.ret()
 })
 
-rest.addResponse('get-admin-settings', async view => {
+rest.addResponse('get-settings', async view => {
 	await view.get('admin')
 	const { db } = await view.gets(['db'])
 	const tables = [
@@ -25,7 +31,7 @@ rest.addResponse('get-admin-settings', async view => {
 	for (const i in tables) {
 		const table = tables[i]
 		const obj = {}
-		obj.count = await db.col('select count(*) from '+table).catch(e => '-')
+		obj.count = await db.col('select count(*) from ' + table).catch(e => '-')
 		obj.name = table
 		tables[i] = obj
 	}

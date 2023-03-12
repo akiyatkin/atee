@@ -1,8 +1,9 @@
 import Rest from "/-rest"
-import funcs from '/-rest/rest.funcs.js'
+import rest_funcs from '/-rest/rest.funcs.js'
 import Notion from "/-notion/Notion.js"
 import Access from "/-controller/Access.js"
-const rest = new Rest(funcs)
+import rest_admin from "/-controller/rest.admin.js"
+const rest = new Rest(rest_funcs, rest_admin)
 
 rest.addArgument('nick')
 rest.addArgument('id')
@@ -33,11 +34,7 @@ rest.addResponse('get-page', async (view) => {
 	return view.ret()
 })
 
-rest.addHandler('admin', async (view) => {
-	const { visitor } = await view.gets(['visitor'])
-	if (await Access.isAdmin(visitor.client.cookie)) return
-	return view.err('Access denied')
-})
+
 rest.addResponse('get-state', async view => {
 	const { visitor } = await view.gets(['visitor'])
 	view.ans.admin = await Access.isAdmin(visitor.client.cookie)

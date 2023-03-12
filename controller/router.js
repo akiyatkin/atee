@@ -67,7 +67,13 @@ const webresolve = async search => {
 	//return await import.meta.resolve(search, pathToFileURL('./').href).then(src => fileURLToPath(src)).catch(() => false)
 	//В адресах в layers.json относительные пути не поддерживаются
 	//console.log(search)
-	return await import.meta.resolve(search, '').then(src => fileURLToPath(src)).catch(() => false)
+	return await import.meta.resolve(search, pathToFileURL('./').href).then(async src => {
+		src = fileURLToPath(src)
+		if ((await fs.lstat(src)).isFile()) { //Нелепый фикс... resolver на папку возвращает иногда путь до файла
+			return src
+		}
+		return false
+	}).catch(() => false)
 }
 
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
@@ -80,10 +86,9 @@ export const loadJSON = (src, visitor) => {
 export const loadTEXT = (src, visitor) => {
 	return load(src, visitor, 'txt')
 }
-const load = (src, visitor, ext) => {
+const load = (src, visitor, ext) => { //ext формат требуемых данных
 	const store = visitor.relate(load)
 	const name = src+':'+ext
-
 	return store.once(name, async () => {
 		let reans = { ans: '', status: 200, nostore: false } //, headers: { }, ext: ext
 		
@@ -161,6 +166,7 @@ export const router = async (search) => {
 	//if (ext) {
 	const src = await webresolve('/' + path)
 	const name = src ? getSrcName(src) : ''
+
 	if (src && name) { //найден файл
 		const ext = getExt(src)
 		if (~conf['403']['indexOf'].indexOf(name)) secure = true
@@ -218,10 +224,12 @@ export const router = async (search) => {
 			for (const v of CONT_DIRECTS) {
 				if (path.indexOf(v.part) === 0) {
 					//layers = (await import(IMPORT_APP_ROOT + '/' + v.rest, {assert: { type: "json" }})).default
-					cont = true
-					root = v.part
-					path = path.slice(root.length + (root ? 1 : 0))
-					break;
+					if (path.length == v.part.length || path[v.part.length] == '/' || !v.part.length) {
+						cont = true
+						root = v.part
+						path = path.slice(root.length + (root ? 1 : 0))
+						break;
+					}
 				}
 
 			}

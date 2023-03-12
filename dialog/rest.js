@@ -4,11 +4,11 @@ import mailtpl from '/-dialog/mail.html.js'
 import mail from '/-mail'
 import config from '/-config'
 import nicked from '/-nicked'
-import vars_mail from '/-mail/vars.js'
-import funcs from '/-rest/rest.funcs.js'
+import rest_mail from '/-mail/rest.mail.js'
+import rest_funcs from '/-rest/rest.funcs.js'
 
 
-const rest = new Rest(funcs, vars_mail)
+const rest = new Rest(rest_funcs, rest_mail)
 
 rest.addResponse('set-callback', async (view) => {
 	await view.gets(['recaptcha','terms'])

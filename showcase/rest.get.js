@@ -127,7 +127,7 @@ rest.addResponse('get-tables', async view => {
 			loaded,
 			duration
 		FROM showcase_tables
-	`)
+	`).catch(e => ([]))
 
 	files.forEach(of => {
 		const index = rows.findIndex(row => row.table_nick == base.onicked(of.name))

@@ -3,7 +3,8 @@ import Access from "/-controller/Access.js"
 import rest_funcs from '/-rest/rest.funcs.js'
 const rest = new Rest(rest_funcs)
 
-rest.addHandler('admin', async (view) => {
+
+rest.addVariable('admin', async (view) => {
 	const { visitor } = await view.gets(['visitor'])
 	view.ans.admin = true
 	view.nostore = true

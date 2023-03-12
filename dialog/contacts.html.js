@@ -21,7 +21,7 @@ cont.CALLBACK = (data, env) => `
 				margin-bottom: 1rem;
 			}
 		</style>
-		<form action="/-dialog/set-callback">
+		<form action="/-dialog/set-callback" data-goal="callback">
 			<div class="float-label icon phone">
 				<input required id="contacts_phone" name="phone" type="tel" placeholder="Телефон">
 				<label for="contacts_phone">Телефон</label>
@@ -35,7 +35,7 @@ cont.CALLBACK = (data, env) => `
 				import("/-form/Autosave.js").then(r => r.default.init(form))
 				form.addEventListener('submit', e => {
 					e.preventDefault()
-					import('/-dialog/submit.js').then(r => r.default(form, form.action, 'callback'))
+					import('/-dialog/submit.js').then(r => r.default(form, {tpl:'${env.layer.tpl}', sub:'MSG'}))
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>
@@ -57,7 +57,7 @@ cont.CONTACTS = (data, env) => `
 				margin-bottom: 1rem;
 			}
 		</style>
-		<form action="/-dialog/set-contacts">
+		<form action="/-dialog/set-contacts" data-goal="contacts">
 			<div class="grid">
 				<div class="float-label icon name">
 					<input id="${env.sid}name" name="name" type="text" placeholder="Ваше имя">
@@ -89,7 +89,7 @@ cont.CONTACTS = (data, env) => `
 				import("/-form/Autosave.js").then(r => r.default.init(form))
 				form.addEventListener('submit', e => {
 					e.preventDefault()
-					import('/-dialog/submit.js').then(r => r.default(form, form.action, 'contacts'))
+					import('/-dialog/submit.js').then(r => r.default(form, {tpl:'${env.layer.tpl}', sub:'MSG'}))
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>
@@ -105,3 +105,4 @@ cont.ERROR = () => `
 	<h1 style="opacity:0.5">Ошибка</h1>
 	<div style="max-width: 300px; position: relative; z-index:1"><p style="font-weight: 500;" class="msg"></p></div>
 `
+cont.MSG = (data, env) => data.result ? cont.SUCCESS(data, env) : cont.ERROR(data, env)
