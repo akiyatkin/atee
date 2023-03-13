@@ -62,7 +62,7 @@ export const resolve = async (specifier, context, defaultResolve) => {
 		//Но это решение НЕ захватывает важные имена, например catalog contacts так как применятся только для файлов с расширением (точкой)
 		return defaultResolve(specifier, context, defaultResolve) //Проверка относительного адреса
 	})().catch(e => {
-		if (isExt(specifier)) console.log('import resolver false', specifier)
+		//if (isExt(specifier)) console.log('import resolver false', specifier)//Срабатывает при обычных тестах наличия файла
 		throw e
 	})
 	res.shortCircuit = true

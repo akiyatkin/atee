@@ -1,4 +1,4 @@
-import Dabudi from '/-dabudi/Dabudi.js'
+import Dabudi from '/-dabudi'
 import nicked from "/-nicked"
 import xlsx from "/-xlsx"
 import Files from "./Files.js"

@@ -572,7 +572,7 @@ rest.addResponse('set-order', async (view) => {
 	await view.gets(['recaptcha','terms'])
 	const { base, db, visitor, catalog } = await view.gets(['db','visitor', 'base', 'catalog'])
 	
-    const user = await view.gets(['text', 'email', 'phone', 'brand_nick','model_nick', 'utms', 'partner'])
+    const user = await view.gets(['text', 'email#required', 'phone#required', 'brand_nick','model_nick', 'utms', 'partner'])
     user.host = visitor.client.host
     user.ip = visitor.client.ip
     user.model = await catalog.getModelByNick(base, user.brand_nick, user.model_nick, user.partner)

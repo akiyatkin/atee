@@ -1,4 +1,4 @@
-import Dabudi from '/-dabudi/Dabudi.js'
+import Dabudi from '/-dabudi'
 import Base from '/-showcase/Base.js'
 import nicked from '/-nicked'
 import Access from '/-controller/Access.js'

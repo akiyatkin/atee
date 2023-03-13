@@ -40,14 +40,24 @@ export const Dabudi = {
 		if (~index) return index
 		index = head_titles.indexOf(oldname)
 		if (~index) {
-			head_titles[index] = name.slice(-base.LONG).trim()
-			head_nicks[index] = base.onicked(name)
+			if (base) {
+				head_titles[index] = name.slice(-base.LONG).trim()
+				head_nicks[index] = base.onicked(name)
+			} else {
+				head_titles[index] = name.trim()
+				head_nicks[index] = nicked(name)
+			}
 			return index
 		}
 		if (!~index) {
 			index = head_titles.length
-			head_titles[index] = name.slice(-base.LONG).trim()
-			head_nicks[index] = base.onicked(name)
+			if (base) {
+				head_titles[index] = name.slice(-base.LONG).trim()
+				head_nicks[index] = base.onicked(name)
+			} else {
+				head_titles[index] = name.trim()
+				head_nicks[index] = nicked(name)
+			}
 		}
 		return index
 	},
@@ -67,8 +77,6 @@ export const Dabudi = {
 		
 		for (let i = head_titles.length - 1; i >= 0; i--) {
 			const col = String(head_titles[i] || '')
-			
-			//if (col) head_titles[i] = col.trim().slice(-base.LONG).trim()
 			if (col) head_titles[i] = col
 
 			if (col && col.at(0) != '.') continue
@@ -76,7 +84,8 @@ export const Dabudi = {
 			rows_body.forEach(row => row.splice(i, 1))
 		}
 		
-		const head_nicks = head_titles.map(h => base.onicked(h))
+		const head_nicks = base ? head_titles.map(h => base.onicked(h)) : head_titles.map(h => nicked(h))
+		
 		rows_body = rows_body.map(row => {
 			if (row.length > head_titles.length) {
 				return row.splice(0, head_titles.length)

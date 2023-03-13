@@ -18,7 +18,7 @@ rest.addAction('set-logout', async (view, src) => {
 	return view.ret('Вы успешно вышли')
 })
 rest.addAction('set-email-verified', async (view, src) => {
-	const { user, code, email, db, token } = await view.gets(['user', 'code','email','db','token'])
+	const { user, code, email, db, token } = await view.gets(['user', 'code','email#required','db','token'])
 	const redirect = (msg, result) => {
 		view.headers['Location'] = User.link + 'result?email=' + email + '&msg=' + encodeURIComponent(msg) 
 		if (!result) {
@@ -71,7 +71,7 @@ rest.addAction('set-signin-token', async (view, src) => {
 	return redirect('Вы авторизованы', 1)
 })
 rest.addAction('set-signin-email', async (view, src) => {
-	const { user_id, email, db } = await view.gets(['user_id', 'email','db'])
+	const { user_id, email, db } = await view.gets(['user_id', 'email#required','db'])
 	const userbyemail = await User.getUserByEmail(view, email)
 	if (!userbyemail) return view.err('Аккаунт не найден')
 	if (user_id == userbyemail.user_id) return view.err('Вы уже авторизованы')
@@ -79,7 +79,7 @@ rest.addAction('set-signin-email', async (view, src) => {
 	return view.ret('Вам отправлено письмо со ссылкой для входа.')
 })
 rest.addAction('set-signup-email', async (view, src) => {
-	const { user, email, db } = await view.gets(['user#create', 'email','db','start'])	
+	const { user, email, db } = await view.gets(['user#create', 'email#required','db','start'])	
 	const user_id = user.user_id
 	if (user.email) return view.err('Вы уже зарегистрированы')
 	const userbyemail = await User.getUserByEmail(view, email)

@@ -41,14 +41,3 @@ rest.addArgument('before_id', ['int'])
 rest.addArgument('after_id', ['int'])
 rest.addArgument('id', ['int'])
 rest.addArgument('go', (view, e) => e || false) //Ссылка куда перейти. Как есть попадает в заголовок Location 301
-rest.addVariable('start', async view => {
-	const { db } = await view.gets(['db'])
-	await db.start()
-	view.after(async () => {
-		if (view.ans.result) {
-			await db.commit()
-		} else {
-			await db.back()
-		}
-	})
-})

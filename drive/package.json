@@ -1,0 +1,13 @@
+{
+	"name": "@atee/drive",
+	"version": "1.0.0",
+	"type": "module",
+	"main": "index.js",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/akiyatkin/atee.git"
+	},
+	"dependencies": {
+		"easy-sheets":"^1.0.11"
+	}
+}

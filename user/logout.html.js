@@ -6,7 +6,7 @@ export const ROOT = (data, env) => `
 		(form => {
 			form.addEventListener('submit', e => {
 				e.preventDefault()
-				import('/-dialog/submit.js').then(r => r.default(form)).then(async res => {
+				import('/-dialog/action.js').then(r => r.default(form)).then(async res => {
 					const Client = await window.getClient()
 					Client.reload()
 				})

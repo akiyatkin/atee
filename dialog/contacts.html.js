@@ -1,15 +1,7 @@
 const cont = {}
 export default cont
 
-const href = '/-float-label/style.css'
-if (!document.head.querySelector('link[href="'+href+'"]')) {
-	const link = document.createElement('link')
-	link.rel = 'stylesheet'
-	link.href = href
-	document.head.prepend(link)
-}
-
-
+cont.css = ['/-float-label/style.css']
 cont.CALLBACK = (data, env) => `
 	<div style="max-width:500px">
 		<h1>Заказать звонок</h1>
@@ -26,7 +18,7 @@ cont.CALLBACK = (data, env) => `
 				<input required id="contacts_phone" name="phone" type="tel" placeholder="Телефон">
 				<label for="contacts_phone">Телефон</label>
 			</div>
-			<p>
+			<p align="right">
 				<button type="submit">Жду звонка</button>
 			</p>
 		</form>
@@ -68,7 +60,7 @@ cont.CONTACTS = (data, env) => `
 					<label for="${env.sid}org">Организация</label>
 				</div>
 				<div class="float-label icon phone">
-					<input id="${env.sid}phone" name="phone" type="tel" placeholder="Телефон">
+					<input id="${env.sid}phone" required name="phone" type="tel" placeholder="Телефон">
 					<label for="${env.sid}phone">Телефон *</label>
 				</div>
 				<div class="float-label icon mail">
@@ -80,8 +72,8 @@ cont.CONTACTS = (data, env) => `
 				<textarea id="${env.sid}text" name="text" rows="4" placeholder="Сообщение">${data?.text || ''}</textarea>
 				<label for="${env.sid}text">Сообщение</label>
 			</div>
-			<p>
-				<button type="submit">Жду звонка</button>
+			<p align="right">
+				<button type="submit">Отправить</button>
 			</p>
 		</form>
 		<script>
@@ -95,14 +87,14 @@ cont.CONTACTS = (data, env) => `
 		</script>
 	</div>
 `
-cont.SUCCESS = () => `
+cont.SUCCESS = (data, env) => `
 	<h1>Готово</h1>
 	<p style="font-size: 1rem; line-height: 140%; margin-left:auto; margin-right:auto">
 		Менеджер свяжется с&nbsp;Вами<br>в&nbsp;рабочее&nbsp;время, как&nbsp;можно&nbsp;быстрее!
 	</p>
 `
-cont.ERROR = () => `
+cont.ERROR = (data, env) => `
 	<h1 style="opacity:0.5">Ошибка</h1>
-	<div style="max-width: 300px; position: relative; z-index:1"><p style="font-weight: 500;" class="msg"></p></div>
+	<div style="max-width: 400px; position: relative; z-index:1"><p style="font-weight: 500;" class="msg">${data.msg}</p></div>
 `
 cont.MSG = (data, env) => data.result ? cont.SUCCESS(data, env) : cont.ERROR(data, env)

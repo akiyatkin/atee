@@ -2,6 +2,7 @@
 	"name": "@atee/dabudi",
 	"version": "1.0.0",
 	"type": "module",
+	"main": "index.js",
 	"description": "",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
