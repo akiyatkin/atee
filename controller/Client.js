@@ -52,11 +52,9 @@ export const Client = {
 	click: (a) => {
 		const search = a.getAttribute('href')
 		const scroll = a.dataset.scroll != 'none'
-		
-		//const promise = search == Client.search ? Client.replaceState(search, scroll) : Client.pushState(search, scroll)
 		const promise = Client.pushState(search, scroll)
-		animate('a', a, promise, a.dataset.animate)
-		return true
+		return animate('a', a, promise, a.dataset.animate)
+		//return true
 	},
 	getSearch: () => decodeURI(location.pathname + location.search),
 	reloaddivs:[],
@@ -90,7 +88,24 @@ export const Client = {
 			if (hash) div = document.getElementById(hash)
 			if (div) div.scrollIntoView()
 			else window.scrollTo(0,0)
-			if (hash && !promise.finalled) promise.then(go).catch(() => null)
+			if (hash) {
+				if (!promise.finalled) {
+					promise.then(go).catch(() => null)
+				} else {
+					setTimeout(() => { //fix scroll
+						let y = window.scrollY
+						setTimeout(() => {
+							requestAnimationFrame(() => {
+								if (y != window.scrollY) return
+								const hash = location.hash.slice(1)
+								if (hash) div = document.getElementById(hash)
+								if (div) div.scrollIntoView()
+								else window.scrollTo(0,0)
+							})
+						}, 1)
+					}, 500)
+				}
+			}
 		}
 		promise.started.then(go).catch(() => null)
 	},
@@ -163,18 +178,18 @@ const fixsearch = search => {
 	return search
 }
 const explode = (sep, str) => {
-    if (!str) return []
-    const i = str.indexOf(sep)
-    return ~i ? [str.slice(0, i), str.slice(i + 1)] : [str]
+	if (!str) return []
+	const i = str.indexOf(sep)
+	return ~i ? [str.slice(0, i), str.slice(i + 1)] : [str]
 }
 const userpathparse = (search) => {
-    //У request всегда есть ведущий /слэш
+	//У request всегда есть ведущий /слэш
 	search = search.slice(1)
-    try { search = decodeURI(search) } catch { }
-    let [path = '', params = ''] = explode('?', search)
-    const get = Theme.parse(params, '&')
-    const secure = !!~path.indexOf('/.') || path[0] == '.'
-    return {secure, path, get}
+	try { search = decodeURI(search) } catch { }
+	let [path = '', params = ''] = explode('?', search)
+	const get = Theme.parse(params, '&')
+	const secure = !!~path.indexOf('/.') || path[0] == '.'
+	return {secure, path, get}
 }
 const applyCrossing = async () => {
 	if (!Client.next) return
@@ -204,7 +219,7 @@ const applyCrossing = async () => {
 		const json = await fetch('/-controller/get-layers', {
 			method: "post",
 			headers: {
-		    	'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
 			},
 			body: new URLSearchParams(req)
 		}).then(res => res.json())

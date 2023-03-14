@@ -23,22 +23,12 @@ rest.addVariable('user', async (view, src) => {
 	}
 	return user
 })
-rest.addVariable('user#create', async (view, src) => {
-	const { user, db } = await view.gets(['user', 'db'])	
-	if (user) return user
+// rest.addVariable('user#create', async (view, src) => {
+// 	const { user, db } = await view.gets(['user', 'db'])	
+// 	if (user) return user
 
-	const token = crypto.randomBytes(12).toString('hex')
-	const password = token.substr(0, 6)
-	const timezone = Intl.DateTimeFormat ? Intl.DateTimeFormat().resolvedOptions().timeZone : ''
-	const new_id = await db.insertId(`
-		INSERT INTO user_users (timezone, password, token, date_token, date_create, date_active) 
-		VALUES(:timezone, :password, :token, now(), now(), now())
-	`,{timezone, password, token});
-	if (!new_id) return view.err('Пользователь не создан', 500)
-	const newuser = await User.getUserById(view, new_id)
-	User.setCookie(view, newuser)
-	return newuser
-})
+	
+// })
 
 rest.addVariable('user#verify', async (view) => {	
 	const { user } = await view.gets(['user#required'])
@@ -61,10 +51,10 @@ rest.addVariable('user_id', async (view, src) => {
 	const { user } = await view.gets(['user'])	
 	return user?.user_id
 })
-rest.addVariable('user_id#create', async (view) => {
-	const { user } = await view.gets(['user#create'])
-	return user.user_id
-})
+// rest.addVariable('user_id#create', async (view) => {
+// 	const { user } = await view.gets(['user#create'])
+// 	return user.user_id
+// })
 
 rest.addVariable('user_id#verify', async (view) => {
 	const { user } = await view.gets(['user#verify'])

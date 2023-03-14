@@ -4,12 +4,26 @@ import cproc from '/-cproc'
 import config from '/-config'
 import Access from '/-controller/Access.js'
 import EasySheetsDef from 'easy-sheets'
+import dabudi from '/-dabudi'
 const EasySheets = EasySheetsDef.default
 
 const dir = 'cache/drive/'
 await fs.mkdir(dir, { recursive: true }).catch(e => null)
 
 export const drive = {
+	getTable: async (gid, range) => {
+		const rows_source = await drive.getRows(gid, range)
+		const {descr, rows_table} = dabudi.splitDescr(rows_source)
+		const {heads, rows_body} = dabudi.splitHead(rows_table)
+
+		const indexes = {}
+		for (const i in heads.head_nicks) {
+			indexes[heads.head_nicks[i]] = i
+		}
+		heads.indexes = indexes
+
+		return {descr, heads, rows_body}
+	},
 	cacheRows: (gid, range) => Access.relate(drive).once(gid, () => cproc(drive, gid, async () => {
 		const cachename = nicked(gid + '-' + range)
 		const cachesrc = dir + cachename + '.json'

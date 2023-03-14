@@ -1,4 +1,5 @@
 import Mail from '/-mail'
+import crypto from 'crypto'
 
 const User = {
 	mergeuser: async (view, olduser, newuser) => {
@@ -10,6 +11,19 @@ const User = {
 		await db.affectedRows('DELETE from user_users where user_id = :user_id', olduser)
 	},
 	link: '/@atee/user/',
+	create: async view => {
+		const { db } = await view.gets(['db'])
+		const token = crypto.randomBytes(12).toString('hex')
+		const password = token.substr(0, 6)
+		const timezone = Intl.DateTimeFormat ? Intl.DateTimeFormat().resolvedOptions().timeZone : ''
+		const new_id = await db.insertId(`
+			INSERT INTO user_users (timezone, password, token, date_token, date_create, date_active) 
+			VALUES(:timezone, :password, :token, now(), now(), now())
+		`,{timezone, password, token});
+		if (!new_id) return view.err('Пользователь не создан', 500)
+		const newuser = await User.getUserById(view, new_id)
+		return newuser
+	}
 	sendEmail: async (view, sub, data) => {
 		if (!data.user_id && !data.user) return view.err('Не указан пользователь', 500)
 		const user_id = data.user_id || data.user.user_id

@@ -1,18 +1,17 @@
 
-export const evalScripts = div => {
+export const evalScripts = async div => {
 	const scripts = []
 	let i = 0
-	for (const old of div.getElementsByTagName("script")) {
-		let p
+	for (const old of div.getElementsByTagName("script")) {		
 		if (old.src) {
-			p = new Promise((resolve, reject) => {
+			await new Promise((resolve, reject) => {
 				const fresh = document.createElement("script")
+				fresh.onload = resolve
 				fresh.src = old.src
 				document.head.append(fresh)
-				resolve()
 			})
 		} else {
-			p = new Promise((resolve, reject) => {
+			const p = new Promise((resolve, reject) => {
 				const fresh = document.createElement("script")
 				fresh.type = old.type
 				fresh.id = old.id || 'evalScripts_' + i + '_' + Date.now()
@@ -29,8 +28,9 @@ export const evalScripts = div => {
 				}
 				old.replaceWith(fresh)
 			})
+			scripts.push(p)
 		}
-		scripts.push(p)
+		
 		i++
 	}	
 	return Promise.all(scripts)

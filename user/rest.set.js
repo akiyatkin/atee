@@ -14,6 +14,7 @@ rest.addArgument('code', ['string'])
 
 
 rest.addAction('set-logout', async (view, src) => {
+	//const { } = await view.gets(['recaptcha'])
 	User.delCookie(view)
 	return view.ret('Вы успешно вышли')
 })
@@ -71,7 +72,7 @@ rest.addAction('set-signin-token', async (view, src) => {
 	return redirect('Вы авторизованы', 1)
 })
 rest.addAction('set-signin-email', async (view, src) => {
-	const { user_id, email, db } = await view.gets(['user_id', 'email#required','db'])
+	const { user_id, email, db } = await view.gets(['user_id', 'email#required','db','recaptcha'])
 	const userbyemail = await User.getUserByEmail(view, email)
 	if (!userbyemail) return view.err('Аккаунт не найден')
 	if (user_id == userbyemail.user_id) return view.err('Вы уже авторизованы')
@@ -79,7 +80,11 @@ rest.addAction('set-signin-email', async (view, src) => {
 	return view.ret('Вам отправлено письмо со ссылкой для входа.')
 })
 rest.addAction('set-signup-email', async (view, src) => {
-	const { user, email, db } = await view.gets(['user#create', 'email#required','db','start'])	
+	let { user, email, db } = await view.gets(['user', 'email#required','db','start','recaptcha'])	
+	if (!user) {
+		user = await User.create(view)
+		User.setCookie(view, user)
+	}
 	const user_id = user.user_id
 	if (user.email) return view.err('Вы уже зарегистрированы')
 	const userbyemail = await User.getUserByEmail(view, email)
