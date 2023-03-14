@@ -23,7 +23,7 @@ const User = {
 		if (!new_id) return view.err('Пользователь не создан', 500)
 		const newuser = await User.getUserById(view, new_id)
 		return newuser
-	}
+	},
 	sendEmail: async (view, sub, data) => {
 		if (!data.user_id && !data.user) return view.err('Не указан пользователь', 500)
 		const user_id = data.user_id || data.user.user_id
