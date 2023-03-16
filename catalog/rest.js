@@ -262,6 +262,7 @@ const isSome = (obj, p) => {
 };
 rest.addResponse('get-filters', async (view) => {
 	const { db, md, partner, visitor, catalog, base} = await view.gets(['db','md','partner', 'visitor','catalog','base'])
+	view.ans.md = md
 	const group = await catalog.getMainGroup(md)
 	if (!group) return view.err('Нет данных')
 	const res = {}
@@ -556,7 +557,6 @@ rest.addResponse('get-nalichie', async (view) => {
 rest.addArgument('partner', async (view, partner) => {
 	const { options } = await view.gets(['options'])
 	const data = options.partners[partner]
-	view.ans.partner = partner
 	if (!data) return false
 	data.key = partner
 	return data
