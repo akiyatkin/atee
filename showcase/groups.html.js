@@ -33,6 +33,7 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 			for(const btn of repbtns) {
 				btn.addEventListener('dblclick', async () => {
 					const group_title = prompt('Укажите новую родительскую группу')
+					if (!group_title) return
 					const ans = await fetch('/-showcase/set-groups-replace?id=' + btn.dataset.group_id + '&title=' + encodeURIComponent(group_title)).then(res => res.json()).catch(e => ({result:0, msg:'Ошибка '+e}))
 					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 					if (ans?.msg) Dialog.alert(ans.msg)

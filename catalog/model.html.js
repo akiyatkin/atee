@@ -205,7 +205,7 @@ model.showitems = (data, mod) => `
 	${mod.items.map(model.showItemDescription).join('')}
 `
 model.showItemDescription = item => item['Описание'] ? `
-	<h2>${item.more.Арт || item.more.Код || ''}</h2>
+	<h2>${item.more.Название || item.more.Арт || item.more.Код || ''}</h2>
 	<p>${item.Описание}</p>
 ` : ''
 model.itemhead = (pr) => `<td>${pr.prop_title}</td>`

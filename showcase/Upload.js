@@ -24,7 +24,10 @@ export class Upload {
 			} else if (of.ext == 'js') {
 				const rest = await import('/' + dir + of.file).then(r => r.default).catch(e => console.log(e))
 				for (const name of ['get-data','get-mtime']) {
-					if (!rest.findopt(name)) console.log(`В обработке ${of.file} не найден ответ ${name}`)
+					if (!rest || !rest.findopt || !rest.findopt(name)) {
+						console.log(`В обработке ${of.file} не найден ответ ${name}`)
+						return false
+					}
 				}
 				if (rest.list['get-mtime']) {
 					const reans = await rest.get('get-mtime', {}, visitor)
