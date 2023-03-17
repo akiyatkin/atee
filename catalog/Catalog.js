@@ -249,14 +249,32 @@ class Catalog {
 		//if (~item_props.indexOf('Старая цена')) model.item_props.push('Старая цена')
 	async prepareCost(model, partner) {
 		const { base } = this
+		partner = partner || {}
 		/*
 		Есть items, Цена, Старая цена, discount обычные характеристики, partner не применён.
 		Нет more
 		Все значения объединены по запятым если дублируются. Цена justonevalue и не может дублироваться в одной строке.
 		*/
-		
 		const cost = await base.getPropByTitle('Цена')
 		const oldcost = await base.getPropByTitle('Старая цена')
+
+		if (partner.cost) {
+			const change = model => {
+				if (!model[partner.cost]) return
+				if (partner.cost == cost.prop_title) return
+				if (!model[oldcost.prop_title]) {
+					model[oldcost.prop_title] = model[cost.prop_title]
+				}
+				model[cost.prop_title] = model[partner.cost]
+				//delete model[partner.cost]
+			}
+			change(model)
+			if (model.items) for (const item of model.items) {
+				change(item)
+			}
+		}
+
+		
 
 		//Цена у позиций в item_props не попадает, так как известная колонка. И в model_props не попадает так как известная колонка
 

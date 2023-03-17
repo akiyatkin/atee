@@ -5,8 +5,9 @@ class ViewException {
 	nostore
 	msg
 	ans
-	constructor (msg) {
+	constructor (msg, view) {
 		this.msg = msg
+		this.view = view
 	}
 }
 class RecView {
@@ -265,8 +266,9 @@ export class View {
 		return this.#ready(msg, null, result)
 	}
 	end (ext = {}) {
-		const reans = new ViewException('end')
-		Object.assign(this, ext)
+		const view = this
+		const reans = new ViewException('end', view)
+		Object.assign(view, ext)
 		throw reans
 	}
 	#ready (msg, status, result, nostore) {
@@ -277,7 +279,7 @@ export class View {
 		if (nostore != null) view.nostore = nostore
 		else if (view.status == 403) view.nostore = true
 		else if (view.status == 500) view.nostore = true
-		throw new ViewException('ready ' + msg)
+		throw new ViewException('ready ' + msg, view)
 	}
 
 	err (msg, status = 422, nostore = null) {//result 0, но вообще фигня, такое не должно быть
@@ -416,7 +418,7 @@ export class Rest {
 		try {
 
 			/*
-				Некоторые create обработки могут быть только в самостоятельном set запросе. 
+				Некоторые create-update обработки могут быть только в самостоятельном set запросе. 
 				Нельзя чтобы считывание было до создание, и гарантировать, что такого запроса в мульти режиме контроллера нельзя
 				даже при правильной последовательности запросов при асинхронном выполнении
 				Таким образом других работ с этим rest в этом visitor не может быть, если выполняется create или любой set
@@ -447,12 +449,14 @@ export class Rest {
 			return reans
 		} catch (e) {
 			if (e instanceof ViewException) {
+				//const oview = view.nostore ? view : e.view //Исключение могло быть из другова view в одном visitor сохранено в promise proc и передано сейчас
+				const oview = e.view //Если обработка once:false или req будет различаться, то исключение будет своё в каждом view, так как промисом не воспользуемся
 				const reans = {
-					ans:view.ans, 
-					nostore: view.nostore,
-					status: view.status,
-					ext: view.ext,
-					headers: view.headers
+					ans: oview.ans, 
+					nostore: oview.nostore,
+					status: oview.status,
+					ext: oview.ext,
+					headers: oview.headers
 				}
 				for (const callback of view.afterlisteners) await callback(view, reans) //выход из базы
 				for (const callback of rest.afterlisteners) await callback(view, reans) //постанализ ответа
@@ -585,7 +589,7 @@ export class Rest {
 		opt['nostore'] = false
 		opt['response'] = false
 		opt['request'] = false
-		opt['once'] = false
+		opt['once'] = false	//Если function вызовется для обработки once:true то повторного function не будет
 		opt['required'] = false
 	}
 

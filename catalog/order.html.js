@@ -65,7 +65,7 @@ export const ROOT = (data, env) => `
 			import("/-form/Autosave.js").then(r => r.default.init(form))
 			form.addEventListener('submit', e => {
 				e.preventDefault()
-				import('/-dialog/submit.js').then(r => r.default(form, {tpl:'-dialog/contacts.html.js', sub:'MSG'}))
+				import('/-dialog/submit.js').then(r => r.default(form, {tpl:'/-dialog/contacts.html.js', sub:'MSG'}))
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>

@@ -168,11 +168,8 @@ rest.addVariable('md', async (view) => {
 		}
 		if (!Object.keys(md.more).length) delete md.more
 	}
-	
 	m = catalog.makemark(md).join(':')
-	view.ans.m = m
 	md.m = m
-	view.ans.md = md
 	return md
 })
 
@@ -219,6 +216,9 @@ const getTpls = Access.cache(async () => {
 rest.addResponse('get-model', async (view) => {
 	const { base, md, db, brand_nick, model_nick, visitor, partner, catalog } = await view.gets(['base', 'md', 'db', 'visitor', 'brand_nick','model_nick','partner', 'catalog'])
 	const model = await catalog.getModelByNick(brand_nick, model_nick, partner)	
+	view.ans.m = md.m
+	view.ans.md = md
+	view.ans.partner = partner?.key || ''
 	view.ans.brand = await catalog.getBrandByNick(brand_nick)
 	if (!model) return view.err()
 	if (model.texts) {
@@ -262,6 +262,8 @@ const isSome = (obj, p) => {
 };
 rest.addResponse('get-filters', async (view) => {
 	const { db, md, partner, visitor, catalog, base} = await view.gets(['db','md','partner', 'visitor','catalog','base'])
+	view.ans.m = md.m
+	view.ans.md = md
 	const group = await catalog.getMainGroup(md)
 	if (!group) return view.err('Нет данных')
 	const res = {}
@@ -291,7 +293,8 @@ rest.addResponse('get-filters', async (view) => {
 
 rest.addResponse('get-search-groups', async (view) => {
 	const { base, db, value, md, partner, visitor, options, catalog} = await view.gets(['base', 'db','value','md','partner', 'visitor', 'options', 'catalog'])
-
+	view.ans.m = md.m
+	view.ans.md = md
 	let type = ''
 
 	if (md.search && md.group && md.brand) type = 'Поиск по группе бренда'
@@ -381,7 +384,8 @@ rest.addResponse('get-search-groups', async (view) => {
 
 rest.addResponse('get-search-list', async (view) => {
 	const { db, value, md, partner, visitor, catalog, page, count, base, options } = await view.gets(['db','value','md','partner','visitor', 'catalog', 'page', 'count', 'base', 'options'])
-	
+	view.ans.m = md.m
+	view.ans.md = md
 	//const {title, group_ids} = Catalog.searchGroups(db, visitor, md)
 	const {from, where, sort} = await catalog.getmdwhere(md, partner)
 	
@@ -479,6 +483,8 @@ rest.addResponse('get-search-sitemap', async (view) => {
 })
 rest.addResponse('get-search-head', async (view) => {
 	const { options, db, md, catalog } = await view.gets(['options', 'db','md', 'catalog'])
+	view.ans.m = md.m
+	view.ans.md = md
 	const group = await catalog.getMainGroup(md)
 	const brand = await catalog.getMainBrand(md)
 	if (group) {
