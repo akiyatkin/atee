@@ -93,7 +93,7 @@ export const set_prices_load = (ans, env) => `
 		<pre>${JSON.stringify(ans.row.conf, null, "\t")}</pre>
 	`)
 const excellist = (data, key) => `
-	<h3>Лист: ${key}</h3>
+	<h3 title="${Object.keys(data.indexes).join(', ')}">Лист: ${key}</h3>
 	<p>Успешно загружено строк: ${data.loadedrow}</p>
 	${data.keyrepeated.length ? showRepeat(data, key) : ''}
 	${data.notconnected.length ? showNotconected(data, key) : ''}

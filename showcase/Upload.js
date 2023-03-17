@@ -14,7 +14,8 @@ export class Upload {
 	}
 
 	addSizeTime (dir, files) {
-		const { visitor } = this
+		const upload = this
+		const { base, visitor } = upload
 		return Promise.all(files.map(async (of) => {
 			const stat = await fs.stat(dir + of.file)
 			of.size = Math.round(stat.size / 1024 / 1024 * 100) / 100
@@ -339,7 +340,8 @@ export class Upload {
 		
 		const mvalues = {}
 		const mitems = {}
-		for (const {sheet, heads: {head_titles, head_nicks}, rows} of sheets) {
+		for (const {sheet, heads, rows} of sheets) {
+			const {head_titles, head_nicks} = heads
 			//Ищем ключ который есть в прайсе и по нему будем брать значение для связи
 			const priceprop_title = conf.synonyms[conf.priceprop].find(prop => ~head_titles.indexOf(prop))
 			if (!priceprop_title) continue
@@ -384,10 +386,38 @@ export class Upload {
 			count += rows.length
 
 
+			if (conf.handlers) {
+				for (const new_prop_title in conf.handlers) {
+					let prop
+					for (const p of props) {
+						if (p.prop_title == new_prop_title) {
+							prop = p
+							break
+						}
+					}
+					if (!prop) {
+						prop = {
+							prop_title: new_prop_title
+						}
+						props.push(prop)
+					}
+					if (!prop.index) prop.index = row.length
+				}
+			}
+			const indexes = {}
+			for (const i in head_nicks) {
+				const prop_nick = head_nicks[i]
+				indexes[prop_nick] = i
+			}
+			for (const p of props) {
+				indexes[nicked(p.prop_title)] = p.index
+			}
+			omissions[sheet].indexes = indexes
+
 			// if (props.length < conf.props) {
 			// 	omissions[sheet].emptyprops[conf.props[0]] = rows
 			// }
-
+			const interpolate = (val, row, indexes, sheet, conf) => new Function('row', 'indexes', 'sheet', 'conf', 'return `'+val+'`')(row, indexes, sheet, conf)
 			for (const row of rows) {
 				const key_title = row[priceprop_index]
 				if (!key_title) {
@@ -501,8 +531,33 @@ export class Upload {
 				mvalues[item.model_id] ??= []
 				let somepropsinsert = false
 
+				
+				
+
+				if (conf.handlers) {
+					for (const new_prop_title in conf.handlers) {
+						const tpl = conf.handlers[new_prop_title]
+						let prop
+						for (const p of props) {
+							if (p.prop_title == new_prop_title) {
+								prop = p
+								break
+							}
+						}
+						try {
+							const val = interpolate(tpl, row, omissions[sheet].indexes, sheet, conf)
+							row[prop.index] = val === '' ? row[prop.index] : val
+						} catch(e) {
+							console.log(e)
+							row[prop.index] = e.toString()
+						}
+					}
+				}
+				
+
 				for (const {prop_title, index} of props) {
 					//Свойства которые нужно записать ищем их по синонимам
+
 					if (index === false) {
 						omissions[sheet].emptyprops[prop_title] ??= []
 						omissions[sheet].emptyprops[prop_title].push(row)
@@ -584,9 +639,9 @@ export class Upload {
 								let number = base.toNumber(value_title)
 
 								if (!number) continue
-								if (conf.usd && conf.usdlist && ~conf.usdlist.indexOf(sheet)) {
-									number = number * conf.usd
-								}
+								// if (conf.usd && conf.usdlist && ~conf.usdlist.indexOf(sheet)) {
+								// 	number = number * conf.usd
+								// }
 								if (conf.skidka) {
 									number = number * (100 - conf.skidka) / 100
 								}
