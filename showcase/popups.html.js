@@ -98,7 +98,7 @@ const excellist = (data, key) => `
 	${data.keyrepeated.length ? showRepeat(data, key) : ''}
 	${data.notconnected.length ? showNotconected(data, key) : ''}
 	${data.notfinded.length ? showNotfinded(data, key) : ''}
-	${data.emptyprops.length ? showEmptyprops(data, key) : ''}
+	${Object.values(data.emptyprops).length ? showEmptyprops(data, key) : ''}
 `
 const showEmptyprops = (data, key) => `
 	<h4>Ключи связи есть, совпадения есть, а менять нечего</h4>

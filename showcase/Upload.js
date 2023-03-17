@@ -367,17 +367,26 @@ export class Upload {
 						const nick = base.onicked(title)
 						const i = head_nicks.indexOf(nick)
 						if (~i) {
+							r = true
 							prop.index = i
 							props.push(prop)
 							break
 						}
 					}
-
+				}
+				if (!r) {
+					prop.index = false
+					props.push(prop)
 				}
 			}
-			
+
 			omissions[sheet] = {loadedrow:0, keyrepeated:[], notconnected:[], notfinded:[], emptyprops:{}, head_titles}
 			count += rows.length
+
+
+			// if (props.length < conf.props) {
+			// 	omissions[sheet].emptyprops[conf.props[0]] = rows
+			// }
 
 			for (const row of rows) {
 				const key_title = row[priceprop_index]
@@ -494,6 +503,11 @@ export class Upload {
 
 				for (const {prop_title, index} of props) {
 					//Свойства которые нужно записать ищем их по синонимам
+					if (index === false) {
+						omissions[sheet].emptyprops[prop_title] ??= []
+						omissions[sheet].emptyprops[prop_title].push(row)
+						continue //Пустое значение.. с прайсом итак было удалено
+					}
 					const prop = await upload.receiveProp(prop_title)
 					const value_title = row[index]
 
