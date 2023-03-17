@@ -401,7 +401,11 @@ export class Upload {
 						}
 						props.push(prop)
 					}
-					if (!prop.index) prop.index = row.length
+					if (!prop.index) {
+						prop.index = head_nicks.length
+						head_nicks[prop.index] = nicked(prop.prop_title)
+						head_titles[prop.index] = prop.prop_title
+					}
 				}
 			}
 			const indexes = {}
