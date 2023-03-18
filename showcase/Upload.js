@@ -398,6 +398,7 @@ export class Upload {
 					}
 				}
 				if (!prop) {
+					continue //Записываем и обрабатываем только то что есть в props
 					prop = {
 						prop_title: new_prop_title
 					}
@@ -551,6 +552,7 @@ export class Upload {
 							break
 						}
 					}
+					if (!prop) continue //Это свойство в этом прайсе не записывается и обработка пропускается
 					try {
 						
 						const hand = new Hand(indexes, sheet, conf, row, prop)
@@ -1714,7 +1716,7 @@ export class Upload {
 		const nick = base.onicked(info.name)
 		let ordain = info.num ?? null
 		if (ordain > 255) {
-			console.log('Out of range', info)
+			//console.log('Out of range', info)
 			ordain = 255
 		}
 		

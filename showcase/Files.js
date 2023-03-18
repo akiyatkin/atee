@@ -86,6 +86,8 @@ export const Files = {
 	},
 	srcInfo: (path) => {
 		const i = path.lastIndexOf('/')
+		const r = path.split('?')
+		if (r.length > 1) path = r[0]
 		let file, dir
 		if (~i) {
 			dir = path.slice(0, i + 1)
@@ -96,6 +98,7 @@ export const Files = {
 		}
 		const info = Files.nameInfo(file)
 		info.dir = dir
+		info.query = r[1]
 		return info
 	},
 	nameInfo: (file, isFile = true) => {
