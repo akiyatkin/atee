@@ -85,9 +85,18 @@ export const Files = {
 		})
 	},
 	srcInfo: (path) => {
+		const a = path.indexOf('#')
+		let anchor = ''
+		if (~a) {
+			anchor = path.slice(a + 1)
+			path = path.slice(0, a)
+		}
+		const r = path.indexOf('?')
+		if (~r && (!~a || a > r )) {
+			
+			path = path.slice(0, r) + anchor
+		}
 		const i = path.lastIndexOf('/')
-		const r = path.split('?')
-		if (r.length > 1) path = r[0]
 		let file, dir
 		if (~i) {
 			dir = path.slice(0, i + 1)
@@ -98,15 +107,16 @@ export const Files = {
 		}
 		const info = Files.nameInfo(file)
 		info.dir = dir
-		info.query = r[1]
+		info.anchor = anchor
+		
 		return info
 	},
 	nameInfo: (file, isFile = true) => {
 		let i, name, ext, num = null, secure, match, anchor
 		
-		i = file.lastIndexOf('#')
-		anchor = ~i ? file.slice(i + 1) : ''
-		file = ~i ? file.slice(0, i) : file
+		// i = file.lastIndexOf('#')
+		// anchor = ~i ? file.slice(i + 1) : ''
+		// file = ~i ? file.slice(0, i) : file
 		
 
 		if (isFile) {
@@ -146,7 +156,7 @@ export const Files = {
 		// num = ~i ? name.slice(0, i) : ''
 		// name = ~i ? name.slice(i + 1) : name
 		if (num) num = Number(num.slice(0, 6))
-		return { secure, num, name, ext, file, anchor }
+		return { secure, num, name, ext, file }
 	},
 	readdir: (visitor, dir) => {
 		return visitor.relate(Files).once('readdir'+dir, async () => {
