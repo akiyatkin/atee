@@ -142,7 +142,7 @@ rest.addVariable('md', async (view) => {
 	if (md.brand) {
 		const brands = await catalog.getBrands()
 		for (const brand_nick in md.brand) {
-			if (!brands[brand_nick]) delete md.group[brand_nick]
+			if (!brands[brand_nick]) delete md.brand[brand_nick]
 		}
 		if (!Object.keys(md.brand).length) delete md.brand
 	}
@@ -421,10 +421,9 @@ rest.addResponse('get-search-list', async (view) => {
 	const brand = await catalog.getMainBrand(md)
 	
 	let last = total <= countonpage ? 1 : Math.ceil(total / countonpage)
-	if (last < page) page = last
 	const pagination = {
 		last: last,
-		page: page
+		page: last < page ? last + 1 : page
 	}
 	const res = { list, brand, pagination, count:total, countonpage }
 	Object.assign(view.ans, res)
@@ -562,7 +561,6 @@ rest.addResponse('get-nalichie', async (view) => {
 rest.addArgument('partner', async (view, partner) => {
 	const { options } = await view.gets(['options'])
 	const data = options.partners[partner]
-	view.ans.partner = partner
 	if (!data) return false
 	data.key = partner
 	return data
