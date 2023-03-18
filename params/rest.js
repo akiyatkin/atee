@@ -9,13 +9,13 @@ import config from '/-config'
 import xlsx from '/-xlsx'
 
 const CONFIG = await config('params')
-const lists = await xlsx.read(Access, CONFIG.src)
 
 const rest = new Rest(rest_funcs)
 
 rest.addArgument('name')
 rest.addResponse('get-menu', async view => {
 	const { name, visitor } = await view.gets(['name', 'visitor'])
+	const lists = await xlsx.read(Access, CONFIG.src)
 	const list = lists.find(d => d.name == name)
 	if (!list) return view.err('Лист не найден')
 	const base = new Base({ visitor })

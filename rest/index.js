@@ -589,7 +589,7 @@ export class Rest {
 		opt['nostore'] = false
 		opt['response'] = false
 		opt['request'] = false
-		opt['once'] = false	//Если function вызовется для обработки once:true то повторного function не будет
+		opt['once'] = false     //Если function вызовется для обработки once:true то повторного function не будет
 		opt['required'] = false
 	}
 
