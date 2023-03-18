@@ -341,7 +341,7 @@ class Catalog {
 				const number = Number(model[cost.prop_title])
 				const oldnumber = Number(model[oldcost.prop_title])
 				if (oldnumber) { //100
-					model.discount = Math.round((1 - oldnumber / number) * 100) //20
+					model.discount = Math.round((1 - number / oldnumber) * 100) //20
 				}
 			} else if (is_item_oldcost) {
 				const number = Number(model[cost.prop_title])
@@ -352,7 +352,7 @@ class Catalog {
 					item[cost.prop_title] = number
 					const oldnumber = Number(item[oldcost.prop_title])
 					if (oldnumber) {
-						item.discount = Math.round((1 - oldnumber / number) * 100) //20
+						item.discount = Math.round((1 - number / oldnumber) * 100) //20
 					} else {
 						if (partner?.discount) {
 							item[oldcost.prop_title] = number
@@ -888,7 +888,13 @@ class Catalog {
 					i++
 					iprops_dive = true
 					
-					const prop = await base.getPropByNick(prop_nick)
+					let prop
+					if (partner?.cost && prop_nick == 'cena') {
+						prop = await base.getPropByTitle(partner.cost)
+					} else {
+						prop = await base.getPropByNick(prop_nick)
+					}
+					
 					from.push(`showcase_iprops ip${i}`)
 					where.push(`ip${i}.model_id = i.model_id`)
 					where.push(`ip${i}.item_num = i.item_num`)
@@ -906,6 +912,7 @@ class Catalog {
 							if (typeof(value) == 'string') value = value.replace('-','.')
 							
 							let value_nick = Number(value)
+							
 							if (partner?.discount && prop_nick == 'cena') {
 								value_nick = value_nick * (100 + partner.discount) / 100
 							}

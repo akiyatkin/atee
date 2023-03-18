@@ -567,6 +567,7 @@ rest.addArgument('partner', async (view, partner) => {
 })
 rest.addResponse('get-partner', async (view) => {
 	const { partner } = await view.gets(['partner'])
+	view.ans.partner = partner?.title || partner?.key || ''
 	if (partner) view.ans.descr = partner.descr
 	return partner ? view.ret() : view.nope()
 })

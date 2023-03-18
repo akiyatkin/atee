@@ -5,8 +5,8 @@ import fs from "fs/promises"
 import nicked from '/-nicked/nicked.js'
 import unique from '/-nicked/unique.js'
 import kcproc from '/-cproc/kcproc.js'
-import xlsx from "/-xlsx"
-
+import xlsx from '/-xlsx'
+import Hand from '/-showcase/Hand.js'
 export class Upload {
 	constructor (opt) {
 		opt.upload = this
@@ -385,27 +385,28 @@ export class Upload {
 			omissions[sheet] = {loadedrow:0, keyrepeated:[], notconnected:[], notfinded:[], emptyprops:{}, head_titles}
 			count += rows.length
 
+			const handlers = {}
+			Object.assign(handlers, options.handlers || {}, conf.hanlders || {})
 
-			if (conf.handlers) {
-				for (const new_prop_title in conf.handlers) {
-					let prop
-					for (const p of props) {
-						if (p.prop_title == new_prop_title) {
-							prop = p
-							break
-						}
+				
+			for (const new_prop_title in handlers) {
+				let prop
+				for (const p of props) {
+					if (p.prop_title == new_prop_title) {
+						prop = p
+						break
 					}
-					if (!prop) {
-						prop = {
-							prop_title: new_prop_title
-						}
-						props.push(prop)
+				}
+				if (!prop) {
+					prop = {
+						prop_title: new_prop_title
 					}
-					if (!prop.index) {
-						prop.index = head_nicks.length
-						head_nicks[prop.index] = nicked(prop.prop_title)
-						head_titles[prop.index] = prop.prop_title
-					}
+					props.push(prop)
+				}
+				if (!prop.index) {
+					prop.index = head_nicks.length
+					head_nicks[prop.index] = nicked(prop.prop_title)
+					head_titles[prop.index] = prop.prop_title
 				}
 			}
 			const indexes = {}
@@ -421,7 +422,9 @@ export class Upload {
 			// if (props.length < conf.props) {
 			// 	omissions[sheet].emptyprops[conf.props[0]] = rows
 			// }
-			const interpolate = (val, row, indexes, sheet, conf) => new Function('row', 'indexes', 'sheet', 'conf', 'return `'+val+'`')(row, indexes, sheet, conf)
+			const interpolate = (val, row, indexes, sheet, conf, hand, key) => new Function('row', 'indexes', 'sheet', 'conf', 'hand', 'key', 'return `'+val+'`')(row, indexes, sheet, conf, hand, key)
+			
+
 			for (const row of rows) {
 				const key_title = row[priceprop_index]
 				if (!key_title) {
@@ -538,25 +541,29 @@ export class Upload {
 				
 				
 
-				if (conf.handlers) {
-					for (const new_prop_title in conf.handlers) {
-						const tpl = conf.handlers[new_prop_title]
-						let prop
-						for (const p of props) {
-							if (p.prop_title == new_prop_title) {
-								prop = p
-								break
-							}
-						}
-						try {
-							const val = interpolate(tpl, row, omissions[sheet].indexes, sheet, conf)
-							row[prop.index] = val === '' ? row[prop.index] : val
-						} catch(e) {
-							console.log(e)
-							row[prop.index] = e.toString()
+				
+				for (const new_prop_title in handlers) {
+					const tpl = handlers[new_prop_title]
+					let prop
+					for (const p of props) {
+						if (p.prop_title == new_prop_title) {
+							prop = p
+							break
 						}
 					}
+					try {
+						
+						const hand = new Hand(indexes, sheet, conf, row, prop)
+						
+						const val = interpolate(tpl, row, indexes, sheet, conf, hand, new_prop_title)
+						row[prop.index] = val
+						//row[prop.index] = val === '' ? row[prop.index] : val
+					} catch(e) {
+						console.log(e)
+						row[prop.index] = e.toString()
+					}
 				}
+				
 				
 
 				for (const {prop_title, index} of props) {
@@ -636,29 +643,27 @@ export class Upload {
 							fillings.push({bond_id, value_id, text, number})
 						} else if (prop.type == 'number') {
 
-							if (prop.prop_title == 'Цена') {
-
-
-
-								let number = base.toNumber(value_title)
-
-								if (!number) continue
-								// if (conf.usd && conf.usdlist && ~conf.usdlist.indexOf(sheet)) {
-								// 	number = number * conf.usd
-								// }
-								if (conf.skidka) {
-									number = number * (100 - conf.skidka) / 100
-								}
-								if (!conf.float) number = Math.round(number)
-
-
-
-								fillings.push({bond_id, value_id, text, number})
-							} else if (typeof(value_title) == 'string') {
+							// if (prop.prop_title == 'Цена') {
+							// 	let number = base.toNumber(value_title)
+							// 	if (number == false){
+							// 		omissions[sheet].emptyprops[prop_title] ??= []
+							// 		omissions[sheet].emptyprops[prop_title].push(row)
+							// 		continue
+							// 	}
+							// 	// if (conf.usd && conf.usdlist && ~conf.usdlist.indexOf(sheet)) {
+							// 	// 	number = number * conf.usd
+							// 	// }
+							// 	// if (conf.skidka) {
+							// 	// 	number = number * (100 - conf.skidka) / 100
+							// 	// }
+							// 	// if (!conf.float) number = Math.round(number)
+							// 	fillings.push({bond_id, value_id, text, number})
+							// } else 
+							if (typeof(value_title) == 'string') {
 								const numbers = value_title.split(",")	
 								for (const num of numbers) {
 									const number = base.toNumber(num)
-									if (number === false){
+									if (number === false || number === ''){
 										omissions[sheet].emptyprops[prop_title] ??= []
 										omissions[sheet].emptyprops[prop_title].push(row)
 										continue
@@ -667,7 +672,11 @@ export class Upload {
 								}
 							} else {
 								const number = base.toNumber(value_title)
-								if (number === false) continue
+								if (number === false || number === ''){
+									omissions[sheet].emptyprops[prop_title] ??= []
+									omissions[sheet].emptyprops[prop_title].push(row)
+									continue
+								}
 								fillings.push({bond_id, value_id, text, number})
 							}
 							
