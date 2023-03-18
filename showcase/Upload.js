@@ -386,7 +386,7 @@ export class Upload {
 			count += rows.length
 
 			const handlers = {}
-			Object.assign(handlers, options.handlers || {}, conf.hanlders || {})
+			Object.assign(handlers, options.handlers || {}, conf.handlers || {})
 
 				
 			for (const new_prop_title in handlers) {

@@ -15,6 +15,10 @@ class Hand {
     ifnot (from) {
         return this.floor(from)
     }
+    min (...mins) {
+        mins = mins.filter(m => !!m)
+        return Math.min(...mins)
+    }
     get (from) {
         const {row, indexes} = this
         let from_index
