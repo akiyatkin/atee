@@ -44,8 +44,8 @@ export const ROOT = (data, env) => `
 				<label for="${env.sid}phone">Телефон *</label>
 			</div>
 			<div class="float-label icon mail">
-				<input id="${env.sid}email" name="email" type="email" placeholder="Email">
-				<label for="${env.sid}email">Email</label>
+				<input required id="${env.sid}email" name="email" type="email" placeholder="Email">
+				<label for="${env.sid}email">Email *</label>
 			</div>
 		</div>
 		<div class="float-label">

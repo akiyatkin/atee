@@ -580,7 +580,7 @@ rest.addResponse('set-order', async (view) => {
     const user = await view.gets(['text', 'email#required', 'phone#required', 'brand_nick','model_nick', 'utms', 'partner'])
     user.host = visitor.client.host
     user.ip = visitor.client.ip
-    user.model = await catalog.getModelByNick(base, user.brand_nick, user.model_nick, user.partner)
+    user.model = await catalog.getModelByNick(user.brand_nick, user.model_nick, user.partner)
     const html = MAIL(user)
     
     
