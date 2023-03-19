@@ -79,7 +79,15 @@ class Base {
 				if (r.length > 1) p.unit = r[1].trim()
 				else p.unit = p.unit || ''
 			}
-
+			for (const price_title in options.prices) {
+				const conf = options.prices[price_title]
+				conf.synonyms ??= {}
+				conf.props ??= ['Цена']
+				conf.priceprop ??= 'Артикул'
+				conf.catalogprop ??= 'Модель'
+				conf.start ??= 1
+				conf.starts ??= {}
+			}
 
 			return options
 		})

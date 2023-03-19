@@ -112,6 +112,40 @@ rest.addResponse('get-prices', async view => {
 	return view.ret()
 })
 
+
+rest.addResponse('get-statistics', async view => {
+	const { db, config, options, base } = await view.gets(['db', 'config','options', 'base'])
+	const prices = []
+	for (const price_title in options.prices) {
+		const price = {...options.prices[price_title]}
+		const handlers = Object.assign({}, price.handlers || {})
+		const props = []
+		
+		for (const prop_title in handlers) {
+			if (!price.props || !~price.props.indexOf(prop_title)) continue
+			const synonyms = [...(price.synonyms[prop_title] || [])]
+			props.push({
+				synonyms,
+				prop_title,
+				handler: handlers[prop_title]
+			})
+		}
+		for (const prop_title of price.props) {
+			if (handlers[prop_title]) continue
+			const synonyms = [...(price.synonyms[prop_title] || [])]
+			props.push({
+				synonyms,
+				prop_title,
+				handler:''
+			})
+		}
+		prices.push({...price, props, price_title})
+	}
+	view.ans.partners = options.partners
+	view.ans.handlers = options.handlers
+	view.ans.prices = prices
+	return view.ret()
+})
 rest.addResponse('get-tables', async view => {
 	await view.get('admin')
 	const { upload, visitor, db, config, options, base } = await view.gets(['visitor', 'db', 'config','options', 'base', 'upload'])	

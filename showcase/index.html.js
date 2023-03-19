@@ -60,6 +60,7 @@ export const HEADER = (data, env) => `
 			<a href="values">Значения</a>
 			<a href="models">Модели</a>
 			<a href="files">Файлы</a>
+			<a href="statistics">Статистика</a>
 		</p>
 		<p>
 			<button name="set-applyall">Применить всё</button>

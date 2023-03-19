@@ -26,6 +26,13 @@
 				}
 			}
 		},
+		"statistics":{
+			"layout":{
+				"index:ROOT":{
+					"CONTENT":"statistics:ROOT"
+				}
+			}
+		},
 		"tables":{
 			"layout":{
 				"index:ROOT":{
@@ -122,6 +129,7 @@
 		"index:MAIN":"/-showcase/get-state",
 		"settings:DATABASE":"/-showcase/get-settings",
 		"tables:ROOT":"/-showcase/get-tables",
+		"statistics:ROOT":"/-showcase/get-statistics",
 		"prices:ROOT":"/-showcase/get-prices",
 		"index:PANEL":"/-showcase/get-panel",
 		"models:ROOT":"/-showcase/get-models",
@@ -136,6 +144,7 @@
 		"model:ROOT":"/-showcase/get-model?id=${crumb.name}"
 	},
 	"tpl":{
+		"statistics":"/-showcase/statistics.html.js",
 		"popups":"/-showcase/popups.html.js",
 		"controller":"/-controller/layout.html.js",
 		"index":"/-showcase/index.html.js",

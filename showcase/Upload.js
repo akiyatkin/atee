@@ -295,13 +295,12 @@ export class Upload {
 
 		const dir = config['prices']
 		const { file } = await Files.getFileInfo(visitor, dir, price_title, ['xlsx','js'])
-		const conf = options.prices[price_title] || { }
-		conf.synonyms ??= {}
-		conf.props ??= ['Цена']
-		conf.priceprop ??= 'Артикул'
-		conf.catalogprop ??= 'Модель'
-		conf.start ??= 1
-		conf.starts ??= {}
+		const conf = options.prices[price_title]
+		if (!conf) {
+			console.log('Требуется конфиг', price_title)
+			return false
+		}
+
 		
 		conf.props.slice().reverse().forEach(prop => {
 			conf.synonyms[prop] ??= []
