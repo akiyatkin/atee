@@ -66,23 +66,48 @@ export class Db {
 
 	//select
 	async fetch(sql, values) {
-		const [rows, fields] = await this.db.execute({ sql, values })
-		return rows[0]
+		if (values && Object.keys(values).length) {
+			const [rows, fields] = await this.db.execute({ sql, values })
+			return rows[0]
+		} else {
+			const [rows, fields] = await this.db.query(sql)
+			return rows[0]
+		}
 	}
 	async col(sql, values) {
-		const [rows, fields] = await this.db.execute({ sql, values })
-		if (!rows.length) return null
-		return rows[0][fields[0].name]
+		if (values && Object.keys(values).length) {
+			const [rows, fields] = await this.db.execute({ sql, values })
+			if (!rows.length) return null
+			return rows[0][fields[0].name]
+		} else {
+			const [rows, fields] = await this.db.query(sql)
+			if (!rows.length) return null
+			return rows[0][fields[0].name]
+		}
 	}
 	async colAll(sql, values) {
-		const [rows, fields] = await this.db.execute({ sql, values })
-		return rows.reduce((ak, row) => {
-			ak.push(row[fields[0].name])
+		let r, f
+		if (values && Object.keys(values).length) {
+			const [rows, fields] = await this.db.execute({ sql, values })
+			r = rows
+			f = fields
+		} else {
+			const [rows, fields] = await this.db.query(sql)
+			r = rows
+			f = fields
+
+		}
+		return r.reduce((ak, row) => {
+			ak.push(row[f[0].name])
 			return ak
 		}, [])
 	}
 	async all(sql, values) {
-		return this.db.execute({ sql, values }).then(([rows]) => rows)
+		if (values && Object.keys(values).length) {
+			return this.db.execute({ sql, values }).then(([rows]) => rows)	
+		} else {
+			return this.db.query(sql).then(([rows]) => rows)	
+		}
 	}
 	async allto(name, sql, values) {
 		return this.all(sql, values).then(rows => {
@@ -107,23 +132,44 @@ export class Db {
 
 	
 	async insertId(sql, values) { //insert
-		const [rows, fields] = await this.db.query({ sql, values })
-		return rows.insertId
+		if (values && Object.keys(values).length) {
+			const [rows, fields] = await this.db.execute({ sql, values })
+			return rows.insertId
+		} else {
+			const [rows, fields] = await this.db.query(sql)
+			return rows.insertId	
+		}
+		
 	}
 	async affectedRows(sql, values) { //insert, delete
-		const [rows, fields] = await this.db.execute({ sql, values })
-		return rows.affectedRows
+		if (values && Object.keys(values).length) {
+			const [rows, fields] = await this.db.execute({ sql, values })
+			return rows.affectedRows
+		} else {
+			const [rows, fields] = await this.db.query(sql)
+			return rows.affectedRows
+		}
 	}
 
 	
 	async changedRows(sql, values) { //update
-		const [rows, fields] = await this.db.execute({ sql, values })
-		return rows.changedRows
+		if (values && Object.keys(values).length) {
+			const [rows, fields] = await this.db.execute({ sql, values })
+			return rows.changedRows
+		} else {
+			const [rows, fields] = await this.db.execute(sql)
+			return rows.changedRows
+		}
 	}
 
 	async exec(sql, values) { //for mysql
-		const [rows, fields] = await this.db.execute({ sql, values })
-		return rows.changedRows
+		if (values && Object.keys(values).length) {
+			const [rows, fields] = await this.db.execute({ sql, values })
+			return rows.changedRows
+		} else {
+			const [rows, fields] = await this.db.query(sql)
+			return rows.changedRows
+		}
 	}
 	async query(sql, values) { //for client
 		const [rows, fields] = await this.db.query({ sql, values })
