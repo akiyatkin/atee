@@ -377,14 +377,14 @@ class Catalog {
 				if (model.items) for (const item of model.items) {
 					item[oldcost.prop_title] = oldnumber
 					const number = Number(item[cost.prop_title])
-					item.discount = Math.round((1 - oldnumber / number) * 100) //20
+					item.discount = Math.round((1 - number / oldnumber) * 100) //20
 				}
 			} else if (is_item_oldcost) {
 				if (model.items) for (const item of model.items) {
 					const number = Number(item[cost.prop_title])
 					const oldnumber = Number(item[oldcost.prop_title])
 					if (oldnumber) {
-						item.discount = Math.round((1 - oldnumber / number) * 100) //20
+						item.discount = Math.round((1 - number / oldnumber) * 100) //20
 					} else {
 						if (partner?.discount) {
 							item[oldcost.prop_title] = number
