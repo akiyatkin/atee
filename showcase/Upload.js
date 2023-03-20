@@ -397,7 +397,7 @@ export class Upload {
 					}
 				}
 				if (!prop) {
-					continue //Записываем и обрабатываем только то что есть в props
+					//continue //Записываем и обрабатываем только то что есть в props
 					prop = {
 						prop_title: new_prop_title
 					}
@@ -551,7 +551,7 @@ export class Upload {
 							break
 						}
 					}
-					if (!prop) continue //Это свойство в этом прайсе не записывается и обработка пропускается
+					//if (!prop) continue //Это свойство в этом прайсе не записывается и обработка пропускается
 					try {
 						
 						const hand = new Hand(indexes, sheet, conf, row, prop)
