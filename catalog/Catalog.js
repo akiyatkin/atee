@@ -100,9 +100,24 @@ class Catalog {
 
 
 		//Все нестандартные отличия по позициям вынесли в item_props остальное в model_props
+
 		for (const model of list) {
-			const model_props = {...model.items[0]}
-			const item_props = []
+			//console.log(7, model.items)
+
+			const model_props = {}
+			for (const item of model.items) {
+				for (const prop in item) {
+					model_props[prop] = item[prop]
+				}
+			}
+			for (const item of model.items) {
+				for (const prop in model_props) {
+					if (item[prop] == null) item[prop] = null
+				}
+			}
+
+			let item_props = Object.keys(model_props)
+			const item_props_fix = []
 			for (const item of model.items) {
 				for (const prop in item) {
 					if (model_props[prop] == null) continue //свойство модели остаётся у модели
@@ -114,10 +129,13 @@ class Catalog {
 					} else {
 						if (model_props[prop] == val) continue
 					}
-					item_props.push(prop)
+					item_props_fix.push(prop)
 					delete model_props[prop]
 				}
 			}
+			item_props = item_props.filter(prop => !Object.hasOwn(model_props, prop))
+
+			
 			for (const prop in model_props) {
 				model[prop] = model_props[prop]
 			}

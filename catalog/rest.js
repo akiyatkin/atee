@@ -192,8 +192,7 @@ rest.addArgument('model_nick', ['nicked'])
 rest.addArgument('brand_nick', ['nicked'])
 
 rest.addResponse('get-model-head', async (view) => {
-	const { db, brand_nick, model_nick, visitor, partner, base, catalog} = await view.gets(['db','visitor', 'brand_nick','model_nick','partner', 'base','catalog'])
-	const model = await catalog.getModelByNick(brand_nick, model_nick, partner)
+	const { model, db, brand_nick, model_nick, visitor, partner, base, catalog} = await view.gets(['model', 'db','visitor', 'brand_nick','model_nick','partner', 'base','catalog'])
 	if (!model) {
 		view.ans.brand = await catalog.getBrandByNick(brand_nick)
 		view.ans.title = `${view.ans.brand?.brand_title ?? brand_nick} ${model_nick}`
@@ -205,29 +204,33 @@ rest.addResponse('get-model-head', async (view) => {
 })
 
 
-const getTpls = Access.cache(async () => {
-	const conf = await config('showcase')
-	if (!conf.tpls) return {}
-	let files = await fs.readdir(conf.tpls).catch(() => [])
-	files = files.map((file) => {
-		const i = file.indexOf('.')
-		const name = ~i ? file.slice(0, i) : file
-		const ext = (~i ? file.slice(i + 1) : '').toLowerCase()
-		const secure = file[0] == '.' || file[0] == '~'
-		return {file, name, ext, secure}
-	})
-	files = files.filter(({secure, ext}) => !secure || ext != 'html.js')
-	files.forEach(of => {
-		delete of.secure
-	})
-	return files.reduce((ak, f) => {
-		ak[f.name] = f.file
-		return ak
-	}, {})
+// const getTpls = Access.cache(async () => {
+// 	const conf = await config('showcase')
+// 	if (!conf.tpls) return {}
+// 	let files = await fs.readdir(conf.tpls).catch(() => [])
+// 	files = files.map((file) => {
+// 		const i = file.indexOf('.')
+// 		const name = ~i ? file.slice(0, i) : file
+// 		const ext = (~i ? file.slice(i + 1) : '').toLowerCase()
+// 		const secure = file[0] == '.' || file[0] == '~'
+// 		return {file, name, ext, secure}
+// 	})
+// 	files = files.filter(({secure, ext}) => !secure || ext != 'html.js')
+// 	files.forEach(of => {
+// 		delete of.secure
+// 	})
+// 	return files.reduce((ak, f) => {
+// 		ak[f.name] = f.file
+// 		return ak
+// 	}, {})
+// })
+rest.addVariable('model', async (view) => {
+	const { brand_nick, model_nick, partner, catalog } = await view.gets(['brand_nick', 'model_nick', 'partner', 'catalog'])
+	const model = await catalog.getModelByNick(brand_nick, model_nick, partner)	
+	return model
 })
 rest.addResponse('get-model', async (view) => {
-	const { base, md, db, brand_nick, model_nick, visitor, partner, catalog } = await view.gets(['base', 'md', 'db', 'visitor', 'brand_nick','model_nick','partner', 'catalog'])
-	const model = await catalog.getModelByNick(brand_nick, model_nick, partner)	
+	const { model, base, md, db, brand_nick, model_nick, visitor, partner, catalog } = await view.gets(['model', 'base', 'md', 'db', 'visitor', 'brand_nick','model_nick','partner', 'catalog'])
 	view.ans.m = md.m
 	view.ans.md = md
 	view.ans.partner = partner?.key || ''
@@ -248,22 +251,22 @@ rest.addResponse('get-model', async (view) => {
 	view.ans.mod = model
 
 
-	const conf = await config('showcase')
-	const tpls = await getTpls()
-	const path = await catalog.getPathNickByGroupId(model.group_id)
-	path.reverse()
+	// const conf = await config('showcase')
+	// const tpls = await getTpls()
+	// const path = await catalog.getPathNickByGroupId(model.group_id)
+	// path.reverse()
 	
-	let tpl = false
-	if (!tpl) for (const group_nick of path) {
-		tpl = tpls[`model-${model.brand_nick}-${group_nick}`]
-		if (tpl) break
-	}
-	if (!tpl) tpl = tpls[`model-${model.brand_nick}.html`]
-	if (!tpl) for (const group_nick of path) {
-		tpl = tpls[`model-${group_nick}`]
-		if (tpl) break
-	}
-	view.ans.tpl =  tpl ? '/' + conf.tpls + tpl : "/-catalog/model.html.js"
+	// let tpl = false
+	// if (!tpl) for (const group_nick of path) {
+	// 	tpl = tpls[`model-${model.brand_nick}-${group_nick}`]
+	// 	if (tpl) break
+	// }
+	// if (!tpl) tpl = tpls[`model-${model.brand_nick}.html`]
+	// if (!tpl) for (const group_nick of path) {
+	// 	tpl = tpls[`model-${group_nick}`]
+	// 	if (tpl) break
+	// }
+	// view.ans.tpl =  tpl ? '/' + conf.tpls + tpl : "/-catalog/model.html.js"
 	
 
 	return view.ret()

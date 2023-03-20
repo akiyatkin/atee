@@ -148,7 +148,7 @@ rest.addResponse('webp', async view => {
 			createWriteStream(store).write(Buffer.concat(chunks))
 		})
 		duplex.on('error', chunk => {
-			console.log('Imager stream error', src, view.req.visitor.client.referer)
+			console.log('Imager stream error', src, view.visitor.client.referer)
 		})
 		duplex.on('end', chunk => {
 			AccessCache.set('isFreshCache' + store, true)
