@@ -496,16 +496,17 @@ rest.addResponse('get-search-sitemap', async (view) => {
 	return view.ret()
 })
 rest.addResponse('get-search-head', async (view) => {
-	const { options, db, md, catalog } = await view.gets(['options', 'db','md', 'catalog'])
+	const { value, options, db, md, catalog } = await view.gets(['value', 'options', 'db','md', 'catalog'])
 	view.ans.m = md.m
 	view.ans.md = md
-	const group = await catalog.getMainGroup(md)
+	const group = await catalog.getMainGroup(md)	
 	const brand = await catalog.getMainBrand(md)
 	if (group) {
 		view.ans.title = group.group_title
 	} else if (brand) {
 		view.ans.title = brand.brand_title
 	}
+	if (value) view.ans.thisischild = true
 	view.ans.canonical = group?.parent_id ? group.group_nick : (brand ? brand.brand_nick : '') 
 	if (view.ans.canonical) view.ans.canonical = '/' + view.ans.canonical
 	view.ans.title ??= options.root_title

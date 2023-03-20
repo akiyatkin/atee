@@ -32,6 +32,7 @@ class Hand {
 		return row[index] ?? ''
 	}
 	get (from) {
+		if (from) return this.getFrom(from)
 		const {row, indexes} = this
 		let value = this.getFrom(from)
 		value = this._checkUSD(value)

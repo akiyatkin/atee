@@ -111,9 +111,13 @@ rest.addResponse('get-head', async view => {
 
 	if (!head.canonical) {
 		const src = [env.bread.root, env.bread.path].filter(p => p).join('/')
-		if (src) head.canonical = src
+		if (src) head.canonical = '/' + src
 	} else {
-		head.canonical = env.crumb + head.canonical
+		if (head.thisischild) {
+			head.canonical = env.crumb.parent + head.canonical
+		} else {
+			head.canonical = env.crumb + head.canonical
+		}
 	}
 	return {ans:head}
 })

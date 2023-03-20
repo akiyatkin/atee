@@ -987,7 +987,7 @@ class Catalog {
 		let group = root
 		if (!md.group) return group
 		const group_nicks = Object.keys(md.group)
-		if (group_nicks.length == 1) group = groupnicks[group_nicks[0]]
+		if (group_nicks.length > 0) group = groupnicks[group_nicks[0]]
 		return group
 	}
 	async getMainBrand (md) {
