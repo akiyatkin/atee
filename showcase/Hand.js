@@ -23,7 +23,7 @@ class Hand {
 		mins = mins.filter(m => !!m)
 		return Math.min(...mins)
 	}
-	_getFrom (from) {
+	getFrom (from) {
 		const {row, indexes, prop} = this
 		if (!from) from = prop.prop_title
 		const nick = tonick(from)
@@ -33,18 +33,21 @@ class Hand {
 	}
 	get (from) {
 		const {row, indexes} = this
-		if (!from) return this._getFrom()
-		let value = this._getFrom(from)
+		let value = this.getFrom(from)
 		value = this._checkUSD(value)
-		if (value == '') return ''
+		if (!value) return '' //0 за значение не считаем
 		return Math.floor(value)
 	}
 	getSkidka (from) {
-		const {row, indexes, conf} = this
-		if (!from) return this._getFrom()
-		let value = this._getFrom(from)
-		value = this._checkUSD(value)
-		if (value == '') return ''
+		const {row, indexes, conf, prop} = this
+		let value
+		if (from) {
+			value = this.getFrom(from)
+		} else {
+			value = this.getFrom(prop.prop_title)
+			value = this._checkUSD(value)
+		}
+		if (!value) return ''
 		const discount = conf.skidka
 		if (discount) {
 			const k = (100 - discount) / 100
