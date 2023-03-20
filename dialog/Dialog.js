@@ -111,6 +111,7 @@ export const Dialog = {
 		return popup
 	},
 	parents:[],
+	index:1000,
 	show: (popup, onshow) => {
 		//document.getElementsByTagName('html')[0].style.overscrollY = 'hidden'
 		popup = popup.tagName ? popup : document.getElementById(popup)
@@ -121,6 +122,7 @@ export const Dialog = {
 		const body = cls('dialogbody', dialog)[0]
 		if (body.show) body.show()
 		dialog.classList.add('show')
+		dialog.style.zIndex = ++Dialog.index
 		dialog.lastfocus = document.activeElement
 		document.activeElement.blur()
 		const focus = dialog.querySelector('[tabindex="0"]')
