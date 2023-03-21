@@ -207,6 +207,7 @@ const getHTML = async (layer, look, visitor) => {
 				// 	json = escort.json || json
 				// }
 				if (json) {
+					//console.log('json', json)
 					const reans = await loadJSON(json, visitor).catch(res => {
 						console.log('getHTML loadJSON', res) //08.03 throw res. Стандартный ответ только 404 в статике
 						return res

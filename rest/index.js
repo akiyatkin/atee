@@ -17,6 +17,7 @@ class RecView {
 		this.replaced = pproc.opt.replaced //Может быть только одна подмена в папке проекта
 	}
 	get (name, parentvalue = null, parentname = null) {
+		
 		return this.view.get(name, this.pproc, parentvalue, parentname)
 	}
 	gets (ar) {
@@ -49,11 +50,35 @@ class RecView {
 	delCookie (...args) {
 		return this.view.delCookie(...args)
 	}
+	set req(value) {
+		this.view.req = value
+	}
+	get req() {
+		return this.view.req
+	}
+	set rest(value) {
+		this.view.rest = value
+	}
+	get rest() {
+		return this.view.rest
+	}
 	set nostore(value) {
 		this.view.nostore = value
 	}
 	get nostore() {
 		return this.view.nostore
+	}
+	set action(value) {
+		return this.view.action = value
+	}
+	get action() {
+		return this.view.action
+	}
+	set visitor(value) {
+		return this.view.visitor = value
+	}
+	get visitor() {
+		return this.view.visitor
 	}
 	set headers(value) {
 		this.view.headers = value
@@ -133,11 +158,12 @@ export class View {
 			this.reset(pname)
 		}
 	}
-
 	async getProc (opt) {
 		const mainview = this
+
 		const proc = mainview.proc[opt.name]
 		if (proc) return proc
+
 		if (opt.once && mainview.opt != opt) { //Для главного action запроса раз пришёл ещё один запрос значит есть отличие в реквестах и объединения не должно быть
 			//proc может быть общим или у каждого view свой. Для всех rest в extras view один.
 			//proc общий если у него нет в childs обработки отличающегося request в массиве view.req
@@ -145,18 +171,27 @@ export class View {
 			for (const view of views) {
 				const otherproc = view.proc[opt.name]
 				if (!otherproc) continue
+				await otherproc.init
 				if (otherproc.process) { //Другой proc сейчас выполняется и всех детей ещё не собрал, надо его дождаться
 					await otherproc.promise.catch()
 				}
-				const r = mainview.rest.runChilds(otherproc, proc => {
+				let r
+				r = mainview.rest.runChilds(otherproc, proc => {
 					const popt = proc.opt
 					if (popt.request && view.req[popt.name] != mainview.req[popt.name]) return true
 				})
-				if (r) continue; //Нельзя объединять так как в зависимостях есть разные request				
+				if (r) continue; //Нельзя объединять так как в зависимостях есть разные request	
+
+				// r = view.rest.runChilds(otherproc, proc => {
+				// 	const popt = proc.opt
+				// 	if (popt.request && mainview.req[popt.name] != view.req[popt.name]) return true
+				// })
+				// if (r) continue; //Нельзя объединять так как в зависимостях есть разные request	
 				return otherproc
 			}
 		}
 		mainview.proc[opt.name] = {
+			'counter': ++mainview.rest.counter,
 			'opt': opt,
 			'parents': {},
 			'childs': {},
@@ -165,6 +200,10 @@ export class View {
 			'result': false,
 			'process': false
 		}
+		let resolve
+		mainview.proc[opt.name].init = new Promise(r => resolve = r)
+		mainview.proc[opt.name].init.resolve = resolve
+		
 		return mainview.proc[opt.name]
 	}	
 	async #exec (proc, parentvalue = null, parentname = null) {
@@ -208,32 +247,32 @@ export class View {
 	}
 	
 	async get (pname, pproc, parentvalue = null, parentname = null) {
-
-
 		const view = this
+
 		const rest = view.rest
-		const opt = rest.findopt(pname)
+		const opt = rest.findopt(pname, pproc)
 
 		if (!opt) return view.err(`rest.notfound ${pname}`, 404)
-
+		
 		const proc = await view.getProc(opt)
+		
 		if (pproc) {
 			proc.parents[pproc.opt.name] = pproc //Тест рекурсии
 			pproc.childs[proc.opt.name] = proc //Для мёрджа разных view если нет разный request в childs
-		}
+
+		}		
 
 		if (proc['process']) {
-			const r = rest.runParents(proc, pproc => {
-				if (pproc == proc) return true
-			})
+			const r = rest.runParents(proc, pproc => pproc == proc)
 			if (r) return view.err(`rest.recursion ${pname}`, 500)
 		}
 		//if (opt['nostore'] && !view.opt['nostore']) return view.err(`rest.action required ${pname}`, 500)
-
 		if (opt['once'] && proc['promise']) return proc['promise']
+
 		
 		proc['process'] = true
 		proc['promise'] = view.#exec(proc, parentvalue, parentname)
+		proc.init.resolve()
 		proc['result'] = await proc['promise']
 		proc['ready'] = true		
 		proc['process'] = false
@@ -245,9 +284,11 @@ export class View {
 		const view = this
 		const res = { }
 		const list = []
+
 		for (const pname of pnames ?? []) {
 			//const vname = pname.split(/[\#\*@\?]/)[0]
 			const vname = pname.split(/[\#]/)[0]
+
 			const promise = view.get(pname, pproc)
 			promise.vname = vname
 			list.push(promise)
@@ -303,6 +344,7 @@ export class View {
 
 }
 export class Rest {
+	counter = 0
 	afterlisteners = []
 	after(callback) {
 		this.afterlisteners.push(callback)
@@ -414,6 +456,7 @@ export class Rest {
 		const view = new View(rest, action, req, opt, visitor) //Создаётся у родительского реста
 		const views = rest.addViews(view)
 		
+		//console.log('rest', view.action, req.m)
 
 		try {
 

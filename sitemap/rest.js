@@ -55,6 +55,7 @@ rest.addVariable('env', async view => {
 
 const interpolate = (val, env) => new Function('env', 'return `'+val+'`')(env)
 rest.addResponse('get-head', async view => {
+
 	const { source, visitor, root, bread, theme, timings } = await view.gets(['source', 'visitor', 'root', 'bread', 'theme', 'timings'])
 	
 	const { index, depth } = Layers.getIndex(source, bread)

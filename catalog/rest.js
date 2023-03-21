@@ -48,7 +48,7 @@ rest.addVariable('lim', ['array'], async (view, lim) => {
 rest.addArgument('vals', ['nicks'])
 
 rest.addArgument('m', (view, m) => {
-	if (m) view.nostore = true //безчисленное количество комбинаций, браузеру не нужно запоминать
+	if (m) view.nostore = true //безчисленное количество комбинаций, браузеру не нужно запоминать	
 	return m
 })
 const prepareValue = async (catalog, options, value) => {
@@ -118,6 +118,7 @@ rest.addVariable('md', async (view) => {
 	const addm = await prepareValue(catalog, options, value)
 	m += addm
 	let md = makemd(m)
+
 	if (md.search) {
 		const addm = await prepareValue(catalog, options, md.search)
 		m += ':search'+addm
@@ -182,6 +183,7 @@ rest.addVariable('md', async (view) => {
 	}
 	m = catalog.makemark(md).join(':')
 	md.m = m
+
 	return md
 })
 
@@ -397,7 +399,7 @@ rest.addResponse('get-search-groups', async (view) => {
 })
 
 
-rest.addResponse('get-search-list', async (view) => {
+rest.addResponse('get-search-list', async (view) => {	
 	const { db, value, md, partner, visitor, catalog, page, count, base, options } = await view.gets(['db','value','md','partner','visitor', 'catalog', 'page', 'count', 'base', 'options'])
 	view.ans.m = md.m
 	view.ans.md = md
@@ -442,6 +444,25 @@ rest.addResponse('get-search-list', async (view) => {
 	}
 	const res = { list, brand, pagination, count:total, countonpage }
 	Object.assign(view.ans, res)
+	return view.ret()
+})
+rest.addResponse('get-search-head', async (view) => {
+	const { value, options, db, md, catalog } = await view.gets(['value', 'options', 'db','md', 'catalog'])
+	view.ans.m = md.m
+	view.ans.md = md
+	const group = await catalog.getMainGroup(md)	
+	const brand = await catalog.getMainBrand(md)
+	if (group) {
+		view.ans.title = group.group_title
+	} else if (brand) {
+		view.ans.title = brand.brand_title
+	}
+	if (value) view.ans.thisischild = true
+
+	view.ans.canonical = group?.parent_id ? group.group_nick : (brand ? brand.brand_nick : '') 
+	
+	if (view.ans.canonical) view.ans.canonical = '/' + view.ans.canonical
+	view.ans.title ??= options.root_title
 	return view.ret()
 })
 rest.addResponse('get-search-sitemap', async (view) => {
@@ -495,23 +516,7 @@ rest.addResponse('get-search-sitemap', async (view) => {
 	})
 	return view.ret()
 })
-rest.addResponse('get-search-head', async (view) => {
-	const { value, options, db, md, catalog } = await view.gets(['value', 'options', 'db','md', 'catalog'])
-	view.ans.m = md.m
-	view.ans.md = md
-	const group = await catalog.getMainGroup(md)	
-	const brand = await catalog.getMainBrand(md)
-	if (group) {
-		view.ans.title = group.group_title
-	} else if (brand) {
-		view.ans.title = brand.brand_title
-	}
-	if (value) view.ans.thisischild = true
-	view.ans.canonical = group?.parent_id ? group.group_nick : (brand ? brand.brand_nick : '') 
-	if (view.ans.canonical) view.ans.canonical = '/' + view.ans.canonical
-	view.ans.title ??= options.root_title
-	return view.ret()
-})
+
 rest.addResponse('get-catalog', async (view) => {
 	const { db, catalog } = await view.gets(['db','catalog'])
 	
