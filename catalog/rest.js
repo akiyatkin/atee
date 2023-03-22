@@ -451,18 +451,22 @@ rest.addResponse('get-search-head', async (view) => {
 	view.ans.m = md.m
 	view.ans.md = md
 	const group = await catalog.getMainGroup(md)	
+	if (!group) return view.err('Нет данных')
 	const brand = await catalog.getMainBrand(md)
-	if (group) {
-		view.ans.title = group.group_title
-	} else if (brand) {
+
+	if (brand && !group.parent_id) {
 		view.ans.title = brand.brand_title
+		view.ans.canonical = brand.brand_nick
+	} else {
+		view.ans.title = group.group_title
+		if (group.parent_id) {
+			view.ans.canonical = group.parent_id ? group.group_nick : ''
+		} else {
+			view.ans.canonical = ''		
+		}
 	}
 	if (value) view.ans.thisischild = true
-
-	view.ans.canonical = group?.parent_id ? group.group_nick : (brand ? brand.brand_nick : '') 
-	
 	if (view.ans.canonical) view.ans.canonical = '/' + view.ans.canonical
-	view.ans.title ??= options.root_title
 	return view.ret()
 })
 rest.addResponse('get-search-sitemap', async (view) => {
@@ -581,6 +585,7 @@ rest.addResponse('get-nalichie', async (view) => {
 })
 rest.addArgument('partner', async (view, partner) => {
 	const { options } = await view.gets(['options'])
+	partner = nicked(partner)
 	const data = options.partners[partner]
 	if (!data) return false
 	data.key = partner
@@ -589,9 +594,20 @@ rest.addArgument('partner', async (view, partner) => {
 rest.addResponse('get-partner', async (view) => {
 	const { partner } = await view.gets(['partner'])
 	view.ans.partner = partner?.title || partner?.key || ''
-	if (partner) view.ans.descr = partner.descr
+	if (partner) view.ans.descr = partner.descr || ''
 	return partner ? view.ret() : view.nope()
 })
+// import theme from '/-controller/theme.js'
+// rest.addResponse('set-partner', async (view) => {
+// 	const { partner } = await view.gets(['partner'])
+// 	if (!partner) return view.err('Ключ устарел или указан с ошибкой')
+// 	//them.harvest(view.req, view.visitor.client.cookie)
+// 	//them.torow()
+// 	console.log(view.visitor)
+// 	view.ans.partner = partner.title || partner.key || ''
+// 	view.ans.descr = partner.descr || ''
+// 	return view.ret()
+// })
 
 import { MAIL } from './order.mail.html.js'
 rest.addResponse('set-order', async (view) => {

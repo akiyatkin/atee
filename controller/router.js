@@ -4,7 +4,7 @@ import { whereisit } from './whereisit.js'
 import { ReadStream } from 'fs'
 import { pathToFileURL, fileURLToPath } from 'url'
 
-import Theme from '/-controller/Theme.js'
+import Theme from '/-controller/theme.js'
 
 import config from '/-config'
 import path from 'path'

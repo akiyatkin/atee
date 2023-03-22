@@ -1,4 +1,4 @@
-import Theme from './Theme.js'
+import Theme from './theme.js'
 
 export const getPost = (request, limit = 1e7) => {
     if (request.method != 'POST') return {}

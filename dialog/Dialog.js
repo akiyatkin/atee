@@ -39,7 +39,7 @@ export const Dialog = {
 			list.push(onhide)
 			hides.set(popup, list)
 		}
-		const theme = await import('/-controller/Theme.js').then(r => r.default.get())
+		const theme = await import('/-controller/theme.js').then(r => r.default.get())
 		//const layer = {tpl, sub, json, div:id}
 		layer.div = id
 		const look = { theme }

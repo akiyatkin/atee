@@ -43,7 +43,8 @@ sitemap.HEAD = (head, env) => `
 		}
 		window.addEventListener('crossing', async ({detail: env}) => {
 			const { timings, bread, theme } = env
-			const data = await fetch('/-sitemap/get-head?path=' + bread.path + '&root='+bread.root).then(res => res.json())
+			const data = await fetch('/-sitemap/get-head?path=' + bread.path + '&root='+bread.root + '&m='+(bread.get.m ?? '')).then(res => res.json())
+			if (!data.canonical) data.canonical = location.href
 			for (const rule in data) rules[rule]?.(data[rule])
 			const event = new CustomEvent('crossing-sitemap-headready', {detail: env})
 			window.dispatchEvent(event)

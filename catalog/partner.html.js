@@ -14,7 +14,7 @@ export const POPUP = (data, env) => `
 		: '<p>Нет активного ключа</p>'
 	}
 	${data.descr ? '<p style="max-width:600px"><i>' + data.descr + '</i></p>' : ''}
-	<form>
+	<form action="/-catalog/set-partner">
 		<div class="float-label icon lock">
 			<input id="contacts_partner" name="partner" type="text" placeholder="Укажите ключ">
 			<label for="contacts_partner">Укажите ключ</label>

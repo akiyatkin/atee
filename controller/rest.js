@@ -8,7 +8,7 @@ import { Access } from '/-controller/Access.js'
 import { Once } from './Once.js'
 import Layers from '/-controller/Layers.js'
 import { whereisit } from './whereisit.js'
-import Theme from '/-controller/Theme.js'
+import Theme from '/-controller/theme.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 import rest_admin from '/-controller/rest.admin.js'

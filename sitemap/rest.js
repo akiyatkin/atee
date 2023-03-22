@@ -3,7 +3,7 @@ import Layers from '/-controller/Layers.js'
 import TPL from '/-sitemap/layout.html.js'
 import Access from '/-controller/Access.js'
 import { loadJSON } from '/-controller/router.js'
-import Theme from '/-controller/Theme.js'
+import Theme from '/-controller/theme.js'
 import Bread from '/-controller/Bread.js'
 
 import rest_funcs from '/-rest/rest.funcs.js'
@@ -22,7 +22,10 @@ const rest = new Rest(rest_funcs, rest_seo, rest_pages, rest_path)
 
 rest.addVariable('bread', async view => {
 	const { path, root } = await view.gets(['path','root'])
-	const bread = new Bread(path, {}, path, root)
+	const req = {...view.req}
+	delete req.path
+	delete req.root
+	const bread = new Bread(path, req, path, root)
 	return bread
 })
 rest.addVariable('theme', async view => {

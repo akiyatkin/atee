@@ -1,8 +1,8 @@
 
-const Theme = {}
-export default Theme
+const theme = {}
+export default theme
 
-Theme.parse = (string, sep = '; ') => {
+theme.parse = (string, sep = '; ') => {
     const obj = string?.split(sep).reduce((res, item) => {
         if (!item) return res
         item = item.replace(/\+/g, '%20')
@@ -23,16 +23,21 @@ const fromCookie = (cookie) => {
 	if (name == 'deleted') return ''
 	return decodeURIComponent(name[2])
 }
-Theme.get = () => Theme.harvest({theme:new URL(location).searchParams.get('theme')}, document.cookie) //only for browser
-Theme.harvest = (get, cookie) => {
+theme.get = () => theme.harvest({theme:new URL(location).searchParams.get('theme')}, document.cookie) //only for browser
+theme.harvest = (get, cookie) => {
 	const name = get.theme != null ? get.theme : fromCookie(cookie)
-	const theme = Theme.parse(name,':')
-	for (const key in theme) {
-		const val = theme[key]
+	const obj = theme.parse(name, ':')
+	for (const key in obj) {
+		const val = obj[key]
 		if (!val) {
-			delete theme[key]
+			delete obj[key]
 			continue
 		}
 	}
-	return theme
+	return obj
+}
+theme.torow = (theme) => {
+	return Object.entries(theme).map(([key, val]) => {
+		return encodeURIComponent(key) + '=' + encodeURIComponent(val)
+	}).join(';')
 }

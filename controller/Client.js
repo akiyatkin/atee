@@ -2,7 +2,7 @@ import { animate } from './animate.js'
 import { evalScripts } from './evalScripts.js'
 import { createPromise } from './createPromise.js'
 import Bread from '/-controller/Bread.js'
-import Theme from '/-controller/Theme.js'
+import theme from '/-controller/theme.js'
 
 export const Client = {
 	search:'',
@@ -187,7 +187,7 @@ const userpathparse = (search) => {
 	search = search.slice(1)
 	try { search = decodeURI(search) } catch { }
 	let [path = '', params = ''] = explode('?', search)
-	const get = Theme.parse(params, '&')
+	const get = theme.parse(params, '&')
 	const secure = !!~path.indexOf('/.') || path[0] == '.'
 	return {secure, path, get}
 }

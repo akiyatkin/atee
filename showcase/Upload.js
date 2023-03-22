@@ -399,6 +399,7 @@ export class Upload {
 				if (!prop) {
 					//continue //Записываем и обрабатываем только то что есть в props
 					prop = {
+						auto:true, //Автоматическое свойство, о его отсутствии в данных не надо ругаться
 						prop_title: new_prop_title
 					}
 					props.push(prop)
@@ -567,20 +568,24 @@ export class Upload {
 				
 				
 
-				for (const {prop_title, index} of props) {
+				for (const {prop_title, index, auto} of props) {
 					//Свойства которые нужно записать ищем их по синонимам
 
 					if (index === false) {
-						omissions[sheet].emptyprops[prop_title] ??= []
-						omissions[sheet].emptyprops[prop_title].push(row)
+						if (!auto) {
+							omissions[sheet].emptyprops[prop_title] ??= []
+							omissions[sheet].emptyprops[prop_title].push(row)
+						}
 						continue //Пустое значение.. с прайсом итак было удалено
 					}
 					const prop = await upload.receiveProp(prop_title)
 					const value_title = row[index]
 
-					if (!value_title) {
-						omissions[sheet].emptyprops[prop_title] ??= []
-						omissions[sheet].emptyprops[prop_title].push(row)
+					if (!value_title) { //Автоматические свойства создают строчку, но могут быть пустыми согласно handlers
+						if (!auto) {
+							omissions[sheet].emptyprops[prop_title] ??= []
+							omissions[sheet].emptyprops[prop_title].push(row)
+						}
 						continue //Пустое значение.. с прайсом итак было удалено
 					}
 					let value_titles = []
