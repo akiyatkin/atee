@@ -648,6 +648,7 @@ rest.addResponse('get-maingroups', async (view) => {
 		const tree = await catalog.getTree()	
 		let root = tree[root_id]
 		if (root.childs.length == 1) root = tree[root.childs[0]] //fix для hugong когда есть одна общая группа верхнего уровня
+		console.log(root.childs)
 		const childs = await Promise.all(root.childs.map(async group_id => {
 			const group = tree[group_id]
 			const sql = `

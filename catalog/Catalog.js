@@ -568,11 +568,16 @@ class Catalog {
 	}
 	getMainGroups (prop_title = '') {
 		const { base: { db, dbcache: cache }, base, catalog, options } = this
+
 		return cache.konce('getMainGroups', prop_title, async () => {
-			const tree = structuredClone(await catalog.getTree())
-			const groups = Object.values(tree)
-			const root = groups.find(g => !g.parent_id)
-			const childs = groups.filter(g => g.parent_id == root.group_id && g.icon_id)
+			const root_id = await base.getGroupIdByNick(options.root_nick)
+			if (!root_id) return view.err('Не найдена верхняя группа')
+
+			const tree = await catalog.getTree()
+
+			const groups = tree[root_id].groups
+			
+			const childs = groups.filter(gid => tree[gid].parent_id == root_id && tree[gid].icon_id).map(gid => ({...tree[gid]}))
 
 			if (prop_title) {
 				const prop = await base.getPropByTitle(prop_title)

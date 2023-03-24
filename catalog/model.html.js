@@ -49,9 +49,9 @@ model.showmodel = (data, env, { mod } = data) =>
 	<!-- <pre>${JSON.stringify(mod, "\n", 2)}</pre> -->
 `
 model.filerow = f => `
-	<div style="display: grid; align-items: center; grid-template-columns: max-content 1fr; gap: 0.5rem; margin-bottom:0.5rem">
+	<div style="display: grid; width:auto; align-items: center; grid-template-columns: max-content 1fr; gap: 0.5rem; margin-bottom:0.5rem">
 		<img width="20" load="lazy" src="/file-icon-vectors/dist/icons/vivid/${f.ext || 'lnk'}.svg"> 
-		<a target="about:blank" href="${f.dir + f.file}">${f.anchor || f.name}</a>
+		<div><a target="about:blank" href="${f.dir + f.file}">${f.anchor || f.name}</a></div>
 	</div>
 `
 model.showGallery = (data, env, mod) => `
