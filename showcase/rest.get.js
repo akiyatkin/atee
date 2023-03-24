@@ -141,8 +141,8 @@ rest.addResponse('get-statistics', async view => {
 		}
 		prices.push({...price, props, price_title})
 	}
-	view.ans.partners = options.partners
-	view.ans.handlers = options.handlers
+	view.ans.partners = options.partners || {}
+	view.ans.handlers = options.handlers || {}
 	view.ans.prices = prices
 	return view.ret()
 })

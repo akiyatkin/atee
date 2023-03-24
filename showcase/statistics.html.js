@@ -34,7 +34,7 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 	${data.prices.map(showPrice).join('')}
 `
 const showCoupon = ([name, val]) => `
-	<b>${val.title}</b>: <b>${val.cost || ''} ${val.discount || ''}</b><br>${val.descr || ''}<br>
+	<b>${val.title}</b>: <b>${val.cost || ''} <span style="color:red">${val.discount || ''}</span></b><br>${val.descr || ''}<br>
 `
 const showPrice = (price) => `
 	<div style="margin-bottom:1rem">
