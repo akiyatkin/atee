@@ -114,8 +114,9 @@ cards.prop = {
 		</div>
 	`,
 	bold: (data, mod, pr, title, val) => cards.prop.default(data, mod, pr, title, `<b>${val}</b>`),
-	brand: (data, mod, pr, title, val) => cards.prop.default(data, mod, pr, title, 
-		`<a href="/catalog/${mod.brand_nick}">${mod.brand_title}</a>`
+	brand: (data, mod, pr, title, val) => cards.prop.just(data, mod, pr, title, 
+		data.md?.brand?.[mod.brand_nick]
+			? `<b>${mod.brand_title}</b>` : `<a href="/catalog/${links.addm(data)}brand::.${mod.brand_nick}=1">${mod.brand_title}</a>`
 	),
 	model: (data, mod, pr, title, val) => cards.prop.just(data, mod, pr, title, 
 		`<a href="/catalog/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${val}</a>`

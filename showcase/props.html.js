@@ -47,8 +47,6 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 				e.preventDefault()
 				delete current.style.transition
 			})
-			
-
 		</script>
 	</p>
 `

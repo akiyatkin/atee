@@ -270,8 +270,9 @@ rest.addResponse('set-props-clearempty', async view => {
 		DELETE p
 		FROM showcase_props p
 		LEFT JOIN showcase_iprops ip on ip.prop_id = p.prop_id
-		WHERE ip.prop_id is null
+		WHERE ip.prop_id is null and p.prop_id > 3
 	`)
+	//Первый 3 свойства системные model, brand, group
 	return view.ret('Удалено')
 })
 

@@ -173,7 +173,7 @@ export class View {
 				if (!otherproc) continue
 				await otherproc.init
 				if (otherproc.process) { //Другой proc сейчас выполняется и всех детей ещё не собрал, надо его дождаться
-					await otherproc.promise.catch()
+					await otherproc.promise.catch(r => false)
 				}
 				let r
 				r = mainview.rest.runChilds(otherproc, proc => {
@@ -251,24 +251,24 @@ export class View {
 
 		const rest = view.rest
 		const opt = rest.findopt(pname, pproc)
-
+				
 		if (!opt) return view.err(`rest.notfound ${pname}`, 404)
 		
 		const proc = await view.getProc(opt)
-		
+
 		if (pproc) {
 			proc.parents[pproc.opt.name] = pproc //Тест рекурсии
 			pproc.childs[proc.opt.name] = proc //Для мёрджа разных view если нет разный request в childs
 
 		}		
-
+		
 		if (proc['process']) {
 			const r = rest.runParents(proc, pproc => pproc == proc)
 			if (r) return view.err(`rest.recursion ${pname}`, 500)
 		}
 		//if (opt['nostore'] && !view.opt['nostore']) return view.err(`rest.action required ${pname}`, 500)
-		if (opt['once'] && proc['promise']) return proc['promise']
 
+		if (opt['once'] && proc['promise']) return proc['promise']
 		
 		proc['process'] = true
 		proc['promise'] = view.#exec(proc, parentvalue, parentname)

@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS `showcase_props` (
 	`prop_id` SMALLINT unsigned NOT NULL AUTO_INCREMENT COMMENT '',
 	`prop_title` varchar(31) NOT NULL COMMENT 'Ограничение по длине, иначе дизайн неуправляемый.',
 	`prop_nick` varchar(31) NOT NULL COLLATE latin1_bin COMMENT '',
-	`ordain` TINYINT unsigned NOT NULL COMMENT '',
+	`ordain` SMALLINT unsigned NOT NULL COMMENT '',
 --	`type` ENUM("bond","model","group","brand","value","number","text","file") NOT NULL COMMENT 'БЕРЁТСЯ ИЗ КОНФИГА В какой колонке и как хранятся значения',
 	PRIMARY KEY (`prop_id`),
 	UNIQUE INDEX (prop_nick)

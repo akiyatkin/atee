@@ -549,7 +549,7 @@ rest.addResponse('get-nalichie', async (view) => {
 	view.ans.list = await Access.relate(rest).once('get-nalichie', async () => {
 		const lim = 100
 		const vals = options.actions.map(v => nicked(v)).filter(v => v).sort()
-		const p = await catalog.base.getPropByTitle('Наличие')
+		const p = await base.getPropByTitle('Наличие')
 		if (!p) return []
 		const { prop_id } = p
 
@@ -565,7 +565,7 @@ rest.addResponse('get-nalichie', async (view) => {
 		if (!value_ids.length) {
 			db.release()
 			return []
-		}
+		}		
 		
 		const moditem_ids = await db.all(`
 			SELECT distinct ip.model_id, GROUP_CONCAT(distinct ip.item_num separator ',') as item_nums
@@ -633,9 +633,10 @@ rest.addResponse('set-order', async (view) => {
 
 
 
-rest.addResponse('get-maingroups', async (view) => {
+rest.addResponse('get-maingroups', async (view) => {	
 	const { db, options, catalog, base, partner } = await view.gets(['db', 'options', 'catalog', 'base','partner'])
 	const root_id = await base.getGroupIdByNick(options.root_nick)
+
 	if (!root_id) return view.err('Не найдена верхняя группа')
 	
 	const imgprop = await base.getPropByNick('images')
