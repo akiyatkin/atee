@@ -4,6 +4,7 @@ import rest_funcs from '/-rest/rest.funcs.js'
 import fs from 'fs/promises'
 import nicked from '/-nicked'
 import drive from '/-drive'
+//import { createReadStream, readFileSync } from 'fs'
 
 const rest = new Rest(rest_funcs)
 export default rest
@@ -18,9 +19,9 @@ rest.addResponse('get-table', async view => {
 })
 
 
-rest.addResponse('get-rows', async view => {
-	const { gid, range } = await view.gets(['gid','range'])
-	const cachesrc = await drive.cacheRows(gid, range)
-	view.ans = createReadStream(cachesrc)
-	return view.ret()
-})
+// rest.addResponse('get-rows', async view => {
+// 	const { gid, range } = await view.gets(['gid','range'])
+// 	const cachesrc = await drive.cacheRows(gid, range)
+// 	view.ans = createReadStream(cachesrc)
+// 	return view.ret()
+// })

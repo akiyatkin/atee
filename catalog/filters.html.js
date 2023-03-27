@@ -14,17 +14,17 @@ const showFilter = (data, filter, env) => `
 `
 
 
-filters.item = (data, filter, v) => getp(data, filter.prop_nick)[v.value_nick] ? 
+filters.item = (data, env, filter, v) => getp(data, filter.prop_nick)[v.value_nick] ? 
 	`<a class="clearlink" title="Отменить выбор" 
 		style="display: inline-block; margin-top:0.3em; border-color: transparent; color:inherit;" 
 		class="a" data-scroll="none" rel="nofollow" 
-		href="/catalog${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}">
+		href="${env.crumb.parent}${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}">
 		<span class="value">${v.value_title}</span><sup style="position: absolute; margin-left:-2px; margin-top:-2px" class="krest">&nbsp;✕</sup>
 	</a>` : 
 	`<a title="Выбрать" 
 		style="opacity: ${v.mute ?'0.3':'1'}; margin-top:0.3em; display:inline-block;" 
 		class="a" data-scroll="none" rel="nofollow" 
-		href="/catalog${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}::.${v.value_nick}=1">
+		href="${env.crumb.parent}${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}::.${v.value_nick}=1">
 		${v.value_title}</a>`
 
 filters.option = (data, filter, v) => getp(data, filter.prop_nick)[v.value_nick] ? `
@@ -116,7 +116,7 @@ filters.props = {
 			</div>
 			<div class="slider">
 				<style>
-					#${env.layer.div} .slider {
+					${env.scope} .slider {
 						max-widtH: 300px;
 						display: grid;
 						grid-template-columns: max-content 1fr max-content;
@@ -124,7 +124,7 @@ filters.props = {
 						gap: 1ch;
 
 					}
-					#${env.layer.div} .slider input[type=range] {
+					${env.scope} .slider input[type=range] {
 						width: 100%;
 						appearance: none;
 						border: none;
@@ -136,7 +136,7 @@ filters.props = {
 						margin-bottom: calc(1em - 1px);
 					}
 
-					#${env.layer.div} .slider input[type=range]::-webkit-slider-thumb {
+					${env.scope} .slider input[type=range]::-webkit-slider-thumb {
 						appearance: none;
 						border: none;
 						cursor: ew-resize;
@@ -150,7 +150,7 @@ filters.props = {
 					}
 					
 					
-					#${env.layer.div} .slider input[type=range]::-moz-range-thumb {
+					${env.scope} .slider input[type=range]::-moz-range-thumb {
 						border: none;
 						border: none;
 						cursor: ew-resize;
@@ -163,11 +163,11 @@ filters.props = {
 						transition: background-color 0.3s;
 					}
 
-					#${env.layer.div} .slider input[type=range]::-webkit-slider-thumb:hover,
-					#${env.layer.div} .slider input[type=range]::-webkit-slider-thumb:active {
+					${env.scope} .slider input[type=range]::-webkit-slider-thumb:hover,
+					${env.scope} .slider input[type=range]::-webkit-slider-thumb:active {
 						background-color: var(--thumb-active-color);
 					}
-					/*#${env.layer.div} .slider input[type=range]::-ms-thumb {
+					/*${env.scope} .slider input[type=range]::-ms-thumb {
 						border: none;
 						cursor: ew-resize;
 						cursor: pointer;
@@ -191,7 +191,7 @@ filters.props = {
 									//const set = value_nick ? '::.'+direction+'=' + value_nick : ''
 									const set = '::.'+direction+'=' + value_nick
 									const Client = await window.getClient()
-			    					Client.pushState('/catalog${links.addm(data)}more.${filter.prop_nick}' + set, false)
+			    					Client.pushState('${env.crumb.parent}${links.addm(data)}more.${filter.prop_nick}' + set, false)
 								})
 								input.addEventListener('change', input.click)
 								const div = input.closest('.bodyslider')
@@ -231,7 +231,7 @@ filters.props = {
 	row: (data, filter, env) => filters.block(
 		filter.prop_title, 
 		`
-			<span style="white-space:nowrap; margin-right:0.7em;">${filter.values.map(v => filters.item(data, filter, v)).join(',</span> <span style="white-space:nowrap; margin-right:0.7em">')}</span>
+			<span style="white-space:nowrap; margin-right:0.7em;">${filter.values.map(v => filters.item(data, env, filter, v)).join(',</span> <span style="white-space:nowrap; margin-right:0.7em">')}</span>
 		`
 	)
 }

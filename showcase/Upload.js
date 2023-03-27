@@ -1765,9 +1765,10 @@ export class Upload {
 				UPDATE showcase_files
 				SET 
 				status = :status,
+				src = :src,
 				destiny = :destiny
 				WHERE file_id = :file_id
-			`, {file_id, status, destiny})
+			`, {file_id, status, destiny, src})
 		}
 
 	 	if (keys_nick) {

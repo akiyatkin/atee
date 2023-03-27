@@ -11,8 +11,8 @@ const dir = 'cache/drive/'
 await fs.mkdir(dir, { recursive: true }).catch(e => null)
 
 export const drive = {
-	getTable: async (gid, range) => {
-		const rows_source = await drive.getRows(gid, range)
+	getTable: async (gid, range, sheet) => {
+		const rows_source = await drive.getRows(gid, range, sheet)
 		const {descr, rows_table} = dabudi.splitDescr(rows_source)
 		const {heads, rows_body} = dabudi.splitHead(rows_table)
 
@@ -24,7 +24,7 @@ export const drive = {
 
 		return {descr, heads, rows_body}
 	},
-	cacheRows: (gid, range) => Access.relate(drive).once(gid, () => cproc(drive, gid, async () => {
+	cacheRows: (gid, range, sheet = '') => Access.relate(drive).once(sheet + gid, () => cproc(drive, sheet + gid, async () => {
 		const cachename = nicked(gid + '-' + range)
 		const cachesrc = dir + cachename + '.json'
 		const conf = await config('drive')
@@ -32,15 +32,15 @@ export const drive = {
 		const easySheets = new EasySheets(gid, btoa('{}'))
 		easySheets.serviceAccountCreds = JSON.parse(await fs.readFile(conf.certificate, "utf8"))
 		
-		const rows = await easySheets.getRange(range).catch(e => {
-			console.log('drive', gid, range, e.code)
+		const rows = await easySheets.getRange(range, {sheet}).catch(e => {
+			console.log('drive', gid, sheet, range, e.code)
 			return []
 		})
 		await fs.writeFile(cachesrc, JSON.stringify(rows))
 		return cachesrc
 	})),
-	getRows: async (gid, range) => {
-		const cachesrc = await drive.cacheRows(gid, range)
+	getRows: async (gid, range, sheet) => {
+		const cachesrc = await drive.cacheRows(gid, range, sheet)
 		if (!cachesrc) return false
 		const rows = JSON.parse(await fs.readFile(cachesrc, "utf8"))
 		return rows
