@@ -25,7 +25,7 @@ export const drive = {
 		return {descr, heads, rows_body}
 	},
 	cacheRows: (gid, range, sheet = '') => Access.relate(drive).once(sheet + gid, () => cproc(drive, sheet + gid, async () => {
-		const cachename = nicked(gid + '-' + range)
+		const cachename = nicked(gid + '-' + range + '-' + sheet)
 		const cachesrc = dir + cachename + '.json'
 		const conf = await config('drive')
 

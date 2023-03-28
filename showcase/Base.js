@@ -98,6 +98,7 @@ class Base {
 			
 			for (const prop_title in options.props) {
 				const prop = options.props[prop_title]
+				if (prop.column) options.columns.push(prop_title)
 				if (prop.justone) options.justonevalue.push(prop_title)
 				if (prop.type) options[prop.type + 's'].push(prop_title)
 			}
