@@ -56,7 +56,50 @@ rest.addArgument('src', async (view, src) => {
 	if (!/data\//.test(src)) return view.err('forbidden', 403)
 	return src
 })
+rest.addResponse('get-head', async view => {
+	const { src, visitor } = await view.gets(['src','visitor'])
+	const index = src.lastIndexOf('/')
+	if (!index) index = 0
+	const name = src.slice(index + 1)
+	const dir = src.slice(0, index + 1)
+	
+	const list = await getList(dir)
+	const finfo = list.find(finfo => finfo.name == name)
+	if (!finfo) return {
+		status: 404,
+		ans: {
+			title:name
+		}
+	}
+	return {
+		ans: {
+			title:finfo.heading, 
+			description:finfo.preview
+		}
+	}
+})
 
+rest.addResponse('get-sitemap', async view => {
+	const { src } = await view.gets(['src'])
+	const dir = src
+	const list = await getList(dir)
+	let files = {}
+	for (const finfo of list) {
+		files[finfo.name] = {
+			name: finfo.heading ? finfo.heading : finfo.name,
+			title: finfo.heading
+		}
+	}
+	
+	return {
+		ans: {
+			headings:[{
+				title:'Страницы',
+				childs: files
+			}]
+		}
+	}
+})
 rest.addResponse('get-html', async view => {
 	const { src, visitor } = await view.gets(['src','visitor'])
 	const index = src.lastIndexOf('/')
@@ -65,9 +108,7 @@ rest.addResponse('get-html', async view => {
 	const dir = src.slice(0, index + 1)
 	
 	const list = await getList(dir)
-	const finfo = list.find(finfo => {
-		if (finfo.name == name) return finfo
-	})
+	const finfo = list.find(finfo => finfo.name == name)
 	if (!finfo) return {ans:'', ext:'html', status:404}
 	const html = await fs.readFile(finfo.htmlsrc, 'utf8')
 	return {ans:html, ext:'html', status:200}
@@ -111,7 +152,7 @@ const getList = (src) => {
 			const t = html.match(/<h1[^>]*>.*?<\/h1>/iu)
 			finfo.heading = t ? t[0].replace(/<\/?[^>]+(>|$)/g, " ").replace(/\s+/," ").trim() : finfo.name
 			let text = html.replace(/<h1[^>]*>.*<\/h1>/iu, "").replace(/<\/?[^>]+(>|$)/g, " ").replace(/\s+/," ").trim()
-			text.replace(/\s\./,'.').replace(/\s\!/,'!').replace(/\s\?/,'?').replace(/\s\:/,':').replace(/\s\;/,';')
+			text = text.replace(/\s\./,'.').replace(/\s\!/,'!').replace(/\s\?/,'?').replace(/\s\:/,':').replace(/\s\;/,';')
 			const r = text.match(/.{25}[^\.!]*[\.!]/u)
 			finfo.preview = r ? r[0] : text
 			const num = String(finfo.num)

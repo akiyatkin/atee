@@ -42,7 +42,8 @@ rest.addVariable('data', async view => {
 	const headings = []
 	for (const href in sitemap.childs) {
 		const head = sitemap.childs[href]
-		if (head.hidden && !head.sitemap) continue
+		//if (head.hidden && !head.sitemap) continue
+		if (head.hidden) continue
 		const json = head.sitemap || head.json
 		const res = json ? await loadJSON(json, visitor).catch(e => console.log('head', href, e)) : false
 		if (res && res.ans) Object.assign(head, res.ans)

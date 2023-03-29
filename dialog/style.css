@@ -10,7 +10,7 @@
 	/*bottom: 0;
 	right: 0;*/
 	background-color: rgba(0,0,0,0.4);
-	/*backdrop-filter: blur(5px);*/
+	backdrop-filter: blur(5px);
 	display: grid;
 	align-items: center;
 	justify-content: center;
