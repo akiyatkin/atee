@@ -25,7 +25,7 @@ model.showmodel = (data, env, { mod } = data) =>
 	<div style="margin-top:1rem">
 		<div style="float:left"><a href="${env.crumb.parent.parent}${mod.parent_id ? '/'+mod.group_nick : ''}${links.setm(data)}">${mod.group_title}</a></div>
 		${cards.badgecss(data, env)}
-		<div style="float: right">${mod.Наличие || mod.discount ? cards.badgenalichie(data, mod) : ''}</div>
+		<div style="float: right">${mod.Наличие || mod.discount ? cards.badgenalichie(data, env, mod) : ''}</div>
 	</div>
 	<h1 style="clear:both">${cards.name(data, mod)}</h1>
 	

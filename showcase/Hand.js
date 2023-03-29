@@ -21,6 +21,7 @@ class Hand {
 
 	min (...mins) {
 		mins = mins.filter(m => !!m)
+		if (!mins.length) return ''
 		return Math.min(...mins)
 	}
 	getFrom (from) {
