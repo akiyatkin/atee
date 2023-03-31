@@ -8,7 +8,7 @@ export default rest
 
 rest.addArgument('name')
 
-const getFiles = Access.cache(async (dir) => {
+const getFiles = dir => Access.relate(rest).konce('getFiles', dir, async () => {
 	let files = (await fs.readdir(dir).catch(() => []))
 	.map((file) => {
 		const i = file.indexOf('.', file.length - 5)

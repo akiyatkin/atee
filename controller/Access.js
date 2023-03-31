@@ -29,7 +29,7 @@ export const Access = {
 	getUpdateTime: () => times.UPDATE_TIME,
 
 	mapate: new Map(),
-	relate: (obj, fn) => {
+	relate: (obj) => {
 		if (Access.mapate.has(obj)) return Access.mapate.get(obj)
 		const res = new Relate()
 		Access.mapate.set(obj, res)
@@ -44,20 +44,20 @@ export const Access = {
 	},
 
 	
-	cache: fn => { //depricated (relate ^)
-		fn.store = {}
-		return (...args) => {
-			const hash = JSON.stringify(args)
-			const store = fn.store[hash] || {}
-			fn.store[hash] = store
-			if (store.executed) {
-				if (store.executed >= Access.getAccessTime()) return store.result
-			}
-			store.executed = Date.now()
-			store.result = fn(...args)
-			return store.result
-		}
-	},
+	// cache: fn => { //depricated (relate ^)
+	// 	fn.store = {}
+	// 	return (...args) => {
+	// 		const hash = JSON.stringify(args)
+	// 		const store = fn.store[hash] || {}
+	// 		fn.store[hash] = store
+	// 		if (store.executed) {
+	// 			if (store.executed >= Access.getAccessTime()) return store.result
+	// 		}
+	// 		store.executed = Date.now()
+	// 		store.result = fn(...args)
+	// 		return store.result
+	// 	}
+	// },
 	mcache: (src, fn, check = false) => { //update cache, проверяющий дату изменений если с последнего был access
 		fn.store = {}
 		return (...args) => {
