@@ -112,6 +112,7 @@ const spread = (rule, parent) => { //всё что в layout root перенос
 
 const maketree = (layer, layout, rule) => {
 	if (!layout) return
+	//if (layer.name == 'params') 
 	const tsf = layer.tsf
 	if (!layout[tsf]) return
 	layer.layers = Object.values(layout[tsf])
@@ -168,22 +169,21 @@ const getRule = Once.proxy( async root => {
 	const ts = fin(name, lin(':', sub))
 	
 	//const ts = fi(name, ':' + sub)
-	Layers.runByIndex(rule, (r, path) => { //строим дерево root по дивам		
+	Layers.runByIndex(rule, (r, path, depth) => { 
+		//строим дерево root по дивам для каждого состояния path
 		const layer = { tsf, ts, name, sub, frame, frameid, depth: 0, tpl:null, html: null, json:null, layers:null }
 		r.root = layer
-		//Object.seal(r.root) debug test
 		maketree(r.root, r.layout, rule)
 		delete r.layout
 		runByRootLayer(r.root, layer => {
 			const ts = layer.ts
-			if (rule.animate && rule.animate[ts]) layer.animate = rule.animate[ts]
+			if (rule.animate && rule.animate[ts]) layer.animate = rule.animate[ts]			
 			if (!rule.depth || rule.depth[ts] == null) return
 			const dif = rule.depth[ts] - layer.depth
 			layer.depth += dif
 			runByRootLayer(layer, (l) => l.depth = layer.depth)
 		})
 	})
-	
 	return rule
 })
 const collectPush = (rule, timings, bread, root, interpolate, theme) => {
@@ -237,7 +237,6 @@ rest.addResponse('get-layers', async view => {
 	
 	if (!rule) return view.err('Bad type layers.json')
 
-	
 	const bread = new Bread(nroute.path, nroute.get, nroute.search, nroute.root)
 	
 	const theme = Theme.harvest(bread.get, cookie)
@@ -346,7 +345,7 @@ const getIndex = (rule, timings, bread, interpolate, theme) => {
 		const {ts, tsf} = layer
 		if (rule.replacetpl) layer.replacetpl = rule.replacetpl[layer.ts]
 		if (layer.name) {
-			if (rule.htmltpl?.[layer.name]) {
+			if (rule.htmltpl && Object.hasOwn(rule.htmltpl, layer.name)) {
 				layer.html = interpolate(rule.htmltpl[layer.name], timings, layer, bread, crumb, theme)
 			} else {
 				if (rule.html) layer.html = rule.html[layer.name]

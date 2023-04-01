@@ -115,6 +115,8 @@ export const Server = {
 					req.nt = root + status
 					const a = await meta.get('get-layers', req, visitor)
 					json = a.ans
+				
+					
 					info = await controller(json, visitor, bread)
 				}
 				if (json.push?.length) response.setHeader('Link', json.push.join(','));
@@ -153,6 +155,7 @@ const getHTML = async (layer, look, visitor) => {
 	let json = layer.json
 
 	//Статика
+	
 	if (layer.html || layer.htmltpl) {
 		if (json) {
 			const reans = await loadJSON(json, visitor).catch(res => {

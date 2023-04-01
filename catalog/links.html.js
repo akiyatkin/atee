@@ -14,5 +14,5 @@ links.search = (val, env) => `${env.crumb.parent}/${nicked(val)}`
 
 links.val = (data, env, mod, pr, val) => `${env.crumb.parent}/${links.addm(data)}more.${pr.prop_nick}::.${nicked(val ?? common.prnick(mod, pr))}=1`
 //links.nick = (data, prop_nick, value_nick) => `/catalog/${links.addm(data)}more.${prop_nick}::.${value_nick}=1`
-links.addm = (data) => `?m=${data?.m || ''}:`
-links.setm = (data) => data?.m ? `?m=${data.m}` : ''
+links.addm = (data) => `?m=${data?.m || data?.bread?.get?.m || ''}:`
+links.setm = (data) => ((m) => m ? `?m=${m}` : '')(data?.m || data?.bread?.get?.m)

@@ -24,10 +24,11 @@ export default class Layers {
 		}
 		return {index, depth, status}
 	}
-	static runByIndex (rule, fn, path = []) {
-		fn(rule, path)
-		if (rule.childs) for (const i in rule.childs) Layers.runByIndex(rule.childs[i], fn, [...path, i])
-		if (rule.child) Layers.runByIndex(rule.child, fn, [...path, false])
+	static runByIndex (rule, fn, path = [], depth = 0) {
+		fn(rule, path, depth)
+		depth++
+		if (rule.childs) for (const i in rule.childs) Layers.runByIndex(rule.childs[i], fn, [...path, i], depth)
+		if (rule.child) Layers.runByIndex(rule.child, fn, [...path, false], depth)
 	}
 	constructor(root) {
 		this.root = root
