@@ -164,6 +164,12 @@ class Base {
 			return db.col('SELECT value_id from showcase_values where value_nick = :value_nick', { value_nick })
 		})
 	}
+	getValueTitleByNick(value_nick) {
+		const { db, dbcache: cache } = this
+		return cache.konce('getValueTitleByNick', value_nick, () => {
+			return db.col('SELECT value_title from showcase_values where value_nick = :value_nick', { value_nick })
+		})
+	}
 
 	getBondIdByTitle (title) {
 		const { base } = this

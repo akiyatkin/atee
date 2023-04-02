@@ -445,14 +445,7 @@ rest.addResponse('get-nalichie', async (view) => {
 	})
 	return view.ret()
 })
-rest.addArgument('partner', async (view, partner) => {
-	const { options } = await view.gets(['options'])
-	partner = nicked(partner)
-	const data = options.partners[partner]
-	if (!data) return false
-	data.key = partner
-	return data
-})
+
 rest.addResponse('get-partner', async (view) => {
 	const { partner } = await view.gets(['partner'])
 	view.ans.partner = partner?.title || partner?.key || ''

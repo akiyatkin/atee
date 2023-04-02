@@ -4,7 +4,14 @@ import rest_db from '/-db/rest.db.js'
 import nicked from '/-nicked'
 const rest = new Rest(rest_funcs, rest_db)
 
-
+rest.addArgument('partner', async (view, partner) => {
+	const { options } = await view.gets(['options'])
+	partner = nicked(partner)
+	const data = options.partners[partner]
+	if (!data) return false
+	data.key = partner
+	return data
+})
 rest.addArgument('value', ['string'], (view, v) => v || '')
 
 rest.addVariable('base', async (view) => {

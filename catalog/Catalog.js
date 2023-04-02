@@ -77,10 +77,11 @@ class Catalog {
 			list[ip.model_id].items[ip.item_num][prop.prop_title].push(val)
 		}
 		list = Object.values(list)
+		
 		for (const model of list) {
 			model.items = Object.values(model.items)
 		}
-
+		//list = list.filter(mod => !!mod.items.length)
 		//Все повторные пропертисы объединили по запятым, кроме файлов
 		for (const model of list) {
 			for (const item of model.items) {
@@ -881,13 +882,16 @@ class Catalog {
 	}
 	getmdwhere (md, partner = '') {
 		const { catalog, base: { db, vicache: cache }, base} = this
+
 		return cache.konce('getmdwhere', md.m, async () => {
 			const groupnicks = await catalog.getGroups()
 			const brandnicks = await catalog.getBrands()
 			const where = []
 			if (md.group) {
 				let group_ids = []
-				Object.keys(md.group).forEach(nick => groupnicks[nick].groups.forEach(id => group_ids.push(id)))
+				Object.keys(md.group).forEach(nick => {
+					if (groupnicks[nick]) groupnicks[nick].groups.forEach(id => group_ids.push(id))
+				})
 				group_ids = unique(group_ids)
 				if (group_ids.length) where.push(`m.group_id in (${group_ids.join(',')})`)
 			}
