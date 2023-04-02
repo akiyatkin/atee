@@ -165,14 +165,14 @@ model.maindata = (data, env, mod) => `
 			<p>
 				<button style="font-size:1.4rem; margin:1rem 0">Сделать заказ</button>
 				<script>
-					(async btn => {
+					(btn => {
 						btn.addEventListener('click', async () => {
 							btn.disabled = true
-							const { Dialog } = await import('/-dialog/Dialog.js')
+							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 							await Dialog.open({
 								tpl:'/-catalog/order.html.js', 
 								sub:'ROOT',
-								json: '${env.layer.json}'
+								json: '/-catalog/get-model?brand_nick=${mod.brand_nick}&model_nick=${mod.model_nick}&m&partner=${env.theme.partner ?? ''}'
 							})
 							btn.disabled = false
 						})
