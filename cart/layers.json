@@ -1,62 +1,46 @@
 {
 	"index":"index:ROOT",
 	"tpl":{
-		"main":"/-user/main.html.js",
-		"signup":"/-user/signup.html.js",
-		"signin":"/-user/signin.html.js",
-		"logout":"/-user/logout.html.js",
-		"result":"/-user/result.html.js",
+		"main":"/-cart/main.html.js",
 		"index":"/-sitemap/index.html.js",
+		"settings":"/-cart/settings.html.js",
+		"list":"/-cart/list.html.js",
 		"controller":"/-controller/layout.html.js",
 		"sitemap":"/-sitemap/sitemap.html.js"
 	},
 	"layout":{
 		"index:ROOT":{
-			"BODY":"main:ROOT",
+			"BODY":"main:BODY",
 			"FOOTER":"main:FOOTER",
 			"HEADER":"main:HEADER"
+		},
+		"settings:ROOT":{
+			"DATABASE":"settings:DATABASE"
 		}
 	},
 	"jsontpl":{
 		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}"
 	},
 	"json":{
-		"main:ROOT":"/-user/get-user",
-		"signup:ROOT":"/-user/get-user",
-		"signin:ROOT":"/-user/get-user",
-		"logout:ROOT":"/-user/get-user",
+		"main:BODY":"/-controller/get-admin",
+		"settings:DATABASE":"/-cart/get-settings",
+		"list:ROOT":"/-cart/get-list",
 		"sitemap:ROOT":"/-sitemap/get-data"
 	},
 	"childs":{
-		"signup":{
-			"head":{ "title":"Регистрация", "css2":["float-label"] },
+		"list":{
+			"head":{ "title":"Список пользователей" },
 			"layout":{
 				"index:ROOT":{
-					"BODY":"signup:ROOT"
+					"BODY":"list:ROOT"
 				}
 			}
 		},
-		"signin":{
-			"head":{ "title":"Вход", "css2":["float-label"] },
+		"settings":{
+			"head":{ "title":"Настройки" },
 			"layout":{
 				"index:ROOT":{
-					"BODY":"signin:ROOT"
-				}
-			}
-		},
-		"result":{
-			"head":{ "title":"Подтверждение" },
-			"layout":{
-				"index:ROOT":{
-					"BODY":"result:ROOT"
-				}
-			}
-		},
-		"logout":{
-			"head":{ "title":"Вход" },
-			"layout":{
-				"index:ROOT":{
-					"BODY":"logout:ROOT"
+					"BODY":"settings:ROOT"
 				}
 			}
 		},
@@ -81,7 +65,7 @@
 		}
 	},
 	"head":{
-		"title":"Личный кабинет пользователя",
+		"title":"Менеджер каталога",
 		"description": "",
 		"image_src": ""
 	}

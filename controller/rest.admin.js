@@ -3,7 +3,6 @@ import Access from "/-controller/Access.js"
 import rest_funcs from '/-rest/rest.funcs.js'
 const rest = new Rest(rest_funcs)
 
-
 rest.addVariable('admin', async (view) => {
 	const { visitor } = await view.gets(['visitor'])
 	view.ans.admin = true

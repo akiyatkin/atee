@@ -1,5 +1,5 @@
 export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
-	<h1>Список пользователей</h1>
+	<h1>Клиенты</h1>
 	<table>
 	${data.list.map(row).join('')}
 	</table>

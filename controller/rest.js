@@ -17,7 +17,10 @@ import rest_funcs from '/-rest/rest.funcs.js'
 
 
 const rest = new Rest(rest_admin, rest_funcs, rest_path)
-
+rest.addResponse('get-admin', async view => {
+	await view.get('admin')
+	return view.ret()
+})
 rest.addResponse('get-access', async view => {
 	const { visitor } = await view.gets(['visitor'])
 	const cookie = visitor.client.cookie
