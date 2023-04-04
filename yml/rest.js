@@ -6,7 +6,6 @@ import config from '/-config'
 import rest_vars from "/-db/rest.db.js"
 import rest_funcs from "/-rest/rest.funcs.js"
 import rest_catalog from '/-catalog/rest.vars.js'
-
 const rest = new Rest(rest_vars, rest_funcs, rest_catalog)
 
 rest.addArgument('feed')
@@ -27,14 +26,14 @@ rest.addResponse('get-feeds', async view => {
 })
 
 rest.addResponse('get-yandex', async view => {
-	const { feed, db, visitor } = await view.gets(['db', 'visitor', 'feed', 'catalog'])
-	const poss = await yml.data(catalog, feed)
+	const { feed, db, visitor } = await view.gets(['db', 'visitor', 'feed'])
+	const poss = await yml.data(view, feed)
 	const conf = await config('yml')
 	const mail = await config('mail')
 	const host = visitor.client.host
 	
 	const data = {}
-	data.groups = await yml.groups()
+	data.groups = await yml.groups(view)
 	poss.forEach(pos => {
 		if (pos.images) pos.images = pos.images.map(src => 'https://' + host + '/' + encodeURI(src));
 		['Описание', 'Наименование', 'model_title'].forEach(name => pos[name] = tostr(pos[name]))

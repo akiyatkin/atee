@@ -3,7 +3,27 @@ import rest_funcs from '/-rest/rest.funcs.js'
 import rest_db from '/-db/rest.db.js'
 import nicked from '/-nicked'
 const rest = new Rest(rest_funcs, rest_db)
+import Catalog from "/-catalog/Catalog.js"
 
+rest.addArgument('model_nick', ['nicked'])
+rest.addArgument('brand_nick', ['nicked'])
+rest.addArgument('item_num', ['int'], (view, n) => n || 1)
+rest.addVariable('item', async (view) => {
+	const { brand_nick, model_nick, item_num } = await view.gets(['brand_nick', 'model_nick', 'item_num'])
+	const item = await Catalog.getItemByNick(view, brand_nick, model_nick, item_num)
+	return item
+})
+rest.addVariable('item#required', async (view) => {
+	const { item } = await view.gets(['item'])
+	if (!item) return view.err('Позиция не найдена')
+	return item
+})
+
+rest.addVariable('model', async (view) => {
+	const { brand_nick, model_nick, partner} = await view.gets(['brand_nick', 'model_nick', 'partner'])
+	const model = await Catalog.getModelByNick(view, brand_nick, model_nick, partner)	
+	return model
+})
 rest.addArgument('partner', async (view, partner) => {
 	const { options } = await view.gets(['options'])
 	partner = nicked(partner)
@@ -24,25 +44,19 @@ rest.addVariable('options', async (view) => {
 	const { base } = await view.gets(['base'])
 	return base.getOptions()
 })
-rest.addVariable('catalog', async (view) => {
-	const { base, db, visitor, options } = await view.gets(['base', 'db', 'visitor', 'options'])
-	const Catalog = await import('/-catalog/Catalog.js').then(r => r.default)
-	return new Catalog({base, options})
-})
-
 
 rest.addArgument('m', (view, m) => {
 	if (m) view.nostore = true //безчисленное количество комбинаций, браузеру не нужно запоминать	
 	return m
 })
-const prepareValue = async (catalog, options, value) => {
-	const tree = await catalog.getTree()
+const prepareValue = async (view, base, options, value) => {
+	const tree = await Catalog.getTree(view)
 	const nick = nicked(value);
 	let addm = ''
 	if (nick) {
 		if (nick == 'actions') {
 			const vals = options.actions.map(v => nicked(v)).filter(v => v).sort()
-			const p = await catalog.base.getPropByTitle('Наличие')
+			const p = await base.getPropByTitle('Наличие')
 			if (p) {
 				vals.forEach(v => () => addm += `:more.${p.prop_nick}.${v}=1`)
 			}
@@ -57,7 +71,7 @@ const prepareValue = async (catalog, options, value) => {
 			if (group) {
 				addm += `:group::.${nick}=1`;
 			} else {
-				const brands = await catalog.getBrands()
+				const brands = await Catalog.getBrands(view)
 				const brand = brands[nick]
 				if (brand) {
 					addm += `:brand::.${nick}=1`
@@ -117,18 +131,18 @@ const adddef = (md, def, i) => {
 	}
 }
 rest.addVariable('md', async (view) => {
-	let { base, m, db, value, visitor, catalog, options } = await view.gets(['base', 'm','db','value','visitor', 'catalog', 'options'])
-	const addm = await prepareValue(catalog, options, value)
+	let { base, m, db, value, visitor, options } = await view.gets(['base', 'm','db','value','visitor', 'options'])
+	const addm = await prepareValue(view, base, options, value)
 	m += addm
 	let md = makemd(m)
 
 	if (md.search) {
-		const addm = await prepareValue(catalog, options, md.search)
+		const addm = await prepareValue(view, base, options, md.search)
 		m += ':search'+addm
 		md = makemd(m)
 	}
 	if (md.value) { //value это то что было до поиска и можт содержать старый поиск, который применять не нужно
-		const addm = await prepareValue(catalog, options, md.value)
+		const addm = await prepareValue(view, base, options, md.value)
 		m += addm
 		const search = md.search
 		md = makemd(m)
@@ -137,14 +151,14 @@ rest.addVariable('md', async (view) => {
 		delete md.value
 	}
 	if (md.group) {
-		const groups = await catalog.getGroups()
+		const groups = await Catalog.getGroups(view)
 		for (const group_nick in md.group) {
 			if (!groups[group_nick]) delete md.group[group_nick]
 		}
 		if (!Object.keys(md.group).length) delete md.group
 	}
 	if (md.brand) {
-		const brands = await catalog.getBrands()
+		const brands = await Catalog.getBrands(view)
 		for (const brand_nick in md.brand) {
 			if (!brands[brand_nick]) delete md.brand[brand_nick]
 		}
@@ -174,7 +188,7 @@ rest.addVariable('md', async (view) => {
 						delete md.more[prop_nick][value_nick]
 						continue
 					}
-					const value = await catalog.getValueByNick(value_nick)
+					const value = await Catalog.getValueByNick(view, value_nick)
 					if (!value || typeof(md.more[prop_nick][value_nick]) == 'object') {
 						delete md.more[prop_nick][value_nick]
 					}
@@ -184,7 +198,7 @@ rest.addVariable('md', async (view) => {
 		}
 		if (!Object.keys(md.more).length) delete md.more
 	}
-	m = catalog.makemark(md).join(':')
+	m = Catalog.makemark(md).join(':')
 	md.m = m
 	return md
 })

@@ -1,9 +1,10 @@
 import nicked from "/-nicked"
 import Rest from "/-rest"
 import unique from "/-nicked/unique.js"
-import rest_catalog from '/-catalog/rest.vars.js'
+import rest_vars from '/-catalog/rest.vars.js'
+import Catalog from "/-catalog/Catalog.js"
 //const wait = delay => new Promise(resolve => setTimeout(resolve, delay))
-const rest = new Rest(rest_catalog)
+const rest = new Rest(rest_vars)
 export default rest
 rest.addArgument('hash', (view, hash) => {
 	hash = nicked(hash)
@@ -15,11 +16,11 @@ rest.addVariable('hashs', async (view) => {
 	return hashs
 })
 rest.addResponse('get-livemodels', async (view) => {
-	const { hash, db, visitor, partner, options, catalog } = await view.gets(['db','hash', 'visitor', 'partner', 'options','catalog'])
+	const { hash, db, visitor, partner, options, base} = await view.gets(['base', 'db','hash', 'visitor', 'partner', 'options'])
 	
 	const md = {search: hash}
 
-	const group_ids = await catalog.getGroupIds(md, partner)
+	const group_ids = await Catalog.getGroupIds(view, md, partner)
 	
 
 	
@@ -31,11 +32,11 @@ rest.addResponse('get-livemodels', async (view) => {
 		return view.ret()
 	}
 
-	const groupnicks = await catalog.getGroups()
+	const groupnicks = await Catalog.getGroups(view)
 	const root = groupnicks[options.root_nick]
 
 
-	const tree = await catalog.getTree()		
+	const tree = await Catalog.getTree(view)
 
 	let rootpath = group_ids[0] ? [...tree[group_ids[0]].path, group_ids[0]] : []		
 
@@ -63,7 +64,7 @@ rest.addResponse('get-livemodels', async (view) => {
 		return g
 	})
 
-	const {from, where} = await catalog.getmdwhere(md, partner)
+	const {from, where} = await Catalog.getmdwhere(view, md, partner)
 
 	const list = []
 	const models = await db.all(`
@@ -79,10 +80,10 @@ rest.addResponse('get-livemodels', async (view) => {
 		WHERE ${where.join(' and ')}
 	`)
 
-	const prop = await catalog.base.getPropByTitle('Наименование')
-	const cost = await catalog.base.getPropByTitle('Цена')
+	const prop = await base.getPropByTitle('Наименование')
+	const cost = await base.getPropByTitle('Цена')
 	for (const model of models) {
-		const brand = await catalog.getBrandById(model.brand_id)
+		const brand = await Catalog.getBrandById(view, model.brand_id)
 		model.brand_nick = brand.brand_nick
 		model.brand_title = brand.brand_title
 		delete model.brand_id

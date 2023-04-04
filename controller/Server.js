@@ -154,17 +154,20 @@ const getHTML = async (layer, look, visitor) => {
 	let tplobj	
 	let json = layer.json
 
+	const load = async json => {
+		if (!json) return
+		const reans = await loadJSON(json, visitor).catch(res => {
+			console.log('getHTML loadJSON', res) //08.03 throw res. Стандартный ответ только 404
+			return res
+			//return {msg:'Ошибка на сервере'}
+		})
+		data = reans.ans || {}
+		nostore = nostore || reans.nostore
+	}
 	//Статика
 	
 	if (layer.html || layer.htmltpl) {
-		if (json) {
-			const reans = await loadJSON(json, visitor).catch(res => {
-				console.log('getHTML loadJSON', res) //08.03 throw res. Стандартный ответ только 404
-				return res
-			})
-			data = reans.ans
-			nostore = nostore || reans.nostore
-		}
+		await load(json)
 		if (layer.htmltpl) layer.html = interpolate(layer.htmltpl, data, env)
 
 		const reans = await loadTEXT(layer.html, visitor).catch(e => { 
@@ -184,14 +187,7 @@ const getHTML = async (layer, look, visitor) => {
 	//Динамика
 	if (layer.replacetpl || layer.tpl) {
 		if (layer.replacetpl) {
-			if (json) {
-				const reans = await loadJSON(json, visitor).catch(res => {
-					console.log('getHTML loadJSON', res) //08.03 throw res. Стандартный ответ только 404
-					return res
-				})
-				data = reans.ans
-				nostore = nostore || reans.nostore
-			}
+			await load(json)
 			layer.tpl = interpolate(layer.replacetpl, data, env)
 		}
 		if (layer.tpl) {
@@ -209,15 +205,7 @@ const getHTML = async (layer, look, visitor) => {
 				// if (escort) {
 				// 	json = escort.json || json
 				// }
-				if (json) {
-					//console.log('json', json)
-					const reans = await loadJSON(json, visitor).catch(res => {
-						console.log('getHTML loadJSON', res) //08.03 throw res. Стандартный ответ только 404 в статике
-						return res
-					})
-					data = reans.ans
-					nostore = nostore || reans.nostore
-				}
+				await load(json)
 				try {
 					html = tplobj[layer.sub](data, env)
 				} catch(e) {

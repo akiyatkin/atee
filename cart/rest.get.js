@@ -3,12 +3,28 @@ import Rest from '/-rest'
 import rest_db from '/-db/rest.db.js'
 import rest_admin from '/-controller/rest.admin.js'
 import rest_user from '/-user/rest.user.js'
-const rest = new Rest(rest_db, rest_admin, rest_user)
+import rest_vars from '/-catalog/rest.vars.js'
+import rest_cart from '/-cart/rest.cart.js'
+import Catalog from "/-catalog/Catalog.js"
+import Cart from "/-cart/Cart.js"
+const rest = new Rest(rest_db, rest_admin, rest_user, rest_cart, rest_vars)
 export default rest
 
 rest.addResponse('get-cart', async view => {
-	const { user } = await view.gets(['user#required'])
-	view.ans.list = [{model_title:'Модель'}]
+	const { db, active_id } = await view.gets(['db', 'active_id#required'])
+	const list = await db.all(`
+		SELECT model_nick, brand_nick, count, item_num 
+		FROM cart_basket 
+		WHERE order_id = :active_id
+		ORDER by dateedit DESC
+	`, {active_id})
+
+	view.ans.list = (await Promise.all(list.map(async pos => {
+		const item = await Cart.getItem(view, active_id, pos.brand_nick, pos.model_nick, pos.item_num)
+		item.count = pos.count
+		return item
+		
+	}))).filter(item => !!item)
 	return view.ret()
 })
 rest.addResponse('get-list', async view => {

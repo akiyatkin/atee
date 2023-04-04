@@ -81,7 +81,7 @@ rest.addAction('set-signin-email', async (view, src) => {
 })
 rest.addAction('set-signup-email', async (view, src) => {
 	let { user, email, db } = await view.gets(['user', 'email#required','db','start','recaptcha'])	
-	if (!user) {
+	if (!user) { //'user#create'
 		user = await User.create(view)
 		User.setCookie(view, user)
 	}
