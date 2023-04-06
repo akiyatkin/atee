@@ -142,11 +142,8 @@ const errmsg = (layer, e, msg = '') => `
 const interpolate = (val, data, env) => new Function('data', 'env', 'return `'+val+'`')(data, env)
 
 
-const getHTML = async (layer, look, visitor) => {
-	const env = { layer, ...look }
-	env.crumb = look.bread.getCrumb(layer.depth)
-	env.sid = 'sid-' + (layer.div || layer.name) + '-' + layer.sub + '-'
-	env.scope = layer.div ? '#' + layer.div : 'html'
+const getHTML = async (layer, env, visitor) => {
+	
 	let nostore = false
 	let status = 200
 	let data = layer.data
@@ -221,7 +218,9 @@ const getHTML = async (layer, look, visitor) => {
 const runLayers = async (layers, fn, parent) => {
 	let promises = []
 	for (const layer of layers) {
-		promises.push(fn(layer, parent))
+		const promise = fn(layer, parent)
+		promises.push(promise)
+		if (layer.onlyclient) continue //Дочерние слои игнорируем собирутся в браузере
 		if (layer.layers?.length) promises.push(runLayers(layer.layers, fn, layer))
 	}
 	return Promise.all(promises)
@@ -239,10 +238,24 @@ export const controller = async ({ vt, st, ut, layers, theme }, visitor, bread) 
 	const doc = new Doc()
 	
 	await runLayers(layers, async layer => {
-		const { nostore, html, status } = await getHTML(layer, look, visitor)
-		ans.nostore = Math.max(ans.nostore, nostore)
-		ans.status = Math.max(ans.status, status)
-		doc.insert(html, layer.div, layer.layers?.length)
+
+		const env = { layer, ...look }
+		env.crumb = look.bread.getCrumb(layer.depth)
+		env.sid = 'sid-' + (layer.div || layer.name) + '-' + layer.sub + '-'
+		env.scope = layer.div ? '#' + layer.div : 'html'
+
+		if (layer.onlyclient) {
+			const { ROOT } = await import('/-controller/onlyclient.html.js')
+			const html = ROOT(layer, env)
+			doc.insert(html, layer.div)
+		} else {
+
+			const { nostore, html, status } = await getHTML(layer, env, visitor)
+			ans.nostore = Math.max(ans.nostore, nostore)
+			ans.status = Math.max(ans.status, status)
+			doc.insert(html, layer.div, layer.layers?.length)
+		}
+		
 	})
 	try {
 		ans.html = doc.get()

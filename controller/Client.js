@@ -162,6 +162,60 @@ export const Client = {
 		Client.next = { search, promise }
 		requestAnimationFrame(applyCrossing)
 		return promise
+	},
+	show: async (json, bread, promise) => {
+		const layers = json.layers
+		const promises = loadAll(layers)
+		for (const layer of layers) {
+			layer.sys = {}
+			const div = document.getElementById(layer.div)
+			layer.sys.div = div
+			layer.sys.execute = createPromise()
+			if (promise) promise.started.finally(() => {
+				layer.sys.execute.reject()
+			}).catch(e => null)
+			const hash = location.hash.slice(1)
+			let anim = layer.animate //Скрол неточный 1. из-за анимации и 2. из-за изменений DOM в скриптах
+			if (hash && anim != 'none') anim = 'opacity'
+			animate('div', div, layer.sys.execute, anim)
+		}
+
+		
+		await Promise.all(promises)
+
+		if (promise) {
+			if (promise.rejected) return
+			promise.started.resolve(bread.href)
+		}
+
+		if (json.rd) {
+			Client.reloaddivs = Client.reloaddivs.filter(div => {
+				return !~json.rd.indexOf(div)
+			})
+		}
+		if (json.rt) {
+			Client.reloadtss = Client.reloadtss.filter(ts => {
+				return !~json.rt.indexOf(ts)
+			})
+		}
+		for (const layer of json.layers) {
+			layer.sys.template = document.createElement('template')
+			await addHtml(layer.sys.template, layer, bread, Client.timings, json.theme)
+		}
+		
+		const scripts = []
+		for (const layer of json.layers) {
+			const elements = layer.sys.template.content
+			layer.sys.div.replaceChildren(elements)
+			window.waitClient.stack.push(evalScripts(layer.sys.div))
+			const promise = Promise.all(window.waitClient.stack)
+			window.waitClient.stack = []
+			promise.then(() => layer.sys.execute.resolve()).catch(e => null) //Покажется когда выполнятся скрипты
+			scripts.push(promise)
+		}
+		await Promise.all(scripts)
+
+		return true
 	}
 }
 const fixsearch = search => {
@@ -234,59 +288,14 @@ const applyCrossing = async () => {
 		}
 		Client.timings = timings
 
-		
-		const promises = loadAll(json.layers)
-		for (const layer of json.layers) {
-			layer.sys = {}
-			const div = document.getElementById(layer.div)
-			layer.sys.div = div
-			layer.sys.execute = createPromise()
-			promise.started.finally(() => {
-				layer.sys.execute.reject()
-			}).catch(e => null)
-			const hash = location.hash.slice(1)
-			let anim = layer.animate //Скрол неточный 1. из-за анимации и 2. из-за изменений DOM в скриптах
-			if (hash && anim != 'none') anim = 'opacity'
-			animate('div', div, layer.sys.execute, anim)
-		}
-
 		const usersearch = json.root ? search.slice(json.root.length + 1) : search
-
 		const {path, get} = userpathparse(usersearch) //Останется ведущий слэш
-
 		const bread = new Bread(path, get, search, json.root) //root+path+get = search
 
-		await Promise.all(promises)
-
-		if (promise.rejected) return
-		promise.started.resolve(search)
-
-		if (json.rd) {
-			Client.reloaddivs = Client.reloaddivs.filter(div => {
-				return !~json.rd.indexOf(div)
-			})
-		}
-		if (json.rt) {
-			Client.reloadtss = Client.reloadtss.filter(ts => {
-				return !~json.rt.indexOf(ts)
-			})
-		}
-		for (const layer of json.layers) {
-			layer.sys.template = document.createElement('template')
-			await addHtml(layer.sys.template, layer, bread, timings, json.theme)
-		}
+		const r = await Client.show(json, bread, promise)
+		if (!r) return
 		
-		const scripts = []
-		for (const layer of json.layers) {
-			const elements = layer.sys.template.content
-			layer.sys.div.replaceChildren(elements)
-			waitClient.stack.push(evalScripts(layer.sys.div))
-			const promise = Promise.all(waitClient.stack)
-			waitClient.stack = []
-			promise.then(() => layer.sys.execute.resolve()).catch(e => null) //Покажется когда выполнятся скрипты
-			scripts.push(promise)
-		}
-		await Promise.all(scripts)
+		
 		Client.search = search
 		Client.next = false
 		promise.resolve(search)

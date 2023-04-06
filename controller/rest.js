@@ -80,7 +80,7 @@ const wakeup = (rule, depth = 0) => {
 			const sid = [div, name, sub, frame].join('-')
 			//const ts = fi(name, ':' + sub)
 			const layer = { sid, ts, tsf, name, sub, div, depth, tpl:null, html: null, json:null, layers: null}
-			
+			if (rule.onlyclient && ~rule.onlyclient.indexOf(ts)) layer.onlyclient = true
 			if (frame) {
 				layer.frame = frame
 				layer.frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
