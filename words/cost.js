@@ -1,5 +1,5 @@
 export const cost = (cost) => {
-	if (!cost) return
+	if (!cost) return 0
 	cost = String(cost)
 	const ar = cost.split(/[,\.]/)
 	cost = ar[0];

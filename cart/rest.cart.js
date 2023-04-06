@@ -5,11 +5,19 @@ import rest_user from '/-user/rest.user.js'
 
 const rest = new Rest(rest_funcs, rest_vars, rest_user)
 
-
+rest.addArgument('order_id', ['int'])
 rest.addArgument('count', ['int'])
 rest.addVariable('active_id', async view => {
-	const { db, user_id } = await view.gets(['db', 'user_id'])
+	const { db, user_id, order_id } = await view.gets(['db', 'user_id','order_id'])
 	if (!user_id) return false
+	if (order_id) {
+		const active_id = await db.col(`
+			SELECT order_id 
+			FROM cart_userorders 
+			WHERE user_id = :user_id and active = 1 and order_id = :order_id
+		`, {user_id, order_id})
+		return active_id
+	}
 	const active_id = await db.col(`
 		SELECT order_id 
 		FROM cart_userorders 

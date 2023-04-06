@@ -10,7 +10,7 @@ import Cart from "/-cart/Cart.js"
 const rest = new Rest(rest_db, rest_admin, rest_user, rest_cart, rest_vars)
 export default rest
 
-rest.addResponse('get-cart', async view => {
+rest.addResponse('get-panel', async view => {
 	const { db, active_id } = await view.gets(['db', 'active_id#required'])
 	const list = await db.all(`
 		SELECT model_nick, brand_nick, count, item_num 
@@ -24,7 +24,14 @@ rest.addResponse('get-cart', async view => {
 		item.count = pos.count
 		return item
 		
-	}))).filter(item => !!item)
+	}))).filter(item => !!item || !item['Цена'])
+
+	view.ans.sum = 0
+	view.ans.list.forEach(mod => {
+		mod.sum = (mod['Цена'] || 0) * (mod.count || 0)
+		view.ans.sum += mod.sum
+	})
+
 	return view.ret()
 })
 rest.addResponse('get-list', async view => {

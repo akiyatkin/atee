@@ -26,7 +26,13 @@ rest.addResponse('set-add', async view => {
 	}
 
 	await Cart.addItem(view, active_id, item, count)
-	return view.ret('Готово')	
+	return view.ret('Готово')
+})
+rest.addResponse('set-remove', async view => {
+	let { db, item, active_id, user } = await view.gets(['db', 'item#required', 'user', 'active_id'])
+	if (!active_id) return view.err('Заказ не найден')
+	await Cart.removeItem(view, active_id, item)
+	return view.ret('Готово')
 })
 
 

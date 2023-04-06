@@ -16,6 +16,18 @@ Cart.createNick = async (view, user) => {
 Cart.getItem = async (view, order_id, brand_nick, model_nick, item_num) => {
 	return Catalog.getItemByNick(view, brand_nick, model_nick, item_num)
 }
+Cart.removeItem = async (view, order_id, item) => {
+	const { db } = await view.gets(['db'])
+	return await db.exec(`
+		DELETE FROM cart_basket 
+		WHERE order_id = :order_id 
+			and item_num = :item_num 
+			and model_nick = :model_nick
+			and brand_nick = :brand_nick
+	`, {
+		order_id, ...item
+	})
+}
 Cart.addItem = async (view, order_id, item, count = 0) => {
 	const { db } = await view.gets(['db'])
 	const pos = await db.fetch(`

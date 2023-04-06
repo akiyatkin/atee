@@ -727,7 +727,8 @@ Catalog.getFilterConf = async (view, prop, group_id, md, partner) => {
 			}
 		}
 	}
-	if (!selected && filter.values.length < 2) return false
+	//if (!selected && filter.values.length < 2) return false
+	if (!selected && filter.values.length < 1) return false
 
 	
 	const nmd = {...md}
