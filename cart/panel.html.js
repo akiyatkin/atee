@@ -112,17 +112,9 @@ export const ROOT = (data, env) => `
 	<script>
 		(panel => {
 			const hand = panel.querySelector('.hand')
-			const body = panel.querySelector('.body')
-			let t
-			hand.addEventListener('click', () => {
-				body.scrollTo(0, 0)
-				panel.classList.toggle('show')
-				panel.classList.remove('ready')
-				clearTimeout(t)
-				t = setTimeout(() => {
-					if (!panel.classList.contains('show')) return
-					panel.classList.add('ready')
-				}, 500)
+			hand.addEventListener('click', async () => {
+				const Panel = await import('/-cart/Panel.js').then(r => r.default)
+				Panel.toggle(panel)
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>
