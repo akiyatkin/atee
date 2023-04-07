@@ -3,7 +3,7 @@ import Layers from '/-controller/Layers.js'
 import TPL from '/-sitemap/layout.html.js'
 import Access from '/-controller/Access.js'
 import { loadJSON } from '/-controller/router.js'
-import Theme from '/-controller/theme.js'
+import Theme from '/-controller/Theme.js'
 import Bread from '/-controller/Bread.js'
 
 import rest_funcs from '/-rest/rest.funcs.js'

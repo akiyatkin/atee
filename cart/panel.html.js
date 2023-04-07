@@ -13,20 +13,14 @@ export const ROOT = (data, env) => `
 				background:white; 
 				border-top: 1px solid gray;
 			}
-			
-			${env.scope} .panel .body {
-				max-height: 110px;
-				transition: max-height 0.3s;
-				overflow: hidden;
+			${env.scope} .panel {
+				pointer-events: none;
 			}
-
-			${env.scope} .panel.show .body {
-				max-height: calc(100vh - 100px);
+			${env.scope} .panel.up {
+				position: relative;
 			}
-			${env.scope} .panel.ready .body {
-				overflow-y: auto;
-			}
-			${env.scope} .hand {
+			${env.scope} .panel .hand {
+				pointer-events: visiblePainted;
 				margin:0 auto;
 				height: 40px;
 				position: relative;
@@ -45,7 +39,6 @@ export const ROOT = (data, env) => `
 				grid-template-columns: 1fr max-content;
 				gap:1rem;
 			}
-
 			${env.scope} .panel.up .hand {
 				display: grid;
 				
@@ -57,16 +50,42 @@ export const ROOT = (data, env) => `
 			${env.scope} .panel.show .hand svg {
 				transform: rotate(180deg);
 			}
-			${env.scope} .panel.up {
-				position: relative;
+			
+			${env.scope} .panel .body {
+				max-height: 110px;
+				transition: max-height 0.3s;
+				overflow: hidden;
+				pointer-events: visiblePainted;
+
+				/*display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 1fr;*/
 			}
-			${env.scope} .panel .list {
+			${env.scope} .panel.show .body {
+				max-height: calc(100vh - 100px);
+			}
+			${env.scope} .panel.ready .body {
+				overflow-y: auto;
+
+			}
+			${env.scope} .panel .body .padding {
 				padding: 25px 0 20px 0;
+			}
+			${env.scope} .panel .body .list {
 				display: grid;
-				grid-template-columns: max-content max-content max-content;
+				grid-template-columns: max-content 1fr max-content;
 				gap: 1rem;
 			}
-			
+			${env.scope} .panel .body .content {
+				display: grid; 
+				grid-template-columns: 1fr 1fr; 
+				gap: 0 2rem;
+			}
+			@media (max-width: 1199px) {
+				${env.scope} .panel .body .content {
+					grid-template-columns: 1fr;
+				}
+			}
 		</style>
 		<div class="hand">
 			<svg fill="#000000" height="20" width="20" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
@@ -80,33 +99,48 @@ export const ROOT = (data, env) => `
 			</svg>
 			<div style="line-height: 1;" class="title"></div>
 		</div>
-		<div class="body" id="PANELBODY"></div>
-		<script>
-			(div => {
-				const hand = div.querySelector('.hand')
-				const panel = hand.closest('.panel')
-				const body = panel.querySelector('.body')
-				let t
-				hand.addEventListener('click', () => {
-					body.scrollTo(0, 0)
-					panel.classList.toggle('show')
-					panel.classList.remove('ready')
-					clearTimeout(t)
-					t = setTimeout(() => {
-						if (!panel.classList.contains('show')) return
-						panel.classList.add('ready')
-					}, 500)
-				})
-			})(document.currentScript.parentElement)
-		</script>
+
+		<div class="body" >
+			<div class="container">
+				<div class="content">
+					<div id="PANELBODY"></div>
+					<div id="PANELORDER"></div>
+				</div>
+			</div>
+		</div>
 	</div>
+	<script>
+		(panel => {
+			const hand = panel.querySelector('.hand')
+			const body = panel.querySelector('.body')
+			let t
+			hand.addEventListener('click', () => {
+				body.scrollTo(0, 0)
+				panel.classList.toggle('show')
+				panel.classList.remove('ready')
+				clearTimeout(t)
+				t = setTimeout(() => {
+					if (!panel.classList.contains('show')) return
+					panel.classList.add('ready')
+				}, 500)
+			})
+		})(document.currentScript.previousElementSibling)
+	</script>
 `
 export const SUM = (sum) => `${cost(sum)}${common.unit()}`
 export const TITLE = (obj) => `<b>${obj.length}</b> ${words(obj.length, 'позиция','позиции','позиций')} на <b>${SUM(obj.sum)}</b>`
-export const BODY = (data, env) => data.result && data.list.length ? `
-	<div class="list">
-		${data.list.map(mod => showPos(mod, env)).join('')}
+export const ORDER = (data, env) => data.result && data.list.length ? `
+	<div class="padding">
+		Форма
 	</div>
+` : ``
+export const BODY = (data, env) => data.result && data.list.length ? `
+	<div class="padding">
+		<div class="list">
+			${data.list.map(mod => showPos(mod, env)).join('')}
+		</div>
+	</div>
+	
 	<script type="module">
 		import { TITLE, SUM } from "${env.layer.tpl}"
 		const div = document.getElementById("${env.layer.div}")
@@ -142,14 +176,14 @@ export const BODY = (data, env) => data.result && data.list.length ? `
 			del.addEventListener('click', async () => {
 				await fetch('/-cart/set-remove?order_id&model_nick='+mod.model_nick+'&brand_nick='+mod.brand_nick+'&item_num='+mod.item_num+'&partner=${env.theme.partner || ""}').catch(e => console.log(e))
 				const Client = await window.getClient()
-				await Client.reloaddiv('PANELBODY')
+				await Client.global('cart')
 			})
 		}
 		recalc()
 		title.innerHTML = TITLE(state)
 	</script>
 ` : `
-	В заказе ничего нет
+	<!-- В заказе ничего нет -->
 	<script>
 		(body => {
 			const panel = body.closest('.panel')
@@ -173,10 +207,10 @@ const showPos = (mod, env) => `
 		data-sum="${mod.sum}"
 		data-cost="${mod.Цена || 0}" data-count="${mod.count || 0}"
 		style="
+			align-self: flex-start;
 			text-align:right;
 			display: grid;
 			gap:8px;
-			align-items: center;
 			grid-template-columns: max-content max-content;
 			grid-template-areas: 'input remove' 'sum .';
 		"

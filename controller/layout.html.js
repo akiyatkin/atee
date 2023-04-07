@@ -35,14 +35,13 @@ controller.HEAD = (data, env) =>
 					window.removeEventListener('click', click)
 					const time = ${env.timings.access_time}
 					import("/-controller/Client.js").then(({ Client }) => {
-						Client.search = '${env.bread.href}'
 						Client.isSuitable = isSuitable
 						Client.timings = {
 							view_time: time,
 							update_time: time,
 							access_time: time
 						}
-						Client.follow()
+						Client.follow('${env.bread.root}')
 						resolve(Client)
 					}).catch(reject)
 				})

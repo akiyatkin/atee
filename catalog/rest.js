@@ -448,7 +448,7 @@ rest.addResponse('get-partner', async (view) => {
 	if (partner) view.ans.descr = partner.descr || ''
 	return partner ? view.ret() : view.nope()
 })
-// import theme from '/-controller/theme.js'
+// import theme from '/-controller/Theme.js'
 // rest.addResponse('set-partner', async (view) => {
 // 	const { partner } = await view.gets(['partner'])
 // 	if (!partner) return view.err('Ключ устарел или указан с ошибкой')

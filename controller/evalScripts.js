@@ -1,4 +1,3 @@
-
 export const evalScripts = async div => {
 	const scripts = []
 	let i = 0
@@ -35,3 +34,5 @@ export const evalScripts = async div => {
 	}	
 	return Promise.all(scripts)
 }
+
+export default evalScripts

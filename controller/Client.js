@@ -1,13 +1,18 @@
-import { animate } from './animate.js'
-import { evalScripts } from './evalScripts.js'
-import { createPromise } from './createPromise.js'
+import animate from '/-controller/animate.js'
+import evalScripts from '/-controller/evalScripts.js'
+import createPromise from '/-controller/createPromise.js'
 import Bread from '/-controller/Bread.js'
-import theme from '/-controller/theme.js'
+import Theme from '/-controller/Theme.js'
 
 export const Client = {
 	search:'',
 	access_promise: null,
-	follow: () => {
+	follow: (root) => {
+		Client.search = fixsearch(Client.getSearch())
+		const get = Object.fromEntries(new URLSearchParams(location))
+		Client.bread = new Bread(Client.search, get, Client.search, root)
+		Client.theme = Theme.harvest(get, document.cookie)
+
 		navigator.serviceWorker?.register('/-controller/sw.js', { scope:'/' })
 		window.addEventListener('crossing', async ({detail: { timings }}) => {
 			if (navigator.serviceWorker) {
@@ -63,7 +68,7 @@ export const Client = {
 		Client.reloaddivs.push(div)
 		return Client.replaceState('', false)
 	},
-	reload: () => {
+	reload: () => { //depricated?
 		Client.search = ''
 		return Client.replaceState('', false)
 	},
@@ -71,6 +76,12 @@ export const Client = {
 	reloadts: (ts) => {
 		if (~Client.reloadtss.indexOf(ts)) return
 		Client.reloadtss.push(ts)
+		return Client.replaceState('', false)
+	},
+	reloadgs:[],
+	global: (g) => {
+		if (~Client.reloadgs.indexOf(g)) return
+		Client.reloadgs.push(g)
 		return Client.replaceState('', false)
 	},
 	view:Date.now(), //Метка сеанса в котором актуальна Client.history
@@ -163,7 +174,24 @@ export const Client = {
 		requestAnimationFrame(applyCrossing)
 		return promise
 	},
-	show: async (json, bread, promise) => {
+	show_promise: null,
+	show_layers: [],
+	show: (layer) => {
+		//Нужно собрать все вызовы и выполнить разом
+		Client.show_layers.push(layer)
+		if (Client.show_promise) return Client.show_promise
+		Client.show_promise = new Promise(resolve => {
+			setTimeout(async () => {
+				const json = {layers:Client.show_layers, theme: Client.theme}
+				await Client.commonshow(json, Client.bread)
+				delete Client.show_promise
+				Client.show_layers = []
+				resolve()
+			}, 1)
+		})
+		return Client.show_promise
+	},
+	commonshow: async (json, bread, promise) => {
 		const layers = json.layers
 		const promises = loadAll(layers)
 		for (const layer of layers) {
@@ -196,6 +224,11 @@ export const Client = {
 		if (json.rt) {
 			Client.reloadtss = Client.reloadtss.filter(ts => {
 				return !~json.rt.indexOf(ts)
+			})
+		}
+		if (json.rg) {
+			Client.reloadgs = Client.reloadgs.filter(ts => {
+				return !~json.rg.indexOf(ts)
 			})
 		}
 		for (const layer of json.layers) {
@@ -241,7 +274,7 @@ const userpathparse = (search) => {
 	search = search.slice(1)
 	try { search = decodeURI(search) } catch { }
 	let [path = '', params = ''] = explode('?', search)
-	const get = theme.parse(params, '&')
+	const get = Theme.parse(params, '&')
 	const secure = !!~path.indexOf('/.') || path[0] == '.'
 	return {secure, path, get}
 }
@@ -259,7 +292,6 @@ const applyCrossing = async () => {
 	Но со второго раза надо уже передать корректные данные
 	*/
 	const req = {
-		gs: '',
 		vt: timings.view_time,
 		ut: timings.update_time,
 		st: timings.access_time,
@@ -268,6 +300,7 @@ const applyCrossing = async () => {
 	}
 	if (Client.reloaddivs.length) req.rd = Client.reloaddivs.join(',')
 	if (Client.reloadtss.length) req.rt = Client.reloadtss.join(',')
+	if (Client.reloadgs.length) req.rg = Client.reloadgs.join(',')
 		
 	try {
 		const json = await fetch('/-controller/get-layers', {
@@ -291,11 +324,12 @@ const applyCrossing = async () => {
 		const usersearch = json.root ? search.slice(json.root.length + 1) : search
 		const {path, get} = userpathparse(usersearch) //Останется ведущий слэш
 		const bread = new Bread(path, get, search, json.root) //root+path+get = search
-
-		const r = await Client.show(json, bread, promise)
+		
+		const r = await Client.commonshow(json, bread, promise)
 		if (!r) return
-		
-		
+
+		Client.theme = json.theme
+		Client.bread = bread
 		Client.search = search
 		Client.next = false
 		promise.resolve(search)

@@ -8,7 +8,7 @@ import { Access } from '/-controller/Access.js'
 import { Once } from './Once.js'
 import Layers from '/-controller/Layers.js'
 import { whereisit } from './whereisit.js'
-import Theme from '/-controller/theme.js'
+import Theme from '/-controller/Theme.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 import rest_admin from '/-controller/rest.admin.js'
@@ -53,7 +53,8 @@ rest.addArgument('nt', ['checksearch']) //next
 rest.addArgument('vt', ['int']) //view_time
 rest.addArgument('ut', ['int']) //update_time
 rest.addArgument('st', ['int']) //access_time
-rest.addArgument('gs', ['array']) //globals
+
+rest.addArgument('rg', ['array']) //globals
 rest.addArgument('rd', ['array']) //reloaddivs
 rest.addArgument('rt', ['array']) //reloadts
 
@@ -81,6 +82,7 @@ const wakeup = (rule, depth = 0) => {
 			//const ts = fi(name, ':' + sub)
 			const layer = { sid, ts, tsf, name, sub, div, depth, tpl:null, html: null, json:null, layers: null}
 			if (rule.onlyclient && ~rule.onlyclient.indexOf(ts)) layer.onlyclient = true
+			if (rule.global && rule.global[ts]) layer.global = rule.global[ts]
 			if (frame) {
 				layer.frame = frame
 				layer.frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
@@ -211,8 +213,8 @@ rest.addResponse('get-layers', async view => {
 	view.nostore = true
 	view.headers = {}
 	const {
-		visitor, rt:reloadtss, rd:reloaddivs, pv: prev, nt: next, st: access_time, ut: update_time, vt: view_time, gs: globals 
-	} = await view.gets(['visitor', 'rt', 'rd', 'pv', 'nt', 'st', 'ut', 'gs', 'vt'])	
+		visitor, rt:reloadtss, rd:reloaddivs, pv: prev, nt: next, st: access_time, ut: update_time, vt: view_time, rg: globals 
+	} = await view.gets(['visitor', 'rt', 'rd', 'pv', 'nt', 'st', 'ut', 'rg', 'vt'])	
 	const host = visitor.client.host
 	const cookie = visitor.client.cookie
 	const ptimings = { access_time, update_time, view_time }
@@ -227,10 +229,10 @@ rest.addResponse('get-layers', async view => {
 	view.ans.vt = timings.view_time
 
 	if (!next) return view.err()
-	if (globals.length) {
-		return view.err() //Ну или перезагрузиться	
-	}
-	view.ans.gs = globals
+	// if (globals.length) {
+	// 	return view.err() //Ну или перезагрузиться	
+	// }
+	// view.ans.gs = globals
 	
 	const nroute = await router(next)
 	view.ans.root = nroute.root
@@ -298,9 +300,10 @@ rest.addResponse('get-layers', async view => {
 	
 	
 
-	view.ans.layers = getDiff(popt.root.layers, nlayers, reloaddivs, reloadtss)
+	view.ans.layers = getDiff(popt.root.layers, nlayers, reloaddivs, reloadtss, globals)
 	if (reloaddivs.length) view.ans.rd = reloaddivs
 	if (reloadtss.length) view.ans.rt = reloadtss
+	if (globals.length) view.ans.rg = globals
 
 	return view.ret()    
 })
@@ -320,7 +323,7 @@ rest.addResponse('get-head', async view => {
 
 	return {ans:head}
 })
-const getDiff = (players, nlayers, reloaddivs, reloadtss, layers = []) => {
+const getDiff = (players, nlayers, reloaddivs, reloadtss, globals, layers = []) => {
 	nlayers?.forEach(nlayer => {
 		const player = players.find(player => {
 			return nlayer.div == player.div 
@@ -330,9 +333,10 @@ const getDiff = (players, nlayers, reloaddivs, reloadtss, layers = []) => {
 			&& nlayer.parsed == player.parsed 
 			&& !~reloaddivs.indexOf(player.div)
 			&& !~reloadtss.indexOf(player.ts)
+			&& (!player.global || !globals.some(g => ~player.global.indexOf(g)))
 		})
 		if (player) {
-			getDiff(player.layers, nlayer.layers, reloaddivs, reloadtss, layers)
+			getDiff(player.layers, nlayer.layers, reloaddivs, reloadtss, globals, layers)
 		} else {
 			layers.push(nlayer) //Слой не найден, его надо показать
 		}

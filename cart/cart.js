@@ -36,6 +36,7 @@ Cart.addItem = async (view, order_id, item, count = 0) => {
 			and item_num = :item_num 
 			and model_nick = :model_nick
 			and brand_nick = :brand_nick
+		FOR UPDATE
 	`, {
 		order_id, ...item
 	})
