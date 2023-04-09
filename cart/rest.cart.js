@@ -27,7 +27,7 @@ rest.addVariable('active_id', async view => {
 })
 rest.addVariable('active_id#required', async view => {
 	const { db, active_id } = await view.gets(['db', 'active_id'])
-	if (!active_id) return view.err('Заказ не найден')
+	if (!active_id) return view.err('Заказ не найден', 200)
 	return active_id
 })
 

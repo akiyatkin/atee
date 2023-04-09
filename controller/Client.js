@@ -58,7 +58,7 @@ export const Client = {
 		const search = a.getAttribute('href')
 		const scroll = a.dataset.scroll != 'none'
 		const promise = Client.pushState(search, scroll)
-		return animate('a', a, promise, a.dataset.animate)
+		return animate('a', a, a.dataset.animate, promise)
 		//return true
 	},
 	getSearch: () => decodeURI(location.pathname + location.search),
@@ -191,7 +191,8 @@ export const Client = {
 		})
 		return Client.show_promise
 	},
-	commonshow: async (json, bread, promise) => {
+	commonshow: async (json, bread, promise, timings) => {
+		if (!timings) timings = Client.timings
 		const layers = json.layers
 		const promises = loadAll(layers)
 		for (const layer of layers) {
@@ -205,7 +206,7 @@ export const Client = {
 			const hash = location.hash.slice(1)
 			let anim = layer.animate //Скрол неточный 1. из-за анимации и 2. из-за изменений DOM в скриптах
 			if (hash && anim != 'none') anim = 'opacity'
-			animate('div', div, layer.sys.execute, anim)
+			animate('div', div, anim, layer.sys.execute)
 		}
 
 		
@@ -233,7 +234,7 @@ export const Client = {
 		}
 		for (const layer of json.layers) {
 			layer.sys.template = document.createElement('template')
-			await addHtml(layer.sys.template, layer, bread, Client.timings, json.theme)
+			await addHtml(layer.sys.template, layer, bread, timings, json.theme)
 		}
 		
 		const scripts = []
@@ -319,23 +320,25 @@ const applyCrossing = async () => {
 			update_time: json.ut,
 			access_time: json.st
 		}
-		Client.timings = timings
+		
 
 		const usersearch = json.root ? search.slice(json.root.length + 1) : search
 		const {path, get} = userpathparse(usersearch) //Останется ведущий слэш
 		const bread = new Bread(path, get, search, json.root) //root+path+get = search
 		
-		const r = await Client.commonshow(json, bread, promise)
+		const r = await Client.commonshow(json, bread, promise, timings)
 		if (!r) return
 
+		const event = new CustomEvent('crossing', {detail: {timings, bread, theme: json.theme}})
+		window.dispatchEvent(event)
+		
+		Client.timings = timings
 		Client.theme = json.theme
 		Client.bread = bread
 		Client.search = search
 		Client.next = false
 		promise.resolve(search)
 
-		const event = new CustomEvent('crossing', {detail: {timings, bread, theme: json.theme}})
-		window.dispatchEvent(event)
 		if (req.ut && req.ut < timings.update_time) {
 			console.log(2, req, timings)
 			location.reload()

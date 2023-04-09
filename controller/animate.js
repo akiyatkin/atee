@@ -5,7 +5,7 @@ link.rel = 'stylesheet'
 link.href = '/-controller/animate.css'
 document.head.prepend(link)
 
-export const animate = (tag, a, promise = Promise.resolve(), animate = '') => {
+export const animate = (tag, a, animate = '', promise = Promise.resolve()) => {
 	const reg = new RegExp(tag + '-animate-')
 	if (animate) animate = '-' + animate
 	const list = a.classList

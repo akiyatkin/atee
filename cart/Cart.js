@@ -3,12 +3,13 @@ const Cart = {}
 
 Cart.createNick = async (view, user) => {
 	const { db } = await view.gets(['db'])
-	const t = new Date('2023-01-01 00:00:00').getTime()
-	const seconds = t - Date.now()
+	
+	
 	// Количество дней нужно округлить в меньшую сторону,
 	// чтобы узнать точное количество прошедших дней
 	// 86400 - количество секунд в 1 дне (60 * 60 * 24) + 000
-	const days = Math.floor(seconds / 86400000)
+	const days = Math.floor((Date.now() - new Date('2023-01-01 00:00:00').getTime()) / 86400000)
+
 	const num = await db.col(`SELECT count(*) + 1 FROM cart_orders WHERE user_id = :user_id`, user)
 	const order_nick = days + '-' + user.user_id + '-' + num
 	return order_nick
@@ -27,6 +28,14 @@ Cart.removeItem = async (view, order_id, item) => {
 	`, {
 		order_id, ...item
 	})
+}
+Cart.getOrder = async (view, order_id) => {
+	const { db } = await view.gets(['db'])
+	const order = await db.fetch(`
+		SELECT order_nick FROM cart_orders
+		WHERE order_id = :order_id 
+	`, { order_id })
+	return order
 }
 Cart.addItem = async (view, order_id, item, count = 0) => {
 	const { db } = await view.gets(['db'])

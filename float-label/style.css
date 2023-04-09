@@ -5,6 +5,8 @@
 	box-sizing: border-box;
 	width:  100%;
 }
+
+
 .float-label > select,
 .float-label > input,
 .float-label > textarea,

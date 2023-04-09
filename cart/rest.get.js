@@ -12,6 +12,7 @@ export default rest
 
 rest.addResponse('get-panel', async view => {
 	const { db, active_id } = await view.gets(['db', 'active_id#required'])
+	view.ans.order = await Cart.getOrder(view, active_id)
 	const list = await db.all(`
 		SELECT model_nick, brand_nick, count, item_num 
 		FROM cart_basket 

@@ -1,5 +1,5 @@
 const number = {}
-number.css = ['-cart/number-block.css']
+number.css = ['/-cart/number-block.css']
 
 //import number from "/-cart/number-block.html.js"
 //export const css = [...number.css]

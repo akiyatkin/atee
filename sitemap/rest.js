@@ -80,6 +80,7 @@ rest.addResponse('get-head', async view => {
 	let css = []
 	for (const name in tpls) {
 		if (!source.tpl[name]) continue
+
 		let tplobj = await import(source.tpl[name])
 		if (tplobj.default) tplobj = tplobj.default
 		if (!tplobj.css) continue

@@ -4,11 +4,12 @@ const link = document.createElement('link')
 link.rel = 'stylesheet'
 link.href = '/-dialog/style.css'
 document.head.prepend(link)
-document.addEventListener('keydown', async e => {
+document.addEventListener('keydown', e => {
 	if (!~[27].indexOf(e.keyCode)) return //13
 	const l = Dialog.parents.length
 	if (!l) return
 	const parent = Dialog.parents[l-1]
+	//e.stopImmediatePropagation()
     Dialog.hide(parent)
 })
 const addCSS = href => { //файл этот нельзя использовать на сервере

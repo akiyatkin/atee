@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS `cart_basket` (
     `dateadd` DATETIME NULL DEFAULT NULL COMMENT 'Дата добавления, в том числе в замороженный заказ менеджером, позиция не обновляется из каталога если уже была',
     `dateedit` DATETIME NULL DEFAULT NULL COMMENT 'Дата изменений, в том числе в замороженном заказ менеджером, позиция не обновляется с каталога',
 
-    UNIQUE INDEX (`order_id`, `brand_nick`, `model_nick`)
+    UNIQUE INDEX (`order_id`, `brand_nick`, `model_nick`, `item_num`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1;
 
 
