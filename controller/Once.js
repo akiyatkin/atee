@@ -1,3 +1,4 @@
+//depricated - use global consts
 export const Once = {
 	proxy: fn => {
 		const cache = {}

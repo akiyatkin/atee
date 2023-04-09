@@ -59,48 +59,33 @@ rest.addVariable('env', async view => {
 const interpolate = (val, env) => new Function('env', 'return `'+val+'`')(env)
 rest.addResponse('get-head', async view => {
 
-	const { source, visitor, root, bread, theme, timings } = await view.gets(['source', 'visitor', 'root', 'bread', 'theme', 'timings'])
+	const { rule, source, visitor, root, bread, theme, timings } = await view.gets(['rule', 'source', 'visitor', 'root', 'bread', 'theme', 'timings'])
 	
-	const { index, depth } = Layers.getIndex(source, bread)
-	let head = index.head
-	const layout = index.layout
+	//view.ans = rule //Тотже объект что и source но теперь со свойством root в каждом child и childs и в корне
 	
-	const list = {}
-	for (const tsf in layout) {
-		list[tsf] = true
-		for (const div in layout[tsf]) {
-			list[layout[tsf][div]] = true
-		}
-	}
+	const { index, depth } = Layers.getIndex(rule, bread)
+	
 	const tpls = {}
-	for (const tsf in list) {
-		const [name, sub] = split(':', tsf)
-		if (sub) tpls[name] = true
-	}
+	Layers.runByRootLayer(index.root, ({name}) => {
+		if (!rule.tpl[name]) return
+		tpls[name] = rule.tpl[name]
+	})
+	let head = index.head	
+	
 	let css = []
 	for (const name in tpls) {
-		if (!source.tpl[name]) continue
-
-		let tplobj = await import(source.tpl[name])
+		let tplobj = await import(tpls[name])
 		if (tplobj.default) tplobj = tplobj.default
 		if (!tplobj.css) continue
-		for(const link of tplobj.css) css.push(link)
+		for (const link of tplobj.css) css.push(link)
 	}
 
 	const crumb = bread.getCrumb(depth)
 	const look = { head, theme, timings, bread }
 	const env = { crumb, ...look}
 
-	head = {...env.head}
+	head = {...head}
 
-	// const css = []
-	// if (head.css) {
-	// 	for (const i in head.css) {
-	// 		const name = head.css[i]
-	// 		if (!source.css?.[name]) continue
-	// 		css.push(source.css[name])
-	// 	}
-	// }
 	head.css = css
 	if (head.jsontpl) {
 		head.json = interpolate(head.jsontpl, env)

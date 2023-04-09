@@ -16,6 +16,11 @@ rest.addVariable('source', async view => {
 	const source = await layers.getSource()
 	return source
 })
+rest.addVariable('rule', async view => {
+	const { root } = await view.gets(['root'])
+	const rule = await Layers.getRule(root)
+	return rule
+})
 rest.addVariable('data', async view => {
 	const { source, visitor } = await view.gets(['source', 'visitor'])
 	const host = visitor.client.host
