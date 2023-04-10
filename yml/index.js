@@ -18,13 +18,14 @@ const yml = {
 		return groups
 	},
 	data: (view, feed) => cproc(yml, '', async () => {
+		const { db } = await view.gets(['db'])
 		const conf = await config('yml')
 		const md = conf.feeds[feed]
 		if (!md) return []
 		const group = await Catalog.getMainGroup(view, md)
 		if (!group) return []
 		const {from, where} = await Catalog.getmdwhere(view, md)
-		const moditem_ids = await catalog.base.db.all(`
+		const moditem_ids = await db.all(`
 			SELECT m.model_id, GROUP_CONCAT(distinct i.item_num separator ',') as item_nums 
 			FROM ${from.join(', ')}
 			WHERE ${where.join(' and ')}
