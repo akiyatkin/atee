@@ -18,8 +18,8 @@ const yml = {
 		return groups
 	},
 	data: (view, feed) => cproc(yml, '', async () => {
-		const config = await config('yml')
-		const md = config.feeds[feed]
+		const conf = await config('yml')
+		const md = conf.feeds[feed]
 		if (!md) return []
 		const group = await Catalog.getMainGroup(view, md)
 		if (!group) return []
