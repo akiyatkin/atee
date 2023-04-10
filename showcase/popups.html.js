@@ -95,6 +95,7 @@ export const set_prices_load = (ans, env) => `
 const excellist = (data, key) => `
 	<h3 title="${Object.keys(data.indexes).join(', ')}">Лист: ${key}</h3>
 	<p>Успешно загружено строк: ${data.loadedrow}</p>
+	${data.notpriceprop ? '<p>Не найдена связующая колонка <b>'+data.notpriceprop+'</p></b>' : ''}
 	${data.keyrepeated.length ? showRepeat(data, key) : ''}
 	${data.notconnected.length ? showNotconected(data, key) : ''}
 	${data.notfinded.length ? showNotfinded(data, key) : ''}

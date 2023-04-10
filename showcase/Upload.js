@@ -341,14 +341,7 @@ export class Upload {
 		const mitems = {}
 		for (const {sheet, heads, rows} of sheets) {
 			const {head_titles, head_nicks} = heads
-			//Ищем ключ который есть в прайсе и по нему будем брать значение для связи
-			const priceprop_title = conf.synonyms[conf.priceprop].find(prop => ~head_titles.indexOf(prop))
-			if (!priceprop_title) continue
-			const priceprop_nick = base.onicked(priceprop_title)
-			const priceprop_index = head_nicks.indexOf(priceprop_nick)
 			
-			//.slice(-base.LONG).trim()
-
 			const props = [] //Нужно найти индексы для тех свойств которые нужно записать
 			for (const prop_title of conf.props) {
 				const prop = { prop_title }
@@ -380,8 +373,33 @@ export class Upload {
 					props.push(prop)
 				}
 			}
+			const indexes = {}
+			for (const i in head_nicks) {
+				const prop_nick = head_nicks[i]
+				indexes[prop_nick] = i
+			}
+			for (const p of props) {
+				indexes[nicked(p.prop_title)] = p.index
+			}
+			omissions[sheet] = {
+				notpriceprop: false,
+				loadedrow:0, keyrepeated:[], notconnected:[], notfinded:[], emptyprops:{}, 
+				head_titles, indexes
+			}
+			//Ищем ключ который есть в прайсе и по нему будем брать значение для связи
+			const priceprop_title = conf.synonyms[conf.priceprop].find(prop => ~head_titles.indexOf(prop))
+			if (!priceprop_title) {
+				omissions[sheet].notpriceprop = conf.priceprop
+				continue
+			}
+			const priceprop_nick = base.onicked(priceprop_title)
+			const priceprop_index = head_nicks.indexOf(priceprop_nick)
+			
+			//.slice(-base.LONG).trim()
 
-			omissions[sheet] = {loadedrow:0, keyrepeated:[], notconnected:[], notfinded:[], emptyprops:{}, head_titles}
+			
+
+			
 			count += rows.length
 
 			const handlers = {}
@@ -410,15 +428,7 @@ export class Upload {
 					head_titles[prop.index] = prop.prop_title
 				}
 			}
-			const indexes = {}
-			for (const i in head_nicks) {
-				const prop_nick = head_nicks[i]
-				indexes[prop_nick] = i
-			}
-			for (const p of props) {
-				indexes[nicked(p.prop_title)] = p.index
-			}
-			omissions[sheet].indexes = indexes
+			
 
 			// if (props.length < conf.props) {
 			// 	omissions[sheet].emptyprops[conf.props[0]] = rows
