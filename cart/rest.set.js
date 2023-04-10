@@ -13,8 +13,12 @@ const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 const rest = new Rest(rest_admin, rest_vars, rest_cart)
 export default rest
 
-
-
+rest.addResponse('set-submit', async view => {
+	return view.err('Обработка формы не готова')
+})
+rest.addResponse('set-field', async view => {
+	return view.ret('Введённые данные сохранены')
+})
 rest.addResponse('set-add', async view => {
 	let { db, item, active_id, user, count } = await view.gets(['db', 'item#required', 'user', 'active_id', 'count'])
 	if (!active_id) {

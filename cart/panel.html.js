@@ -27,8 +27,8 @@ export const ROOT = (data, env) => `
 				height: 40px;
 				position: relative;
 				z-index: 1;
-			    margin-bottom: -15px;
-			    margin-top: -25px;
+				margin-bottom: -15px;
+				margin-top: -25px;
 				width:max-content; 
 				border-radius: 50px; 
 				background: white; 
@@ -75,8 +75,8 @@ export const ROOT = (data, env) => `
 			}
 			${env.scope} .panel.hide .hand .btnhide {
 				width: 0;
-    			opacity: 0;
-    			padding-left: 0;
+				opacity: 0;
+				padding-left: 0;
 			}
 			
 			${env.scope} .panel .body {
@@ -234,44 +234,180 @@ export const SUM = (sum) => `${cost(sum)}${common.unit()}`
 export const TITLE = (obj) => `<b>${obj.length}</b> ${words(obj.length, 'позиция','позиции','позиций')} на <b>${SUM(obj.sum)}</b>`
 export const ORDER = (data, env) => data.result && data.list.length ? `
 	<div class="padding" style="position: sticky; top: 0;">
+		<style>
+			${env.scope} .field {
+				display: grid; 
+				grid-template-columns: 1fr max-content; 
+				align-items: center;
+			}
+			${env.scope} .res {
+				cursor: pointer;
+			}
+			${env.scope} .res .success {
+				color: var(--border-color, green);
+			}
+			${env.scope} .res .error {
+				color: red;
+			}
+			${env.scope} .res .required {
+				color: gray;
+			}
+			${env.scope} .res .loader {
+				color: var(--blue, gray);
+				animation-name: cart_res_rotation;
+				animation-duration: 1s;
+				animation-iteration-count: infinite;
+				animation-timing-function: linear;
+			}
+			${env.scope} .res svg {
+				display: none;
+			}
+			${env.scope} .res svg.show {
+				display: block;
+			}
+			@keyframes cart_res_rotation {
+				0% {
+					transform:rotate(0deg);
+				}
+				100% {
+					transform:rotate(360deg);
+				}
+			}
+		</style>
 		<div class="whenshow">
 			<h1 style="margin-top:1rem;">Оформить заказ <span style="float:right; font-weight: normal">№ ${data.order.order_nick}</span></h1>
-			<div style="border-radius:var(--radius); display: grid; gap:1rem; padding:1rem; background:var(--lightyellow);">
-				<div class="float-label icon name">
-					<input id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)">
+			<form action="/-cart/set-submit" style="border-radius:var(--radius); display: grid; gap:1rem; padding:1rem; background:var(--lightyellow);">
+				<div class="float-label icon name field">
+					<input required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
 					<label for="${env.sid}name">Получатель (ФИО)</label>
+					${svgres('required', data.order.name)}
 				</div>
-				<div class="float-label icon phone">
-					<input required id="contacts_phone" name="phone" type="tel" placeholder="Телефон">
+				<div class="float-label icon phone field">
+					<input required id="contacts_phone" name="phone" type="tel" placeholder="Телефон" value="${data.order.phone || ''}">
 					<label for="contacts_phone">Телефон</label>
+					${svgres('required', data.order.phone)}
 				</div>
-				<div class="float-label icon mail">
-					<input id="${env.sid}email" name="email" type="email" placeholder="Email">
+				<div class="float-label icon mail field">
+					<input required id="${env.sid}email" name="email" type="email" placeholder="Email" value="${data.order.email || ''}">
 					<label for="${env.sid}email">Email</label>
+					${svgres('required', data.order.email)}
 				</div>
-				<div class="float-label icon org">
-					<input id="${env.sid}address" name="address" type="text" placeholder="Адрес">
+				<div class="float-label icon org field">
+					<input required id="${env.sid}address" name="address" type="text" placeholder="Адрес" value="${data.order.address || ''}">
 					<label for="${env.sid}address">Адрес доставки</label>
+					${svgres('required', data.order.address)}
 				</div>
 				<div>
 					Менеджер перезвонит в&nbsp;рабочее время, уточнит время и&nbsp;стоимость доставки. Стоимость доставки оплачивается отдельно в&nbsp;транспортной компании.
 				</div>
-				<div class="float-label">
+				<div class="float-label field">
 					<textarea placeholder="Дополнительная информация" id="${env.sid}text" 
-						name="text" style="width:100%; box-sizing: border-box; min-height:130px"></textarea>
+						name="text" style="width:100%; box-sizing: border-box; min-height:130px">${data.order.commentuser || ''}</textarea>
 					<label for="${env.sid}text">Дополнительная информация</label>
+					<div style="align-self: flex-start; margin-top: 0.5rem">
+						${svgres('optional', data.order.commentuser)}
+					</div>
 				</div>
 				<div style="max-width: 500px;">
 					${checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на усфловиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}
 				</div>
-				<p align="right">
-					<button type="submit">Отправить</button>
-				</p>
-			</div>
+				<div class="field submit">
+					<p align="right"><button type="submit">Отправить</button></p>
+					${svgres('optional')}
+				</div>
+			</form>
+			<script>
+				(form => {
+					const promise = import("/-form/Autosave.js").then(r => r.default.init(form))
+					const setres = (res, type, msg) => {
+						const show = res.querySelector('.show')
+						if (show) show.classList.remove('show')
+						type = type || res.dataset.emptytype
+						res.dataset.type = type
+						res.dataset.msg = msg || {
+							optional:'Опциональное поле',
+							required:'Обязательное поле', 
+							success:'Данные сохранены',
+							loader: 'Идёт обработка'
+						}[type] || ''
+						const need = res.getElementsByClassName(type)[0]
+						need.classList.add('show')
+					}
+					const restore = (res, input) => {
+						const saved = res.dataset.saved || ''
+						if (input.value && input.value == saved) setres(res, 'success')
+						else if (input.value) setres(res, 'error')
+						else setres(res)
+					}
+					const request = async (res, input) => {
+						setres(res, 'loader')
+						const ans = await fetch('/-cart/set-field?order_id&name=' + name +'&value='+input.value).then(r => r.json()).catch(e => {
+							console.log(e)
+							return {msg:'Ошибка на сервере'}
+						})
+						if (!input.value && ans.result) setres(res)
+						else setres(res, ans.result ? 'success' : 'error', ans.msg)
+						return ans
+					}
+					for (const field of form.querySelectorAll('.field')) {
+						const res = field.querySelector('.res')
+						if (!res) continue
+						let input = field.querySelector('input')
+						if (!input) input = field.querySelector('textarea')
+
+						res.addEventListener('click', async () => {
+							await promise
+							const show = res.querySelector('.show')
+							if (input && !res.dataset.msg) {
+								const ans = await request(res, input)
+								if (ans.msg) return
+							}
+							const msg = res.dataset.msg
+							const type = res.dataset.type
+							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+							Dialog.alert(msg)
+						})
+						
+						if (!input) continue
+						promise.then(() => restore(res, input))
+						input.addEventListener('input', async () => {
+							const ans = await request(res, input)
+						})
+					}
+					form.addEventListener('submit', async e => {
+						e.preventDefault()
+						const btn = form.querySelector('.submit')
+						const res = btn.getElementsByClassName('res')[0]
+						setres(res, 'loader')
+						const ans = await import('/-dialog/submit.js').then(r => r.default(form, {tpl:'${env.layer.tpl}', sub:'MSG'}))
+						if (ans.result) setres(res, 'success', ans.msg)
+						else setres(res, 'error', ans.msg)
+					})
+				})(document.currentScript.previousElementSibling)
+			</script>
 		</div>
 	</div>
-` : `
-
+` : ``
+export const MSG = (data, env) => `
+	<h1>${data.result ? 'Готово' : 'Ошибка'}</h1>
+	<div style="max-width: 400px;"><p class="msg">${data.msg || ''}</p></div>
+`
+const svgres = (type, saved) => `
+	<div data-saved="${saved || ''}" style="width:30px" class="res" data-type="${type || ''}" data-emptytype="${type || ''}">
+		<svg class="success${type == 'success' ? ' show': ''}" fill="currentColor" width="30" height="30" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+			<path d="M15.3 5.3l-6.8 6.8-2.8-2.8-1.4 1.4 4.2 4.2 8.2-8.2"/>
+		</svg>
+		<svg class="loader${type == 'loader' ? ' show': ''}" style="margin:4px" fill="currentColor" width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+			<path d="M12 22c5.421 0 10-4.579 10-10h-2c0 4.337-3.663 8-8 8s-8-3.663-8-8c0-4.336 3.663-8 8-8V2C6.579 2 2 6.58 2 12c0 5.421 4.579 10 10 10z" stroke-linecap="round" stroke-linejoin="round"/>
+		</svg>
+		<svg class="error${type == 'error' ? ' show': ''}" fill="none" style="margin:3px" width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+			<path d="M12 16H12.01M12 8V12M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+		</svg>
+		<svg class="required${type == 'required' ? ' show': ''}" style="margin:7px" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+			<path d="M8 0a1 1 0 0 1 1 1v5.268l4.562-2.634a1 1 0 1 1 1 1.732L10 8l4.562 2.634a1 1 0 1 1-1 1.732L9 9.732V15a1 1 0 1 1-2 0V9.732l-4.562 2.634a1 1 0 1 1-1-1.732L6 8 1.438 5.366a1 1 0 0 1 1-1.732L7 6.268V1a1 1 0 0 1 1-1z"/>
+		</svg>
+		<div class="optional${type == 'optional' ? ' show' : ''}"></div>
+	</div>
 `
 export const BODY = (data, env) => data.result && data.list.length ? `
 	<div class="padding" style="position: sticky; top: 0">

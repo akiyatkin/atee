@@ -16,7 +16,7 @@
 	justify-content: center;
 	opacity: 0;
 	visibility: hidden;  /*Надо чтобы там не работал*/
-	transition: opacity 0.3s;
+	transition: opacity 0.1s;
 	pointer-events: none;
 }
 .dialogframe.show {
