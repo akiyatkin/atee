@@ -59,6 +59,47 @@ rest.addResponse('set-brands-clearempty', async view => {
 	`)
 	return view.ret('Удалено')
 })
+
+const addParents = (group, parent_id, tree) => {
+	if (!parent_id) return
+	group.path.unshift(parent_id)
+	addParents(group, tree[parent_id].parent_id, tree)
+}
+const getTree = async (view) => {
+	const { db } = await view.gets(['db'])
+	
+	const tree = {}
+	const rows = await db.all(`
+		SELECT group_id, parent_id, group_nick, icon_id, group_title 
+		FROM showcase_groups 
+		ORDER by ordain
+	`)
+
+	for (const group of rows) {
+		tree[group.group_id] = group
+	}
+	for (const group of rows) {
+		group.path = []
+		addParents(group, group.parent_id, tree)
+	}
+	for (const group of rows) {
+		group.groups = [group.group_id]
+		group.childs = []
+	}
+	
+	for (const group of rows) {
+		const group_id = group.group_id
+		if (group.parent_id) {
+			const parent = tree[group.parent_id]
+			parent.childs.push(group.group_id)
+		}
+		group.path.forEach(parent_id => {
+			const parent = tree[parent_id]
+			parent.groups.push(group.group_id)
+		})
+	}
+	return tree
+}
 rest.addResponse('set-groups-replace', async view => {
 	await view.gets(['admin'])
 	const { id, title, base, db } = await view.gets(['id','title', 'base','db'])
@@ -68,6 +109,11 @@ rest.addResponse('set-groups-replace', async view => {
 	if (!parent_id) return view.err('Родительская группа не найдена')
 	const group_id = await db.col('select group_id from showcase_groups where group_id = :id', { id })
 	if (!group_id) return view.err('Группа не найдена '+id)
+	if (parent_id == group_id) return view.err('Вы хотите текущую группу переместить в текущую группу? Этого не будет.')
+
+	const tree = await getTree(view)
+	if (~tree[group_id].groups.indexOf(parent_id)) return view.err('Новая родительская группа является вложеной и получается рекурсия. Этого не будет.')
+
 	const r = await db.changedRows(`
 		UPDATE showcase_groups
 		SET parent_id = :parent_id
@@ -106,7 +152,6 @@ rest.addResponse('set-groups-clearempty', async view => {
 		}
 		
 	}
-
 	
 	for (const group of groups) {
 		if (group.inside > 0) continue

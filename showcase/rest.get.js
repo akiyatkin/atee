@@ -454,6 +454,7 @@ rest.addResponse('get-groups', async view => {
 	for (const group of groups) {
 		group.direct = await db.col('select count(*) from showcase_models m, showcase_items i where m.model_id = i.model_id and item_num = 1 and m.group_id = :group_id', group)
 	}
+
 	const objgroups = {}
 	for (const group of groups) {
 		objgroups[group.group_id] = group
@@ -472,10 +473,11 @@ rest.addResponse('get-groups', async view => {
 		objgroups[group.parent_id].childs ??= []
 		objgroups[group.parent_id].childs.push(group)
 	}
+	
 
 	for (let group of groups) {
 		const direct = group.direct
-		while(group.parent_id) {
+		while (group.parent_id) {
 			group = objgroups[group.parent_id]
 			group.inside += direct
 		}
