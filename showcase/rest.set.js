@@ -112,7 +112,7 @@ rest.addResponse('set-groups-replace', async view => {
 	if (parent_id == group_id) return view.err('Вы хотите текущую группу переместить в текущую группу? Этого не будет.')
 
 	const tree = await getTree(view)
-	if (~tree[group_id].groups.indexOf(parent_id)) return view.err('Новая родительская группа является вложеной и получается рекурсия. Этого не будет.')
+	if (~tree[group_id].groups.indexOf(parent_id)) return view.err('Новая родительская группа является вложенной и получается рекурсия. Этого не будет.')
 
 	const r = await db.changedRows(`
 		UPDATE showcase_groups
