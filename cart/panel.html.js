@@ -96,6 +96,7 @@ export const ROOT = (data, env) => `
 			}
 			${env.scope} .panel.ready .body {
 				overflow-y: auto;
+				overflow-x: auto;
 
 			}
 			${env.scope} .panel.hide .body {
@@ -413,7 +414,7 @@ export const BODY = (data, env) => data.result && data.list.length ? `
 	<div class="padding" style="position: sticky; top: 0">
 		<style>
 			${env.scope} .list {
-				width: max-content;
+				width: fit-content;
 			    max-width: 100%;
 			    margin: 0 auto;
 				display: grid;
