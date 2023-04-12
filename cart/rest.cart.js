@@ -7,6 +7,11 @@ const rest = new Rest(rest_funcs, rest_vars, rest_user)
 
 rest.addArgument('order_id', ['int'])
 rest.addArgument('count', ['int'])
+rest.addArgument('field', ['string'], (view, val) => {
+	if (!~['name', 'phone','email','address','commentuser'].indexOf(val)) return view.err('Некорректный запрос, такого поля нет.')
+	return val
+})
+//rest.addArgument('value', ['string']) есть у каталога
 rest.addVariable('active_id', async view => {
 	const { db, user_id, order_id } = await view.gets(['db', 'user_id','order_id'])
 	if (!user_id) return false

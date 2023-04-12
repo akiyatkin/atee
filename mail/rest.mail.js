@@ -3,6 +3,7 @@ import funcs from '/-rest/rest.funcs.js'
 import config from '/-config'
 import UTM from '/-form/UTM.js'
 const rest = new Rest(funcs)
+import Mail from '/-mail'
 
 rest.addArgument('g-recaptcha-response')
 rest.addVariable('recaptcha', async (view) => {
@@ -23,9 +24,9 @@ rest.addVariable('recaptcha', async (view) => {
 	if (!result || !result['success']) return view.err('Не пройдена защита от спама')
 	return true
 })
-const emailreg = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+
 rest.addArgument('email', ['string'], (view, email) => {
-	if (email && !email.toLowerCase().match(emailreg)) return view.err('Уточните Ваш Email-адрес')
+	if (email && !Mail.isEmail(email)) return view.err('Уточните Ваш Email-адрес')
 	return email
 })
 rest.addVariable('email#required', async (view) => {
@@ -59,7 +60,7 @@ rest.addVariable('text#required', async (view) => {
 rest.addArgument('org', ['escape'])
 rest.addArgument('name', ['escape'])
 
-rest.addArgument('terms',['checkbox'], (terms) => {
+rest.addArgument('terms',['checkbox'], (view, terms) => {
 	if (!terms) return view.err('Требуется согласие на обработку персональных данных')
 })
 

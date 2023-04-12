@@ -14,6 +14,14 @@ Cart.createNick = async (view, user) => {
 	const order_nick = days + '-' + user.user_id + '-' + num
 	return order_nick
 }
+Cart.saveFiled = async (view, order_id, field, value) => {
+	const { db } = await view.gets(['db'])
+	return await db.exec(`
+		UPDATE cart_orders 
+		SET ${field} = :value, dateedit = now()
+		WHERE order_id = :order_id
+	`, {order_id, value})
+}
 Cart.getItem = async (view, order_id, brand_nick, model_nick, item_num) => {
 	return Catalog.getItemByNick(view, brand_nick, model_nick, item_num)
 }
@@ -32,7 +40,7 @@ Cart.removeItem = async (view, order_id, item) => {
 Cart.getOrder = async (view, order_id) => {
 	const { db } = await view.gets(['db'])
 	const order = await db.fetch(`
-		SELECT order_nick FROM cart_orders
+		SELECT order_nick, name, phone, email, address, commentuser FROM cart_orders
 		WHERE order_id = :order_id 
 	`, { order_id })
 	return order

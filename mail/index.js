@@ -7,7 +7,12 @@ const conf = await config('mail')
 const transport = conf.nodemailer ? nodemailer.createTransport(conf.nodemailer) : false
 if (!transport) console.log('nodemailer не настроен в .mail.json')
 if (transport) await fs.mkdir('data/auto/mail/', { recursive: true }).catch(e => null)
+
 const mail = {
+	emailreg: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+	isEmail: (email) => {
+		return email && email.toLowerCase().match(Mail.emailreg)
+	},
 	saveSend: opt => {
 		csv('data/auto/mail/.mail-v1.csv', opt)
 		if (!transport) return false
