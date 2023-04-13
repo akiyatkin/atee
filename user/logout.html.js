@@ -1,6 +1,11 @@
 
-export const ROOT = (data, env) => `
-	<h1>Выход</h1>
+export const ROOT = (data, env) => 
+`<h1>Выход</h1>` 
++ 
+(!data.user.user_id ? `
+	<p>Вы не авторизованы.</p>
+	<p>Выхода нет. <code>&copy;</code> Сплин  </p>
+` : `	
 	<form action="/-user/set-logout" data-goal="logout"><button type="submit">Выйти</button></form>
 	<script>
 		(form => {
@@ -13,4 +18,4 @@ export const ROOT = (data, env) => `
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>
-`
+`)

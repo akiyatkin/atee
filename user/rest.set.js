@@ -2,16 +2,43 @@
 import Rest from '/-rest'
 import User from '/-user/User.js'
 import crypto from 'crypto'
+import rest_admin from '/-controller/rest.admin.js'
 import rest_user from '/-user/rest.user.js'
 import rest_mail from "/-mail/rest.mail.js"
-const rest = new Rest(rest_user, rest_mail)
+
+import { whereisit } from '/-controller/whereisit.js'
+import fs from "fs/promises"
+const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
+
+const rest = new Rest(rest_user, rest_mail, rest_admin)
 
 rest.addArgument('token', ['string'])
 rest.addArgument('code', ['string'])
 //rest.addArgument('go', ['string'])
 
 
+rest.addResponse('set-reset', async view => {
+	await view.gets(['admin'])
+	const { db } = await view.gets(['db'])
 
+	const res = await db.exec(`DROP TABLE IF EXISTS 
+		user_users,
+		user_uemails,
+		user_uphones
+	`)
+	
+	const src = FILE_MOD_ROOT + '/update.sql'
+	const sql = await fs.readFile(src).then(buffer => buffer.toString())
+	const sqls = sql.split(';')
+
+	await Promise.all(sqls.map(sql => {
+		sql = sql.trim()
+		if (!sql) return Promise.resolve()
+		return db.exec(sql)
+	}))
+	
+	return view.ret('База обновлена')
+})
 
 rest.addAction('set-logout', async (view, src) => {
 	//const { } = await view.gets(['recaptcha'])
@@ -93,37 +120,8 @@ rest.addAction('set-signup-email', async (view, src) => {
 		return view.err('На указанный email уже есть регистрация')
 	}
 	//email свободен можно записать
-	await db.affectedRows(`
-		UPDATE
-			user_uemails
-		SET
-			ordain = ordain + 1
-		WHERE
-			user_id = :user_id
-	`, user)
-	const code_verify = crypto.randomBytes(4).toString('hex').toUpperCase()
-	await db.affectedRows(`
-		INSERT INTO 
-			user_uemails
-		SET
-			user_id = :user_id,
-			email = :email,
-			code_verify = :code_verify,
-			date_verify = now(),
-			date_add = now(),
-			ordain = 1
-	`, {email, code_verify, user_id})
-
-	await db.affectedRows(`
-		UPDATE
-			user_users
-		SET
-			date_signup = now()			
-		WHERE
-			user_id = :user_id
-	`, {user_id})
-
-	await User.sendEmail(view, 'signup', {user_id, email, code_verify})
+	await User.signup(view, user_id, email)
+	
 	return view.ret('Вы зарегистрированы. Вам отправлено письмо для подтверждения адреса.')
 })
 

@@ -252,7 +252,7 @@ export class View {
 		const rest = view.rest
 		const opt = rest.findopt(pname, pproc)
 				
-		if (!opt) return view.err(`rest.notfound ${pname}`, 404)
+		if (!opt) return view.err(`rest.notfound ${pname}`, 500)
 		
 		const proc = await view.getProc(opt)
 

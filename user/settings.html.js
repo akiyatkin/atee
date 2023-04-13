@@ -11,7 +11,7 @@ export const ROOT = (data, env) => `
 		btn.addEventListener('click', async () => {
 			if (!confirm('Все данные будут удалены. Пересоздать?')) return
 			btn.innerHTML = 'Процесс запущен...'
-			const ans = await fetch('/-user/admin/set-reset').then(res => res.json())
+			const ans = await fetch('/-user/set-reset').then(res => res.json())
 			btn.innerHTML = ans.msg
 			const Client = await window.getClient()
 			Client.reloaddiv('DATABASE')

@@ -5,6 +5,7 @@ export const ROOT = (data, env) => `
 `
 const showsignupalready = (data, env) => `
 	<p>Вы зарегистрированы</p>
+	<p><b>${data.user.email}</b></p>
 `
 const showsignupform = (data, env) => `
 	<form data-goal="signup" style="max-width:500px" action="/-user/set-signup-email">

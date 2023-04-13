@@ -17,7 +17,22 @@ export default rest
 
 rest.addResponse('set-submit', async view => {
 	const { db, terms, active_id, user } = await view.gets(['db', 'terms', 'user', 'active_id#required'])
-	return view.err('Обработка формы не готова')
+	const order = await Cart.getOrder(view, active_id)
+	for (const check of ['email','name','address','phone']) if (!order[check]) return view.err('Заполнены не все поля', 422)
+	if (order.status != 'wait') return view.err('Заказ уже отрпавлен менеджеру')
+	if (order.email != user.email) {
+		const order_user_id = await User.getUserIdByEmail(order.email)
+		if (order_user_id) {
+			//Есть зарегистрированный пользователь по заявке и он отличается от текущего
+			return view.err('Вам нужно авторизоваться. На почту отправлена ссылка.', 422)
+		}
+		//Пользователя по заявке нет
+		if (!user.email) { //И текущий пользователь не зарегистрирован
+			await User.signup(view, user.user_id, order.email)
+		}
+	}
+	await Cart.toCheck(view, active_id)
+	return view.ret('Менеджер оповещён')
 })
 
 rest.addResponse('set-field', async view => {
@@ -39,7 +54,8 @@ rest.addResponse('set-field', async view => {
 	return view.ret('Указанные данные сохранены')
 })
 rest.addResponse('set-add', async view => {
-	const { db, item, active_id, user, count } = await view.gets(['db', 'item#required', 'user', 'active_id', 'count'])
+	let { active_id, user } = await view.gets(['user', 'active_id'])
+	const { db, item, count } = await view.gets(['db', 'item#required', 'count'])
 	if (!active_id) {
 		if (!user) {
 			user = await User.create(view)

@@ -10,7 +10,7 @@ const User = {
 		//Прошлый пользователь ещё не регистрировался, надо замёрджить и удалить его
 		await db.affectedRows('DELETE from user_users where user_id = :user_id', olduser)
 	},
-	link: '/@atee/user/',
+	link: '/user/',
 	create: async view => {
 		const { db } = await view.gets(['db'])
 		const token = crypto.randomBytes(12).toString('hex')
@@ -121,6 +121,39 @@ const User = {
 			WHERE u.user_id = :user_id
 		`, {user_id})
 		return user
+	},
+	signup: async (view, user_id, email) => {
+		const { db } = await view.gets(['db'])
+		await db.affectedRows(`
+			UPDATE
+				user_uemails
+			SET
+				ordain = ordain + 1
+			WHERE
+				user_id = :user_id
+		`, user)
+		const code_verify = crypto.randomBytes(4).toString('hex').toUpperCase()
+		await db.affectedRows(`
+			INSERT INTO 
+				user_uemails
+			SET
+				user_id = :user_id,
+				email = :email,
+				code_verify = :code_verify,
+				date_verify = now(),
+				date_add = now(),
+				ordain = 1
+		`, {email, code_verify, user_id})
+
+		await db.affectedRows(`
+			UPDATE
+				user_users
+			SET
+				date_signup = now()			
+			WHERE
+				user_id = :user_id
+		`, {user_id})
+		await User.sendEmail(view, 'signup', {user_id, email, code_verify})
 	}
 }
 export default User

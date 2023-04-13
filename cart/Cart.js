@@ -1,14 +1,33 @@
 import Catalog from "/-catalog/Catalog.js"
-const Cart = {}
+import Mail from '/-mail'
+const Cart = {
+	toCheck: async (view, order_id) => {
+		await Cart.setStatus(view, order_id, 'check')
+		await Cart.sendToManager(view, 'tocheck', order_id)
+	},
+	sendToManager: async (view, sub, order_id) => {
+		const order = await Cart.getOrder(view, order_id)
+		const vars = await view.gets(['utms', 'host', 'ip'])
+		const data = {order, vars}
+		const tpl = await import('/-cart/mail.html.js').then(res => res.default)
+		if (!tpl[sub]) return view.err('Не найден шаблон письма', 500)
+		if (!tpl[sub + '_subject']) return view.err('Не найден шаблон темы', 500)
+		const subject = tpl[sub + '_subject'](data)
+		const html = tpl[sub](data)
+
+		const r = await Mail.toAdmin(subject, html) //email не указан, чтобы нельзя было ответить на заявку, так как там будет аналитика
+		if (!r) return view.err('Не удалось отправить письмо.', 500)
+		return true
+	}
+
+}
 
 Cart.createNick = async (view, user) => {
 	const { db } = await view.gets(['db'])
-	
-	
 	// Количество дней нужно округлить в меньшую сторону,
 	// чтобы узнать точное количество прошедших дней
 	// 86400 - количество секунд в 1 дне (60 * 60 * 24) + 000
-	const days = Math.floor((Date.now() - new Date('2023-01-01 00:00:00').getTime()) / 86400000)
+	const days = Math.floor((Date.now() - new Date('2020-01-01 00:00:00').getTime()) / 86400000)
 
 	const num = await db.col(`SELECT count(*) + 1 FROM cart_orders WHERE user_id = :user_id`, user)
 	const order_nick = days + '-' + user.user_id + '-' + num
@@ -40,7 +59,7 @@ Cart.removeItem = async (view, order_id, item) => {
 Cart.getOrder = async (view, order_id) => {
 	const { db } = await view.gets(['db'])
 	const order = await db.fetch(`
-		SELECT order_nick, name, phone, email, address, commentuser FROM cart_orders
+		SELECT user_id, order_nick, name, phone, email, address, commentuser, status FROM cart_orders
 		WHERE order_id = :order_id 
 	`, { order_id })
 	return order
@@ -110,4 +129,14 @@ Cart.create = async (view, user) => {
 	return order_id
 }
 
+Cart.setStatus = async (view, order_id, status) => {
+	const { db } = await view.gets(['db'])
+	return await db.exec(`
+		UPDATE cart_orders 
+		SET status = '${status}', date${status} = now()
+		WHERE order_id = ${order_id}
+	`)
+}
+
+		
 export default Cart
