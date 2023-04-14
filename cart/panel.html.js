@@ -2,6 +2,7 @@ import common from "/-catalog/common.html.js"
 import number from "/-cart/number-block.html.js"
 import words from "/-words/words.js"
 import cost from "/-words/cost.js"
+import ago from "/-words/ago.js"
 export const css = [...number.css, '/-float-label/style.css']
 
 export const ROOT = (data, env) => `
@@ -229,6 +230,11 @@ const checkbox = (name, title, checked) => `
 `
 export const SUM = (sum) => `${cost(sum)}${common.unit()}`
 export const TITLE = (obj) => `<b>${obj.length}</b> ${words(obj.length, 'позиция','позиции','позиций')} на <b>${SUM(obj.sum)}</b>`
+const TITLES = {
+	"wait":"Оформить заказ",
+	"check":"Заказ на проверке",
+	"pay":"Заказ ожидает оплату"
+}
 export const ORDER = (data, env) => data.result && data.list.length ? `
 	<div class="padding" style="position: sticky; top: 0;">
 		<style>
@@ -272,123 +278,165 @@ export const ORDER = (data, env) => data.result && data.list.length ? `
 			}
 		</style>
 		<div class="whenshow">
-			<h1 style="margin-top:1rem;">Оформить заказ <span style="float:right; font-weight: normal">№ ${data.order.order_nick}</span></h1>
+			<h1 style="margin-top:1rem;">${TITLES[data.order.status]} <span style="float:right; font-weight: normal">№ ${data.order.order_nick}</span></h1>
+			${data.order.status == 'check' ? showCheckDate(data) : ''}
 			<form action="/-cart/set-submit" style="clear:both; border-radius:var(--radius); display: grid; gap:1rem; padding:1rem; background:var(--lightyellow);">
 				<div class="float-label icon name field">
-					<input required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
+					<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
 					<label for="${env.sid}name">Получатель (ФИО)</label>
-					${svgres('required', data.order.name)}
+					${data.order.status == 'wait' ? svgres('required', data.order.name) : ''}
 				</div>
 				<div class="float-label icon phone field">
-					<input required id="contacts_phone" name="phone" type="tel" placeholder="Телефон" value="${data.order.phone || ''}">
+					<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="contacts_phone" name="phone" type="tel" placeholder="Телефон" value="${data.order.phone || ''}">
 					<label for="contacts_phone">Телефон</label>
-					${svgres('required', data.order.phone)}
+					${data.order.status == 'wait' ? svgres('required', data.order.phone) : ''}
 				</div>
 				<div class="float-label icon mail field">
-					<input required id="${env.sid}email" name="email" type="email" placeholder="Email" value="${data.order.email || ''}">
+					<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}email" name="email" type="email" placeholder="Email" value="${data.order.email || ''}">
 					<label for="${env.sid}email">Email</label>
-					${svgres('required', data.order.email)}
+					${data.order.status == 'wait' ? svgres('required', data.order.email) : ''}
 				</div>
 				<div class="float-label icon org field">
-					<input required id="${env.sid}address" name="address" type="text" placeholder="Адрес" value="${data.order.address || ''}">
+					<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}address" name="address" type="text" placeholder="Адрес" value="${data.order.address || ''}">
 					<label for="${env.sid}address">Адрес доставки</label>
-					${svgres('required', data.order.address)}
+					${data.order.status == 'wait' ? svgres('required', data.order.address) : ''}
 				</div>
 				<div>
 					Менеджер перезвонит в&nbsp;рабочее время, уточнит время и&nbsp;стоимость доставки. Стоимость доставки оплачивается отдельно в&nbsp;транспортной компании.
 				</div>
 				<div class="float-label field">
-					<textarea placeholder="Комментарий" id="${env.sid}text" 
+					<textarea ${data.order.status == 'wait' ? '' : 'disabled'} placeholder="Комментарий" id="${env.sid}text" 
 						name="commentuser" style="width:100%; box-sizing: border-box; min-height:130px">${data.order.commentuser || ''}</textarea>
 					<label for="${env.sid}text">Комментарий к заказу</label>
 					<div style="align-self: flex-start; margin-top: 0.5rem">
-						${svgres('optional', data.order.commentuser)}
+						${data.order.status == 'wait' ? svgres('optional', data.order.commentuser) : ''}
 					</div>
 				</div>
-				<div style="max-width: 500px;">
-					${checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на усфловиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}
-				</div>
-				<div class="field submit">
-					<p align="right"><button type="submit">Отправить</button></p>
-					${svgres('optional')}
-				</div>
+				
+				${data.order.status == 'wait' ? showSubmit(data, env) : ''}
 			</form>
-			<script>
-				(form => {
-					const promise = import("/-form/Autosave.js").then(r => r.default.init(form))
-					const setres = (res, type, msg) => {
-						const show = res.querySelector('.show')
-						if (show) show.classList.remove('show')
-						type = type || res.dataset.emptytype
-						res.dataset.type = type
-						res.dataset.msg = msg || {
-							optional:'Опциональное поле',
-							required:'Обязательное поле', 
-							success:'Данные сохранены',
-							loader: 'Идёт обработка'
-						}[type] || ''
-						const need = res.getElementsByClassName(type)[0]
-						need.classList.add('show')
-					}
-					const restore = (res, input) => {
-						const saved = res.dataset.saved || ''
-						if (input.value && input.value == saved) setres(res, 'success')
-						else if (input.value) setres(res, 'error')
-						else setres(res)
-					}
-					const request = async (res, input) => {
-						setres(res, 'loader')
-						const params = new URLSearchParams({
-							field: input.name,
-							value: input.value
-						})
-						const ans = await fetch('/-cart/set-field?order_id&'+params.toString()).then(r => r.json()).catch(e => {
-							console.log(e)
-							return {msg:'Ошибка на сервере'}
-						})
-						if (!input.value && ans.result) setres(res)
-						else setres(res, ans.result ? 'success' : 'error', ans.msg)
-						return ans
-					}
-					for (const field of form.querySelectorAll('.field')) {
-						const res = field.querySelector('.res')
-						if (!res) continue
-						let input = field.querySelector('input')
-						if (!input) input = field.querySelector('textarea')
-
-						res.addEventListener('click', async () => {
-							await promise
-							const show = res.querySelector('.show')
-							if (input && !res.dataset.msg) {
-								const ans = await request(res, input)
-								if (ans.msg) return
-							}
-							const msg = res.dataset.msg
-							const type = res.dataset.type
-							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-							Dialog.alert(msg)
-						})
-						
-						if (!input) continue
-						promise.then(() => restore(res, input))
-						input.addEventListener('input', async () => {
-							const ans = await request(res, input)
-						})
-					}
-					form.addEventListener('submit', async e => {
-						e.preventDefault()
-						const btn = form.querySelector('.submit')
-						const res = btn.getElementsByClassName('res')[0]
-						setres(res, 'loader')
-						const ans = await import('/-dialog/submit.js').then(r => r.default(form, {tpl:'${env.layer.tpl}', sub:'MSG'}))
-						if (ans.result) setres(res, 'success', ans.msg)
-						else setres(res, 'error', ans.msg)
-					})
-				})(document.currentScript.previousElementSibling)
-			</script>
+			
+			${data.orders.length > 1 ? showOrders(data, env) : ''}
 		</div>
 	</div>
 ` : ``
+const showCheckDate = (data) => `
+	<p>
+		Отправлен ${ago(data.order.datecheck * 1000)}. 	${new Date(data.order.datecheck * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric' })}
+	</p>
+`
+const showOrders = (data, env) => `
+	<h2>Заказы</h2>
+	<div style="padding-bottom:2rem">
+		${data.orders.map(order => showOrder(data, env, order)).join(', ')}
+	</div>
+	<script>
+		(div => {
+			for (const button of div.getElementsByTagName('button')) {
+				button.addEventListener('click', async () => {
+					const ans = await fetch('/-cart/set-newactive?' + new URLSearchParams({
+						order_id: button.dataset.order_id
+					}).toString()).then(r => r.json()).catch(e => {
+						console.log(e)
+						return {msg:'Ошибка на сервере'}
+					})
+					const Client = await window.getClient()
+					Client.global('cart')
+				})
+			}
+		})(document.currentScript.previousElementSibling)
+	</script>
+`
+const showOrder = (data, env, order) => `<button ${data.order.order_id == order.order_id ? 'disabled ' : ''}data-order_id="${order.order_id}" class="a">${order.order_nick}</button>`
+const showSubmit = (data, env) => `
+	<div style="max-width: 500px;">
+		${checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на усфловиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}
+	</div>
+	<div class="field submit">
+		<p align="right"><button type="submit">Отправить</button></p>
+		${svgres('optional')}
+	</div>
+	<script>
+		(form => {
+			const promise = import("/-form/Autosave.js").then(r => r.default.init(form))
+			const setres = (res, type, msg) => {
+				const show = res.querySelector('.show')
+				if (show) show.classList.remove('show')
+				type = type || res.dataset.emptytype
+				res.dataset.type = type
+				res.dataset.msg = msg || {
+					optional:'Опциональное поле',
+					required:'Обязательное поле', 
+					success:'Данные сохранены',
+					loader: 'Идёт обработка'
+				}[type] || ''
+				const need = res.getElementsByClassName(type)[0]
+				need.classList.add('show')
+			}
+			const restore = (res, input) => {
+				const saved = res.dataset.saved || ''
+				if (input.value && input.value == saved) setres(res, 'success')
+				else if (input.value) setres(res, 'error')
+				else setres(res)
+			}
+			const request = async (res, input) => {
+				setres(res, 'loader')
+
+				
+				const ans = await fetch('/-cart/set-field?order_id&'+ new URLSearchParams({
+					field: input.name,
+					value: input.value
+				}).toString()).then(r => r.json()).catch(e => {
+					console.log(e)
+					return {msg:'Ошибка на сервере'}
+				})
+
+				if (!input.value && ans.result) setres(res)
+				else setres(res, ans.result ? 'success' : 'error', ans.msg)
+				return ans
+			}
+			for (const field of form.querySelectorAll('.field')) {
+				const res = field.querySelector('.res')
+				if (!res) continue
+				let input = field.querySelector('input')
+				if (!input) input = field.querySelector('textarea')
+
+				res.addEventListener('click', async () => {
+					await promise
+					const show = res.querySelector('.show')
+					if (input && !res.dataset.msg) {
+						const ans = await request(res, input)
+					}
+					const msg = res.dataset.msg
+					const type = res.dataset.type
+					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+					Dialog.alert(msg)
+				})
+				
+				if (!input) continue
+				promise.then(() => restore(res, input))
+				input.addEventListener('input', async () => {
+					const ans = await request(res, input)
+				})
+			}
+			form.addEventListener('submit', async e => {
+				e.preventDefault()
+				const btn = form.querySelector('.submit')
+				const res = btn.getElementsByClassName('res')[0]
+				setres(res, 'loader')
+				const ans = await import('/-dialog/submit.js').then(r => r.default(form, {tpl:'${env.layer.tpl}', sub:'MSG'}))
+				if (ans.result) {
+					//setres(res, 'success', ans.msg)
+					const Client = await window.getClient()
+					Client.global('cart')
+					//Client.reloadts('${env.layer.ts}')
+				} else {
+					setres(res, 'error', ans.msg) 
+				}
+			})
+		})(document.currentScript.parentElement)
+	</script>
+`
 export const MSG = (data, env) => `
 	<h1>${data.result ? 'Готово' : 'Ошибка'}</h1>
 	<div style="max-width: 400px;"><p class="msg">${data.msg || ''}</p></div>
@@ -480,13 +528,17 @@ export const BODY = (data, env) => data.result && data.list.length ? `
 			const input = block.querySelector('input[type=number]')
 			const modsum = block.querySelector('.modsum')
 			state.list.push(mod)
-			input.addEventListener('input', () => {
+			input.addEventListener('input', async () => {
 				mod.count = input.value
 				mod.sum = mod.cost * mod.count
 				modsum.innerHTML = SUM(mod.sum)
 				recalc()
 				title.innerHTML = TITLE(state)
-				fetch('/-cart/set-add?order_id&count=' + mod.count +'&model_nick='+mod.model_nick+'&brand_nick='+mod.brand_nick+'&item_num='+mod.item_num+'&partner=${env.theme.partner || ""}').catch(e => console.log(e))
+				const ans = await fetch('/-cart/set-add?order_id&count=' + mod.count +'&model_nick='+mod.model_nick+'&brand_nick='+mod.brand_nick+'&item_num='+mod.item_num+'&partner=${env.theme.partner || ""}').then(r => r.json()).catch(e => console.log(e))
+				if (ans?.newactive) {
+					const Client = await window.getClient()
+					Client.global('cart')
+				}
 			})
 			const del = block.querySelector('.del')
 			del.addEventListener('click', async () => {

@@ -368,8 +368,8 @@ const addHtml = async (template, layer, bread, timings, theme) => {
 	if (layer.replacetpl) {
 		const tpl = interpolate(layer.replacetpl, layer.sys.data, env)
 		layer.sys.tplobj = await import(tpl).then(res => res.default || res).catch(e => {
-			console.log('replacetpl', e)
-			location.reload()
+			console.log('replacetpl', e, layer)
+			if (!layer.onlyclient) location.reload()
 		})
 	}
 	if (layer.sys.html) {
@@ -405,8 +405,8 @@ const loadAll = (layers, promises = [], proc = {}) => {
 		let promise = proc[layer.json]
 		if (!promise) promise = fetch(layer.json).then(res => {
 			if (res.status != 200 && res.status != 422) {
-				console.log(4, res)
-				location.reload()
+				console.log(4, res, layer)
+				if (!layer.onlyclient) location.reload()
 				return new Promise(() => {})//reload сразу не происходит, надо зависнуть
 			}
 			const type = res.headers.get('Content-Type')
@@ -423,8 +423,9 @@ const loadAll = (layers, promises = [], proc = {}) => {
 				let promise = import(layer.tpl).then(res => {
 					layer.sys.tplobj = res.default || res
 				}).catch(e => {
-					console.log(3, e)
-					location.reload()
+					console.log(3, e, layer)
+					if (!layer.onlyclient) location.reload()
+					return {}
 				})
 				promises.push(promise)
 			}

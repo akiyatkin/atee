@@ -11,7 +11,7 @@ const rest = new Rest(rest_db, rest_admin, rest_user, rest_cart, rest_vars)
 export default rest
 
 rest.addResponse('get-panel', async view => {
-	const { db, active_id } = await view.gets(['db', 'active_id#required'])
+	const { db, active_id, user_id } = await view.gets(['db', 'active_id#required','user_id'])
 	view.ans.order = await Cart.getOrder(view, active_id)
 	const list = await db.all(`
 		SELECT model_nick, brand_nick, count, item_num 
@@ -33,6 +33,12 @@ rest.addResponse('get-panel', async view => {
 		view.ans.sum += mod.sum
 	})
 
+	view.ans.orders = await db.all(`
+		SELECT o.order_nick, o.status, o.order_id
+		FROM cart_userorders uo, cart_orders o
+		WHERE uo.user_id = :user_id and uo.order_id = o.order_id
+	`, {user_id, active_id})
+
 	return view.ret()
 })
 rest.addResponse('get-list', async view => {
@@ -52,6 +58,7 @@ rest.addResponse('get-settings', async view => {
 	const { db } = await view.gets(['db'])
 	const tables = [
 		'cart_orders',
+		'cart_actives',
 		'cart_transports',
 		'cart_basket',
 		'cart_userorders'

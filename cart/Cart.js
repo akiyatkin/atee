@@ -18,8 +18,40 @@ const Cart = {
 		const r = await Mail.toAdmin(subject, html) //email не указан, чтобы нельзя было ответить на заявку, так как там будет аналитика
 		if (!r) return view.err('Не удалось отправить письмо.', 500)
 		return true
-	}
+	},
+	castWaitActive: async (view, active_id) => {
+		let { db, user } = await view.gets(['db', 'user'])
+		if (!user) {
+			user = await User.create(view)
+			User.setCookie(view, user)
+		}
+		if (!active_id) return Cart.create(view, user)
+		const order = await Cart.getOrder(view, active_id)
+		if (order.status == 'wait') return active_id
+		let nactive_id = await db.col(`
+			SELECT uo.order_id
+			FROM cart_userorders uo, cart_orders o
+			WHERE uo.order_id != :active_id and uo.order_id = o.order_id and uo.user_id = :user_id and o.status = 'wait'
+		`, {
+			active_id, 
+			user_id:user.user_id
+		})
+		if (!nactive_id) {
+			//Другой активной нет, надо создать и скопировать
+			nactive_id = await Cart.create(view, user)
 
+		} else {
+			await db.exec(`
+				UPDATE cart_actives
+				SET order_id = :active_id
+				WHERE user_id = :user_id
+			`, {
+				active_id: nactive_id, 
+				user_id:user.user_id
+			})
+		}
+		return nactive_id
+	}
 }
 
 Cart.createNick = async (view, user) => {
@@ -59,7 +91,11 @@ Cart.removeItem = async (view, order_id, item) => {
 Cart.getOrder = async (view, order_id) => {
 	const { db } = await view.gets(['db'])
 	const order = await db.fetch(`
-		SELECT user_id, order_nick, name, phone, email, address, commentuser, status FROM cart_orders
+		SELECT 
+			order_id, 
+			UNIX_TIMESTAMP(datecheck) as datecheck, 
+			user_id, order_nick, name, phone, email, address, commentuser, status 
+		FROM cart_orders
 		WHERE order_id = :order_id 
 	`, { order_id })
 	return order
@@ -99,7 +135,7 @@ Cart.create = async (view, user) => {
 	const { db } = await view.gets(['db'])
 	const user_id = user.user_id
 
-	const fields = ['name','phone','address','tk','zip','transport','city_id','pay','pvz']
+	const fields = ['name','phone','address','tk','zip','transport','city_id','pay','pvz','commentuser']
 	//Берём данные из прошлой заявки у которой автор этот пользователь
 	let row = await db.fetch(`
 		SELECT ${fields.join(',')} 
@@ -123,8 +159,12 @@ Cart.create = async (view, user) => {
 	if (!order_id) return false;
 	
 	await db.exec(`
-		INSERT INTO cart_userorders (user_id, order_id, active) VALUES(:user_id, :order_id, 1)
+		INSERT INTO cart_userorders (user_id, order_id) VALUES(:user_id, :order_id)
 	`, {user_id, order_id})
+	await db.exec(`
+		REPLACE INTO cart_actives (user_id, order_id) VALUES(:user_id, :order_id)
+	`, {user_id, order_id})
+	
 	
 	return order_id
 }

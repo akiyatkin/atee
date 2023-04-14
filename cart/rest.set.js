@@ -37,6 +37,9 @@ rest.addResponse('set-submit', async view => {
 
 rest.addResponse('set-field', async view => {
 	const { db, field, value, active_id, user } = await view.gets(['db', 'field', 'value', 'user', 'active_id#required'])
+	const order = await Cart.getOrder(view, active_id)
+	if (order[field] == value) return view.ret('Данные сохранены')
+	if (order.status != 'wait') return view.err('Заявка уже отправлена менеджеру', 500)
 	if (field == 'name') {
 		if (value.length < 5) return view.err('Вы указали очень короткие ФИО', 422)
 	} else if (field == 'email') {
@@ -53,23 +56,30 @@ rest.addResponse('set-field', async view => {
 	if (!r) view.err('Ошибка на сервере', 500)
 	return view.ret('Указанные данные сохранены')
 })
+rest.addResponse('set-newactive', async view => {
+	const { order, db, user_id } = await view.gets(['db', 'order#required','user_id'])
+	await db.exec(`
+		UPDATE cart_actives
+		SET order_id = :active_id
+		WHERE user_id = :user_id
+	`, {
+		active_id: order.order_id, 
+		user_id: user_id
+	})
+	return view.ret()
+})
 rest.addResponse('set-add', async view => {
-	let { active_id, user } = await view.gets(['user', 'active_id'])
+	let { active_id } = await view.gets(['active_id'])
 	const { db, item, count } = await view.gets(['db', 'item#required', 'count'])
-	if (!active_id) {
-		if (!user) {
-			user = await User.create(view)
-			User.setCookie(view, user)
-		}
-		active_id = await Cart.create(view, user)
-	}
-
-	await Cart.addItem(view, active_id, item, count)
+	const nactive_id = await Cart.castWaitActive(view, active_id)
+	view.ans.newactive = active_id != nactive_id
+	await Cart.addItem(view, nactive_id, item, count)
 	return view.ret('Готово')
 })
 rest.addResponse('set-remove', async view => {
-	let { db, item, active_id, user } = await view.gets(['db', 'item#required', 'user', 'active_id'])
+	let { db, item, active_id } = await view.gets(['db', 'item#required', 'active_id'])
 	if (!active_id) return view.err('Заказ не найден')
+	active_id = await Cart.castWaitActive(view, active_id)
 	await Cart.removeItem(view, active_id, item)
 	return view.ret('Готово')
 })
@@ -85,6 +95,7 @@ rest.addResponse('set-reset', async view => {
 		cart_orders,
 		cart_transports,
 		cart_basket,
+		cart_actives,
 		cart_userorders
 	`)
 	
