@@ -21,7 +21,7 @@ rest.addResponse('set-submit', async view => {
 	for (const check of ['email','name','address','phone']) if (!order[check]) return view.err('Заполнены не все поля', 422)
 	if (order.status != 'wait') return view.err('Заказ уже отрпавлен менеджеру')
 	if (order.email != user.email) {
-		const order_user_id = await User.getUserIdByEmail(order.email)
+		const order_user_id = await User.getUserIdByEmail(view, order.email)
 		if (order_user_id) {
 			//Есть зарегистрированный пользователь по заявке и он отличается от текущего
 			return view.err('Вам нужно авторизоваться. На почту отправлена ссылка.', 422)

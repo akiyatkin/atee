@@ -425,7 +425,11 @@ const showSubmit = (data, env) => `
 				const res = btn.getElementsByClassName('res')[0]
 				for (const r of form.getElementsByClassName('res')) {
 					if (r == res) continue
-					if (!r.querySelector('.show').classList.contains('success')) {
+					const showcls = r.querySelector('.show').classList
+					if (
+						!showcls.contains('success')
+						&& !showcls.contains('optional')
+					) {
 						r.click()
 						return
 					}
