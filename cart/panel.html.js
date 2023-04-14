@@ -423,6 +423,13 @@ const showSubmit = (data, env) => `
 				e.preventDefault()
 				const btn = form.querySelector('.submit')
 				const res = btn.getElementsByClassName('res')[0]
+				for (const r of form.getElementsByClassName('res')) {
+					if (r == res) continue
+					if (!r.querySelector('.show').classList.contains('success')) {
+						r.click()
+						return
+					}
+				}
 				setres(res, 'loader')
 				const ans = await import('/-dialog/submit.js').then(r => r.default(form, {tpl:'${env.layer.tpl}', sub:'MSG'}))
 				if (ans.result) {
