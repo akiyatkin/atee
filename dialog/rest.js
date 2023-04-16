@@ -8,7 +8,7 @@ import rest_funcs from '/-rest/rest.funcs.js'
 const rest = new Rest(rest_funcs, rest_mail)
 
 rest.addResponse('set-callback', async (view) => {
-	await view.gets(['recaptcha','terms'])
+	await view.gets(['recaptcha'])
     const user = await view.gets(['phone#required', 'utms', 'host', 'ip'])
     const html = mailtpl.CALLBACK(user)
     const r = await mail.toAdmin(`Заказ звонка ${user.host} ${user.phone}`, html)

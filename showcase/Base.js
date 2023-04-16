@@ -81,6 +81,7 @@ class Base {
 			types.bond = ["Файл", "sheet_title", "Фото", "Арт"]
 			types.file = ["texts", "images", "files", "videos", "slides","unknown_files"]
 			const systems = [
+				"Скрыть фильтры",
 				"tpl","parent_id",
 				"card_props", "item_props", "model_props", 
 				"min","max",
