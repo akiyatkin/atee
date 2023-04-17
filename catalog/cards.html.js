@@ -116,16 +116,16 @@ cards.prop = {
 	bold: (data, env, mod, pr, title, val) => cards.prop.default(data, env, mod, pr, title, `<b>${val}</b>`),
 	brand: (data, env, mod, pr, title, val) => cards.prop.just(data, env, mod, pr, title, 
 		data.md?.brand?.[mod.brand_nick]
-			? `<b>${mod.brand_title}</b>` : `<a href="${env.crumb.parent}/${links.addm(data)}brand::.${mod.brand_nick}=1">${mod.brand_title}</a>`
+			? `<b>${mod.brand_title}</b>` : `<a href="${env.crumb.parent||'/catalog'}/${links.addm(data)}brand::.${mod.brand_nick}=1">${mod.brand_title}</a>`
 	),
 	model: (data, env, mod, pr, title, val) => cards.prop.just(data, env, mod, pr, title, 
-		`<a href="${env.crumb.parent}/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${val}</a>`
+		`<a href="${env.crumb.parent||'/catalog'}/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${val}</a>`
 	),
 	modelhidden: (data, env, mod, pr, title, val) => cards.prop.just(data, env, mod, pr, title, 
-		`<a style="color:inherit" href="${env.crumb.parent}/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${val}</a>`
+		`<a style="color:inherit" href="${env.crumb.parent||'/catalog'}/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${val}</a>`
 	),
 	group: (data, env, mod, pr, title, val) => cards.prop.p(data, env, mod, pr, title, 
-		`<a style="max-width:100%" href="${env.crumb.parent}/${mod.group_nick}"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block">${mod.group_title}</span></a>`
+		`<a style="max-width:100%" href="${env.crumb.parent||'/catalog'}/${mod.group_nick}"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block">${mod.group_title}</span></a>`
 	),
 	cost: (data, env, mod, pr, title, val) => cards.prop.bold(data, env, mod, pr, title, `${cost(val)}${common.unit()}`),
 	hideable: (data, env, mod, pr, title, val) => cards.prop.default(data, mod, pr, title, val.length < 30 ? val : `
@@ -150,19 +150,19 @@ cards.prop = {
 	justlinknowrap: (data, env, mod, pr, title, val) => cards.prop.just(data, env, mod, pr, title, 
 		val.split(', ').map(val => 
 			data.md.more && data.md.more[pr.prop_nick] && data.md.more[pr.prop_nick][val] 
-			? `<b>${val}</b>` : `<a href="${env.crumb.parent}/${links.addm(data)}more.${pr.prop_nick}::.${nicked(val)}=1">${val}</a>`
+			? `<b>${val}</b>` : `<a href="${env.crumb.parent||'/catalog'}/${links.addm(data)}more.${pr.prop_nick}::.${nicked(val)}=1">${val}</a>`
 		).join(', ')
 	),
 	
 	justlink: (data, env, mod, pr, title, val) => cards.prop.justwrap(data, env, mod, pr, title, 
 		val.split(', ').map(val => 
 			data.md?.more?.[pr.prop_nick]?.[nicked(val)] 
-			? `<b>${val}</b>` : `<a href="${env.crumb.parent}/${links.addm(data)}more.${pr.prop_nick}::.${nicked(val)}=1">${val}</a>`
+			? `<b>${val}</b>` : `<a href="${env.crumb.parent||'/catalog'}/${links.addm(data)}more.${pr.prop_nick}::.${nicked(val)}=1">${val}</a>`
 		).join(', ')
 	),
 	brandart: (data, env, mod, pr, title, val) => cards.prop.p(data, env, mod, pr, title, `
 		${data.brand?.brand_nick != mod.brand_nick ? cards.brandlink(data, env, mod) : '<b>' + mod.brand_title + '</b>'}
-		<br><a style="white-space: normal" href="${env.crumb.parent}/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${mod.model_title}</a>
+		<br><a style="white-space: normal" href="${env.crumb.parent||'/catalog'}/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${mod.model_title}</a>
 	`),
 	p: (data, env, mod, pr, title, val) => `<div style="margin: 0.25rem 0;">${val}</div>`,
 	empty: () => '',
@@ -172,7 +172,7 @@ cards.prop = {
 }
 
 cards.brandlink = (data, env, mod) => `
-	<a href="${env.crumb.parent}/${mod.brand_nick}${links.setm(data)}">${mod.brand_title}</a>
+	<a href="${env.crumb.parent||'/catalog'}/${mod.brand_nick}${links.setm(data)}">${mod.brand_title}</a>
 `
 cards.basket = (data, mod) => {
 	let html = ''
@@ -221,7 +221,7 @@ cards.nalichie = (data, env, mod) => `
 	<div style="position:absolute; right: 0px; z-index:1; margin: 1rem; top:0">${cards.badgenalichie(data, env, mod)}</div>
 `
 cards.badgenalichie = (data, env, mod) => mod.Наличие ? `
-	<a rel="nofollow" href="${env.crumb.parent}/${links.addm(data)}more.${cards.nal}::.${nicked(mod.Наличие)}=1" 
+	<a rel="nofollow" href="${env.crumb.parent||'/catalog'}/${links.addm(data)}more.${cards.nal}::.${nicked(mod.Наличие)}=1" 
 		class="badge badge_${nicked(mod['Наличие'] || 'discount')}">
 		${mod.discount ? ('-' + mod.discount + '%') : mod.Наличие}
 	</a>
