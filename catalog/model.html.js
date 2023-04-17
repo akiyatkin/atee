@@ -163,7 +163,7 @@ model.maindata = (data, env, mod) => `
 			</p>
 			<p>${cards.basket(data, mod)}</p>
 			<p>
-				<button style="font-size:1.4rem; margin:1rem 0">Сделать заказ</button>
+				<button style="font-size:1.4rem; margin:1rem 0">${(mod.Цена||mod.min) ? 'Седелать заказ' : 'Оставить запрос'}</button>
 				<script>
 					(btn => {
 						btn.addEventListener('click', async () => {
