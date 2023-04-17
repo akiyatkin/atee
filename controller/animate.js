@@ -6,6 +6,7 @@ link.href = '/-controller/animate.css'
 document.head.prepend(link)
 
 export const animate = (tag, a, animate = '', promise = Promise.resolve()) => {
+	if (!a) return
 	const reg = new RegExp(tag + '-animate-')
 	if (animate) animate = '-' + animate
 	const list = a.classList
