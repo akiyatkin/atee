@@ -33,6 +33,13 @@ cont.CALLBACK = (data, env) => `
 		</script>
 	</div>
 `
+const checkbox = (name, title, checked) => `
+	<div style="align-items: flex-start; display: grid; grid-template-columns: max-content 1fr;">
+		<input ${checked ? 'checked' : ''} style="margin-right: 10px; transform: scale(1.4); transform-origin: left center" 
+		type="checkbox" id="contacts_${name}" name="${name}"> 
+		<label for="contacts_${name}">${title}</label>
+	</div>
+`
 cont.CONTACTS = (data, env) => `
 	<div style="max-width:500px">
 		<h1>Форма для связи</h1>
@@ -71,6 +78,9 @@ cont.CONTACTS = (data, env) => `
 			<div class="float-label">
 				<textarea id="${env.sid}text" name="text" rows="4" placeholder="Сообщение">${data?.text || ''}</textarea>
 				<label for="${env.sid}text">Сообщение</label>
+			</div>
+			<div style="max-width: 500px;">
+				${checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на усфловиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}
 			</div>
 			<p align="right">
 				<button type="submit">Отправить</button>
