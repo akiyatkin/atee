@@ -599,7 +599,7 @@ export class Upload {
 						continue //Пустое значение.. с прайсом итак было удалено
 					}
 					let value_titles = []
-					if (~options.justonevalue_nicks.indexOf(prop.prop_nick)) {
+					if (prop.type == 'text' || ~options.justonevalue_nicks.indexOf(prop.prop_nick)) {
 						value_titles = [value_title]
 					} else {
 						value_titles = String(value_title).split(',').map(v => v.trim()).filter(v => v)
@@ -617,85 +617,48 @@ export class Upload {
 						let number = null
 
 						if (prop.type == 'value') {
-							const values = value_title.split(",")
-							for (const value of values) {
-								const value_nick = base.onicked(value_title)
-								if (!value_nick) {
-									omissions[sheet].emptyprops[prop_title] ??= []
-									omissions[sheet].emptyprops[prop_title].push(row)
-									continue
-								}
-								value_id = await db.col('SELECT value_id from showcase_values where value_nick = :value_nick', { value_nick })
-								if (!value_id) value_id = await db.insertId(`
-									INSERT INTO 
-							 			showcase_values
-							 		SET
-							 			value_title = :value_title,
-							 			value_nick = :value_nick
-							 	`, { value_nick, value_title })
-								fillings.push({value_id, text, number})
+							const value_nick = base.onicked(value_title)
+							if (!value_nick) {
+								omissions[sheet].emptyprops[prop_title] ??= []
+								omissions[sheet].emptyprops[prop_title].push(row)
+								continue
 							}
+							value_id = await db.col('SELECT value_id from showcase_values where value_nick = :value_nick', { value_nick })
+							if (!value_id) value_id = await db.insertId(`
+								INSERT INTO 
+						 			showcase_values
+						 		SET
+						 			value_title = :value_title,
+						 			value_nick = :value_nick
+						 	`, { value_nick, value_title })
+							fillings.push({value_id, text, number})
 						} else if (prop.type == 'bond') {
-							const values = value_title.split(",")
-							for (const value of values) {
-								const value_nick = base.onicked(value_title)
-								if (!value_nick) {
-									omissions[sheet].emptyprops[prop_title] ??= []
-									omissions[sheet].emptyprops[prop_title].push(row)
-									continue
-								}
-								bond_id = await db.col('SELECT bond_id from showcase_bonds where bond_nick = :value_nick', { value_nick })
-								if (!bond_id) bond_id = await db.insertId(`
-									INSERT INTO 
-							 			showcase_bonds
-							 		SET
-							 			bond_title = :value_title,
-							 			bond_nick = :value_nick
-							 	`, { value_nick, value_title })
-								fillings.push({bond_id, value_id, text, number})
+							const value_nick = base.onicked(value_title)
+							if (!value_nick) {
+								omissions[sheet].emptyprops[prop_title] ??= []
+								omissions[sheet].emptyprops[prop_title].push(row)
+								continue
 							}
+							bond_id = await db.col('SELECT bond_id from showcase_bonds where bond_nick = :value_nick', { value_nick })
+							if (!bond_id) bond_id = await db.insertId(`
+								INSERT INTO 
+						 			showcase_bonds
+						 		SET
+						 			bond_title = :value_title,
+						 			bond_nick = :value_nick
+						 	`, { value_nick, value_title })
+							fillings.push({bond_id, value_id, text, number})
 						} else if (prop.type == 'text') {
 							text = value_title
 							fillings.push({bond_id, value_id, text, number})
 						} else if (prop.type == 'number') {
-
-							// if (prop.prop_title == 'Цена') {
-							// 	let number = base.toNumber(value_title)
-							// 	if (number == false){
-							// 		omissions[sheet].emptyprops[prop_title] ??= []
-							// 		omissions[sheet].emptyprops[prop_title].push(row)
-							// 		continue
-							// 	}
-							// 	// if (conf.usd && conf.usdlist && ~conf.usdlist.indexOf(sheet)) {
-							// 	// 	number = number * conf.usd
-							// 	// }
-							// 	// if (conf.skidka) {
-							// 	// 	number = number * (100 - conf.skidka) / 100
-							// 	// }
-							// 	// if (!conf.float) number = Math.round(number)
-							// 	fillings.push({bond_id, value_id, text, number})
-							// } else 
-							if (typeof(value_title) == 'string') {
-								const numbers = value_title.split(",")	
-								for (const num of numbers) {
-									const number = base.toNumber(num)
-									if (number === false || number === ''){
-										omissions[sheet].emptyprops[prop_title] ??= []
-										omissions[sheet].emptyprops[prop_title].push(row)
-										continue
-									}
-									fillings.push({bond_id, value_id, text, number})
-								}
-							} else {
-								const number = base.toNumber(value_title)
-								if (number === false || number === ''){
-									omissions[sheet].emptyprops[prop_title] ??= []
-									omissions[sheet].emptyprops[prop_title].push(row)
-									continue
-								}
-								fillings.push({bond_id, value_id, text, number})
+							const number = base.toNumber(value_title)
+							if (number === false || number === ''){
+								omissions[sheet].emptyprops[prop_title] ??= []
+								omissions[sheet].emptyprops[prop_title].push(row)
+								continue
 							}
-							
+							fillings.push({bond_id, value_id, text, number})
 						}
 						somepropsinsert = true
 						for (const fill of fillings) {
@@ -1158,12 +1121,12 @@ export class Upload {
 					const prop_title = heads.head_titles[i]
 					const type = await base.getPropTypeByNick(prop_nick)
 
-					
 					if (type != 'text' && !~options.justonevalue_nicks.indexOf(prop_nick)) {
 						item[i] = String(value_title).split(',').map(v => v.trim()).filter(v => v)
 					} else {
 						item[i] = [value_title]
 					}
+
 					if (type == 'text') continue
 					if (type == 'number') {
 
@@ -1218,6 +1181,7 @@ export class Upload {
 								`)
 								//console.log(msgs[msgs.length - 1])
 							}
+
 							if (type == 'value') {
 								const value_title = v_title.slice(-base.LONG).trim()
 								values[v_title] = { value_title, value_nick }
