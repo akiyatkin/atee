@@ -125,7 +125,7 @@ cards.prop = {
 		`<a style="color:inherit; border:none;" href="${env.crumb.parent||'/catalog'}/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${val}</a>`
 	),
 	modelhiddenwrap: (data, env, mod, pr, title, val) => cards.prop.justwrap(data, env, mod, pr, title, 
-		`<a style="color:inherit; border:none;" href="${env.crumb.parent||'/catalog'}/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${val}</a>`
+		`<a style="color:inherit; border:none; white-space: normal;" href="${env.crumb.parent||'/catalog'}/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${val}</a>`
 	),
 	group: (data, env, mod, pr, title, val) => cards.prop.p(data, env, mod, pr, title, 
 		`<a style="max-width:100%" href="${env.crumb.parent||'/catalog'}/${mod.group_nick}"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block">${mod.group_title}</span></a>`
