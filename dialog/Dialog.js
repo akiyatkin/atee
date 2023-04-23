@@ -131,6 +131,7 @@ export const Dialog = {
 		if (onshow) onshow(popup)
 		return popup
 	},
+
 	hide: popup => {
 		//document.getElementsByTagName('html')[0].style.overscrollY = ''
 		popup = popup.tagName ? popup : document.getElementById(popup)

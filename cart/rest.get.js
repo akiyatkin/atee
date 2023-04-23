@@ -10,6 +10,8 @@ import Cart from "/-cart/Cart.js"
 const rest = new Rest(rest_db, rest_admin, rest_user, rest_cart, rest_vars)
 export default rest
 
+
+const formatter = new Intl.DateTimeFormat('ru', { month: 'long' });
 rest.addResponse('get-panel', async view => {
 	const { db, active_id, user_id } = await view.gets(['db', 'active_id#required','user_id'])
 	view.ans.order = await Cart.getOrder(view, active_id)
@@ -33,11 +35,39 @@ rest.addResponse('get-panel', async view => {
 		view.ans.sum += mod.sum
 	})
 
+
 	view.ans.orders = await db.all(`
-		SELECT o.order_nick, o.status, o.order_id
+		SELECT o.order_nick, o.status, o.order_id,
+			UNIX_TIMESTAMP(datecheck) as datecheck, 
+			UNIX_TIMESTAMP(datewait) as datewait
 		FROM cart_userorders uo, cart_orders o
 		WHERE uo.user_id = :user_id and uo.order_id = o.order_id
 	`, {user_id, active_id})
+	for (const order of view.ans.orders) {
+		const poss = await db.all(`
+			SELECT count, cost 
+			FROM cart_basket
+			WHERE order_id = :order_id
+		`, order)
+		order.sum = 0
+		for (const {count, cost} of poss) {
+			order.sum += count * cost
+		}
+	}
+	const years = {}
+	for (const index in view.ans.orders) {
+		const order = view.ans.orders[index]
+		const date = new Date((order.datecheck || order.datewait) * 1000)
+		const year = date.getFullYear()
+		if (!years[year]) years[year] = {title: year, months: {}} 
+		const month = formatter.format(date)	
+		if (!years[year].months[month]) years[year].months[month] = {title: month, list: []}
+		years[year].months[month].list.push(index)
+	}
+	view.ans.years = Object.values(years)
+	for (const year of view.ans.years) {
+		year.months = Object.values(year.months)
+	}
 
 	return view.ret()
 })

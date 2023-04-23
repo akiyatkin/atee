@@ -96,11 +96,24 @@ Cart.getOrder = async (view, order_id) => {
 	const order = await db.fetch(`
 		SELECT 
 			order_id, 
+			count, 
 			UNIX_TIMESTAMP(datecheck) as datecheck, 
+			UNIX_TIMESTAMP(datewait) as datewait, 
 			user_id, order_nick, name, phone, email, address, commentuser, status 
 		FROM cart_orders
 		WHERE order_id = :order_id 
 	`, { order_id })
+
+	const poss = await db.all(`
+		SELECT count, cost 
+		FROM cart_basket
+		WHERE order_id = :order_id
+	`, order)
+	order.sum = 0
+	for (const {count, cost} of poss) {
+		order.sum += count * cost
+	}
+
 	return order
 }
 Cart.addItem = async (view, order_id, item, count = 0) => {
@@ -118,20 +131,31 @@ Cart.addItem = async (view, order_id, item, count = 0) => {
 	if (!pos) {
 		await db.exec(`
 			INSERT INTO cart_basket (
-			order_id, model_nick, brand_nick, item_num, count, dateadd, dateedit
+			order_id, model_nick, brand_nick, item_num, count, cost, dateadd, dateedit
 		) VALUES (
-			:order_id, :model_nick, :brand_nick, :item_num, :count, now(), now()
-		)`, {order_id, ...item, count})
+			:order_id, :model_nick, :brand_nick, :item_num, :count, :cost, now(), now()
+		)`, {order_id, ...item, count, cost: item['Цена']})
 	} else {
 		await db.exec(`
 			UPDATE cart_basket 
-			SET count = :count, dateedit = now()
+			SET 
+				count = :count, 
+				cost = :cost, 
+				dateedit = now()
 			WHERE order_id = :order_id
 			and brand_nick = :brand_nick
 			and model_nick = :model_nick
 			and item_num = :item_num
-		`, {order_id, ...item, count})
+		`, {order_id, ...item, count, cost: item['Цена']})
 	}
+
+	const poscount = await db.fetch(`
+		SELECT count FROM cart_basket 
+		WHERE order_id = :order_id 
+	`, {
+		order_id
+	})
+	console.log(poscount)
 	return true
 }
 Cart.create = async (view, user) => {

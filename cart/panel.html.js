@@ -170,7 +170,6 @@ export const ROOT = (data, env) => `
 								if (e.code != "Escape") return
 								if (panel.classList.contains('hide')) return
 								if (!panel.classList.contains('show')) return
-								//e.stopImmediatePropagation()
 								const Panel = await import('/-cart/Panel.js').then(r => r.default)
 								Panel.down(panel)
 							}
@@ -229,13 +228,14 @@ const checkbox = (name, title, checked) => `
 	</div>
 `
 export const SUM = (sum) => `${cost(sum)}${common.unit()}`
-export const TITLE = (obj) => `<b>${obj.length}</b> ${words(obj.length, 'позиция','позиции','позиций')} на <b>${SUM(obj.sum)}</b>`
+export const TITLE = (obj) => obj.length ? `<b>${obj.length}</b> ${words(obj.length, 'позиция','позиции','позиций')} на <b>${SUM(obj.sum)}</b>` : `<b>${obj.orders}</b> ${words(obj.orders, 'заказ','заказа','заказов')}` //`В заказе ещё нет товаров` 
 const TITLES = {
 	"wait":"Оформить заказ",
-	"check":"Заказ на проверке",
+	"check":"Заказ оформлен",
+	"empty":"В заказе нет товаров",
 	"pay":"Заказ ожидает оплату"
 }
-export const ORDER = (data, env) => data.result && data.list.length ? `
+export const ORDER = (data, env) => isShowPanel(data) ? `
 	<div class="padding" style="position: sticky; top: 0;">
 		<style>
 			${env.scope} .field {
@@ -280,55 +280,75 @@ export const ORDER = (data, env) => data.result && data.list.length ? `
 		<div class="whenshow">
 			<h1 style="margin-top:1rem;">${TITLES[data.order.status]} <span style="float:right; font-weight: normal">№ ${data.order.order_nick}</span></h1>
 			${data.order.status == 'check' ? showCheckDate(data) : ''}
-			<form action="/-cart/set-submit" style="clear:both; border-radius:var(--radius); display: grid; gap:1rem; padding:1rem; background:var(--lightyellow);">
-				<div class="float-label icon name field">
-					<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
-					<label for="${env.sid}name">Получатель (ФИО)</label>
-					${data.order.status == 'wait' ? svgres('required', data.order.name) : ''}
-				</div>
-				<div class="float-label icon phone field">
-					<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="contacts_phone" name="phone" type="tel" placeholder="Телефон" value="${data.order.phone || ''}">
-					<label for="contacts_phone">Телефон</label>
-					${data.order.status == 'wait' ? svgres('required', data.order.phone) : ''}
-				</div>
-				<div class="float-label icon mail field">
-					<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}email" name="email" type="email" placeholder="Email" value="${data.order.email || ''}">
-					<label for="${env.sid}email">Email</label>
-					${data.order.status == 'wait' ? svgres('required', data.order.email) : ''}
-				</div>
-				<div class="float-label icon org field">
-					<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}address" name="address" type="text" placeholder="Адрес" value="${data.order.address || ''}">
-					<label for="${env.sid}address">Адрес доставки</label>
-					${data.order.status == 'wait' ? svgres('required', data.order.address) : ''}
-				</div>
-				<div>
-					Менеджер перезвонит в&nbsp;рабочее время, уточнит время и&nbsp;стоимость доставки. Стоимость доставки оплачивается отдельно в&nbsp;транспортной компании.
-				</div>
-				<div class="float-label field">
-					<textarea ${data.order.status == 'wait' ? '' : 'disabled'} placeholder="Комментарий" id="${env.sid}text" 
-						name="commentuser" style="width:100%; box-sizing: border-box; min-height:130px">${data.order.commentuser || ''}</textarea>
-					<label for="${env.sid}text">Комментарий к заказу</label>
-					<div style="align-self: flex-start; margin-top: 0.5rem">
-						${data.order.status == 'wait' ? svgres('optional', data.order.commentuser) : ''}
-					</div>
-				</div>
-				
-				${data.order.status == 'wait' ? showSubmit(data, env) : ''}
-			</form>
-			
+			${data.list.length ? showPoss(data, env) : showEmpty(data, env)}
 			${data.orders.length > 1 ? showOrders(data, env) : ''}
 		</div>
 	</div>
 ` : ``
 const showCheckDate = (data) => `
 	<p>
-		Отправлен ${ago(data.order.datecheck * 1000)}. 	${new Date(data.order.datecheck * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric' })}
+		${ago(data.order.datecheck * 1000)}. 	${new Date(data.order.datecheck * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric' })}
 	</p>
 `
+const showEmpty = (data, env) => `
+	${data.order.status == 'wait' ? '<p>В заказе ещё нет товаров</p>' : ''}
+`
+const showPoss = (data, env) => `
+		
+		<form action="/-cart/set-submit" style="clear:both; border-radius:var(--radius); display: grid; gap:1rem; padding:1rem; background:var(--lightyellow);">
+			<div class="float-label icon name field">
+				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
+				<label for="${env.sid}name">Получатель (ФИО)</label>
+				${data.order.status == 'wait' ? svgres('required', data.order.name) : ''}
+			</div>
+			<div class="float-label icon phone field">
+				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="contacts_phone" name="phone" type="tel" placeholder="Телефон" value="${data.order.phone || ''}">
+				<label for="contacts_phone">Телефон</label>
+				${data.order.status == 'wait' ? svgres('required', data.order.phone) : ''}
+			</div>
+			<div class="float-label icon mail field">
+				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}email" name="email" type="email" placeholder="Email" value="${data.order.email || ''}">
+				<label for="${env.sid}email">Email</label>
+				${data.order.status == 'wait' ? svgres('required', data.order.email) : ''}
+			</div>
+			<div class="float-label icon org field">
+				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}address" name="address" type="text" placeholder="Адрес" value="${data.order.address || ''}">
+				<label for="${env.sid}address">Адрес доставки</label>
+				${data.order.status == 'wait' ? svgres('required', data.order.address) : ''}
+			</div>
+			<div>
+				Менеджер перезвонит в&nbsp;рабочее время, уточнит время и&nbsp;стоимость доставки. Стоимость доставки оплачивается отдельно в&nbsp;транспортной компании.
+			</div>
+			<div class="float-label field">
+				<textarea ${data.order.status == 'wait' ? '' : 'disabled'} placeholder="Комментарий" id="${env.sid}text" 
+					name="commentuser" style="width:100%; box-sizing: border-box; min-height:130px">${data.order.commentuser || ''}</textarea>
+				<label for="${env.sid}text">Комментарий к заказу</label>
+				<div style="align-self: flex-start; margin-top: 0.5rem">
+					${data.order.status == 'wait' ? svgres('optional', data.order.commentuser) : ''}
+				</div>
+			</div>
+			
+			${data.order.status == 'wait' ? showSubmit(data, env) : ''}
+		</form>
+		
+		
+`
+const showMonth = (data, env, month) => `
+	<div>
+		<b style="text-transform: capitalize;">${month.title}</b> ${month.list.map(index => showOrder(data, env, data.orders[index])).join(', ')}
+	</div>
+`
+const showYear = (data, env, year) => `
+	<div style="margin-bottom:1rem">
+		<h3>${year.title}</h3>
+		${year.months.map(month => showMonth(data, env, month)).join('')}
+	</div>
+`
+
 const showOrders = (data, env) => `
 	<h2>Заказы</h2>
 	<div style="padding-bottom:2rem">
-		${data.orders.map(order => showOrder(data, env, order)).join(', ')}
+		${data.years.map(year => showYear(data, env, year)).join('')}
 	</div>
 	<script>
 		(div => {
@@ -469,7 +489,8 @@ const svgres = (type, saved) => `
 		<div class="optional${type == 'optional' ? ' show' : ''}"></div>
 	</div>
 `
-export const BODY = (data, env) => data.result && data.list.length ? `
+export const isShowPanel = data => data.result && (data.list.length || data.orders.length > 2)
+export const BODY = (data, env) => isShowPanel(data) ? `
 	<div class="padding" style="position: sticky; top: 0">
 		<style>
 			${env.scope} .list {
@@ -522,6 +543,7 @@ export const BODY = (data, env) => data.result && data.list.length ? `
 		Panel.show(panel)
 		const title = panel.querySelector('.title')
 		const state = {
+			orders: ${data.orders.length},
 			list: []
 		}
 		const recalc = () => {

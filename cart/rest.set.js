@@ -18,6 +18,7 @@ export default rest
 rest.addResponse('set-submit', async view => {
 	const { db, terms, active_id, user } = await view.gets(['db', 'terms', 'user', 'active_id#required'])
 	const order = await Cart.getOrder(view, active_id)
+	if (!order.count) return view.err('В заказе нет товаров', 422)
 	for (const check of ['email','name','address','phone']) if (!order[check]) return view.err('Заполнены не все поля', 422)
 	if (order.status != 'wait') return view.err('Заказ уже отрпавлен менеджеру')
 	if (order.email != user.email) {

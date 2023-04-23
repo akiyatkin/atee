@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `cart_transports` (
 		'cdek_courier','pochta_simple','pochta_1',
 		'pochta_courier'
 	) NULL COMMENT 'Выбор пользователя',
-	`cost` SMALLINT NULL COMMENT 'Цена',
+	`transport_cost` SMALLINT NULL COMMENT 'Цена',
 	`min` TINYINT NULL COMMENT 'Cрок в днях',
 	`max` TINYINT NULL COMMENT 'Cрок в днях',
 	UNIQUE INDEX (`order_id`,`type`)
