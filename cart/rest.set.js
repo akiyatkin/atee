@@ -41,20 +41,25 @@ rest.addResponse('set-field', async view => {
 	const order = await Cart.getOrder(view, active_id)
 	if (order[field] == value) return view.ret('Данные сохранены')
 	if (order.status != 'wait') return view.err('Заявка уже отправлена менеджеру', 500)
+	const error = async msg => {
+		const r = await Cart.saveFiled(view, active_id, field, '')
+		if (!r) return view.err('Ошибка на сервере', 500)
+		return view.err(msg, 422)
+	}
 	if (field == 'name') {
-		if (value.length < 5) return view.err('Вы указали очень короткие ФИО', 422)
+		if (value.length < 5) return error('Вы указали очень короткие ФИО')
 	} else if (field == 'email') {
-		if (!Mail.isEmail(value)) return view.err('Указан некорректный Email', 422)
+		if (!Mail.isEmail(value)) return error('Указан некорректный Email')
 	} else if (field == 'phone') {
 		let test = value.replace(/\D/g,'')
 		test = test.replace(/^8/,'7')
-		if (test[0] != 7) return view.err("Уточните ваш телефон, номер должен начинаться с 7, мы работаем в России", 422)
-		if (test.length != 11) return view.err("Уточните ваш телефон для связи, должно быть 11 цифр ("+test+")", 422)
+		if (test[0] != 7) return error("Уточните ваш телефон, номер должен начинаться с 7, мы работаем в России")
+		if (test.length != 11) return error("Уточните ваш телефон для связи, должно быть 11 цифр ("+test+")")
 	} else if (field == 'usercomment') {
 
 	}
 	const r = await Cart.saveFiled(view, active_id, field, value)
-	if (!r) view.err('Ошибка на сервере', 500)
+	if (!r) return view.err('Ошибка на сервере', 500)
 	return view.ret('Указанные данные сохранены')
 })
 rest.addResponse('set-newactive', async view => {

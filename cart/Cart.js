@@ -42,7 +42,37 @@ const Cart = {
 		if (!nactive_id) {
 			//Другой активной нет, надо создать и скопировать
 			nactive_id = await Cart.create(view, user)
-
+			await db.exec(`
+				INSERT INTO cart_basket (
+					order_id,
+					cost,
+					oldcost,
+					discount,
+					model_nick,
+					brand_nick,
+					item_num,
+					hash,
+					json,
+					count,
+					dateadd,
+					dateedit 
+				)
+				SELECT 
+					:nactive_id,
+					cost,
+					oldcost,
+					discount,
+					model_nick,
+					brand_nick,
+					item_num,
+					hash,
+					json,
+					count,
+					now(),
+					now()
+				FROM cart_basket
+				WHERE order_id = :active_id
+			`, {active_id, nactive_id})
 		} else {
 			await db.exec(`
 				UPDATE cart_actives
@@ -110,7 +140,9 @@ Cart.getOrder = async (view, order_id) => {
 		WHERE order_id = :order_id
 	`, order)
 	order.sum = 0
+	order.count = 0
 	for (const {count, cost} of poss) {
+		order.count++
 		order.sum += count * cost
 	}
 
@@ -149,13 +181,13 @@ Cart.addItem = async (view, order_id, item, count = 0) => {
 		`, {order_id, ...item, count, cost: item['Цена']})
 	}
 
-	const poscount = await db.fetch(`
-		SELECT count FROM cart_basket 
-		WHERE order_id = :order_id 
-	`, {
-		order_id
-	})
-	console.log(poscount)
+	// const poscount = await db.fetch(`
+	// 	SELECT count FROM cart_basket 
+	// 	WHERE order_id = :order_id 
+	// `, {
+	// 	order_id
+	// })
+	
 	return true
 }
 Cart.create = async (view, user) => {

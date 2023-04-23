@@ -335,7 +335,7 @@ const showPoss = (data, env) => `
 `
 const showMonth = (data, env, month) => `
 	<div>
-		<b style="text-transform: capitalize;">${month.title}</b> ${month.list.map(index => showOrder(data, env, data.orders[index])).join(', ')}
+		<b style="text-transform: capitalize;">${month.title}</b> <span style="white-space: nowrap">${month.list.map(index => showOrder(data, env, data.orders[index])).join(',</span> <span style="white-space: nowrap">')}</span>
 	</div>
 `
 const showYear = (data, env, year) => `
@@ -354,9 +354,7 @@ const showOrders = (data, env) => `
 		(div => {
 			for (const button of div.getElementsByTagName('button')) {
 				button.addEventListener('click', async () => {
-					const ans = await fetch('/-cart/set-newactive?' + new URLSearchParams({
-						order_id: button.dataset.order_id
-					}).toString()).then(r => r.json()).catch(e => {
+					const ans = await fetch('/-cart/set-newactive?' + new URLSearchParams({ order_id: button.dataset.order_id }).toString()).then(r => r.json()).catch(e => {
 						console.log(e)
 						return {msg:'Ошибка на сервере'}
 					})
@@ -373,7 +371,12 @@ const showSubmit = (data, env) => `
 		${checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на усфловиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}
 	</div>
 	<div class="field submit">
-		<p align="right"><button type="submit">Отправить</button></p>
+		<div style="display:flex; justify-content: space-between; align-items: center;">
+			<div>
+				<button class="a clear">Очистить</button>
+			</div>
+			<button type="submit">Отправить</button>
+		</div>
 		${svgres('optional')}
 	</div>
 	<script>
@@ -401,8 +404,6 @@ const showSubmit = (data, env) => `
 			}
 			const request = async (res, input) => {
 				setres(res, 'loader')
-
-				
 				const ans = await fetch('/-cart/set-field?order_id&'+ new URLSearchParams({
 					field: input.name,
 					value: input.value
@@ -411,7 +412,8 @@ const showSubmit = (data, env) => `
 					return {msg:'Ошибка на сервере'}
 				})
 
-				if (!input.value && ans.result) setres(res)
+				//if (!input.value && ans.result) setres(res)
+				if (!input.value) setres(res)
 				else setres(res, ans.result ? 'success' : 'error', ans.msg)
 				return ans
 			}
@@ -465,6 +467,20 @@ const showSubmit = (data, env) => `
 					setres(res, 'error', ans.msg) 
 				}
 			})
+			const btnclear = form.querySelector('.clear')
+			btnclear.addEventListener('click', () => {
+				for (const field of form.querySelectorAll('.field')) {
+					const res = field.querySelector('.res')
+					if (!res) continue
+					let input = field.querySelector('input')
+					if (!input) input = field.querySelector('textarea')
+					if (!input) continue
+					input.value = ''
+					input.dispatchEvent(new Event("input"))
+				}
+			})
+				
+				
 		})(document.currentScript.parentElement)
 	</script>
 `
