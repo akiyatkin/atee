@@ -40,6 +40,9 @@ tpl.sendin = (data) => `
 	${tpl.footer(data)}
 `
 
+
+
+
 tpl.footer = (data) => `
 	<p>
 		С уважением, <a href="https://${data.vars.host}">${data.vars.host}</a><br>

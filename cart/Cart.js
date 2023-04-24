@@ -9,9 +9,27 @@ const Cart = {
 		await Cart.sendToManager(view, 'tocheck', order_id)
 	},
 	sendToManager: async (view, sub, order_id) => {
+		let { db } = await view.gets(['db'])
 		const order = await Cart.getOrder(view, order_id)
+
+		let list = await db.all(`
+			SELECT model_nick, brand_nick, count, item_num 
+			FROM cart_basket 
+			WHERE order_id = :order_id
+			ORDER by dateedit DESC
+		`, {order_id})
+		list = (await Promise.all(list.map(async pos => {
+			const item = await Cart.getItem(view, order_id, pos.brand_nick, pos.model_nick, pos.item_num)
+			item.count = pos.count
+			return item
+			
+		}))).filter(item => !!item || !item['Цена'])
+
+
 		const vars = await view.gets(['utms', 'host', 'ip'])
-		const data = {order, vars}
+
+		const data = {order, vars, list}
+
 		const tpl = await import('/-cart/mail.html.js').then(res => res.default)
 		if (!tpl[sub]) return view.err('Не найден шаблон письма', 500)
 		if (!tpl[sub + '_subject']) return view.err('Не найден шаблон темы', 500)
@@ -147,11 +165,23 @@ Cart.getOrder = async (view, order_id) => {
 			count, 
 			UNIX_TIMESTAMP(datecheck) as datecheck, 
 			UNIX_TIMESTAMP(datewait) as datewait, 
-			user_id, order_nick, name, phone, email, address, commentuser, status 
+			user_id, 
+			order_nick, 
+			name, 
+			phone, 
+			email, 
+			address, 
+			commentuser, 
+			status 
 		FROM cart_orders
 		WHERE order_id = :order_id 
 	`, { order_id })
 	
+	order.commentuser = order.commentuser.replaceAll(/[<>\'\"\`]/ig,' ')
+	order.name = order.name.replaceAll(/[<>\'\"\`]/ig,' ')
+	order.phone = order.phone.replaceAll(/[<>\'\"\`]/ig,' ')
+
+
 	const poss = await db.all(`
 		SELECT count, cost 
 		FROM cart_basket

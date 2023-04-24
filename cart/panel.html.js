@@ -302,7 +302,7 @@ const showEmpty = (data, env) => `
 `
 const showPoss = (data, env) => `
 		
-		<form action="/-cart/set-submit" style="clear:both; border-radius:var(--radius); display: grid; gap:1rem; padding:1rem; background:var(--lightyellow);">
+		<form action="/-cart/set-submit?partner=${env.theme.partner}" style="clear:both; border-radius:var(--radius); display: grid; gap:1rem; padding:1rem; background:var(--lightyellow);">
 			<div class="float-label icon name field">
 				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
 				<label for="${env.sid}name">Получатель (ФИО)</label>
@@ -319,8 +319,8 @@ const showPoss = (data, env) => `
 				${data.order.status == 'wait' ? svgres('required', data.order.email) : ''}
 			</div>
 			<div class="float-label icon org field">
-				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}address" name="address" type="text" placeholder="Адрес" value="${data.order.address || ''}">
-				<label for="${env.sid}address">Адрес доставки</label>
+				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}address" name="address" type="text" placeholder="Полный адрес доставки" value="${data.order.address || ''}">
+				<label for="${env.sid}address">Полный адрес доставки</label>
 				${data.order.status == 'wait' ? svgres('required', data.order.address) : ''}
 			</div>
 			<div>

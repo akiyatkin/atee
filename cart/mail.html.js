@@ -10,6 +10,8 @@ tpl.tocheck = (data) => `
 	${tpl.footer(data.vars)}
 `
 
+
+
 tpl.footer = vars => `
 	<p>
 		IP: ${vars.ip} (<a href="https://ip2geolocation.com/?ip=${vars.ip}">GEO</a>)
