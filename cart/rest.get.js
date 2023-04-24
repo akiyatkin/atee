@@ -11,9 +11,10 @@ const rest = new Rest(rest_db, rest_admin, rest_user, rest_cart, rest_vars)
 export default rest
 
 
-const formatter = new Intl.DateTimeFormat('ru', { month: 'long' });
+const formatter = new Intl.DateTimeFormat('ru', { month: 'long' })
 rest.addResponse('get-panel', async view => {
-	const { db, active_id, user_id } = await view.gets(['db', 'active_id#required','user_id'])
+	const { db, active_id, user_id, user } = await view.gets(['db', 'active_id#required','user_id', 'user'])
+	view.ans.user = user
 	view.ans.order = await Cart.getOrder(view, active_id)
 	const list = await db.all(`
 		SELECT model_nick, brand_nick, count, item_num 

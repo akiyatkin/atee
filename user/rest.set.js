@@ -103,7 +103,7 @@ rest.addAction('set-signin-email', async (view, src) => {
 	const userbyemail = await User.getUserByEmail(view, email)
 	if (!userbyemail) return view.err('Аккаунт не найден')
 	if (user_id == userbyemail.user_id) return view.err('Вы уже авторизованы')
-	await User.sendEmail(view, 'signin', {user:userbyemail})
+	await User.sendin(view, userbyemail)
 	return view.ret('Вам отправлено письмо со ссылкой для входа.')
 })
 rest.addAction('set-signup-email', async (view, src) => {

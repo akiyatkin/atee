@@ -16,21 +16,44 @@ const rest = new Rest(rest_admin, rest_vars, rest_cart, rest_mail)
 export default rest
 
 rest.addResponse('set-submit', async view => {
-	const { db, terms, active_id, user } = await view.gets(['db', 'terms', 'user', 'active_id#required'])
+	const { db, terms, active_id, user, user_id } = await view.gets(['db', 'terms', 'user#required', 'user_id', 'active_id#required'])
 	const order = await Cart.getOrder(view, active_id)
 	if (!order.count) return view.err('В заказе нет товаров', 422)
 	for (const check of ['email','name','address','phone']) if (!order[check]) return view.err('Заполнены не все поля', 422)
-	if (order.status != 'wait') return view.err('Заказ уже отрпавлен менеджеру')
-	if (order.email != user.email) {
-		const order_user_id = await User.getUserIdByEmail(view, order.email)
-		if (order_user_id) {
-			//Есть зарегистрированный пользователь по заявке и он отличается от текущего
-			return view.err('Вам нужно авторизоваться. На почту отправлена ссылка.', 422)
+	if (order.status != 'wait') return view.err('Заказ уже отправлен менеджеру')
+	if (user.email == order.email) {
+		//Это я и я зарегистрирован
+		await Cart.toCheck(view, active_id)
+		return view.ret('Менеджер оповещён')
+	}
+	let ouser = order.email ? await User.getUserByEmail(view, order.email) : false
+	if (user.manager) {
+		if (!ouser) {
+			ouser = await User.create(view)
+			await User.sendup(view, ouser.user_id, order.email) //Сохраняем email нового пользователя и отправляем письмо ему
 		}
-		//Пользователя по заявке нет
-		if (!user.email) { //И текущий пользователь не зарегистрирован
-			await User.signup(view, user.user_id, order.email)
-		}
+		if (ouser.user_id != user.user_id) await Cart.grant(view, ouser.user_id, order.order_id) //Указанному пользователю даём доступ к заказу. У него он будет активным
+		await Cart.toCheck(view, active_id)
+		return view.ret('Менеджер оповещён')
+	}
+
+	if (ouser) { //Есть зарегистрированный пользователь по заявке, найденный по email
+		await User.sendin(view, ouser)
+		if (user.email) { //При авторизации заказ не передастся будет просто ошибка
+			return view.err('Вам нужно авторизоваться (' + order.email + ') и повторить заказ или изменить email. Сейчас вы в другом аккаунте (' + user.email + '). На почту отправлена ссылка.', 422)
+		} else { //Заказ передастся при авторизации в томже браузере
+			return view.err('Вам нужно авторизоваться (' + order.email + ') в этом браузере. Корзина не потеряется. На почту отправлена ссылка.', 422)
+		}			
+	}
+
+	//Пользователя по заявке нет
+	if (!user.email) { //текущий пользователь не зарегистрирован
+		await User.sendup(view, user.user_id, order.email)
+	} else { //Текущий пользователь зарегистрирован
+		const ouser = await User.create(view)
+		await Cart.grant(view, ouser.user_id, order.order_id) //И новому пользователю даём доступ к заказу
+		//Заказ может быть активен у двух пользователей
+		await User.sendup(view, ouser.user_id, order.email) //Сохраняем email нового пользователя и отправляем письмо ему
 	}
 	await Cart.toCheck(view, active_id)
 	return view.ret('Менеджер оповещён')
@@ -40,21 +63,21 @@ rest.addResponse('set-field', async view => {
 	const { db, field, value, active_id, user } = await view.gets(['db', 'field', 'value', 'user', 'active_id#required'])
 	const order = await Cart.getOrder(view, active_id)
 	if (order[field] == value) return view.ret('Данные сохранены')
-	if (order.status != 'wait') return view.err('Заявка уже отправлена менеджеру', 500)
-	const error = async msg => {
+	if (order.status != 'wait') return view.err('Заявка уже отправлена менеджеру', 422)
+	const errorsave = async msg => {
 		const r = await Cart.saveFiled(view, active_id, field, '')
 		if (!r) return view.err('Ошибка на сервере', 500)
 		return view.err(msg, 422)
 	}
 	if (field == 'name') {
-		if (value.length < 5) return error('Вы указали очень короткие ФИО')
+		if (value.length < 5) return errorsave('Вы указали очень короткие ФИО')
 	} else if (field == 'email') {
-		if (!Mail.isEmail(value)) return error('Указан некорректный Email')
+		if (!Mail.isEmail(value)) return errorsave('Указан некорректный Email')
 	} else if (field == 'phone') {
 		let test = value.replace(/\D/g,'')
 		test = test.replace(/^8/,'7')
-		if (test[0] != 7) return error("Уточните ваш телефон, номер должен начинаться с 7, мы работаем в России")
-		if (test.length != 11) return error("Уточните ваш телефон для связи, должно быть 11 цифр ("+test+")")
+		if (test[0] != 7) return errorsave("Уточните ваш телефон, номер должен начинаться с 7, мы работаем в России")
+		if (test.length != 11) return errorsave("Уточните ваш телефон для связи, должно быть 11 цифр ("+test+")")
 	} else if (field == 'usercomment') {
 
 	}

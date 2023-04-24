@@ -1,17 +1,19 @@
 const tpl = {}
 export default tpl
 
-tpl.signup_subject = (data) => `Подтвердите ваш аккаут на ${data.vars.host}`
-tpl.signup = (data) => `
+tpl.sendup_subject = (data) => `Подтвердите ваш аккаут на ${data.vars.host}`
+tpl.sendup = (data) => `
 
 	<p>Добрый день!</p>
-	<p>Перед тем, как Вам будут доступны все функции сайта, нужно подтвердить email. 
-	Для этого перейдите по следующей ссылке.</p>
 	<p>
+		Перед тем, как Вам будут доступны все функции сайта, нужно подтвердить email. 
+	</p>
+	<p>
+		Для этого перейдите по
 		<b>
 			<big>
 				<a href="https://${data.vars.host}/-user/set-email-verified?email=${data.email}&code=${data.code_verify}&token=${data.user.user_id}-${data.user.token}">
-					${data.code_verify}
+					ссылке
 				</a>
 			</big>
 		</b>
@@ -19,8 +21,9 @@ tpl.signup = (data) => `
 
 	${tpl.footer(data)}
 `
-tpl.signin_subject = (data) => `Вход на ${data.vars.host}`
-tpl.signin = (data) => `
+
+tpl.sendin_subject = (data) => `Вход на ${data.vars.host}`
+tpl.sendin = (data) => `
 
 	<p>Добрый день!</p>
 	<p>Для входа на сайт используйте следующую ссылку.</p>

@@ -1,4 +1,5 @@
 import Mail from '/-mail'
+import config from '/-config'
 import crypto from 'crypto'
 
 const User = {
@@ -79,27 +80,11 @@ const User = {
 		return User.getUserById(view, user_id)
 	},
 	getUserByToken: async (view, token) => {
-		const { db } = await view.gets(['db'])
 		const tok = User.getTok(token)
 		if (!tok) return false
-		const user = await db.fetch(`
-			SELECT 
-				u.user_id, 
-				u.name, 
-				e.email,
-				p.phone,
-				u.token,
-				u.sername, 
-				UNIX_TIMESTAMP(u.date_token) as date_token,
-				UNIX_TIMESTAMP(ifnull(e.date_verified, p.date_verified)) as date_verified,
-				UNIX_TIMESTAMP(u.date_active) as date_active,
-				UNIX_TIMESTAMP(u.date_signup) as date_signup 
-			FROM user_users u
-			LEFT JOIN user_uemails e on (e.user_id = u.user_id and e.ordain = 1)
-			LEFT JOIN user_uphones p on (p.user_id = u.user_id and e.ordain = 1)
-			WHERE u.user_id = :user_id and u.token = :token
-		`, tok)
-		return user
+		const user = await User.getUserById(view, tok.user_id)
+		if (tok.token == user.token) return user
+		return false
 	},
 	getUserById: async (view, user_id) => {
 		const { db } = await view.gets(['db'])
@@ -120,9 +105,20 @@ const User = {
 			LEFT JOIN user_uphones p on (p.user_id = u.user_id and e.ordain = 1)
 			WHERE u.user_id = :user_id
 		`, {user_id})
+
+		if (user.email) {
+			const conf = await config('user')
+			user.manager = ~conf.managers.indexOf(user.email)
+		}
 		return user
 	},
-	signup: async (view, user_id, email) => {
+	sendin: (view, user) => {
+		return User.sendEmail(view, 'sendin', {user})
+	},
+	signup: (view, user_id, email) => { //depricated
+		return User.sendup(view, user_id, email)
+	},
+	sendup: async (view, user_id, email) => {
 		const { db } = await view.gets(['db'])
 		await db.affectedRows(`
 			UPDATE
@@ -131,7 +127,7 @@ const User = {
 				ordain = ordain + 1
 			WHERE
 				user_id = :user_id
-		`, user)
+		`, { user_id })
 		const code_verify = crypto.randomBytes(4).toString('hex').toUpperCase()
 		await db.affectedRows(`
 			INSERT INTO 
@@ -153,7 +149,7 @@ const User = {
 			WHERE
 				user_id = :user_id
 		`, {user_id})
-		await User.sendEmail(view, 'signup', {user_id, email, code_verify})
+		return await User.sendEmail(view, 'sendup', {user_id, email, code_verify})
 	}
 }
 export default User

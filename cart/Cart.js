@@ -22,6 +22,24 @@ const Cart = {
 		if (!r) return view.err('Не удалось отправить письмо.', 500)
 		return true
 	},
+	mergeuser: async (view, olduser, newuser) => {
+		const order_id = await db.col('select order_id from cart_actives where user_id = :user_id', olduser)
+		if (order_id) {
+			await Cart.grant(view, newuser.user_id, order_id)
+			//Изменили автора заказа
+			await db.affectedRows(`
+				UPDATE cart_orders
+				SET user_id = :user_id
+				WHERE order_id = :order_id
+			`, {
+				order_id, 
+				user_id: newuser.user_id
+			})
+			//Удалили запись о правах
+			await db.affectedRows('DELETE from cart_userorders where user_id = :user_id', olduser)
+			await db.affectedRows('DELETE from cart_actives where user_id = :user_id', olduser)
+		}
+	},
 	castWaitActive: async (view, active_id) => {
 		let { db, user } = await view.gets(['db', 'user'])
 		if (!user) {
@@ -133,7 +151,7 @@ Cart.getOrder = async (view, order_id) => {
 		FROM cart_orders
 		WHERE order_id = :order_id 
 	`, { order_id })
-
+	
 	const poss = await db.all(`
 		SELECT count, cost 
 		FROM cart_basket
@@ -190,12 +208,28 @@ Cart.addItem = async (view, order_id, item, count = 0) => {
 	
 	return true
 }
+Cart.grant = async (view, user_id, order_id) => {
+	const { db } = await view.gets(['db'])
+	await db.exec(`
+		INSERT INTO cart_userorders (user_id, order_id) VALUES(:user_id, :order_id)
+	`, {user_id, order_id})
+	await db.exec(`
+		REPLACE INTO cart_actives (user_id, order_id) VALUES(:user_id, :order_id)
+	`, {user_id, order_id})
+}
 Cart.create = async (view, user) => {
 	const { db } = await view.gets(['db'])
 	const user_id = user.user_id
 
 	const fields = ['name','phone','address','tk','zip','transport','city_id','pay','pvz','commentuser']
 	//Берём данные из прошлой заявки у которой автор этот пользователь
+
+	// const last_id = await db.col(`
+	// 	select o.order_id 
+	// 	from cart_orders o, cart_userorders uo
+	// 	where o.order_id = uo.order_id
+	// `)
+
 	let row = await db.fetch(`
 		SELECT ${fields.join(',')} 
 		FROM cart_orders 
@@ -217,14 +251,7 @@ Cart.create = async (view, user) => {
 	`, row);
 	if (!order_id) return false;
 	
-	await db.exec(`
-		INSERT INTO cart_userorders (user_id, order_id) VALUES(:user_id, :order_id)
-	`, {user_id, order_id})
-	await db.exec(`
-		REPLACE INTO cart_actives (user_id, order_id) VALUES(:user_id, :order_id)
-	`, {user_id, order_id})
-	
-	
+	await Cart.grant(view, user_id, order_id)
 	return order_id
 }
 

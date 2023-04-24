@@ -5,14 +5,31 @@ import rest_user from '/-user/rest.user.js'
 import Cart from "/-cart/Cart.js"
 const rest = new Rest(rest_funcs, rest_vars, rest_user)
 
-rest.addArgument('order_id', ['int'])
+rest.addArgument('order_id', ['int'], async (view, order_id) => {
+	const { user, db } = await view.gets(['user', 'db'])
+	if (user.manager) return order_id
+	if (!order_id) return false
+	const check_id = await db.col(`
+		SELECT uo.order_id 
+		FROM cart_userorders uo
+		WHERE uo.order_id = :order_id and uo.user_id = :user_id
+	`, {order_id, user_id: user.user_id})
+	if (!check_id) return view.err('Недостаточно прав '+user.email, 401)
+	return check_id
+})
+rest.addArgument('order_id#required', async (view) => {
+	const { order_id } = await view.gets(['order_id'])
+	if (!order_id) return view.err('Заказ не найден', 422)
+	return order_id
+})
 rest.addVariable('order', async (view) => {
 	const { order_id } = await view.gets(['order_id'])
+	if (!order_id) return false
 	return Cart.getOrder(view, order_id)
 })
 rest.addVariable('order#required', async (view) => {
 	const { order } = await view.gets(['order'])
-	if (!order) return view.err('Требуется order_id')
+	if (!order) return view.err('Заказ не найден', 422)
 	return order
 })
 rest.addArgument('count', ['int'])
