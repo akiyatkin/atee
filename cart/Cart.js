@@ -176,7 +176,7 @@ Cart.getOrder = async (view, order_id) => {
 		FROM cart_orders
 		WHERE order_id = :order_id 
 	`, { order_id })
-	
+	if (!order) return order
 	order.commentuser = order.commentuser.replaceAll(/[<>\'\"\`]/ig,' ')
 	order.name = order.name.replaceAll(/[<>\'\"\`]/ig,' ')
 	order.phone = order.phone.replaceAll(/[<>\'\"\`]/ig,' ')
