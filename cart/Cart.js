@@ -177,9 +177,9 @@ Cart.getOrder = async (view, order_id) => {
 		WHERE order_id = :order_id 
 	`, { order_id })
 	if (!order) return order
-	order.commentuser = order.commentuser.replaceAll(/[<>\'\"\`]/ig,' ')
-	order.name = order.name.replaceAll(/[<>\'\"\`]/ig,' ')
-	order.phone = order.phone.replaceAll(/[<>\'\"\`]/ig,' ')
+	if (order.commentuser) order.commentuser = order.commentuser.replaceAll(/[<>\'\"\`]/ig,' ')
+	if (order.name) order.name = order.name.replaceAll(/[<>\'\"\`]/ig,' ')
+	if (order.phone) order.phone = order.phone.replaceAll(/[<>\'\"\`]/ig,' ')
 
 
 	const poss = await db.all(`
