@@ -121,7 +121,7 @@ tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
 tpl.showOrder = (data, env, row) => `
 	<tr class="status-${row.status} ${row.order_id == data.active_id ? 'active': ''}">
 		<td>
-			<button style="font-size: inherit;" data-order_id="${row.order_id}" class="a">${row.order_nick}</button>
+			<button style="white-space:nowrap; font-size: inherit;" data-order_id="${row.order_id}" class="a">${row.order_nick}</button>
 		</td>
 		<td>
 			${row.name}
@@ -139,7 +139,7 @@ tpl.showOrder = (data, env, row) => `
 			${cost(row.sum)}
 		</td>
 		<td>
-			${new Date(row.dateedit * 1000).toLocaleString(undefined, { minute: 'numeric', hour: 'numeric', year: 'numeric', month: 'numeric', day: 'numeric' })}
+			${new Date(row.dateedit * 1000).toLocaleString('ru-RU', { minute: 'numeric', hour: 'numeric', year: 'numeric', month: 'numeric', day: 'numeric' })}
 		</td>
 	</tr>
 `
