@@ -56,7 +56,7 @@ rest.addResponse('set-submit', async view => {
 		await User.sendup(view, ouser.user_id, order.email) //Сохраняем email нового пользователя и отправляем письмо ему
 	}
 	await Cart.toCheck(view, active_id)
-	return view.ret('Менеджер оповещён')
+	return view.ret('Спасибо за заказ. Менеджер оповещён, ответит в течение 24 часов, как можно скорее.')
 })
 
 rest.addResponse('set-field', async view => {
