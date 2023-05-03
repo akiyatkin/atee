@@ -1,17 +1,84 @@
 //get для интерфейса
 import Rest from '/-rest'
 import rest_db from '/-db/rest.db.js'
+import rest_funcs from '/-rest/rest.funcs.js'
 import rest_admin from '/-controller/rest.admin.js'
 import rest_user from '/-user/rest.user.js'
 import rest_vars from '/-catalog/rest.vars.js'
 import rest_cart from '/-cart/rest.cart.js'
 import Catalog from "/-catalog/Catalog.js"
 import Cart from "/-cart/Cart.js"
-const rest = new Rest(rest_db, rest_admin, rest_user, rest_cart, rest_vars)
+const rest = new Rest(rest_db, rest_admin, rest_user, rest_cart, rest_vars, rest_funcs)
 export default rest
 
 
 const formatter = new Intl.DateTimeFormat('ru', { month: 'long' })
+rest.addResponse('get-manager-years', async view => {
+	await view.gets(['manager#required'])
+	const { db } = await view.gets(['db'])
+	view.ans.list = await db.all(`
+		SELECT 
+			year(o.datecheck) as year,
+			sum(o.sum) as sum,
+			round(avg(o.sum)) as average,
+			count(*) as count
+		FROM cart_orders o
+		WHERE o.status = 'check'
+		GROUP BY year
+	`)
+	return view.ret()
+})
+rest.addArgument('year', ['int#required'])
+rest.addResponse('get-manager-months', async view => {
+	await view.gets(['manager#required'])
+	const { db, year } = await view.gets(['db', 'year'])
+	view.ans.year = year
+	view.ans.list = await db.all(`
+		SELECT 
+			year(o.datecheck) as year,
+			month(o.datecheck) as month,
+			sum(o.sum) as sum,
+			round(avg(o.sum)) as average,
+			count(*) as count
+		FROM cart_orders o
+		WHERE o.status = 'check' and year(o.datecheck) = :year
+		GROUP BY month
+		ORDER BY month DESC
+	`, { year })
+	return view.ret()
+})
+rest.addArgument('month', ['int#required'])
+rest.addResponse('get-manager-orders', async view => {
+	await view.gets(['manager#required'])
+	const { db, year, month, active_id } = await view.gets(['db', 'year','month','active_id'])
+	
+	view.ans.active_id = active_id
+	view.ans.year = year
+	view.ans.month = month
+	view.ans.list = await db.all(`
+		SELECT
+			order_nick,
+			order_id,
+			name,
+			email,
+			phone,
+			count,
+			sum,
+			status,
+			UNIX_TIMESTAMP(dateedit) as dateedit, 
+			UNIX_TIMESTAMP(datecheck) as datecheck, 
+			UNIX_TIMESTAMP(datewait) as datewait
+		FROM cart_orders o
+		WHERE year(o.dateedit) = :year and month(o.dateedit) = :month
+		ORDER BY o.dateedit DESC
+	`, { year, month })
+
+
+	return view.ret()
+})
+
+
+
 rest.addResponse('get-panel', async view => {
 	const { db, active_id, user_id, user } = await view.gets(['db', 'active_id#required','user_id', 'user'])
 	view.ans.user = user

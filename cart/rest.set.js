@@ -14,7 +14,37 @@ const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 const rest = new Rest(rest_admin, rest_vars, rest_cart, rest_mail)
 export default rest
+rest.addResponse('set-manager-refresh', async view => {
+	await view.gets(['manager#required'])
+	const { db } = await view.gets(['db'])
 
+	const poss = await db.all('SELECT order_id, brand_nick, model_nick, item_num, count from cart_basket')
+
+	const orders = {}
+	for (const pos of poss) {
+		const {order_id, brand_nick, model_nick, item_num, count} = pos
+		const item = await Cart.getItem(view, order_id, brand_nick, model_nick, item_num)
+		if (!item) continue; //Позиция и не заморожена и нет в каталоге
+
+		if (!orders[order_id]) orders[order_id] = { order_id, sum:0, count:0 }
+		const order = orders[order_id]
+
+		order.sum += item['Цена'] * count
+		order.count++
+	}
+	for (const order_id in orders) {
+		const order = orders[order_id]
+		await db.exec(`
+			UPDATE cart_orders 
+			SET sum = :sum, count = :count
+			WHERE order_id = :order_id
+		`, order)
+	}
+
+	
+	
+	return view.ret('Суммы пересчитаны')
+})
 rest.addResponse('set-submit', async view => {
 	const { db, terms, active_id, user, user_id } = await view.gets(['db', 'terms', 'user#required', 'user_id', 'active_id#required'])
 	const order = await Cart.getOrder(view, active_id)

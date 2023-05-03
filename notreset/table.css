@@ -1,0 +1,19 @@
+table {
+	border-collapse: collapse;
+}
+th, 
+td {
+	padding: 0.6em 1em;
+	text-align: left;
+	border-bottom: 1px solid #ddd;
+}
+tbody th, 
+tbody td {
+	
+}
+thead {
+	font-weight: bold;
+}
+tbody tr:nth-child(odd) {
+/*	background-color: #f2f2f2;*/
+}

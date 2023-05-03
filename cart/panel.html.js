@@ -288,13 +288,13 @@ export const ORDER = (data, env) => isShowPanel(data) ? `
 	</div>
 ` : ``
 const showCrown = () => `
-	<span title="Вы администратор и можете на любой email оформить заказ. Заказ будет доступен и Вам и новому пользователю">
+	<a href="/cart/manager/${new Date().getFullYear()}/${new Date().getMonth()}" title="Вы администратор и можете на любой email оформить заказ. Заказ будет доступен и Вам и новому пользователю">
 		<svg style="color: var(--brown); margin-bottom: 3px;" width="24" height="24" viewBox="0 0 18 18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.179 13.425h13.656v3.02H2.179v-3.02z" fill="currentColor" fill-opacity=".8"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8.999 1L2.093 11.031h4.25l6.662-4.315L9 1z" fill="currentColor" fill-opacity=".6"/><path fill-rule="evenodd" clip-rule="evenodd" d="M2.067 12.641L.5 3.752l12.76 8.89H2.068z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M15.927 12.641l1.607-8.858L3.857 12.64h12.07z" fill="currentColor" fill-opacity=".8"/></svg>
-	</span>
+	</a>
 `
 const showCheckDate = (data) => `
 	<p>
-		${ago(data.order.datecheck * 1000)}. 	${new Date(data.order.datecheck * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric' })}
+		${ago(data.order.datecheck * 1000)}. ${new Date(data.order.datecheck * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric' })}
 	</p>
 `
 const showEmpty = (data, env) => `
@@ -353,7 +353,7 @@ const showYear = (data, env, year) => `
 `
 
 const showOrders = (data, env) => `
-	<h2>Заказы</h2>
+	<h2>Мои заказы</h2>
 	<div style="padding-bottom:2rem">
 		${data.years.map(year => showYear(data, env, year)).join('')}
 	</div>

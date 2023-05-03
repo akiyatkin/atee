@@ -25,9 +25,11 @@ CREATE TABLE IF NOT EXISTS `cart_orders` (
 	`address` TEXT NULL COMMENT 'Адрес в городе',
 	`tk` TINYTEXT NULL COMMENT 'Рекомендуемая ТК',
 	`zip` TEXT NULL COMMENT 'Индекс',
-	`count` SMALLINT unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш количества позиций в корзине',
-	`weight` MEDIUMINT unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш - расчётный вес',
 
+	`count` SMALLINT unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш количества позиций(строчек) в корзине. Для сводной таблицы МЕНЕДЖЕРА',
+	`sum` MEDIUMINT unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш суммы заказа без стоимости доставки. Для сводной таблицы МЕНЕДЖЕРА',
+
+	`weight` MEDIUMINT unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш - расчётный вес',
 	`datecreate` DATETIME NULL COMMENT 'Дата создания заказа, в момент добавления первой позиции',
 	`datefreeze` DATETIME NULL COMMENT 'Дата последней заморозки заказа, если такая была',
 	`datecancel` DATETIME NULL COMMENT 'Дата отмены',
@@ -59,9 +61,9 @@ CREATE TABLE IF NOT EXISTS `cart_transports` (
 CREATE TABLE IF NOT EXISTS `cart_basket` (
 	`order_id` MEDIUMINT unsigned NOT NULL,
 
-	`cost` DECIMAL(10,2) NULL COMMENT 'Кэш цены',
-	`oldcost` DECIMAL(10,2) NULL COMMENT 'Кэш старой цены',
-	`discount` INT(2) NULL COMMENT 'Кэш cкидка от Старой цены',
+	`cost` DECIMAL(10,2) NULL COMMENT 'Кэш цены depricated',
+	`oldcost` DECIMAL(10,2) NULL COMMENT 'Кэш старой цены depricated',
+	`discount` INT(2) NULL COMMENT 'Кэш cкидка от Старой цены depricated',
 
 	`model_nick` varchar(31) COLLATE latin1_bin NOT NULL COMMENT 'model_id не можем сохранять, так как может поменяться',
 	`brand_nick` varchar(31) COLLATE latin1_bin NOT NULL COMMENT '',

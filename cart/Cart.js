@@ -147,7 +147,7 @@ Cart.getItem = async (view, order_id, brand_nick, model_nick, item_num) => {
 }
 Cart.removeItem = async (view, order_id, item) => {
 	const { db } = await view.gets(['db'])
-	return await db.exec(`
+	await db.exec(`
 		DELETE FROM cart_basket 
 		WHERE order_id = :order_id 
 			and item_num = :item_num 
@@ -156,6 +156,12 @@ Cart.removeItem = async (view, order_id, item) => {
 	`, {
 		order_id, ...item
 	})
+	const order = await Cart.getOrder(view, order_id)
+	await db.exec(`
+		UPDATE cart_orders 
+		SET sum = :sum, count = :count
+		WHERE order_id = :order_id
+	`, order)
 }
 Cart.getOrder = async (view, order_id) => {
 	const { db } = await view.gets(['db'])
@@ -229,6 +235,12 @@ Cart.addItem = async (view, order_id, item, count = 0) => {
 		`, {order_id, ...item, count, cost: item['Цена']})
 	}
 
+	const order = await Cart.getOrder(view, order_id)
+	await db.exec(`
+		UPDATE cart_orders 
+		SET sum = :sum, count = :count
+		WHERE order_id = :order_id
+	`, order)
 	// const poscount = await db.fetch(`
 	// 	SELECT count FROM cart_basket 
 	// 	WHERE order_id = :order_id 
