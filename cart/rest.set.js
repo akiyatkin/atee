@@ -21,10 +21,11 @@ rest.addResponse('set-submit', async view => {
 	if (!order.count) return view.err('В заказе нет товаров', 422)
 	for (const check of ['email','name','address','phone']) if (!order[check]) return view.err('Заполнены не все поля', 422)
 	if (order.status != 'wait') return view.err('Заказ уже отправлен менеджеру')
+	const ready = () => view.ret('Спасибо за заказ. Менеджер оповещён, ответит в течение 24 часов, как можно скорее.')
 	if (user.email == order.email) {
 		//Это я и я зарегистрирован
 		await Cart.toCheck(view, active_id)
-		return view.ret('Менеджер оповещён')
+		return ready()
 	}
 	let ouser = order.email ? await User.getUserByEmail(view, order.email) : false
 	if (user.manager) {
@@ -34,7 +35,7 @@ rest.addResponse('set-submit', async view => {
 		}
 		if (ouser.user_id != user.user_id) await Cart.grant(view, ouser.user_id, order.order_id) //Указанному пользователю даём доступ к заказу. У него он будет активным
 		await Cart.toCheck(view, active_id)
-		return view.ret('Менеджер оповещён')
+		return ready()
 	}
 
 	if (ouser) { //Есть зарегистрированный пользователь по заявке, найденный по email
@@ -55,8 +56,8 @@ rest.addResponse('set-submit', async view => {
 		//Заказ может быть активен у двух пользователей
 		await User.sendup(view, ouser.user_id, order.email) //Сохраняем email нового пользователя и отправляем письмо ему
 	}
-	await Cart.toCheck(view, active_id)
-	return view.ret('Спасибо за заказ. Менеджер оповещён, ответит в течение 24 часов, как можно скорее.')
+	await Cart.toCheck(view, active_id)	
+	return ready()
 })
 
 rest.addResponse('set-field', async view => {

@@ -36,7 +36,7 @@ const Cart = {
 		const subject = tpl[sub + '_subject'](data)
 		const html = tpl[sub](data)
 
-		const r = await Mail.toAdmin(subject, html) //email не указан, чтобы нельзя было ответить на заявку, так как там будет аналитика
+		const r = await Mail.toAdmin(subject, html, order.email) //В письме заказа не должно быть аналитики
 		if (!r) return view.err('Не удалось отправить письмо.', 500)
 		return true
 	},
