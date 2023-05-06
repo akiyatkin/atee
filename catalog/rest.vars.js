@@ -4,6 +4,7 @@ import rest_db from '/-db/rest.db.js'
 import nicked from '/-nicked'
 const rest = new Rest(rest_funcs, rest_db)
 import Catalog from "/-catalog/Catalog.js"
+import User from "/-user/User.js"
 
 rest.addArgument('model_nick', ['nicked'])
 rest.addArgument('brand_nick', ['nicked'])
@@ -24,21 +25,34 @@ rest.addVariable('model', async (view) => {
 	const model = await Catalog.getModelByNick(view, brand_nick, model_nick, partner)	
 	return model
 })
-rest.addArgument('partner', async (view, partner) => {
-	const { options } = await view.gets(['options'])
-	partner = nicked(partner)
-	const data = options.partners[partner]
+// rest.addVariable('partner', async (view) => {
+// 	const { user_id } = await view.gets(['user_id'])
+// 	const partner = user_id ? await Catalog.getPartner(view, user_id) : false
+// 	//if (!partner) view.nostore = false //Тот у кого partner указан получит кэш и у него не будет редиректа
+// 	return partner
+// })
+rest.addArgument('partner', async (view, partner_nick) => {
+	const { options, db } = await view.gets(['options', 'db'])
+	
+	//const partner_nick = nicked(partner_title)
+	const data = options.partners[partner_nick]
 	if (!data) return false
-	data.key = partner
+	data.key = partner_nick
+
+	// const user = await User.harvest(view)
+	// if (user && user.partner_nick != partner_nick) {
+	// 	//set нельзя тут делать
+	// }
+	
+	
 	return data
 })
 rest.addArgument('value', ['string'], (view, v) => v || '')
 
 rest.addVariable('base', async (view) => {
-	const { db, visitor } = await view.gets(['db','visitor'])
+	const { db } = await view.gets(['db'])
 	const Base = await import('/-showcase/Base.js').then(r => r.default)
-	
-	return new Base({db, visitor})
+	return new Base({db, visitor: view.visitor})
 })
 rest.addVariable('options', async (view) => {
 	const { base } = await view.gets(['base'])

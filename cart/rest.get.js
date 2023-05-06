@@ -1,15 +1,36 @@
 //get для интерфейса
 import Rest from '/-rest'
+const rest = new Rest()
+export default rest
+
 import rest_db from '/-db/rest.db.js'
+rest.extra(rest_db)
+
 import rest_funcs from '/-rest/rest.funcs.js'
+rest.extra(rest_funcs)
+
 import rest_admin from '/-controller/rest.admin.js'
+rest.extra(rest_admin)
+
 import rest_user from '/-user/rest.user.js'
+rest.extra(rest_user)
+
 import rest_vars from '/-catalog/rest.vars.js'
+rest.extra(rest_vars)
+
 import rest_cart from '/-cart/rest.cart.js'
+rest.extra(rest_cart)
+
 import Catalog from "/-catalog/Catalog.js"
 import Cart from "/-cart/Cart.js"
-const rest = new Rest(rest_db, rest_admin, rest_user, rest_cart, rest_vars, rest_funcs)
-export default rest
+
+
+
+
+
+
+
+
 
 
 const formatter = new Intl.DateTimeFormat('ru', { month: 'long' })

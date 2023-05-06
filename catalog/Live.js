@@ -102,7 +102,8 @@ export const Live = {
 	getNeed: async input => {
 		const { default:getNeed } = await import('/-nicked/getNeed.js')
 		const need = getNeed(input)
-		const theme = await import('/-controller/Theme.js').then(r => r.default.get())
+		const Theme = await import('/-controller/Theme.js').then(r => r.default)
+		const theme = Theme.get()
 		need.partner = theme.partner || ''
 		return need
 	},

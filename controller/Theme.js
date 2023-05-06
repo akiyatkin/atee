@@ -1,8 +1,8 @@
+//const Theme = new EventTarget()
+const Theme = {}
+export default Theme
 
-const theme = {}
-export default theme
-
-theme.parse = (string, sep = '; ') => {
+Theme.parse = (string, sep = '; ') => {
     const obj = string?.split(sep).reduce((res, item) => {
         if (!item) return res
         item = item.replace(/\+/g, '%20')
@@ -23,10 +23,10 @@ const fromCookie = (cookie) => {
 	if (name == 'deleted') return ''
 	return decodeURIComponent(name[2])
 }
-theme.get = () => theme.harvest({theme:new URL(location).searchParams.get('theme')}, document.cookie) //only for browser
-theme.harvest = (get, cookie) => {
+Theme.get = () => Theme.harvest({theme:new URL(location).searchParams.get('theme')}, document.cookie) //only for browser
+Theme.harvest = (get, cookie) => {
 	const name = get.theme != null ? get.theme : fromCookie(cookie)
-	const obj = theme.parse(name, ':')
+	const obj = Theme.parse(name, ':')
 	for (const key in obj) {
 		const val = obj[key]
 		if (!val) {
@@ -36,7 +36,15 @@ theme.harvest = (get, cookie) => {
 	}
 	return obj
 }
-theme.torow = (theme) => {
+Theme.set = (view, theme) => {
+	const themevalue = Object.entries(theme).map(a => a.join("=")).join(":")
+	if (themevalue) {
+		view.headers['Set-Cookie'] = 'theme=' + encodeURIComponent(themevalue) + '; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT'
+	} else {
+		view.headers['Set-Cookie'] = 'theme=; path=/; SameSite=Strict; Max-Age=-1;'
+	}
+}
+Theme.torow = (theme) => {
 	return Object.entries(theme).map(([key, val]) => {
 		return encodeURIComponent(key) + '=' + encodeURIComponent(val)
 	}).join(';')

@@ -167,6 +167,3 @@ CREATE TABLE IF NOT EXISTS `showcase_files` (
 	INDEX (group_nick),
 	INDEX (brand_nick)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci AUTO_INCREMENT=1 COMMENT 'Индекс файлов каталога. Файлы с удалённого сервера http, также могут быть сохранены при внесении данных с полным адресом в src';
-
-
-

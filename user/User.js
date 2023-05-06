@@ -3,6 +3,13 @@ import config from '/-config'
 import crypto from 'crypto'
 
 const User = {
+	harvest: async (view) => {
+		const token = (t => t ? t[2] : false)(view.visitor.client.cookie.match('(^|;)?-token=([^;]*)(;|$)'))
+		if (!token) return false
+		const user = await User.getUserByToken(view, token)
+		if (!user) return false
+		return user
+	},
 	mergeuser: async (view, olduser, newuser) => {
 		if (!olduser) return
 		if (olduser.date_signup) return

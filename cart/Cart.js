@@ -4,12 +4,44 @@ import Mail from '/-mail'
 
 
 const Cart = {
-	toCheck: async (view, order_id) => {
+	// setPartner: (view, partner) => {
+	// 	const user = User.harvest(view)
+	// 	if (!user) return
+	// 	await db.exec(`
+	// 		INSERT INTO 
+	// 			cart_partners
+	// 		SET
+	// 			order_id = :order_id,
+	// 			partner_nick = :partner_nick
+	// 	`, { user_id: user.user_id, partner })
+	// },
+	toCheck: async (view, order_id, partner) => {
+		const { db } = await view.gets(['db'])
+		await Cart.freeze({db, order_id, partner})
 		await Cart.setStatus(view, order_id, 'check')
 		await Cart.sendToManager(view, 'tocheck', order_id)
 	},
+	freeze: async ({db, order_id, partner}) => {
+		const partnerfreeze = JSON.stringify(partner)
+		await db.exec(`
+				UPDATE 
+					cart_orders
+				SET
+					freeze = 1,
+					partnerfreeze = :partnerfreeze
+				WHERE order_id = :order_id
+			`, { order_id, partnerfreeze })
+		// await db.exec(`
+		// 		INSERT INTO 
+		// 			cart_orders
+		// 		SET
+		// 			order_id = :order_id,
+		// 			partner_nick = :partner_nick
+		// 	`, { user_id: user.user_id, partner })
+		// }
+	},
 	sendToManager: async (view, sub, order_id) => {
-		let { db } = await view.gets(['db'])
+		const { db } = await view.gets(['db'])
 		const order = await Cart.getOrder(view, order_id)
 
 		let list = await db.all(`

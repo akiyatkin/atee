@@ -354,10 +354,14 @@ export class Rest {
 	extras = []
 	constructor (...extras) {
 		this.extras = []
-		for (const m of extras) {
-			if (this.findextra(m)) continue
-			this.extras.push(m)
+		for (const rest of extras) {
+			if (this.findextra(rest)) continue
+			this.extras.push(rest)
 		}
+	}
+	extra(rest) {
+		if (this.findextra(rest)) return
+		this.extras.push(rest)
 	}
 	findextra (m) {
 		for (const e of this.extras) {

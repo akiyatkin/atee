@@ -14,6 +14,8 @@ const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 const rest = new Rest(rest_admin, rest_vars, rest_cart, rest_mail)
 export default rest
+
+
 rest.addResponse('set-manager-refresh', async view => {
 	await view.gets(['manager#required'])
 	const { db } = await view.gets(['db'])
@@ -46,7 +48,7 @@ rest.addResponse('set-manager-refresh', async view => {
 	return view.ret('Суммы пересчитаны')
 })
 rest.addResponse('set-submit', async view => {
-	const { db, terms, active_id, user, user_id } = await view.gets(['db', 'terms', 'user#required', 'user_id', 'active_id#required'])
+	const { partner, db, terms, active_id, user, user_id } = await view.gets(['partner', 'db', 'terms', 'user#required', 'user_id', 'active_id#required'])
 	const order = await Cart.getOrder(view, active_id)
 	if (!order.count) return view.err('В заказе нет товаров', 422)
 	for (const check of ['email','name','address','phone']) if (!order[check]) return view.err('Заполнены не все поля', 422)
@@ -54,7 +56,7 @@ rest.addResponse('set-submit', async view => {
 	const ready = () => view.ret('Спасибо за заказ. Менеджер оповещён, ответит в течение 24 часов, как можно скорее.')
 	if (user.email == order.email) {
 		//Это я и я зарегистрирован
-		await Cart.toCheck(view, active_id)
+		await Cart.toCheck(view, active_id, partner)
 		return ready()
 	}
 	let ouser = order.email ? await User.getUserByEmail(view, order.email) : false
@@ -64,7 +66,7 @@ rest.addResponse('set-submit', async view => {
 			await User.sendup(view, ouser.user_id, order.email) //Сохраняем email нового пользователя и отправляем письмо ему
 		}
 		if (ouser.user_id != user.user_id) await Cart.grant(view, ouser.user_id, order.order_id) //Указанному пользователю даём доступ к заказу. У него он будет активным
-		await Cart.toCheck(view, active_id)
+		await Cart.toCheck(view, active_id, partner)
 		return ready()
 	}
 
@@ -86,7 +88,7 @@ rest.addResponse('set-submit', async view => {
 		//Заказ может быть активен у двух пользователей
 		await User.sendup(view, ouser.user_id, order.email) //Сохраняем email нового пользователя и отправляем письмо ему
 	}
-	await Cart.toCheck(view, active_id)	
+	await Cart.toCheck(view, active_id, partner)	
 	return ready()
 })
 
@@ -156,6 +158,7 @@ rest.addResponse('set-reset', async view => {
 		cart_transports,
 		cart_basket,
 		cart_actives,
+		cart_partners,
 		cart_userorders
 	`)
 	

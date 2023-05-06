@@ -20,7 +20,7 @@ const Panel = {
 		Panel.t = setTimeout(() => {
 			if (!panel.classList.contains('show')) return
 			panel.classList.add('ready')
-		}, 200)
+		}, 0)
 	},
 	toggle: (panel) => {
 		Panel.show(panel)

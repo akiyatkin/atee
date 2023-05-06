@@ -92,3 +92,9 @@ CREATE TABLE IF NOT EXISTS `cart_actives` (
 	`order_id` MEDIUMINT unsigned NOT NULL,
 	PRIMARY KEY (`user_id`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- CREATE TABLE IF NOT EXISTS `cart_partners` (
+--  	`order_id` int(11) unsigned NOT NULL,
+-- 	`partner_nick` varchar(31) COLLATE latin1_bin NOT NULL,
+-- 	PRIMARY KEY (`order_id`)
+-- ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;

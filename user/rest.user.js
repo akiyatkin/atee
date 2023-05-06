@@ -9,13 +9,10 @@ export default rest
 
 
 rest.addVariable('user', async (view, src) => {
-	const { visitor, db } = await view.gets(['visitor', 'db'])
+	const { db } = await view.gets(['db'])
 	view.nostore = true
-	const token = (t => t ? t[2] : false)(visitor.client.cookie.match('(^|;)?-token=([^;]*)(;|$)'))
-	if (!token) return false
-	const user = await User.getUserByToken(view, token)
-	if (!user) return false
-	if (user.date_active + 60 < Date.now() / 1000) {
+	const user = await User.harvest(view)
+	if (user && user.date_active + 60 < Date.now() / 1000) {
 		db.changedRows(`UPDATE user_users
 			SET date_active = now()
 			WHERE user_id = :user_id

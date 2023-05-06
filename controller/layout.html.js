@@ -94,11 +94,6 @@ controller.HEAD = (data, env) =>
 				if (getname != null) return
 				const cookiename = fromCookie()
 				if (tplname == cookiename) return
-				if (getname) {
-					document.cookie = "theme=" + encodeURIComponent(getname) + "; path=/; SameSite=Strict ";
-				} else {
-					document.cookie = "theme=; path=/; SameSite=Strict ";
-				}
 				const Client = await window.getClient()
 				if (cookiename) {
 					await Client.replaceState(location.href + (location.search ? '&' : '?') + 'theme=' + cookiename)	

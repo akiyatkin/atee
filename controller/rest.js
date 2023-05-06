@@ -97,14 +97,8 @@ rest.addResponse('get-layers', async view => {
 	const bread = new Bread(nroute.path, nroute.get, nroute.search, nroute.root)
 	
 	const theme = Theme.harvest(bread.get, cookie)
-
 	if (bread.get.theme != null) {
-		const themevalue = Object.entries(theme).map(a => a.join("=")).join(":")
-		if (themevalue) {
-			view.headers['Set-Cookie'] = 'theme=' + encodeURIComponent(themevalue) + '; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT'
-		} else {
-			view.headers['Set-Cookie'] = 'theme=; path=/; SameSite=Strict; Max-Age=-1;'
-		}
+		Theme.set(view, theme)
 	}
 
 	const interpolate = (val, timings, layer, bread, crumb, theme) => {

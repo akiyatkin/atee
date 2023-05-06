@@ -32,7 +32,9 @@ rest.addResponse('set-reset', async view => {
 		showcase_items,
 		showcase_models,
 		showcase_search,
-		showcase_iprops
+		showcase_iprops,
+
+		showcase_partners
 	`)
 	
 	const src = FILE_MOD_ROOT + '/update.sql'
