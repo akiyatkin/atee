@@ -256,7 +256,7 @@ Cart.removeItem = async (db, order_id, item) => {
 	`, {
 		order_id, ...item
 	})
-	await Cart.recalcOrder(db, order_id)
+	// await Cart.recalcOrder(db, order_id)
 	// const order = await Cart.getOrder(db, order_id)
 	// await db.exec(`
 	// 	UPDATE cart_orders 

@@ -112,7 +112,7 @@ rest.addResponse('set-add', async view => {
 	return view.ret('Готово')
 })
 rest.addResponse('set-remove', async view => {
-	const { db, base, item, active_id } = await view.gets(['db', 'base', 'item#required', 'active_id'])
+	const { db, base, item, active_id, partner } = await view.gets(['db', 'base', 'item#required', 'active_id', 'partner'])
 	if (!active_id) return view.err('Заказ не найден')
 	const order_id = await Cart.castWaitActive(view, active_id)
 	await Cart.setPartner(db, order_id, partner)
