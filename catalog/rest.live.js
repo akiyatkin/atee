@@ -16,7 +16,7 @@ rest.addVariable('hashs', async (view) => {
 	return hashs
 })
 rest.addResponse('get-livemodels', async (view) => {
-	const { hash, db, visitor, partner, options, base} = await view.gets(['base', 'db','hash', 'visitor', 'partner', 'options'])
+	const { hash, db, partner, options, base} = await view.gets(['base', 'db','hash', 'partner', 'options'])
 	
 	const md = {search: hash}
 
@@ -36,7 +36,7 @@ rest.addResponse('get-livemodels', async (view) => {
 	const root = groupnicks[options.root_nick]
 
 
-	const tree = await Catalog.getTree(view)
+	const tree = await Catalog.getTree(db, view.visitor)
 
 	let rootpath = group_ids[0] ? [...tree[group_ids[0]].path, group_ids[0]] : []		
 

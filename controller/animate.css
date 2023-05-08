@@ -1,36 +1,58 @@
-.a-animate-before {
+
+
+.a-animate-zoom-before {
 	transform-origin: center; 
 	transform: scale(0.97);
 	opacity: 0.5;
 	transition:none;
 }
-.a-animate-after {
+.a-animate-zoom-after {
 	transform-origin: center; 
-	/*transition: transform 0.3s;*/
-	/*transition: opacity 0.3s;*/
+	transition: opacity 0.3s, transform 0.3s;
+}
+.a-animate-slide-before {
+	transform-origin: top left;
+	transform: scale(0.95);
+	opacity: 0;
+	transition: none;
+}
+.a-animate-slide-after {
+	transform-origin: top left;
 	transition: opacity 0.3s, transform 0.3s;
 }
 .a-animate-opacity-before {
-	
 	opacity: 0.5;
 	transition:none;
 }
 .a-animate-opacity-after {
-
 	transition: opacity 0.3s;
 }
+.a-animate-none-before {
+}
 
-.div-animate-before {
+
+
+
+.div-animate-zoom-before {
+	will-change: content; 
+	transform-origin: center; 
+	transform: scale(0.97);
+	opacity: 0.5;
+	transition:none;
+}
+.div-animate-zoom-after {
+	transform-origin: center; 
+	transition: opacity 0.3s, transform 0.3s;
+}
+.div-animate-slide-before {
 	will-change: content; 
 	transform-origin: top left;
 	transform: scale(0.95);
 	opacity: 0;
 	transition: none;
 }
-.div-animate-after {
-	/*transition: transform 0.3s;*/
+.div-animate-slide-after {
 	transform-origin: top left;
-	/*transition: opacity 0.3s;*/
 	transition: opacity 0.3s, transform 0.3s;
 }
 .div-animate-opacity-before {

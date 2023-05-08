@@ -43,7 +43,7 @@ class Base {
 			options.brands ??= {}
 			options.groups ??= {}
 			options.limit ??= 10
-			options.groupids = {}
+			//options.groupids = {}
 			options.partners ??= {}
 			options.props ??= {}
 			options.props["Бренд"] ??= {
@@ -113,12 +113,12 @@ class Base {
 			options.justonevalue_nicks = options.justonevalue.map(prop => base.onicked(prop))
 
 
-			for (const group_title in options.groups) {
-				const ids = await db.colAll('SELECT group_id FROM showcase_groups where group_title = :group_title', { group_title })
-				ids.forEach(id => {
-					options.groupids[id] = options.groups[group_title]	
-				})
-			}
+			// for (const group_title in options.groups) {
+			// 	const ids = await db.colAll('SELECT group_id FROM showcase_groups where group_title = :group_title', { group_title })
+			// 	ids.forEach(id => {
+			// 		options.groupids[id] = options.groups[group_title]	
+			// 	})
+			// }
 			for (const value in options.props) {
 				const p = options.props[value]
 				if (!p.prop_title) p.prop_title = value //Название свойства на карточке

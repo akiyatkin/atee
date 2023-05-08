@@ -10,8 +10,8 @@ rest.addArgument('model_nick', ['nicked'])
 rest.addArgument('brand_nick', ['nicked'])
 rest.addArgument('item_num', ['int'], (view, n) => n || 1)
 rest.addVariable('item', async (view) => {
-	const { brand_nick, model_nick, item_num } = await view.gets(['brand_nick', 'model_nick', 'item_num'])
-	const item = await Catalog.getItemByNick(view, brand_nick, model_nick, item_num)
+	const { brand_nick, model_nick, item_num, db, base } = await view.gets(['db', 'base', 'brand_nick', 'model_nick', 'item_num'])
+	const item = await Catalog.getItemByNick(db, base, brand_nick, model_nick, item_num)
 	return item
 })
 rest.addVariable('item#required', async (view) => {
@@ -63,8 +63,8 @@ rest.addArgument('m', (view, m) => {
 	if (m) view.nostore = true //безчисленное количество комбинаций, браузеру не нужно запоминать	
 	return m
 })
-const prepareValue = async (view, base, options, value) => {
-	const tree = await Catalog.getTree(view)
+const prepareValue = async (db, base, options, value) => {
+	const tree = await Catalog.getTree(db, base.visitor)
 	const nick = nicked(value);
 	let addm = ''
 	if (nick) {
@@ -85,7 +85,7 @@ const prepareValue = async (view, base, options, value) => {
 			if (group) {
 				addm += `:group::.${nick}=1`;
 			} else {
-				const brands = await Catalog.getBrands(view)
+				const brands = await Catalog.getBrands(db)
 				const brand = brands[nick]
 				if (brand) {
 					addm += `:brand::.${nick}=1`
@@ -145,18 +145,18 @@ const adddef = (md, def, i) => {
 	}
 }
 rest.addVariable('md', async (view) => {
-	let { base, m, db, value, visitor, options } = await view.gets(['base', 'm','db','value','visitor', 'options'])
-	const addm = await prepareValue(view, base, options, value)
+	let { base, m, db, value, options } = await view.gets(['base', 'm','db','value','options'])
+	const addm = await prepareValue(db, base, options, value)
 	m += addm
 	let md = makemd(m)
 
 	if (md.search) {
-		const addm = await prepareValue(view, base, options, md.search)
+		const addm = await prepareValue(db, base, options, md.search)
 		m += ':search'+addm
 		md = makemd(m)
 	}
 	if (md.value) { //value это то что было до поиска и можт содержать старый поиск, который применять не нужно
-		const addm = await prepareValue(view, base, options, md.value)
+		const addm = await prepareValue(db, base, options, md.value)
 		m += addm
 		const search = md.search
 		md = makemd(m)
@@ -172,7 +172,7 @@ rest.addVariable('md', async (view) => {
 		if (!Object.keys(md.group).length) delete md.group
 	}
 	if (md.brand) {
-		const brands = await Catalog.getBrands(view)
+		const brands = await Catalog.getBrands(db)
 		for (const brand_nick in md.brand) {
 			if (!brands[brand_nick]) delete md.brand[brand_nick]
 		}

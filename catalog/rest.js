@@ -1,25 +1,31 @@
-import Rest from "/-rest"
-
 import fs from "fs/promises"
 import nicked from '/-nicked'
-
+import docx from '/-docx'
+import mail from '/-mail'
+import config from '/-config'
 import unique from "/-nicked/unique.js"
 import Access from "/-controller/Access.js"
 import Files from "/-showcase/Files.js"
-
 import common from "/-catalog/common.html.js"
-import rest_live from '/-catalog/rest.live.js'
-import rest_funcs from '/-rest/rest.funcs.js'
-import docx from '/-docx'
-
-import mail from '/-mail'
-import config from '/-config'
-import rest_mail from '/-mail/rest.mail.js'
-import rest_db from '/-db/rest.db.js'
-import rest_catalog from '/-catalog/rest.vars.js'
 import Catalog from "/-catalog/Catalog.js"
 
-const rest = new Rest(rest_live, rest_funcs, rest_mail, rest_db, rest_catalog)
+
+import Rest from "/-rest"
+const rest = new Rest() //rest_live, rest_funcs, rest_mail, rest_db, rest_catalog
+
+import rest_live from '/-catalog/rest.live.js'
+rest.extra(rest_live)
+import rest_funcs from '/-rest/rest.funcs.js'
+rest.extra(rest_funcs)
+import rest_mail from '/-mail/rest.mail.js'
+rest.extra(rest_mail)
+import rest_db from '/-db/rest.db.js'
+rest.extra(rest_db)
+import rest_catalog from '/-catalog/rest.vars.js'
+rest.extra(rest_catalog)
+
+
+
 
 
 
@@ -56,9 +62,9 @@ rest.addArgument('vals', ['nicks'])
 
 
 rest.addResponse('get-model-head', async (view) => {
-	const { model, db, brand_nick, model_nick, visitor, partner, base} = await view.gets(['model', 'db','visitor', 'brand_nick','model_nick','partner', 'base'])
+	const { model, db, brand_nick, model_nick, partner, base} = await view.gets(['model', 'db', 'brand_nick','model_nick','partner', 'base'])
 	if (!model) {
-		view.ans.brand = await Catalog.getBrandByNick(view, brand_nick)
+		view.ans.brand = await Catalog.getBrandByNick(db, brand_nick)
 		view.ans.title = `${view.ans.brand?.brand_title ?? brand_nick} ${model_nick}`
 		return view.ret()
 	}
@@ -90,11 +96,11 @@ rest.addResponse('get-model-head', async (view) => {
 // })
 
 rest.addResponse('get-model', async (view) => {
-	const { model, base, md, db, brand_nick, model_nick, visitor, partner } = await view.gets(['model', 'base', 'md', 'db', 'visitor', 'brand_nick','model_nick','partner'])
+	const { model, base, md, db, brand_nick, model_nick, partner } = await view.gets(['model', 'base', 'md', 'db', 'brand_nick','model_nick','partner'])
 	view.ans.m = md.m
 	view.ans.md = md
 	view.ans.partner = partner?.key || ''
-	view.ans.brand = await Catalog.getBrandByNick(view, brand_nick)
+	view.ans.brand = await Catalog.getBrandByNick(db, brand_nick)
 	if (!model) return view.err()
 	if (model.texts) {
 		model.texts = await Promise.all(model.texts.map(src => {
@@ -136,13 +142,13 @@ const isSome = (obj, p) => {
 	return false
 };
 rest.addResponse('get-filters', async (view) => {
-	const { db, md, partner, visitor, base} = await view.gets(['db','md','partner', 'visitor','base'])
+	const { db, md, partner, base, options} = await view.gets(['db','md','partner', 'base', 'options'])
 	view.ans.m = md.m
 	view.ans.md = md
 	const group = await Catalog.getMainGroup(view, md)
 	if (!group) return view.err('Нет данных')
 	const res = {}
-	const opt = await Catalog.getGroupOpt(view, group.group_id)
+	const opt = await Catalog.getGroupOpt(db, view.visitor, group.group_id)
 	const filters = []
 
 
@@ -167,7 +173,7 @@ rest.addResponse('get-filters', async (view) => {
 })
 
 rest.addResponse('get-search-groups', async (view) => {
-	const { base, db, value, md, partner, visitor, options} = await view.gets(['base', 'db','value','md','partner', 'visitor', 'options'])
+	const { base, db, value, md, partner, options} = await view.gets(['base', 'db','value','md','partner', 'options'])
 	view.ans.m = md.m
 	view.ans.md = md
 	let type = ''
@@ -184,9 +190,9 @@ rest.addResponse('get-search-groups', async (view) => {
 
 	view.ans.root_title = options.root_title
 
-	const brand = await Catalog.getMainBrand(view, md)
+	const brand = await Catalog.getMainBrand(db, md)
 	const groupnicks = await Catalog.getGroups(view)
-	const tree = await Catalog.getTree(view)
+	const tree = await Catalog.getTree(db, view.visitor)
 	const group = await Catalog.getMainGroup(view, md)
 	if (!group) return view.err('Нет данных')
 
@@ -267,7 +273,7 @@ rest.addResponse('get-search-list', async (view) => {
 	
 	const group = await Catalog.getMainGroup(view, md)
 	if (!group) return view.err('Нет данных')
-	const opt = await Catalog.getGroupOpt(view, group.group_id)
+	const opt = await Catalog.getGroupOpt(db, view.visitor, group.group_id)
 	view.ans.limit = options.limit
 	const countonpage = count || options.limit
 	const start = (page - 1) * countonpage
@@ -292,9 +298,9 @@ rest.addResponse('get-search-list', async (view) => {
 		WHERE ${where.join(' and ')}
 	`)
 
-	const list = await Catalog.getModelsByItems(view, moditem_ids, partner)
+	const list = await Catalog.getModelsByItems(db, base, moditem_ids, partner)
 
-	const brand = await Catalog.getMainBrand(view, md)
+	const brand = await Catalog.getMainBrand(db, md)
 	
 	let last = total <= countonpage ? 1 : Math.ceil(total / countonpage)
 	const pagination = {
@@ -311,7 +317,7 @@ rest.addResponse('get-search-head', async (view) => {
 	view.ans.md = md
 	const group = await Catalog.getMainGroup(view, md)
 	if (!group) return view.err('Нет данных')
-	const brand = await Catalog.getMainBrand(view, md)
+	const brand = await Catalog.getMainBrand(db, md)
 
 	if (brand && !group.parent_id) {
 		view.ans.title = brand.brand_title
@@ -334,7 +340,7 @@ rest.addResponse('get-search-sitemap', async (view) => {
 	view.ans.title = options.root_title
 	view.ans.headings = []
 
-	const brands = await Catalog.getBrands(view)
+	const brands = await Catalog.getBrands(db)
 	let childs = {}
 	for (const brand_nick in brands) {
 		const brand = brands[brand_nick]
@@ -383,7 +389,7 @@ rest.addResponse('get-search-sitemap', async (view) => {
 rest.addResponse('get-catalog', async (view) => {
 	const { db } = await view.gets(['db'])
 	
-	const tree = await Catalog.getTree(view)
+	const tree = await Catalog.getTree(db, view.visitor)
 	
 	const groups = Object.values(tree)
 	const root = groups.find(g => !g.parent_id)
@@ -404,7 +410,7 @@ rest.addResponse('get-catalog', async (view) => {
 	return view.ret()
 })
 rest.addResponse('get-nalichie', async (view) => {
-	const { options, partner, base } = await view.gets(['partner', 'base','options'])
+	const { db, options, partner, base } = await view.gets(['db', 'partner', 'base','options'])
 	view.ans.list = await Access.relate(rest).once('get-nalichie', async () => {
 		const lim = 100
 		const vals = options.actions.map(v => nicked(v)).filter(v => v).sort()
@@ -436,7 +442,7 @@ rest.addResponse('get-nalichie', async (view) => {
 			GROUP BY ip.model_id
 			LIMIT 100
 		`, { prop_id })
-		const models = await Catalog.getModelsByItems(view, moditem_ids, partner)
+		const models = await Catalog.getModelsByItems(db, base, moditem_ids, partner)
 		
 		return models
 	})
@@ -464,11 +470,11 @@ rest.addResponse('get-partner', async (view) => {
 import { MAIL } from './order.mail.html.js'
 rest.addResponse('set-order', async (view) => {
 	await view.gets(['recaptcha','terms'])
-	const { base, db, visitor } = await view.gets(['db','visitor', 'base'])
+	const { base, db } = await view.gets(['db', 'base'])
 	
     const user = await view.gets(['text', 'email#required', 'phone#required', 'brand_nick','model_nick', 'utms', 'partner'])
-    user.host = visitor.client.host
-    user.ip = visitor.client.ip
+    user.host = view.visitor.client.host
+    user.ip = view.visitor.client.ip
     user.model = await Catalog.getModelByNick(view, user.brand_nick, user.model_nick, user.partner)
     const html = MAIL(user)
     
@@ -498,7 +504,7 @@ rest.addResponse('get-maingroups', async (view) => {
 
 	const cache = Access.relate(rest)
 	const childs = await cache.konce('get-maingroups', partner.key, async () => {
-		const tree = await Catalog.getTree(view)
+		const tree = await Catalog.getTree(db, view.visitor)
 		let root = tree[root_id]
 		if (root.childs.length == 1) root = tree[root.childs[0]] //fix для hugong когда есть одна общая группа верхнего уровня
 		const childs = await Promise.all(root.childs.map(async group_id => {

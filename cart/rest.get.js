@@ -101,51 +101,34 @@ rest.addResponse('get-manager-orders', async view => {
 
 
 rest.addResponse('get-panel', async view => {
-	const { db, active_id, user_id, user } = await view.gets(['db', 'active_id#required','user_id', 'user'])
+	const { db, partner, base, active_id: order_id, user_id, user } = await view.gets(['db', 'partner', 'base', 'active_id#required','user_id', 'user'])
 	view.ans.user = user
-	view.ans.order = await Cart.getOrder(view, active_id)
-	const list = await db.all(`
-		SELECT model_nick, brand_nick, count, item_num 
-		FROM cart_basket 
-		WHERE order_id = :active_id
-		ORDER by dateedit DESC
-	`, {active_id})
 
-	view.ans.list = (await Promise.all(list.map(async pos => {
-		const item = await Cart.getItem(view, active_id, pos.brand_nick, pos.model_nick, pos.item_num)
-		item.count = pos.count
-		return item
-		
-	}))).filter(item => !!item || !item['Цена'])
-
-	view.ans.sum = 0
-	view.ans.list.forEach(mod => {
-		mod.sum = (mod['Цена'] || 0) * (mod.count || 0)
-		view.ans.sum += mod.sum
-	})
+	const order = await Cart.getOrder(db, order_id)
+	view.ans.order = order
+	if (!order.freeze && (!user.email || user.email == order.email)) { //Только тот на кого заявка обновляет партнёрский ключ при просмотре
+		await Cart.setPartner(db, order_id, partner)
+		order.partner = partner
+		await Cart.recalcOrder(db, base, order_id, order.partner)
+	}
+	const list = await Cart.getBasket(db, base, order_id, order.freeze, order.partner)
+	// view.ans.sum = 0
+	// list.forEach(pos => {
+	// 	view.ans.sum += pos.sum
+	// })
+	view.ans.list = list
 
 
-	view.ans.orders = await db.all(`
-		SELECT o.order_nick, o.status, o.order_id,
+	const orders = await db.all(`
+		SELECT o.order_nick, o.status, o.order_id, sum, count,
 			UNIX_TIMESTAMP(datecheck) as datecheck, 
 			UNIX_TIMESTAMP(datewait) as datewait
 		FROM cart_userorders uo, cart_orders o
 		WHERE uo.user_id = :user_id and uo.order_id = o.order_id
-	`, {user_id, active_id})
-	for (const order of view.ans.orders) {
-		const poss = await db.all(`
-			SELECT count, cost 
-			FROM cart_basket
-			WHERE order_id = :order_id
-		`, order)
-		order.sum = 0
-		for (const {count, cost} of poss) {
-			order.sum += count * cost
-		}
-	}
+	`, {user_id})
 	const years = {}
-	for (const index in view.ans.orders) {
-		const order = view.ans.orders[index]
+	for (const index in orders) {
+		const order = orders[index]
 		const date = new Date((order.datecheck || order.datewait) * 1000)
 		const year = date.getFullYear()
 		if (!years[year]) years[year] = {title: year, months: {}} 
@@ -157,6 +140,7 @@ rest.addResponse('get-panel', async view => {
 	for (const year of view.ans.years) {
 		year.months = Object.values(year.months)
 	}
+	view.ans.orders = orders
 
 	return view.ret()
 })

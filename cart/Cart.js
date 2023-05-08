@@ -4,46 +4,46 @@ import Mail from '/-mail'
 
 
 const Cart = {
-	// setPartner: (view, partner) => {
-	// 	const user = User.harvest(view)
-	// 	if (!user) return
-	// 	await db.exec(`
-	// 		INSERT INTO 
-	// 			cart_partners
-	// 		SET
-	// 			order_id = :order_id,
-	// 			partner_nick = :partner_nick
-	// 	`, { user_id: user.user_id, partner })
-	// },
-	toCheck: async (view, order_id, partner) => {
-		const { db } = await view.gets(['db'])
-		await Cart.freeze({db, order_id, partner})
-		await Cart.setStatus(view, order_id, 'check')
-		await Cart.sendToManager(view, 'tocheck', order_id)
-	},
-	freeze: async ({db, order_id, partner}) => {
-		const partnerfreeze = JSON.stringify(partner)
+	setPartner: async (db, order_id, partner) => {
+		const partnerjson = JSON.stringify(partner)
 		await db.exec(`
-				UPDATE 
-					cart_orders
-				SET
-					freeze = 1,
-					partnerfreeze = :partnerfreeze
-				WHERE order_id = :order_id
-			`, { order_id, partnerfreeze })
-		// await db.exec(`
-		// 		INSERT INTO 
-		// 			cart_orders
-		// 		SET
-		// 			order_id = :order_id,
-		// 			partner_nick = :partner_nick
-		// 	`, { user_id: user.user_id, partner })
-		// }
+			UPDATE cart_orders
+			SET
+				partnerjson = :partnerjson
+			WHERE order_id = :order_id
+		`, { order_id, partnerjson })
 	},
-	sendToManager: async (view, sub, order_id) => {
-		const { db } = await view.gets(['db'])
-		const order = await Cart.getOrder(view, order_id)
+	// toCheck: async (view, order_id) => {
+	// 	const { db, base } = await view.gets(['db','base'])
+	// 	await Cart.freeze(db, base, order_id)
+	// 	await Cart.setStatus(db, order_id, 'check')
+	// 	await Cart.sendToManager(view, 'tocheck', order_id)
+	// },
+	freeze: async (db, base, order_id, partner) => {
+		const list = await Cart.getBasketCatalog(db, base, order_id, partner)
+		for (const item of list) {
+			const json = JSON.stringify(item)
+			await db.exec(`
+				UPDATE 
+					cart_basket
+				SET
+					json = :json
+				WHERE order_id = :order_id 
+					and item_num = :item_num 
+					and model_nick = :model_nick
+					and brand_nick = :brand_nick
+			`, { json, order_id, ...item })
 
+		}
+		await db.exec(`
+			UPDATE 
+				cart_orders
+			SET
+				freeze = 1
+			WHERE order_id = :order_id
+		`, { order_id })
+	},
+	getBasketCatalog:  async (db, base, order_id, partner) => {
 		let list = await db.all(`
 			SELECT model_nick, brand_nick, count, item_num 
 			FROM cart_basket 
@@ -51,11 +51,46 @@ const Cart = {
 			ORDER by dateedit DESC
 		`, {order_id})
 		list = (await Promise.all(list.map(async pos => {
-			const item = await Cart.getItem(view, order_id, pos.brand_nick, pos.model_nick, pos.item_num)
+			const item = await Cart.getItem(db, base, order_id, pos.brand_nick, pos.model_nick, pos.item_num, partner)
 			item.count = pos.count
 			return item
-			
 		}))).filter(item => !!item || !item['Цена'])
+		list.forEach(pos => {
+			pos.sum = (pos['Цена'] || 0) * (pos.count || 0)
+		})
+		return list
+	},
+	getBasketFreeze:  async (db, order_id) => {
+		let list = await db.all(`
+			SELECT json, count
+			FROM cart_basket 
+			WHERE order_id = :order_id
+			ORDER by dateedit DESC
+		`, {order_id})
+		list = list.map(async pos => {
+			const item = JSON.parse(pos.json)
+			item.count = pos.count
+			return item
+		})
+		list.forEach(pos => {
+			pos.sum = (pos['Цена'] || 0) * (pos.count || 0)
+		})
+		return list
+	},
+	getBasket: async (db, base, order_id, freeze, partner) => {
+		//const freeze = await db.col("SELECT freeze from cart_orders where order_id = :order_id", {order_id})
+		if (freeze) {
+			return Cart.getBasketFreeze(db, order_id)
+		} else {
+			return Cart.getBasketCatalog(db, base, order_id, partner)
+		}
+	},
+	sendToManager: async (view, sub, order_id) => {
+		const { db, base } = await view.gets(['db','base'])
+		const order = await Cart.getOrder(db, order_id)
+
+		const list = await Cart.getBasket(db, base, order_id, order.freeze, order.partner)
+		
 
 
 		const vars = await view.gets(['utms', 'host', 'ip'])
@@ -97,7 +132,7 @@ const Cart = {
 			User.setCookie(view, user)
 		}
 		if (!active_id) return Cart.create(view, user)
-		const order = await Cart.getOrder(view, active_id)
+		const order = await Cart.getOrder(db, active_id)
 		if (order.status == 'wait') return active_id
 		let nactive_id = await db.col(`
 			SELECT uo.order_id
@@ -174,29 +209,17 @@ Cart.saveFiled = async (view, order_id, field, value) => {
 		WHERE order_id = :order_id
 	`, {order_id, value})
 }
-Cart.getItem = async (view, order_id, brand_nick, model_nick, item_num) => {
-	return Catalog.getItemByNick(view, brand_nick, model_nick, item_num)
+Cart.getItem = async (db, base, order_id, brand_nick, model_nick, item_num, partner) => {
+	const item = await Catalog.getItemByNick(db, base, brand_nick, model_nick, item_num, partner)
+	delete item.item_props
+	delete item.model_props
+	delete item.card_props
+	return item
 }
-Cart.removeItem = async (view, order_id, item) => {
-	const { db } = await view.gets(['db'])
-	await db.exec(`
-		DELETE FROM cart_basket 
-		WHERE order_id = :order_id 
-			and item_num = :item_num 
-			and model_nick = :model_nick
-			and brand_nick = :brand_nick
-	`, {
-		order_id, ...item
-	})
-	const order = await Cart.getOrder(view, order_id)
-	await db.exec(`
-		UPDATE cart_orders 
-		SET sum = :sum, count = :count
-		WHERE order_id = :order_id
-	`, order)
-}
-Cart.getOrder = async (view, order_id) => {
-	const { db } = await view.gets(['db'])
+
+Cart.getOrder = async (db, order_id) => {
+	if (db.gets) db = await db.get(['db'])
+
 	const order = await db.fetch(`
 		SELECT 
 			order_id, 
@@ -210,7 +233,8 @@ Cart.getOrder = async (view, order_id) => {
 			email, 
 			address, 
 			commentuser, 
-			status 
+			partnerjson,
+			status
 		FROM cart_orders
 		WHERE order_id = :order_id 
 	`, { order_id })
@@ -219,23 +243,32 @@ Cart.getOrder = async (view, order_id) => {
 	if (order.name) order.name = order.name.replaceAll(/[<>\'\"\`]/ig,' ')
 	if (order.phone) order.phone = order.phone.replaceAll(/[<>\'\"\`]/ig,' ')
 
-
-	const poss = await db.all(`
-		SELECT count, cost 
-		FROM cart_basket
-		WHERE order_id = :order_id
-	`, order)
-	order.sum = 0
-	order.count = 0
-	for (const {count, cost} of poss) {
-		order.count++
-		order.sum += count * cost
-	}
+	order.partner = order.partnerjson ? JSON.parse(order.partnerjson) : false
+	
+	
 
 	return order
 }
-Cart.addItem = async (view, order_id, item, count = 0) => {
-	const { db } = await view.gets(['db'])
+Cart.removeItem = async (db, order_id, item) => {
+	await db.exec(`
+		DELETE FROM cart_basket 
+		WHERE order_id = :order_id 
+			and item_num = :item_num 
+			and model_nick = :model_nick
+			and brand_nick = :brand_nick
+	`, {
+		order_id, ...item
+	})
+	await Cart.recalcOrder(db, order_id)
+	// const order = await Cart.getOrder(db, order_id)
+	// await db.exec(`
+	// 	UPDATE cart_orders 
+	// 	SET sum = :sum, count = :count
+	// 	WHERE order_id = :order_id
+	// `, order)
+}
+Cart.addItem = async (db, order_id, item, count = 0) => {
+
 	const pos = await db.fetch(`
 		SELECT count FROM cart_basket 
 		WHERE order_id = :order_id 
@@ -249,30 +282,25 @@ Cart.addItem = async (view, order_id, item, count = 0) => {
 	if (!pos) {
 		await db.exec(`
 			INSERT INTO cart_basket (
-			order_id, model_nick, brand_nick, item_num, count, cost, dateadd, dateedit
+			order_id, model_nick, brand_nick, item_num, count, dateadd, dateedit
 		) VALUES (
-			:order_id, :model_nick, :brand_nick, :item_num, :count, :cost, now(), now()
-		)`, {order_id, ...item, count, cost: item['Цена']})
+			:order_id, :model_nick, :brand_nick, :item_num, :count, now(), now()
+		)`, {order_id, ...item, count})
 	} else {
 		await db.exec(`
 			UPDATE cart_basket 
 			SET 
 				count = :count, 
-				cost = :cost, 
 				dateedit = now()
 			WHERE order_id = :order_id
 			and brand_nick = :brand_nick
 			and model_nick = :model_nick
 			and item_num = :item_num
-		`, {order_id, ...item, count, cost: item['Цена']})
+		`, {order_id, ...item, count})
 	}
 
-	const order = await Cart.getOrder(view, order_id)
-	await db.exec(`
-		UPDATE cart_orders 
-		SET sum = :sum, count = :count
-		WHERE order_id = :order_id
-	`, order)
+	//await Cart.recalcOrder(db, order_id)
+	
 	// const poscount = await db.fetch(`
 	// 	SELECT count FROM cart_basket 
 	// 	WHERE order_id = :order_id 
@@ -281,6 +309,25 @@ Cart.addItem = async (view, order_id, item, count = 0) => {
 	// })
 	
 	return true
+}
+Cart.recalcOrder = async (db, base, order_id, partner) => {
+	const list = await Cart.getBasketCatalog(db, base, order_id, partner)
+	// const list = await db.all(`
+	// 	SELECT count, cost 
+	// 	FROM cart_basket
+	// 	WHERE order_id = :order_id
+	// `, { order_id })
+	let sum = 0
+	let count = 0
+	for (const item of list) {
+		count++
+		sum += item.count * item['Цена']
+	}
+	await db.exec(`
+		UPDATE cart_orders 
+		SET sum = :sum, count = :count
+		WHERE order_id = :order_id
+	`, {order_id, sum, count})
 }
 Cart.grant = async (view, user_id, order_id) => {
 	const { db } = await view.gets(['db'])
@@ -329,8 +376,7 @@ Cart.create = async (view, user) => {
 	return order_id
 }
 
-Cart.setStatus = async (view, order_id, status) => {
-	const { db } = await view.gets(['db'])
+Cart.setStatus = async (db, order_id, status) => {
 	return await db.exec(`
 		UPDATE cart_orders 
 		SET status = '${status}', date${status} = now()

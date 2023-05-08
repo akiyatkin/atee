@@ -11,6 +11,7 @@ export const ROOT = (data, env) => `
 			${env.scope} {
 /*				z-index:200;*/
 				position: sticky; bottom:0; 
+				z-index:1;
 				background:white; 
 				border-top: 1px solid gray;
 			}
@@ -288,7 +289,7 @@ export const ORDER = (data, env) => isShowPanel(data) ? `
 	</div>
 ` : ``
 const showCrown = () => `
-	<a href="/cart/manager/${new Date().getFullYear()}/${new Date().getMonth()}" title="Вы администратор и можете на любой email оформить заказ. Заказ будет доступен и Вам и новому пользователю">
+	<a href="/cart/manager/${new Date().getFullYear()}/${new Date().getMonth() + 1}" title="Вы администратор и можете на любой email оформить заказ. Заказ будет доступен и Вам и новому пользователю">
 		<svg style="color: var(--brown); margin-bottom: 3px;" width="24" height="24" viewBox="0 0 18 18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.179 13.425h13.656v3.02H2.179v-3.02z" fill="currentColor" fill-opacity=".8"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8.999 1L2.093 11.031h4.25l6.662-4.315L9 1z" fill="currentColor" fill-opacity=".6"/><path fill-rule="evenodd" clip-rule="evenodd" d="M2.067 12.641L.5 3.752l12.76 8.89H2.068z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M15.927 12.641l1.607-8.858L3.857 12.64h12.07z" fill="currentColor" fill-opacity=".8"/></svg>
 	</a>
 `
@@ -326,6 +327,9 @@ const showPoss = (data, env) => `
 			<div>
 				Менеджер перезвонит в&nbsp;рабочее время, уточнит время и&nbsp;стоимость доставки. Стоимость доставки оплачивается отдельно в&nbsp;транспортной компании.
 			</div>
+			
+			${data.order.partner ? showPartner(data, env) : '' }
+			
 			<div class="float-label field">
 				<textarea ${data.order.status == 'wait' ? '' : 'disabled'} placeholder="Комментарий" id="${env.sid}text" 
 					name="commentuser" style="width:100%; box-sizing: border-box; min-height:130px">${data.order.commentuser || ''}</textarea>
@@ -339,6 +343,11 @@ const showPoss = (data, env) => `
 		</form>
 		
 		
+`
+const showPartner = (data, env) => `
+	<div>
+		Ключ партнёра: <b>${data.order.partner.title}</b>
+	</div>
 `
 const showMonth = (data, env, month) => `
 	<div>
@@ -372,7 +381,7 @@ const showOrders = (data, env) => `
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
-const showOrder = (data, env, order) => `<button ${data.order.order_id == order.order_id ? 'disabled ' : ''}data-order_id="${order.order_id}" class="a">${order.order_nick}</button>`
+const showOrder = (data, env, order) => `<button ${data.order.order_id == order.order_id ? 'disabled ' : ''}data-order_id="${order.order_id}" style="${order.status == 'wait' ? 'color:red':''}" class="a">${order.order_nick}</button>`
 const showSubmit = (data, env) => `
 	<div style="max-width: 500px;">
 		${checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на усфловиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}
@@ -596,7 +605,7 @@ export const BODY = (data, env) => isShowPanel(data) ? `
 				recalc()
 				title.innerHTML = TITLE(state)
 				const ans = await fetch('/-cart/set-add?order_id&count=' + mod.count +'&model_nick='+mod.model_nick+'&brand_nick='+mod.brand_nick+'&item_num='+mod.item_num+'&partner=${env.theme.partner || ""}').then(r => r.json()).catch(e => console.log(e))
-				if (ans?.newactive) {
+				if (ans?.orderrefresh) {
 					const Client = await window.getClient()
 					Client.global('cart')
 				}

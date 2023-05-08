@@ -9,7 +9,8 @@ await fs.mkdir('cache/yml/', { recursive: true }).catch(e => null)
 
 const yml = {
 	groups: async (view) => {
-		const tree = await Catalog.getTree(view)
+		const db = await view.get('db')
+		const tree = await Catalog.getTree(db, view.visitor)
 		const groups = []
 		for (const group_id in tree) {
 			const {parent_id, group_title} = tree[group_id]
@@ -18,7 +19,7 @@ const yml = {
 		return groups
 	},
 	data: (view, feed) => cproc(yml, '', async () => {
-		const { db } = await view.gets(['db'])
+		const { db, base } = await view.gets(['db','base'])
 		const conf = await config('yml')
 		const md = conf.feeds[feed]
 		if (!md) return []
@@ -31,7 +32,7 @@ const yml = {
 			WHERE ${where.join(' and ')}
 			GROUP BY m.model_id 
 		`)
-		const list = await Catalog.getModelsByItems(view, moditem_ids)
+		const list = await Catalog.getModelsByItems(db, base, moditem_ids)
 		return list
 	})
 }

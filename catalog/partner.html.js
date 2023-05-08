@@ -1,16 +1,23 @@
-const addCSS = href => { //файл этот нельзя использовать на сервере
-	if (document.head.querySelector('link[href="'+href+'"]')) return
-	const link = document.createElement('link')
-	link.rel = 'stylesheet'
-	link.href = href
-	document.head.prepend(link)
-}
-addCSS('/-float-label/style.css')
-
-export const POPUP = (data, env) => `
+// const addCSS = href => { //файл этот нельзя использовать на сервере
+// 	if (document.head.querySelector('link[href="'+href+'"]')) return
+// 	const link = document.createElement('link')
+// 	link.rel = 'stylesheet'
+// 	link.href = href
+// 	document.head.prepend(link)
+// }
+// addCSS('/-float-label/style.css')
+const tpl = {}
+export default tpl
+tpl.css = ['/-float-label/style.css']
+tpl.successmsg = (data, env) => `
+	<p>
+		Для Вас действуют более <a href="/catalog">выгодные цены</a>!
+	</p>
+`
+tpl.POPUP = (data, env) => `
 	<h1>Вход для партнёра</h1>
 	${data.result
-		? '<p>Активный ключ <b>' + data.partner + '</b>. <br>Для Вас действуют более <a href="/catalog">выгодные цены</a>.</p>'
+		? '<p>Активный ключ <b>' + data.partner + '</b></p>' + tpl.successmsg(data, env)
 		: '<p>Нет активного ключа</p>'
 	}
 	${data.descr ? '<p style="max-width:600px"><i>' + data.descr + '</i></p>' : ''}
@@ -54,12 +61,12 @@ export const POPUP = (data, env) => `
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
-export const SUCCESS = (data) => `
+tpl.SUCCESS = (data, env) => `
 	<h1>Хорошо</h1>
-	<p>Теперь для Вас действуют более <a href="/catalog">выгодные цены.</a></p>
+	<p>${tpl.successmsg(data, env)}</p>
 	${data.descr ? '<p style="max-width:600px"><i>' + data.descr + '</i></p>' : ''}
 `
-export const ERROR = () => `
+tpl.ERROR = (data, env) => `
 	<h1>Ключ неточный</h1>
 	<p>Ключ мог устареть или введён с ошибкой.</p>
 `

@@ -67,9 +67,7 @@ const addParents = (group, parent_id, tree) => {
 	group.path.unshift(parent_id)
 	addParents(group, tree[parent_id].parent_id, tree)
 }
-const getTree = async (view) => {
-	const { db } = await view.gets(['db'])
-	
+const getTree = async (db) => {
 	const tree = {}
 	const rows = await db.all(`
 		SELECT group_id, parent_id, group_nick, icon_id, group_title 
@@ -113,7 +111,7 @@ rest.addResponse('set-groups-replace', async view => {
 	if (!group_id) return view.err('Группа не найдена '+id)
 	if (parent_id == group_id) return view.err('Вы хотите текущую группу переместить в текущую группу? Этого не будет.')
 
-	const tree = await getTree(view)
+	const tree = await getTree(db)
 	if (~tree[group_id].groups.indexOf(parent_id)) return view.err('Новая родительская группа является вложенной и получается рекурсия. Этого не будет.')
 
 	const r = await db.changedRows(`

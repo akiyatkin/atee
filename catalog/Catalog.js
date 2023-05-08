@@ -1,11 +1,12 @@
-import { Access } from "/-controller/Access.js"
-import { Db } from "/-db/Db.js"
+import Access from "/-controller/Access.js"
+import Db from "/-db/Db.js"
 import nicked from "/-nicked"
-import { unique } from "/-nicked/unique.js"
-import { filter } from "/-nicked/filter.js"
+import unique from "/-nicked/unique.js"
+import filter from "/-nicked/filter.js"
 import fs from 'fs/promises'
 import config from '/-config'
 import Base from '/-showcase/Base.js'
+import Showcase from '/-showcase/Showcase.js'
 
 
 const addParents = (group, parent_id, tree) => {
@@ -15,21 +16,21 @@ const addParents = (group, parent_id, tree) => {
 }
 
 const Catalog = {}
-Catalog.getItemByNick = async (view, brand_nick, model_nick, item_num) => {
-	const { db, partner, base} = await view.gets(['db', 'base', 'partner'])
+Catalog.getItemByNick = async (db, base, brand_nick, model_nick, item_num, partner) => {
 	const { vicache: cache } = base
 	const brand_id = await base.getBrandIdByNick(brand_nick)
 	const model_id = await base.getModelIdByNick(brand_id, model_nick)
 	return cache.konce('getItemByNick', model_id + ':' + item_num + ':' + partner, async () => {
 		const moditem_ids = [{model_id, item_nums: String(item_num)}]
-		const models = await Catalog.getModelsByItems(view, moditem_ids, partner)
+		const models = await Catalog.getModelsByItems(db, base, moditem_ids, partner)
 		const item = models[0]
 		//unset(item.items)
 		return item
 	})
 }
-Catalog.getModelsByItems = async (view, moditems_ids, partner) => { //[{item_nums after GROUP_CONCAT(distinct i.item_num separator ','), model_id}]
-	const { db, base, options} = await view.gets(['db', 'base', 'options'])
+Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item_nums after GROUP_CONCAT(distinct i.item_num separator ','), model_id}]
+	const visitor = base.visitor
+	const options = await Showcase.getOptions(visitor)
 	if (!moditems_ids.length) return []
 	
 	const ids = unique(moditems_ids.map(it => it.model_id))
@@ -171,7 +172,7 @@ Catalog.getModelsByItems = async (view, moditems_ids, partner) => { //[{item_num
 
 	//Какие пропертисы надо показать на карточке
 	for (const model of list) {
-		let { props } = await Catalog.getGroupOpt(view, model.group_id)
+		let { props } = await Catalog.getGroupOpt(db, visitor, model.group_id)
 		
 		model.card_props = props.map(prop => ({...prop}))
 		model.card_props = await filter(model.card_props, async (pr) => {
@@ -207,8 +208,8 @@ Catalog.getModelsByItems = async (view, moditems_ids, partner) => { //[{item_num
 	const cost = await base.getPropByTitle('Цена')
 	const oldcost = await base.getPropByTitle('Старая цена')
 	for (const model of list) {
-		await Catalog.prepareCost(view, model, partner)
-		await Catalog.prepareCostMinMax(view, model)
+		await Catalog.prepareCost(base, model, partner)
+		await Catalog.prepareCostMinMax(base, model)
 
 		let is_item_cost, is_item_oldcost
 		for (const item of model.items) {
@@ -271,8 +272,7 @@ Catalog.getModelsByItems = async (view, moditems_ids, partner) => { //[{item_num
 	
 	return list
 }
-Catalog.prepareCost = async (view, model, partner) => {
-	const { base } = await view.gets(['base'])
+Catalog.prepareCost = async (base, model, partner) => {
 	partner = partner || {}
 	/*
 	Есть items, Цена, Старая цена, discount обычные характеристики, partner не применён.
@@ -440,9 +440,8 @@ Catalog.prepareCost = async (view, model, partner) => {
 	}
 	
 }
-Catalog.prepareCostMinMax = async (view, model) => {
+Catalog.prepareCostMinMax = async (base, model) => {
 	if (!model.items) return
-	const { base } = await view.gets(['base'])
 	const cost = await base.getPropByTitle('Цена')
 	
 	let is_item_cost
@@ -476,30 +475,39 @@ Catalog.prepareCostMinMax = async (view, model) => {
 		model.discount = max_discount
 	}
 }
-Catalog.getGroupOpt = async (view, group_id) => {
-	const { options } = await view.gets(['options'])
-	const group = await Catalog.getGroupById(view, group_id)
+Catalog.getGroupOpt = async (db, visitor, group_id) => {
+	const options = await Showcase.getOptions(visitor)
+	const group = await Catalog.getGroupById(db, visitor, group_id)
 	let opt = {}
+
+	const groupids = {}
+	for (const group_title in options.groups) {
+		const ids = await db.colAll('SELECT group_id FROM showcase_groups where group_title = :group_title', { group_title })
+		ids.forEach(id => {
+			groupids[id] = options.groups[group_title]	
+		})
+	}
+
+
 	group.path.forEach(parent_id => {
-		if (!options.groupids[parent_id]) return
-		opt = {...opt, ...options.groupids[parent_id]}
+		if (!groupids[parent_id]) return
+		opt = {...opt, ...groupids[parent_id]}
 	})
-	if (options.groupids[group_id]) opt = {...opt, ...options.groupids[group_id]}
+	if (groupids[group_id]) opt = {...opt, ...groupids[group_id]}
 	opt.props ??= []
 	opt.props = opt.props.filter(prop => options.props[prop]).map(prop => {
 		return options.props[prop]
 	})
 	return opt
 }
-Catalog.getGroupById = async (view, id) => {
-	const groups = await Catalog.getTree(view)
+Catalog.getGroupById = async (db, visitor, id) => {
+	const groups = await Catalog.getTree(db, visitor)
 	return groups[id]
 }
 
-Catalog.getTree = async (view) => {
-	const { db, base, options } = await view.gets(['db', 'options','base'])
-	const cache = base.dbcache
-
+Catalog.getTree = async (db, visitor) => {
+	const options = await Showcase.getOptions(visitor)
+	const cache = Access.relate(Catalog)
 	return cache.once('getTree', async () => {
 		const tree = {}
 		const rows = await db.all(`
@@ -573,7 +581,7 @@ Catalog.getGroups = async (view) => {
 	const cache = base.dbcache
 
 	return cache.once('getGroups', async () => {
-		const tree = await Catalog.getTree(view)
+		const tree = await Catalog.getTree(db, view.visitor)
 		const groups = {}
 		for (const group_id in tree) {
 			groups[tree[group_id].group_nick] = tree[group_id]
@@ -589,7 +597,7 @@ Catalog.getMainGroups = async (view, prop_title = '') => {
 		const root_id = await base.getGroupIdByNick(options.root_nick)
 		if (!root_id) return view.err('Не найдена верхняя группа')
 
-		const tree = await Catalog.getTree(view)
+		const tree = await Catalog.getTree(db, view.visitor)
 
 		const groups = tree[root_id].groups
 		
@@ -627,7 +635,7 @@ Catalog.getMainGroups = async (view, prop_title = '') => {
 Catalog.getFilterConf = async (view, prop, group_id, md, partner) => {
 	const { db, base, options } = await view.gets(['db', 'options','base'])
 	const cache = base.dbcache
-	const group = await Catalog.getGroupById(view, group_id)
+	const group = await Catalog.getGroupById(db, view.visitor, group_id)
 	const prop_id = prop.prop_id
 	if (!~['value','brand','number'].indexOf(prop.type)) return false
 	
@@ -722,7 +730,7 @@ Catalog.getFilterConf = async (view, prop, group_id, md, partner) => {
 				filter.values.push({value_nick})
 			} else if (prop.type == 'brand') {
 				if (filter.values.some(v => v.value_nick == value_nick)) continue
-				const brand = await Catalog.getBrandByNick(view, value_nick)
+				const brand = await Catalog.getBrandByNick(db, value_nick)
 				filter.values.push({value_nick, value_title: brand.brand_title})
 			}
 		}
@@ -780,9 +788,9 @@ Catalog.getFilterConf = async (view, prop, group_id, md, partner) => {
 	return filter
 }
 Catalog.getAllCount = async (view) => {	
-	const { options } = await view.gets(['options'])
+	const { options, db } = await view.gets(['options', 'db'])
 	const root = await Catalog.getGroupByNick(view, options.root_nick)
-	const tree = await Catalog.getTree(view)
+	const tree = await Catalog.getTree(db, view.visitor)
 	return {count:root.indepth, gcount: groups.length - 1, list:[], groups:root.childs.map(group_id => tree[group_id])}
 }
 Catalog.getGroupByNick = async (view, nick) => {
@@ -826,11 +834,12 @@ Catalog.getValueByNick = async (view, value_nick) => {
 
 
 Catalog.getPathNickByGroupId = async (view, id) => {
-	const group = await Catalog.getGroupById(view, id)
+	const db = await view.get('db')
+	const group = await Catalog.getGroupById(db, view.visitor, id)
 	const path = [...group.path]
 	path.push(id)
 	return Promise.all(path.map(async (id) => {
-		const group = await Catalog.getGroupById(view, id)
+		const group = await Catalog.getGroupById(db, view.visitor, id)
 		return group.group_nick
 	}))
 }
@@ -843,20 +852,19 @@ Catalog.getBrandById = async (view, brand_id) => {
 	const cache = base.vicache
 
 	return cache.konce('getBrandById', brand_id, async () => {
-		const brands = await Catalog.getBrands(view)
+		const brands = await Catalog.getBrands(db)
 		for (const brand_nick in brands) {
 			const brand = brands[brand_nick]
 			if (brand.brand_id == brand_id) return brand
 		}
 	})
 }
-Catalog.getBrandByNick = async (view, nick) => {
-	const brands = await Catalog.getBrands(view)
+Catalog.getBrandByNick = async (db, nick) => {
+	const brands = await Catalog.getBrands(db)
 	return brands[nick]
 }
-Catalog.getBrands = async (view) => {
-	const { base, db } = await view.gets(['base', 'db'])
-	const cache = base.dbcache
+Catalog.getBrands = async (db) => {
+	const cache = Access.relate(Catalog)
 	return cache.once('getBrands', async () => db.alltoint('brand_nick', `
 		SELECT b.brand_id, b.brand_nick, b.brand_title, f.src as logo, b.ordain
 		FROM showcase_brands b 
@@ -880,7 +888,7 @@ Catalog.getModelByNick = async (view, brand_nick, model_nick, partner = '') => {
 			WHERE i.model_id = :model_id
 			GROUP BY i.model_id
 		`, { model_id })
-		const models = await Catalog.getModelsByItems(view, moditem_ids, partner)
+		const models = await Catalog.getModelsByItems(db, base, moditem_ids, partner)
 		return models[0]
 	})
 }
@@ -902,7 +910,7 @@ Catalog.getmdwhere = async (view, md, partner = '') => {
 
 	return cache.konce('getmdwhere', md.m, async () => {
 		const groupnicks = await Catalog.getGroups(view)
-		const brandnicks = await Catalog.getBrands(view)
+		const brandnicks = await Catalog.getBrands(db)
 		const where = []
 		if (md.group) {
 			let group_ids = []
@@ -1016,11 +1024,11 @@ Catalog.getMainGroup = async (view, md) => {
 	if (group_nicks.length > 0) group = groupnicks[group_nicks[0]]
 	return group
 }
-Catalog.getMainBrand = async (view, md) => {
+Catalog.getMainBrand = async (db, md) => {
 	if (!md.brand) return
 	const brand_nicks = Object.keys(md.brand)
 	if (brand_nicks.length != 1) return
-	const brandnicks = await Catalog.getBrands(view)
+	const brandnicks = await Catalog.getBrands(db)
 	return brandnicks[brand_nicks[0]]
 }
 export default Catalog

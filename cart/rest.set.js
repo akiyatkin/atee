@@ -18,14 +18,15 @@ export default rest
 
 rest.addResponse('set-manager-refresh', async view => {
 	await view.gets(['manager#required'])
-	const { db } = await view.gets(['db'])
+	const { db, base } = await view.gets(['db','base'])
 
 	const poss = await db.all('SELECT order_id, brand_nick, model_nick, item_num, count from cart_basket')
 
 	const orders = {}
 	for (const pos of poss) {
 		const {order_id, brand_nick, model_nick, item_num, count} = pos
-		const item = await Cart.getItem(view, order_id, brand_nick, model_nick, item_num)
+		const partner = await db.col('SELECT partner from cart_orders where order_id = :order_id', {order_id})
+		const item = await Cart.getItem(db, base, order_id, brand_nick, model_nick, item_num, partner)
 		if (!item) continue; //Позиция и не заморожена и нет в каталоге
 
 		if (!orders[order_id]) orders[order_id] = { order_id, sum:0, count:0 }
@@ -48,15 +49,20 @@ rest.addResponse('set-manager-refresh', async view => {
 	return view.ret('Суммы пересчитаны')
 })
 rest.addResponse('set-submit', async view => {
-	const { partner, db, terms, active_id, user, user_id } = await view.gets(['partner', 'db', 'terms', 'user#required', 'user_id', 'active_id#required'])
-	const order = await Cart.getOrder(view, active_id)
+	const { db, base, terms, active_id: order_id, user, user_id } = await view.gets(['db', 'base', 'terms', 'user#required', 'user_id', 'active_id#required'])
+	const order = await Cart.getOrder(view, order_id)
 	if (!order.count) return view.err('В заказе нет товаров', 422)
 	for (const check of ['email','name','address','phone']) if (!order[check]) return view.err('Заполнены не все поля', 422)
 	if (order.status != 'wait') return view.err('Заказ уже отправлен менеджеру')
-	const ready = () => view.ret('Спасибо за заказ. Менеджер оповещён, ответит в течение 24 часов, как можно скорее.')
-	if (user.email == order.email) {
-		//Это я и я зарегистрирован
-		await Cart.toCheck(view, active_id, partner)
+	const ready = async () => {
+		//await Cart.setPartner(db, order_id, partner)
+		await Cart.recalcOrder(db, base, order_id, order.partner)
+		await Cart.freeze(db, base, order_id)
+		await Cart.setStatus(db, order_id, 'check')
+		await Cart.sendToManager(view, 'tocheck', order_id)
+		return view.ret('Спасибо за заказ. Менеджер оповещён, ответит в течение 24 часов, как можно скорее.')
+	}
+	if (user.email == order.email) { //Это я и я зарегистрирован
 		return ready()
 	}
 	let ouser = order.email ? await User.getUserByEmail(view, order.email) : false
@@ -66,7 +72,6 @@ rest.addResponse('set-submit', async view => {
 			await User.sendup(view, ouser.user_id, order.email) //Сохраняем email нового пользователя и отправляем письмо ему
 		}
 		if (ouser.user_id != user.user_id) await Cart.grant(view, ouser.user_id, order.order_id) //Указанному пользователю даём доступ к заказу. У него он будет активным
-		await Cart.toCheck(view, active_id, partner)
 		return ready()
 	}
 
@@ -88,10 +93,33 @@ rest.addResponse('set-submit', async view => {
 		//Заказ может быть активен у двух пользователей
 		await User.sendup(view, ouser.user_id, order.email) //Сохраняем email нового пользователя и отправляем письмо ему
 	}
-	await Cart.toCheck(view, active_id, partner)	
 	return ready()
 })
+rest.addResponse('set-add', async view => {
+	let { base, active_id, partner } = await view.gets(['base', 'active_id', 'partner'])
+	const { db, item, count } = await view.gets(['db', 'item#required', 'count'])
+	const order_id = await Cart.castWaitActive(view, active_id)
 
+	let orderrefresh = false
+	if (active_id != order_id) orderrefresh = true
+	const order = await Cart.getOrder(db, order_id)
+	if (order.partner?.key != partner?.key) orderrefresh = true
+	view.ans.orderrefresh = orderrefresh
+
+	await Cart.setPartner(db, order_id, partner)
+	await Cart.addItem(db, order_id, item, count)
+	await Cart.recalcOrder(db, base, order_id, partner)
+	return view.ret('Готово')
+})
+rest.addResponse('set-remove', async view => {
+	const { db, base, item, active_id } = await view.gets(['db', 'base', 'item#required', 'active_id'])
+	if (!active_id) return view.err('Заказ не найден')
+	const order_id = await Cart.castWaitActive(view, active_id)
+	await Cart.setPartner(db, order_id, partner)
+	await Cart.removeItem(db, order_id, item)
+	await Cart.recalcOrder(db, base, order_id, partner)
+	return view.ret('Готово')
+})
 rest.addResponse('set-field', async view => {
 	const { db, field, value, active_id, user } = await view.gets(['db', 'field', 'value', 'user', 'active_id#required'])
 	const order = await Cart.getOrder(view, active_id)
@@ -130,21 +158,7 @@ rest.addResponse('set-newactive', async view => {
 	})
 	return view.ret()
 })
-rest.addResponse('set-add', async view => {
-	let { active_id } = await view.gets(['active_id'])
-	const { db, item, count } = await view.gets(['db', 'item#required', 'count'])
-	const nactive_id = await Cart.castWaitActive(view, active_id)
-	view.ans.newactive = active_id != nactive_id
-	await Cart.addItem(view, nactive_id, item, count)
-	return view.ret('Готово')
-})
-rest.addResponse('set-remove', async view => {
-	let { db, item, active_id } = await view.gets(['db', 'item#required', 'active_id'])
-	if (!active_id) return view.err('Заказ не найден')
-	active_id = await Cart.castWaitActive(view, active_id)
-	await Cart.removeItem(view, active_id, item)
-	return view.ret('Готово')
-})
+
 
 
 

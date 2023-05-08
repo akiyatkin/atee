@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `cart_orders` (
 	`paydata` TEXT NULL DEFAULT NULL COMMENT 'Данные оплаты',    
 	`city_id` MEDIUMINT NULL DEFAULT NULL COMMENT 'Город определённый или изменённый, для сортировки заявок и расчёта стоимости доставки. Может отличаться от выбранного города в заказе',
 	`freeze` int(1) unsigned NULL COMMENT 'Метка заморожены ли позиции',
-	`partnerfreeze` TEXT NULL DEFAULT NULL COMMENT 'Данные купона из option.json на момент фриза, если потребуется разбирать откуда такая цена',
+	`partnerjson` TEXT NULL DEFAULT NULL COMMENT 'Данные купона из option.json на момент фриза, если потребуется разбирать откуда такая цена',
 	`transport` ENUM(
 		'city','self','cdek_pvz', 'any',
 		'cdek_courier','pochta_simple','pochta_1',
@@ -60,10 +60,6 @@ CREATE TABLE IF NOT EXISTS `cart_transports` (
 
 CREATE TABLE IF NOT EXISTS `cart_basket` (
 	`order_id` MEDIUMINT unsigned NOT NULL,
-
-	`cost` DECIMAL(10,2) NULL COMMENT 'Кэш цены depricated',
-	`oldcost` DECIMAL(10,2) NULL COMMENT 'Кэш старой цены depricated',
-	`discount` INT(2) NULL COMMENT 'Кэш cкидка от Старой цены depricated',
 
 	`model_nick` varchar(31) COLLATE latin1_bin NOT NULL COMMENT 'model_id не можем сохранять, так как может поменяться',
 	`brand_nick` varchar(31) COLLATE latin1_bin NOT NULL COMMENT '',
