@@ -296,7 +296,11 @@ Cart.addItem = async (db, order_id, item, count = 0) => {
 			and item_num = :item_num
 		`, {order_id, ...item, count})
 	}
-
+	await db.exec(`
+		UPDATE cart_orders 
+		SET dateedit = now()
+		WHERE order_id = :order_id
+	`, {order_id})
 	//await Cart.recalcOrder(db, order_id)
 	
 	// const poscount = await db.fetch(`
