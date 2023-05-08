@@ -42,7 +42,11 @@ rest.addVariable('order#required', async (view) => {
 	if (!order) return view.err('Заказ не найден', 422)
 	return order
 })
-rest.addArgument('count', ['int'])
+rest.addArgument('count', ['int'], (view, count) => {
+	if (count > 65535) count = 65535
+	if (count < 0) count = 0
+	return count
+})
 rest.addArgument('field', ['string'], (view, val) => {
 	if (!~['name', 'phone','email','address','commentuser'].indexOf(val)) return view.err('Некорректный запрос, такого поля нет.')
 	return val

@@ -13,6 +13,11 @@ const Cart = {
 			WHERE order_id = :order_id
 		`, { order_id, partnerjson })
 	},
+	getPartner: async (db, order_id, partnerjson) => {
+		if (!partnerjson) partnerjson = await db.col("SELECT partnerjson from cart_orders where order_id = :order_id", {order_id})
+		const partner = partnerjson ? JSON.parse(partnerjson) : false
+		return partner
+	},
 	// toCheck: async (view, order_id) => {
 	// 	const { db, base } = await view.gets(['db','base'])
 	// 	await Cart.freeze(db, base, order_id)
@@ -148,9 +153,6 @@ const Cart = {
 			await db.exec(`
 				INSERT INTO cart_basket (
 					order_id,
-					cost,
-					oldcost,
-					discount,
 					model_nick,
 					brand_nick,
 					item_num,
@@ -162,9 +164,6 @@ const Cart = {
 				)
 				SELECT 
 					:nactive_id,
-					cost,
-					oldcost,
-					discount,
 					model_nick,
 					brand_nick,
 					item_num,
@@ -243,9 +242,7 @@ Cart.getOrder = async (db, order_id) => {
 	if (order.name) order.name = order.name.replaceAll(/[<>\'\"\`]/ig,' ')
 	if (order.phone) order.phone = order.phone.replaceAll(/[<>\'\"\`]/ig,' ')
 
-	order.partner = order.partnerjson ? JSON.parse(order.partnerjson) : false
-	
-	
+	order.partner = await Cart.getPartner(db, order_id, order.partnerjson)
 
 	return order
 }

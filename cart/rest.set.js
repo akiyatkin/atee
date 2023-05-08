@@ -25,7 +25,7 @@ rest.addResponse('set-manager-refresh', async view => {
 	const orders = {}
 	for (const pos of poss) {
 		const {order_id, brand_nick, model_nick, item_num, count} = pos
-		const partner = await db.col('SELECT partner from cart_orders where order_id = :order_id', {order_id})
+		const partner = await Cart.getPartner(db, order_id)
 		const item = await Cart.getItem(db, base, order_id, brand_nick, model_nick, item_num, partner)
 		if (!item) continue; //Позиция и не заморожена и нет в каталоге
 
