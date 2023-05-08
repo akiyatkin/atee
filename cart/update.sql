@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS `cart_orders` (
 	`phone` TINYTEXT NULL COMMENT '1. У текущего user_id нет - будет добавлен. 2. У текущего другой, если свободен, то будет добавлен текущему пользователю 3. Для менеджера. Создаётся новый пользователь или заявка привяжется к существующему пользователю. Если телефон у одного, почта у другова заявка привяжется к обоим.',
 	`name` TINYTEXT NULL DEFAULT NULL,
 	`callback` ENUM('yes','no') NULL DEFAULT NULL COMMENT 'Перезвонить или нет',
-	`status` ENUM('wait','pay','check','complete','cancel') NOT NULL DEFAULT 'wait' COMMENT 'Доступные статусы',
+	`status` ENUM('wait','pay','paid', 'check','complete','cancel') NOT NULL DEFAULT 'wait' COMMENT 'Доступные статусы',
 	`lang` ENUM('ru','en') NULL DEFAULT NULL COMMENT 'Определёный язык интерфейса посетителя',    
 	`paid` int(1) unsigned NULL COMMENT 'Метка была ли онлайн оплата',
 	`pay` ENUM('self','card','corp','perevod') NULL DEFAULT NULL,

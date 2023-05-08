@@ -17,6 +17,16 @@ rest.addArgument('order_id', ['int'], async (view, order_id) => {
 	if (!check_id) return view.err('Недостаточно прав '+user.email, 401)
 	return check_id
 })
+rest.addArgument('status', (view, status) => {
+	if (status && !~['check','complete','wait','cancel'].indexOf(status)) return view.err('Некорректный статус', 422)
+	return status
+})
+rest.addVariable('status#required', async (view) => {
+	const { status } = await view.gets(['status'])
+	if (!status) return view.err('Требуется указать статус', 422)
+	return status
+})
+
 rest.addVariable('order_id#required', async (view) => {
 	const { order_id } = await view.gets(['order_id'])
 	if (!order_id) return view.err('Заказ не найден', 422)

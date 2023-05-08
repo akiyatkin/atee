@@ -44,7 +44,7 @@ rest.addResponse('get-manager-years', async view => {
 			round(avg(o.sum)) as average,
 			count(*) as count
 		FROM cart_orders o
-		WHERE o.status = 'check'
+		WHERE (o.status = 'check' or o.status = 'complete')
 		GROUP BY year
 	`)
 	return view.ret()
@@ -62,7 +62,7 @@ rest.addResponse('get-manager-months', async view => {
 			round(avg(o.sum)) as average,
 			count(*) as count
 		FROM cart_orders o
-		WHERE o.status = 'check' and year(o.datecheck) = :year
+		WHERE (o.status = 'check' or o.status = 'complete') and year(o.datecheck) = :year
 		GROUP BY month
 		ORDER BY month DESC
 	`, { year })
@@ -71,11 +71,12 @@ rest.addResponse('get-manager-months', async view => {
 rest.addArgument('month', ['int#required'])
 rest.addResponse('get-manager-orders', async view => {
 	await view.gets(['manager#required'])
-	const { db, year, month, active_id } = await view.gets(['db', 'year','month','active_id'])
+	const { db, year, month, active_id, status } = await view.gets(['db', 'status', 'year','month','active_id'])
 	
 	view.ans.active_id = active_id
 	view.ans.year = year
 	view.ans.month = month
+
 	view.ans.list = await db.all(`
 		SELECT
 			order_nick,
@@ -90,13 +91,16 @@ rest.addResponse('get-manager-orders', async view => {
 			UNIX_TIMESTAMP(datecheck) as datecheck, 
 			UNIX_TIMESTAMP(datewait) as datewait
 		FROM cart_orders o
-		WHERE year(o.dateedit) = :year and month(o.dateedit) = :month
+		WHERE 
+			${status ? 'o.status = :status and' : ''}
+			year(o.dateedit) = :year and month(o.dateedit) = :month
 		ORDER BY o.dateedit DESC
-	`, { year, month })
+	`, { year, month, status })
 
 
 	return view.ret()
 })
+
 
 
 

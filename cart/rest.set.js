@@ -48,10 +48,7 @@ rest.addResponse('set-manager-refresh', async view => {
 	
 	return view.ret('Суммы пересчитаны')
 })
-rest.addArgument('status', (view, status) => {
-	if (!~['check','complete','wait'].indexOf(status)) return view.err('Некорректный статус', 422)
-	return status
-})
+
 rest.addResponse('set-delete', async view => {
 	const { db, order_id } = await view.gets(['db', 'order_id#required', 'manager#required'])
 	
@@ -70,7 +67,7 @@ rest.addResponse('set-delete', async view => {
 	// `, { order_id })
 })
 rest.addResponse('set-status', async view => {
-	const {db, status, order_id, base, user_id} = await view.gets(['status','db', 'base', 'order_id#required', 'user_id#required'])
+	const {db, status, order_id, base, user_id} = await view.gets(['status#required','db', 'base', 'order_id#required', 'user_id#required'])
 	view.ans.active_id = await db.col(`
 		SELECT order_id 
 		FROM cart_actives 

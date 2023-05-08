@@ -56,6 +56,7 @@ tpl.STATUSES = {
 	'pay':'Оплата',
 	'paid':'Оплачен',
 	'complete':'Выполнен',
+	'cancel':'Отменён',
 	'wait':'Ожидает'
 }
 tpl.showMonth = (data, env, row) => `
@@ -78,6 +79,13 @@ tpl.showMonth = (data, env, row) => `
 
 tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
 	<h1><a href="/cart/manager">Заказы</a> <a href="/cart/manager/${data.year}">${data.year}</a> ${MONTHS[data.month - 1]}</h1>
+	<p>
+		<a href="/cart/manager/${data.year}/${data.month}">Все</a>
+		<a href="/cart/manager/${data.year}/${data.month}/wait">Ожидает</a>
+		<a href="/cart/manager/${data.year}/${data.month}/check">На проверке</a>
+		<a href="/cart/manager/${data.year}/${data.month}/complete">Выполнен</a>
+		<a href="/cart/manager/${data.year}/${data.month}/cancel">Отменён</a>
+	</p>
 	<style>
 		${env.scope} .status-check {
 			background-color: #fff7ed;
@@ -101,7 +109,7 @@ tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
 	<script>
 		(div => {
 			for (const button of div.getElementsByClassName('status')) {
-				const list = ['wait','check','complete']
+				const list = ['wait','check','complete','cancel']
 				button.addEventListener('click', async () => {
 					const status = list[list.indexOf(button.dataset.status) + 1] || list[0]
 					const order_id = button.dataset.order_id
@@ -121,7 +129,7 @@ tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
 					if (ans.active_id == order_id) {
 						const Client = await window.getClient()
 						Client.global('cart')
-						Client.reloadts('${env.layer.ts}')
+						//Client.reloadts('${env.layer.ts}')
 					}
 				})
 			}

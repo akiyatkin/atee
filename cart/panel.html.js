@@ -234,6 +234,7 @@ const TITLES = {
 	"wait":"Оформить заказ",
 	"check":"Заказ оформлен",
 	"complete":"Заказ выполнен",
+	"cancel":"Заказ отменён",
 	"empty":"В заказе нет товаров",
 	"pay":"Заказ ожидает оплату"
 }
@@ -380,7 +381,7 @@ const showOrders = (data, env) => `
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
-const showOrder = (data, env, order) => `<button ${data.order.order_id == order.order_id ? 'disabled ' : ''}data-order_id="${order.order_id}" style="${order.status == 'complete' ? 'color:gray':''} ${order.status == 'wait' ? 'color:red':''}" class="a">${order.order_nick}</button>`
+const showOrder = (data, env, order) => `<button ${data.order.order_id == order.order_id ? 'disabled ' : ''}data-order_id="${order.order_id}" style="${order.status == 'complete' ? 'color:gray':''} ${order.status == 'cancel' ? 'color:gray; text-decoration: line-through':''} ${order.status == 'wait' ? 'color:red':''}" class="a">${order.order_nick}</button>`
 const showSubmit = (data, env) => `
 	<div style="max-width: 500px;">
 		${checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на усфловиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}
