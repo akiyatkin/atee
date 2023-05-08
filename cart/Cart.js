@@ -24,6 +24,7 @@ const Cart = {
 	// 	await Cart.setStatus(db, order_id, 'check')
 	// 	await Cart.sendToManager(view, 'tocheck', order_id)
 	// },
+	
 	freeze: async (db, base, order_id, partner) => {
 		const list = await Cart.getBasketCatalog(db, base, order_id, partner)
 		for (const item of list) {

@@ -51,7 +51,7 @@ tpl.MONTHS = (data, env) => tpl.iserr(data, env) || `
 	${tpl.buttons(data, env)}
 `
 const MONTHS = ['Январь','Февраль','Март', "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь" ]
-const STATUSES = {
+tpl.STATUSES = {
 	'check':'Отправлен',
 	'pay':'Оплата',
 	'paid':'Оплачен',
@@ -92,14 +92,40 @@ tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
 	<table>
 		<thead>
 			<tr>
-				<td>Заказ</td><td>ФИО</td><td>Email</td><td>Телефон</td><td>Позиций</td><td>Сумма</td><td>Изменения</td>
+				<td>Заказ</td><td>ФИО</td><td>Email</td><td>Телефон</td><td>Позиций</td><td>Сумма</td><td>Статус</td><td>Изменения</td>
 			</tr>
 		</thead>
 		${data.list.map(row => tpl.showOrder(data, env, row)).join('')}
 	</table>
+
 	<script>
 		(div => {
-			for (const button of div.getElementsByTagName('button')) {
+			for (const button of div.getElementsByClassName('status')) {
+				const list = ['wait','check','complete']
+				button.addEventListener('click', async () => {
+					const status = list[list.indexOf(button.dataset.status) + 1] || list[0]
+					const order_id = button.dataset.order_id
+					const ans = await fetch('/-cart/set-status?' + new URLSearchParams({ status, order_id }).toString()).then(r => r.json()).catch(e => {
+						console.log(e)
+						return {msg:'Ошибка на сервере'}
+					})
+					const tpl = await import('${env.layer.tpl}').then(r => r.default || r)
+					
+					const classList = button.closest('tr').classList
+					classList.remove('status-' + button.dataset.status)
+					classList.add('status-' + status)
+
+					button.dataset.status = status
+					button.innerHTML = tpl.STATUSES[status]
+
+					if (ans.active_id == order_id) {
+						const Client = await window.getClient()
+						Client.global('cart')
+						Client.reloadts('${env.layer.ts}')
+					}
+				})
+			}
+			for (const button of div.getElementsByClassName('order')) {
 				button.addEventListener('click', async () => {
 					const ans = await fetch('/-cart/set-newactive?' + new URLSearchParams({ order_id: button.dataset.order_id }).toString()).then(r => r.json()).catch(e => {
 						console.log(e)
@@ -108,10 +134,26 @@ tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
 					const Client = await window.getClient()
 					Client.global('cart')
 					Client.reloadts('${env.layer.ts}')
-
 					const Panel = await import('/-cart/Panel.js').then(r => r.default)
 					const panel = document.querySelector('#PANEL .panel')
 					Panel.up(panel)
+				})
+			}
+			for (const button of div.getElementsByClassName('delete')) {
+				button.addEventListener('click', async () => {
+					const order_id = button.dataset.order_id
+					const order_nick = button.dataset.order_nick
+					if (!confirm('Удалить заказ ' + order_nick + ' ?')) return
+					
+					const ans = await fetch('/-cart/set-delete?' + new URLSearchParams({ order_id }).toString()).then(r => r.json()).catch(e => {
+						console.log(e)
+						return {msg:'Ошибка на сервере'}
+					})
+					const Client = await window.getClient()
+					Client.reloadts('${env.layer.ts}')
+					if (ans.active_id == order_id) {
+						Client.global('cart')
+					}
 				})
 			}
 		})(document.currentScript.previousElementSibling)
@@ -121,7 +163,7 @@ tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
 tpl.showOrder = (data, env, row) => `
 	<tr class="status-${row.status} ${row.order_id == data.active_id ? 'active': ''}">
 		<td>
-			<button style="white-space:nowrap; font-size: inherit;" data-order_id="${row.order_id}" class="a">${row.order_nick}</button>
+			<button class="order a" style="white-space:nowrap; font-size: inherit;" data-order_id="${row.order_id}">${row.order_nick}</button>
 		</td>
 		<td>
 			${row.name}
@@ -139,7 +181,11 @@ tpl.showOrder = (data, env, row) => `
 			${cost(row.sum)}
 		</td>
 		<td>
+			<button data-status="${row.status}" data-order_id="${row.order_id}" class="a status">${tpl.STATUSES[row.status]}</button>
+		</td>
+		<td style="white-space: nowrap;">
 			${new Date(row.dateedit * 1000).toLocaleString('ru-RU', { minute: 'numeric', hour: 'numeric', year: 'numeric', month: 'numeric', day: 'numeric' })}
+			<button data-order_id="${row.order_id}" data-order_nick="${row.order_nick}" class="a delete">X</button>
 		</td>
 	</tr>
 `

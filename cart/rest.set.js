@@ -48,6 +48,67 @@ rest.addResponse('set-manager-refresh', async view => {
 	
 	return view.ret('Суммы пересчитаны')
 })
+rest.addArgument('status', (view, status) => {
+	if (!~['check','complete','wait'].indexOf(status)) return view.err('Некорректный статус', 422)
+	return status
+})
+rest.addResponse('set-delete', async view => {
+	const { db, order_id } = await view.gets(['db', 'order_id#required', 'manager#required'])
+	
+	await db.affectedRows('DELETE from cart_orders where order_id = :order_id', {order_id})
+	await db.affectedRows('DELETE from cart_basket where order_id = :order_id', {order_id})
+	await db.affectedRows('DELETE from cart_transports where order_id = :order_id', {order_id})
+	await db.affectedRows('DELETE from cart_userorders where order_id = :order_id', {order_id})
+	await db.affectedRows('DELETE from cart_actives where order_id = :order_id', {order_id})
+
+	return view.ret('Заказ удалён')
+	// const order = await Cart.getOrder(db, order_id)
+	// const actives_id = await db.colAll(`
+	// 	SELECT user_id
+	// 	FROM cart_actives 
+	// 	WHERE order_id = :order_id
+	// `, { order_id })
+})
+rest.addResponse('set-status', async view => {
+	const {db, status, order_id, base, user_id} = await view.gets(['status','db', 'base', 'order_id#required', 'user_id#required'])
+	view.ans.active_id = await db.col(`
+		SELECT order_id 
+		FROM cart_actives 
+		WHERE user_id = :user_id
+	`, { user_id })
+	
+	if (status == 'wait') {
+		await db.exec(`
+			UPDATE 
+				cart_orders
+			SET
+				freeze = 0
+			WHERE order_id = :order_id
+		`, { order_id })
+	} else {
+		const json = await db.col(`
+			SELECT json
+			FROM cart_basket 
+			WHERE order_id = :order_id
+		`, {order_id})
+		const item = json ? JSON.parse(json) : false
+		if (!item) {
+			const order = await Cart.getOrder(db, order_id)
+			Cart.freeze(db, base, order_id, order.partner)
+		} else {
+			await db.exec(`
+				UPDATE 
+					cart_orders
+				SET
+					freeze = 1
+				WHERE order_id = :order_id
+			`, { order_id })
+		}
+	}
+	await Cart.setStatus(db, order_id, status)
+	view.ans.status = status
+	return view.ret('Готово')
+})
 rest.addResponse('set-submit', async view => {
 	const { db, base, terms, active_id: order_id, user, user_id } = await view.gets(['db', 'base', 'terms', 'user#required', 'user_id', 'active_id#required'])
 	const order = await Cart.getOrder(view, order_id)

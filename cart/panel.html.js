@@ -229,10 +229,11 @@ const checkbox = (name, title, checked) => `
 	</div>
 `
 export const SUM = (sum) => `${cost(sum)}${common.unit()}`
-export const TITLE = (obj) => obj.length ? `<b>${obj.length}</b> ${words(obj.length, 'позиция','позиции','позиций')} на <b>${SUM(obj.sum)}</b>` : `<b>${obj.orders}</b> ${words(obj.orders, 'заказ','заказа','заказов')}` //`В заказе ещё нет товаров` 
+export const TITLE = (obj) => obj.length ? `<b>${obj.length}</b> ${words(obj.length, 'позиция','позиции','позиций')} <b>${SUM(obj.sum)}</b>` : `<b>${obj.orders}</b> ${words(obj.orders, 'заказ','заказа','заказов')}` //`В заказе ещё нет товаров` 
 const TITLES = {
 	"wait":"Оформить заказ",
 	"check":"Заказ оформлен",
+	"complete":"Заказ выполнен",
 	"empty":"В заказе нет товаров",
 	"pay":"Заказ ожидает оплату"
 }
@@ -281,8 +282,8 @@ export const ORDER = (data, env) => isShowPanel(data) ? `
 		<div class="whenshow">
 			<h1 style="margin-top:1rem;">${TITLES[data.order.status]}
 			${data.user.manager ? showCrown() : ''}
-			<span style="float:right; font-weight: normal">№ ${data.order.order_nick}</span></h1>
-			${data.order.status == 'check' ? showCheckDate(data) : ''}
+			<span style="margin-left:1ch; float:right; font-weight: normal">№ ${data.order.order_nick}</span></h1>
+			${data.order.status == 'check' ? showCheckDate(data, env) : ''}
 			${data.list.length ? showPoss(data, env) : showEmpty(data, env)}
 			${data.orders.length > 1 ? showOrders(data, env) : ''}
 		</div>
@@ -293,7 +294,7 @@ const showCrown = () => `
 		<svg style="color: var(--brown); margin-bottom: 3px;" width="24" height="24" viewBox="0 0 18 18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.179 13.425h13.656v3.02H2.179v-3.02z" fill="currentColor" fill-opacity=".8"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8.999 1L2.093 11.031h4.25l6.662-4.315L9 1z" fill="currentColor" fill-opacity=".6"/><path fill-rule="evenodd" clip-rule="evenodd" d="M2.067 12.641L.5 3.752l12.76 8.89H2.068z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M15.927 12.641l1.607-8.858L3.857 12.64h12.07z" fill="currentColor" fill-opacity=".8"/></svg>
 	</a>
 `
-const showCheckDate = (data) => `
+const showCheckDate = (data, env) => `
 	<p>
 		${ago(data.order.datecheck * 1000)}. ${new Date(data.order.datecheck * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric' })}
 	</p>
@@ -338,12 +339,10 @@ const showPoss = (data, env) => `
 					${data.order.status == 'wait' ? svgres('optional', data.order.commentuser) : ''}
 				</div>
 			</div>
-			
 			${data.order.status == 'wait' ? showSubmit(data, env) : ''}
-		</form>
-		
-		
+		</form>		
 `
+
 const showPartner = (data, env) => `
 	<div>
 		Ключ партнёра: <b>${data.order.partner.title}</b>
@@ -381,7 +380,7 @@ const showOrders = (data, env) => `
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
-const showOrder = (data, env, order) => `<button ${data.order.order_id == order.order_id ? 'disabled ' : ''}data-order_id="${order.order_id}" style="${order.status == 'wait' ? 'color:red':''}" class="a">${order.order_nick}</button>`
+const showOrder = (data, env, order) => `<button ${data.order.order_id == order.order_id ? 'disabled ' : ''}data-order_id="${order.order_id}" style="${order.status == 'complete' ? 'color:gray':''} ${order.status == 'wait' ? 'color:red':''}" class="a">${order.order_nick}</button>`
 const showSubmit = (data, env) => `
 	<div style="max-width: 500px;">
 		${checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на усфловиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}

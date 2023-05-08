@@ -17,7 +17,7 @@ rest.addArgument('order_id', ['int'], async (view, order_id) => {
 	if (!check_id) return view.err('Недостаточно прав '+user.email, 401)
 	return check_id
 })
-rest.addArgument('order_id#required', async (view) => {
+rest.addVariable('order_id#required', async (view) => {
 	const { order_id } = await view.gets(['order_id'])
 	if (!order_id) return view.err('Заказ не найден', 422)
 	return order_id
@@ -53,7 +53,7 @@ rest.addArgument('field', ['string'], (view, val) => {
 })
 //rest.addArgument('value', ['string']) есть у каталога
 rest.addVariable('active_id', async view => {
-	const { db, user_id, order_id } = await view.gets(['db', 'user_id','order_id'])
+	const { db, user_id, order_id } = await view.gets(['db', 'user_id', 'order_id'])
 	if (!user_id) return false
 	if (order_id) {
 		const active_id = await db.col(`
