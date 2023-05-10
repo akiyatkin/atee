@@ -41,7 +41,7 @@ rest.addResponse('get-manager-years', async view => {
 	view.ans.status = status
 	view.ans.list = await db.all(`
 		SELECT 
-			year(o.datecheck) as year,
+			year(o.dateedit) as year,
 			sum(o.sum) as sum,
 			round(avg(o.sum)) as average,
 			count(*) as count
@@ -59,15 +59,15 @@ rest.addResponse('get-manager-months', async view => {
 	view.ans.status = status
 	view.ans.list = await db.all(`
 		SELECT 
-			year(o.datecheck) as year,
-			month(o.datecheck) as month,
+			year(o.dateedit) as year,
+			month(o.dateedit) as month,
 			sum(o.sum) as sum,
 			round(avg(o.sum)) as average,
 			count(*) as count
 		FROM cart_orders o
 		WHERE 
 			${status ? 'o.status = :status and' : ''}
-			year(o.datecheck) = :year
+			year(o.dateedit) = :year
 		GROUP BY month
 		ORDER BY month DESC
 	`, { year, status })
