@@ -73,7 +73,7 @@ rest.addResponse('set-status', async view => {
 		FROM cart_actives 
 		WHERE user_id = :user_id
 	`, { user_id })
-	
+	const order = await Cart.getOrder(db, order_id)
 	if (status == 'wait') {
 		await db.exec(`
 			UPDATE 
@@ -83,6 +83,7 @@ rest.addResponse('set-status', async view => {
 			WHERE order_id = :order_id
 		`, { order_id })
 	} else {
+
 		const json = await db.col(`
 			SELECT json
 			FROM cart_basket 
@@ -102,7 +103,7 @@ rest.addResponse('set-status', async view => {
 			`, { order_id })
 		}
 	}
-	await Cart.setStatus(db, order_id, status)
+	await Cart.setStatus(db, order_id, status, order)
 	view.ans.status = status
 	return view.ret('Готово')
 })

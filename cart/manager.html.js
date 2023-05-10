@@ -11,6 +11,7 @@ tpl.iserr = (data, env) => data?.result ? '' : `
 
 tpl.YEARS = (data, env) => tpl.iserr(data, env) || `
 	<h1>Заказы</h1>
+	${showStatuses(data, env)}
 	<table>
 		<thead>
 			<tr>
@@ -24,7 +25,7 @@ tpl.YEARS = (data, env) => tpl.iserr(data, env) || `
 tpl.showYear = (data, env, row) => `
 	<tr>
 		<td>
-			<a href="/cart/manager/${row.year}">${row.year}</a>
+			<a href="/cart/manager/${row.year}${prefixif('?status=', data.status)}">${row.year}</a>
 		</td>
 		<td>
 			${row.count}
@@ -39,7 +40,8 @@ tpl.showYear = (data, env, row) => `
 `
 
 tpl.MONTHS = (data, env) => tpl.iserr(data, env) || `
-	<h1><a href="/cart/manager">Заказы</a> ${data.year}</h1>
+	<h1><a href="/cart/manager${prefixif('?status=', data.status)}">Заказы</a> ${data.year}</h1>
+	${showStatuses(data, env)}
 	<table>
 		<thead>
 			<tr>
@@ -62,7 +64,7 @@ tpl.STATUSES = {
 tpl.showMonth = (data, env, row) => `
 	<tr>
 		<td>
-			<a href="/cart/manager/${row.year}/${row.month}">${MONTHS[row.month - 1]}</a>
+			<a href="/cart/manager/${row.year}/${row.month}${prefixif('?status=', data.status)}">${MONTHS[row.month - 1]}</a>
 		</td>
 		<td>
 			${row.count}
@@ -75,17 +77,19 @@ tpl.showMonth = (data, env, row) => `
 		</td>
 	</tr>
 `
-
-
-tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
-	<h1><a href="/cart/manager">Заказы</a> <a href="/cart/manager/${data.year}">${data.year}</a> ${MONTHS[data.month - 1]}</h1>
+const prefixif = (prefix, val) => val ? prefix + '' + val : ''
+const showStatuses = (data, env) => `
 	<p>
-		<a href="/cart/manager/${data.year}/${data.month}">Все</a>
-		<a href="/cart/manager/${data.year}/${data.month}/wait">Ожидает</a>
-		<a href="/cart/manager/${data.year}/${data.month}/check">На проверке</a>
-		<a href="/cart/manager/${data.year}/${data.month}/complete">Выполнен</a>
-		<a href="/cart/manager/${data.year}/${data.month}/cancel">Отменён</a>
+		<a style="${data.status ? '': 'font-weight:bold'}" href="/cart/manager${prefixif('/', data.year)}${prefixif('/', data.month)}">Все</a>
+		<a style="${data.status == 'wait' ? 'font-weight:bold' : ''}" href="/cart/manager${prefixif('/', data.year)}${prefixif('/', data.month)}?status=wait">Ожидает</a>
+		<a style="${data.status == 'check' ? 'font-weight:bold' : ''}" href="/cart/manager${prefixif('/', data.year)}${prefixif('/', data.month)}?status=check">На проверке</a>
+		<a style="${data.status == 'complete' ? 'font-weight:bold' : ''}" href="/cart/manager${prefixif('/', data.year)}${prefixif('/', data.month)}?status=complete">Выполнен</a>
+		<a style="${data.status == 'cancel' ? 'font-weight:bold' : ''}" href="/cart/manager${prefixif('/', data.year)}${prefixif('/', data.month)}?status=cancel">Отменён</a>
 	</p>
+`
+tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
+	<h1><a href="/cart/manager${prefixif('?status=', data.status)}">Заказы</a> <a href="/cart/manager/${data.year}${prefixif('?status=', data.status)}">${data.year}</a> ${MONTHS[data.month - 1]}</h1>
+	${showStatuses(data, env)}
 	<style>
 		${env.scope} .status-check {
 			background-color: #fff7ed;
@@ -100,7 +104,7 @@ tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
 	<table>
 		<thead>
 			<tr>
-				<td>Заказ</td><td>ФИО</td><td>Email</td><td>Телефон</td><td>Позиций</td><td>Сумма</td><td>Статус</td><td>Изменения</td>
+				<td>Заказ</td><td>ФИО</td><td>Email</td><td>Телефон</td><td>Позиций</td><td>Сумма</td><td>Статус</td><td>Изменения</td><td></td>
 			</tr>
 		</thead>
 		${data.list.map(row => tpl.showOrder(data, env, row)).join('')}
@@ -193,6 +197,8 @@ tpl.showOrder = (data, env, row) => `
 		</td>
 		<td style="white-space: nowrap;">
 			${new Date(row.dateedit * 1000).toLocaleString('ru-RU', { minute: 'numeric', hour: 'numeric', year: 'numeric', month: 'numeric', day: 'numeric' })}
+		</td>
+		<td>
 			<button data-order_id="${row.order_id}" data-order_nick="${row.order_nick}" class="a delete">X</button>
 		</td>
 	</tr>

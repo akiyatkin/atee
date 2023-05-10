@@ -362,8 +362,15 @@ const showYear = (data, env, year) => `
 `
 
 const showOrders = (data, env) => `
-	<h2>Мои заказы</h2>
-	<div style="padding-bottom:2rem">
+	<h2>Мои заказы <span style="font-weight: normal">${data.ouser.email || ''}</span></h2>
+	<style>
+		${env.scope} .orders button:disabled {
+			font-weight: bold;
+			opacity: 1;
+			font-family: Montserrat;
+		}
+	</style>
+	<div class="orders" style="padding-bottom:2rem">
 		${data.years.map(year => showYear(data, env, year)).join('')}
 	</div>
 	<script>
@@ -381,7 +388,7 @@ const showOrders = (data, env) => `
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
-const showOrder = (data, env, order) => `<button ${data.order.order_id == order.order_id ? 'disabled ' : ''}data-order_id="${order.order_id}" style="${order.status == 'complete' ? 'color:gray':''} ${order.status == 'cancel' ? 'color:gray; text-decoration: line-through':''} ${order.status == 'wait' ? 'color:red':''}" class="a">${order.order_nick}</button>`
+const showOrder = (data, env, order) => `<button title="${TITLES[order.status]}" ${data.order.order_id == order.order_id ? 'disabled ' : ''}data-order_id="${order.order_id}" style="${order.status == 'complete' ? 'color:green':''} ${order.status == 'cancel' ? 'color:gray; text-decoration: line-through':''} ${order.status == 'wait' ? 'color:red':''}" class="a">${order.order_nick}</button>`
 const showSubmit = (data, env) => `
 	<div style="max-width: 500px;">
 		${checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на усфловиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}

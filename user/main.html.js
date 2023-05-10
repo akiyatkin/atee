@@ -7,6 +7,7 @@ export const HEADER = (data, env) => `
 
 export const ROOT = (data, env) => data.result ? `
 	<h1>Личный кабинет</h1>
+	<p>${data.user.email || ''}</p>
 	<div style="display: grid;">
 		<a href="${env.crumb}/signup">Регистрация</a>
 		<a href="${env.crumb}/signin">Вход</a>

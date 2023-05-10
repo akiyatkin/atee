@@ -5,7 +5,8 @@ export const ROOT = (data, env) =>
 (!data.user.user_id ? `
 	<p>Вы не авторизованы.</p>
 	<p>Выхода нет. <code>&copy;</code> Сплин  </p>
-` : `	
+` : `
+	<p>${data.user.email || ''}</p>
 	<form action="/-user/set-logout" data-goal="logout"><button type="submit">Выйти</button></form>
 	<script>
 		(form => {

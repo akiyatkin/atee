@@ -378,10 +378,10 @@ Cart.create = async (view, user) => {
 	return order_id
 }
 
-Cart.setStatus = async (db, order_id, status) => {
+Cart.setStatus = async (db, order_id, status, order) => {
 	return await db.exec(`
 		UPDATE cart_orders 
-		SET status = '${status}', date${status} = now()
+		SET status = '${status}'${!order || order['date' + status] ? `, date${status} = now()` : ''}
 		WHERE order_id = ${order_id}
 	`)
 }

@@ -72,19 +72,19 @@ const User = {
 		if (!user_id) return false;
 		return {user_id, token: r[1]}
 	},
-	getUserIdByEmail: async (view, email) => {
-		const { db } = await view.gets(['db'])
+	getUserIdByEmail: async (db, email) => {
+		db = db.gets ? await db.get('db') : db
 		return await db.col(`
 			SELECT e.user_id
 			FROM user_uemails e 
 			WHERE e.email = :email
 		`, { email })
 	},
-	getUserByEmail: async (view, email) => {
-		const { db } = await view.gets(['db'])
-		const user_id = await User.getUserIdByEmail(view, email)
+	getUserByEmail: async (db, email) => {
+		db = db.gets ? await db.get('db') : db
+		const user_id = await User.getUserIdByEmail(db, email)
 		if (!user_id) return false
-		return User.getUserById(view, user_id)
+		return User.getUserById(db, user_id)
 	},
 	getUserByToken: async (view, token) => {
 		const tok = User.getTok(token)
@@ -93,8 +93,8 @@ const User = {
 		if (tok.token == user.token) return user
 		return false
 	},
-	getUserById: async (view, user_id) => {
-		const { db } = await view.gets(['db'])
+	getUserById: async (db, user_id) => {
+		db = db.gets ? await db.get('db') : db
 		const user = await db.fetch(`
 			SELECT 
 				u.user_id, 

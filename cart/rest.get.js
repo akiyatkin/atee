@@ -23,6 +23,7 @@ rest.extra(rest_cart)
 
 import Catalog from "/-catalog/Catalog.js"
 import Cart from "/-cart/Cart.js"
+import User from "/-user/User.js"
 
 
 
@@ -35,8 +36,9 @@ import Cart from "/-cart/Cart.js"
 
 const formatter = new Intl.DateTimeFormat('ru', { month: 'long' })
 rest.addResponse('get-manager-years', async view => {
-	await view.gets(['manager#required'])
-	const { db } = await view.gets(['db'])
+	await view.get('manager#required')
+	const { db, status } = await view.gets(['db', 'status'])
+	view.ans.status = status
 	view.ans.list = await db.all(`
 		SELECT 
 			year(o.datecheck) as year,
@@ -44,16 +46,17 @@ rest.addResponse('get-manager-years', async view => {
 			round(avg(o.sum)) as average,
 			count(*) as count
 		FROM cart_orders o
-		WHERE (o.status = 'check' or o.status = 'complete')
+		${status ? 'WHERE o.status = :status' : ''}
 		GROUP BY year
-	`)
+	`, { status })
 	return view.ret()
 })
 rest.addArgument('year', ['int#required'])
 rest.addResponse('get-manager-months', async view => {
 	await view.gets(['manager#required'])
-	const { db, year } = await view.gets(['db', 'year'])
+	const { db, year, status } = await view.gets(['db', 'year', 'status'])
 	view.ans.year = year
+	view.ans.status = status
 	view.ans.list = await db.all(`
 		SELECT 
 			year(o.datecheck) as year,
@@ -62,10 +65,12 @@ rest.addResponse('get-manager-months', async view => {
 			round(avg(o.sum)) as average,
 			count(*) as count
 		FROM cart_orders o
-		WHERE (o.status = 'check' or o.status = 'complete') and year(o.datecheck) = :year
+		WHERE 
+			${status ? 'o.status = :status and' : ''}
+			year(o.datecheck) = :year
 		GROUP BY month
 		ORDER BY month DESC
-	`, { year })
+	`, { year, status })
 	return view.ret()
 })
 rest.addArgument('month', ['int#required'])
@@ -76,6 +81,7 @@ rest.addResponse('get-manager-orders', async view => {
 	view.ans.active_id = active_id
 	view.ans.year = year
 	view.ans.month = month
+	view.ans.status = status
 
 	view.ans.list = await db.all(`
 		SELECT
@@ -120,8 +126,9 @@ rest.addResponse('get-panel', async view => {
 	// list.forEach(pos => {
 	// 	view.ans.sum += pos.sum
 	// })
+	const ouser = await User.getUserByEmail(db, order.email) || await User.getUserById(db, order.user_id) || user
+	view.ans.ouser = ouser
 	view.ans.list = list
-
 
 	const orders = await db.all(`
 		SELECT o.order_nick, o.status, o.order_id, sum, count,
@@ -129,7 +136,7 @@ rest.addResponse('get-panel', async view => {
 			UNIX_TIMESTAMP(datewait) as datewait
 		FROM cart_userorders uo, cart_orders o
 		WHERE uo.user_id = :user_id and uo.order_id = o.order_id
-	`, {user_id})
+	`, {user_id: (user.manager ? ouser.user_id : user_id)})
 	const years = {}
 	for (const index in orders) {
 		const order = orders[index]
