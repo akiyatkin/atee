@@ -239,7 +239,8 @@ const TITLES = {
 	"pay":"Заказ ожидает оплату"
 }
 export const ORDER = (data, env) => isShowPanel(data) ? `
-	<div class="padding" style="position: sticky; top: 0;">
+<!-- position: sticky; top: 0; -->
+	<div class="padding" style="">
 		<style>
 			${env.scope} .field {
 				display: grid; 
