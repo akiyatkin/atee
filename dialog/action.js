@@ -17,10 +17,10 @@ export default async (form, userlayer = {}) => {
 		layer.data = await response.clone().json()
 		if (layer.data.result) {
 			if (goal) {
-				const metrikaid = window.Ya?._metrika.getCounters()[0].id
+				const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
 				if (metrikaid) {
 					console.log('Goal.reach ' + goal)
-					ym(metrikaid, 'reachGoal', goal);	
+					ym(metrikaid, 'reachGoal', goal);
 				}
 			}
 		}

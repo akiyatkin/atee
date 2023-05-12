@@ -305,7 +305,7 @@ const showEmpty = (data, env) => `
 `
 const showPoss = (data, env) => `
 		
-		<form action="/-cart/set-submit?partner=${env.theme.partner}" style="clear:both; border-radius:var(--radius); display: grid; gap:1rem; padding:1rem; background:var(--lightyellow);">
+		<form data-goal="cart" action="/-cart/set-submit?partner=${env.theme.partner}" style="clear:both; border-radius:var(--radius); display: grid; gap:1rem; padding:1rem; background:var(--lightyellow);">
 			<div class="float-label icon name field">
 				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
 				<label for="${env.sid}name">Получатель (ФИО)</label>
@@ -612,6 +612,20 @@ export const BODY = (data, env) => isShowPanel(data) ? `
 				recalc()
 				title.innerHTML = TITLE(state)
 				const ans = await fetch('/-cart/set-add?order_id&count=' + mod.count +'&model_nick='+mod.model_nick+'&brand_nick='+mod.brand_nick+'&item_num='+mod.item_num+'&partner=${env.theme.partner || ""}').then(r => r.json()).catch(e => console.log(e))
+				if (!ans.result) {
+					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+					await Dialog.alert(ans.msg)
+				}
+				const goal = 'basket'
+				if (goal && ans.result) {
+					const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
+					if (metrikaid) {
+						console.log('Goal.reach ' + goal)
+						ym(metrikaid, 'reachGoal', goal);
+					}
+				}
+
+
 				if (ans?.orderrefresh) {
 					const Client = await window.getClient()
 					Client.global('cart')
