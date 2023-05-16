@@ -1373,20 +1373,21 @@ export class Upload {
 				SELECT ip.text as src, ip.model_id, ip.item_num
 				FROM showcase_iprops ip
 				WHERE ip.prop_id = :prop_id
-			`, { prop_id })
-
-			for (const {model_id, item_num, src} of listsrc) {
-				const { file_id, ordain } = await upload.receiveFile(src, {destiny: 'images'})
-				await db.exec(`
-					INSERT IGNORE INTO 
-						showcase_iprops
-					SET
-						model_id = :model_id,
-						item_num = :item_num,
-						ordain = :ordain,
-						prop_id = :prop_id,
-						file_id = :file_id
-				`, {model_id, item_num, ordain, file_id, prop_id:in_id})
+			`, { prop_id })			
+			for (const {model_id, item_num, src: srcs} of listsrc) {
+				for (const src of srcs.split(',')) {
+					const { file_id, ordain } = await upload.receiveFile(src, {destiny: 'images'})
+					await db.exec(`
+						INSERT IGNORE INTO 
+							showcase_iprops
+						SET
+							model_id = :model_id,
+							item_num = :item_num,
+							ordain = :ordain,
+							prop_id = :prop_id,
+							file_id = :file_id
+					`, {model_id, item_num, ordain, file_id, prop_id:in_id})
+				}
 			}
 		})()
 		await (async () => {
@@ -1403,19 +1404,20 @@ export class Upload {
 				FROM showcase_iprops ip
 				WHERE ip.prop_id = :prop_id
 			`, { prop_id })
-
-			for (const {model_id, item_num, src} of listsrc) {
-				const { file_id, ordain } = await upload.receiveFile(src, {destiny: 'files'})
-				await db.exec(`
-					INSERT IGNORE INTO 
-						showcase_iprops
-					SET
-						model_id = :model_id,
-						item_num = :item_num,
-						ordain = :ordain,
-						prop_id = :prop_id,
-						file_id = :file_id
-				`, {model_id, item_num, ordain, file_id, prop_id:in_id})
+			for (const {model_id, item_num, src: srcs} of listsrc) {
+				for (const src of srcs.split(',')) {
+					const { file_id, ordain } = await upload.receiveFile(src, {destiny: 'files'})
+					await db.exec(`
+						INSERT IGNORE INTO 
+							showcase_iprops
+						SET
+							model_id = :model_id,
+							item_num = :item_num,
+							ordain = :ordain,
+							prop_id = :prop_id,
+							file_id = :file_id
+					`, {model_id, item_num, ordain, file_id, prop_id:in_id})
+				}
 			}
 		})()
 

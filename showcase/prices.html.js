@@ -45,14 +45,14 @@ const itemrow = (item) => `
 				${fileinfo(item)}
 			</div>
 			<div class="rowdata" data-name="${item.name}">
-				${rowdata(item.row)}
+				${rowdata(item.row, item)}
 			</div>
 			
 		</td>
 	</tr>
 `
-export const rowdata = (row) => (!row ? '' : `
-	<div style="margin-bottom:3px; ${row.loaded? '' : 'opacity:0.5'}">
+export const rowdata = (row, item) => (!row ? '' : `
+	<div style="margin-bottom:3px; background: ${item?.mtime > row?.loadtime ? 'lightgoldenrodyellow' : ''}; ${row.loaded? '' : 'opacity:0.5'}">
 		${row.quantity} ${words(row.quantity,'строка','строки','строк')} за ${passed(row.duration)}, <span title="Файл загружен ${new Date(row.loadtime).toLocaleDateString()}">${ago(row.loadtime)}</span>
 	</div>
 `) + `
