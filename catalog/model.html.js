@@ -28,12 +28,12 @@ model.showmodel = (data, env, { mod } = data) =>
 		<div style="float: right">${mod.Наличие || mod.discount ? cards.badgenalichie(data, env, mod) : ''}</div>
 	</div>
 	<h1 style="clear:both">${cards.name(data, mod)}</h1>
-	
 	${model.maindata(data, env, mod)}
 	<div style="margin-bottom:2rem">
 		${mod['Скрыть фильтры'] ? '' : model.props(data, env, mod)}
 		${mod.item_props.length ? model.showitems(data, env, mod) : ''}
 	</div>
+
 	<div class="modtext" style="margin-bottom:2rem">
 		<style>
 			${env.scope} .modtext img {
