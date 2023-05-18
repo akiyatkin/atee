@@ -90,6 +90,7 @@ const User = {
 		const tok = User.getTok(token)
 		if (!tok) return false
 		const user = await User.getUserById(view, tok.user_id)
+		if (!user) return false
 		if (tok.token == user.token) return user
 		return false
 	},
@@ -112,6 +113,7 @@ const User = {
 			LEFT JOIN user_uphones p on (p.user_id = u.user_id and e.ordain = 1)
 			WHERE u.user_id = :user_id
 		`, {user_id})
+		if (!user) return false
 
 		if (user.email) {
 			const conf = await config('user')
