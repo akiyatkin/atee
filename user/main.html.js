@@ -1,11 +1,13 @@
-export const HEADER = (data, env) => `
+const tpl = {}
+
+tpl.HEADER = (data, env) => `
 	<div style="display: flex; justify-content: space-between;">
 		<a href="/${env.bread.root}">Личный кабинет</a>
 		<a href="/">${env.host}</a>
 	</div>
 `
 
-export const ROOT = (data, env) => data.result ? `
+tpl.ROOT = (data, env) => data.result ? `
 	<h1>Личный кабинет</h1>
 	<p>${data.user.email || ''}</p>
 	<div style="display: grid;">
@@ -15,9 +17,12 @@ export const ROOT = (data, env) => data.result ? `
 	</div>
 ` : `<p>Ошибка</p>`
 
-export const FOOTER = (data, env) => `
+tpl.FOOTER = (data, env) => `
 	<ul>
 		<li><a href="list">Список пользователей</a></li>
 		<li><a href="settings">Настройки</a></li>
 	</ul>
 `
+
+
+export default tpl
