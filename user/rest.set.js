@@ -58,7 +58,7 @@ rest.addAction('set-email-verified', async (view, src) => {
 	}
 	const newuser = await User.getUserByToken(view, token)
 	if (!newuser) return redirect('Токен устарел')
-	await User.mergeuser(view, user, newuser)
+	await User.mergeuser(db, user, newuser)
 	User.setCookie(view, newuser)
 	const row = await db.fetch(`
 		select code_verify, UNIX_TIMESTAMP(date_verify) as date_verify, UNIX_TIMESTAMP(date_verified) as date_verified 
@@ -82,7 +82,7 @@ rest.addAction('set-email-verified', async (view, src) => {
 	return redirect('Уже готово!',1)
 })
 rest.addAction('set-signin-token', async (view, src) => {
-	const { user, token } = await view.gets(['user', 'token'])
+	const { user, token, db } = await view.gets(['user', 'token', 'db'])
 	const redirect = (msg, result) => {
 		view.headers['Location'] = User.link + 'result?msg=' + encodeURIComponent(msg) 
 		if (!result) {
@@ -94,7 +94,7 @@ rest.addAction('set-signin-token', async (view, src) => {
 	}
 	const newuser = await User.getUserByToken(view, token)
 	if (!newuser) return redirect('Токен устарел')
-	await User.mergeuser(view, user, newuser) //Если старый пользователь не регистрировался мёрджим его или просто забываем
+	await User.mergeuser(db, user, newuser) //Если старый пользователь не регистрировался мёрджим его или просто забываем
 	User.setCookie(view, newuser)
 	return redirect('Вы авторизованы', 1)
 })

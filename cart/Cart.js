@@ -113,10 +113,10 @@ const Cart = {
 		if (!r) return view.err('Не удалось отправить письмо.', 500)
 		return true
 	},
-	mergeuser: async (view, olduser, newuser) => {
+	mergeuser: async (db, olduser, newuser) => {
 		const order_id = await db.col('select order_id from cart_actives where user_id = :user_id', olduser)
 		if (order_id) {
-			await Cart.grant(view, newuser.user_id, order_id)
+			await Cart.grant(db, newuser.user_id, order_id)
 			//Изменили автора заказа
 			await db.affectedRows(`
 				UPDATE cart_orders
@@ -331,8 +331,7 @@ Cart.recalcOrder = async (db, base, order_id, partner) => {
 		WHERE order_id = :order_id
 	`, {order_id, sum, count})
 }
-Cart.grant = async (view, user_id, order_id) => {
-	const { db } = await view.gets(['db'])
+Cart.grant = async (db, user_id, order_id) => {
 	await db.exec(`
 		INSERT INTO cart_userorders (user_id, order_id) VALUES(:user_id, :order_id)
 	`, {user_id, order_id})
@@ -374,7 +373,7 @@ Cart.create = async (view, user) => {
 	`, row);
 	if (!order_id) return false;
 	
-	await Cart.grant(view, user_id, order_id)
+	await Cart.grant(db, user_id, order_id)
 	return order_id
 }
 

@@ -130,7 +130,7 @@ rest.addResponse('set-submit', async view => {
 			ouser = await User.create(view)
 			await User.sendup(view, ouser.user_id, order.email) //Сохраняем email нового пользователя и отправляем письмо ему
 		}
-		if (ouser.user_id != user.user_id) await Cart.grant(view, ouser.user_id, order.order_id) //Указанному пользователю даём доступ к заказу. У него он будет активным
+		if (ouser.user_id != user.user_id) await Cart.grant(db, ouser.user_id, order.order_id) //Указанному пользователю даём доступ к заказу. У него он будет активным
 		return ready()
 	}
 
@@ -148,7 +148,7 @@ rest.addResponse('set-submit', async view => {
 		await User.sendup(view, user.user_id, order.email)
 	} else { //Текущий пользователь зарегистрирован
 		const ouser = await User.create(view)
-		await Cart.grant(view, ouser.user_id, order.order_id) //И новому пользователю даём доступ к заказу
+		await Cart.grant(db, ouser.user_id, order.order_id) //И новому пользователю даём доступ к заказу
 		//Заказ может быть активен у двух пользователей
 		await User.sendup(view, ouser.user_id, order.email) //Сохраняем email нового пользователя и отправляем письмо ему
 	}

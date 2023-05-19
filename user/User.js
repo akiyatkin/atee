@@ -10,11 +10,10 @@ const User = {
 		if (!user) return false
 		return user
 	},
-	mergeuser: async (view, olduser, newuser) => {
+	mergeuser: async (db, olduser, newuser) => {
 		if (!olduser) return
 		if (olduser.date_signup) return
 		if (newuser.user_id == olduser.user_id) return
-		const { db } = await view.gets(['db'])
 		//Прошлый пользователь ещё не регистрировался, надо замёрджить и удалить его
 		await db.affectedRows('DELETE from user_users where user_id = :user_id', olduser)
 	},
