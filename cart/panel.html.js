@@ -285,7 +285,7 @@ export const ORDER = (data, env) => isShowPanel(data) ? `
 			<h1 style="margin-top:1rem;">${TITLES[data.order.status]}
 			${data.user.manager ? showCrown() : ''}
 			<span style="margin-left:1ch; float:right; font-weight: normal">№ ${data.order.order_nick}</span></h1>
-			${data.order.status == 'check' ? showCheckDate(data, env) : ''}
+			${data.order.status != 'wait' ? showDate(data.order, env) : ''}
 			${data.list.length ? showPoss(data, env) : showEmpty(data, env)}
 			${data.orders.length > 1 ? showOrders(data, env) : ''}
 		</div>
@@ -296,11 +296,17 @@ const showCrown = () => `
 		<svg style="color: var(--brown); margin-bottom: 3px;" width="24" height="24" viewBox="0 0 18 18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.179 13.425h13.656v3.02H2.179v-3.02z" fill="currentColor" fill-opacity=".8"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8.999 1L2.093 11.031h4.25l6.662-4.315L9 1z" fill="currentColor" fill-opacity=".6"/><path fill-rule="evenodd" clip-rule="evenodd" d="M2.067 12.641L.5 3.752l12.76 8.89H2.068z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M15.927 12.641l1.607-8.858L3.857 12.64h12.07z" fill="currentColor" fill-opacity=".8"/></svg>
 	</a>
 `
-const showCheckDate = (data, env) => `
+const showDate = (order, env) => `
 	<p>
-		${ago(data.order.datecheck * 1000)}. ${new Date(data.order.datecheck * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric' })}
+		<!-- ${printDate('Создан', order.datewait)} -->
+		${order.status != 'wait' ? printDate('Оформлен', order.datecheck) : ''}
+		<!-- ${order.status == 'cancel' ? printDate('Отменён', order.datecancel) : ''} 
+		${order.status == 'complete' ? printDate('Выполнен', order.datecomplete) : ''} -->
 	</p>
 `
+const printDate = (title, date) => date ? `
+	${title}: ${ago(date * 1000)}. ${new Date(date * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric' })}<br>	
+` : ''
 const showEmpty = (data, env) => `
 	${data.order.status == 'wait' ? '<p>В заказе ещё нет товаров</p>' : ''}
 `
@@ -328,7 +334,7 @@ const showPoss = (data, env) => `
 				${data.order.status == 'wait' ? svgres('required', data.order.address) : ''}
 			</div>
 			<div>
-				Менеджер перезвонит в&nbsp;рабочее время, уточнит время и&nbsp;стоимость доставки. Стоимость доставки оплачивается отдельно в&nbsp;транспортной компании.
+				Менеджер перезвонит в&nbsp;рабочее время, уточнит время и&nbsp;стоимость доставки. Стоимость доставки оплачивается отдельно в&nbsp;транспортной компании при получении.
 			</div>
 			
 			${data.order.partner ? showPartner(data, env) : '' }
@@ -363,7 +369,8 @@ const showYear = (data, env, year) => `
 `
 
 const showOrders = (data, env) => `
-	<h2>Мои заказы <span style="font-weight: normal">${data.ouser.email || ''}</span></h2>
+	<h2>Мои заказы</h2>
+	<!-- <h2>Заказы <span style="font-weight: normal">${data.ouser.email || ''}</span></h2> -->
 	<style>
 		${env.scope} .orders button:disabled {
 			font-weight: bold;
@@ -534,7 +541,7 @@ const svgres = (type, saved) => `
 		<div class="optional${type == 'optional' ? ' show' : ''}"></div>
 	</div>
 `
-export const isShowPanel = data => data.result && (data.list.length || data.orders.length > 2)
+export const isShowPanel = data => data.result && (data.list.length || data.orders.length > 1)
 export const BODY = (data, env) => isShowPanel(data) ? `
 	<div class="padding" style="position: sticky; top: 0">
 		<style>

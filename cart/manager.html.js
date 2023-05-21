@@ -54,7 +54,7 @@ tpl.MONTHS = (data, env) => tpl.iserr(data, env) || `
 `
 const MONTHS = ['Январь','Февраль','Март', "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь" ]
 tpl.STATUSES = {
-	'check':'Отправлен',
+	'check':'Оформлен',
 	'pay':'Оплата',
 	'paid':'Оплачен',
 	'complete':'Выполнен',
@@ -82,7 +82,7 @@ const showStatuses = (data, env) => `
 	<p>
 		<a style="${data.status ? '': 'font-weight:bold'}" href="/cart/manager${prefixif('/', data.year)}${prefixif('/', data.month)}">Все</a>
 		<a style="${data.status == 'wait' ? 'font-weight:bold' : ''}" href="/cart/manager${prefixif('/', data.year)}${prefixif('/', data.month)}?status=wait">Ожидает</a>
-		<a style="${data.status == 'check' ? 'font-weight:bold' : ''}" href="/cart/manager${prefixif('/', data.year)}${prefixif('/', data.month)}?status=check">На проверке</a>
+		<a style="${data.status == 'check' ? 'font-weight:bold' : ''}" href="/cart/manager${prefixif('/', data.year)}${prefixif('/', data.month)}?status=check">Оформлен</a>
 		<a style="${data.status == 'complete' ? 'font-weight:bold' : ''}" href="/cart/manager${prefixif('/', data.year)}${prefixif('/', data.month)}?status=complete">Выполнен</a>
 		<a style="${data.status == 'cancel' ? 'font-weight:bold' : ''}" href="/cart/manager${prefixif('/', data.year)}${prefixif('/', data.month)}?status=cancel">Отменён</a>
 	</p>

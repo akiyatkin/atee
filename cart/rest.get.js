@@ -136,7 +136,8 @@ rest.addResponse('get-panel', async view => {
 			UNIX_TIMESTAMP(datewait) as datewait
 		FROM cart_userorders uo, cart_orders o
 		WHERE uo.user_id = :user_id and uo.order_id = o.order_id
-	`, {user_id: (user.manager ? ouser.user_id : user_id)})
+	`, { user_id })
+	//`, {user_id: (user.manager ? ouser.user_id : user_id)})
 	const years = {}
 	for (const index in orders) {
 		const order = orders[index]

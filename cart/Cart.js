@@ -223,8 +223,10 @@ Cart.getOrder = async (db, order_id) => {
 	const order = await db.fetch(`
 		SELECT 
 			order_id, 
-			UNIX_TIMESTAMP(datecheck) as datecheck, 
 			UNIX_TIMESTAMP(datewait) as datewait, 
+			UNIX_TIMESTAMP(datecheck) as datecheck, 
+			UNIX_TIMESTAMP(datecancel) as datecancel, 
+			UNIX_TIMESTAMP(datecomplete) as datecomplete, 
 			user_id, 
 			order_nick, 
 			name, 
@@ -242,6 +244,22 @@ Cart.getOrder = async (db, order_id) => {
 	if (order.name) order.name = order.name.replaceAll(/[<>\'\"\`]/ig,' ')
 	if (order.phone) order.phone = order.phone.replaceAll(/[<>\'\"\`]/ig,' ')
 
+	// if (order.status == 'wait') {
+	// 	delete order.datecomplete
+	// 	delete order.datecancel
+	// 	delete order.datecheck
+	// }
+	// if (order.status == 'check') {
+	// 	delete order.datecomplete
+	// 	delete order.datecancel
+	// }
+	// if (order.status == 'complete') {
+	// 	delete order.datecancel
+	// }
+	// if (order.status == 'cancel') {
+	// 	delete order.datecomplete
+	// }
+	
 	order.partner = await Cart.getPartner(db, order_id, order.partnerjson)
 
 	return order
@@ -375,13 +393,19 @@ Cart.create = async (view, user) => {
 	await Cart.grant(db, user_id, order_id)
 	return order_id
 }
-
-Cart.setStatus = async (db, order_id, status, order) => {
+Cart.setDate = async (db, order_id, status) => {
 	return await db.exec(`
-		UPDATE cart_orders 
-		SET status = '${status}'${!order || order['date' + status] ? `, date${status} = now()` : ''}
+		UPDATE cart_orders
+		SET date${status} = now()
 		WHERE order_id = ${order_id}
 	`)
+}
+Cart.setStatus = async (db, order_id, status) => {
+	return await db.exec(`
+		UPDATE cart_orders 
+		SET status = :status
+		WHERE order_id = :order_id
+	`, {status, order_id})
 }
 
 		

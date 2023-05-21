@@ -8,7 +8,7 @@ const addCSS = href => { //файл этот нельзя использоват
 addCSS('/-float-label/style.css')
 
 export const SUCCESS = () => `
-	<h1>Заявка отправлена</h1>
+	<h1>Заказ оформлен</h1>
 	<p style="font-size: 1rem; line-height: 140%; margin-left:auto; margin-right:auto">
 		Менеджер свяжется с&nbsp;Вами<br>в&nbsp;рабочее&nbsp;время, как&nbsp;можно&nbsp;быстрее 
 	</p>

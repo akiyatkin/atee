@@ -74,6 +74,17 @@ rest.addResponse('set-status', async view => {
 		WHERE user_id = :user_id
 	`, { user_id })
 	const order = await Cart.getOrder(db, order_id)
+
+	if (!order['date' + status]) {
+		if (status == 'check' && order['date' + status]) {
+
+		} else if (status == 'wait') {
+
+		} else {
+			await Cart.setDate(db, order_id, status)
+		}
+	}
+
 	if (status == 'wait') {
 		await db.exec(`
 			UPDATE 
@@ -83,14 +94,13 @@ rest.addResponse('set-status', async view => {
 			WHERE order_id = :order_id
 		`, { order_id })
 	} else {
-
 		const json = await db.col(`
 			SELECT json
 			FROM cart_basket 
 			WHERE order_id = :order_id
 		`, {order_id})
 		const item = json ? JSON.parse(json) : false
-		if (!item) {
+		if (!item) { //Замораживаем если там там нет данных. Иначе, заморозка сохраняется оригинальная (туда-сюда действия менеджера не должны изменить заявку).
 			const order = await Cart.getOrder(db, order_id)
 			Cart.freeze(db, base, order_id, order.partner)
 		} else {
@@ -118,6 +128,7 @@ rest.addResponse('set-submit', async view => {
 		await Cart.recalcOrder(db, base, order_id, order.partner)
 		await Cart.freeze(db, base, order_id)
 		await Cart.setStatus(db, order_id, 'check')
+		await Cart.setDate(db, order_id, 'check')
 		await Cart.sendToManager(view, 'tocheck', order_id)
 		return view.ret('Спасибо за заказ. Менеджер оповещён, ответит в течение 24 часов, как можно скорее.')
 	}
@@ -139,7 +150,7 @@ rest.addResponse('set-submit', async view => {
 		if (user.email) { //При авторизации заказ не передастся будет просто ошибка
 			return view.err('Вам нужно авторизоваться (' + order.email + ') и повторить заказ или изменить email. Сейчас вы в другом аккаунте (' + user.email + '). На почту отправлена ссылка.', 422)
 		} else { //Заказ передастся при авторизации в томже браузере
-			return view.err('Вам нужно авторизоваться (' + order.email + ') в этом браузере. Корзина не потеряется. На почту отправлена ссылка.', 422)
+			return view.err('Вам нужно авторизоваться в этом браузере (' + order.email + '). Корзина не потеряется. На почту отправлена ссылка.', 422)
 		}			
 	}
 
@@ -183,7 +194,7 @@ rest.addResponse('set-field', async view => {
 	const { db, field, value, active_id, user } = await view.gets(['db', 'field', 'value', 'user', 'active_id#required'])
 	const order = await Cart.getOrder(view, active_id)
 	if (order[field] == value) return view.ret('Данные сохранены')
-	if (order.status != 'wait') return view.err('Заявка уже отправлена менеджеру', 422)
+	if (order.status != 'wait') return view.err('Заказ уже отправлен менеджеру', 422)
 	const errorsave = async msg => {
 		const r = await Cart.saveFiled(view, active_id, field, '')
 		if (!r) return view.err('Ошибка на сервере', 500)
