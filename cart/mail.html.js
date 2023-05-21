@@ -15,12 +15,12 @@ tpl.tocheck = (data) => `
 		${prefixif('<br>Адрес: ', data.order.address)}
 	</div>
 	<pre style="font-style: italic; margin-bottom:1rem">${data.order.commentuser}</pre>
-	<div style="margin-bottom:1rem">${data.order.count} ${words(data.order.count, 'позиция', 'позиции', 'позиций')}</div>
+	<div style="margin-bottom:1rem">${data.list.length} ${words(data.list.length, 'позиция', 'позиции', 'позиций')}</div>
 	<div style="font-family: monospace; font-size: 0.9rem; margin-bottom: 1rem">
 		${data.list.map(pos => tpl.showPos(pos, data)).join('')}
 	</div>
 	<div>
-		Стоимость заказа <b>${cost(data.order.sum)}${common.unit()}</b>
+		Стоимость заказа <b>${cost(data.list.reduce((val, pos) => val + pos.sum, 0))}${common.unit()}</b>
 	</div>
 `
 

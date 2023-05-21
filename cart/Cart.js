@@ -223,7 +223,6 @@ Cart.getOrder = async (db, order_id) => {
 	const order = await db.fetch(`
 		SELECT 
 			order_id, 
-			count, 
 			UNIX_TIMESTAMP(datecheck) as datecheck, 
 			UNIX_TIMESTAMP(datewait) as datewait, 
 			user_id, 
