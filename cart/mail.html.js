@@ -3,11 +3,21 @@ import common from "/-catalog/common.html.js"
 import cost from "/-words/cost.js"
 
 const tpl = {}
+
+const TITLES = {
+	"wait":"Оформить заказ",
+	"check":"Заказ оформлен",
+	"complete":"Заказ выполнен",
+	"cancel":"Заказ отменён",
+	"empty":"В заказе нет товаров",
+	"pay":"Заказ ожидает оплату"
+}
+
 export default tpl
 const prefixif = (prefix, val) => val ? prefix + '' + val : ''
 tpl.tocheck_subject = (data) => `Заказ с сайта ${data.vars.host}`
 tpl.tocheck = (data) => `
-	<h1>Заказ № ${data.order.order_nick}</h1>
+	<h1>${TITLES[data.order.status]} № ${data.order.order_nick}</h1>
 	<div style="margin-bottom:1rem">
 		ФИО: ${data.order.name}<br>
 		Email: ${data.order.email}<br>

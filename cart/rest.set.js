@@ -129,7 +129,11 @@ rest.addResponse('set-submit', async view => {
 		await Cart.freeze(db, base, order_id)
 		await Cart.setStatus(db, order_id, 'check')
 		await Cart.setDate(db, order_id, 'check')
-		await Cart.sendToManager(view, 'tocheck', order_id)
+		
+		const r1 = Cart.sendToAdmin(view, 'tocheck', order_id)
+		const r2 = Cart.sendToUser(view, 'tocheck', order_id)
+		if ((await Promise.all([r1, r2])).some(r => !r)) return view.err('Не удалось отправить письмо.', 500)
+
 		return view.ret('Спасибо за заказ. Менеджер оповещён, ответит в течение 24 часов, как можно скорее.')
 	}
 	if (user.email == order.email) { //Это я и я зарегистрирован

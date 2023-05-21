@@ -18,12 +18,6 @@ const Cart = {
 		const partner = partnerjson ? JSON.parse(partnerjson) : false
 		return partner
 	},
-	// toCheck: async (view, order_id) => {
-	// 	const { db, base } = await view.gets(['db','base'])
-	// 	await Cart.freeze(db, base, order_id)
-	// 	await Cart.setStatus(db, order_id, 'check')
-	// 	await Cart.sendToManager(view, 'tocheck', order_id)
-	// },
 	
 	freeze: async (db, base, order_id, partner) => {
 		const list = await Cart.getBasketCatalog(db, base, order_id, partner)
@@ -91,27 +85,28 @@ const Cart = {
 			return Cart.getBasketCatalog(db, base, order_id, partner)
 		}
 	},
-	sendToManager: async (view, sub, order_id) => {
+	
+	sendToUser: async (view, sub, order_id) => {
+		const {subject, html, email} = await Cart.getMailOpt(view, sub, order_id)
+		return Mail.toUser(subject, html, email) //В письме заказа не должно быть аналитики
+	},
+	sendToAdmin: async (view, sub, order_id) => {
+		const {subject, html, email} = await Cart.getMailOpt(view, sub, order_id)
+		return Mail.toAdmin(subject, html, email) //В письме заказа не должно быть аналитики
+	},
+	getMailOpt: async (view, sub, order_id) => {
 		const { db, base } = await view.gets(['db','base'])
 		const order = await Cart.getOrder(db, order_id)
-
 		const list = await Cart.getBasket(db, base, order_id, order.freeze, order.partner)
-		
-
-
 		const vars = await view.gets(['utms', 'host', 'ip'])
-
 		const data = {order, vars, list}
-
+		const email = order.email
 		const tpl = await import('/-cart/mail.html.js').then(res => res.default)
 		if (!tpl[sub]) return view.err('Не найден шаблон письма', 500)
 		if (!tpl[sub + '_subject']) return view.err('Не найден шаблон темы', 500)
 		const subject = tpl[sub + '_subject'](data)
 		const html = tpl[sub](data)
-
-		const r = await Mail.toAdmin(subject, html, order.email) //В письме заказа не должно быть аналитики
-		if (!r) return view.err('Не удалось отправить письмо.', 500)
-		return true
+		return {subject, html, email}
 	},
 	mergeuser: async (db, olduser, newuser) => {
 		const order_id = await db.col('select order_id from cart_actives where user_id = :user_id', olduser)
