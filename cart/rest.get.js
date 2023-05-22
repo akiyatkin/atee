@@ -122,10 +122,7 @@ rest.addResponse('get-panel', async view => {
 		await Cart.recalcOrder(db, base, order_id, order.partner)
 	}
 	const list = await Cart.getBasket(db, base, order_id, order.freeze, order.partner)
-	// view.ans.sum = 0
-	// list.forEach(pos => {
-	// 	view.ans.sum += pos.sum
-	// })
+
 	const ouser = await User.getUserByEmail(db, order.email) || await User.getUserById(db, order.user_id) || user
 	view.ans.ouser = ouser
 	view.ans.list = list
@@ -137,7 +134,7 @@ rest.addResponse('get-panel', async view => {
 		FROM cart_userorders uo, cart_orders o
 		WHERE uo.user_id = :user_id and uo.order_id = o.order_id
 	`, { user_id })
-	//`, {user_id: (user.manager ? ouser.user_id : user_id)})
+	//{user_id: (user.manager ? ouser.user_id : user_id)})
 	const years = {}
 	for (const index in orders) {
 		const order = orders[index]
