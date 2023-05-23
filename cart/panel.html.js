@@ -94,7 +94,7 @@ export const ROOT = (data, env) => `
 			
 			
 			${env.scope} .panel.show .body {
-				max-height: calc(100vh - 150px);
+				max-height: calc(100vh - 200px);
 			}
 			${env.scope} .panel.ready .body {
 				overflow-y: auto;
