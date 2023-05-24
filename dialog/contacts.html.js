@@ -35,7 +35,7 @@ cont.CALLBACK = (data, env) => `
 `
 const checkbox = (name, title, checked) => `
 	<div style="align-items: flex-start; display: grid; grid-template-columns: max-content 1fr;">
-		<input ${checked ? 'checked' : ''} style="margin-right: 10px; transform: scale(1.4); transform-origin: left center" 
+		<input ${checked ? 'checked' : ''} required style="margin-right: 10px; transform: scale(1.4); transform-origin: left center" 
 		type="checkbox" id="contacts_${name}" name="${name}"> 
 		<label for="contacts_${name}">${title}</label>
 	</div>
