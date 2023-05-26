@@ -67,7 +67,8 @@ export const Excel = {
 			indexes.sheet_index = Dabudi.recColIndex(heads, 'sheet_index', base)
 			indexes.sheet_title = Dabudi.recColIndex(heads, 'sheet_title', base) //Обязательно последний
 
-			sheets[sheet.name] = { descr, heads, indexes }
+			const sheet_name = sheet.name.slice(-base.LONG).trim()
+			sheets[sheet_name] = { descr, heads, indexes }
 
 			
 			let {rows_items} = Dabudi.splitGroups(rows_body, heads, root, indexes.group_nick, base, groups)
@@ -103,7 +104,8 @@ export const Excel = {
 
 				row[indexes.sheet_row] = i + 1
 				row[indexes.sheet_index] = sheet_index
-				row[indexes.sheet_title] = sheet.name.slice(-base.LONG).trim()
+				 
+				row[indexes.sheet_title] = sheet_name
 				row.splice(indexes.sheet_title + 1)
 				brands[row[indexes.brand_nick]] = { brand_title:row[indexes.brand_title], brand_nick:row[indexes.brand_nick] }
 			})
