@@ -406,7 +406,7 @@ const showSubmit = (data, env) => `
 			<div>
 				<button class="a clear">Очистить</button>
 			</div>
-			<button type="submit">Отправить</button>
+			<button type="submit" data-order_id=${data.order.order_id}>Отправить</button>
 		</div>
 		${svgres('optional')}
 	</div>

@@ -52,12 +52,31 @@ rest.addResponse('set-manager-refresh', async view => {
 rest.addResponse('set-delete', async view => {
 	const { db, order_id } = await view.gets(['db', 'order_id#required', 'manager#required'])
 	
+	const user_ids = await db.colAll(`
+		SELECT user_id 
+		FROM cart_actives
+		WHERE order_id = :order_id
+	`, { order_id })
+
+
 	await db.affectedRows('DELETE from cart_orders where order_id = :order_id', {order_id})
 	await db.affectedRows('DELETE from cart_basket where order_id = :order_id', {order_id})
 	await db.affectedRows('DELETE from cart_transports where order_id = :order_id', {order_id})
 	await db.affectedRows('DELETE from cart_userorders where order_id = :order_id', {order_id})
 	await db.affectedRows('DELETE from cart_actives where order_id = :order_id', {order_id})
-
+	
+	for (const user_id of user_ids) {
+		const order_id = await db.col(`
+			SELECT uo.order_id
+			FROM cart_userorders uo, cart_orders o
+			WHERE uo.user_id = :user_id and o.order_id = uo.order_id
+			ORDER by o.dateedit DESC
+		`, { user_id })
+		if (!order_id) continue
+		await db.exec(`
+			REPLACE INTO cart_actives (user_id, order_id) VALUES(:user_id, :order_id)
+		`, {user_id, order_id})
+	}
 	return view.ret('Заказ удалён')
 	// const order = await Cart.getOrder(db, order_id)
 	// const actives_id = await db.colAll(`
@@ -221,15 +240,21 @@ rest.addResponse('set-field', async view => {
 	return view.ret('Указанные данные сохранены')
 })
 rest.addResponse('set-newactive', async view => {
-	const { order, db, user_id } = await view.gets(['db', 'order#required','user_id'])
+	const { order_id, db, user_id } = await view.gets(['db', 'order_id#required','user_id'])
+	view.ans.user_id = user_id
+
 	await db.exec(`
-		UPDATE cart_actives
-		SET order_id = :active_id
-		WHERE user_id = :user_id
-	`, {
-		active_id: order.order_id, 
-		user_id: user_id
-	})
+		REPLACE INTO cart_actives (user_id, order_id) VALUES(:user_id, :order_id)
+	`, {user_id, order_id})
+	
+	// await db.exec(`
+	// 	UPDATE cart_actives
+	// 	SET order_id = :active_id
+	// 	WHERE user_id = :user_id
+	// `, {
+	// 	active_id: order.order_id, 
+	// 	user_id: user_id
+	// })
 	return view.ret()
 })
 
