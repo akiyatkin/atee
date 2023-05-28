@@ -32,6 +32,7 @@ tpl.tocheck = (data) => `
 	<div>
 		Стоимость заказа <b>${cost(data.list.reduce((val, pos) => val + pos.sum, 0))}${common.unit()}</b>
 	</div>
+	${tpl.footer(data)}
 `
 
 tpl.showPos = (pos, data) => `
@@ -39,4 +40,10 @@ tpl.showPos = (pos, data) => `
 		<div>${pos.brand_title} ${pos.model_title}</div>
 		<div><b>${pos.count}</b> по <b>${cost(pos.Цена)}${common.unit()}</b> = <b>${cost(pos.count * pos.Цена)}${common.unit()}</b></div>
 	</div>
+`
+tpl.footer = (data) => `
+	<p>
+		С уважением, <a href="https://${data.vars.host}">${data.vars.host}</a><br>
+		Поддержка: <a href="https://${data.vars.host}/contacts">${data.vars.host}/contacts</a>
+	</p>
 `

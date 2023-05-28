@@ -33,10 +33,12 @@ const Mail = {
 		return info
 	},
 	toUser: (subject, html, email) => {
+		const r = conf.to.split(',')
+		const replayto = r[0].trim()
 		const opt = {
 			from: conf.from, 
 			to: email,
-			replyTo: conf.to,
+			replyTo: replayto,
 			subject,
 			html
 		}
