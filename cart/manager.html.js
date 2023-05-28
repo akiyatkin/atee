@@ -107,7 +107,9 @@ tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
 				<td>Заказ</td><td>ФИО</td><td>Email</td><td>Телефон</td><td>Позиций</td><td>Сумма</td><td>Статус</td><td>Изменения</td><td></td>
 			</tr>
 		</thead>
-		${data.list.map(row => tpl.showOrder(data, env, row)).join('')}
+		<tbody>
+			${data.list.map(row => tpl.showOrder(data, env, row)).join('')}
+		</tbody>
 	</table>
 
 	<script>

@@ -50,8 +50,9 @@ rest.addResponse('set-manager-refresh', async view => {
 })
 
 rest.addResponse('set-delete', async view => {
-	const { db, order_id } = await view.gets(['db', 'order_id#required', 'manager#required'])
-	
+	await view.gets(['manager#required'])
+	const { db, order_id, active_id } = await view.gets(['db', 'order_id#required', 'active_id'])
+	view.ans.active_id = active_id
 	const user_ids = await db.colAll(`
 		SELECT user_id 
 		FROM cart_actives

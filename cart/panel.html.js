@@ -82,14 +82,22 @@ export const ROOT = (data, env) => `
 			}
 			
 			${env.scope} .panel .body {
+
 				max-height: 95px;
 				transition: max-height 0.3s;
-				overflow: hidden;
+/*				overflow: auto;*/
+				overflow-y: scroll;
+				-ms-overflow-style: none;  /* Internet Explorer 10+ */
+    			scrollbar-width: none;  /* Firefox */
+
 				pointer-events: visiblePainted;
 
 				/*display: grid;
 				grid-template-columns: 1fr 1fr;
 				gap: 1fr;*/
+			}
+			${env.scope} .panel .body::-webkit-scrollbar { 
+			    display: none;  /* Safari and Chrome */
 			}
 			
 			
@@ -97,12 +105,13 @@ export const ROOT = (data, env) => `
 				max-height: calc(100vh - 200px);
 			}
 			${env.scope} .panel.ready .body {
-				overflow-y: auto;
-				overflow-x: auto;
+				/*overflow-y: visible;
+				overflow-x: auto;*/
 
 			}
 			${env.scope} .panel.hide .body {
-				overflow: hidden;
+				/*overflow: hidden;
+				overflow-y: visible;*/
 				max-height: 1rem;
 			}
 			${env.scope} .panel.hide .hand {
@@ -412,7 +421,7 @@ const showSubmit = (data, env) => `
 	</div>
 	<script>
 		(form => {
-			const promise = import("/-form/Autosave.js").then(r => r.default.init(form))
+			//const promise = import("/-form/Autosave.js").then(r => r.default.init(form))
 			const setres = (res, type, msg) => {
 				const show = res.querySelector('.show')
 				if (show) show.classList.remove('show')
@@ -455,7 +464,7 @@ const showSubmit = (data, env) => `
 				if (!input) input = field.querySelector('textarea')
 
 				res.addEventListener('click', async () => {
-					await promise
+					//await promise
 					const show = res.querySelector('.show')
 					if (input && !res.dataset.msg) {
 						const ans = await request(res, input)
@@ -467,11 +476,11 @@ const showSubmit = (data, env) => `
 				})
 				
 				if (!input) continue
-				promise.then(() => {
-					request(res, input)
+				//promise.then(() => {
+					//request(res, input)
 					//input.dispatchEvent(new Event("input"))
-					//restore(res, input)
-				})
+					restore(res, input)
+				//})
 				input.addEventListener('input', async () => {
 					const ans = await request(res, input)
 				})
@@ -591,6 +600,8 @@ export const BODY = (data, env) => isShowPanel(data) ? `
 		import Panel from '/-cart/Panel.js'
 		import { TITLE, SUM } from "${env.layer.tpl}"
 		const div = document.getElementById("${env.layer.div}")
+		const body = div.closest('.body')
+		body.scrollTo(0,0)
 		const panel = div.closest('.panel')
 		Panel.show(panel)
 		const title = panel.querySelector('.title')
