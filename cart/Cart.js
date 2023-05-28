@@ -373,7 +373,7 @@ Cart.create = async (view, user) => {
 
 	if (!row) {
 		row = {}
-		fields.forEach(key => row[key] = null)
+		fields.forEach(key => row[key] = '')
 	}
 	row['email'] = user['email'] || ''
 	row['order_nick'] = await Cart.createNick(view, user)
