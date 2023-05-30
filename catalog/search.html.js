@@ -46,8 +46,10 @@ search.pag = (data, env, scroll) => `
 		<style>
 			${env.scope} .pagination {
 				user-select: none;
-				padding: 2rem 0; 
-				margin-left: auto; width: max-content;align-items: center; display: grid; 
+				margin: 2rem 0; 
+				margin-left: auto; 
+				width: max-content;
+				align-items: center; display: grid; 
 				grid-template-columns: repeat(5, max-content); 
 				gap:1rem
 			}
@@ -113,7 +115,7 @@ search.pag.disabled = (data, env, scroll, title) => `
 	<span style="opacity: 0.3">${title}</span>
 `
 search.listcards = (data, env) => `	
-	<div style="margin-top:1rem">
+	<div style="margin-top:1rem; margin-bottom: 2rem">
 		${cards.LIST(data, env)}
 	</div>
 `
