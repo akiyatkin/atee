@@ -1375,7 +1375,9 @@ export class Upload {
 				WHERE ip.prop_id = :prop_id
 			`, { prop_id })			
 			for (const {model_id, item_num, src: srcs} of listsrc) {
-				for (const src of srcs.split(',')) {
+				const list = srcs.split(',').map(e => e.trim()).filter(r => r)
+				for ( const src of list) {
+
 					const { file_id, ordain } = await upload.receiveFile(src, {destiny: 'images'})
 					await db.exec(`
 						INSERT IGNORE INTO 
