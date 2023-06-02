@@ -1,5 +1,8 @@
 import links from "/-catalog/links.html.js"
 
+const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : ''
+
+
 const getp = (data, prop_nick) => {
 	return data.md.more?.[prop_nick] || data.md[prop_nick] || {}
 }
@@ -32,9 +35,10 @@ filters.option = (data, filter, v) => getp(data, filter.prop_nick)[v.value_nick]
 	` : `
 		<option style="opacity: ${v.mute ?'0.3':'1'}" value="${v.value_nick}">${v.value_title}</option>
 `
-filters.block = (title, body) => `
+filters.block = (title, body, descr) => `
 	<div style="margin-bottom: 1rem;">
 		<div style="font-weight: bold; padding-right: 0.5rem">${title}</div>
+		${prefixif('<div>', descr, '</div>')}
 		<div>${body}</div>
 	</div>
 `
@@ -66,6 +70,10 @@ const showkrest = (data, filter) => `
 		<span class="krest">&nbsp;✕</span>
 	</a>
 `
+const showDescr = (filter) => `
+	<div>${filter.opt.descr}</div>
+`
+
 filters.props = {
 	slider: (data, filter, env) => `
 		<div class="bodyslider" style="margin-bottom: 1rem;">
@@ -75,9 +83,11 @@ filters.props = {
 					--thumb-static-color: var(--color-link, gray);
 				}
 			</style>
-			<div style="display: flex; gap:5px; align-items: center">
-				<div><b>${filter.prop_title}${filter.prop_nick == 'cena' ? ', ' + filter.opt.unit : ''}</b></div>
-				<div style="flex-grow:1">
+			<div style="display: flex; gap:5px; align-items: end; margin-right:1rem">
+				<div>
+					<b>${filter.prop_title}${filter.prop_nick == 'cena' ? ', ' + filter.opt.unit : ''}</b>
+				</div>
+				<div style="flex-grow:1; white-space: nowrap">
 					<a data-scroll="none" rel="nofollow"
 						href="/catalog${changelink(data,filter)}" 
 						style="width: 2ch; text-align:center" 
@@ -114,6 +124,7 @@ filters.props = {
 					${sliderval(data, filter)? showkrest(data, filter) : ''}
 				</div>
 			</div>
+			${prefixif('<div>', filter.opt.descr, '</div>')}
 			<div class="slider">
 				<style>
 					${env.scope} .slider {
@@ -232,6 +243,6 @@ filters.props = {
 		filter.prop_title, 
 		`
 			<span style="white-space:nowrap; margin-right:0.7em;">${filter.values.map(v => filters.item(data, env, filter, v)).join(',</span> <span style="white-space:nowrap; margin-right:0.7em">')}</span>
-		`
+		`, filter.opt.descr
 	)
 }
