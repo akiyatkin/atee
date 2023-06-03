@@ -5,13 +5,13 @@ import links from "/-catalog/links.html.js"
 import common from "/-catalog/common.html.js"
 import ti from "/-words/ti.js"
 
-const model = {}
-export default model
+const tpl = {}
+export default tpl
 
-model.ROOT = (data, env, { mod } = data) => `
-	${data.result ? model.showmodel(data, env, data) : model.showerror(data, env)}
+tpl.ROOT = (data, env, { mod } = data) => `
+	${data.result ? tpl.showmodel(data, env, data) : tpl.showerror(data, env)}
 `
-model.showerror = (data, env) => `
+tpl.showerror = (data, env) => `
 	<div style="float:left; margin-top:1rem">
 		<a href="${env.crumb.parent}${links.setm(data)}">${data.brand?.brand_title ?? env.crumb.parent.name}</a>
 	</div>
@@ -20,7 +20,7 @@ model.showerror = (data, env) => `
 		Модель в магазине не найдена
 	</p>
 `
-model.showmodel = (data, env, { mod } = data) =>
+tpl.showmodel = (data, env, { mod } = data) =>
 `
 	<div style="margin-top:1rem">
 		<div style="float:left"><a href="${env.crumb.parent.parent}${mod.parent_id ? '/'+mod.group_nick : ''}${links.setm(data)}">${mod.group_title}</a></div>
@@ -28,10 +28,10 @@ model.showmodel = (data, env, { mod } = data) =>
 		<div style="float: right">${mod.Наличие || mod.discount ? cards.badgenalichie(data, env, mod) : ''}</div>
 	</div>
 	<h1 style="clear:both">${cards.name(data, mod)}</h1>
-	${model.maindata(data, env, mod)}
+	${tpl.maindata(data, env, mod)}
 	<div style="margin-bottom:2rem">
-		${mod['Скрыть фильтры'] ? '' : model.props(data, env, mod)}
-		${mod.item_props.length ? model.showitems(data, env, mod) : ''}
+		${mod['Скрыть фильтры'] ? '' : tpl.props(data, env, mod)}
+		${mod.item_props.length ? tpl.showitems(data, env, mod) : ''}
 	</div>
 
 	<div class="modtext" style="margin-bottom:2rem">
@@ -44,17 +44,17 @@ model.showmodel = (data, env, { mod } = data) =>
 		${ti.ar(mod.texts).join('')}
 	</div>
 	<div class="modfiles" style="margin-bottom:2rem">
-		${ti.ar(mod.files).map(model.filerow).join('')}
+		${ti.ar(mod.files).map(tpl.filerow).join('')}
 	</div>
 	<!-- <pre>${JSON.stringify(mod, "\n", 2)}</pre> -->
 `
-model.filerow = f => `
+tpl.filerow = f => `
 	<div style="display: grid; width:auto; align-items: center; grid-template-columns: max-content 1fr; gap: 0.5rem; margin-bottom:0.5rem">
 		<img width="20" load="lazy" src="/file-icon-vectors/dist/icons/vivid/${f.ext || 'lnk'}.svg"> 
 		<div><a target="about:blank" href="${f.dir + f.file}">${f.anchor || f.name}</a></div>
 	</div>
 `
-model.showGallery = (data, env, mod) => `
+tpl.showGallery = (data, env, mod) => `
 	<div class="imagecontent">
 		<style>
 			${env.scope} .imagemin_showgallery {	
@@ -96,7 +96,7 @@ model.showGallery = (data, env, mod) => `
 		</div>
 		<div class="imagemin_showgallery">
 			<div class="imagemin_gallery">
-				${mod.images.length > 1 ? mod.images.map(model.showimage).join('') : ''}
+				${mod.images.length > 1 ? mod.images.map(tpl.showimage).join('') : ''}
 			</div>
 		</div>
 
@@ -121,12 +121,12 @@ model.showGallery = (data, env, mod) => `
 		</script>
 	</div>
 `
-model.showimage = (src, i) => `	
+tpl.showimage = (src, i) => `	
 	<div data-file="${src}" class="imagemin ${i === 0 ? 'selected' : ''}">
 		<img width="150" height="150" loading="lazy" alt="" style="max-width: 100%; height:auto" src="/-imager/webp?cache&w=90&h=90&src=${src}">
 	</div>
 `
-model.maindata = (data, env, mod) => `
+tpl.maindata = (data, env, mod) => `
 	
 	
 	
@@ -151,36 +151,39 @@ model.maindata = (data, env, mod) => `
 			}
 		</style>	
 		
-			${mod.images ? model.showGallery(data, env, mod) : ''}	
+			${mod.images ? tpl.showGallery(data, env, mod) : ''}	
 
 		<div class="textcontent">
 			
-			${model.showprop('Модель', mod.model_title)}
-			${model.showprop('Бренд', brandlink(data, env, mod))}
+			${tpl.showprop('Модель', mod.model_title)}
+			${tpl.showprop('Бренд', brandlink(data, env, mod))}
 			
 			<p>
 				<i>${mod.Описание || ''}</i>
 			</p>
 			<p>${cards.basket(data, mod)}</p>
-			<p>
-				<button style="font-size:1.4rem; margin:1rem 0">${(mod.Цена||mod.min) ? 'Сделать заказ' : 'Оставить запрос'}</button>
-				<script>
-					(btn => {
-						btn.addEventListener('click', async () => {
-							btn.disabled = true
-							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-							await Dialog.open({
-								tpl:'/-catalog/order.html.js', 
-								sub:'ROOT',
-								json: '/-catalog/get-model?brand_nick=${mod.brand_nick}&model_nick=${mod.model_nick}&m&partner=${env.theme.partner ?? ''}'
-							})
-							btn.disabled = false
-						})
-					})(document.currentScript.previousElementSibling)
-				</script>
-			</p>
+			${tpl.orderButton(data, env, mod)}
 		</div>
 	</div>
+`
+tpl.orderButton = (data, env, mod) => `
+	<p align="right">
+		<button style="font-size:1.2rem; margin:1rem 0">${(mod.Цена||mod.min) ? 'Сделать заказ' : 'Оставить запрос'}</button>
+		<script>
+			(btn => {
+				btn.addEventListener('click', async () => {
+					btn.disabled = true
+					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+					await Dialog.open({
+						tpl:'/-catalog/order.html.js', 
+						sub:'ROOT',
+						json: '/-catalog/get-model?brand_nick=${mod.brand_nick}&model_nick=${mod.model_nick}&m&partner=${env.theme.partner ?? ''}'
+					})
+					btn.disabled = false
+				})
+			})(document.currentScript.previousElementSibling)
+		</script>
+	</p>
 `
 
 
@@ -197,33 +200,33 @@ const brandlink = (data, env, mod) => `
 	<a href="${env.crumb.parent}${links.setm(data)}">${mod.brand_title}</a>
 `
 
-model.showitems = (data, env, mod) => `
+tpl.showitems = (data, env, mod) => `
 	<table style="margin-top:2em">
-		<tr>${mod.item_props.map(model.itemhead).join('')}</tr>
-		${mod.items.map(item => model.itembody(data, mod, item)).join('')}
+		<tr>${mod.item_props.map(tpl.itemhead).join('')}</tr>
+		${mod.items.map(item => tpl.itembody(data, mod, item)).join('')}
 	</table>
-	${mod.items.map(model.showItemDescription).join('')}
+	${mod.items.map(tpl.showItemDescription).join('')}
 `
-model.showItemDescription = item => item['Описание'] ? `
+tpl.showItemDescription = item => item['Описание'] ? `
 	<h2>${item.more.Название || item.more.Арт || item.more.Код || ''}</h2>
 	<p>${item.Описание}</p>
 ` : ''
-model.itemhead = (pr) => `<td>${pr.prop_title}</td>`
-model.itembody = (data, mod, item) => `
+tpl.itemhead = (pr) => `<td>${pr.prop_title}</td>`
+tpl.itembody = (data, mod, item) => `
 	<tr>
-		${mod.item_props.map(pr => model.itemprop(item, pr.prop_title)).join('')}
+		${mod.item_props.map(pr => tpl.itemprop(item, pr.prop_title)).join('')}
 	</tr>
 `
-model.itemprop = (item, prop) => `
+tpl.itemprop = (item, prop) => `
 	<td>${common.propval(item,prop)}</td>
 `
-model.showprop = (prop_title, val) => `
+tpl.showprop = (prop_title, val) => `
 	<div style="margin: 0.25rem 0; display: flex">
 		<div style="padding-right: 0.5rem">${prop_title}:</div>
 		<div>${val}</div>
 	</div>
 `
-model.props = (data, env, mod) => `
+tpl.props = (data, env, mod) => `
 	<div>
 		${mod.model_props.map(pr => {
 			const val = common.prtitle(mod, pr)
@@ -232,8 +235,8 @@ model.props = (data, env, mod) => `
 		}).join('')}
 	</div>
 `
-// model.prop = {
-// 	default: (data, env, mod, pr, title, val) => model.showprop(title, val),
+// tpl.prop = {
+// 	default: (data, env, mod, pr, title, val) => tpl.showprop(title, val),
 // 	bold: (data, env, mod, pr, title, val) => cards.prop.default(data, mod, pr, title, `<b>${val}</b>`),
 // 	brand: (data, env, mod, pr, title, val) => cards.prop.default(data, mod, pr, title, 
 // 		`<a href="/catalog/${mod.brand_nick}">${mod.brand_title}</a>`

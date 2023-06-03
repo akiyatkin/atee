@@ -355,7 +355,7 @@ Cart.create = async (view, user) => {
 	const { db } = await view.gets(['db'])
 	const user_id = user.user_id
 
-	const fields = ['name','phone','address','tk','zip','transport','city_id','pay','pvz','commentuser']
+	const fields = ['name','phone','address','tk','zip','transport','city_id','pay','pvz']
 	//Берём данные из прошлой заявки у которой автор этот пользователь
 
 	// const last_id = await db.col(`
@@ -375,6 +375,15 @@ Cart.create = async (view, user) => {
 		row = {}
 		fields.forEach(key => row[key] = '')
 	}
+	
+	
+	//row['address'] = user['address'] || ''
+	//row['phone'] = user['phone'] || ''
+	row['transport'] = row['transport'] || null
+	row['city_id'] = row['city_id'] || null
+	row['pay'] = row['pay'] || null
+	
+
 	row['email'] = user['email'] || ''
 	row['order_nick'] = await Cart.createNick(view, user)
 	row['user_id'] = user_id
