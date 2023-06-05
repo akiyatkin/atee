@@ -1,4 +1,4 @@
-import { isShowPanel } from "/-cart/panel.html.js"
+import panel from "/-cart/panel.html.js"
 import cost from "/-words/cost.js"
 import common from "/-catalog/common.html.js"
 const tpl = {}
@@ -66,7 +66,7 @@ tpl.USER = (data, env) => `
 	</div>
 `
 
-tpl.CART = (data, env) => isShowPanel(data) ? `
+tpl.CART = (data, env) => panel.isShowPanel(data) ? `
 	<button title="На ${cost((data.list||[]).reduce((val, pos) => val + pos.sum, 0))}${common.unit()}" 
 		style="cursor:pointer; background: transparent;" class="header_table_cart transparent">
 		<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

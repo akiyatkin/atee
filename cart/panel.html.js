@@ -86,7 +86,7 @@ tpl.ROOT = (data, env) => `
 			
 			${env.scope} .panel .body {
 
-				max-height: 95px;
+				max-height: 105px;
 				transition: max-height 0.3s;
 /*				overflow: auto;*/
 				overflow-y: scroll;
@@ -633,31 +633,18 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 				modsum.innerHTML = pantpl.SUM(mod.sum)
 				recalc()
 				title.innerHTML = pantpl.TITLE(state)
-				const ans = await fetch('/-cart/set-add?order_id&count=' + mod.count +'&model_nick='+mod.model_nick+'&brand_nick='+mod.brand_nick+'&item_num='+mod.item_num+'&partner=${env.theme.partner || ""}').then(r => r.json()).catch(e => console.log(e))
-				if (!ans.result) {
-					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-					await Dialog.alert(ans.msg)
-				}
-				const goal = 'basket'
-				if (goal && ans.result) {
-					const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
-					if (metrikaid) {
-						console.log('Goal.reach ' + goal)
-						ym(metrikaid, 'reachGoal', goal);
-					}
-				}
 
-
-				if (ans?.orderrefresh) {
+				const request = await import('/-dialog/request.js').then(r => r.default)
+				const ans = await request('/-cart/set-add', block, {goal: 'basket'})
+				if (ans.orderrefresh) {
 					const Client = await window.getClient()
 					Client.global('cart')
 				}
 			})
 			const del = block.querySelector('.del')
 			del.addEventListener('click', async () => {
-				await fetch('/-cart/set-remove?order_id&model_nick='+mod.model_nick+'&brand_nick='+mod.brand_nick+'&item_num='+mod.item_num+'&partner=${env.theme.partner || ""}').catch(e => console.log(e))
-				const Client = await window.getClient()
-				await Client.global('cart')
+				const request = await import('/-dialog/request.js').then(r => r.default)
+				request('/-cart/set-remove', block, {global: 'cart'})
 			})
 		}
 		recalc()
@@ -680,11 +667,13 @@ tpl.showPos = (mod, env) => `
 		<div><b>${cost(mod.Цена)}${common.unit()}</b></div>
 	</div>
 	<div class="cost blocksum" 
+	data-partner="${env.theme.partner}"
 	data-brand_nick="${mod.brand_nick}" 
 	data-model_nick="${mod.model_nick}"
 	data-item_num="${mod.item_num}"
 	data-sum="${mod.sum}"
-	data-cost="${mod.Цена || 0}" data-count="${mod.count || 0}">
+	data-cost="${mod.Цена || 0}" 
+	data-count="${mod.count || 0}">
 
 		<div style="grid-area: input;">${number.INPUT({min:0, max:1000, value:mod.count, name:mod.model_nick})}</div>
 		<div style="grid-area: sum"><b class="modsum">${tpl.SUM(mod.sum)}</b></div>

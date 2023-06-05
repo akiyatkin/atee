@@ -20,5 +20,6 @@ const request = async (src, btn, {goal, global}) => {
 		await Client.global(global)
 	}
 	btn.disabled = false
+	return ans
 }
 export default request
