@@ -3,9 +3,12 @@ import number from "/-cart/number-block.html.js"
 import words from "/-words/words.js"
 import cost from "/-words/cost.js"
 import ago from "/-words/ago.js"
-export const css = [...number.css, '/-float-label/style.css']
 
-export const ROOT = (data, env) => `
+
+const tpl = {}
+export default tpl
+tpl.css = [...number.css, '/-float-label/style.css']
+tpl.ROOT = (data, env) => `
 	<div class="panel">
 		<style>
 			${env.scope} {
@@ -30,11 +33,11 @@ export const ROOT = (data, env) => `
 				position: relative;
 				z-index: 1;
 				margin-bottom: -15px;
-				margin-top: -25px;
+				margin-top: -20px;
 				width:max-content; 
 				border-radius: 50px; 
 				background: white; 
-				border:solid 1px gray; 
+				border:solid 1px var(--border-color); 
 				align-items: center;
 				display: none;
 				transition: margin-top 0.3s;
@@ -237,8 +240,8 @@ const checkbox = (name, title, checked) => `
 		<label for="contacts_${name}">${title}</label>
 	</div>
 `
-export const SUM = (sum) => `${cost(sum)}${common.unit()}`
-export const TITLE = (obj) => obj.length ? `<b>${obj.length}</b> ${words(obj.length, 'позиция','позиции','позиций')} <b>${SUM(obj.sum)}</b>` : `<b>${obj.orders}</b> ${words(obj.orders, 'заказ','заказа','заказов')}` //`В заказе ещё нет товаров` 
+tpl.SUM = (sum) => `${cost(sum)}${common.unit()}`
+tpl.TITLE = (obj) => obj.length ? `<b>${obj.length}</b> ${words(obj.length, 'позиция','позиции','позиций')} <b>${tpl.SUM(obj.sum)}</b>` : `<b>${obj.orders}</b> ${words(obj.orders, 'заказ','заказа','заказов')}` //`В заказе ещё нет товаров` 
 const TITLES = {
 	"wait":"Оформить заказ",
 	"check":"Заказ оформлен",
@@ -247,7 +250,7 @@ const TITLES = {
 	"empty":"В заказе нет товаров",
 	"pay":"Заказ ожидает оплату"
 }
-export const ORDER = (data, env) => isShowPanel(data) ? `
+tpl.ORDER = (data, env) => tpl.isShowPanel(data) ? `
 <!-- position: sticky; top: 0; -->
 	<div class="padding" style="">
 		<style>
@@ -295,7 +298,7 @@ export const ORDER = (data, env) => isShowPanel(data) ? `
 			${data.user.manager ? showCrown() : ''}
 			<span style="margin-left:1ch; float:right; font-weight: normal">№ ${data.order.order_nick}</span></h1>
 			${data.order.status != 'wait' ? showDate(data.order, env) : ''}
-			${data.list.length ? showPoss(data, env) : showEmpty(data, env)}
+			${data.list.length ? tpl.showForm(data, env) : showEmpty(data, env)}
 			${data.orders.length > 1 ? showOrders(data, env) : ''}
 		</div>
 	</div>
@@ -319,7 +322,7 @@ const printDate = (title, date) => date ? `
 const showEmpty = (data, env) => `
 	${data.order.status == 'wait' ? '<p>В заказе ещё нет товаров</p>' : ''}
 `
-const showPoss = (data, env) => `
+tpl.showForm = (data, env) => `
 		
 		<form data-goal="cart" action="/-cart/set-submit?partner=${env.theme.partner}" style="clear:both; border-radius:var(--radius); display: grid; gap:1rem; padding:1rem; background:var(--lightyellow);">
 			<div class="float-label icon name field">
@@ -529,7 +532,7 @@ const showSubmit = (data, env) => `
 		})(document.currentScript.parentElement)
 	</script>
 `
-export const MSG = (data, env) => `
+tpl.MSG = (data, env) => `
 	<h1>${data.result ? 'Готово' : 'Ошибка'}</h1>
 	<div style="max-width: 400px;"><p class="msg">${data.msg || ''}</p></div>
 `
@@ -550,8 +553,8 @@ const svgres = (type, saved) => `
 		<div class="optional${type == 'optional' ? ' show' : ''}"></div>
 	</div>
 `
-export const isShowPanel = data => data.result && (data.list.length || data.orders.length > 1)
-export const BODY = (data, env) => isShowPanel(data) ? `
+tpl.isShowPanel = data => data.result && (data.list.length || data.orders.length > 1)
+tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 	<div class="padding" style="position: sticky; top: 0">
 		<style>
 			${env.scope} .list {
@@ -592,13 +595,13 @@ export const BODY = (data, env) => isShowPanel(data) ? `
 			<h1 style="margin-top:1rem;">&nbsp;</h1>
 		</div>
 		<div class="list">
-			${data.list.map(mod => showPos(mod, env)).join('')}
+			${data.list.map(mod => tpl.showPos(mod, env)).join('')}
 		</div>
 	</div>
 	
 	<script type="module">
 		import Panel from '/-cart/Panel.js'
-		import { TITLE, SUM } from "${env.layer.tpl}"
+		import pantpl from "${env.layer.tpl}"
 		const div = document.getElementById("${env.layer.div}")
 		const body = div.closest('.body')
 		body.scrollTo(0,0)
@@ -627,9 +630,9 @@ export const BODY = (data, env) => isShowPanel(data) ? `
 			input.addEventListener('input', async () => {
 				mod.count = input.value
 				mod.sum = mod.cost * mod.count
-				modsum.innerHTML = SUM(mod.sum)
+				modsum.innerHTML = pantpl.SUM(mod.sum)
 				recalc()
-				title.innerHTML = TITLE(state)
+				title.innerHTML = pantpl.TITLE(state)
 				const ans = await fetch('/-cart/set-add?order_id&count=' + mod.count +'&model_nick='+mod.model_nick+'&brand_nick='+mod.brand_nick+'&item_num='+mod.item_num+'&partner=${env.theme.partner || ""}').then(r => r.json()).catch(e => console.log(e))
 				if (!ans.result) {
 					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
@@ -658,7 +661,7 @@ export const BODY = (data, env) => isShowPanel(data) ? `
 			})
 		}
 		recalc()
-		title.innerHTML = TITLE(state)
+		title.innerHTML = pantpl.TITLE(state)
 	</script>
 ` : `
 	<!-- В заказе ничего нет -->
@@ -670,26 +673,21 @@ export const BODY = (data, env) => isShowPanel(data) ? `
 	</script>
 `
 
-const showPos = (mod, env) => `
-	
-	<div class="image">${mod.images?.[0] ? showImage(mod) : ''}</div>
+tpl.showPos = (mod, env) => `
+	<div class="image">${mod.images?.[0] ? tpl.showImage(mod) : ''}</div>
 	<div class="info">
-		<div>${mod.Серия}</div>
-		<div>${mod.Код || mod.model_title} на ${mod.Рамок} рамок</div>
+		<div>${mod.brand_title} ${mod.model_title} ${mod.Название || mod.more.Название || ''}</div>
 		<div><b>${cost(mod.Цена)}${common.unit()}</b></div>
 	</div>
 	<div class="cost blocksum" 
-		data-brand_nick="${mod.brand_nick}" 
-		data-model_nick="${mod.model_nick}"
-		data-item_num="${mod.item_num}"
-		data-sum="${mod.sum}"
-		data-cost="${mod.Цена || 0}" data-count="${mod.count || 0}"
-		style="
-			
-		"
-	>
+	data-brand_nick="${mod.brand_nick}" 
+	data-model_nick="${mod.model_nick}"
+	data-item_num="${mod.item_num}"
+	data-sum="${mod.sum}"
+	data-cost="${mod.Цена || 0}" data-count="${mod.count || 0}">
+
 		<div style="grid-area: input;">${number.INPUT({min:0, max:1000, value:mod.count, name:mod.model_nick})}</div>
-		<div style="grid-area: sum"><b class="modsum">${SUM(mod.sum)}</b></div>
+		<div style="grid-area: sum"><b class="modsum">${tpl.SUM(mod.sum)}</b></div>
 		<div style="grid-area: remove">
 			<button class="del transparent" style="margin-top: 4px;">
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -699,6 +697,6 @@ const showPos = (mod, env) => `
 		</div>
 	</div>
 `
-const showImage = mod => `
+tpl.showImage = mod => `
 	<img alt="" width="80" height="70" src="/-imager/webp?fit=contain&h=100&w=100&src=${mod.images[0]}">
 `
