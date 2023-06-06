@@ -94,12 +94,16 @@ const Cart = {
 		const {subject, html, email} = await Cart.getMailOpt(view, sub, order_id)
 		return Mail.toAdmin(subject, html, email) //В письме заказа не должно быть аналитики
 	},
-	getMailOpt: async (view, sub, order_id) => {
+	getMailData: async (view, sub, order_id) => {
 		const { db, base } = await view.gets(['db','base'])
 		const order = await Cart.getOrder(db, order_id)
 		const list = await Cart.getBasket(db, base, order_id, order.freeze, order.partner)
-		const vars = await view.gets(['utms', 'host', 'ip'])
+		const vars = await view.gets(['host', 'ip'])
 		const data = {order, vars, list}
+		return data
+	},
+	getMailOpt: async (view, sub, order_id) => {
+		const data = await Cart.getMailData(view, sub, order_id)
 		const email = order.email
 		const tpl = await import('/-cart/mail.html.js').then(res => res.default)
 		if (!tpl[sub]) return view.err('Не найден шаблон письма', 500)

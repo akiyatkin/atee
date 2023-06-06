@@ -296,7 +296,7 @@ tpl.ORDER = (data, env) => tpl.isShowPanel(data) ? `
 		<div class="whenshow">
 			<h1 style="margin-top:1rem;">${TITLES[data.order.status]}
 			${data.user.manager ? showCrown() : ''}
-			<span style="margin-left:1ch; float:right; font-weight: normal">№ ${data.order.order_nick}</span></h1>
+			<a href="/cart/mail" style="color:inherit; margin-left:1ch; float:right; font-weight: normal">№ ${data.order.order_nick}</a></h1>
 			${data.order.status != 'wait' ? showDate(data.order, env) : ''}
 			${data.list.length ? tpl.showForm(data, env) : showEmpty(data, env)}
 			${data.orders.length > 1 ? showOrders(data, env) : ''}
@@ -416,6 +416,7 @@ const showSubmit = (data, env) => `
 	<div class="field submit">
 		<div style="display:flex; justify-content: space-between; align-items: center;">
 			<div>
+				
 				<button class="a clear">Очистить</button>
 			</div>
 			<button type="submit" data-order_id=${data.order.order_id}>Отправить</button>
@@ -596,7 +597,13 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 		</div>
 		<div class="list">
 			${data.list.map(mod => tpl.showPos(mod, env)).join('')}
+			<!-- <div></div><div></div><div style="margin-top:1rem; text-align: right;"><a href="/cart/mail">Спецификация</a></div> -->
+			<!-- <div><a href="/cart/mail">Спецификация</a></div> -->
 		</div>
+		
+		
+		
+		
 	</div>
 	
 	<script type="module">

@@ -45,7 +45,6 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 	`)
 	
 	
-
 	const modids = []
 	for (const mod of moditems_ids) {
 		const model_id = mod.model_id

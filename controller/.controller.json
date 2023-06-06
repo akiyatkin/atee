@@ -2,7 +2,7 @@
 	"access":"admin",
 	"403":{
 		"indexOf":["package.json","layers.json","package-lock.json","nodemon.json"],
-		"search":["rest\\..*js", "mail\\..*js"]
+		"search":["rest\\..*js"]
 	},
 	"types": {
 		"mp4":"video/mp4",
