@@ -104,7 +104,7 @@ const Cart = {
 	},
 	getMailOpt: async (view, sub, order_id) => {
 		const data = await Cart.getMailData(view, sub, order_id)
-		const email = order.email
+		const email = data.order.email
 		const tpl = await import('/-cart/mail.html.js').then(res => res.default)
 		if (!tpl[sub]) return view.err('Не найден шаблон письма', 500)
 		if (!tpl[sub + '_subject']) return view.err('Не найден шаблон темы', 500)
