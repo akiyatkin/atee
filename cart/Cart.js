@@ -359,7 +359,7 @@ Cart.create = async (view, user) => {
 	const { db } = await view.gets(['db'])
 	const user_id = user.user_id
 
-	const fields = ['name','phone','address','tk','zip','transport','city_id','pay','pvz']
+	const fields = ['name','phone','address','tk','zip','transport','city_id','pay','pvz','commentuser']
 	//Берём данные из прошлой заявки у которой автор этот пользователь
 
 	// const last_id = await db.col(`
