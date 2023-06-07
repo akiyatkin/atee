@@ -37,8 +37,9 @@ import User from "/-user/User.js"
 const formatter = new Intl.DateTimeFormat('ru', { month: 'long' })
 rest.addResponse('get-tocheck', async view => {
 	const { active_id: order_id } = await view.gets(['active_id#required'])
-	const ans = await Cart.getMailData(view, 'tocheck', order_id)
-	return { ans }
+	const data = await Cart.getMailData(view, 'tocheck', order_id)
+	Object.assign(view.ans, data)
+	return view.ret()
 })
 rest.addResponse('get-manager-years', async view => {
 	await view.get('manager#required')
