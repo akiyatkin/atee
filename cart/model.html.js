@@ -1,14 +1,15 @@
 import tpl from "/@atee/catalog/model.html.js"
 export default tpl
 
-tpl.orderButton = (data, env, mod) => (mod.Цена||mod.min) ? `
+const origButton = tpl.orderButton
+tpl.orderButton = (data, env, mod) => mod.Цена ? `
 	<p align="right">
 		<button 
 		data-brand_nick="${mod.brand_nick}"
 		data-model_nick="${mod.model_nick}"
 		data-item_num="${mod.item_num}"
 		data-partner="${env.theme.partner}"
-		style="font-size:1.4rem; margin:1rem 0">
+		style="font-size:1.2rem;">
 			Добавить в корзину
 		</button>
 		<script>
@@ -20,4 +21,4 @@ tpl.orderButton = (data, env, mod) => (mod.Цена||mod.min) ? `
 			})(document.currentScript.previousElementSibling)
 		</script>
 	</p>
-` : ''
+` : origButton(data, env, mod)

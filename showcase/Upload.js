@@ -1376,9 +1376,9 @@ export class Upload {
 			`, { prop_id })			
 			for (const {model_id, item_num, src: srcs} of listsrc) {
 				const list = srcs.split(',').map(e => e.trim()).filter(r => r)
+				let i = 10
 				for ( const src of list) {
-
-					const { file_id, ordain } = await upload.receiveFile(src, {destiny: 'images'})
+					const { file_id, ordain } = await upload.receiveFile(src, {destiny: 'images', ordain: ++i})
 					await db.exec(`
 						INSERT IGNORE INTO 
 							showcase_iprops
@@ -1407,8 +1407,10 @@ export class Upload {
 				WHERE ip.prop_id = :prop_id
 			`, { prop_id })
 			for (const {model_id, item_num, src: srcs} of listsrc) {
-				for (const src of srcs.split(',')) {
-					const { file_id, ordain } = await upload.receiveFile(src, {destiny: 'files'})
+				const list = srcs.split(',').map(e => e.trim()).filter(r => r)
+				let i = 10
+				for (const src of list) {
+					const { file_id, ordain } = await upload.receiveFile(src, {destiny: 'files', ordain: ++i})
 					await db.exec(`
 						INSERT IGNORE INTO 
 							showcase_iprops
@@ -1673,12 +1675,12 @@ export class Upload {
 		})
 		return {doublepath, count}
 	}
-	async receiveFile(src, { fileinfo, destiny = null, source = 'data'}, connect = {group_nick: null, brand_nick: null, keys_title: null}) {
+	async receiveFile(src, { fileinfo, destiny = null, source = 'data', ordain = false}, connect = {group_nick: null, brand_nick: null, keys_title: null}) {
 		const { upload } = this
 		if (!fileinfo) fileinfo = Files.srcInfo(src)
 		//if (!destiny) destiny = Files.getWayByExt(fileinfo.ext) //files, images, texts, videos
 		const {ready_id: file_id, src_nick} = await upload.index(src, {fileinfo, destiny, source}, connect) 
-		return {file_id, destiny, ordain: fileinfo.num || 1}
+		return {file_id, destiny, ordain: ordain || fileinfo.num || 1}
 	}
 	async index(src, descr, connect = {}) {
 		const { upload, base: {db, vicache: cache}, config } = this

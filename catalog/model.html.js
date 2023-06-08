@@ -127,9 +127,6 @@ tpl.showimage = (src, i) => `
 	</div>
 `
 tpl.maindata = (data, env, mod) => `
-	
-	
-	
 	<div class="mod_content">
 		<style>
 			${env.scope} .mod_content {
@@ -150,14 +147,10 @@ tpl.maindata = (data, env, mod) => `
 				}
 			}
 		</style>	
-		
-			${mod.images ? tpl.showGallery(data, env, mod) : ''}	
-
-		<div class="textcontent">
-			
+		${mod.images ? tpl.showGallery(data, env, mod) : ''}	
+		<div>
 			${tpl.showprop('Модель', mod.model_title)}
-			${tpl.showprop('Бренд', brandlink(data, env, mod))}
-			
+			${tpl.showprop('Бренд', tpl.brandlink(data, env, mod))}
 			<p>
 				<i>${mod.Описание || ''}</i>
 			</p>
@@ -196,7 +189,7 @@ tpl.orderButton = (data, env, mod) => `
 
 
 
-const brandlink = (data, env, mod) => `
+tpl.brandlink = (data, env, mod) => `
 	<a href="${env.crumb.parent}${links.setm(data)}">${mod.brand_title}</a>
 `
 

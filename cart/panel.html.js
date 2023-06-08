@@ -669,7 +669,7 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 `
 
 tpl.showPos = (mod, env) => `
-	<div class="image">${mod.images?.[0] ? tpl.showImage(mod) : ''}</div>
+	<a href="/catalog/${mod.brand_nick}/${mod.model_nick}" class="image">${mod.images?.[0] ? tpl.showImage(mod) : ''}</a>
 	<div class="info">
 		<div>${mod.brand_title} ${mod.model_title} ${mod.Название || mod.more.Название || ''}</div>
 		<div><b>${cost(mod.Цена)}${common.unit()}</b></div>
