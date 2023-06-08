@@ -35,18 +35,23 @@ rest.addResponse('set-manager-refresh', async view => {
 		order.sum += item['Цена'] * count
 		order.count++
 	}
+	const res = []
 	for (const order_id in orders) {
 		const order = orders[order_id]
-		await db.exec(`
+		const r = await db.affectedRows(`
 			UPDATE cart_orders 
 			SET sum = :sum, count = :count
 			WHERE order_id = :order_id
-		`, order)
+		`, order).catch(r => false)
+		if (!r) {
+			const order_nick = await db.col('select order_nick from cart_orders where order_id = :order_id', order)
+			res.push('Слишком большая сумма или количество в заказе ' + order_nick)
+		}
 	}
 
 	
 	
-	return view.ret('Суммы пересчитаны')
+	return view.ret('Суммы пересчитаны.<br>' + res.join('<br>'))
 })
 
 rest.addResponse('set-delete', async view => {

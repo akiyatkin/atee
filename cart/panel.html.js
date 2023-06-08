@@ -29,11 +29,11 @@ tpl.ROOT = (data, env) => `
 			${env.scope} .panel .hand {
 				pointer-events: visiblePainted;
 				margin:0 auto;
-				height: 40px;
+/*				height: 40px;*/
 				position: relative;
 				z-index: 1;
 				margin-bottom: -15px;
-				margin-top: -20px;
+				margin-top: -25px;
 				width:max-content; 
 				border-radius: 50px; 
 				background: white; 
@@ -115,7 +115,8 @@ tpl.ROOT = (data, env) => `
 			${env.scope} .panel.hide .body {
 				/*overflow: hidden;
 				overflow-y: visible;*/
-				max-height: 1rem;
+/*				max-height: 1rem;*/
+				max-height: 0;
 			}
 			${env.scope} .panel.hide .hand {
 				margin-top: calc(-1rem - 25px);
@@ -563,14 +564,14 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 			    max-width: 100%;
 			    margin: 0 auto;
 				display: grid;
-				grid-template-columns: max-content 1fr max-content;
+				grid-template-columns: max-content 1fr 1fr;
 				gap: 1rem;
 			}
 			${env.scope} .cost {
 				text-align: right;
 				align-self: flex-start;
 				display: grid;
-				gap:8px;
+				gap: 0.5ch;
 				grid-template-columns: max-content max-content;
 				grid-template-areas: 'input remove' 'sum .';
 			}

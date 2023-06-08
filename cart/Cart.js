@@ -330,22 +330,13 @@ Cart.addItem = async (db, order_id, item, count = 0) => {
 }
 Cart.recalcOrder = async (db, base, order_id, partner) => {
 	const list = await Cart.getBasketCatalog(db, base, order_id, partner)
-	// const list = await db.all(`
-	// 	SELECT count, cost 
-	// 	FROM cart_basket
-	// 	WHERE order_id = :order_id
-	// `, { order_id })
-	let sum = 0
-	let count = 0
-	for (const item of list) {
-		count++
-		sum += item.count * item['Цена']
-	}
+	const sum = list.reduce((sum, item) => sum + item.count * item['Цена'], 0)
+	const count = list.length
 	await db.exec(`
 		UPDATE cart_orders 
 		SET sum = :sum, count = :count
 		WHERE order_id = :order_id
-	`, {order_id, sum, count})
+	`, {order_id, sum, count}).catch(r => false) //Если кэш не обновился, то это проблема кэша и менеджера.. .пофиг
 }
 Cart.grant = async (db, user_id, order_id) => {
 	await db.exec(`

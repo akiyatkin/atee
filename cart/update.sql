@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `cart_orders` (
 	`zip` TEXT NULL COMMENT 'Индекс',
 
 	`count` SMALLINT unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш количества позиций(строчек) в корзине. Для сводной таблицы МЕНЕДЖЕРА',
-	`sum` MEDIUMINT unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш суммы заказа без стоимости доставки. Для сводной таблицы МЕНЕДЖЕРА',
+	`sum` INT unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш суммы заказа без стоимости доставки. Для сводной таблицы МЕНЕДЖЕРА',
 
 	`weight` MEDIUMINT unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш - расчётный вес',
 	`datecreate` DATETIME NULL COMMENT 'Дата создания заказа, в момент добавления первой позиции',
