@@ -97,7 +97,8 @@ const Cart = {
 	getMailData: async (view, sub, order_id) => {
 		const { db, base } = await view.gets(['db','base'])
 		const order = await Cart.getOrder(db, order_id)
-		const list = await Cart.getBasket(db, base, order_id, order.freeze, order.partner)
+		let list = await Cart.getBasket(db, base, order_id, order.freeze, order.partner)
+		list = list.filter(pos => pos.count > 0)
 		const vars = await view.gets(['host', 'ip'])
 		const data = {order, vars, list}
 		return data
