@@ -32,12 +32,12 @@ tpl.ITEM = (data, env) => {
 
 
 const getitem = (data, env, v, index) => ischoice(env, index) ? 
-`<span style="display: inline-block; margin-top:0.3em;
+`<span style="display: inline-block; margin-top:0.3em; border-radius:var(--radius);
 		padding:0 1ch; line-height: 2;
 		border:solid rgba(0,0,0,0.7) 3px;">
 	${v}
 </span>` : 
-`<a style="margin-top:0.3em; display:inline-block;
+`<a style="margin-top:0.3em; display:inline-block; border-radius:var(--radius);
 	padding:0 1ch; line-height: 2;
 	border:solid rgba(0,0,0,0.15) 3px;" 
 	class="a" data-scroll="none" rel="nofollow" 

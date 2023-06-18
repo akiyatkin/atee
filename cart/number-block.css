@@ -2,7 +2,7 @@
 	position: relative;
 	width: 11ch;
 	border:solid 1px #D9D9D9;
-	border-radius: 10px;
+	border-radius: var(--radius, 10px);
 }
 
 .number-block input[type="number"] {
@@ -35,7 +35,7 @@
 }
 
 .number-block .minus {
-	border-radius: 10px 0 0 10px;
+	border-radius: var(--radius, 10px) 0 0 var(--radius, 10px);
 	position: absolute;
 	top: 1px;
 	left: 1px;
@@ -46,7 +46,7 @@
 	border-right: 1px solid #ddd;
 }
 .number-block .plus {
-	border-radius: 0 10px 10px 0;
+	border-radius: 0 var(--radius, 10px) var(--radius, 10px) 0;
 	position: absolute;
 	top: 1px;
 	right: 1px;

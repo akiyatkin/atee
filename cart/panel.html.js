@@ -35,7 +35,7 @@ tpl.ROOT = (data, env) => `
 				margin-bottom: -15px;
 				margin-top: -25px;
 				width:max-content; 
-				border-radius: 50px; 
+				border-radius: var(--radius, 10px); 
 				background: white; 
 				border:solid 1px var(--border-color); 
 				align-items: center;
@@ -325,7 +325,7 @@ const showEmpty = (data, env) => `
 `
 tpl.showForm = (data, env) => `
 		
-		<form data-goal="cart" action="/-cart/set-submit?partner=${env.theme.partner}" style="clear:both; border-radius:var(--radius); display: grid; gap:1rem; padding:1rem; background:var(--lightyellow);">
+		<form data-goal="cart" action="/-cart/set-submit?partner=${env.theme.partner}" style="clear:both; border-radius:var(--radius, 10px); display: grid; gap:1rem; padding:1rem; background:var(--lightyellow);">
 			<div class="float-label icon name field">
 				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
 				<label for="${env.sid}name">Получатель (ФИО)</label>

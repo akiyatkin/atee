@@ -4,8 +4,10 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 	<head>
 		${controller.HEAD(data, env)}
 		<link rel="icon" type="image/x-icon" href="/favicon.ico">
+		<link rel="stylesheet" href="/-notreset/table.css">
 		<link rel="stylesheet" href="/style.css">
 		<link rel="stylesheet" href="/-showcase/style.css">
+
 	</head>
 	<body style="margin:0;">
 		<div style="padding:10px; min-height:100vh; display:flex; flex-direction:column">

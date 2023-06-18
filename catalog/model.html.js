@@ -195,8 +195,10 @@ tpl.brandlink = (data, env, mod) => `
 
 tpl.showitems = (data, env, mod) => `
 	<table style="margin-top:2em">
-		<tr>${mod.item_props.map(tpl.itemhead).join('')}</tr>
-		${mod.items.map(item => tpl.itembody(data, env, mod, item)).join('')}
+		<thead><tr>${mod.item_props.map(tpl.itemhead).join('')}</tr></thead>
+		<tbody>
+			${mod.items.map(item => tpl.itembody(data, env, mod, item)).join('')}
+		</tbody>
 	</table>
 	${mod.items.map(tpl.showItemDescription).join('')}
 `
@@ -204,7 +206,7 @@ tpl.showItemDescription = item => item['Описание'] ? `
 	<h2>${item.more.Позиция || item.more.Название || item.more.Арт || item.more.Код || ''}</h2>
 	<p>${item.Описание}</p>
 ` : ''
-tpl.itemhead = (pr) => `<td>${pr.prop_title}</td>`
+tpl.itemhead = (pr) => `<th>${pr.prop_title}</th>`
 tpl.itembody = (data, env, mod, item) => `
 	<tr>
 		${mod.item_props.map(pr => tpl.itemprop(item, pr.prop_title)).join('')}
@@ -219,15 +221,30 @@ tpl.showprop = (prop_title, val) => `
 		<div>${val}</div>
 	</div>
 `
-tpl.props = (data, env, mod) => `
-	<div>
+// tpl.props = (data, env, mod) => `
+// 	<div>
+// 		${mod.model_props.map(pr => {
+// 			const val = common.prtitle(mod, pr)
+// 			if (val == null) return ''
+// 			return cards.prop.wrap(data, env, mod, pr, pr.prop_title, val)
+// 		}).join('')}
+// 	</div>
+// `
+
+tpl.props = (data, env, mod) => mod.model_props.length ? `
+	<h2>Характеристики</h2>
+	<table>
 		${mod.model_props.map(pr => {
 			const val = common.prtitle(mod, pr)
 			if (val == null) return ''
-			return cards.prop.wrap(data, env, mod, pr, pr.prop_title, val)
+			return tpl.showTrProp(data, env, pr, val)
 		}).join('')}
-	</div>
+	</table>
+` : ''
+tpl.showTrProp = (data, env, pr, val) => `
+	<tr><th>${pr.prop_title}</th><td>${val}</td></tr>
 `
+
 // tpl.prop = {
 // 	default: (data, env, mod, pr, title, val) => tpl.showprop(title, val),
 // 	bold: (data, env, mod, pr, title, val) => cards.prop.default(data, mod, pr, title, `<b>${val}</b>`),
