@@ -20,7 +20,7 @@ tpl.ITEM = (data, env) => {
 		if (mod.Цена) return showModelBuy(data, env, mod)
 		return origButton(data, env, mod)	
 	}
-	if (!mod.Цена) return origButton(data, env, mod)	//Добавить в корзину точно ничего нельзя
+	//if (!mod.Цена) return origButton(data, env, mod)	//Добавить в корзину точно ничего нельзя
 	let item_index = env.crumb.child?.name || 0
 	if (!mod.items[item_index]) item_index = 0
 	const item = mod.items[item_index]

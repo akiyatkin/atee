@@ -1,4 +1,4 @@
-export const css = '/-float-label/style.css'
+export const css = ['/-float-label/style.css']
 
 const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
 const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : ''
