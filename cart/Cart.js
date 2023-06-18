@@ -54,7 +54,9 @@ const Cart = {
 			const item = await Cart.getItem(db, base, order_id, pos.brand_nick, pos.model_nick, pos.item_num, partner)
 			item.count = pos.count
 			return item
-		}))).filter(item => !!item || !item['Цена'])
+		}))).filter(item => item && item['Цена'])
+
+
 		list.forEach(pos => {
 			pos.sum = (pos['Цена'] || 0) * (pos.count || 0)
 		})

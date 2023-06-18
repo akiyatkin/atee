@@ -1,11 +1,7 @@
-const addCSS = href => { //файл этот нельзя использовать на сервере
-	if (document.head.querySelector('link[href="'+href+'"]')) return
-	const link = document.createElement('link')
-	link.rel = 'stylesheet'
-	link.href = href
-	document.head.prepend(link)
-}
-addCSS('/-float-label/style.css')
+export const css = '/-float-label/style.css'
+
+const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
+const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : ''
 
 export const SUCCESS = () => `
 	<h1>Заказ оформлен</h1>

@@ -88,7 +88,7 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 	for (const model of list) {
 		model.items = Object.values(model.items)
 	}
-	//list = list.filter(mod => !!mod.items.length)
+
 	//Все повторные пропертисы объединили по запятым, кроме файлов
 	for (const model of list) {
 		for (const item of model.items) {

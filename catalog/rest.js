@@ -98,6 +98,30 @@ rest.addResponse('get-model', async (view) => {
 
 	return view.ret()
 })
+// rest.addResponse('get-item', async (view) => {
+// 	const { model, base, md, db, brand_nick, model_nick, partner } = await view.gets(['model', 'base', 'md', 'db', 'brand_nick','model_nick','partner'])
+// 	view.ans.m = md.m
+// 	view.ans.md = md
+	
+// 	view.ans.partner = partner?.key || ''
+// 	view.ans.brand = await Catalog.getBrandByNick(db, brand_nick)
+// 	if (!model) return view.err()
+// 	if (model.texts) {
+// 		model.texts = await Promise.all(model.texts.map(src => {
+// 			const ext = (i => ~i ? src.slice(i + 1) : '')(src.lastIndexOf('.'))
+// 			if (ext == 'docx') return docx.read(Access, src)
+// 			return fs.readFile(src, 'utf8')
+// 		}))
+// 	}
+
+// 	if (model.files) {
+// 		model.files = model.files.map(src => Files.srcInfo(src))
+// 	}
+
+// 	view.ans.mod = model
+
+// 	return view.ret()
+// })
 
 
 

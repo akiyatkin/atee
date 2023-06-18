@@ -16,7 +16,7 @@ tpl.TITLES = {
 }
 
 
-const prefixif = (prefix, val) => val ? prefix + '' + val : ''
+const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : ''
 tpl.tocheck_subject = (data) => `Заказ с сайта ${data.vars.host}`
 tpl.tocheck = (data) => `
 	<h1>${tpl.TITLES[data.order.status]} № ${data.order.order_nick}</h1>
@@ -39,7 +39,7 @@ tpl.tocheck = (data) => `
 
 tpl.showPos = (pos, data) => `
 	<div style="margin-bottom:1rem">
-		<div>${pos.brand_title} ${pos.model_title}</div>
+		<div>${pos.brand_title} ${pos.model_title}${prefixif(' (', pos.more.Позиция, ')')}</div>
 		<div><b>${pos.count}</b> по <b>${cost(pos.Цена)}${common.unit()}</b> = <b>${cost(pos.count * pos.Цена)}${common.unit()}</b></div>
 	</div>
 `

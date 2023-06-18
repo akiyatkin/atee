@@ -44,6 +44,8 @@ td > p {
 	background-color: transparent;
 	color: inherit;
 	display: inline;
+	font-size: inherit;
+    font-weight: inherit;
 	padding:0;
 	margin:0;
 	box-shadow: none;

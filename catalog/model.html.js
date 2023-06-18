@@ -1,6 +1,6 @@
 import cards from "/-catalog/cards.html.js"
 import nicked from "/-nicked"
-import { cost } from "/-words/cost.js"
+import cost from "/-words/cost.js"
 import links from "/-catalog/links.html.js"
 import common from "/-catalog/common.html.js"
 import ti from "/-words/ti.js"
@@ -159,9 +159,9 @@ tpl.maindata = (data, env, mod) => `
 		</div>
 	</div>
 `
-tpl.orderButton = (data, env, mod) => `
-	<p align="right">
-		<button style="font-size:1.2rem; margin:1rem 0">${(mod.Цена||mod.min) ? 'Сделать заказ' : 'Оставить запрос'}</button>
+tpl.orderButton = (data, env, mod, item) => `
+	<p>
+		<button style="font-size:1.2rem;">${((item || mod).Цена) ? 'Сделать заказ' : 'Оставить запрос'}</button>
 		<script>
 			(btn => {
 				btn.addEventListener('click', async () => {
@@ -196,16 +196,16 @@ tpl.brandlink = (data, env, mod) => `
 tpl.showitems = (data, env, mod) => `
 	<table style="margin-top:2em">
 		<tr>${mod.item_props.map(tpl.itemhead).join('')}</tr>
-		${mod.items.map(item => tpl.itembody(data, mod, item)).join('')}
+		${mod.items.map(item => tpl.itembody(data, env, mod, item)).join('')}
 	</table>
 	${mod.items.map(tpl.showItemDescription).join('')}
 `
 tpl.showItemDescription = item => item['Описание'] ? `
-	<h2>${item.more.Название || item.more.Арт || item.more.Код || ''}</h2>
+	<h2>${item.more.Позиция || item.more.Название || item.more.Арт || item.more.Код || ''}</h2>
 	<p>${item.Описание}</p>
 ` : ''
 tpl.itemhead = (pr) => `<td>${pr.prop_title}</td>`
-tpl.itembody = (data, mod, item) => `
+tpl.itembody = (data, env, mod, item) => `
 	<tr>
 		${mod.item_props.map(pr => tpl.itemprop(item, pr.prop_title)).join('')}
 	</tr>

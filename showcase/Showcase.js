@@ -8,6 +8,9 @@ const Showcase = {
 	onicked: (vicache, title) => {
 		return vicache.once(title, () => nicked(nicked(title).slice(-Showcase.LONG)))
 	},
+	initOptions: (options) => {
+
+	},
 	getOptionsDirect: async (visitor) => {
 		const conf = await config('showcase')
 		const vicache = visitor.relate(Showcase)
@@ -20,7 +23,6 @@ const Showcase = {
 		options.values ??= []
 		options.files ??= []
 		options.justonevalue ??= []
-		options.justonevalue.push("Арт","Название")
 		options.tables ??= {}
 		options.prices ??= {}
 		options.columns ??= []
@@ -31,27 +33,51 @@ const Showcase = {
 		//options.groupids = {}
 		options.partners ??= {}
 		options.props ??= {}
+
+
+		options.props["Арт"] ??= {
+			"type":"bond",
+			"column":false,
+			"justone": true,
+		}
 		options.props["Бренд"] ??= {
 			"filter":{"tpl":"row"},
+			"column":true,
 			"tplprop":"brand",
+			"justone": true,
 			"prop_title":"Бренд",
 			"value_title":"brand_title",
 			"value_nick":"brand_nick"
 		}
 		options.props["Модель"] ??= {
 			"value_title":"model_title",
+			"column":true,
 			"tplprop":"model"
+		}
+		options.props["Позиция"] ??= {
+			"type":"value",
+			"justone": true,
+			"column":false
+		}
+		options.props["Название"] ??= {
+			"type":"text",
+			"justone": true,
+			"column":false
 		}
 		options.props["Наименование"] ??= {
 			"type":"text",
+			"column":true,
+			"justone": true,
 			"tplprop":"modelhidden"
 		}
 		options.props["Цена"] ??= {
 			"type":"number",
+			"column":true,
 			"justone":true,
 			"filter":{"slider":true,"tpl":"slider"},
 			"tplprop":"empty"
 		}
+
 		options.root_title ??= 'Каталог'
 		options.root_nick = nicked(options.root_title)
 		options.groups[options.root_title] ??= {
@@ -64,7 +90,7 @@ const Showcase = {
 		types.text = ["Описание", "Наименование", "Ссылки на картинки","Ссылки на файлы", "Файлы"]
 		types.number = ["Старая цена", "Цена", "sheet_row","sheet_index", "discount"]
 		types.value = ["Наличие"]
-		types.bond = ["Файл", "sheet_title", "Фото", "Арт"]
+		types.bond = ["Файл", "sheet_title", "Фото"]
 		types.file = ["texts", "images", "files", "videos", "slides","unknown_files"]
 		const systems = [
 			"Скрыть фильтры",

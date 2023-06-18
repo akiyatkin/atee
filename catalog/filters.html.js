@@ -91,9 +91,7 @@ filters.props = {
 					<a data-scroll="none" rel="nofollow"
 						href="/catalog${changelink(data,filter)}" 
 						style="width: 2ch; text-align:center" 
-						class="a adirect">
-						${data.md.more?.[filter.prop_nick]?.from ? 'от' : 'до'}
-					</a>
+						class="a adirect">${data.md.more?.[filter.prop_nick]?.from ? 'от' : 'до'}</a>
 					<input style="
 						border-radius: 0; border:none; 
 						border: 1px solid rgba(0,0,0,0.1);
