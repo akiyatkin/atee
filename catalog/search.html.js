@@ -38,9 +38,9 @@ search.PAGINATION = (data, env) => ti.bs(data.result) && `
 	${search.pag(data, env, 'none')}
 `
 search.LIST = (data, env) => data.result ? `
-	${data.list.length ? search.listcards(data, env) : 'К сожалению, ничего не найдено.'}
+	${data.list.length ? search.listcards(data, env) : '<div style="margin: 2rem 0; ">К сожалению, ничего не найдено.</div>'}
 	${data.countonpage == data.list.length ? search.pag(data, env) : ''}
-` : 'Данные не найдены'
+` : '<div style="margin: 2rem 0; ">Данные не найдены</div>'
 search.pag = (data, env, scroll) => `
 	<div class="pagination">
 		<style>

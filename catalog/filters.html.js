@@ -60,13 +60,13 @@ const changelink = (data, filter) => {
 			val = filter.min
 		}
 	}
-	return `${links.addm(data)}more.${filter.prop_nick}::.${direction}=${val}`
+	return `${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}::.${direction}=${val}`
 }
 const showkrest = (data, filter) => `
 	<a class="clearlink" title="Отменить выбор" style="
 		position: absolute; margin-top: 1px;
 		display: inline-block; border-color: 
-		transparent; color:inherit;" class="a" data-scroll="none" rel="nofollow" href="/catalog${links.addm(data)}more.${filter.prop_nick}">
+		transparent; color:inherit;" class="a" data-scroll="none" rel="nofollow" href="/catalog${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}">
 		<span class="krest">&nbsp;✕</span>
 	</a>
 `
@@ -231,7 +231,7 @@ filters.props = {
 						let value_nick = select.options[n].value
 						const Client = await window.getClient()
 						const set = value_nick ? '::.'+value_nick+'=1' : ''
-    					Client.pushState('/catalog${links.addm(data)}more.${filter.prop_nick}' + set)
+    					Client.pushState('/catalog${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}' + set)
 					})
 				})(document.currentScript.previousElementSibling)
 			</script>

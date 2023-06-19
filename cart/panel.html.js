@@ -679,7 +679,7 @@ const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : '
 tpl.showPos = (mod, env) => `
 	<a href="/catalog/${mod.brand_nick}/${mod.model_nick}" class="image">${mod.images?.[0] ? tpl.showImage(mod) : ''}</a>
 	<div class="info">
-		<div>${mod.brand_title} ${mod.model_title} ${prefixif('<br>', mod.more.Позиция)}</div>
+		<div>${mod.brand_title} ${mod.model_title}${prefixif(' (', mod.more.Позиция,')')}</div>
 		<div><b>${cost(mod.Цена)}${common.unit()}</b></div>
 	</div>
 	<div class="cost blocksum" 
