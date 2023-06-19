@@ -37,7 +37,7 @@ tpl.ROOT = (data, env) => `
 				width:max-content; 
 				border-radius: var(--radius, 10px); 
 				background: white; 
-				border:solid 1px var(--border-color); 
+				border:solid 1px var(--border-color, gray); 
 				align-items: center;
 				display: none;
 				transition: margin-top 0.3s;
@@ -306,7 +306,7 @@ tpl.ORDER = (data, env) => tpl.isShowPanel(data) ? `
 ` : ``
 const showCrown = () => `
 	<a href="/cart/manager/${new Date().getFullYear()}/${new Date().getMonth() + 1}?status=check" title="Вы администратор и можете на любой email оформить заказ. Заказ будет доступен и Вам и новому пользователю">
-		<svg style="color: var(--brown); margin-bottom: 3px;" width="24" height="24" viewBox="0 0 18 18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.179 13.425h13.656v3.02H2.179v-3.02z" fill="currentColor" fill-opacity=".8"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8.999 1L2.093 11.031h4.25l6.662-4.315L9 1z" fill="currentColor" fill-opacity=".6"/><path fill-rule="evenodd" clip-rule="evenodd" d="M2.067 12.641L.5 3.752l12.76 8.89H2.068z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M15.927 12.641l1.607-8.858L3.857 12.64h12.07z" fill="currentColor" fill-opacity=".8"/></svg>
+		<svg style="color: var(--success); margin-bottom: 3px;" width="24" height="24" viewBox="0 0 18 18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.179 13.425h13.656v3.02H2.179v-3.02z" fill="currentColor" fill-opacity=".8"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8.999 1L2.093 11.031h4.25l6.662-4.315L9 1z" fill="currentColor" fill-opacity=".6"/><path fill-rule="evenodd" clip-rule="evenodd" d="M2.067 12.641L.5 3.752l12.76 8.89H2.068z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M15.927 12.641l1.607-8.858L3.857 12.64h12.07z" fill="currentColor" fill-opacity=".8"/></svg>
 	</a>
 `
 const showDate = (order, env) => `
@@ -325,7 +325,7 @@ const showEmpty = (data, env) => `
 `
 tpl.showForm = (data, env) => `
 		
-		<form data-goal="cart" action="/-cart/set-submit?partner=${env.theme.partner}" style="clear:both; border-radius:var(--radius, 10px); display: grid; gap:1rem; padding:1rem; background:var(--lightyellow);">
+		<form data-goal="cart" action="/-cart/set-submit?partner=${env.theme.partner}" style="clear:both; border-radius:var(--radius, 10px); display: grid; gap:1rem; background:var(--lightyellow);">
 			<div class="float-label icon name field">
 				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
 				<label for="${env.sid}name">Получатель (ФИО)</label>
@@ -388,7 +388,6 @@ const showOrders = (data, env) => `
 		${env.scope} .orders button:disabled {
 			font-weight: bold;
 			opacity: 1;
-			font-family: Montserrat;
 		}
 	</style>
 	<div class="orders" style="padding-bottom:2rem">
@@ -575,6 +574,15 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 				grid-template-columns: max-content max-content;
 				grid-template-areas: 'input remove' 'sum .';
 			}
+			${env.scope} .delbtn {
+				transition: color 0.1s;
+				color:;
+				margin-top: 4px; 
+				color:var(--border-color, gray)
+			}
+			${env.scope} .delbtn:hover {
+				color:var(--success);
+			}
 			@media(max-width: 480px) {
 				${env.scope} .list {
 				}
@@ -686,9 +694,9 @@ tpl.showPos = (mod, env) => `
 		<div style="grid-area: input;">${number.INPUT({min:0, max:1000, value:mod.count, name:mod.model_nick})}</div>
 		<div style="grid-area: sum"><b class="modsum">${tpl.SUM(mod.sum)}</b></div>
 		<div style="grid-area: remove">
-			<button class="del transparent" style="margin-top: 4px;">
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<path d="M20 6H16V5C16 4.20435 15.6839 3.44129 15.1213 2.87868C14.5587 2.31607 13.7956 2 13 2H11C10.2044 2 9.44129 2.31607 8.87868 2.87868C8.31607 3.44129 8 4.20435 8 5V6H4C3.73478 6 3.48043 6.10536 3.29289 6.29289C3.10536 6.48043 3 6.73478 3 7C3 7.26522 3.10536 7.51957 3.29289 7.70711C3.48043 7.89464 3.73478 8 4 8H5V19C5 19.7956 5.31607 20.5587 5.87868 21.1213C6.44129 21.6839 7.20435 22 8 22H16C16.7956 22 17.5587 21.6839 18.1213 21.1213C18.6839 20.5587 19 19.7956 19 19V8H20C20.2652 8 20.5196 7.89464 20.7071 7.70711C20.8946 7.51957 21 7.26522 21 7C21 6.73478 20.8946 6.48043 20.7071 6.29289C20.5196 6.10536 20.2652 6 20 6ZM10 5C10 4.73478 10.1054 4.48043 10.2929 4.29289C10.4804 4.10536 10.7348 4 11 4H13C13.2652 4 13.5196 4.10536 13.7071 4.29289C13.8946 4.48043 14 4.73478 14 5V6H10V5ZM17 19C17 19.2652 16.8946 19.5196 16.7071 19.7071C16.5196 19.8946 16.2652 20 16 20H8C7.73478 20 7.48043 19.8946 7.29289 19.7071C7.10536 19.5196 7 19.2652 7 19V8H17V19Z" fill="#D9AE00"/>
+			<button title="Удалить из корзины" class="delbtn del transparent">
+				<svg style="fill:currentColor;" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M20 6H16V5C16 4.20435 15.6839 3.44129 15.1213 2.87868C14.5587 2.31607 13.7956 2 13 2H11C10.2044 2 9.44129 2.31607 8.87868 2.87868C8.31607 3.44129 8 4.20435 8 5V6H4C3.73478 6 3.48043 6.10536 3.29289 6.29289C3.10536 6.48043 3 6.73478 3 7C3 7.26522 3.10536 7.51957 3.29289 7.70711C3.48043 7.89464 3.73478 8 4 8H5V19C5 19.7956 5.31607 20.5587 5.87868 21.1213C6.44129 21.6839 7.20435 22 8 22H16C16.7956 22 17.5587 21.6839 18.1213 21.1213C18.6839 20.5587 19 19.7956 19 19V8H20C20.2652 8 20.5196 7.89464 20.7071 7.70711C20.8946 7.51957 21 7.26522 21 7C21 6.73478 20.8946 6.48043 20.7071 6.29289C20.5196 6.10536 20.2652 6 20 6ZM10 5C10 4.73478 10.1054 4.48043 10.2929 4.29289C10.4804 4.10536 10.7348 4 11 4H13C13.2652 4 13.5196 4.10536 13.7071 4.29289C13.8946 4.48043 14 4.73478 14 5V6H10V5ZM17 19C17 19.2652 16.8946 19.5196 16.7071 19.7071C16.5196 19.8946 16.2652 20 16 20H8C7.73478 20 7.48043 19.8946 7.29289 19.7071C7.10536 19.5196 7 19.2652 7 19V8H17V19Z"/>
 				</svg>
 			</button>
 		</div>

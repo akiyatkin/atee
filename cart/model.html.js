@@ -1,6 +1,7 @@
 import tpl from "/@atee/catalog/model.html.js"
 import cost from "/-words/cost.js"
 import common from "/-catalog/common.html.js"
+import links from "/-catalog/links.html.js"
 import filters from "/-catalog/filters.html.js"
 export default tpl
 const origButton = tpl.orderButton
@@ -41,7 +42,7 @@ const getitem = (data, env, v, index) => ischoice(env, index) ?
 	padding:0 1ch; line-height: 2;
 	border:solid rgba(0,0,0,0.15) 3px;" 
 	class="a" data-scroll="none" rel="nofollow" 
-	href="${env.crumb}${index ? '/' + index : ''}">
+	href="${env.crumb}${index ? '/' + index : ''}${links.setm(data)}">
 	${v}
 </a>`
 

@@ -195,13 +195,13 @@ tpl.showOrder = (data, env, row) => `
 			${cost(row.sum)}
 		</td>
 		<td>
-			<button data-status="${row.status}" data-order_id="${row.order_id}" class="a status">${tpl.STATUSES[row.status]}</button>
+			<button title="Изменить статус" data-status="${row.status}" data-order_id="${row.order_id}" class="a status">${tpl.STATUSES[row.status]}</button>
 		</td>
 		<td style="white-space: nowrap;">
 			${new Date(row.dateedit * 1000).toLocaleString('ru-RU', { minute: 'numeric', hour: 'numeric', year: 'numeric', month: 'numeric', day: 'numeric' })}
 		</td>
 		<td>
-			<button data-order_id="${row.order_id}" data-order_nick="${row.order_nick}" class="a delete">X</button>
+			<button title="Удалить" data-order_id="${row.order_id}" data-order_nick="${row.order_nick}" class="a delete">X</button>
 		</td>
 	</tr>
 `
