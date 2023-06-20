@@ -724,12 +724,12 @@ export class Upload {
 
 		return {conf, omissions, count, quantity, duration, loadtime:Date.now(), loaded:1 }
 	}
-	async applyall() {
+	async applyall(all = false) {
 		const { upload, visitor, db, config } = this
 		let tables = 0
 		let counttables = 0
 		await (async () => {
-			const files = await upload.getNewTables()
+			const files = all ? await upload.getAllTables() : await upload.getNewTables()
 			counttables = files.length
 			await Promise.all(files.map(async of => {
 				const { quantity = 0 } = await upload.loadTable(of.name)
