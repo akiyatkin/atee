@@ -61,7 +61,7 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 			LEFT JOIN showcase_bonds b on b.bond_id = ip.bond_id
 			LEFT JOIN showcase_files f on f.file_id = ip.file_id
 		WHERE p.prop_id = ip.prop_id and (ip.model_id, ip.item_num) in (${modids.map(it => '(' + it.model_id + ',' + it.item_num + ')').join(',')})
-		order by p.ordain, -ip.ordain, f.file_id
+		order by p.ordain, -ip.ordain DESC, f.file_id
 	`)
 
 	//Создаём модели и массив items, значения свойств массивы. 
