@@ -25,8 +25,9 @@ tpl.ITEM = (data, env) => {
 	let item_index = env.crumb.child?.name || 0
 	if (!mod.items[item_index]) item_index = 0
 	const item = mod.items[item_index]
-
-	const html = filters.block("", showIprops(data, env, mod)) + showCost(item)
+	
+	const prop_title = "Позиция"
+	const html = filters.block("", showIprops(data, env, mod, prop_title)) + showCost(item)
 	if (!item.Цена) return html + origButton(data, env, mod, item)
 	return html + showItemsBuy(data, env, mod, item)
 }
@@ -48,12 +49,11 @@ const getitem = (data, env, v, index) => ischoice(env, index) ?
 
 
 
-const showIprops = (data, env, mod) => {
+const showIprops = (data, env, mod, prop_title) => {
 	const values = mod.items.reduce((ak, item) => {
-		ak.push(getv(item,'Позиция') || getv(item,'Название') || getv(item,'Арт'))
+		ak.push(getv(item, prop_title))
 		return ak
 	}, [])
-	//const values = ["В бочках","В канистрах"]
 	return `<span style="margin-right:0.3ch; font-size:90%">
 		${values.map((v, index) => getitem(data, env, v, index)).join('<span style="display: inline-block; width:1ch"></span>')}
 	</span>`

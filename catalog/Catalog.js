@@ -55,15 +55,14 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 	}
 
 	const ips = await db.all(`
-		SELECT ip.model_id, ip.item_num, v.value_title, ip.text, ip.number, ip.prop_id, b.bond_title, f.src
+		SELECT p.ordain, ip.model_id, ip.item_num, v.value_title, ip.text, ip.number, ip.prop_id, b.bond_title, f.src
 		FROM showcase_props p, showcase_iprops ip
 			LEFT JOIN showcase_values v on v.value_id = ip.value_id
 			LEFT JOIN showcase_bonds b on b.bond_id = ip.bond_id
 			LEFT JOIN showcase_files f on f.file_id = ip.file_id
 		WHERE p.prop_id = ip.prop_id and (ip.model_id, ip.item_num) in (${modids.map(it => '(' + it.model_id + ',' + it.item_num + ')').join(',')})
-		order by p.ordain DESC, -ip.ordain DESC, f.file_id
+		order by p.ordain, -ip.ordain, f.file_id
 	`)
-	
 
 	//Создаём модели и массив items, значения свойств массивы. 
 	//Некоторых свойств у item может не быть, если пропертиса для именно этой позиции нет
@@ -227,12 +226,20 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 	//Создали массив more
 	for (const model of list) {
 		model.more = {}
-		for (const prop in model) {
-			if (~options.columns.indexOf(prop)) continue
-			if (~options.systems.indexOf(prop)) continue
-			model.more[prop] = model[prop]
-			delete model[prop]
+
+		for (const {prop_title} of model.model_props) {
+			if (~options.columns.indexOf(prop_title)) continue
+			if (~options.systems.indexOf(prop_title)) continue
+			model.more[prop_title] = model[prop_title]
+			delete model[prop_title]
 		}
+		
+		// for (const prop in model) {
+		// 	if (~options.columns.indexOf(prop)) continue
+		// 	if (~options.systems.indexOf(prop)) continue
+		// 	model.more[prop] = model[prop]
+		// 	delete model[prop]
+		// }
 
 		for (const item of model.items) {
 			item.more = {}
@@ -525,7 +532,7 @@ Catalog.getTree = async (db, visitor) => {
 		}
 		
 		
-		//console.log(tree)
+		
 		for (const group of rows) {
 			group.path = []
 			addParents(group, group.parent_id, tree)
