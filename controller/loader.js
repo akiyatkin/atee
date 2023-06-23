@@ -54,6 +54,9 @@ export const resolve = async (specifier, context, defaultResolve) => {
 				res = await checkfromroot('./' + specifier, context, defaultResolve)
 				if (res) return res
 
+				res = await checkfromroot('./index/' + specifier, context, defaultResolve)
+				if (res) return res
+
 				res = await checkfromroot('@atee/' + specifier, context, defaultResolve)
 				if (res) return res
 			}

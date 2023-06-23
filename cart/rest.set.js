@@ -146,7 +146,8 @@ rest.addResponse('set-submit', async view => {
 	const { db, base, terms, active_id: order_id, user, user_id } = await view.gets(['db', 'base', 'terms', 'user#required', 'user_id', 'active_id#required'])
 	const order = await Cart.getOrder(view, order_id)
 	//if (!order.count) return view.err('В заказе нет товаров', 422) интерфейс не позволит это отправить, но если такое произойдёт проблема не сервера, пофиг
-	for (const check of ['email','name','address','phone']) if (!order[check]) return view.err('Заполнены не все поля', 422)
+	// 'address' - защита только на клиенте
+	for (const check of ['email','name','phone']) if (!order[check]) return view.err('Заполнены не все поля', 422)
 	if (order.status != 'wait') return view.err('Заказ уже отправлен менеджеру')
 	const ready = async () => {
 		//await Cart.setPartner(db, order_id, partner)

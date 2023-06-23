@@ -14,6 +14,8 @@ tpl.ROOT = (data, env) => data.result ? `
 		<a href="${env.crumb}/signup">Регистрация</a>
 		<a href="${env.crumb}/signin">Вход</a>
 		<a href="${env.crumb}/logout">Выход</a>
+		<hr>
+		<a href="/user/orders">Мои заказы</a>
 	</div>
 ` : `<p>Ошибка</p>`
 

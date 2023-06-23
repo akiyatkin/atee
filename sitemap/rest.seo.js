@@ -22,8 +22,8 @@ rest.addVariable('rule', async view => {
 	return rule
 })
 rest.addVariable('data', async view => {
-	const { source, visitor } = await view.gets(['source', 'visitor'])
-	const host = visitor.client.host
+	const { source } = await view.gets(['source'])
+	const host = view.visitor.client.host
 	const date = new Date(Access.getAccessTime())
 	let dd = date.getDate();
 	if (dd < 10) dd = '0' + dd;
@@ -50,7 +50,7 @@ rest.addVariable('data', async view => {
 		//if (head.hidden && !head.sitemap) continue
 		if (head.hidden) continue
 		const json = head.sitemap || head.json
-		const res = json ? await loadJSON(json, visitor).catch(e => console.log('head', href, e)) : false
+		const res = json ? await loadJSON(json, view.visitor).catch(e => console.log('head', href, e)) : false
 		if (res && res.ans) Object.assign(head, res.ans)
 		if (head.name || head.title) {
 			list.push({...head, href})
@@ -71,8 +71,8 @@ rest.addResponse('get-data', async view => {
 	return {ans:data}
 })
 rest.addResponse('sitemap.xml', async view => {
-	const { data: {list, headings}, visitor } = await view.gets(['data','visitor'])
-	const host = visitor.client.host
+	const { data: {list, headings} } = await view.gets(['data'])
+	const host = view.visitor.client.host
 	const res = [...list]
 	for (const i in headings) {
 		const heading = headings[i]

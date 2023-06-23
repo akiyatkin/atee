@@ -49,12 +49,19 @@ rest.addArgument('partner', async (view, partner_nick) => {
 })
 rest.addArgument('value', ['string'], (view, v) => v || '')
 
-rest.addVariable('base', async (view) => {
+rest.addVariable('base', async (view) => { //depricated
 	const { db } = await view.gets(['db'])
 	const Base = await import('/-showcase/Base.js').then(r => r.default)
 	return new Base({db, visitor: view.visitor})
 })
-rest.addVariable('options', async (view) => {
+
+rest.addResponse('get-options', async (view) => { //depricated
+	const { base } = await view.gets(['base'])
+	view.ans.options = await base.getOptions()
+	return view.ret()
+})
+
+rest.addVariable('options', async (view) => { //depricated
 	const { base } = await view.gets(['base'])
 	return base.getOptions()
 })

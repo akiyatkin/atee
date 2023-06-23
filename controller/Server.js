@@ -19,8 +19,12 @@ export const Server = {
 	follow: (PORT = 8888, IP = "127.0.0.1") => {
 		const server = http.createServer()
 		server.on('request', async (request, response) => {
-			const error = (code, status) => {
-				console.log(request.url, code, status)
+			const error_after = (code, status) => {
+				console.log('error_after content', request.url, code, status)
+				return response.end()
+			}
+			const error_before = (code, status) => {
+				console.log('error_before content', request.url, code, status)
 				response.writeHead(code, status)
 				return response.end()
 			}
@@ -29,7 +33,7 @@ export const Server = {
 			}
 			const usersearch = request.url.replace(/\/+/,'/').replace(/\/$/,'')//Дубли и слешей не ломают путь, но это плохо...
 			const route = await router(usersearch || '/')
-			if (route.secure) return error(403, 'Forbidden')
+			if (route.secure) return error_before(403, 'Forbidden')
 			// const {
 			// 	search, secure, get, path, ext,
 			// 	rest, query, restroot,
@@ -48,17 +52,17 @@ export const Server = {
 					const r = typeof(route.rest) == 'function' ? route.rest(route.query, req, visitor) : route.rest.get(route.query, req, visitor)
 					Object.assign(reans, await r)
 				} catch (e) {
-					console.error(e)					
+					console.error(e)				
 				}
 				
-				if (!reans?.ans) return error(500, 'Not a suitable answer')
+				if (!reans?.ans) return error_before(500, 'Not a suitable answer')
 
 				const headers = {}
 				if (conf.types[reans.ext]) {
 					headers['Content-Type'] = conf.types[reans.ext] + '; charset=utf-8'
 				} else {
 					console.log(route.path, 'Unregistered extension')
-					return error(403, 'Wrong content type, ext not found')
+					return error_before(403, 'Wrong content type, ext not found')
 				}
 				headers['Cache-Control'] = reans.nostore ? 'no-store' : 'public, max-age=31536000'
 				Object.assign(headers, reans.headers)
@@ -69,11 +73,11 @@ export const Server = {
 						response.writeHead(reans.status, headers)
 						ans.pipe(response)
 					});
-					return ans.on('error', () => error(404, 'Not found'))
+					return ans.on('error', () => error_after(404, 'Not found'))
 				} else if (ans instanceof Duplex) {
 					response.writeHead(reans.status, headers)
 					ans.pipe(response)
-					return ans.on('error', () => error(404, 'Not found'))
+					return ans.on('error', () => error_after(404, 'Not found'))
 				} else {
 					response.writeHead(reans.status, headers)
 					if (reans.ext == 'json' || ( typeof(ans) != 'string' && typeof(ans) != 'number') ) {
@@ -84,7 +88,7 @@ export const Server = {
 				}
 			}
 
-			if (route.path[0] == '-') return error(404, 'Not found')
+			if (route.path[0] == '-') return error_before(404, 'Not found')
 
 			if (route.cont) {
 				//cookie: request.headers.cookie || '',
@@ -100,9 +104,9 @@ export const Server = {
 				const a = await meta.get('get-layers', req, visitor)
 				let json = a.ans
 				let status = a.status
-				if (!json) return error(500, 'layers have bad definition')
-				if (!json.layers) return error(500, 'layers not defined')
-				if (!json.layers.length) return error(500, 'layers empty')
+				if (!json) return error_before(500, 'layers have bad definition')
+				if (!json.layers) return error_before(500, 'layers not defined')
+				if (!json.layers.length) return error_before(500, 'layers empty')
 				const bread = new Bread(route.path, route.get, route.search, json.root) //root+path+get = search
 				let info
 				try {
@@ -127,7 +131,7 @@ export const Server = {
 				})
 				return response.end(info.html)
 			} else { //Это может быть новый проект без всего
-				return error(404, 'layers.json not found')
+				return error_before(404, 'layers.json not found')
 			}
 		});
 		server.listen(PORT, IP)

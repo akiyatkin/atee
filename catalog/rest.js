@@ -8,6 +8,7 @@ import Access from "/-controller/Access.js"
 import Files from "/-showcase/Files.js"
 import common from "/-catalog/common.html.js"
 import Catalog from "/-catalog/Catalog.js"
+import Showcase from "/-showcase/Showcase.js"
 
 
 import Rest from "/-rest"
@@ -332,8 +333,11 @@ rest.addResponse('get-search-head', async (view) => {
 	return view.ret()
 })
 rest.addResponse('get-search-sitemap', async (view) => {
-	const { options, db, value } = await view.gets(['options', 'db','value'])
 	
+	const options = await Showcase.getOptions(view.visitor)
+	
+	const { db, value } = await view.gets(['db','value'])
+
 	view.ans.title = options.root_title
 	view.ans.headings = []
 

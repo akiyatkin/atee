@@ -16,7 +16,7 @@ tpl.ROOT = (data, env) => `
 				position: sticky; bottom:0; 
 				z-index:1;
 				background:white; 
-				border-top: 1px solid gray;
+				border-top: 1px solid var(--border-color);
 			}
 			${env.scope} .panel {
 				pointer-events: none;
@@ -341,13 +341,10 @@ tpl.showForm = (data, env) => `
 				<label for="${env.sid}email">Email</label>
 				${data.order.status == 'wait' ? svgres('required', data.order.email) : ''}
 			</div>
-			<div class="float-label icon org field">
-				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}address" name="address" type="text" placeholder="Полный адрес доставки" value="${data.order.address || ''}">
-				<label for="${env.sid}address">Полный адрес доставки</label>
-				${data.order.status == 'wait' ? svgres('required', data.order.address) : ''}
-			</div>
+			${tpl.showAddress(data,env)}
+			
 			<div>
-				Менеджер перезвонит в&nbsp;рабочее время, уточнит время и&nbsp;стоимость доставки. Стоимость доставки оплачивается отдельно в&nbsp;транспортной компании при получении.
+				Менеджер уточнит стоимость,&nbsp;варинты&nbsp;доставки и&nbsp;в&nbsp;рабочее время свяжется с&nbsp;Вами. Предложение на&nbsp;сайте&nbsp;не&nbsp;является публичной офертой, итоговая цена может&nbsp;отличаться.
 			</div>
 			
 			${data.order.partner ? showPartner(data, env) : '' }
@@ -363,7 +360,13 @@ tpl.showForm = (data, env) => `
 			${data.order.status == 'wait' ? showSubmit(data, env) : ''}
 		</form>		
 `
-
+tpl.showAddress = (data, env) => `
+	<div class="float-label icon org field">
+		<input ${data.order.status == 'wait' ? '' : 'disabled'} id="${env.sid}address" name="address" type="text" placeholder="Полный адрес доставки" value="${data.order.address || ''}">
+		<label for="${env.sid}address">Город и адрес доставки</label>
+		${data.order.status == 'wait' ? svgres('optional', data.order.address) : ''}
+	</div>
+`
 const showPartner = (data, env) => `
 	<div>
 		Ключ партнёра: <b>${data.order.partner.title}</b>

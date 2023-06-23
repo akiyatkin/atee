@@ -2,6 +2,9 @@
 	--black: #444;
 	--primary: #0b7ace;
 	--success: #e74405;
+	--border-color: gray;
+	--border: solid 1px var(--border-color);
+	--radius: 5px;
 }
 
 html {
@@ -29,6 +32,37 @@ select, button, input {
 button:not(:disabled) {
 	cursor: pointer;
 }
+button.transparent,
+.button.transparent {
+	color:inherit;
+	font-size:inherit;
+	font-family: inherit;
+	padding:0; 
+	margin:0; 
+	background:transparent; 
+	border:none;
+	box-shadow: none;
+}
+button:disabled,
+.button:disabled {
+	opacity: 0.5;
+}
+button.transparent::before,
+.button.transparent::before {
+	background:transparent;
+}
+.button.transparent:hover,
+button.transparent:hover {
+	border: none;
+	color: inherit;
+}
+.button.transparent:active,
+button.transparent:active {
+	-webkit-tap-highlight-color: transparent;
+	box-shadow: none;
+}
+
+
 table td, table th {
 	vertical-align: top;
 }

@@ -1,6 +1,10 @@
 import fs from 'fs/promises'
 import { pathToFileURL, fileURLToPath } from 'url'
-const webresolve = search => import.meta.resolve(search, pathToFileURL('./').href).then(src => fileURLToPath(src))
+const webresolve = async search => {
+	const href = pathToFileURL('./').href
+	const src = await import.meta.resolve(search, href)
+	return fileURLToPath(src)
+}
 const searchJSON = async src => JSON.parse(await fs.readFile(await webresolve(src)))
 const importJSON = src => import(src, {assert:{type:'json'}}).then(e => e.default)
 const readJSON = async src => JSON.parse(await fs.readFile(src))
@@ -26,5 +30,7 @@ const config = (name = 'config', pub = false) => {
 		}, {})
 	})
 }
+
+//const conf = await config('controller')
 
 export default config

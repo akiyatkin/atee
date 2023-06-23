@@ -10,6 +10,7 @@ import config from '/-config'
 import path from 'path'
 import fs from 'fs/promises'
 
+const conf = await config('controller')
 
 const searchRest = async (source, file, RESTS, parent = source, innodemodules = false) => {
 	const src = path.posix.join(source, file)
@@ -63,18 +64,35 @@ for (const r in CONTS) {
 CONT_DIRECTS = Object.values(CONT_DIRECTS)
 CONT_DIRECTS.sort(fnsort)
 
+
 const webresolve = async search => {
+	const href = pathToFileURL('./').href
+	const src = await import.meta.resolve(search, href)
+	return fileURLToPath(src)
+}
+
+// const webresolve = async search => {
+// 	try {
+// 		const src = await import.meta.resolve(search, pathToFileURL('./').href)
+// 		return fileURLToPath(src)
+// 	} catch (e) {
+// 		return false
+// 	}
+// }
+//const webresolve = async search => {
 	//return await import.meta.resolve(search, pathToFileURL('./').href).then(src => fileURLToPath(src)).catch(() => false)
+
 	//В адресах в layers.json относительные пути не поддерживаются
 	//console.log(search)
-	return await import.meta.resolve(search, pathToFileURL('./').href).then(async src => {
-		src = fileURLToPath(src)
-		if ((await fs.lstat(src)).isFile()) { //Нелепый фикс... resolver на папку возвращает иногда путь до файла
-			return src
-		}
-		return false
-	}).catch(() => false)
-}
+
+	// return await import.meta.resolve(search, pathToFileURL('./').href).then(async src => {
+	// 	src = fileURLToPath(src)
+	// 	if ((await fs.lstat(src)).isFile()) { //Нелепый фикс... resolver на папку возвращает иногда путь до файла
+	// 		return src
+	// 	}
+	// 	return false
+	// }).catch(() => false)
+//}
 
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
@@ -97,7 +115,9 @@ const load = (src, visitor, ext) => { //ext формат требуемых да
 		// 	rest, query, restroot
 		// } = await router(src)
 		//404, 422, 200, 500, 501 method not emplimented, 403 
-		const route = await router(src)
+
+		const route = await router(src, true) //debug
+		
 	    if (!route.rest) throw { status: 500, src, ext }
 	    const r = typeof(route.rest) == 'function' ? route.rest(route.query, route.get, visitor) : route.rest.get(route.query, route.get, visitor)
 		reans = {...reans, ...(await r)}
@@ -138,7 +158,7 @@ const getExt = (str) => {
 	const i = str.lastIndexOf('.')
 	return ~i ? str.slice(i + 1) : ''
 }
-const conf = await config('controller')
+
 const explode = (sep, str) => {
     if (!str) return []
     const i = str.indexOf(sep)
@@ -153,7 +173,7 @@ const userpathparse = (search) => {
     const secure = !!~path.indexOf('/.') || path[0] == '.'
     return {secure, path, get}
 }
-export const router = async (search) => {
+export const router = async (search, debug) => {
 	//У search всегда есть ведущий /слэш
 	//if (search.indexOf('/-') === 0) search = search.slice(1)
 	let { secure, path, get} = userpathparse(search)
@@ -164,7 +184,7 @@ export const router = async (search) => {
 	let cont = false
 
 	//if (ext) {
-	const src = await webresolve('/' + path)
+	const src = await webresolve('/' + path).catch(e => false)
 	const name = src ? getSrcName(src) : ''
 
 	if (src && name) { //найден файл
@@ -188,17 +208,21 @@ export const router = async (search) => {
 			cont, root
 		}
 	}
+
 	//}
 	const ext = getExt(path)
 
 	if (path[0] == '-') { //Обязательный rest и без контроллера
+
 		for (const v of REST_HYPHENS) {
 			if (path.indexOf(v.part) === 1 || !v.part) {
 				if (	
 						(path == '-' + v.part)  //-params = params
 						|| path[v.part.length + 1] == '/' || !v.part //-params-list != params, -params/list = params
 				) { 
-					rest = await import(v.innodemodules ? v.rest : IMPORT_APP_ROOT + '/' + v.rest).then(r => r.default || r.rest)
+					const src = v.innodemodules ? v.rest : IMPORT_APP_ROOT + '/' + v.rest
+					
+					rest = await import(src).then(r => r.default || r.rest)
 					restroot = v.part
 					query = path.slice(v.part.length + (v.part ? 2 : 1)) //Отрезаем - и последний /
 					break;
@@ -206,7 +230,9 @@ export const router = async (search) => {
 			}
 		}
 
+
 	} else {
+
 		if (ext) { //Без дефиса подходит только rest в корне для файлов
 			for (const v of REST_DIRECTS) {
 				//if (!v.part && !ext) continue //rest в корне только при наличии расширения
@@ -235,6 +261,7 @@ export const router = async (search) => {
 			}
 		}
 	}
+
 	return {
 		search, secure, get, path, ext,
 		rest, query, restroot,

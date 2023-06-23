@@ -100,7 +100,7 @@ rest.addResponse('webp', async view => {
 	
 	let store
 	const iscache = cache||conf.constraint?.alwayscache
-
+	
 	if (iscache) {
 		store = `cache/imager/${nicked([src,h,w,fit].join('-'))}.webp`	
 		const is = await AccessCache.once('isFreshCache' + store, async () => {
@@ -136,21 +136,21 @@ rest.addResponse('webp', async view => {
 	})
 	const duplex = inStream.pipe(transform)
 	inStream.on('error', e => duplex.destroy(e))
-	if (!iscache) return {ext, ans:duplex, headers};
+	if (!iscache) 
+		return {ext, ans:duplex, headers};
 
-	(async () => {
-		
+	(() => {
 		const chunks = []
 		duplex.on('data', chunk => {
 			chunks.push(chunk)
 		})
-		duplex.on('data', chunk => {
-			createWriteStream(store).write(Buffer.concat(chunks))
-		})
 		duplex.on('error', chunk => {
 			console.log('Imager stream error', src, view.visitor.client.referer)
 		})
-		duplex.on('end', chunk => {
+		duplex.on('end', async chunk => {
+			const ws = createWriteStream(store)
+			await ws.write(Buffer.concat(chunks))
+			ws.close()
 			AccessCache.set('isFreshCache' + store, true)
 		})
 	})()
