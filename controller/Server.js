@@ -29,7 +29,7 @@ export const Server = {
 				return response.end()
 			}
 			if (!~['GET','POST'].indexOf(request.method)) {
-				return error(501, 'Method '+request.method+' not implemented')
+				return error_before(501, 'Method '+request.method+' not implemented')
 			}
 			const usersearch = request.url.replace(/\/+/,'/').replace(/\/$/,'')//Дубли и слешей не ломают путь, но это плохо...
 			const route = await router(usersearch || '/')
