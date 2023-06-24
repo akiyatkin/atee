@@ -17,6 +17,7 @@ tpl.ROOT = (data, env) => `
 				z-index:1;
 				background:white; 
 				border-top: 1px solid var(--border-color);
+				border-bottom: 1px solid var(--border-color);
 			}
 			${env.scope} .panel {
 				pointer-events: none;
