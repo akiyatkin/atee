@@ -298,7 +298,7 @@ tpl.ORDER = (data, env) => tpl.isShowPanel(data) ? `
 		<div class="whenshow">
 			<h1 style="margin-top:1rem;">${TITLES[data.order.status]}
 			${data.user.manager ? showCrown() : ''}
-			<a href="/cart/mail" style="color:inherit; margin-left:1ch; float:right; font-weight: normal">№ ${data.order.order_nick}</a></h1>
+			<a href="/cart/mail" style="color:inherit; margin-left:1ch; margin-bottom: 2rem; float:right; font-weight: normal">№ ${data.order.order_nick}</a></h1>
 			${data.order.status != 'wait' ? showDate(data.order, env) : ''}
 			${data.list.length ? tpl.showForm(data, env) : showEmpty(data, env)}
 			${data.orders.length > 1 ? showOrders(data, env) : ''}

@@ -16,14 +16,17 @@ export const ROOT = (data, env) => `
 				padding: 20px;
 				margin-bottom: 1rem;
 			}
-			${env.scope} .border {
-				border: 3px solid var(--border-color);
-				border-radius: var(--radius);
-			}
 			${env.scope} .orderDetaly {				
 				padding-right: 10px;
 				padding-top: 5px;
 				padding-bottom: 5px;
+			}
+			${env.scope} .orderStyle {
+				padding:0;
+			}
+			${env.scope} .orderDetaly {
+				padding-top: 0;
+			    padding-bottom: 0;
 			}
 			@media screen and (max-width:940px){
 				${env.scope} .orderStyle {

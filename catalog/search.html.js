@@ -106,7 +106,7 @@ search.pag.link = (data, env, scroll = '', title, page) => `
 				return '?' + reqs.join('&')
 			}
 			onload(() => {
-				a.href = "${env.crumb}" + getreq('${env.bread.get.m || ''}', '${page}') + "${!scroll?'#page':''}"	
+				a.href = "${env.crumb.child}" + getreq('${env.bread.get.m || ''}', '${page}') + "${!scroll?'#page':''}"	
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>
@@ -144,7 +144,7 @@ search.group = (data, env, group) => `
 	<div>
 		<a ${groupclass(data, env, group)}
 			data-scroll="none"
-			href="${env.crumb.parent}/${group.group_nick}${links.setm(data)}">${group.group_title}</a>
+			href="${env.crumb}/${group.group_nick}${links.setm(data)}">${group.group_title}</a>
 	</div>
 `
 
@@ -175,7 +175,9 @@ search.title = (data, env) => html`
 		}
 	</style>
 	<div style="float:right; margin-top:1rem">${data.type}</div>
-	${(!data.path.length && !data.md.m) || search.parenttitle(data, env)}
+	<div style="float:left; margin-top:1rem">
+		${(!data.path.length && !data.md.m) ? '<a href="/">&nbsp;</a>' : search.parenttitle(data, env)}
+	</div>
 	
 	<h1 style="display: flex; clear:both; gap:0 0.6ch; flex-wrap:wrap">
 		${data.title.group_title}
@@ -204,7 +206,7 @@ search.title = (data, env) => html`
 search.choice = {
 	"just": (data, env, prop, value) => `
 		<a title="${prop.prop_title}" data-scroll="none" class="clearlink" 
-			href="${env.crumb.parent}${links.addm(data)}more.${prop.prop_nick}.${value.value_nick}">
+			href="${env.crumb}${links.addm(data)}more.${prop.prop_nick}.${value.value_nick}">
 			<span class="value">${value.value_title}</span>
 			<span class="krest" style="font-size:1rem; line-height: 2rem;">✕</span>
 		</a>
@@ -212,15 +214,13 @@ search.choice = {
 }
 search.titlepart = (data, env, part, value) => `
 	<a data-scroll="none" class="clearlink" 
-		href="${env.crumb.parent}${links.addm(data)}${part}">
+		href="${env.crumb}${links.addm(data)}${part}">
 		<span class="value">${value}</span>
 		<span class="krest" style="font-size:1rem; line-height: 2rem;">✕</span>
 	</a>
 `
 search.parenttitle = (data, env) => `
-	<div style="float:left; margin-top:1rem">
-		<a data-scroll="none" href="${env.crumb.parent}${search.toplink(data, env)}">${data.parent.group_title}</a>
-	</div>
+	<a data-scroll="none" href="${env.crumb}${search.toplink(data, env)}">${data.parent.group_title}</a>
 `
 search.toplink = (data, env) => {
 	if (data.parent.parent_id) {
