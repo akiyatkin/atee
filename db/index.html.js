@@ -4,6 +4,7 @@ export const ROOT = (...args) => `<!DOCTYPE html>
 	<head>
 		${controller.HEAD(...args)}
 		<link rel="icon" type="image/x-icon" href="/favicon.ico">
+		<link rel="stylesheet" href="/-notreset/style.css">
 		<link rel="stylesheet" href="/style.css">
 		<link rel="stylesheet" href="/-db/style.css">
 	</head>

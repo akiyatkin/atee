@@ -4,6 +4,7 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 	<head>
 		${controller.HEAD(data, env)}
 		<link rel="icon" type="image/x-icon" href="/favicon.ico">
+		<link rel="stylesheet" href="/-notreset/style.css">
 		<link rel="preload" as="style" href="/-modal/style.css" onload="this.onload=null;this.rel='stylesheet'">
 		<link rel="stylesheet" href="/-notion/style.css">
 		<link rel="stylesheet" href="/style.css">

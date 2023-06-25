@@ -176,7 +176,7 @@ search.title = (data, env) => html`
 	</style>
 	<div style="float:right; margin-top:1rem">${data.type}</div>
 	<div style="float:left; margin-top:1rem">
-		${(!data.path.length && !data.md.m) ? '<a href="/">&nbsp;</a>' : search.parenttitle(data, env)}
+		${(!data.path.length && !data.md.m) ? '<a href="/"><br></a>' : search.parenttitle(data, env)}
 	</div>
 	
 	<h1 style="display: flex; clear:both; gap:0 0.6ch; flex-wrap:wrap">
