@@ -21,13 +21,13 @@ filters.item = (data, env, filter, v) => getp(data, filter.prop_nick)[v.value_ni
 	`<a class="clearlink" title="Отменить выбор" 
 		style="display: inline-block; margin-top:0.3em; border-color: transparent; color:inherit;" 
 		class="a" data-scroll="none" rel="nofollow" 
-		href="${env.crumb.parent}${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}">
+		href="${env.crumb}${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}">
 		<span class="value">${v.value_title}</span><sup style="position: absolute; margin-left:-2px; margin-top:-2px" class="krest">&nbsp;✕</sup>
 	</a>` : 
 	`<a title="Выбрать" 
 		style="opacity: ${v.mute ?'0.3':'1'}; margin-top:0.3em; display:inline-block;" 
 		class="a" data-scroll="none" rel="nofollow" 
-		href="${env.crumb.parent}${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}::.${v.value_nick}=1">
+		href="${env.crumb}${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}::.${v.value_nick}=1">
 		${v.value_title}</a>`
 
 filters.option = (data, filter, v) => getp(data, filter.prop_nick)[v.value_nick] ? `
@@ -200,7 +200,7 @@ filters.props = {
 									//const set = value_nick ? '::.'+direction+'=' + value_nick : ''
 									const set = '::.'+direction+'=' + value_nick
 									const Client = await window.getClient()
-			    					Client.pushState('${env.crumb.parent}${links.addm(data)}more.${filter.prop_nick}' + set, false)
+			    					Client.pushState('${env.crumb}${links.addm(data)}more.${filter.prop_nick}' + set, false)
 								})
 								input.addEventListener('change', input.click)
 								const div = input.closest('.bodyslider')
