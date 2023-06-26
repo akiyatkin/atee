@@ -26,8 +26,8 @@ tpl.ITEM = (data, env) => {
 	if (!mod.items[item_index]) item_index = 0
 	const item = mod.items[item_index]
 	
-	const prop_title = "Позиция"
-	const html = filters.block("", showIprops(data, env, mod, prop_title)) + showCost(item)
+	const prop_titles = ["Позиция","Арт"]
+	const html = filters.block("", showIprops(data, env, mod, prop_titles)) + showCost(item)
 	if (!item.Цена) return html + origButton(data, env, mod, item)
 	return html + showItemsBuy(data, env, mod, item)
 }
@@ -49,9 +49,10 @@ const getitem = (data, env, v, index) => ischoice(env, index) ?
 
 
 
-const showIprops = (data, env, mod, prop_title) => {
+const showIprops = (data, env, mod, prop_titles) => {
 	const values = mod.items.reduce((ak, item) => {
-		ak.push(getv(item, prop_title))
+		const prop_title = prop_titles.find(prop_title => getv(item, prop_title))
+		ak.push(prop_title ? getv(item, prop_title) : '')
 		return ak
 	}, [])
 	return `<span style="margin-right:0.3ch; font-size:90%">
