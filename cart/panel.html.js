@@ -100,6 +100,11 @@ tpl.ROOT = (data, env) => `
 				grid-template-columns: 1fr 1fr;
 				gap: 1fr;*/
 			}
+			@media (max-width:480px) {
+				${env.scope} .panel .body {
+					max-height: 140px;
+				}
+			}
 			${env.scope} .panel .body::-webkit-scrollbar { 
 			    display: none;  /* Safari and Chrome */
 			}
