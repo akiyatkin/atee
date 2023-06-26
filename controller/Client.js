@@ -69,6 +69,8 @@ export const Client = {
 		return Client.replaceState('', false)
 	},
 	reload: () => { //depricated?
+		//'/' переход с главной
+		//'' переход с ничего
 		Client.search = ''
 		return Client.replaceState('', false)
 	},

@@ -15,8 +15,9 @@ tpl.TITLES = {
 	"pay":"Заказ ожидает оплату"
 }
 
-
+const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
 const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : ''
+
 tpl.tocheck_subject = (data) => `Заказ с сайта ${data.vars.host}`
 tpl.tocheck = (data) => `
 	<h1>${tpl.TITLES[data.order.status]} № ${data.order.order_nick}</h1>
@@ -39,7 +40,7 @@ tpl.tocheck = (data) => `
 
 tpl.showPos = (pos, data) => `
 	<div style="margin-bottom:1rem">
-		<div>${pos.brand_title} ${pos.model_title}${prefixif(' (', pos.more.Позиция, ')')}</div>
+		<div>${pos.brand_title} ${pos.model_title}${prefixif(' (', getv(pos,'Позиция') || getv(pos,'Арт'), ')')}</div>
 		<div><b>${pos.count}</b> по <b>${cost(pos.Цена)}${common.unit()}</b> = <b>${cost(pos.count * pos.Цена)}${common.unit()}</b></div>
 	</div>
 `

@@ -7,6 +7,10 @@ import ago from "/-words/ago.js"
 
 const tpl = {}
 export default tpl
+
+const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
+const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : ''
+
 tpl.css = [...number.css, '/-float-label/style.css']
 tpl.ROOT = (data, env) => `
 	<div class="panel">
@@ -102,7 +106,7 @@ tpl.ROOT = (data, env) => `
 			}
 			@media (max-width:480px) {
 				${env.scope} .panel .body {
-					max-height: 140px;
+					max-height: 141px;
 				}
 			}
 			${env.scope} .panel .body::-webkit-scrollbar { 
@@ -125,7 +129,7 @@ tpl.ROOT = (data, env) => `
 				max-height: 0;
 			}
 			${env.scope} .panel.hide .hand {
-				margin-top: calc(-1rem - 25px);
+				margin-top: calc(-1em - 25px - 2px);
 			}
 			${env.scope} .panel .body .padding {
 				padding: 25px 0 20px 0;
@@ -684,11 +688,12 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 		})(document.currentScript.parentElement)
 	</script>
 `
-const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : ''
+
+
 tpl.showPos = (mod, env) => `
 	<a href="/catalog/${mod.brand_nick}/${mod.model_nick}" class="image">${mod.images?.[0] ? tpl.showImage(mod) : ''}</a>
 	<div class="info">
-		<div>${mod.brand_title} ${mod.model_title}${prefixif(' (', mod.more.Позиция,')')}</div>
+		<div>${mod.brand_title} ${mod.model_title}${prefixif(' (', getv(mod,'Позиция') || getv(mod,'Арт'),')')}</div>
 		<div><b>${cost(mod.Цена)}${common.unit()}</b></div>
 	</div>
 	<div class="cost blocksum" 

@@ -115,23 +115,47 @@ const Cart = {
 		const html = tpl[sub](data)
 		return {subject, html, email}
 	},
-	mergeuser: async (db, olduser, newuser) => {
-		const order_id = await db.col('select order_id from cart_actives where user_id = :user_id', olduser)
+	mergeuser: async (db, olduser, newuser) => { //olduser будет удалён
+		const order_id = await Cart.getWaitId(db, olduser.user_id) //order_id долна быть или удалена или перенесена
 		if (order_id) {
-			await Cart.grant(db, newuser.user_id, order_id)
-			//Изменили автора заказа
-			await db.affectedRows(`
-				UPDATE cart_orders
-				SET user_id = :user_id
-				WHERE order_id = :order_id
-			`, {
-				order_id, 
-				user_id: newuser.user_id
-			})
-			//Удалили запись о правах
-			await db.affectedRows('DELETE from cart_userorders where user_id = :user_id', olduser)
-			await db.affectedRows('DELETE from cart_actives where user_id = :user_id', olduser)
+			//У olduser есть активная заявка, надо позиции из неё пернести в заявку newuser
+			const wait_id = await Cart.getWaitId(db, newuser.user_id)
+			if (wait_id) {
+				//Содержание order_id надо перенести в wait_id и удалить order_id
+				//Чтобы переносить надо знать есть ли уже такая позиция в заявке
+				const items = await db.all(`select count, model_nick, brand_nick, item_num from cart_basket where order_id = :order_id`, {order_id})
+				for (const item of items) {
+					await Cart.addItem(db, wait_id, item, item.count)
+				}
+				await db.exec(`
+					REPLACE INTO cart_actives (user_id, order_id) VALUES(:user_id, :wait_id)
+				`, {user_id: newuser.user_id, wait_id})
+
+				await db.affectedRows('DELETE from cart_orders where order_id = :order_id', {order_id})				
+			} else {
+				//Изменили автора заказа и дали права
+				await Cart.grant(db, newuser.user_id, order_id)
+				await db.affectedRows(`
+					UPDATE cart_orders
+					SET user_id = :user_id
+					WHERE order_id = :order_id
+				`, {
+					order_id, 
+					user_id: newuser.user_id
+				})
+			}
 		}
+		//Удалили запись о правах
+		await db.affectedRows('DELETE from cart_userorders where user_id = :user_id', olduser)
+		await db.affectedRows('DELETE from cart_actives where user_id = :user_id', olduser)
+	},
+	getWaitId: async (db, user_id) => {
+		const wait_id = await db.col(`
+			SELECT uo.order_id
+			FROM cart_userorders uo, cart_orders o
+			WHERE uo.order_id = o.order_id and uo.user_id = :user_id and o.status = 'wait'
+		`, { user_id })
+		return wait_id
 	},
 	castWaitActive: async (view, active_id) => {
 		let { db, user } = await view.gets(['db', 'user'])

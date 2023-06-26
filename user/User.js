@@ -10,12 +10,19 @@ const User = {
 		if (!user) return false
 		return user
 	},
-	mergeuser: async (db, olduser, newuser) => {
+	mergeguest: async (db, olduser, newuser) => { //Вызывается из обработок и содержит проверку гость или не гость
 		if (!olduser) return
 		if (olduser.date_signup) return
 		if (newuser.user_id == olduser.user_id) return
+		await User.mergeuser(db, olduser, newuser)
+	},
+	mergeuser: async (db, olduser, newuser) => { 
+		//Другие мёрджи дополняют этот обработчик через подмену
+		//Зарегистрированного пользователя тоже можно замёрджить. Старый будет удалён, даже если был зарегистрирован
 		//Прошлый пользователь ещё не регистрировался, надо замёрджить и удалить его
 		await db.affectedRows('DELETE from user_users where user_id = :user_id', olduser)
+		await db.affectedRows('DELETE from user_uemails where user_id = :user_id', olduser)
+		await db.affectedRows('DELETE from user_uphones where user_id = :user_id', olduser)
 	},
 	link: '/user/',
 	create: async view => {
