@@ -25,6 +25,7 @@ tpl.tocheck = (data) => `
 		ФИО: ${data.order.name}<br>
 		Email: ${data.order.email}<br>
 		Телефон: ${data.order.phone}
+		${prefixif('<br>Ключ партнёра: <b>', data.order.partner?.title,'</b>')}
 		${prefixif('<br>Адрес: ', data.order.address)}
 	</div>
 	<pre style="font-style: italic; margin-bottom:1rem">${data.order.commentuser}</pre>
