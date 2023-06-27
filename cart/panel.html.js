@@ -339,23 +339,21 @@ tpl.showForm = (data, env) => `
 			<div class="float-label icon name field">
 				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
 				<label for="${env.sid}name">Получатель (ФИО)</label>
-				${data.order.status == 'wait' ? svgres('required', data.order.name) : ''}
+				${data.order.status == 'wait' ? tpl.svgres('required', data.order.name) : ''}
 			</div>
 			<div class="float-label icon phone field">
 				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="contacts_phone" name="phone" type="tel" placeholder="Телефон" value="${data.order.phone || ''}">
 				<label for="contacts_phone">Телефон</label>
-				${data.order.status == 'wait' ? svgres('required', data.order.phone) : ''}
+				${data.order.status == 'wait' ? tpl.svgres('required', data.order.phone) : ''}
 			</div>
 			<div class="float-label icon mail field">
 				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}email" name="email" type="email" placeholder="Email" value="${data.order.email || ''}">
 				<label for="${env.sid}email">Email</label>
-				${data.order.status == 'wait' ? svgres('required', data.order.email) : ''}
+				${data.order.status == 'wait' ? tpl.svgres('required', data.order.email) : ''}
 			</div>
 			${tpl.showAddress(data,env)}
+			${tpl.formMessage(data, env)}
 			
-			<div>
-				Менеджер уточнит стоимость,&nbsp;варинты&nbsp;доставки и&nbsp;в&nbsp;рабочее время свяжется с&nbsp;Вами. Предложение на&nbsp;сайте&nbsp;не&nbsp;является публичной офертой, итоговая цена может&nbsp;отличаться.
-			</div>
 			
 			${data.order.partner ? showPartner(data, env) : '' }
 			
@@ -364,17 +362,22 @@ tpl.showForm = (data, env) => `
 					name="commentuser" style="width:100%; box-sizing: border-box; min-height:130px">${data.order.commentuser || ''}</textarea>
 				<label for="${env.sid}text">Комментарий к заказу</label>
 				<div style="align-self: flex-start; margin-top: 0.5rem">
-					${data.order.status == 'wait' ? svgres('optional', data.order.commentuser) : ''}
+					${data.order.status == 'wait' ? tpl.svgres('optional', data.order.commentuser) : ''}
 				</div>
 			</div>
 			${data.order.status == 'wait' ? showSubmit(data, env) : ''}
 		</form>		
 `
+tpl.formMessage = (data, env) => `
+	<div>
+		Менеджер уточнит стоимость,&nbsp;варинты&nbsp;доставки и&nbsp;в&nbsp;рабочее время свяжется с&nbsp;Вами. Предложение на&nbsp;сайте&nbsp;не&nbsp;является публичной офертой, итоговая цена может&nbsp;отличаться.
+	</div>
+`
 tpl.showAddress = (data, env) => `
 	<div class="float-label icon org field">
 		<input ${data.order.status == 'wait' ? '' : 'disabled'} id="${env.sid}address" name="address" type="text" placeholder="Полный адрес доставки" value="${data.order.address || ''}">
 		<label for="${env.sid}address">Город и адрес доставки</label>
-		${data.order.status == 'wait' ? svgres('optional', data.order.address) : ''}
+		${data.order.status == 'wait' ? tpl.svgres('optional', data.order.address) : ''}
 	</div>
 `
 const showPartner = (data, env) => `
@@ -434,7 +437,7 @@ const showSubmit = (data, env) => `
 			</div>
 			<button type="submit" data-order_id=${data.order.order_id}>Отправить</button>
 		</div>
-		${svgres('optional')}
+		${tpl.svgres('optional')}
 	</div>
 	<script>
 		(form => {
@@ -550,7 +553,7 @@ tpl.MSG = (data, env) => `
 	<h1>${data.result ? 'Готово' : 'Ошибка'}</h1>
 	<div style="max-width: 400px;"><p class="msg">${data.msg || ''}</p></div>
 `
-const svgres = (type, saved) => `
+tpl.svgres = (type, saved) => `
 	<div data-saved="${saved || ''}" style="width:30px" class="res" data-type="${type || ''}" data-emptytype="${type || ''}">
 		<svg class="success${type == 'success' ? ' show': ''}" fill="currentColor" width="30" height="30" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
 			<path d="M15.3 5.3l-6.8 6.8-2.8-2.8-1.4 1.4 4.2 4.2 8.2-8.2"/>
