@@ -66,7 +66,7 @@ export const ROOT = (data, env) => `
 
 
 const showOrder = (data, env, order) => `
-	<div class='orderStyle border'>
+	<div class='orderStyle'>
 		${order.datecheck ? showDate(order) : ''}
 		<div class="orderDetaly">Заказ № <b>${order.order_nick}</b></div> 
 		<div class="orderDetaly">Сумма: <b>${order.sum} руб.</b></div> 
