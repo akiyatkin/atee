@@ -43,8 +43,8 @@ yml.des = (des) => des ? `
 	]]></description>
 ` : ''
 
-yml.param = (par, key) => `
-	<param name="${key}">${par}</param>
+yml.param = (par) => `
+	<param name="${par[0]}">${par[1]}</param>
 `
 yml.image = (src) => `
 	<picture>${src}</picture>
