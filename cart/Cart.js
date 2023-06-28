@@ -309,7 +309,6 @@ Cart.removeItem = async (db, order_id, item) => {
 	// `, order)
 }
 Cart.addItem = async (db, order_id, item, count = 0) => {
-	console.log(item)
 	const pos = await db.fetch(`
 		SELECT count FROM cart_basket 
 		WHERE order_id = :order_id 
