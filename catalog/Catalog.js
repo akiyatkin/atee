@@ -95,7 +95,7 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 				item[prop_title] = unique(item[prop_title])
 				const prop = await base.getPropByTitle(prop_title)
 				if (prop.type == 'file') continue
-				if (~['item_num'].indexOf(prop_title)) continue
+				//if (~['item_num'].indexOf(prop_title)) continue
 				item[prop_title] = item[prop_title].join(', ')
 				// if (prop.type == 'number' && ~options.justonevalue_nicks.indexOf(prop.prop_nick)) {
 				// 	item[prop_title] = Number(item[prop_title])
