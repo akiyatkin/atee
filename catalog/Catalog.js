@@ -92,6 +92,7 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 	for (const model of list) {
 		for (const item of model.items) {
 			for (const prop_title in item) {
+				item[prop_title] = unique(item[prop_title])
 				const prop = await base.getPropByTitle(prop_title)
 				if (prop.type == 'file') continue
 				if (~['item_num'].indexOf(prop_title)) continue
@@ -144,6 +145,7 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 
 		
 		for (const prop in model_props) {
+			
 			model[prop] = model_props[prop]
 		}
 

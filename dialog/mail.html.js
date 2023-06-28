@@ -27,5 +27,5 @@ tpl.signature = user => `
 	<p>
 		IP: ${user.ip} (<a href="https://ip2geolocation.com/?ip=${user.ip}">GEO</a>)
 	</p>
-	${user.utms.length ? UTMS(user.utms) : ''}
+	${false && user.utms.length ? UTMS(user.utms) : ''}
 `

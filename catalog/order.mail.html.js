@@ -10,7 +10,7 @@ export const MAIL = (user) => `
 	</p>
 	<pre>${user.text}</pre>
 	${ip(user.ip)}
-	${user.utms.length ? UTMS(user.utms) : ''}
+	${false && user.utms.length ? UTMS(user.utms) : ''}
 `
 const ip = (ip) => `
 	<p>

@@ -55,7 +55,7 @@ const Showcase = {
 			"tplprop":"model"
 		}
 		options.props["Позиция"] ??= {
-			"type":"value",
+			"type":"bond",
 			"justone": true,
 			"column":false
 		}
