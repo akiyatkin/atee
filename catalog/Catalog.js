@@ -73,7 +73,7 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 	}
 
 	for (const im of modids) {
-		list[im.model_id].items[im.item_num] = { item_num:im.item_num }
+		list[im.model_id].items[im.item_num] = { item_num:[im.item_num] }
 	}
 	for (const ip of ips) {
 		const prop = await base.getPropById(ip.prop_id)
@@ -145,7 +145,7 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 
 		
 		for (const prop in model_props) {
-			
+
 			model[prop] = model_props[prop]
 		}
 

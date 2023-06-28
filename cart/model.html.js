@@ -75,7 +75,7 @@ const showItemsBuy = (data, env, mod, item) => `
 		data-brand_nick="${mod.brand_nick}"
 		data-model_nick="${mod.model_nick}"
 		data-item_num="${item.item_num}"
-		data-partner="${env.theme.partner}"
+		data-partner="${env.theme.partner || ''}"
 		style="font-size:1.2rem;">
 			Добавить в корзину
 		</button>
