@@ -27,7 +27,7 @@ yml.pos = (pos, env) => `
  	<offer type="vendor.model" id="${pos.model_id}" available="true">
 		<url>https://${env.host}/catalog/${pos.brand_nick}/${pos.model_nick}</url>
 		<model>${pos.model_title} ${pos.Наименование}</model>
-		<price>${pos.Цена}</price>
+		<price>${pos.Цена || pos.min}</price>
 		<currencyId>RUB</currencyId>
 		<categoryId>${pos.group_id}</categoryId>
 		${pos.images?.map(yml.image).join('') || ''}
