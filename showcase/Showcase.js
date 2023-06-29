@@ -77,6 +77,13 @@ const Showcase = {
 			"filter":{"slider":true,"tpl":"slider"},
 			"tplprop":"empty"
 		}
+		options.props["Старая цена"] ??= {
+			"type":"number",
+			"column":true,
+			"justone":true,
+			"filter":{"slider":true,"tpl":"slider"},
+			"tplprop":"empty"
+		}
 
 		options.root_title ??= 'Каталог'
 		options.root_nick = nicked(options.root_title)
@@ -88,7 +95,7 @@ const Showcase = {
 
 		const types = {}
 		types.text = ["Описание", "Наименование", "Ссылки на картинки","Ссылки на файлы", "Файлы"]
-		types.number = ["Старая цена", "Цена", "sheet_row","sheet_index", "discount"]
+		types.number = ["sheet_row","sheet_index", "discount"]
 		types.value = ["Наличие"]
 		types.bond = ["Файл", "sheet_title", "Фото"]
 		types.file = ["texts", "images", "files", "videos", "slides","unknown_files"]
