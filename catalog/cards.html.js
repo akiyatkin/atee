@@ -28,7 +28,7 @@ cards.scriptRemoveSuperfluous = (data) => `
 			const numberOfCards = await import('/-catalog/numberOfCards.js').then(r => r.default)
 			//Надо чтобы всегда было 2 ряда, не больше
 			const count = numberOfCards(${data.limit})
-			while (listcards.children.length > count) listcards.children[count - 1].remove()
+			while (listcards.children.length > count) listcards.children[count].remove()
 		})(document.currentScript.previousElementSibling)
 	</script>
 `

@@ -66,11 +66,11 @@ rest.addResponse('get-model-head', async (view) => {
 	const { model, db, brand_nick, model_nick, partner, base} = await view.gets(['model', 'db', 'brand_nick','model_nick','partner', 'base'])
 	if (!model) {
 		view.ans.brand = await Catalog.getBrandByNick(db, brand_nick)
-		view.ans.title = `${view.ans.brand?.brand_title ?? brand_nick} ${model_nick}`
+		view.ans.title = `${view.ans.brand?.brand_title ?? brand_nick ?? ''} ${model_nick}`
 		return view.ret()
 	}
 	view.ans.mod = model
-	view.ans.title = `${model.brand_title} ${model.model_title} ${common.propval(model,'Наименование')}`
+	view.ans.title = `${model.brand_title} ${model.model_title} ${common.propval(model,'Наименование') || ''}`
 	return view.ret()		
 })
 
