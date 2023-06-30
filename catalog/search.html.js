@@ -107,7 +107,7 @@ tpl.pagt.link = (data, env, scroll = '', title, page) => `
 				return '?' + reqs.join('&')
 			}
 			onload(() => {
-				a.href = "${env.crumb}" + getreq('${env.bread.get.m || ''}', '${page}') + "${!scroll?'#page':''}"	
+				a.href = "${env.crumb.child || links.root}" + getreq('${env.bread.get.m || ''}', '${page}') + "${!scroll?'#page':''}"	
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>
