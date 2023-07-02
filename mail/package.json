@@ -18,7 +18,9 @@
   },
   "homepage": "https://github.com/akiyatkin/atee#readme",
   "dependencies": {
-    "nodemailer": "^6.7.5",
+    "nodemailer": "^6.7.5"
+  },
+  "dependencies2": {
     "@atee/config": "https://gitpkg.now.sh/akiyatkin/atee/config?main",
     "@atee/csv": "https://gitpkg.now.sh/akiyatkin/atee/csv?main"
   }

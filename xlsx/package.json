@@ -18,10 +18,12 @@
 	},
 	"homepage": "https://github.com/akiyatkin/atee#readme",
 	"dependencies": {
+		"node-xlsx": "^0.21"
+	},
+	"dependencies2": {
 		"@atee/controller": "https://gitpkg.now.sh/akiyatkin/atee/controller?main",
 		"@atee/rest": "https://gitpkg.now.sh/akiyatkin/atee/rest?main",
 		"@atee/nicked": "https://gitpkg.now.sh/akiyatkin/atee/nicked?main",
-		"@atee/cproc": "https://gitpkg.now.sh/akiyatkin/atee/cproc?main",
-		"node-xlsx": "^0.21"
+		"@atee/cproc": "https://gitpkg.now.sh/akiyatkin/atee/cproc?main"
 	}
 }
