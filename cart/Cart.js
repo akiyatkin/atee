@@ -366,7 +366,7 @@ Cart.recalcOrder = async (db, base, order_id, partner) => {
 }
 Cart.grant = async (db, user_id, order_id) => {
 	await db.exec(`
-		INSERT INTO cart_userorders (user_id, order_id) VALUES(:user_id, :order_id)
+		REPLACE INTO cart_userorders (user_id, order_id) VALUES(:user_id, :order_id)
 	`, {user_id, order_id})
 	await db.exec(`
 		REPLACE INTO cart_actives (user_id, order_id) VALUES(:user_id, :order_id)
