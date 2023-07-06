@@ -29,6 +29,6 @@ export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 		</script>
 	</p>
 `
-const showmodel = (model) => `
-	<a href="models/${model.model_id}">${model.brand_title} ${model.model_title}</a> ${model.cost||''} <small>${model.items}</small><br>
+const showmodel = (mod) => `
+	<a title="Порядок ${mod.ordain}" href="models/${mod.model_id}">${mod.brand_title} ${mod.model_title}</a> ${mod.cost||''} <small>${mod.items}</small><br>
 `

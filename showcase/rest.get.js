@@ -39,15 +39,15 @@ rest.addResponse('get-settings', async view => {
 })
 
 rest.addResponse('get-state', async view => {
-	const { isdb, visitor } = await view.gets(['isdb', 'visitor'])
-	view.ans.admin = await Access.isAdmin(visitor.client.cookie)
+	const { isdb } = await view.gets(['isdb'])
+	view.ans.admin = await Access.isAdmin(view.visitor.client.cookie)
 	view.ans.isdb = !!isdb
 	return view.ret('', 200, true)
 })
 rest.addResponse('get-stat', async view => {
-	const { visitor, db } = await view.gets(['visitor','db'])
+	const { db } = await view.gets(['db'])
 	if (!db) return view.err('Нет соединения с базой данных')
-	view.ans.admin = await Access.isAdmin(visitor.client.cookie)
+	view.ans.admin = await Access.isAdmin(view.visitor.client.cookie)
 	if (!view.ans.admin) return view.err('Требуется авторизация', 403)
 	//view.ans.count = await db.col('SELECT count(*) FROM information_schema.innodb_trx')
 	await new Promise(resolve => setTimeout(resolve, 50))
@@ -113,7 +113,7 @@ rest.addResponse('get-statistics', async view => {
 
 rest.addResponse('get-prices', async view => {
 	await view.get('admin')
-	const { upload, base, visitor, db, config, options } = await view.gets(['base', 'visitor', 'db','config','options','upload'])
+	const { upload, base, db, config, options } = await view.gets(['base', 'db','config','options','upload'])
 
 	const files = await upload.getAllPrices()
 
@@ -150,7 +150,7 @@ rest.addResponse('get-prices', async view => {
 
 rest.addResponse('get-tables', async view => {
 	await view.get('admin')
-	const { upload, visitor, db, config, options, base } = await view.gets(['visitor', 'db', 'config','options', 'base', 'upload'])	
+	const { upload, db, config, options, base } = await view.gets(['db', 'config','options', 'base', 'upload'])	
 	const files = await upload.getAllTables()
 	
 	const rows = await db.all(`
@@ -203,7 +203,7 @@ rest.addResponse('get-model', async view => {
 	if (!model) return view.err('Модель не найдена', 404)
 	const items = await db.all(`
 		SELECT 
-			i.item_num, t.table_title
+			i.item_num, t.table_title, i.ordain
 		FROM showcase_items i
 			LEFT JOIN showcase_tables t on t.table_id = i.table_id
 		WHERE i.model_id = :model_id
@@ -213,6 +213,7 @@ rest.addResponse('get-model', async view => {
 		item.more = {}
 		model.items[item.item_num] = item
 	})
+	
 	
 	const props = await db.all(`
 		SELECT 
@@ -244,7 +245,11 @@ rest.addResponse('get-model', async view => {
 		model.items[prop.item_num].more[prop.prop_title] ??= {value: [], ...prop}
 		model.items[prop.item_num].more[prop.prop_title].value.push(prop.text ?? prop.value_title ?? prop.number ?? prop.src ?? prop.bond_title)
 	}
-	model.items = Object.values(model.items).reverse()
+
+	model.items = Object.values(model.items)
+	model.items.sort((a, b) => a.ordain - b.ordain)
+
+
 	model.items.forEach(item => {
 		for( const prop_title in item.more) {
 			item.more[prop_title].value = item.more[prop_title].value.join(', ')
@@ -283,6 +288,7 @@ rest.addResponse('get-models', async view => {
 			g.group_nick,
 			b.brand_title,
 			b.brand_nick,
+			i.ordain,
 			(select number from showcase_iprops ip where ip.model_id = m.model_id and ip.prop_id = :cost_id limit 1) as cost,
 			count(i.model_id) as items
 		FROM showcase_groups g, showcase_brands b, showcase_models m
@@ -337,7 +343,7 @@ rest.addResponse('get-brands', async view => {
 })
 rest.addResponse('get-files', async view => {
 	await view.get('admin')
-	const { visitor, db, config } = await view.gets(['visitor', 'db', 'config'])
+	const { db, config } = await view.gets(['db', 'config'])
 	
 	//Надо показать что не привязано
 

@@ -14,8 +14,9 @@ const showmodel = (mod) => `
 `
 const showitem = (item) => `
 	<h1>${item.item_num}</h1>
-	<p><b>Таблица</b>: ${item.table_title}</p>
+	<div><b>Таблица</b>: ${item.table_title}</div>
 	${mapobj(item.more, showprop).join('')}
+	<div><b>Порядок</b>: ${item.ordain}</div>
 `
 const showprop = (prop, prop_titel) => `
 	<div><b>${prop_titel}</b>: ${prop.value} <small>(${prop.type}${prop.price_title ? ', ' + prop.price_title : ''})</small></div>
