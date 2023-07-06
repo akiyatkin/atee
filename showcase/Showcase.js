@@ -70,6 +70,12 @@ const Showcase = {
 			"justone": true,
 			"tplprop":"modelhidden"
 		}
+		options.props["Описание"] ??= {
+			"type":"text",
+			"column":true,
+			"justone": true,
+			"tplprop":"just"
+		}
 		options.props["Цена"] ??= {
 			"type":"number",
 			"column":true,
