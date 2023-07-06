@@ -20,6 +20,7 @@ Catalog.getItemByNick = async (db, base, brand_nick, model_nick, item_num, partn
 	const { vicache: cache } = base
 	const brand_id = await base.getBrandIdByNick(brand_nick)
 	const model_id = await base.getModelIdByNick(brand_id, model_nick)
+	if (!model_id) return false
 	return cache.konce('getItemByNick', model_id + ':' + item_num + ':' + partner, async () => {
 		const moditem_ids = [{model_id, item_nums: String(item_num)}]
 		const models = await Catalog.getModelsByItems(db, base, moditem_ids, partner)
@@ -45,7 +46,7 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 	`)
 	
 	
-	const modids = []
+	let modids = []
 	for (const mod of moditems_ids) {
 		const model_id = mod.model_id
 		const items = mod['item_nums'].split(',')
@@ -53,7 +54,12 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 			modids.push({item_num, model_id})
 		})
 	}
-
+	modids = await db.all(`
+		SELECT i.item_num, i.model_id
+		FROM showcase_items i
+		WHERE (i.model_id, i.item_num) in (${modids.map(it => '(' + it.model_id + ',' + it.item_num + ')').join(',')})
+	`)
+	if (!modids.length) return []
 	const ips = await db.all(`
 		SELECT p.ordain, ip.model_id, ip.item_num, v.value_title, ip.text, ip.number, ip.prop_id, b.bond_title, f.src
 		FROM showcase_props p, showcase_iprops ip
@@ -79,12 +85,14 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 		const prop = await base.getPropById(ip.prop_id)
 		let val = ip.value_title ?? ip.number ?? ip.text ?? ip.bond_title ?? ip.src
 		if (prop.type == 'number') val = Number(val)
+		//list[im.model_id].items[im.item_num] ??= []
 		list[ip.model_id].items[ip.item_num][prop.prop_title] ??= []
 		list[ip.model_id].items[ip.item_num][prop.prop_title].push(val)
 	}
-	list = Object.values(list)
+	list = Object.values(list).filter(mod => Object.values(mod.items).length)
+
 	
-	for (const model of list) {
+	for (const model of list) {		
 		model.items = Object.values(model.items)
 	}
 
@@ -171,7 +179,7 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 	
 
 	//Какие пропертисы надо показать на карточке
-	for (const model of list) {
+	for (const model of list) {		
 		let { props } = await Catalog.getGroupOpt(db, visitor, model.group_id)
 		
 		model.card_props = props.map(prop => ({...prop}))

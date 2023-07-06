@@ -52,6 +52,7 @@ const Cart = {
 		`, {order_id})
 		list = (await Promise.all(list.map(async pos => {
 			const item = await Cart.getItem(db, base, order_id, pos.brand_nick, pos.model_nick, pos.item_num, partner)
+			if (!item) return false
 			item.count = pos.count
 			return item
 		}))).filter(item => item && item['Цена'])
@@ -237,6 +238,7 @@ Cart.saveFiled = async (view, order_id, field, value) => {
 }
 Cart.getItem = async (db, base, order_id, brand_nick, model_nick, item_num, partner) => {
 	const item = await Catalog.getItemByNick(db, base, brand_nick, model_nick, item_num, partner)
+	if (!item) return item
 	delete item.item_props
 	delete item.model_props
 	delete item.card_props
