@@ -1,5 +1,5 @@
 import nicked from "/-nicked"
-import { cost } from "/-words/cost.js"
+import cost from "/-words/cost.js"
 import links from "/-catalog/links.html.js"
 import common from "/-catalog/common.html.js"
 
