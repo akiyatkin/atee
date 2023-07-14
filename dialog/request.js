@@ -1,4 +1,5 @@
-const request = async (src, btn, {goal, global}) => {
+const request = async (src, btn, obj = {}) => {
+	const {goal, global} = obj
 	const entries = Object.entries(btn.dataset)
 	let params = entries.map(row => row.join('=')).join('&')
 	params = params ? (~src.indexOf('?') ? '&' : '?') + params : ''
