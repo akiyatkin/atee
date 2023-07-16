@@ -26,7 +26,7 @@ const User = {
 	},
 	link: '/user/',
 	create: async view => {
-		const { db } = await view.gets(['db'])
+		const db = await view.get('db')
 		const token = crypto.randomBytes(12).toString('hex')
 		const password = token.substr(0, 6)
 		const timezone = Intl.DateTimeFormat ? Intl.DateTimeFormat().resolvedOptions().timeZone : ''
@@ -34,8 +34,8 @@ const User = {
 			INSERT INTO user_users (timezone, password, token, date_token, date_create, date_active) 
 			VALUES(:timezone, :password, :token, now(), now(), now())
 		`,{timezone, password, token});
-		if (!new_id) return view.err('Пользователь не создан', 500)
-		const newuser = await User.getUserById(view, new_id)
+		if (!new_id) return false
+		const newuser = await User.getUserById(db, new_id)
 		return newuser
 	},
 	sendEmail: async (view, sub, data) => {
@@ -43,8 +43,8 @@ const User = {
 		const user_id = data.user_id || data.user.user_id
 		let email = data.email
 		
-		const { db } = await view.gets(['db'])
-		data.vars = await view.gets(['utms', 'host', 'ip'])
+		const db = await view.get('db')
+		data.vars = await view.gets(['host', 'ip'])
 		data.vars.link = User.link
 		if (!email) {
 			const emails = await db.colAll('select email from user_uemails where user_id = :user_id', {user_id})
@@ -134,7 +134,7 @@ const User = {
 		return User.sendup(view, user_id, email)
 	},
 	sendup: async (view, user_id, email) => {
-		const { db } = await view.gets(['db'])
+		const db = await view.get('db')
 		await db.affectedRows(`
 			UPDATE
 				user_uemails
