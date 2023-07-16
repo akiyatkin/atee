@@ -16,10 +16,12 @@ rest.addFunction('int#required', (view, n, prop) => {
 rest.addFunction('array', (view, n) => n ? n.split(',') : [])
 rest.addFunction('nicked', (view, v) => nicked(v))
 rest.addFunction('escape', ['string'], (view, text) => text.replace(/[&<>]/g, tag => ({
+    '"': '&quot',
+    "'": '&apos;',
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;'
-}[tag])))
+}[tag])).trim())
 
 
 

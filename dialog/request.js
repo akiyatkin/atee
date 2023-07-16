@@ -12,19 +12,21 @@ const request = async (src, btn, opt = {}) => {
 		//btn.disabled = true //для js
 		//btn.setAttribute('disabled', '') //для css
 
+		const options = {}
 		const formBody = []
 		if (post) {
+			options.method = 'POST'
+			options.headers = { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }
 			for (const property in post) {
 				const encodedKey = encodeURIComponent(property)
 				const encodedValue = encodeURIComponent(post[property])
 				formBody.push(encodedKey + "=" + encodedValue)
 			}
+			options.body = formBody.join("&")
 		}
-		const ans = await fetch(src, {
-			method: post ? 'POST' : 'GET',
-			headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-			body: formBody.join("&")
-		}).then(res => res.json()).catch(e => ({msg:"Ошибка на сервере"}))
+		
+
+		const ans = await fetch(src, options).then(res => res.json()).catch(e => ({msg:"Ошибка на сервере"}))
 
 		if (!ans.result) {
 			const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
