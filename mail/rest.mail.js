@@ -25,15 +25,18 @@ rest.addVariable('recaptcha', async (view) => {
 	return true
 })
 
-rest.addArgument('email', ['string'], (view, email) => {
-	if (email && !Mail.isEmail(email)) return view.err('Уточните Ваш Email-адрес')
+
+rest.addFunction('toemail', ['string'], (view, email) => {
+	if (email && !Mail.isEmail(email)) return view.err('Уточните Email-адрес')
 	return email
 })
-rest.addVariable('email#required', async (view) => {
-	const { email } = await view.gets(['email'])
-	if (!email)  return view.err('Укажите ваш Email-адрес')
+rest.addFunction('toemail#required', ['toemail'], (view, email) => {
+	if (!email)  return view.err('Укажите Email-адрес')
 	return email
 })
+
+rest.addArgument('email', ['toemail'])
+rest.addVariable('email#required', (view) => view.get('email'), ['toemail#required'])
 
 rest.addArgument('phone', ['string'], (view, phone) => {
 	if (!phone) return phone

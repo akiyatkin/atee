@@ -32,15 +32,7 @@ rest.addVariable('order_id#required', async (view) => {
 	if (!order_id) return view.err('Заказ не найден', 422)
 	return order_id
 })
-rest.addVariable('manager', async (view) => {
-	const { user } = await view.gets(['user'])
-	return user.manager
-})
-rest.addVariable('manager#required', async (view) => {
-	const { manager } = await view.gets(['manager'])
-	if (!manager) return view.err('Требуются права менеджера', 401)
-	return manager
-})
+
 
 rest.addVariable('order', async (view) => {
 	const { order_id } = await view.gets(['order_id'])
