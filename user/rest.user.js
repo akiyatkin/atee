@@ -40,7 +40,7 @@ rest.addVariable('user#signup', async (view) => {
 })
 rest.addVariable('user#required', async (view) => {
 	const { user } = await view.gets(['user'])
-	if (!user) return view.err('Пользователь не создан')
+	if (!user) return view.err('Пользователь не найден')
 	return user
 })
 
