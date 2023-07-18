@@ -17,6 +17,7 @@ const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : '
 
 tpl.ITEM = (data, env) => {
 	const mod = data.mod
+	if (!mod) return ''
 	if (mod.items.length == 1) {
 		if (mod.Цена) return showModelBuy(data, env, mod)
 		return origButton(data, env, mod)	
