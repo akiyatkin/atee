@@ -1,6 +1,7 @@
 export const css = ["/-float-label/style.css"]
 export const ROOT = (data, env) => `
-	<h1>Вход</h1>
+	<div style="margin-top:1rem"><a href="/user">Личный кабинет</a></div>
+	<h1 style="margin-top:0">Вход</h1>
 	<form data-goal="signin" style="max-width:500px" action="/-user/set-signin-email">
 		<div class="float-label icon mail">
 			<input id="${env.sid}email" name="email" type="email" placeholder="Email">

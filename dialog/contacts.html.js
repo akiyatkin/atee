@@ -27,7 +27,7 @@ cont.CALLBACK = (data, env) => `
 				import("/-form/Autosave.js").then(r => r.default.init(form))
 				form.addEventListener('submit', e => {
 					e.preventDefault()
-					import('/-dialog/submit.js').then(r => r.default(form, {tpl:'${env.layer.tpl}', sub:'MSG'}))
+					import('/-dialog/submit.js').then(r => r.default(form, {tpl:'/-dialog/contacts.html.js', sub:'MSG'}))
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>
@@ -63,7 +63,7 @@ cont.CONTACTS = (data, env) => `
 					<label for="${env.sid}name">Ваше имя</label>
 				</div>
 				<div class="float-label icon org">
-					<input id="${env.sid}org" name="org" type="tel" placeholder="Организация">
+					<input id="${env.sid}org" name="org" type="text" placeholder="Организация">
 					<label for="${env.sid}org">Организация</label>
 				</div>
 				<div class="float-label icon phone">

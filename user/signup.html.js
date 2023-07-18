@@ -1,6 +1,7 @@
 export const css = ["/-float-label/style.css"]
 export const ROOT = (data, env) => `
-	<h1>Регистрация</h1>
+	<div style="margin-top:1rem"><a href="/user">Личный кабинет</a></div>
+	<h1 style="margin-top:0">Регистрация</h1>
 	${data.user.date_signup ? showsignupalready(data, env) : showsignupform(data, env)}
 `
 const showsignupalready = (data, env) => `

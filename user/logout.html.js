@@ -1,6 +1,7 @@
 
 export const ROOT = (data, env) => 
-`<h1>Выход</h1>` 
+`<div style="margin-top:1rem"><a href="/user">Личный кабинет</a></div>
+	<h1 style="margin-top:0">Выход</h1>` 
 + 
 (!data.user.user_id ? `
 	<p>Вы не авторизованы.</p>

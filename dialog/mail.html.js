@@ -12,10 +12,10 @@ tpl.CALLBACK = user => `
 
 tpl.CONTACTS = user => `
 	<p>
-		Имя: ${user.name}<br>
-		Организация: ${user.org}<br>
-		Email: ${user.email}<br>
-		Телефон: ${user.phone}
+		Имя: ${user.name || ''}<br>
+		Организация: ${user.org || ''}<br>
+		Email: ${user.email || ''}<br>
+		Телефон: ${user.phone || ''}
 	</p>
 
 	<pre>${user.text}</pre>
