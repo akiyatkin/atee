@@ -1,9 +1,11 @@
 export const ROOT = (data, env) => env.bread.get.result ? `
-	<h1>${env.bread.get.heading || 'Успех'}</h1>
+	<div style="margin-top:1rem"><a href="/user">Личный кабинет</a></div>
+	<h1 style="margin-top:0">${env.bread.get.heading || 'Успех'}</h1>
 	<p><b>${env.bread.get.email || ''}</b></p>
 	<p>${env.bread.get.msg || ''}</p>
 ` : `
-	<h1>${env.bread.get.heading || 'Ошибка'}</h1>
+	<div style="margin-top:1rem"><a href="/user">Личный кабинет</a></div>
+	<h1 style="margin-top:0">${env.bread.get.heading || 'Ошибка'}</h1>
 	<p><b>${env.bread.get.email || ''}</b></p>
 	<p>${env.bread.get.msg || ''}</p>
 `
