@@ -487,7 +487,7 @@ const showSubmit = (data, env) => `
 					//await promise
 					const show = res.querySelector('.show')
 					if (input && !res.dataset.msg) {
-						const ans = await request(res, input)
+						const ans = await request(res, {args: input.dataset})
 					}
 					const msg = res.dataset.msg
 					const type = res.dataset.type
@@ -502,7 +502,7 @@ const showSubmit = (data, env) => `
 					restore(res, input)
 				//})
 				input.addEventListener('input', async () => {
-					const ans = await request(res, input)
+					const ans = await request(res, {args:input.dataset})
 				})
 			}
 			form.addEventListener('submit', async e => {
@@ -667,7 +667,7 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 				title.innerHTML = pantpl.TITLE(state)
 
 				const request = await import('/-dialog/request.js').then(r => r.default)
-				const ans = await request('/-cart/set-add', block, {goal: 'basket'})
+				const ans = await request('/-cart/set-add', {args: block.dataset, goal: 'basket'})
 				if (ans.orderrefresh) {
 					const Client = await window.getClient()
 					Client.global('cart')
@@ -676,7 +676,7 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 			const del = block.querySelector('.del')
 			del.addEventListener('click', async () => {
 				const request = await import('/-dialog/request.js').then(r => r.default)
-				request('/-cart/set-remove', block, {global: 'cart'})
+				request('/-cart/set-remove', {args: block.dataset, global: 'cart'})
 			})
 		}
 		recalc()

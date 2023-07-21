@@ -84,7 +84,7 @@ const showItemsBuy = (data, env, mod, item) => `
 			(btn => {
 				btn.addEventListener('click', async () => {
 					const request = await import('/-dialog/request.js').then(r => r.default)
-					request('/-cart/set-add?count=1', btn, {global: 'cart', goal: 'basket'})
+					request('/-cart/set-add?count=1', {args: btn.dataset, global: 'cart', goal: 'basket'})
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>
@@ -104,7 +104,7 @@ const showModelBuy = (data, env, mod) => `
 			(btn => {
 				btn.addEventListener('click', async () => {
 					const request = await import('/-dialog/request.js').then(r => r.default)
-					request('/-cart/set-add?count=1', btn, {global: 'cart', goal: 'basket'})
+					request('/-cart/set-add?count=1', {args: btn.dataset, global: 'cart', goal: 'basket'})
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>

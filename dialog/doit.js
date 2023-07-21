@@ -5,7 +5,7 @@ const doit = async (div, action, opt) => {
 	div.counter++
 	div.classList.add('process')
 	div.classList.remove('ready')
-	request(action, div, opt)
+	const ans = request(action, {...opt, args:div.dataset})
 	setTimeout(() => {
 		div.counter--
 		if (div.counter) return
@@ -16,5 +16,6 @@ const doit = async (div, action, opt) => {
 			div.classList.remove('ready')
 		}, 2000)
 	}, 500)
+	return ans
 }
 export default doit

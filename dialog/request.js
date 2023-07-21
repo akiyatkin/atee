@@ -1,8 +1,8 @@
 import cproc from "/-cproc"
 let postcounter = 0
-const request = async (src, btn, opt = {}) => {
-	const {goal, global, post} = opt
-	const entries = Object.entries(btn.dataset)
+const request = async (src, opt = {}) => {
+	const {reloaddiv, goal, global, post, args = {}} = opt
+	const entries = Object.entries(args)
 	const params = entries.map(row => row.join('=')).join('&')
 	src += params ? (~src.indexOf('?') ? '&' : '?') + params : ''
 	
@@ -38,6 +38,10 @@ const request = async (src, btn, opt = {}) => {
 				console.log('Goal.reach ' + goal)
 				ym(metrikaid, 'reachGoal', goal);
 			}
+		}
+		if (reloaddiv) {
+			const Client = await window.getClient()
+			Client.reloaddiv(reloaddiv)
 		}
 		if (global) {
 			const Client = await window.getClient()
