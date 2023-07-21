@@ -487,7 +487,7 @@ const showSubmit = (data, env) => `
 					//await promise
 					const show = res.querySelector('.show')
 					if (input && !res.dataset.msg) {
-						const ans = await request(res, {args: input.dataset})
+						const ans = await request(res, input)
 					}
 					const msg = res.dataset.msg
 					const type = res.dataset.type
@@ -502,7 +502,7 @@ const showSubmit = (data, env) => `
 					restore(res, input)
 				//})
 				input.addEventListener('input', async () => {
-					const ans = await request(res, {args:input.dataset})
+					const ans = await request(res, input)
 				})
 			}
 			form.addEventListener('submit', async e => {
