@@ -15,15 +15,15 @@ const tpl = {
 		</script>`
 	},
 	area: (name, title, action, value) => {
-		const id = 'doit-' + nicked(title)
+		const id = 'inputs-' + nicked(title)
 		return `
 			<div class="float-label">
-				<div name="${name}" contenteditable id="${id}" class="doit">${value}</div>
+				<div name="${name}" contenteditable id="${id}" class="input">${value}</div>
 				<script>
 					(div => {
 						div.addEventListener('input', async () => {
-							const doit = await import('/-dialog/doit.js').then(r => r.default)
-							doit(div, '${action}', {post:{${name}: div.innerHTML}})
+							const requestit = await import('/-dialog/requestit.js').then(r => r.default)
+							requestit(div, '${action}', {post:{${name}: div.innerHTML}})
 						})
 					})(document.currentScript.previousElementSibling)
 				</script>
@@ -32,15 +32,15 @@ const tpl = {
 		`
 	},
 	text: (name, title, action, value) => {
-		const id = 'doit-' + nicked(title)
+		const id = 'inputs-' + nicked(title)
 		return `
 			<div class="float-label">
-				<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="doit">
+				<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="input">
 				<script>
 					(input => {
 						input.addEventListener('input', async () => {
-							const doit = await import('/-dialog/doit.js').then(r => r.default)
-							doit(input, '${action}', {post:{${name}: input.value}})
+							const requestit = await import('/-dialog/requestit.js').then(r => r.default)
+							requestit(input, '${action}', {post:{${name}: input.value}})
 						})
 					})(document.currentScript.previousElementSibling)
 				</script>
@@ -52,7 +52,7 @@ const tpl = {
 		const id = 'doit-' + nicked(title)
 		return `
 			<div class="float-label">
-				<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="doit">
+				<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="input">
 				<script>
 					(input => {
 						input.addEventListener('input', async () => {

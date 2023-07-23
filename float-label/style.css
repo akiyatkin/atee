@@ -6,8 +6,8 @@
 	width:  100%;
 }
 
-.float-label > .doit,
-.float-label > .doit ~ label,
+.float-label > .input,
+.float-label > .input ~ label,
 .float-label > select,
 .float-label > input,
 .float-label > textarea,
@@ -19,7 +19,7 @@
     margin-top: 0; /*textarea has top margin*/
 }
 
-.float-label > .doit ~ label,
+.float-label > .input ~ label,
 .float-label > textarea ~ label,
 .float-label > input ~ label {
 	pointer-events: none;
@@ -57,15 +57,15 @@
 .float-label > input::placeholder {
 	color: transparent;
 }
-.float-label > .doit:not(:empty),
-/*.float-label > .doit,*/
+.float-label > .input:not(:empty),
+/*.float-label > .input,*/
 .float-label > textarea:not(:placeholder-shown),
 .float-label > input:not(:placeholder-shown) {
 	padding-top: calc(.75rem + .75rem * (2 / 3));
 	padding-bottom: calc(.75rem / 3);
 }
-.float-label > .doit:not(:empty) ~ label,
-/*.float-label > .doit ~ label,*/
+.float-label > .input:not(:empty) ~ label,
+/*.float-label > .input ~ label,*/
 .float-label > textarea:not(:placeholder-shown) ~ label,
 .float-label > input:not(:placeholder-shown) ~ label {
 	padding-top: calc(.75rem / 3);
@@ -126,7 +126,7 @@
 .float-label {
 	--gauge: 1px;
 }
-.float-label > .doit {
+.float-label > .input {
 	cursor: default;
 	border-radius: var(--radius);
 	display: block;
@@ -136,28 +136,28 @@
 	font-style: italic;
 	font-family: monospace;
 }
-.float-label > .doit[contenteditable] {
+.float-label > .input[contenteditable] {
 	min-height: 4rem;
 }
 
-.float-label > .doit,
-.float-label > .doit ~ label {
+.float-label > .input,
+.float-label > .input ~ label {
 	margin-left:calc(-0.75rem - var(--gauge));
 	margin-right:calc(-0.75rem - var(--gauge));
 	width:calc(100% + 2 * (0.75rem + var(--gauge)));
 }
-.float-label > .doit:focus {
+.float-label > .input:focus {
 	outline: none;
 	border-style:solid;
 	border-color: currentColor;
 }
-.float-label > .doit.ready {
+.float-label > .input.ready {
 	border-color: green;
 }
-.float-label > .doit.process {
+.float-label > .input.process {
 	border-color: var(--blue);
 }
-.float-label > .doit.error {
+.float-label > .input.error {
 	border-color: red
 }
 
@@ -167,11 +167,11 @@
 }
 
 
-.doit, input, select, textarea {
+.input, input, select, textarea {
 	border: 1px solid var(--border-color);
 	border-radius: 30px;
 }
-.float-label > .doit ~ label,
+.float-label > .input ~ label,
 .float-label > input ~ label {
 	color: #CCC;
 }

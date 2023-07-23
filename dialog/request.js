@@ -2,7 +2,7 @@ import cproc from "/-cproc"
 import send from "/-dialog/send.js"
 let postcounter = 0
 const request = async (src, opt = {}) => {
-	const {reloaddiv, goal, global, post, args = {}, go, silent = false} = opt
+	const {reloaddiv, goal, global, post, args = {}, go} = opt
 	const entries = Object.entries(args)
 	const params = entries.map(row => row.join('=')).join('&')
 	src += params ? (~src.indexOf('?') ? '&' : '?') + params : ''
@@ -14,7 +14,7 @@ const request = async (src, opt = {}) => {
 		//btn.setAttribute('disabled', '') //для css
 		const ans = await send(src, post)
 
-		if (!silent && !ans.result) {
+		if (!ans.result) {
 			const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 			await Dialog.alert(ans.msg)
 		}
@@ -33,7 +33,7 @@ const request = async (src, opt = {}) => {
 			const Client = await window.getClient()
 			await Client.global(global)
 		}
-		if (go) {
+		if (go && ans.result) {
 			const Client = await window.getClient()
 			await Client.pushState(go)
 		}
