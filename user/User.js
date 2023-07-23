@@ -165,6 +165,45 @@ const User = {
 				user_id = :user_id
 		`, {user_id})
 		return await User.sendEmail(view, 'sendup', {user_id, email, code_verify})
+	},
+	addPhone: async (db, user_id, phone) => {
+		await db.affectedRows(`
+			UPDATE
+				user_uphones
+			SET
+				ordain = ordain + 1
+			WHERE
+				user_id = :user_id
+		`, { user_id })
+		const code_verify = crypto.randomBytes(4).toString('hex').toUpperCase()
+		await db.affectedRows(`
+			INSERT INTO 
+				user_uphones
+			SET
+				user_id = :user_id,
+				phone = :phone,
+				code_verify = :code_verify,
+				date_verify = now(),
+				date_add = now(),
+				ordain = 1
+		`, {phone, code_verify, user_id})
+	},
+	delAllPhone: async (db, user_id) => {
+		return await db.affectedRows(`
+			DELETE FROM 
+				user_uphones
+			WHERE
+				user_id = :user_id
+		`, {user_id})
+	},
+	delPhone: async (db, user_id, ordain) => {
+		return await db.affectedRows(`
+			DELETE FROM 
+				user_uphones
+			WHERE
+				user_id = :user_id
+				and ordain = :ordain
+		`, {ordain, user_id})
 	}
 }
 export default User

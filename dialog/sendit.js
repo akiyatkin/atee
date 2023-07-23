@@ -1,13 +1,13 @@
-import request from '/-dialog/request.js'
+import send from '/-dialog/send.js'
 
-const doit = async (div, action, opt) => {
+const sendit = async (div, action, post) => {
 	if (!div.counter) div.counter = 0
 	div.counter++
 	div.title = "В процессе ..."
 	div.classList.add('process')
 	div.classList.remove('ready')
 	div.classList.remove('error')
-	const ans = await request(action, {...opt, args:div.dataset})
+	const ans = await send(action, post)
 	div.title = ans.msg || "Сохранено"
 	setTimeout(() => {
 		div.counter--
@@ -18,7 +18,7 @@ const doit = async (div, action, opt) => {
 			if (div.counter) return
 			div.classList.remove('ready')
 		}, 2000)
-	}, 500)
+	}, 200)
 	return ans
 }
-export default doit
+export default sendit

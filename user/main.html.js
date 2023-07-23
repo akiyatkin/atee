@@ -17,7 +17,6 @@ tpl.ROOT = (data, env) => tpl.err(data, env) || `
 	<p>${data.user.email || ''}</p>
 	${data.user.email ? '' : '<p><a href="'+env.crumb+'/signup">Регистрация</a></p>'}
 	${data.user.email ? '' : '<p><a href="'+env.crumb+'/signin">Вход</a></p>'}
-	${data.user.email ? '<p><a href="'+env.crumb+'/data">Мои данные</a></p>':''}
 	${data.user.email ? '<p><a href="'+env.crumb+'/logout">Выход</a></p>' : ''}
 	${data.user.email ? '<p><a href="/user/orders">Мои заказы</a></p>' : ''}	
 `

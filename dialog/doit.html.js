@@ -47,6 +47,23 @@ const tpl = {
 				<label for="${id}">${title}</label>
 			</div>
 		`
+	},
+	textstatus: (name, title, action, value) => {
+		const id = 'doit-' + nicked(title)
+		return `
+			<div class="float-label">
+				<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="doit">
+				<script>
+					(input => {
+						input.addEventListener('input', async () => {
+							const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+							const ans = await sendit(input, '${action}', {${name}: input.value})
+						})
+					})(document.currentScript.previousElementSibling)
+				</script>
+				<label for="${id}">${title}</label>
+			</div>
+		`
 	}
 }
 

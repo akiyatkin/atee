@@ -1,7 +1,8 @@
 import cproc from "/-cproc"
+import send from "/-dialog/send.js"
 let postcounter = 0
 const request = async (src, opt = {}) => {
-	const {reloaddiv, goal, global, post, args = {}} = opt
+	const {reloaddiv, goal, global, post, args = {}, go, silent = false} = opt
 	const entries = Object.entries(args)
 	const params = entries.map(row => row.join('=')).join('&')
 	src += params ? (~src.indexOf('?') ? '&' : '?') + params : ''
@@ -11,24 +12,9 @@ const request = async (src, opt = {}) => {
 	return cproc(request, src, async () => {
 		//btn.disabled = true //для js
 		//btn.setAttribute('disabled', '') //для css
+		const ans = await send(src, post)
 
-		const options = {}
-		const formBody = []
-		if (post) {
-			options.method = 'POST'
-			options.headers = { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }
-			for (const property in post) {
-				const encodedKey = encodeURIComponent(property)
-				const encodedValue = encodeURIComponent(post[property])
-				formBody.push(encodedKey + "=" + encodedValue)
-			}
-			options.body = formBody.join("&")
-		}
-		
-
-		const ans = await fetch(src, options).then(res => res.json()).catch(e => ({msg:"Ошибка на сервере"}))
-
-		if (!ans.result) {
+		if (!silent && !ans.result) {
 			const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 			await Dialog.alert(ans.msg)
 		}
@@ -47,11 +33,15 @@ const request = async (src, opt = {}) => {
 			const Client = await window.getClient()
 			await Client.global(global)
 		}
+		if (go) {
+			const Client = await window.getClient()
+			await Client.pushState(go)
+		}
 		setTimeout(() => {
 			//btn.removeAttribute('disabled')
 			//btn.disabled = false
 		}, 300)
-		
+
 		return ans
 	}, group)
 	
