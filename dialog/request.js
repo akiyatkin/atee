@@ -35,7 +35,7 @@ const request = async (src, opt = {}) => {
 		}
 		if (go && ans.result) {
 			const Client = await window.getClient()
-			await Client.pushState(go)
+			await Client.go(go)
 		}
 		setTimeout(() => {
 			//btn.removeAttribute('disabled')

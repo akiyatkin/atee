@@ -31,7 +31,7 @@ const tpl = {
 			</div>
 		`
 	},
-	text: (name, title, action, value) => {
+	_textalert: (name, title, action, value) => {
 		const id = 'inputs-' + nicked(title)
 		return `
 			<div class="float-label">
@@ -48,8 +48,8 @@ const tpl = {
 			</div>
 		`
 	},
-	textstatus: (name, title, action, value) => {
-		const id = 'doit-' + nicked(title)
+	text: (name, title, action, value) => {
+		const id = 'inputs-' + nicked(title)
 		return `
 			<div class="float-label">
 				<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="input">

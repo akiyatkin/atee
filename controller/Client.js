@@ -122,6 +122,7 @@ export const Client = {
 		}
 		promise.started.then(go).catch(() => null)
 	},
+	go: (search, scroll) => Client.pushState(search, scroll),
 	pushState: (search, scroll = true) => {
 
 		search = fixsearch(search)

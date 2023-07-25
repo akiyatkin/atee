@@ -123,7 +123,7 @@ const User = {
 
 		if (user.email) {
 			const conf = await config('user')
-			user.manager = ~conf.managers.indexOf(user.email)
+			user.manager = !!~conf.managers.indexOf(user.email)
 		}
 		return user
 	},

@@ -778,7 +778,7 @@ export class Upload {
 			}
 			
 		}
-		
+		await upload.reorderModels()
 		return res
 	}
 	

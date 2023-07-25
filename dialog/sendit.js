@@ -16,7 +16,7 @@ const sendit = async (div, action, post) => {
 		div.classList.add(ans.result ? 'ready' : 'error') 
 		setTimeout(() => {
 			if (div.counter) return
-			div.classList.remove('ready')
+			//div.classList.remove('ready')
 		}, 2000)
 	}, 200)
 	return ans
