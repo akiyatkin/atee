@@ -10,7 +10,7 @@ const request = async (src, opt = {}) => {
 	const group = post ? ++postcounter : ''
 
 	return cproc(request, src, async () => {
-		//btn.disabled = true //для js
+		//btn.disabled = true //для js нельзя блокировать если я печатаю
 		//btn.setAttribute('disabled', '') //для css
 		const ans = await send(src, post)
 
