@@ -25,9 +25,13 @@ const User = {
 		await db.affectedRows('DELETE from user_uphones where user_id = :user_id', olduser)
 	},
 	link: '/user/',
+	createToken: () => {
+		const token = crypto.randomBytes(12).toString('hex')
+		return token
+	},
 	create: async view => {
 		const db = await view.get('db')
-		const token = crypto.randomBytes(12).toString('hex')
+		const token = User.createToken()
 		const password = token.substr(0, 6)
 		const timezone = Intl.DateTimeFormat ? Intl.DateTimeFormat().resolvedOptions().timeZone : ''
 		const new_id = await db.insertId(`
@@ -85,6 +89,20 @@ const User = {
 			FROM user_uemails e 
 			WHERE e.email = :email
 		`, { email })
+	},
+	getUserIdByPhone: async (db, phone) => {
+		db = db.gets ? await db.get('db') : db
+		return await db.col(`
+			SELECT e.user_id
+			FROM user_uphones e 
+			WHERE e.phone = :phone
+		`, { phone })
+	},
+	getUserByPhone: async (db, email) => {
+		db = db.gets ? await db.get('db') : db
+		const user_id = await User.getUserIdByPhone(db, email)
+		if (!user_id) return false
+		return User.getUserById(db, user_id)
 	},
 	getUserByEmail: async (db, email) => {
 		db = db.gets ? await db.get('db') : db
@@ -160,7 +178,7 @@ const User = {
 			UPDATE
 				user_users
 			SET
-				date_signup = now()			
+				date_signup = now()
 			WHERE
 				user_id = :user_id
 		`, {user_id})
@@ -204,6 +222,46 @@ const User = {
 				user_id = :user_id
 				and ordain = :ordain
 		`, {ordain, user_id})
+	},
+	addEmail: async (db, user_id, email) => {
+		await db.affectedRows(`
+			UPDATE
+				user_uemails
+			SET
+				ordain = ordain + 1
+			WHERE
+				user_id = :user_id
+		`, { user_id })
+		const code_verify = crypto.randomBytes(4).toString('hex').toUpperCase()
+		await db.affectedRows(`
+			INSERT INTO 
+				user_uemails
+			SET
+				user_id = :user_id,
+				email = :email,
+				code_verify = :code_verify,
+				date_verify = now(),
+				date_add = now(),
+				ordain = 1
+		`, {email, code_verify, user_id})
+	},
+	delAllEmail: async (db, user_id) => {
+		return await db.affectedRows(`
+			DELETE FROM 
+				user_uemails
+			WHERE
+				user_id = :user_id
+		`, {user_id})
+	},
+	delEmail: async (db, user_id, ordain) => {
+		return await db.affectedRows(`
+			DELETE FROM 
+				user_uemails
+			WHERE
+				user_id = :user_id
+				and ordain = :ordain
+		`, {ordain, user_id})
 	}
+
 }
 export default User
