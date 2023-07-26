@@ -1,6 +1,6 @@
 import nicked from "/-nicked"
 const tpl = {}
-tpl.css = ['/-float-label/style.css']
+
 tpl.switch = (name, title, action, is, valuetrue, valuefalse) => {
 	return `
 	<div>
