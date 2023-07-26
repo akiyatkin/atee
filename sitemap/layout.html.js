@@ -2,10 +2,10 @@ const sitemap = {}
 export default sitemap
 const csslink = src => `<link rel="stylesheet" href="${src}">`
 sitemap.HEAD = (head, env) => `
-	<title>${head.title??''}</title>
-	<meta name="description" content="${head.description??''}">
-	<meta property="og:image" content="${head.image_src??''}">
-	<link rel="image_src" href="${head.image_src??''}">
+	<title>${head?.title??''}</title>
+	<meta name="description" content="${head?.description??''}">
+	<meta property="og:image" content="${head?.image_src ?? ''}">
+	<link rel="image_src" href="${head?.image_src ?? ''}">
 	<link rel="canonical" href="https://${env.host}${head.canonical??''}"/>
 	<link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
 	${head?.css?.map(csslink).join('') || ''}
