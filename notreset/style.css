@@ -62,7 +62,12 @@ button.transparent:active {
 	-webkit-tap-highlight-color: transparent;
 	box-shadow: none;
 }
-
+button.process,
+.button.process {
+	border-style: dashed;
+	opacity:0.5;
+	cursor: default;
+}
 
 table td, table th {
 	vertical-align: top;
