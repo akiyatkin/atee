@@ -1,6 +1,10 @@
 .float-label {
 	position: relative;
+	display: grid;
+	gap: 0.5em;
+	grid-template-columns: 1fr auto;
 }
+
 .float-label > * {
 	box-sizing: border-box;
 	width:  100%;
@@ -142,30 +146,76 @@
 
 .float-label > .field,
 .float-label > .field ~ label {
-	margin-left:calc(-0.75rem - var(--gauge));
+	/*margin-left:calc(-0.75rem - var(--gauge));
 	margin-right:calc(-0.75rem - var(--gauge));
-	width:calc(100% + 2 * (0.75rem + var(--gauge)));
+	width:calc(100% + 2 * (0.75rem + var(--gauge)));*/
 }
 .float-label > .field:focus {
 	outline: none;
 	border-style:solid;
 	border-color: currentColor;
 }
-.float-label > .field.ready {
-	border-color: green;
+.float-label.success > .field {
+	border-color: var(--success);
 }
-.float-label > .field.process {
-	border-color: var(--blue);
+.float-label.process > .field {
+	border-color: var(--black);
+	border-style: dashed;
 }
-.float-label > .field.error {
-	border-color: red
+.float-label.error > .field {
+	border-color: var(--danger)
+}
+.float-label .status > *:focus-visible {
+	color:black!important;
+}
+.float-label .status > * {
+	
+	display: grid; align-items:center; justify-content: center;
+}
+.float-label .status {
+	--size: 30px;
+	border:solid 1px color-mix(in srgb, currentColor 10%, transparent);
+	border-radius: var(--size);
+	width:var(--size);
+	height:var(--size);
+	display: grid; 
+}
+.float-label .status > *  {
+	grid-row: 1 / 1;
+	grid-column: 1 / 1;
+	transition: none;
+	display: none;
+}
+
+.float-label.error .status .error {
+	display: grid;
+}
+.float-label.process .status .process {
+	display: grid;
+	animation-name: float_label_rotation;
+	animation-duration: 1s;
+	animation-iteration-count: infinite;
+	animation-timing-function: linear;
+}
+.float-label.success .status .success {	
+	display: grid;
+}
+.float-label.submit .status .submit {	
+	display: grid;
 }
 
 .float-label [disabled] {
 	opacity:0.5;
 	cursor: default;
 }
-
+@keyframes float_label_rotation {
+	0% {
+		transform:rotate(0deg);
+	}
+	100% {
+		transform:rotate(360deg);
+	}
+}
 
 .field, input, select, textarea {
 	border: 1px solid var(--border-color);

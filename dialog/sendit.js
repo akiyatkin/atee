@@ -5,19 +5,14 @@ const sendit = async (div, action, post) => {
 	div.counter++
 	div.title = "В процессе ..."
 	div.classList.add('process')
-	div.classList.remove('ready')
-	div.classList.remove('error')
+	div.classList.remove('success', 'error', 'submit')
 	const ans = await send(action, post)
 	div.title = ans.msg || "Сохранено"
 	setTimeout(() => {
 		div.counter--
 		if (div.counter) return
 		div.classList.remove('process')
-		div.classList.add(ans.result ? 'ready' : 'error') 
-		setTimeout(() => {
-			if (div.counter) return
-			//div.classList.remove('ready')
-		}, 2000)
+		div.classList.add(ans.result ? 'success' : 'error')
 	}, 200)
 	return ans
 }

@@ -1,7 +1,8 @@
 :root {
 	--black: #444;
-	--primary: #0b7ace;
-	--success: #e74405;
+	--primary: darkblue;
+	--success: darkgreen;
+	--danger: brown;
 	--border-color: gray;
 	--border: solid 1px var(--border-color);
 	--radius: 5px;
