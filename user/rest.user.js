@@ -35,7 +35,7 @@ rest.addVariable('user#verify', async (view) => {
 
 rest.addVariable('user#signup', async (view) => {	
 	const { user } = await view.gets(['user#required'])
-	if (!user.date_signup) return view.err('Требуется регистрация')
+	if (!user.email) return view.err('Требуется регистрация')
 	return user
 })
 rest.addVariable('user#required', async (view) => {

@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `user_uemails` (
 
 CREATE TABLE IF NOT EXISTS `user_uphones` (
   `user_id` MEDIUMINT unsigned NOT NULL,
-  `phone` BIGINT NOT NULL DEFAULT '' COMMENT 'Возможность отправить смс, 7 ведующая без +',
+  `phone` BIGINT NULL DEFAULT NULL COMMENT 'Возможность отправить смс, 7 ведующая без +',
   `ordain` tinyint NOT NULL DEFAULT 1,
   `code_verify` varchar(255) NOT NULL COMMENT 'Код для смены скольк-то действует от date_verify',
   `date_verify` DATETIME NOT NULL COMMENT 'Дата, когда создан и отправлен код верификации',
