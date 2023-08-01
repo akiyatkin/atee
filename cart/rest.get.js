@@ -77,7 +77,7 @@ rest.addResponse('get-myorders', async view => {
 })
 
 
-const formatter = new Intl.DateTimeFormat('ru', { month: 'long' })
+const formatter = new Intl.DateTimeFormat("ru-RU", { month: 'long' })
 rest.addResponse('get-tocheck', async view => {
 	const { active_id: order_id } = await view.gets(['active_id#required'])
 	const data = await Cart.getMailData(view, 'tocheck', order_id)
