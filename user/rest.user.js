@@ -28,24 +28,24 @@ rest.addVariable('user', async (view, src) => {
 // })
 
 rest.addVariable('user#verify', async (view) => {	
-	const { user } = await view.gets(['user#required'])
+	const user = await view.get('user#required')
 	if (!user.date_verified) return view.err('Требуется поддвердить аккаунт')
 	return user
 })
 
 rest.addVariable('user#signup', async (view) => {	
-	const { user } = await view.gets(['user#required'])
+	const user = await view.get('user#required')
 	if (!user.email) return view.err('Требуется регистрация')
 	return user
 })
 rest.addVariable('user#required', async (view) => {
-	const { user } = await view.gets(['user'])
+	const user = await view.get('user')
 	if (!user) return view.err('Пользователь не найден')
 	return user
 })
 
 rest.addVariable('user_id', async (view, src) => {
-	const { user } = await view.gets(['user'])	
+	const user = await view.get('user')
 	return user?.user_id
 })
 // rest.addVariable('user_id#create', async (view) => {
@@ -54,25 +54,25 @@ rest.addVariable('user_id', async (view, src) => {
 // })
 
 rest.addVariable('user_id#verify', async (view) => {
-	const { user } = await view.gets(['user#verify'])
+	const user = await view.get('user#verify')
 	return user.user_id
 })
 rest.addVariable('user_id#signup', async (view) => {
-	const { user } = await view.gets(['user#signup'])
+	const user = await view.get('user#signup')
 	return user.user_id
 })
 rest.addVariable('user_id#required', async (view) => {
-	const { user } = await view.gets(['user#required'])
+	const user = await view.get('user#required')
 	return user.user_id
 })
 
 
 rest.addVariable('manager', async (view) => {
-	const { user } = await view.gets(['user'])
+	const user = await view.get('user')
 	return user.manager
 })
 rest.addVariable('manager#required', async (view) => {
-	const { manager } = await view.gets(['manager'])
+	const manager = await view.get('manager')
 	if (!manager) return view.err('Требуются права менеджера', 401)
 	return manager
 })
