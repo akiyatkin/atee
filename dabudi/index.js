@@ -84,14 +84,16 @@ export const Dabudi = {
 			rows_body.forEach(row => row.splice(i, 1))
 		}
 		
-		const head_nicks = base ? head_titles.map(h => base.onicked(h)) : head_titles.map(h => nicked(h))
-		
 		rows_body = rows_body.map(row => {
 			if (row.length > head_titles.length) {
 				return row.splice(0, head_titles.length)
 			}
 			return row
 		})
+
+		if (!base) return {head_titles, rows_body}
+		
+		const head_nicks = base ? head_titles.map(h => base.onicked(h)) : head_titles.map(h => nicked(h))
 		return {heads: {head_nicks, head_titles}, rows_body}
 	},
 	splitGroups: (rows_body, heads, root_title, index_group, base, groups) => {
