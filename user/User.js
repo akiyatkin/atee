@@ -123,7 +123,6 @@ const User = {
 		const user = await db.fetch(`
 			SELECT 
 				u.user_id, 
-				u.name, 
 				e.email,
 				p.phone,
 				u.token,
