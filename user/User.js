@@ -126,7 +126,6 @@ const User = {
 				e.email,
 				p.phone,
 				u.token,
-				u.sername, 
 				UNIX_TIMESTAMP(u.date_token) as date_token,
 				UNIX_TIMESTAMP(ifnull(e.date_verified, p.date_verified)) as date_verified,
 				UNIX_TIMESTAMP(u.date_active) as date_active,
