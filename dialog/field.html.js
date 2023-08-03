@@ -1,16 +1,18 @@
 import nicked from "/-nicked"
 const field = {}
 
-field.switch = (name, title, action, is, valuetrue, valuefalse) => {
+field.switch = (name, title, action, status, valuedef, values) => {
 	return `
 	<div>
-		<div style="display: inline-block; cursor:pointer; padding:calc(.75rem / 3) 0">${title}: <span class="a">${is ? valuetrue : valuefalse}</span></div>
+		<div style="display: inline-block; cursor:pointer; padding:calc(.75rem / 3) 0">${title}: <span class="a">${status ? values[status] : valuedef}</span></div>
 		<script>
 			(btn => {
 				btn.addEventListener('click', async () => {
 					const send = await import('/-dialog/send.js').then(r => r.default)
 					const ans = await send('${action}')
-					btn.querySelector('.a').innerHTML = ans['${name}'] ? "${valuetrue}" : "${valuefalse}"
+					const status = ans['${name}']
+					const values = ${JSON.stringify(values)}
+					btn.querySelector('.a').innerHTML = status ? values[status] : "${valuedef}" 
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>
