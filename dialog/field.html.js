@@ -111,7 +111,16 @@ field.textok = (name, title, action, value) => {
 		</div>
 	`
 }
-
+field.textdisabled = (name, title, action, value) => {
+	const id = 'inputs-' + nicked(title)
+	return `
+		<div class="float-label success">
+			<input disabled name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
+			<label for="${id}">${title}</label>
+			${status()}
+		</div>
+	`
+}
 
 
 const status = () => `

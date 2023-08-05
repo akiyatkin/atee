@@ -190,7 +190,7 @@ export const router = async (search, debug) => {
 	if (src && name) { //найден файл
 		const ext = getExt(src)
 		if (~conf['403']['indexOf'].indexOf(name)) secure = true
-	    if (conf['403']['search'].some(pattern => ~name.search(pattern))) secure = true
+	   	if (conf['403']['search'].some(pattern => ~('/'+name).search(pattern))) secure = true
 
 		if (ext == 'json') { //json файлы возвращаются объектом, //с хранением в оперативной памяти
 			rest = async () => {

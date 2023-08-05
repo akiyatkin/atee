@@ -182,7 +182,7 @@ const getDiff = (players, nlayers, reloaddivs, reloadtss, globals, layers = []) 
 			&& (!player.global || !globals.some(g => ~player.global.indexOf(g)))
 		})
 		if (player) {
-			getDiff(player.layers, nlayer.layers, reloaddivs, reloadtss, globals, layers)
+			getDiff(player.layers || [], nlayer.layers, reloaddivs, reloadtss, globals, layers)
 		} else {
 			layers.push(nlayer) //Слой не найден, его надо показать
 		}
