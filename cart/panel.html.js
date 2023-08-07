@@ -720,5 +720,5 @@ tpl.showPos = (mod, env) => `
 	</div>
 `
 tpl.showImage = mod => `
-	<img alt="" width="80" height="70" src="/-imager/webp?fit=contain&h=100&w=100&src=${mod.images[0]}">
+	<img alt="" width="80" height="70" src="/-imager/webp?fit=contain&h=100&w=100&src=${encodeURIComponent(mod.images[0])}">
 `
