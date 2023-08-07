@@ -6,7 +6,7 @@ sitemap.HEAD = (head, env) => `
 	<meta name="description" content="${head?.description??''}">
 	<meta property="og:image" content="${head?.image_src ?? ''}">
 	<link rel="image_src" href="${head?.image_src ?? ''}">
-	<link rel="canonical" href="https://${env.host}${head.canonical??''}"/>
+	<link rel="canonical" href="https://${env.host}${head.canonical??''}">
 	<link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
 	${head?.css?.map(csslink).join('') || ''}
 	<script type="module">//Независимая обработка metatags и sitemap

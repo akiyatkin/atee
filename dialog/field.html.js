@@ -33,6 +33,11 @@ field.area = (name, title, action, value) => {
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
 						const ans = await sendit(float, '${action}', {${name}: field.innerHTML})
 					})
+					const status = float.querySelector('.status')
+					status.addEventListener('click', async () => {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.alert(float.title || "Сохранено!")
+					})
 				})(document.currentScript.parentElement)
 			</script>
 		</div>
@@ -53,6 +58,11 @@ field.text = (name, title, action, value) => {
 					field.addEventListener('input', async () => {
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
 						const ans = await sendit(float, '${action}', {${name}: field.value})
+					})
+					const status = float.querySelector('.status')
+					status.addEventListener('click', async () => {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.alert(float.title || "Сохранено!")
 					})
 				})(document.currentScript.parentElement)
 			</script>

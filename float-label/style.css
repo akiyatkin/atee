@@ -173,6 +173,7 @@
 	display: grid; align-items:center; justify-content: center;
 }
 .float-label .status {
+	cursor: pointer;
 	--size: 30px;
 	border:solid 1px color-mix(in srgb, currentColor 10%, transparent);
 	border-radius: var(--size);
