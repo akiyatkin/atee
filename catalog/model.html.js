@@ -205,7 +205,7 @@ tpl.showitems = (data, env, mod) => `
 	${mod.items.map(tpl.showItemDescription).join('')}
 `
 tpl.showItemDescription = item => item['Описание'] ? `
-	<h2>${item.more.Позиция || ''} ${item.more.Название || item.more.Арт || ''}</h2>
+	<h2>${item.more.Позиция || item.more.Название || item.more.Арт || ''}</h2>
 	<p>${item.Описание}</p>
 ` : ''
 tpl.itemhead = (pr) => `<th>${pr.prop_title}</th>`
