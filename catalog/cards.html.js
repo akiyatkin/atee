@@ -139,6 +139,11 @@ cards.prop = {
 		`<a href="${links.root}/${links.addm(data)}more.${pr.prop_nick}::.${nicked(val)}=1">${val}</a>`
 	),
 	just: (data, env, mod, pr, title, val) => `
+		<div style="margin: 0.25rem 0">
+			${val}
+		</div>
+	`,
+	justold: (data, env, mod, pr, title, val) => `
 		<div style="margin: 0.25rem 0; display: flex">
 			<div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
 				${val}
