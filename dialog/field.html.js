@@ -4,7 +4,7 @@ const field = {}
 field.switch = (name, title, action, status, valuedef, values) => {
 	return `
 	<div>
-		<div style="display: inline-block; cursor:pointer; padding:calc(.75rem / 3) 0">${title}: <span class="a">${status ? values[status] : valuedef}</span></div>
+		<button class="transparent" style="display: inline-block; cursor:pointer; padding:calc(.75rem / 3) 0">${title}: <span class="a">${status ? values[status] : valuedef}</span></button>
 		<script>
 			(btn => {
 				btn.addEventListener('click', async () => {
