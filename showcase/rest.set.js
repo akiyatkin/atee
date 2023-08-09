@@ -433,7 +433,7 @@ rest.addResponse('set-load', async view => { //Для ручного перех�
 	await view.gets(['admin', 'start']) //Нужно подменять в проекте если требуется разрешить неавторизованному пользователю
 	const { upload } = await view.gets(['upload'])
 	const res = await upload.applyall()
-	const Location = '/catalog?showcase=' + encodeURIComponent(res.msg)
+	const Location = '/catalog?alert=' + encodeURIComponent(res.msg)
 	view.headers = { Location }
 	return view.ret('', 301)
 })

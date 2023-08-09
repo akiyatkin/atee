@@ -126,9 +126,17 @@
 
 
 
-
+.float-field-help {
+	--gauge: 1px;
+	--size: 30px;
+	margin-left:calc(0.75rem + var(--gauge));
+	margin-right:calc(var(--gauge) + var(--size) + 0.5em);
+	color: gray; 
+	font-size: 12px
+}
 .float-label {
 	--gauge: 1px;
+	--size: 30px;
 }
 .float-label > .field {
 	cursor: default;
@@ -143,6 +151,8 @@
 .float-label > .field[contenteditable] {
 	min-height: 4rem;
 }
+
+
 
 .float-label > .field,
 .float-label > .field ~ label {
@@ -174,7 +184,6 @@
 }
 .float-label .status {
 	cursor: pointer;
-	--size: 30px;
 	border:solid 1px color-mix(in srgb, currentColor 10%, transparent);
 	border-radius: var(--size);
 	width:var(--size);

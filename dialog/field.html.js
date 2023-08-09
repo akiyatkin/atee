@@ -70,15 +70,15 @@ field.text = (name, title, action, value) => {
 	`
 }
 field.button = (title, action, obj = {}) => {
-	const {go, reloaddiv, id, ask} = obj
+	const {go, reloaddiv, id } = obj
 	return `
 		<button>${title}</button>
 		<script>
 			(btn => {
 				btn.addEventListener('click', async () => {
 					if (btn.classList.contains('process')) return
-					const ask = "${ask ? ask : ''}"
-					if (ask && !confirm(ask)) return
+					const ask = "${obj.confirm || ''}"
+					if (ask && !window.confirm(ask)) return
 					const id = "${id ? id : ''}"
 					const sendit = await import('/-dialog/sendit.js').then(r => r.default)
 					const ans = await sendit(btn, '${action}')
