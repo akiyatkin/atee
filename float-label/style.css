@@ -22,6 +22,9 @@
     line-height: inherit;
     margin-top: 0; /*textarea has top margin*/
 }
+.float-label > .field {
+	background-color:white;
+}
 
 .float-label > .field ~ label,
 .float-label > textarea ~ label,
