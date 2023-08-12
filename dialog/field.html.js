@@ -1,7 +1,7 @@
 import nicked from "/-nicked"
 const field = {}
 
-field.switch = (name, title, action, status, valuedef, values) => {
+field.switch = (name, title, action, status, valuedef, values) => { //depricated
 	return `
 	<div>
 		<button class="transparent" style="display: inline-block; cursor:pointer; padding:calc(.75rem / 3) 0">${title}: <span class="a">${status ? values[status] : valuedef}</span></button>
@@ -18,6 +18,23 @@ field.switch = (name, title, action, status, valuedef, values) => {
 		</script>
 	</div>`
 
+}
+field.toggle = (name, title, action, value, values, valuedef = '') => {
+	return `
+	<div>
+		<button class="transparent" style="display: inline-block; cursor:pointer; padding:calc(.75rem / 3) 0">${title ? title + ': ' : ''} <span class="a">${value ? values[value] : valuedef}</span></button>
+		<script>
+			(btn => {
+				btn.addEventListener('click', async () => {
+					const send = await import('/-dialog/send.js').then(r => r.default)
+					const ans = await send('${action}')
+					const status = ans['${name}']
+					const values = ${JSON.stringify(values)}
+					btn.querySelector('.a').innerHTML = status ? values[status] : "${valuedef}" 
+				})
+			})(document.currentScript.previousElementSibling)
+		</script>
+	</div>`
 }
 field.area = (name, title, action, value) => {
 	const id = 'inputs-' + nicked(title)
@@ -49,7 +66,7 @@ field.text = (name, title, action, value) => {
 	const id = 'inputs-' + nicked(title)
 	return `
 		<div class="float-label success">
-			<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
+			<input name="${name}" type="text" id="${id}" value="${quote(value)}" placeholder="${title}" class="field">
 			<label for="${id}">${title}</label>
 			${status()}
 			<script>
@@ -99,7 +116,7 @@ field.textok = (name, title, action, value) => {
 	const id = 'inputs-' + nicked(title)
 	return `
 		<div class="float-label success">
-			<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
+			<input name="${name}" type="text" id="${id}" value="${quote(value)}" placeholder="${title}" class="field">
 			<label for="${id}">${title}</label>
 			${status()}
 			<script>
@@ -125,13 +142,14 @@ field.textdisabled = (name, title, action, value) => {
 	const id = 'inputs-' + nicked(title)
 	return `
 		<div class="float-label success">
-			<input disabled name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
+			<input disabled name="${name}" type="text" id="${id}" value="${quote(value)}" placeholder="${title}" class="field">
 			<label for="${id}">${title}</label>
 			${status()}
 		</div>
 	`
 }
-
+//const quote = value => String(value).replaceAll(/"/g, '&quot;')
+const quote = value => value
 
 const status = () => `
 	<div class="status">

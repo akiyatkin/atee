@@ -9,19 +9,21 @@ rest.addFunction('checkbox', (view, n) => !!n)
 rest.addFunction('isset', (view, v) => v !== null)
 rest.addFunction('int', (view, n) => Number(n) || 0)
 rest.addFunction('int#required', (view, n, prop) => {
-    n = Number(n) || 0
-    if (!n) return view.err('Требуется ' + prop, 422)
-    return n
+	n = Number(n) || 0
+	if (!n) return view.err('Требуется ' + prop, 422)
+	return n
 })
 rest.addFunction('array', (view, n) => n ? n.split(',') : [])
 rest.addFunction('nicked', (view, v) => nicked(v))
-rest.addFunction('escape', ['string'], (view, text) => text.replace(/[&<>]/g, tag => ({
-    '"': '&quot',
-    "'": '&apos;',
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;'
-}[tag])).trim())
+rest.addFunction('escape', (view, text) => {
+	return text.replaceAll(/["'&<>]/g, tag => ({
+		'"': '&quot',
+		"'": '&apos;',
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;'
+	})[tag]).trim()
+})
 
 
 
