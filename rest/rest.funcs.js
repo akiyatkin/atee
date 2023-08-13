@@ -16,12 +16,14 @@ rest.addFunction('int#required', (view, n, prop) => {
 rest.addFunction('array', (view, n) => n ? n.split(',') : [])
 rest.addFunction('nicked', (view, v) => nicked(v))
 rest.addFunction('escape', (view, text) => {
-	return text.replaceAll(/["'&<>]/g, tag => ({
-		'"': '&quot',
-		"'": '&apos;',
-		'&': '&amp;',
-		'<': '&lt;',
-		'>': '&gt;'
+	return text.replaceAll(/[\n\r"'&<>]/g, tag => ({
+		'"': '&quot', //Чтобы вставлять в атрибут value="" и защита от sql инекции
+		"'": '&apos;', //Чтобы вставлять в атрибут value="" и защита от sql инекции
+		"\n": '&#10;', //Чтобы вставлять в атрибут value=""
+		"\r": '&#13;', //Чтобы вставлять в атрибут value=""
+		'&': '&amp;', //Чтобы вставлять в запрос?
+		'<': '&lt;', //защита от интерпретации тегов и скриптов
+		'>': '&gt;'//защита от интерпретации тегов и скриптов
 	})[tag]).trim()
 })
 

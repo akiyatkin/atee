@@ -66,7 +66,7 @@ field.text = (name, title, action, value) => {
 	const id = 'inputs-' + nicked(title)
 	return `
 		<div class="float-label success">
-			<input name="${name}" type="text" id="${id}" value="${quote(value)}" placeholder="${title}" class="field">
+			<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
 			<label for="${id}">${title}</label>
 			${status()}
 			<script>
@@ -116,7 +116,7 @@ field.textok = (name, title, action, value) => {
 	const id = 'inputs-' + nicked(title)
 	return `
 		<div class="float-label success">
-			<input name="${name}" type="text" id="${id}" value="${quote(value)}" placeholder="${title}" class="field">
+			<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
 			<label for="${id}">${title}</label>
 			${status()}
 			<script>
@@ -142,14 +142,12 @@ field.textdisabled = (name, title, action, value) => {
 	const id = 'inputs-' + nicked(title)
 	return `
 		<div class="float-label success">
-			<input disabled name="${name}" type="text" id="${id}" value="${quote(value)}" placeholder="${title}" class="field">
+			<input disabled name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
 			<label for="${id}">${title}</label>
 			${status()}
 		</div>
 	`
 }
-//const quote = value => String(value).replaceAll(/"/g, '&quot;')
-const quote = value => value
 
 const status = () => `
 	<div class="status">
