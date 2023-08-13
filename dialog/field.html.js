@@ -1,28 +1,11 @@
 import nicked from "/-nicked"
 const field = {}
 
-field.switch = (name, title, action, status, valuedef, values) => { //depricated
-	return `
-	<div>
-		<button class="transparent" style="display: inline-block; cursor:pointer; padding:calc(.75rem / 3) 0">${title}: <span class="a">${status ? values[status] : valuedef}</span></button>
-		<script>
-			(btn => {
-				btn.addEventListener('click', async () => {
-					const send = await import('/-dialog/send.js').then(r => r.default)
-					const ans = await send('${action}')
-					const status = ans['${name}']
-					const values = ${JSON.stringify(values)}
-					btn.querySelector('.a').innerHTML = status ? values[status] : "${valuedef}" 
-				})
-			})(document.currentScript.previousElementSibling)
-		</script>
-	</div>`
 
-}
-field.toggle = (name, title, action, value, values, valuedef = '') => {
+field.toggle = (name, title, action, value, values) => {
 	return `
 	<div>
-		<button class="transparent" style="display: inline-block; cursor:pointer; padding:calc(.75rem / 3) 0">${title ? title + ': ' : ''} <span class="a">${value ? values[value] : valuedef}</span></button>
+		<button class="transparent" style="display: inline-block; cursor:pointer; padding:calc(.75rem / 3) 0">${title ? title + ': ' : ''} <span class="a">${values[value || ""]}</span></button>
 		<script>
 			(btn => {
 				btn.addEventListener('click', async () => {
@@ -30,11 +13,37 @@ field.toggle = (name, title, action, value, values, valuedef = '') => {
 					const ans = await send('${action}')
 					const status = ans['${name}']
 					const values = ${JSON.stringify(values)}
-					btn.querySelector('.a').innerHTML = status ? values[status] : "${valuedef}" 
+					btn.querySelector('.a').innerHTML = values[status || ''] 
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>
 	</div>`
+}
+field.button = (title, action, obj = {}) => {
+	const {go, reloaddiv, goid } = obj
+	return `
+		<button>${title}</button>
+		<script>
+			(btn => {
+				btn.addEventListener('click', async () => {
+					if (btn.classList.contains('process')) return
+					const ask = "${obj.confirm || ''}"
+					if (ask && !window.confirm(ask)) return
+					const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+					const ans = await sendit(btn, '${action}')
+					if (ans.msg) {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.alert(ans.msg)
+						btn.innerHTML = ans.msg
+					}
+					const Client = await window.getClient()
+					const goid = "${goid ? goid : ''}"
+					if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
+					if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
+				})
+			})(document.currentScript.previousElementSibling)
+		</script>
+	`
 }
 field.area = (name, title, action, value) => {
 	const id = 'inputs-' + nicked(title)
@@ -60,8 +69,6 @@ field.area = (name, title, action, value) => {
 		</div>
 	`
 }
-
-
 field.text = (name, title, action, value) => {
 	const id = 'inputs-' + nicked(title)
 	return `
@@ -86,34 +93,10 @@ field.text = (name, title, action, value) => {
 		</div>
 	`
 }
-field.button = (title, action, obj = {}) => {
-	const {go, reloaddiv, id } = obj
-	return `
-		<button>${title}</button>
-		<script>
-			(btn => {
-				btn.addEventListener('click', async () => {
-					if (btn.classList.contains('process')) return
-					const ask = "${obj.confirm || ''}"
-					if (ask && !window.confirm(ask)) return
-					const id = "${id ? id : ''}"
-					const sendit = await import('/-dialog/sendit.js').then(r => r.default)
-					const ans = await sendit(btn, '${action}')
-					if (ans.msg) {
-						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-						Dialog.alert(ans.msg)
-						btn.innerHTML = ans.msg
-					}
-					const Client = await window.getClient()
-					if (${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
-					if (ans.result && ${!!go}) Client.go('${go}' + (id ? ans[id] : ''))
-				})
-			})(document.currentScript.previousElementSibling)
-		</script>
-	`
-}
-field.textok = (name, title, action, value) => {
+
+field.textok = (name, title, action, value, obj = {}) => {
 	const id = 'inputs-' + nicked(title)
+	const {go, reloaddiv, goid } = obj
 	return `
 		<div class="float-label success">
 			<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
@@ -129,9 +112,22 @@ field.textok = (name, title, action, value) => {
 						float.title = 'Подтвердите введённые данные'
 					})
 					status.addEventListener('click', async () => {
-						if (!float.classList.contains('submit')) return
-						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
-						const ans = await sendit(float, '${action}', {${name}: field.value})
+						if (float.classList.contains('submit')) {
+							const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+							const ans = await sendit(float, '${action}', {${name}: field.value})
+							if (ans.msg) {
+								const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+								Dialog.alert(ans.msg)
+							}
+							const Client = await window.getClient()
+							const goid = "${goid ? goid : ''}"
+							if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
+							if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
+						} else {
+							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+							Dialog.alert(float.title || "Сохранено")
+							
+						}
 					})
 				})(document.currentScript.parentElement)
 			</script>
