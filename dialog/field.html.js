@@ -46,7 +46,7 @@ field.button = (title, action, obj = {}) => {
 	`
 }
 field.area = (name, title, action, value) => {
-	const id = 'inputs-' + nicked(title)
+	const id = 'field-' + nicked(title)
 	return `
 		<div class="float-label success">
 			<div name="${name}" contenteditable id="${id}" class="field">${value}</div>
@@ -70,7 +70,7 @@ field.area = (name, title, action, value) => {
 	`
 }
 field.text = (name, title, action, value) => {
-	const id = 'inputs-' + nicked(title)
+	const id = 'field-' + nicked(title)
 	return `
 		<div class="float-label success">
 			<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
@@ -95,10 +95,10 @@ field.text = (name, title, action, value) => {
 }
 
 field.textok = (name, title, action, value, obj = {}) => {
-	const id = 'inputs-' + nicked(title)
+	const id = 'field-' + nicked(title)
 	const {go, reloaddiv, goid } = obj
 	return `
-		<div class="float-label success">
+		<div class="float-label ${value ? 'success' : 'submit'}">
 			<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
 			<label for="${id}">${title}</label>
 			${status()}
@@ -109,7 +109,7 @@ field.textok = (name, title, action, value, obj = {}) => {
 					field.addEventListener('input', async () => {
 						float.classList.remove('error','process','success')
 						float.classList.add('submit')
-						float.title = 'Подтвердите введённые данные'
+						float.title = 'Подтвердить введённые данные'
 					})
 					status.addEventListener('click', async () => {
 						if (float.classList.contains('submit')) {
@@ -135,7 +135,7 @@ field.textok = (name, title, action, value, obj = {}) => {
 	`
 }
 field.textdisabled = (name, title, action, value) => {
-	const id = 'inputs-' + nicked(title)
+	const id = 'field-' + nicked(title)
 	return `
 		<div class="float-label success">
 			<input disabled name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
@@ -144,7 +144,21 @@ field.textdisabled = (name, title, action, value) => {
 		</div>
 	`
 }
-
+field.select = (title = '') => {
+	const id = 'field-' + nicked(title)
+	return `
+		<div class="float-label success">
+			<select id="${id}" class="field">
+				<option value="1">Выберите аудитора</option>
+				<option value="1">Киткин Антон</option>
+				<option value="2">Иванов Иван</option>
+				<option value="3">Александр Иванович</option>
+			</select>
+			<label for="${id}">Аудитор</label>
+			${status()}
+		</div>
+	`
+}
 const status = () => `
 	<div class="status">
 		<button class="submit transparent" style="color: brown; font-size: 16px; font-weight: bold; padding:0;">

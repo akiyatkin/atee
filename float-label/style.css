@@ -22,6 +22,10 @@
     line-height: inherit;
     margin-top: 0; /*textarea has top margin*/
 }
+.float-label > select.field {
+	padding: .75rem .5rem;
+}
+
 .float-label > .field {
 	background-color:white;
 }
@@ -150,6 +154,10 @@
 	
 	font-style: italic;
 	font-family: monospace;
+}
+.float-label > select.field {
+	font-family: inherit;
+	font-style: normal;
 }
 .float-label > .field[contenteditable] {
 	min-height: 4rem;
