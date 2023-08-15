@@ -2,7 +2,6 @@
 	position: relative;
 	display: grid;
 	gap: 0.5em;
-	grid-template-columns: 1fr auto;
 }
 
 .float-label > * {
@@ -175,6 +174,12 @@
 	outline: none;
 	border-style:solid;
 	border-color: currentColor;
+}
+.float-label.success,
+.float-label.error,
+.float-label.process,
+.float-label.submit {
+	grid-template-columns: 1fr auto;
 }
 .float-label.success > .field {
 	border-color: var(--success);

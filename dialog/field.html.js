@@ -51,7 +51,7 @@ field.area = (name, title, action, value) => {
 		<div class="float-label success">
 			<div name="${name}" contenteditable id="${id}" class="field">${value}</div>
 			<label for="${id}">${title}</label>
-			${status()}
+			${showStatus()}
 			<script>
 				(float => {
 					const field = float.querySelector('.field')					
@@ -75,7 +75,7 @@ field.text = (name, title, action, value) => {
 		<div class="float-label success">
 			<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
 			<label for="${id}">${title}</label>
-			${status()}
+			${showStatus()}
 			<script>
 				(float => {
 					const field = float.querySelector('.field')					
@@ -101,7 +101,7 @@ field.textok = (name, title, action, value, obj = {}) => {
 		<div class="float-label ${value ? 'success' : 'submit'}">
 			<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
 			<label for="${id}">${title}</label>
-			${status()}
+			${showStatus()}
 			<script>
 				(float => {
 					const field = float.querySelector('.field')
@@ -140,26 +140,72 @@ field.textdisabled = (name, title, action, value) => {
 		<div class="float-label success">
 			<input disabled name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
 			<label for="${id}">${title}</label>
-			${status()}
+			${showStatus()}
 		</div>
 	`
 }
-field.select = (title = '') => {
-	const id = 'field-' + nicked(title)
+const showOption = (obj, vname, tname, value, def) => `<option ${value == obj[vname] ? 'selected ' : ''}value="${obj[vname]}">${obj[tname] || def}</option>`
+const showEmpty = (empty) => `<option value="empty">${empty.title}</option>`
+field.select = ({label, status, empty, fill, create}) => {
+	const id = 'field-' + nicked(label)
 	return `
-		<div class="float-label success">
+		<div class="float-label ${status || ''}">
 			<select id="${id}" class="field">
-				<option value="1">Выберите аудитора</option>
-				<option value="1">Киткин Антон</option>
-				<option value="2">Иванов Иван</option>
-				<option value="3">Александр Иванович</option>
+				${empty ? showEmpty(empty) : ''}
+				${fill.options.map(obj => showOption(obj, fill.vname, fill.tname, fill.selected?.[fill.vname], fill.def || ''))}
+				${!create || (create.action && fill.options.some(obj => !obj[fill.tname])) ? '' : '<optgroup label="------------"></optgroup><option value="create">' + create.title + '</option>'}
 			</select>
-			<label for="${id}">Аудитор</label>
-			${status()}
+			<label for="${id}">${label}</label>
+			${status ? showStatus() : ''}
 		</div>
+		<script>
+			(float => {
+				const select = float.querySelector('.field')
+				const status = float.querySelector('.status')
+				const makeaction = async (opt, value = '') => {
+					if (opt.action) {
+						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+
+						const ans = await sendit(float, opt.action, value ? {[opt.prop]: value} : false)
+						if (ans.msg) {
+							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+							Dialog.alert(ans.msg)
+						}
+						if (ans.result && opt.go) {
+							const Client = await window.getClient()
+							return Client.go(opt.go + (opt.goid ? ans[opt.goid] : ''))
+						}
+					} else if (opt.go) {
+						const Client = await window.getClient()
+						return Client.go(opt.go + value)
+					}
+				}
+				select.addEventListener('input', async () => {
+					const i = select.options.selectedIndex
+					const value = select.options[i].value
+					select.disabled = true
+					if (value == 'empty') {
+						const opt = ${JSON.stringify(empty)}
+						await makeaction(opt)
+					} else if (value == 'create') {
+						const opt = ${JSON.stringify(create)}
+						await makeaction(opt)
+					} else {
+						const opt = ${JSON.stringify(fill)}
+						await makeaction(opt, value)
+					}
+					select.disabled = false
+				})
+
+				if (status) status.addEventListener('click', async () => {
+					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+					Dialog.alert(float.title || "Сохранено!")
+				})
+			})(document.currentScript.previousElementSibling)
+		</script>
 	`
 }
-const status = () => `
+const showStatus = () => `
 	<div class="status">
 		<button class="submit transparent" style="color: brown; font-size: 16px; font-weight: bold; padding:0;">
 			OK
