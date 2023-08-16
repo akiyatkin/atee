@@ -265,7 +265,7 @@ tpl.ORDER = (data, env) => tpl.isShowPanel(data) ? `
 <!-- position: sticky; top: 0; -->
 	<div class="padding" style="">
 		<style>
-			${env.scope} .field {
+			${env.scope} .formfield {
 				display: grid; 
 				grid-template-columns: 1fr max-content; 
 				align-items: center;
@@ -336,17 +336,17 @@ const showEmpty = (data, env) => `
 tpl.showForm = (data, env) => `
 		
 		<form data-goal="cart" action="/-cart/set-submit?partner=${env.theme.partner || ''}" style="clear:both; border-radius:var(--radius, 10px); display: grid; gap:1rem; ">
-			<div class="float-label icon name field">
+			<div class="float-label icon name formfield">
 				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
 				<label for="${env.sid}name">Получатель (ФИО)</label>
 				${data.order.status == 'wait' ? tpl.svgres('required', data.order.name) : ''}
 			</div>
-			<div class="float-label icon phone field">
+			<div class="float-label icon phone formfield">
 				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="contacts_phone" name="phone" type="tel" placeholder="Телефон" value="${data.order.phone || ''}">
 				<label for="contacts_phone">Телефон</label>
 				${data.order.status == 'wait' ? tpl.svgres('required', data.order.phone) : ''}
 			</div>
-			<div class="float-label icon mail field">
+			<div class="float-label icon mail formfield">
 				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}email" name="email" type="email" placeholder="Email" value="${data.order.email || ''}">
 				<label for="${env.sid}email">Email</label>
 				${data.order.status == 'wait' ? tpl.svgres('required', data.order.email) : ''}
@@ -357,7 +357,7 @@ tpl.showForm = (data, env) => `
 			
 			${data.order.partner ? showPartner(data, env) : '' }
 			
-			<div class="float-label field">
+			<div class="float-label formfield">
 				<textarea ${data.order.status == 'wait' ? '' : 'disabled'} placeholder="Комментарий" id="${env.sid}text" 
 					name="commentuser" style="width:100%; box-sizing: border-box; min-height:130px">${data.order.commentuser || ''}</textarea>
 				<label for="${env.sid}text">Комментарий к заказу</label>
@@ -374,7 +374,7 @@ tpl.formMessage = (data, env) => `
 	</div>
 `
 tpl.showAddress = (data, env) => `
-	<div class="float-label icon org field">
+	<div class="float-label icon org formfield">
 		<input ${data.order.status == 'wait' ? '' : 'disabled'} id="${env.sid}address" name="address" type="text" placeholder="Полный адрес доставки" value="${data.order.address || ''}">
 		<label for="${env.sid}address">Город и адрес доставки</label>
 		${data.order.status == 'wait' ? tpl.svgres('optional', data.order.address) : ''}
@@ -429,7 +429,7 @@ const showSubmit = (data, env) => `
 	<div style="max-width: 500px;">
 		${checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на усфловиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}
 	</div>
-	<div class="field submit">
+	<div class="formfield submit">
 		<div style="display:flex; justify-content: space-between; align-items: center;">
 			<div>
 				
@@ -477,7 +477,7 @@ const showSubmit = (data, env) => `
 				else setres(res, ans.result ? 'success' : 'error', ans.msg)
 				return ans
 			}
-			for (const field of form.querySelectorAll('.field')) {
+			for (const field of form.querySelectorAll('.formfield')) {
 				const res = field.querySelector('.res')
 				if (!res) continue
 				let input = field.querySelector('input')
@@ -533,7 +533,7 @@ const showSubmit = (data, env) => `
 			})
 			const btnclear = form.querySelector('.clear')
 			btnclear.addEventListener('click', () => {
-				for (const field of form.querySelectorAll('.field')) {
+				for (const field of form.querySelectorAll('.formfield')) {
 					const res = field.querySelector('.res')
 					if (!res) continue
 					let input = field.querySelector('input')

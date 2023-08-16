@@ -92,6 +92,7 @@ td > p {
 	cursor: pointer;
 	border:none;
 	border-bottom: dashed 1px currentColor;
+	border-radius: 0;
 }
 .a {
 	color: var(--primary);

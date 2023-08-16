@@ -69,11 +69,11 @@ field.area = (name, title, action, value) => {
 		</div>
 	`
 }
-field.text = (name, title, action, value) => {
+field.input = (name, title, action, value, type = 'text') => {
 	const id = 'field-' + nicked(title)
 	return `
 		<div class="float-label success">
-			<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
+			<input name="${name}" type="${type}" id="${id}" value="${value}" placeholder="${title}" class="field">
 			<label for="${id}">${title}</label>
 			${showStatus()}
 			<script>
@@ -81,7 +81,8 @@ field.text = (name, title, action, value) => {
 					const field = float.querySelector('.field')					
 					field.addEventListener('input', async () => {
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
-						const ans = await sendit(float, '${action}', {${name}: field.value})
+						const value = field.type == 'datetime-local' ? Math.floor(new Date(field.value).getTime() / 1000) : field.value
+						const ans = await sendit(float, '${action}', {${name}: value})
 					})
 					const status = float.querySelector('.status')
 					status.addEventListener('click', async () => {
@@ -93,6 +94,8 @@ field.text = (name, title, action, value) => {
 		</div>
 	`
 }
+field.text = (name, title, action, value) => field.input(name, title, action, value, 'text')
+field.datetime = (title, action, value) => field.input('datetime', title, action, value ? new Date(value).toISOString().slice(0,16) : '', 'datetime-local')
 
 field.textok = (name, title, action, value, obj = {}) => {
 	const id = 'field-' + nicked(title)
