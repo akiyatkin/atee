@@ -94,8 +94,18 @@ field.input = (name, title, action, value, type = 'text') => {
 		</div>
 	`
 }
+
+
 field.text = (name, title, action, value) => field.input(name, title, action, value, 'text')
-field.datetime = (title, action, value) => field.input('datetime', title, action, value ? new Date(value).toISOString().slice(0,16) : '', 'datetime-local')
+//field.time = (title, action, value) => field.input('time', title, action, value, 'time')
+field.datetime = (title, action, value) => {
+	if (value) {
+		value = new Date(value * 1000)
+		value.setMinutes(value.getMinutes() - value.getTimezoneOffset())
+		value = value.toISOString().slice(0,16)
+	}
+	return field.input('datetime', title, action, value || '', 'datetime-local')
+}
 
 field.textok = (name, title, action, value, obj = {}) => {
 	const id = 'field-' + nicked(title)
