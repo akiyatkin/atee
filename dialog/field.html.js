@@ -69,11 +69,18 @@ field.area = (name, title, action, value) => {
 		</div>
 	`
 }
-field.input = (name, title, action, value, type = 'text') => {
+field.text = (name, title, action, value, type = 'text') => {
 	const id = 'field-' + nicked(title)
 	return `
 		<div class="float-label success">
-			<input name="${name}" type="${type}" id="${id}" value="${value}" placeholder="${title}" class="field">
+			<input 
+				min="${new Date().toISOString().split('T')[0]}" 
+				name="${name}" 
+				type="${type}" 
+				id="${id}" 
+				value="${value}" 
+				placeholder="${title}" 
+				class="field">
 			<label for="${id}">${title}</label>
 			${showStatus()}
 			<script>
@@ -81,8 +88,9 @@ field.input = (name, title, action, value, type = 'text') => {
 					const field = float.querySelector('.field')					
 					field.addEventListener('input', async () => {
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
-						const value = field.type == 'datetime-local' ? Math.floor(new Date(field.value).getTime() / 1000) : field.value
-						const ans = await sendit(float, '${action}', {${name}: value})
+						let value = field.value
+						if (~['datetime-local', 'date'].indexOf(field.type)) value = Math.floor(new Date(field.value).getTime() / 1000)
+						const ans = await sendit(float, '${action}', {[input.name]: value})
 					})
 					const status = float.querySelector('.status')
 					status.addEventListener('click', async () => {
@@ -95,16 +103,83 @@ field.input = (name, title, action, value, type = 'text') => {
 	`
 }
 
-
-field.text = (name, title, action, value) => field.input(name, title, action, value, 'text')
-//field.time = (title, action, value) => field.input('time', title, action, value, 'time')
-field.datetime = (title, action, value) => {
+field.datetime = ({name, action, label = '', value = '', onlyfuture = false}) => {
 	if (value) {
 		value = new Date(value * 1000)
 		value.setMinutes(value.getMinutes() - value.getTimezoneOffset())
 		value = value.toISOString().slice(0,16)
+	} else {
+		value = ''
 	}
-	return field.input('datetime', title, action, value || '', 'datetime-local')
+	const id = 'field-' + nicked(label)
+	return `
+		<div class="float-label success">
+			<input 
+				min="${onlyfuture ? new Date().toISOString().split('T')[0] : ''}" 
+				name="${name}" 
+				type="datetime-local" 
+				id="${id}" 
+				value="${value}" 
+				placeholder="${label}" 
+				class="field">
+			<label for="${id}">${label}</label>
+			${showStatus()}
+			<script>
+				(float => {
+					const field = float.querySelector('.field')					
+					field.addEventListener('input', async () => {
+						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+						const value = Math.floor(new Date(field.value).getTime() / 1000)
+						const ans = await sendit(float, '${action}', {[input.name]: value})
+					})
+					const status = float.querySelector('.status')
+					status.addEventListener('click', async () => {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.alert(float.title || "Сохранено!")
+					})
+				})(document.currentScript.parentElement)
+			</script>
+		</div>
+	`
+}
+field.date = ({name, action, label = '', value = '', onlyfuture = false}) => {
+	if (value) {
+		value = new Date(value * 1000)
+		value.setMinutes(value.getMinutes() - value.getTimezoneOffset())
+		value = value.toISOString().slice(0,10)
+	} else {
+		value = ''
+	}
+	const id = 'field-' + nicked(label)
+	return `
+		<div class="float-label success">
+			<input 
+				min="${onlyfuture ? new Date().toISOString().split('T')[0] : ''}" 
+				name="${name}" 
+				type="date" 
+				id="${id}" 
+				value="${value}" 
+				placeholder="${label}" 
+				class="field">
+			<label for="${id}">${label}</label>
+			${showStatus()}
+			<script>
+				(float => {
+					const field = float.querySelector('.field')					
+					field.addEventListener('input', async () => {
+						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+						const value = Math.floor(new Date(field.value).getTime() / 1000)
+						const ans = await sendit(float, '${action}', {${name}: value})
+					})
+					const status = float.querySelector('.status')
+					status.addEventListener('click', async () => {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.alert(float.title || "Сохранено!")
+					})
+				})(document.currentScript.parentElement)
+			</script>
+		</div>
+	`
 }
 
 field.textok = (name, title, action, value, obj = {}) => {
@@ -158,15 +233,15 @@ field.textdisabled = (name, title, action, value) => {
 	`
 }
 const showOption = (obj, vname, tname, value, def) => `<option ${value == obj[vname] ? 'selected ' : ''}value="${obj[vname]}">${obj[tname] || def}</option>`
-const showEmpty = (empty) => `<option value="empty">${empty.title}</option>`
-field.select = ({label, status, empty, fill, create}) => {
+
+field.select = ({name, action, options, vname, tname, def = '', go, goid, selected, label, status, before, after}) => {
 	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label ${status || ''}">
 			<select id="${id}" class="field">
-				${empty ? showEmpty(empty) : ''}
-				${fill.options.map(obj => showOption(obj, fill.vname, fill.tname, fill.selected?.[fill.vname], fill.def || ''))}
-				${!create || (create.action && fill.options.some(obj => !obj[fill.tname])) ? '' : '<optgroup label="------------"></optgroup><option value="create">' + create.title + '</option>'}
+				${before ? '<option value="before">' + before.title + '</option>' : ''}
+				${options.map(obj => showOption(obj, vname, tname, selected?.[vname], def))}
+				${!after || (after.action && options.some(obj => !obj[tname])) ? '' : '<optgroup label="------------"></optgroup><option value="after">' + after.title + '</option>'}
 			</select>
 			<label for="${id}">${label}</label>
 			${status ? showStatus() : ''}
@@ -179,7 +254,7 @@ field.select = ({label, status, empty, fill, create}) => {
 					if (opt.action) {
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
 
-						const ans = await sendit(float, opt.action, value ? {[opt.prop]: value} : false)
+						const ans = await sendit(float, opt.action, value ? {[opt.name]: value} : false)
 						if (ans.msg) {
 							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 							Dialog.alert(ans.msg)
@@ -197,14 +272,14 @@ field.select = ({label, status, empty, fill, create}) => {
 					const i = select.options.selectedIndex
 					const value = select.options[i].value
 					select.disabled = true
-					if (value == 'empty') {
-						const opt = ${JSON.stringify(empty)}
+					if (value == 'before') {
+						const opt = ${JSON.stringify(before)}
 						await makeaction(opt)
-					} else if (value == 'create') {
-						const opt = ${JSON.stringify(create)}
+					} else if (value == 'after') {
+						const opt = ${JSON.stringify(after)}
 						await makeaction(opt)
 					} else {
-						const opt = ${JSON.stringify(fill)}
+						const opt = ${JSON.stringify({action, go, goid})}
 						await makeaction(opt, value)
 					}
 					select.disabled = false

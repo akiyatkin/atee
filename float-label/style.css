@@ -16,13 +16,15 @@
 .float-label > textarea,
 .float-label > textarea ~ label,
 .float-label > input ~ label {
-	padding: .75rem .75rem;
+/*	padding: .75rem .75rem;*/
+	padding: .75rem 1rem;
 	font-size: inherit;
     line-height: inherit;
     margin-top: 0; /*textarea has top margin*/
 }
 .float-label > select.field {
-	padding: .75rem .5rem;
+/*	padding: .75rem .5rem;*/
+	padding: .75rem .75rem;
 }
 
 .float-label > .field {
@@ -83,9 +85,9 @@
 	font-size: 12px;
 	color: #999;
 }
-.float-label > input[type=date]:not(:placeholder-shown) {
+/*.float-label > input[type=date]:not(:placeholder-shown) {
 	padding-top: calc(.55rem + .75rem * (2 / 3));
-}
+}*/
 @-moz-document url-prefix() { 
 	.float-label > input[type=date]:not(:placeholder-shown) {
 		padding-top: calc(.75rem + .75rem * (2 / 3));
@@ -135,7 +137,7 @@
 .float-field-help {
 	--gauge: 1px;
 	--size: 30px;
-	margin-left:calc(0.75rem + var(--gauge));
+	margin-left:calc(1rem + var(--gauge));
 	margin-right:calc(var(--gauge) + var(--size) + 0.5em);
 	color: gray; 
 	font-size: 12px
