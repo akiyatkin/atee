@@ -136,8 +136,9 @@ td, th {
 dialog {
 	color: inherit;
 }
+
 @media print {
 	.noprint {
-		display: none;
+		display: none!important;
 	}
 }

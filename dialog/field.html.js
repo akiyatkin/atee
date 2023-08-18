@@ -238,7 +238,7 @@ field.select = ({name, action, options, vname, tname, def = '', go, goid, select
 	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label ${status || ''}">
-			<select id="${id}" class="field">
+			<select name="${name}" id="${id}" class="field">
 				${before ? '<option value="before">' + before.title + '</option>' : ''}
 				${options.map(obj => showOption(obj, vname, tname, selected?.[vname], def))}
 				${!after || (after.action && options.some(obj => !obj[tname])) ? '' : '<optgroup label="------------"></optgroup><option value="after">' + after.title + '</option>'}
@@ -279,7 +279,7 @@ field.select = ({name, action, options, vname, tname, def = '', go, goid, select
 						const opt = ${JSON.stringify(after)}
 						await makeaction(opt)
 					} else {
-						const opt = ${JSON.stringify({action, go, goid})}
+						const opt = ${JSON.stringify({name, action, go, goid})}
 						await makeaction(opt, value)
 					}
 					select.disabled = false
