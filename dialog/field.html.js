@@ -90,7 +90,7 @@ field.text = (name, title, action, value, type = 'text') => {
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
 						let value = field.value
 						if (~['datetime-local', 'date'].indexOf(field.type)) value = Math.floor(new Date(field.value).getTime() / 1000)
-						const ans = await sendit(float, '${action}', {[input.name]: value})
+						const ans = await sendit(float, '${action}', {[field.name]: value})
 					})
 					const status = float.querySelector('.status')
 					status.addEventListener('click', async () => {
@@ -130,7 +130,7 @@ field.datetime = ({name, action, label = '', value = '', onlyfuture = false}) =>
 					field.addEventListener('input', async () => {
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
 						const value = Math.floor(new Date(field.value).getTime() / 1000)
-						const ans = await sendit(float, '${action}', {[input.name]: value})
+						const ans = await sendit(float, '${action}', {[field.name]: value})
 					})
 					const status = float.querySelector('.status')
 					status.addEventListener('click', async () => {
