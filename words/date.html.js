@@ -4,4 +4,8 @@ date.dmy = (time) => {
 	if (!time) return ''
 	return intl.format(time * 1000)
 }
+date.dmyhi = (time) => {
+	if (!time) return ''
+	return intl.format(time * 1000)
+}
 export default date
