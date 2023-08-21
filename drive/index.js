@@ -14,15 +14,15 @@ export const drive = {
 	getTable: async (gid, range, sheet) => {
 		const rows_source = await drive.getRows(gid, range, sheet)
 		const {descr, rows_table} = dabudi.splitDescr(rows_source)
-		const {heads, rows_body} = dabudi.splitHead(rows_table)
+		const {head_titles, rows_body} = dabudi.splitHead(rows_table)
 
 		const indexes = {}
-		for (const i in heads.head_nicks) {
-			indexes[heads.head_nicks[i]] = i
+		for (const i in head_titles) {
+			const nick = nicked(head_titles[i])
+			indexes[nick] = i
 		}
-		heads.indexes = indexes
 
-		return {descr, heads, rows_body}
+		return {descr, head_titles, indexes, rows_body}
 	},
 	cacheRows: (gid, range, sheet = '') => Access.relate(drive).once(sheet + gid, () => cproc(drive, sheet + gid, async () => {
 		const cachename = nicked(gid + '-' + range + '-' + sheet)
