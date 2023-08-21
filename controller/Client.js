@@ -315,9 +315,11 @@ const applyCrossing = async () => {
 			body: new URLSearchParams(req)
 		}).then(res => res.json())
 		if (promise.rejected) return
-		if (!json || !json.st || !json.ut || !json.result || !json.layers) {
-			return setTimeout(() => location.reload(), 200) //Чуть чуть подождать чтобы прокрутка закончилась
+		if (!json || !json.st || !json.ut || !json.result || !json.layers || json.root != Client.bread.root) {
+			//return setTimeout(() => location.reload(), 200) //Чуть чуть подождать чтобы прокрутка закончилась?
+			return location.reload()
 		}
+		
 		const timings = {
 			view_time: json.vt,
 			update_time: json.ut,

@@ -31,8 +31,8 @@ const searchRest = async (source, file, RESTS, parent = source, innodemodules = 
 	for (const name of dirs) {
 		if (name[0] == '.') continue
 		const newparent = name == 'node_modules' ? parent : path.posix.join(parent, name)
-		innodemodules = name == 'node_modules' ? true : innodemodules
-		await searchRest(path.posix.join(source, name), file, RESTS, newparent, innodemodules)
+		const innode = name == 'node_modules' ? true : innodemodules
+		await searchRest(path.posix.join(source, name), file, RESTS, newparent, innode)
 	}
 }
 const fnsort = (a, b) => {
@@ -41,6 +41,7 @@ const fnsort = (a, b) => {
 
 const RESTS = {}
 await searchRest('.', 'rest.js', RESTS)
+
 let REST_DIRECTS = {}
 let REST_HYPHENS = {}
 for (const r in RESTS) { //Напрямую можно обратиться только к элементам в node_modules, rest проекта только через дефис
@@ -118,11 +119,11 @@ const load = (src, visitor, ext) => { //ext формат требуемых да
 
 		const route = await router(src, true) //debug
 		
-	    if (!route.rest) throw { status: 500, src, ext }
-	    const r = typeof(route.rest) == 'function' ? route.rest(route.query, route.get, visitor) : route.rest.get(route.query, route.get, visitor)
+		if (!route.rest) throw { status: 500, src, ext }
+		const r = typeof(route.rest) == 'function' ? route.rest(route.query, route.get, visitor) : route.rest.get(route.query, route.get, visitor)
 		reans = {...reans, ...(await r)}
-	    //if (reans.status != 200 && reans.status != 422 && reans.status != 403) throw { status: reans.status, src, reans, ext, from:'router.load', toString: () => route.query + ' ' + reans.status}
-	    if (reans.status >= 500) throw { status: reans.status, src, reans, ext, from:'router.load', toString: () => route.query + ' ' + reans.status}
+		//if (reans.status != 200 && reans.status != 422 && reans.status != 403) throw { status: reans.status, src, reans, ext, from:'router.load', toString: () => route.query + ' ' + reans.status}
+		if (reans.status >= 500) throw { status: reans.status, src, reans, ext, from:'router.load', toString: () => route.query + ' ' + reans.status}
 
 		let ans = reans.ans
 		if (ans instanceof ReadStream) {
@@ -150,9 +151,9 @@ export const readTextStream = stream => {
 
 
 const getSrcName = (str) => {
-    const i = str.lastIndexOf(path.sep)
-    const name = ~i ? str.slice(i + 1) : ''
-    return ~i && !name ? '' : name
+	const i = str.lastIndexOf(path.sep)
+	const name = ~i ? str.slice(i + 1) : ''
+	return ~i && !name ? '' : name
 }
 const getExt = (str) => {
 	const i = str.lastIndexOf('.')
@@ -160,18 +161,18 @@ const getExt = (str) => {
 }
 
 const explode = (sep, str) => {
-    if (!str) return []
-    const i = str.indexOf(sep)
-    return ~i ? [str.slice(0, i), str.slice(i + 1)] : [str]
+	if (!str) return []
+	const i = str.indexOf(sep)
+	return ~i ? [str.slice(0, i), str.slice(i + 1)] : [str]
 }
 const userpathparse = (search) => {
-    //У request всегда есть ведущий /слэш
+	//У request всегда есть ведущий /слэш
 	search = search.slice(1)
-    try { search = decodeURI(search) } catch { }
-    let [path = '', params = ''] = explode('?', search)
-    const get = Theme.parse(params, '&')
-    const secure = !!~path.indexOf('/.') || path[0] == '.'
-    return {secure, path, get}
+	try { search = decodeURI(search) } catch { }
+	let [path = '', params = ''] = explode('?', search)
+	const get = Theme.parse(params, '&')
+	const secure = !!~path.indexOf('/.') || path[0] == '.'
+	return {secure, path, get}
 }
 export const router = async (search, debug) => {
 	//У search всегда есть ведущий /слэш
@@ -190,7 +191,7 @@ export const router = async (search, debug) => {
 	if (src && name) { //найден файл
 		const ext = getExt(src)
 		if (~conf['403']['indexOf'].indexOf(name)) secure = true
-	   	if (conf['403']['search'].some(pattern => ~('/'+name).search(pattern))) secure = true
+		if (conf['403']['search'].some(pattern => ~('/'+name).search(pattern))) secure = true
 
 		if (ext == 'json') { //json файлы возвращаются объектом, //с хранением в оперативной памяти
 			rest = async () => {
@@ -213,7 +214,6 @@ export const router = async (search, debug) => {
 	const ext = getExt(path)
 
 	if (path[0] == '-') { //Обязательный rest и без контроллера
-
 		for (const v of REST_HYPHENS) {
 			if (path.indexOf(v.part) === 1 || !v.part) {
 				if (	

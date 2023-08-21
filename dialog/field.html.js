@@ -13,7 +13,11 @@ field.toggle = (name, title, action, value, values) => {
 					const ans = await send('${action}')
 					const status = ans['${name}']
 					const values = ${JSON.stringify(values)}
-					btn.querySelector('.a').innerHTML = values[status || ''] 
+					if (ans.msg) {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.alert(ans.msg)
+					}
+					if (ans.result) btn.querySelector('.a').innerHTML = values[status || '']
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>
