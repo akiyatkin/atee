@@ -1,7 +1,32 @@
 import nicked from "/-nicked"
 const field = {}
 
-
+const showRadio = (k, v, name, value) => {
+	const id = 'field-' + nicked(name) +'-' + nicked(k)
+	return `
+		<label for="${id}">
+			<input id="${id}" value="${k}" type="radio" name="${name}"${value == k ? ' checked' : ''}/>
+			<span>${v}</span>
+		</label>
+	`
+}
+field.radio = ({name, action = '', value = '', values}) => `
+	${Object.entries(values).map(([k, v]) => showRadio(k, v, name, value || '')).join('')}	
+	<script>
+		(div => {
+			for (const input of div.querySelectorAll('input')) {
+				input.addEventListener('input', async () => {
+					const send = await import('/-dialog/send.js').then(r => r.default)
+					const ans = await send('${action}', {${name}: input.value})
+					if (ans.msg) {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.alert(ans.msg)
+					}
+				})
+			}
+		})(document.currentScript.parentElement)
+	</script>
+`
 field.toggle = (name, title, action, value, values) => {
 	return `
 	<div>
