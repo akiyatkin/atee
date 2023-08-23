@@ -19,8 +19,9 @@ yml.ROOT = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
  </yml_catalog>
 `
 
+const showParentId = (parent_id) => parent_id ? ` parentId="${parent_id}"` : ''
 yml.category = (group) => `
-	<category id="${group.group_id}" parentId="${group.parent_id}">${group.group_title}</category>
+	<category id="${group.group_id}" ${showParentId(group.parent_id)}>${group.group_title}</category>
 `
  		
 yml.pos = (pos, env) => `
