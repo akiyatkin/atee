@@ -1,4 +1,3 @@
-//depricate use ago.html.js
 const rtf = new Intl.RelativeTimeFormat("ru", { 
 	localeMatcher: "best fit",
 	style: "long",
@@ -7,8 +6,10 @@ const rtf = new Intl.RelativeTimeFormat("ru", {
 const format = (dif, type) => {
 	return rtf.format(-Math.round(dif), type)
 }
-export const ago = (mtime) => {
-	if (!mtime) mtime = 0
+const ago = {}
+export default ago
+ago.show = (mtime) => {
+	mtime = mtime ? mtime * 1000 : 0
 	let dif = Date.now() - mtime
 
 	dif = dif / 1000
@@ -32,4 +33,3 @@ export const ago = (mtime) => {
 	dif = dif / 12 //лет
 	return format(dif, 'years')
 }
-export default ago

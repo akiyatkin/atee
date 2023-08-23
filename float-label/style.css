@@ -137,6 +137,7 @@
 .float-field-help {
 	--gauge: 1px;
 	--size: 30px;
+	margin-top:0.25rem;
 	margin-left:calc(1rem + var(--gauge));
 	margin-right:calc(var(--gauge) + var(--size) + 0.5em);
 	color: gray; 

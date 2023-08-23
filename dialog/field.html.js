@@ -48,6 +48,37 @@ field.toggle = (name, title, action, value, values) => {
 		</script>
 	</div>`
 }
+// field.prompt = ({name, go, reloaddiv, goid, confirm, title, label, title, action}) => {
+	
+// 	return `
+// 		<button>${title}</button>
+// 		<script>
+// 			(btn => {
+// 				btn.addEventListener('click', async () => {
+// 					if (btn.classList.contains('process')) return
+// 					const ask = "${confirm || ''}"
+// 					const prompt = ${JSON.stringify(prompt)}
+// 					if (prompt) {
+// 						const second = window.prompt(prompt.title, prompt.value)
+// 						if (!second) return
+// 					}  
+// 					if (ask && !window.confirm(ask)) return
+// 					const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+// 					const ans = await sendit(btn, '${action}')
+// 					if (ans.msg) {
+// 						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+// 						Dialog.alert(ans.msg)
+// 						btn.innerHTML = ans.msg
+// 					}
+// 					const Client = await window.getClient()
+// 					const goid = "${goid ? goid : ''}"
+// 					if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
+// 					if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
+// 				})
+// 			})(document.currentScript.previousElementSibling)
+// 		</script>
+// 	`
+// }
 field.button = (title, action, obj = {}) => {
 	const {go, reloaddiv, goid } = obj
 	return `
@@ -210,7 +241,45 @@ field.date = ({name, action, label = '', value = '', onlyfuture = false}) => {
 		</div>
 	`
 }
-
+field.ok = ({name, title, action, value, newvalue, go, reloaddiv, goid, type = 'text'}) => {
+	const id = 'field-' + nicked(title)
+	return `
+		<div class="float-label ${value ? 'success' : 'submit'}">
+			<input name="${name}" type="${type}" id="${id}" value="${value || newvalue}" placeholder="${title}" class="field">
+			<label for="${id}">${title}</label>
+			${showStatus()}
+			<script>
+				(float => {
+					const field = float.querySelector('.field')
+					const status = float.querySelector('.status')
+					field.addEventListener('input', async () => {
+						float.classList.remove('error','process','success')
+						float.classList.add('submit')
+						float.title = 'Подтвердить введённые данные'
+					})
+					status.addEventListener('click', async () => {
+						if (float.classList.contains('submit')) {
+							const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+							const ans = await sendit(float, '${action}', {${name}: field.value})
+							if (ans.msg) {
+								const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+								Dialog.alert(ans.msg)
+							}
+							const Client = await window.getClient()
+							const goid = "${goid ? goid : ''}"
+							if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
+							if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
+						} else {
+							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+							Dialog.alert(float.title || "Сохранено")
+							
+						}
+					})
+				})(document.currentScript.parentElement)
+			</script>
+		</div>
+	`
+}
 field.textok = (name, title, action, value, obj = {}) => {
 	const id = 'field-' + nicked(title)
 	const {go, reloaddiv, goid } = obj
