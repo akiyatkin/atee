@@ -98,12 +98,12 @@ td > p {
 	color: var(--primary);
 }
 .a:active {
-	color: var(--primary);
+/*	color: var(--primary);*/
 	box-shadow: none;
 	border-bottom: dashed 1px currentColor;
 }
 .a:hover {
-	color: var(--primary);
+/*	color: var(--primary);*/
 	box-shadow: none;
 	border-bottom: dashed 1px currentColor;
 }

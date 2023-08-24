@@ -27,6 +27,27 @@ field.radio = ({name, action = '', value = '', values}) => `
 		})(document.currentScript.parentElement)
 	</script>
 `
+field.switch = ({name, action, value, values}) => {
+	return `
+	<div>
+		<button class="a" style="display: inline-block; cursor:pointer; padding:calc(.75rem / 3) 0">${values[value || ""]}</button>
+		<script>
+			(btn => {
+				btn.addEventListener('click', async () => {
+					const send = await import('/-dialog/send.js').then(r => r.default)
+					const ans = await send('${action}')
+					const status = ans['${name}']
+					const values = ${JSON.stringify(values)}
+					if (ans.msg) {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.alert(ans.msg)
+					}
+					if (ans.result) btn.innerHTML = values[status || '']
+				})
+			})(document.currentScript.previousElementSibling)
+		</script>
+	</div>`
+}
 field.toggle = (name, title, action, value, values) => {
 	return `
 	<div>
@@ -134,7 +155,7 @@ field.text = (name, title, action, value, type = 'text') => {
 	return `
 		<div class="float-label success">
 			<input 
-				min="${new Date().toISOString().split('T')[0]}" 
+				
 				name="${name}" 
 				type="${type}" 
 				id="${id}" 
@@ -162,7 +183,40 @@ field.text = (name, title, action, value, type = 'text') => {
 		</div>
 	`
 }
-
+field.percent = ({name, label, action, value}) => {
+	const id = 'field-' + nicked(label)
+	return `
+		<div class="float-label success">
+			<input 
+				min="0"
+				max="100"
+				name="${name}" 
+				type="number" 
+				id="${id}" 
+				value="${value}" 
+				placeholder="${label}" 
+				class="field">
+			<label for="${id}">${label}</label>
+			${showStatus()}
+			<script>
+				(float => {
+					const field = float.querySelector('.field')					
+					field.addEventListener('input', async () => {
+						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+						let value = field.value
+						if (~['datetime-local', 'date'].indexOf(field.type)) value = Math.floor(new Date(field.value).getTime() / 1000)
+						const ans = await sendit(float, '${action}', {[field.name]: value})
+					})
+					const status = float.querySelector('.status')
+					status.addEventListener('click', async () => {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.alert(float.title || "Сохранено!")
+					})
+				})(document.currentScript.parentElement)
+			</script>
+		</div>
+	`
+}
 field.datetime = ({name, action, label = '', value = '', onlyfuture = false}) => {
 	if (value) {
 		value = new Date(value * 1000)
@@ -332,6 +386,7 @@ field.textdisabled = (name, title, action, value) => {
 }
 const showOption = (obj, vname, tname, value, def) => `<option ${value == obj[vname] ? 'selected ' : ''}value="${obj[vname]}">${obj[tname] || def}</option>`
 
+//${!after || (after.action && options.some(obj => !obj[tname])) ? '' : '<optgroup label="------------"></optgroup><option value="after">' + after.title + '</option>'}
 field.select = ({name, action, options, vname, tname, def = '', go, goid, selected, label, status, before, after}) => {
 	const id = 'field-' + nicked(label)
 	return `
@@ -339,7 +394,7 @@ field.select = ({name, action, options, vname, tname, def = '', go, goid, select
 			<select name="${name}" id="${id}" class="field">
 				${before ? '<option value="before">' + before.title + '</option>' : ''}
 				${options.map(obj => showOption(obj, vname, tname, selected?.[vname], def))}
-				${!after || (after.action && options.some(obj => !obj[tname])) ? '' : '<optgroup label="------------"></optgroup><option value="after">' + after.title + '</option>'}
+				${!after || !after.action ? '' : '<optgroup label="------------"></optgroup><option value="after">' + after.title + '</option>'}
 			</select>
 			<label for="${id}">${label}</label>
 			${status ? showStatus() : ''}
