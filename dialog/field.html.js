@@ -229,7 +229,8 @@ field.datetime = ({name, action, label = '', value = '', onlyfuture = false}) =>
 	return `
 		<div class="float-label success">
 			<input 
-				min="${onlyfuture ? new Date().toISOString().split('T')[0] : ''}" 
+				min="${onlyfuture ? new Date().toISOString().split('T')[0] : '2000-01-01'}" 
+				max="2099-01-01"
 				name="${name}" 
 				type="datetime-local" 
 				id="${id}" 
@@ -241,10 +242,28 @@ field.datetime = ({name, action, label = '', value = '', onlyfuture = false}) =>
 			<script>
 				(float => {
 					const field = float.querySelector('.field')					
+					const check = async () => {
+						console.log(field.value)
+						if (field.value) return
+						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+						sendit.setClass(float, 'error')
+						float.title = "Укажите дату полностью"
+					}
+					field.addEventListener('focus', check)
+					field.addEventListener('click', check)
+					field.addEventListener('keydown', check)
+
 					field.addEventListener('input', async () => {
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
 						const value = Math.floor(new Date(field.value).getTime() / 1000)
 						const ans = await sendit(float, '${action}', {[field.name]: value})
+						//if (ans[field.name]) {
+						//	let value = new Date(ans[field.name] * 1000)
+						//	value.setMinutes(value.getMinutes() - value.getTimezoneOffset())
+						//	value = value.toISOString().slice(0,16)
+						//	field.value = value
+						//}
+
 					})
 					const status = float.querySelector('.status')
 					status.addEventListener('click', async () => {
@@ -279,7 +298,17 @@ field.date = ({name, action, label = '', value = '', onlyfuture = false}) => {
 			${showStatus()}
 			<script>
 				(float => {
-					const field = float.querySelector('.field')					
+					const field = float.querySelector('.field')
+					const check = async () => {
+						console.log(field.value)
+						if (field.value) return
+						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+						sendit.setClass(float, 'error')
+						float.title = "Укажите дату полностью"
+					}
+					field.addEventListener('focus', check)
+					field.addEventListener('click', check)
+					field.addEventListener('keydown', check)				
 					field.addEventListener('input', async () => {
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
 						const value = Math.floor(new Date(field.value).getTime() / 1000)
