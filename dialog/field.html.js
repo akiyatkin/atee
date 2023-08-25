@@ -43,6 +43,7 @@ field.switch = ({name, action, value, values}) => {
 						Dialog.alert(ans.msg)
 					}
 					if (ans.result) btn.innerHTML = values[status || '']
+  					btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>
@@ -206,6 +207,7 @@ field.percent = ({name, label, action, value}) => {
 						let value = field.value
 						if (~['datetime-local', 'date'].indexOf(field.type)) value = Math.floor(new Date(field.value).getTime() / 1000)
 						const ans = await sendit(float, '${action}', {[field.name]: value})
+  						field.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 					})
 					const status = float.querySelector('.status')
 					status.addEventListener('click', async () => {
