@@ -11,7 +11,12 @@ const showRadio = (k, v, name, value) => {
 	`
 }
 field.radio = ({name, action = '', value = '', values}) => `
-	${Object.entries(values).map(([k, v]) => showRadio(k, v, name, value || '')).join('')}	
+	<div style="
+		display: grid;
+		gap: 0.7rem;
+	">
+		${Object.entries(values).map(([k, v]) => showRadio(k, v, name, value || '')).join('')}
+	</div>
 	<script>
 		(div => {
 			for (const input of div.querySelectorAll('input')) {
