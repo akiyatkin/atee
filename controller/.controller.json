@@ -4,6 +4,15 @@
 		"indexOf":["package.json","layers.json","package-lock.json","nodemon.json"],
 		"search":["\\/rest\\..*js"]
 	},
+	"busboy":{
+		"types":["image/jpeg","image/png","image/webp","image/svg+xml"],
+		"limits":{
+			"fields": 20,
+			"files": 1,
+			"fileSize": 20000000,
+			"*":"fileSize в байтах = 20 магабайта, parts - всего и файлов и полей"
+		}
+	},
 	"types": {
 		"mp4":"video/mp4",
 		"zip":"application/zip",

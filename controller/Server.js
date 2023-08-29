@@ -47,7 +47,10 @@ export const Server = {
 					status: 200, 
 					nostore: false
 				}
-				const req = { ...route.get, ...(await getPost(request) || {}) }
+				const post = await getPost(request)
+
+
+				const req = { ...route.get, ...post }
 				try {
 					const r = typeof(route.rest) == 'function' ? route.rest(route.query, req, visitor) : route.rest.get(route.query, req, visitor)
 					Object.assign(reans, await r)
