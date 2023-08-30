@@ -143,117 +143,119 @@ field.image = ({name = 'file', action, src, remove}) => {
 		<div class="field-squares" style="display: block;">
 			${src ? showSrc(src) : '' }
 			<label class="field-square ${src ? '' : 'show'}" for="${id}">
-				<input id="${id}" name="${name}" type="file" accept="image/*">
+				<input class="field" id="${id}" name="${name}" type="file" accept="image/*">
 			</label>
-		</div>
-		<script>
-			(div => {
-				const squares = div
-				const label = squares.querySelector("label")
-				const input = label.querySelector("input");
-				let promise = Promise.resolve()
-				const upload = async (file) => {
-					//return new Promise(resolve => setTimeout(() => resolve({src:"/data/files/org_id/graph_id/audit_id/item_nick/02.png", file_id:777}), 1000))
-					const formData = new FormData()
-					formData.append('${name}', file)
-					const ans = await fetch("${action}", {
-						method: "POST",
-						body: formData
-					}).then(r => r.json())
-					if (ans.msg) {
-						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-						Dialog.alert(ans.msg)
-					}
-					return ans
-				}
-				
-				const addEvents = square => {
-					const remove = square.querySelector('.remove')
-					if (remove) remove.addEventListener('click', async e => {
-						e.stopPropagation()
-						if (!confirm('Удалить файл?')) return 
-						const send = await import('/-dialog/send.js').then(r => r.default)
-						const ans = await send('${remove}')
+			<script>
+				(div => {
+					const squares = div
+					const label = squares.querySelector("label")
+					const input = label.querySelector("input");
+					let promise = Promise.resolve()
+					const upload = async (file) => {
+						//return new Promise(resolve => setTimeout(() => resolve({src:"/data/files/org_id/graph_id/audit_id/item_nick/02.png", file_id:777}), 1000))
+						const formData = new FormData()
+						formData.append('${name}', file)
+						const ans = await fetch("${action}", {
+							method: "POST",
+							body: formData
+						}).then(r => r.json())
 						if (ans.msg) {
 							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 							Dialog.alert(ans.msg)
 						}
-						if (ans.result) {
-							square.remove()
-							label.classList.add('show')
-						}
-					})
-					square.addEventListener('click', e => {
-						if (!square.classList.contains('show')) return
-						if (!square.dataset.src) return
-						window.open(square.dataset.src, '_blank');
-					})
-				}
-				const addSquare = file => {
-					const square = document.createElement('div')
-					square.classList.add('field-square')
-					square.innerHTML = '<div class="remove">&times;</div><canvas></canvas>'
-					label.before(square)
-
-					const canvas = square.querySelector('canvas')
-					const ctx = canvas.getContext("2d")
-					const reader = new FileReader()
-					reader.onload = e => {
-						const img = new Image()
-						img.onload = () => {
-							canvas.width = img.width
-							canvas.height = img.height
-							ctx.drawImage(img, 0, 0)
-						}
-						img.src = e.target.result
+						input.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+						return ans
 					}
-					reader.readAsDataURL(file)
-					addEvents(square)
-					return square
-				}
-				
-				const uploadFile = file => {
-					if (file.size > 10 * 1024 * 1024) {
-						alert("Файл " + file.name + " более 10 МБ не будет загружен.")
-						return
-					}
-					if (!~['image/png', 'image/jpeg', 'image/webp','image/svg+xml'].indexOf(file.type)) {
-						alert("Тип файла " + file.name + " " + file.type+ " не поддерживается.")
-						return
-					}
-					label.classList.remove('show')
-					const square = addSquare(file)
-					promise = promise.then(() => {
-						return upload(file).then(ans => {
-							square.dataset.src = ans.src
-							square.classList.add('show')
-						}).catch(r => {
-							square.classList.add('error')
+					
+					const addEvents = square => {
+						const remove = square.querySelector('.remove')
+						if (remove) remove.addEventListener('click', async e => {
+							e.stopPropagation()
+							if (!confirm('Удалить файл?')) return 
+							const send = await import('/-dialog/send.js').then(r => r.default)
+							const ans = await send('${remove}')
+							if (ans.msg) {
+								const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+								Dialog.alert(ans.msg)
+							}
+							if (ans.result) {
+								square.remove()
+								label.classList.add('show')
+							}
+							input.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 						})
-					})
-				}
-				for (const square of squares.querySelectorAll('.field-square')) addEvents(square)
-				input.addEventListener("change", async () => {
-					if (!input.files[0]) return
-					const file = input.files[0]
-					console.log(file)
-					input.value = ''
-					uploadFile(file)
-				})
+						square.addEventListener('click', e => {
+							if (!square.classList.contains('show')) return
+							if (!square.dataset.src) return
+							window.open(square.dataset.src, '_blank');
+						})
+					}
+					const addSquare = file => {
+						const square = document.createElement('div')
+						square.classList.add('field-square')
+						square.innerHTML = '<div class="remove">&times;</div><canvas></canvas>'
+						label.before(square)
 
-				document.body.addEventListener("dragover", e => {
-					if (!div.closest('body')) return
-					e.preventDefault()
-				})
-				document.body.addEventListener("drop", e => {
-					if (!div.closest('body')) return
-					const files = e.dataTransfer?.files
-					if (!files || !files[0]) return
-					e.preventDefault()
-					uploadFile(files[0])
-				})
-			})(document.currentScript.previousElementSibling)
-		</script>
+						const canvas = square.querySelector('canvas')
+						const ctx = canvas.getContext("2d")
+						const reader = new FileReader()
+						reader.onload = e => {
+							const img = new Image()
+							img.onload = () => {
+								canvas.width = img.width
+								canvas.height = img.height
+								ctx.drawImage(img, 0, 0)
+							}
+							img.src = e.target.result
+						}
+						reader.readAsDataURL(file)
+						addEvents(square)
+						return square
+					}
+					
+					const uploadFile = file => {
+						if (file.size > 10 * 1024 * 1024) {
+							alert("Файл " + file.name + " более 10 МБ не будет загружен.")
+							return
+						}
+						if (!~['image/png', 'image/jpeg', 'image/webp','image/svg+xml'].indexOf(file.type)) {
+							alert("Тип файла " + file.name + " " + file.type+ " не поддерживается.")
+							return
+						}
+						label.classList.remove('show')
+						const square = addSquare(file)
+						promise = promise.then(() => {
+							return upload(file).then(ans => {
+								square.dataset.src = ans.src
+								square.classList.add('show')
+							}).catch(r => {
+								square.classList.add('error')
+							})
+						})
+					}
+					for (const square of squares.querySelectorAll('.field-square')) addEvents(square)
+					input.addEventListener("change", async () => {
+						if (!input.files[0]) return
+						const file = input.files[0]
+						console.log(file)
+						input.value = ''
+						uploadFile(file)
+					})
+
+					document.body.addEventListener("dragover", e => {
+						if (!div.closest('body')) return
+						e.preventDefault()
+					})
+					document.body.addEventListener("drop", e => {
+						if (!div.closest('body')) return
+						const files = e.dataTransfer?.files
+						if (!files || !files[0]) return
+						e.preventDefault()
+						uploadFile(files[0])
+					})
+				})(document.currentScript.parentElement)
+			</script>
+		</div>
 	`
 }
 
@@ -589,12 +591,12 @@ field.date = ({name, action, label = '', value = '', onlyfuture = false}) => {
 		</div>
 	`
 }
-field.ok = ({name, title, action, value, newvalue, go, reloaddiv, goid, type = 'text'}) => {
-	const id = 'field-' + nicked(title)
+field.ok = ({name, label, action, value, newvalue = '', go, reloaddiv, goid, type = 'text'}) => {
+	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label ${value ? 'success' : 'submit'}">
-			<input name="${name}" type="${type}" id="${id}" value="${value || newvalue}" placeholder="${title}" class="field">
-			<label for="${id}">${title}</label>
+			<input name="${name}" type="${type}" id="${id}" value="${value || newvalue}" placeholder="${label}" class="field">
+			<label for="${id}">${label}</label>
 			${showStatus()}
 			<script>
 				(float => {
@@ -617,6 +619,7 @@ field.ok = ({name, title, action, value, newvalue, go, reloaddiv, goid, type = '
 							const goid = "${goid ? goid : ''}"
 							if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
 							if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
+							field.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 						} else {
 							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 							Dialog.alert(float.title || "Сохранено")
