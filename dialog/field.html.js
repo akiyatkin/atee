@@ -1,6 +1,264 @@
 import nicked from "/-nicked"
 const field = {}
 
+field.images = ({name = 'file', file_id_name = 'file_id', action, files, remove}) => {
+	const id = 'field-' + nicked(name)
+	return `
+		<div class="field-squares">
+			${files.map(file => showFile(file, file_id_name)).join('')}
+			<label class="show" for="${id}">
+				<input multiple id="${id}" name="${name}" type="file" accept="image/*">
+			</label>
+		</div>
+		<script>
+			(div => {
+				const squares = div
+				const label = squares.querySelector("label")
+				const input = label.querySelector("input");
+				let promise = Promise.resolve()
+				const upload = async (file) => {
+					//return new Promise(resolve => setTimeout(() => resolve({src:"/data/files/org_id/graph_id/audit_id/item_nick/02.png", file_id:777}), 1000))
+					const formData = new FormData()
+					formData.append('${name}', file)
+					const ans = await fetch("${action}", {
+						method: "POST",
+						body: formData
+					}).then(r => r.json())
+					if (ans.msg) {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.alert(ans.msg)
+					}
+					return ans
+				}
+				const unload = async id => {
+					const send = await import('/-dialog/send.js').then(r => r.default)
+					const ans = await send('${remove}'+id)
+					if (ans.msg) {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.alert(ans.msg)
+					}
+					return ans.result
+				}
+				const addEvents = square => {
+					const remove = square.querySelector('.remove')
+					remove.addEventListener('click', async e => {
+						e.stopPropagation()
+						if (!confirm('Удалить файл?')) return 
+						const r = await unload(square.dataset.id)
+						if (r) square.remove()
+					})
+					square.addEventListener('click', e => {
+						if (!square.classList.contains('show')) return
+						window.open(square.dataset.src, '_blank');
+					})
+				}
+				const addSquare = file => {
+					const square = document.createElement('div')
+					square.classList.add('field-square')
+					square.dataset.id = file['${file_id_name}']
+					square.innerHTML = '<div class="remove">&times;</div><canvas></canvas>'
+					label.before(square)
+
+					const canvas = square.querySelector('canvas')
+					const ctx = canvas.getContext("2d")
+					const reader = new FileReader()
+					reader.onload = e => {
+						const img = new Image()
+						img.onload = () => {
+							canvas.width = img.width
+							canvas.height = img.height
+							ctx.drawImage(img, 0, 0)
+						}
+						img.src = e.target.result
+					}
+					reader.readAsDataURL(file)
+					addEvents(square)
+					return square
+				}
+				
+				const uploadFile = files => {
+					if (files.length > 10) {
+						alert("За раз загрузится только 10 файлов")
+						files.length = 10
+					}
+					for (const file of files) {
+						console.log(file)
+						if (file.size > 10 * 1024 * 1024) {
+							alert("Файл " + file.name + " более 10 МБ не будет загружен.")
+							continue
+						}
+						if (!~['image/png', 'image/jpeg', 'image/webp','image/svg+xml'].indexOf(file.type)) {
+							alert("Тип файла " + file.name + " " + file.type+ " не поддерживается.")
+							continue
+						}
+						const square = addSquare(file)
+						promise = promise.then(() => {
+							return upload(file).then(ans => {
+								square.dataset.id = ans['${file_id_name}']
+								square.dataset.src = ans.src
+								square.classList.add('show')
+							}).catch(r => {
+								square.classList.add('error')
+							})
+						})
+					}
+				}
+				for (const square of squares.querySelectorAll('.field-square')) addEvents(square)
+				input.addEventListener("change", async () => {
+					const files = [...input.files]
+					input.value = ''
+					uploadFile(files)
+				})
+
+				document.body.addEventListener("dragover", e => {
+					if (!div.closest('body')) return
+					e.preventDefault()
+				})
+				document.body.addEventListener("drop", e => {
+					if (!div.closest('body')) return
+					const files = e.dataTransfer?.files
+					if (!files) return
+					e.preventDefault()
+					uploadFile([...files])
+				})
+			})(document.currentScript.previousElementSibling)
+		</script>
+	`
+}
+const showFile = (file, file_id_name) => `
+	<div class="field-square show" data-id="${file[file_id_name]}" data-src="${file.src}">
+		<div class="remove">&times;</div>
+		<img src="${file.src}">
+	</div>
+`
+const showSrc = (src) => `
+	<div class="field-square show" data-src="${src}">
+		<div class="remove">&times;</div>
+		<img src="${src}">
+	</div>
+`
+field.image = ({name = 'file', action, src, remove}) => {
+	const id = 'field-' + nicked(name)
+	return `
+		<div class="field-squares" style="display: block;">
+			${src ? showSrc(src) : '' }
+			<label class="field-square ${src ? '' : 'show'}" for="${id}">
+				<input id="${id}" name="${name}" type="file" accept="image/*">
+			</label>
+		</div>
+		<script>
+			(div => {
+				const squares = div
+				const label = squares.querySelector("label")
+				const input = label.querySelector("input");
+				let promise = Promise.resolve()
+				const upload = async (file) => {
+					//return new Promise(resolve => setTimeout(() => resolve({src:"/data/files/org_id/graph_id/audit_id/item_nick/02.png", file_id:777}), 1000))
+					const formData = new FormData()
+					formData.append('${name}', file)
+					const ans = await fetch("${action}", {
+						method: "POST",
+						body: formData
+					}).then(r => r.json())
+					if (ans.msg) {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.alert(ans.msg)
+					}
+					return ans
+				}
+				
+				const addEvents = square => {
+					const remove = square.querySelector('.remove')
+					if (remove) remove.addEventListener('click', async e => {
+						e.stopPropagation()
+						if (!confirm('Удалить файл?')) return 
+						const send = await import('/-dialog/send.js').then(r => r.default)
+						const ans = await send('${remove}')
+						if (ans.msg) {
+							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+							Dialog.alert(ans.msg)
+						}
+						if (ans.result) {
+							square.remove()
+							label.classList.add('show')
+						}
+					})
+					square.addEventListener('click', e => {
+						if (!square.classList.contains('show')) return
+						if (!square.dataset.src) return
+						window.open(square.dataset.src, '_blank');
+					})
+				}
+				const addSquare = file => {
+					const square = document.createElement('div')
+					square.classList.add('field-square')
+					square.innerHTML = '<div class="remove">&times;</div><canvas></canvas>'
+					label.before(square)
+
+					const canvas = square.querySelector('canvas')
+					const ctx = canvas.getContext("2d")
+					const reader = new FileReader()
+					reader.onload = e => {
+						const img = new Image()
+						img.onload = () => {
+							canvas.width = img.width
+							canvas.height = img.height
+							ctx.drawImage(img, 0, 0)
+						}
+						img.src = e.target.result
+					}
+					reader.readAsDataURL(file)
+					addEvents(square)
+					return square
+				}
+				
+				const uploadFile = file => {
+					if (file.size > 10 * 1024 * 1024) {
+						alert("Файл " + file.name + " более 10 МБ не будет загружен.")
+						return
+					}
+					if (!~['image/png', 'image/jpeg', 'image/webp','image/svg+xml'].indexOf(file.type)) {
+						alert("Тип файла " + file.name + " " + file.type+ " не поддерживается.")
+						return
+					}
+					label.classList.remove('show')
+					const square = addSquare(file)
+					promise = promise.then(() => {
+						return upload(file).then(ans => {
+							square.dataset.src = ans.src
+							square.classList.add('show')
+						}).catch(r => {
+							square.classList.add('error')
+						})
+					})
+				}
+				for (const square of squares.querySelectorAll('.field-square')) addEvents(square)
+				input.addEventListener("change", async () => {
+					if (!input.files[0]) return
+					const file = input.files[0]
+					console.log(file)
+					input.value = ''
+					uploadFile(file)
+				})
+
+				document.body.addEventListener("dragover", e => {
+					if (!div.closest('body')) return
+					e.preventDefault()
+				})
+				document.body.addEventListener("drop", e => {
+					if (!div.closest('body')) return
+					const files = e.dataTransfer?.files
+					if (!files || !files[0]) return
+					e.preventDefault()
+					uploadFile(files[0])
+				})
+			})(document.currentScript.previousElementSibling)
+		</script>
+	`
+}
+
+
+
 const showRadio = (k, v, name, value) => {
 	const id = 'field-' + nicked(name) +'-' + nicked(k)
 	return `
