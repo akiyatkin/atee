@@ -1,11 +1,14 @@
 table {
 	border-collapse: collapse;
 	border-top: 1px solid #ddd;
-	border-left: 1px solid #ddd;
+/*	border-left: 1px solid #ddd;*/
 	border-right: 1px solid #ddd;
+
+    overflow-x: auto;
+    overflow-y: visible;
+    display: block;
+    max-width: fit-content;
 }
-
-
 
 th, 
 td {
@@ -14,8 +17,8 @@ td {
 	border-bottom: 1px solid #ddd;
 	border-left: 1px solid #ddd;
 }
-tr>:first-child {
-	border-left: 1px solid #ddd;
+tr > :first-child {
+/*	border-left: 1px solid #ddd;*/
 }
 
 
