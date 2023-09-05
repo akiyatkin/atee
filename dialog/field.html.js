@@ -705,6 +705,9 @@ field.select = ({name, action, options, vname, tname, def = '', go, goid, select
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
 
 						const ans = await sendit(float, opt.action, value ? {[opt.name]: value} : false)
+
+						select.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+						
 						if (ans.msg) {
 							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 							Dialog.alert(ans.msg)
