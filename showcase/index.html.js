@@ -8,7 +8,7 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 		<link rel="stylesheet" href="/-notreset/table.css">
 		<link rel="stylesheet" href="/style.css">
 		<link rel="stylesheet" href="/-showcase/style.css">
-
+		<base href="/@atee/showcase/">
 	</head>
 	<body style="margin:0;">
 		<div style="padding:10px; min-height:100vh; display:flex; flex-direction:column">
