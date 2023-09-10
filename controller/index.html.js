@@ -1,8 +1,9 @@
 import controller from "/-controller/layout.html.js"
-export const ROOT = (...args) => `<!DOCTYPE html>
+export const ROOT = (data, env) => `<!DOCTYPE html>
 <html>
 	<head>
-		${controller.HEAD(...args)}
+		${controller.HEAD(data, env)}
+		<base href="${env.crumb == '/' ? '/' : env.crumb + '/'}">
 		<link rel="icon" type="image/x-icon" href="/favicon.ico">
 		<link rel="stylesheet" href="/-notreset/style.css">
 		<link rel="stylesheet" href="/style.css">
