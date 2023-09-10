@@ -15,6 +15,7 @@
 	},
 	"types": {
 		"mp4":"video/mp4",
+		"map":"application/javascript",
 		"zip":"application/zip",
 		"tpl":"text/plain",
 		"txt": "text/plain",

@@ -131,18 +131,18 @@ const showFile = (file, file_id_name) => `
 		<img src="${file.src}">
 	</div>
 `
-const showSrc = (src) => `
+const showSrc = (src, width) => `
 	<div class="field-square show" data-src="${src}">
 		<div class="remove">&times;</div>
-		<img src="${src}">
+		<img style="max-width:100%; height:auto" src="${src}">
 	</div>
 `
-field.image = ({name = 'file', action, src, remove}) => {
+field.image = ({name = 'file', action, width = 'auto', src, remove}) => {
 	const id = 'field-' + nicked(name)
 	return `
 		<div class="field-squares" style="display: block;">
-			${src ? showSrc(src) : '' }
-			<label class="field-square ${src ? '' : 'show'}" for="${id}">
+			${src ? showSrc(src, width) : '' }
+			<label width="${width}" class="field-square ${src ? '' : 'show'}" for="${id}">
 				<input class="field" id="${id}" name="${name}" type="file" accept="image/*">
 			</label>
 			<script>
