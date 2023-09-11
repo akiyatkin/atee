@@ -1,6 +1,8 @@
 import nicked from "/-nicked"
 const field = {}
 
+
+//approved
 field.images = ({name = 'file', file_id_name = 'file_id', action, files, remove}) => {
 	const id = 'field-' + nicked(name)
 	return `
@@ -9,120 +11,121 @@ field.images = ({name = 'file', file_id_name = 'file_id', action, files, remove}
 			<label class="show" for="${id}">
 				<input multiple id="${id}" name="${name}" type="file" accept="image/*">
 			</label>
-		</div>
-		<script>
-			(div => {
-				const squares = div
-				const label = squares.querySelector("label")
-				const input = label.querySelector("input");
-				let promise = Promise.resolve()
-				const upload = async (file) => {
-					//return new Promise(resolve => setTimeout(() => resolve({src:"/data/files/org_id/graph_id/audit_id/item_nick/02.png", file_id:777}), 1000))
-					const formData = new FormData()
-					formData.append('${name}', file)
-					const ans = await fetch("${action}", {
-						method: "POST",
-						body: formData
-					}).then(r => r.json())
-					if (ans.msg) {
-						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-						Dialog.alert(ans.msg)
-					}
-					return ans
-				}
-				const unload = async id => {
-					const send = await import('/-dialog/send.js').then(r => r.default)
-					const ans = await send('${remove}'+id)
-					if (ans.msg) {
-						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-						Dialog.alert(ans.msg)
-					}
-					return ans.result
-				}
-				const addEvents = square => {
-					const remove = square.querySelector('.remove')
-					remove.addEventListener('click', async e => {
-						e.stopPropagation()
-						if (!confirm('Удалить файл?')) return 
-						const r = await unload(square.dataset.id)
-						if (r) square.remove()
-					})
-					square.addEventListener('click', e => {
-						if (!square.classList.contains('show')) return
-						window.open(square.dataset.src, '_blank');
-					})
-				}
-				const addSquare = file => {
-					const square = document.createElement('div')
-					square.classList.add('field-square')
-					square.dataset.id = file['${file_id_name}']
-					square.innerHTML = '<div class="remove">&times;</div><canvas></canvas>'
-					label.before(square)
-
-					const canvas = square.querySelector('canvas')
-					const ctx = canvas.getContext("2d")
-					const reader = new FileReader()
-					reader.onload = e => {
-						const img = new Image()
-						img.onload = () => {
-							canvas.width = img.width
-							canvas.height = img.height
-							ctx.drawImage(img, 0, 0)
+			<script>
+				(div => {
+					const squares = div
+					const label = squares.querySelector("label")
+					const input = label.querySelector("input");
+					let promise = Promise.resolve()
+					const upload = async (file) => {
+						//return new Promise(resolve => setTimeout(() => resolve({src:"/data/files/org_id/graph_id/audit_id/item_nick/02.png", file_id:777}), 1000))
+						const formData = new FormData()
+						formData.append('${name}', file)
+						const ans = await fetch("${action}", {
+							method: "POST",
+							body: formData
+						}).then(r => r.json())
+						if (ans.msg) {
+							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+							Dialog.alert(ans.msg)
 						}
-						img.src = e.target.result
+						return ans
 					}
-					reader.readAsDataURL(file)
-					addEvents(square)
-					return square
-				}
-				
-				const uploadFile = files => {
-					if (files.length > 10) {
-						alert("За раз загрузится только 10 файлов")
-						files.length = 10
+					const unload = async id => {
+						const send = await import('/-dialog/send.js').then(r => r.default)
+						const ans = await send('${remove}'+id)
+						if (ans.msg) {
+							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+							Dialog.alert(ans.msg)
+						}
+						return ans.result
 					}
-					for (const file of files) {
-						console.log(file)
-						if (file.size > 10 * 1024 * 1024) {
-							alert("Файл " + file.name + " более 10 МБ не будет загружен.")
-							continue
-						}
-						if (!~['image/png', 'image/jpeg', 'image/webp','image/svg+xml'].indexOf(file.type)) {
-							alert("Тип файла " + file.name + " " + file.type+ " не поддерживается.")
-							continue
-						}
-						const square = addSquare(file)
-						promise = promise.then(() => {
-							return upload(file).then(ans => {
-								square.dataset.id = ans['${file_id_name}']
-								square.dataset.src = ans.src
-								square.classList.add('show')
-							}).catch(r => {
-								square.classList.add('error')
-							})
+					const addEvents = square => {
+						const remove = square.querySelector('.remove')
+						remove.addEventListener('click', async e => {
+							e.stopPropagation()
+							if (!confirm('Удалить файл?')) return 
+							const r = await unload(square.dataset.id)
+							if (r) square.remove()
+						})
+						square.addEventListener('click', e => {
+							if (!square.classList.contains('show')) return
+							window.open(square.dataset.src, '_blank');
 						})
 					}
-				}
-				for (const square of squares.querySelectorAll('.field-square')) addEvents(square)
-				input.addEventListener("change", async () => {
-					const files = [...input.files]
-					input.value = ''
-					uploadFile(files)
-				})
+					const addSquare = file => {
+						const square = document.createElement('div')
+						square.classList.add('field-square')
+						square.dataset.id = file['${file_id_name}']
+						square.innerHTML = '<div class="remove">&times;</div><canvas></canvas>'
+						label.before(square)
 
-				document.body.addEventListener("dragover", e => {
-					if (!div.closest('body')) return
-					e.preventDefault()
-				})
-				document.body.addEventListener("drop", e => {
-					if (!div.closest('body')) return
-					const files = e.dataTransfer?.files
-					if (!files) return
-					e.preventDefault()
-					uploadFile([...files])
-				})
-			})(document.currentScript.previousElementSibling)
-		</script>
+						const canvas = square.querySelector('canvas')
+						const ctx = canvas.getContext("2d")
+						const reader = new FileReader()
+						reader.onload = e => {
+							const img = new Image()
+							img.onload = () => {
+								canvas.width = img.width
+								canvas.height = img.height
+								ctx.drawImage(img, 0, 0)
+							}
+							img.src = e.target.result
+						}
+						reader.readAsDataURL(file)
+						addEvents(square)
+						return square
+					}
+					
+					const uploadFile = files => {
+						if (files.length > 10) {
+							alert("За раз загрузится только 10 файлов")
+							files.length = 10
+						}
+						for (const file of files) {
+							console.log(file)
+							if (file.size > 10 * 1024 * 1024) {
+								alert("Файл " + file.name + " более 10 МБ не будет загружен.")
+								continue
+							}
+							if (!~['image/png', 'image/jpeg', 'image/webp','image/svg+xml'].indexOf(file.type)) {
+								alert("Тип файла " + file.name + " " + file.type+ " не поддерживается.")
+								continue
+							}
+							const square = addSquare(file)
+							promise = promise.then(() => {
+								return upload(file).then(ans => {
+									square.dataset.id = ans['${file_id_name}']
+									square.dataset.src = ans.src
+									square.classList.add('show')
+								}).catch(r => {
+									square.classList.add('error')
+								})
+							})
+						}
+					}
+					for (const square of squares.querySelectorAll('.field-square')) addEvents(square)
+					input.addEventListener("change", async () => {
+						const files = [...input.files]
+						input.value = ''
+						uploadFile(files)
+					})
+
+					document.body.addEventListener("dragover", e => {
+						if (!div.closest('body')) return
+						e.preventDefault()
+					})
+					document.body.addEventListener("drop", e => {
+						if (!div.closest('body')) return
+						const files = e.dataTransfer?.files
+						if (!files) return
+						e.preventDefault()
+						uploadFile([...files])
+					})
+				})(document.currentScript.parentElement)
+			</script>
+		</div>
+		
 	`
 }
 const showFile = (file, file_id_name) => `
@@ -137,6 +140,7 @@ const showSrc = (src, width) => `
 		<img style="max-width:100%; height:auto" src="${src}">
 	</div>
 `
+//approved
 field.image = ({name = 'file', action, width = 'auto', src, remove}) => {
 	const id = 'field-' + nicked(name)
 	return `
@@ -270,31 +274,33 @@ const showRadio = (k, v, name, value) => {
 		</label>
 	`
 }
+//approved
 field.radio = ({name, action = '', value = '', values}) => `
 	<div style="
 		display: grid;
 		gap: 0.7rem;
 	">
 		${Object.entries(values).map(([k, v]) => showRadio(k, v, name, value || '')).join('')}
+		<script>
+			(div => {
+				for (const input of div.querySelectorAll('input')) {
+					input.addEventListener('input', async () => {
+						const send = await import('/-dialog/send.js').then(r => r.default)
+						const ans = await send('${action}', {${name}: input.value})
+						if (ans.msg) {
+							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+							Dialog.alert(ans.msg)
+						}
+					})
+				}
+			})(document.currentScript.parentElement)
+		</script>
 	</div>
-	<script>
-		(div => {
-			for (const input of div.querySelectorAll('input')) {
-				input.addEventListener('input', async () => {
-					const send = await import('/-dialog/send.js').then(r => r.default)
-					const ans = await send('${action}', {${name}: input.value})
-					if (ans.msg) {
-						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-						Dialog.alert(ans.msg)
-					}
-				})
-			}
-		})(document.currentScript.parentElement)
-	</script>
 `
+//approved
 field.switch = ({name, action, value, values}) => {
 	return `
-	<div>
+	<span>
 		<button class="a" style="display: inline-block; cursor:pointer; padding:calc(.75rem / 3) 0">${values[value || ""]}</button>
 		<script>
 			(btn => {
@@ -312,92 +318,44 @@ field.switch = ({name, action, value, values}) => {
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>
-	</div>`
+	</span>`
 }
-field.toggle = (name, title, action, value, values) => {
+
+//approved
+field.button = ({label, action, go, reloaddiv, goid, confirm}) => {
 	return `
-	<div>
-		<button class="transparent" style="display: inline-block; cursor:pointer; padding:calc(.75rem / 3) 0">${title ? title + ': ' : ''} <span class="a">${values[value || ""]}</span></button>
-		<script>
-			(btn => {
-				btn.addEventListener('click', async () => {
-					const send = await import('/-dialog/send.js').then(r => r.default)
-					const ans = await send('${action}')
-					const status = ans['${name}']
-					const values = ${JSON.stringify(values)}
-					if (ans.msg) {
-						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-						Dialog.alert(ans.msg)
-					}
-					if (ans.result) btn.querySelector('.a').innerHTML = values[status || '']
-				})
-			})(document.currentScript.previousElementSibling)
-		</script>
-	</div>`
-}
-// field.prompt = ({name, go, reloaddiv, goid, confirm, title, label, title, action}) => {
-	
-// 	return `
-// 		<button>${title}</button>
-// 		<script>
-// 			(btn => {
-// 				btn.addEventListener('click', async () => {
-// 					if (btn.classList.contains('process')) return
-// 					const ask = "${confirm || ''}"
-// 					const prompt = ${JSON.stringify(prompt)}
-// 					if (prompt) {
-// 						const second = window.prompt(prompt.title, prompt.value)
-// 						if (!second) return
-// 					}  
-// 					if (ask && !window.confirm(ask)) return
-// 					const sendit = await import('/-dialog/sendit.js').then(r => r.default)
-// 					const ans = await sendit(btn, '${action}')
-// 					if (ans.msg) {
-// 						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-// 						Dialog.alert(ans.msg)
-// 						btn.innerHTML = ans.msg
-// 					}
-// 					const Client = await window.getClient()
-// 					const goid = "${goid ? goid : ''}"
-// 					if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
-// 					if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
-// 				})
-// 			})(document.currentScript.previousElementSibling)
-// 		</script>
-// 	`
-// }
-field.button = (title, action, obj = {}) => {
-	const {go, reloaddiv, goid } = obj
-	return `
-		<button>${title}</button>
-		<script>
-			(btn => {
-				btn.addEventListener('click', async () => {
-					if (btn.classList.contains('process')) return
-					const ask = "${obj.confirm || ''}"
-					if (ask && !window.confirm(ask)) return
-					const sendit = await import('/-dialog/sendit.js').then(r => r.default)
-					const ans = await sendit(btn, '${action}')
-					if (ans.msg) {
-						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-						Dialog.alert(ans.msg)
-						btn.innerHTML = ans.msg
-					}
-					const Client = await window.getClient()
-					const goid = "${goid ? goid : ''}"
-					if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
-					if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
-				})
-			})(document.currentScript.previousElementSibling)
-		</script>
+		<span>
+			<button>${label}</button>
+			<script>
+				(btn => {
+					btn.addEventListener('click', async () => {
+						if (btn.classList.contains('process')) return
+						const ask = "${confirm || ''}"
+						if (ask && !window.confirm(ask)) return
+						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+						const ans = await sendit(btn, '${action}')
+						if (ans.msg) {
+							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+							Dialog.alert(ans.msg)
+							//btn.innerHTML = ans.msg
+						}
+						const Client = await window.getClient()
+						const goid = "${goid ? goid : ''}"
+						if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
+						if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
+					})
+				})(document.currentScript.previousElementSibling)
+			</script>
+		</span>
 	`
 }
-field.area = (name, title, action, value) => {
-	const id = 'field-' + nicked(title)
+//approved
+field.area = ({name, label, action, value}) => {
+	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label success">
 			<div name="${name}" contenteditable id="${id}" class="field">${value}</div>
-			<label for="${id}">${title}</label>
+			<label for="${id}">${label}</label>
 			${showStatus()}
 			<script>
 				(float => {
@@ -405,6 +363,7 @@ field.area = (name, title, action, value) => {
 					field.addEventListener('input', async () => {
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
 						const ans = await sendit(float, '${action}', {${name}: field.innerHTML})
+						field.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 					})
 					const status = float.querySelector('.status')
 					status.addEventListener('click', async () => {
@@ -416,8 +375,9 @@ field.area = (name, title, action, value) => {
 		</div>
 	`
 }
-field.text = (name, title, action, value, type = 'text') => {
-	const id = 'field-' + nicked(title)
+//approved
+field.text = ({name, label, action, value, type = 'text'}) => {
+	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label success">
 			<input 
@@ -426,9 +386,9 @@ field.text = (name, title, action, value, type = 'text') => {
 				type="${type}" 
 				id="${id}" 
 				value="${value}" 
-				placeholder="${title}" 
+				placeholder="${label}" 
 				class="field">
-			<label for="${id}">${title}</label>
+			<label for="${id}">${label}</label>
 			${showStatus()}
 			<script>
 				(float => {
@@ -438,6 +398,7 @@ field.text = (name, title, action, value, type = 'text') => {
 						let value = field.value
 						if (~['datetime-local', 'date'].indexOf(field.type)) value = Math.floor(new Date(field.value).getTime() / 1000)
 						const ans = await sendit(float, '${action}', {[field.name]: value})
+						field.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 					})
 					const status = float.querySelector('.status')
 					status.addEventListener('click', async () => {
@@ -449,6 +410,8 @@ field.text = (name, title, action, value, type = 'text') => {
 		</div>
 	`
 }
+
+//approved
 field.percent = ({name, label, action, value}) => {
 	const id = 'field-' + nicked(label)
 	return `
@@ -484,6 +447,8 @@ field.percent = ({name, label, action, value}) => {
 		</div>
 	`
 }
+
+//approved
 field.datetime = ({name, action, label = '', value = '', onlyfuture = false}) => {
 	if (value) {
 		value = new Date(value * 1000)
@@ -542,6 +507,8 @@ field.datetime = ({name, action, label = '', value = '', onlyfuture = false}) =>
 		</div>
 	`
 }
+
+//approved
 field.date = ({name, action, label = '', value = '', onlyfuture = false}) => {
 	if (value) {
 		value = new Date(value * 1000)
@@ -591,7 +558,9 @@ field.date = ({name, action, label = '', value = '', onlyfuture = false}) => {
 		</div>
 	`
 }
-field.ok = ({name, label, action, value, newvalue = '', go, reloaddiv, goid, type = 'text'}) => {
+
+//approved
+field.textok = ({name, label, action, value, newvalue = '', go, reloaddiv, goid, type = 'text'}) => {
 	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label ${value ? 'success' : 'submit'}">
@@ -631,59 +600,22 @@ field.ok = ({name, label, action, value, newvalue = '', go, reloaddiv, goid, typ
 		</div>
 	`
 }
-field.textok = (name, title, action, value, obj = {}) => {
-	const id = 'field-' + nicked(title)
-	const {go, reloaddiv, goid } = obj
-	return `
-		<div class="float-label ${value ? 'success' : 'submit'}">
-			<input name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
-			<label for="${id}">${title}</label>
-			${showStatus()}
-			<script>
-				(float => {
-					const field = float.querySelector('.field')
-					const status = float.querySelector('.status')
-					field.addEventListener('input', async () => {
-						float.classList.remove('error','process','success')
-						float.classList.add('submit')
-						float.title = 'Подтвердить введённые данные'
-					})
-					status.addEventListener('click', async () => {
-						if (float.classList.contains('submit')) {
-							const sendit = await import('/-dialog/sendit.js').then(r => r.default)
-							const ans = await sendit(float, '${action}', {${name}: field.value})
-							if (ans.msg) {
-								const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-								Dialog.alert(ans.msg)
-							}
-							const Client = await window.getClient()
-							const goid = "${goid ? goid : ''}"
-							if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
-							if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
-						} else {
-							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-							Dialog.alert(float.title || "Сохранено")
-							
-						}
-					})
-				})(document.currentScript.parentElement)
-			</script>
-		</div>
-	`
-}
-field.textdisabled = (name, title, action, value) => {
-	const id = 'field-' + nicked(title)
+
+//approved
+field.textdisabled = ({label, value}) => {
+	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label success">
-			<input disabled name="${name}" type="text" id="${id}" value="${value}" placeholder="${title}" class="field">
-			<label for="${id}">${title}</label>
+			<input disabled type="text" id="${id}" value="${value}" placeholder="${label}" class="field">
+			<label for="${id}">${label}</label>
 			${showStatus()}
 		</div>
 	`
 }
+
 const showOption = (obj, vname, tname, value, def) => `<option ${value == obj[vname] ? 'selected ' : ''}value="${obj[vname]}">${obj[tname] || def}</option>`
 
-//${!after || (after.action && options.some(obj => !obj[tname])) ? '' : '<optgroup label="------------"></optgroup><option value="after">' + after.title + '</option>'}
+//approved
 field.select = ({name, action, options, vname, tname, def = '', go, goid, selected, label, status, before, after}) => {
 	const id = 'field-' + nicked(label)
 	return `
@@ -695,71 +627,71 @@ field.select = ({name, action, options, vname, tname, def = '', go, goid, select
 			</select>
 			<label for="${id}">${label}</label>
 			${status ? showStatus() : ''}
-		</div>
-		<script>
-			(float => {
-				const select = float.querySelector('.field')
-				const status = float.querySelector('.status')
-				const makeaction = async (opt, value = '') => {
-					if (opt.action) {
-						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+			<script>
+				(float => {
+					const select = float.querySelector('.field')
+					const status = float.querySelector('.status')
+					const makeaction = async (opt, value = '') => {
+						if (opt.action) {
+							const sendit = await import('/-dialog/sendit.js').then(r => r.default)
 
-						const ans = await sendit(float, opt.action, value ? {[opt.name]: value} : false)
+							const ans = await sendit(float, opt.action, value ? {[opt.name]: value} : false)
 
-						select.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
-						
-						if (ans.msg) {
-							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-							Dialog.alert(ans.msg)
-						}
-						if (ans.result && opt.go) {
+							select.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+							
+							if (ans.msg) {
+								const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+								Dialog.alert(ans.msg)
+							}
+							if (ans.result && opt.go) {
+								const Client = await window.getClient()
+								return Client.go(opt.go + (opt.goid ? ans[opt.goid] : ''))
+							}
+						} else if (opt.go) {
 							const Client = await window.getClient()
-							return Client.go(opt.go + (opt.goid ? ans[opt.goid] : ''))
+							return Client.go(opt.go + value)
 						}
-					} else if (opt.go) {
-						const Client = await window.getClient()
-						return Client.go(opt.go + value)
 					}
-				}
-				select.addEventListener('input', async () => {
-					const i = select.options.selectedIndex
-					const value = select.options[i].value
-					select.disabled = true
-					if (value == 'before') {
-						const opt = ${JSON.stringify(before)}
-						await makeaction(opt)
-					} else if (value == 'after') {
-						const opt = ${JSON.stringify(after)}
-						await makeaction(opt)
-					} else {
-						const opt = ${JSON.stringify({name, action, go, goid})}
-						await makeaction(opt, value)
-					}
-					select.disabled = false
-				})
+					select.addEventListener('input', async () => {
+						const i = select.options.selectedIndex
+						const value = select.options[i].value
+						select.disabled = true
+						if (value == 'before') {
+							const opt = ${JSON.stringify(before)}
+							await makeaction(opt)
+						} else if (value == 'after') {
+							const opt = ${JSON.stringify(after)}
+							await makeaction(opt)
+						} else {
+							const opt = ${JSON.stringify({name, action, go, goid})}
+							await makeaction(opt, value)
+						}
+						select.disabled = false
+					})
 
-				if (status) status.addEventListener('click', async () => {
-					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-					Dialog.alert(float.title || "Сохранено!")
-				})
-			})(document.currentScript.previousElementSibling)
-		</script>
+					if (status) status.addEventListener('click', async () => {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.alert(float.title || "Сохранено!")
+					})
+				})(document.currentScript.parentElement)
+			</script>
+		</div>
 	`
 }
 const showStatus = () => `
-	<div class="status">
-		<button class="submit transparent" style="color: brown; font-size: 16px; font-weight: bold; padding:0;">
+	<div class="status" style="border: none;">
+		<button class="submit transparent" style="color: brown; font-size: 16px; font-weight: bold; padding:0; border-radius: 4px; border: solid 1px color-mix(in srgb, currentColor 10%, transparent)">
 			OK
 		</button>
-		<div class="success" style="color: var(--success); font-size: 16px; font-weight: bold; padding:0;">
+		<div class="success" style="color: var(--success); font-size: 16px; font-weight: bold; padding:0; border-radius: var(--size); border: solid 1px color-mix(in srgb, currentColor 10%, transparent)">
 			✔
 		</div>
-		<div class="process" style="color: gray;">
+		<div class="process" style="color: gray; border-radius: var(--size); border: solid 1px color-mix(in srgb, currentColor 10%, transparent)">
 			<svg style="margin:4px" fill="currentColor" width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
 				<path d="M12 22c5.421 0 10-4.579 10-10h-2c0 4.337-3.663 8-8 8s-8-3.663-8-8c0-4.336 3.663-8 8-8V2C6.579 2 2 6.58 2 12c0 5.421 4.579 10 10 10z" stroke-linecap="round" stroke-linejoin="round"/>
 			</svg>
 		</div>
-		<button class="error transparent" style="color: var(--danger); font-size: 24px; font-weight:bold; padding:0;">
+		<button class="error transparent" style="color: var(--danger); font-size: 24px; font-weight:bold; padding:0; border-radius: var(--size); border: solid 1px color-mix(in srgb, currentColor 10%, transparent)">
 			!
 		</button>
 	</div>
