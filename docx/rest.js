@@ -56,6 +56,7 @@ rest.addArgument('src', async (view, src) => {
 	if (!/data\//.test(src)) return view.err('forbidden', 403)
 	return src
 })
+rest.addArgument('title', ['escape'])
 rest.addResponse('get-head', async view => {
 	const { src, visitor } = await view.gets(['src','visitor'])
 	const index = src.lastIndexOf('/')
@@ -80,8 +81,14 @@ rest.addResponse('get-head', async view => {
 })
 
 rest.addResponse('get-sitemap', async view => {
-	const { src } = await view.gets(['src'])
-	const dir = src
+	const src = await view.get('src')
+	const title = await view.get('title')
+	const index = src.lastIndexOf('/')
+	if (!index) index = 0
+	const name = src.slice(index + 1)
+	const dir = src.slice(0, index + 1)
+	if (name) return view.err('Путь должен быть со слэшём в конце')
+	
 	const list = await getList(dir)
 	let files = {}
 	for (const finfo of list) {
@@ -94,7 +101,7 @@ rest.addResponse('get-sitemap', async view => {
 	return {
 		ans: {
 			headings:[{
-				title:'Страницы',
+				title: title || 'Страницы',
 				childs: files
 			}]
 		}

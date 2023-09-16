@@ -8,12 +8,9 @@ controller.HEAD = (data, env) =>
 		<script>//Делаем SPA переходы
 			const isSuitable = a => {
 				const search = a.getAttribute('href')
-				if (search == null) return
-				if (search[1] == '-') return
+				if (!search || search[1] == '-') return
 				if (a.getAttribute('target')) return
 				if (/^\\w+:/.test(search)) return
-				if (/^\\/cache\\//.test(search)) return
-				if (/^\\/data\\//.test(search)) return
 				return true
 			}
 			const click = event => { 
@@ -74,7 +71,7 @@ controller.HEAD = (data, env) =>
 				if (new_access_time) search += '=' + new_access_time
 				location.href = location.pathname + search + location.hash
 			}
-			check()
+			setTimeout(check, 1000)
 		</script>
 		<script type="module">// Проверка что получен кэш с нужной темой
 			const fromCookie = () => {

@@ -80,7 +80,7 @@ filters.props = {
 			<style>
 				${env.scope} .slider {
 					--thumb-active-color: var(--primary, black);
-					--thumb-static-color: var(--color-link, gray);
+					--thumb-static-color: var(--link-color, gray);
 				}
 			</style>
 			<div style="display: flex; gap:5px; align-items: end; margin-right:1rem">

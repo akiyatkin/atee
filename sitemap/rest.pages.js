@@ -17,7 +17,7 @@ const getFiles = dir => Access.relate(rest).konce('getFiles', dir, async () => {
 		const secure = file[0] == '.' || file[0] == '~'
 		return { secure, name, ext, file }
 	})
-	.filter(({secure, ext}) => !secure && ext == 'html')
+	.filter(({secure, ext}) => !secure && ~['html'].indexOf(ext))
 
 	files.forEach(of => {
 		delete of.ext
@@ -42,7 +42,7 @@ rest.addArgument('dir', async (view, dir) => {
 	const conf = await config('sitemap')
 	if (conf.events == dir) return dir //'data/pages/'
 	if (conf.pages == dir) return dir //'data/pages/'
-	return view.err('', 403)
+	return view.err('Адрес не зарегистрирован', 403)
 })
 rest.addResponse('get-page-head', async (view) => {
 	const { name, dir } = await view.gets(['name', 'dir'])
