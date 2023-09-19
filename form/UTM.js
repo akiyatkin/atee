@@ -1,14 +1,8 @@
 const UTM = {	
 	write: async () => {
-		UTM.write = () => {}
-		const referrer = document.referrer
-		if (referrer) {
-			const ref = new URL(referrer)
-			if (ref.host == location.host) return
-		} //Нет referrer - возможно только при первом прямом посещении за сессию. Такое посещение нужно зафиксировать.
 		const time = new Date().getTime()
 		const href = location.href
-		return UTM.update({ time, referrer: referrer || location.host, href })
+		return UTM.update({ time, referrer: document.referrer || location.href, href })
 	},
 	get: async () => UTM.read().then(store => {
 		const request = store.getAll()

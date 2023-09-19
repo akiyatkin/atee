@@ -1,6 +1,9 @@
 import cproc from "/-cproc"
 import send from "/-dialog/send.js"
 let postcounter = 0
+
+//Depricated надо использовать send или sendit и обработывать ответ явно
+
 const request = async (src, opt = {}) => {
 	const {reloaddiv, goal, global, post, args = {}, go} = opt
 	const entries = Object.entries(args)
