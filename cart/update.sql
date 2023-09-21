@@ -26,6 +26,22 @@ CREATE TABLE IF NOT EXISTS `cart_orders` (
 	`tk` TINYTEXT NULL COMMENT 'Рекомендуемая ТК',
 	`zip` TEXT NULL COMMENT 'Индекс',
 
+	`referrer_host` varchar(31) NOT NULL DEFAULT '' COMMENT '',
+	`source` varchar(31) NOT NULL DEFAULT '' COMMENT '',
+	`content` varchar(31) NOT NULL DEFAULT '' COMMENT '',
+	`campaign` varchar(31) NOT NULL DEFAULT '' COMMENT '',
+	`medium` varchar(31) NOT NULL DEFAULT '' COMMENT '',
+	`term` varchar(31) NOT NULL DEFAULT '' COMMENT '',
+
+	`referrer_host_nick` varchar(31) NOT NULL DEFAULT '' COMMENT '',
+	`source_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
+	`content_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
+	`campaign_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
+	`medium_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
+	`term_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
+
+
+
 	`count` SMALLINT unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш количества позиций(строчек) в корзине. Для сводной таблицы МЕНЕДЖЕРА',
 	`sum` INT unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш суммы заказа без стоимости доставки. Для сводной таблицы МЕНЕДЖЕРА',
 

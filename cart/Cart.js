@@ -1,6 +1,7 @@
 import Catalog from "/-catalog/Catalog.js"
 import User from '/-user/User.js'
 import Mail from '/-mail'
+import nicked from '/-nicked'
 
 
 const Cart = {
@@ -158,13 +159,13 @@ const Cart = {
 		`, { user_id })
 		return wait_id
 	},
-	castWaitActive: async (view, active_id) => {
+	castWaitActive: async (view, active_id, utms) => {
 		let { db, user } = await view.gets(['db', 'user'])
 		if (!user) {
 			user = await User.create(view)
 			User.setCookie(view, user)
 		}
-		if (!active_id) return Cart.create(view, user)
+		if (!active_id) return Cart.create(view, user, utms)
 		const order = await Cart.getOrder(db, active_id)
 		if (order.status == 'wait') return active_id
 		let nactive_id = await db.col(`
@@ -177,7 +178,7 @@ const Cart = {
 		})
 		if (!nactive_id) {
 			//Другой активной нет, надо создать и скопировать
-			nactive_id = await Cart.create(view, user)
+			nactive_id = await Cart.create(view, user, utms)
 			await db.exec(`
 				INSERT INTO cart_basket (
 					order_id,
@@ -374,18 +375,20 @@ Cart.grant = async (db, user_id, order_id) => {
 		REPLACE INTO cart_actives (user_id, order_id) VALUES(:user_id, :order_id)
 	`, {user_id, order_id})
 }
-Cart.create = async (view, user) => {
-	const { db } = await view.gets(['db'])
+Cart.create = async (view, user, utms) => {
+	const db = await view.get('db')
 	const user_id = user.user_id
 
-	const fields = ['name','phone','address','tk','zip','transport','city_id','pay','pvz','commentuser']
+	const fields = [
+		'name','phone','address','tk','zip','transport','city_id','pay','pvz','commentuser'
+	]
 	//Берём данные из прошлой заявки у которой автор этот пользователь
 
-	// const last_id = await db.col(`
-	// 	select o.order_id 
-	// 	from cart_orders o, cart_userorders uo
-	// 	where o.order_id = uo.order_id
-	// `)
+	//'source', 'content', 'campaign', 'medium', 'term', 'referrer_host',
+	//'source_nick', 'content_nick', 'campaign_nick', 'medium_nick', 'term_nick', 'referrer_host_nick',
+
+
+
 
 	let row = await db.fetch(`
 		SELECT ${fields.join(',')} 

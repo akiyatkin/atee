@@ -195,10 +195,15 @@ rest.addResponse('set-submit', async view => {
 	}
 	return ready()
 })
+
+
 rest.addResponse('set-add', async view => {
 	let { base, active_id, partner } = await view.gets(['base', 'active_id', 'partner'])
 	const { db, item, count } = await view.gets(['db', 'item#required', 'count'])
-	const order_id = await Cart.castWaitActive(view, active_id)
+	
+	const utms = await view.get('utms')
+
+	const order_id = await Cart.castWaitActive(view, active_id, utms)
 
 	let orderrefresh = false
 	if (active_id != order_id) orderrefresh = true
@@ -211,10 +216,15 @@ rest.addResponse('set-add', async view => {
 	await Cart.recalcOrder(db, base, order_id, partner)
 	return view.ret('Готово')
 })
+
+
 rest.addResponse('set-remove', async view => {
 	const { db, base, item, active_id, partner } = await view.gets(['db', 'base', 'item#required', 'active_id', 'partner'])
 	if (!active_id) return view.err('Заказ не найден')
-	const order_id = await Cart.castWaitActive(view, active_id)
+
+	const utms = await view.get('utms')
+
+	const order_id = await Cart.castWaitActive(view, active_id, utms)
 	await Cart.setPartner(db, order_id, partner)
 	await Cart.removeItem(db, order_id, item)
 	await Cart.recalcOrder(db, base, order_id, partner)

@@ -665,18 +665,13 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 				modsum.innerHTML = pantpl.SUM(mod.sum)
 				recalc()
 				title.innerHTML = pantpl.TITLE(state)
-
-				const request = await import('/-dialog/request.js').then(r => r.default)
-				const ans = await request('/-cart/set-add', {args: block.dataset, goal: 'basket'})
-				if (ans.orderrefresh) {
-					const Client = await window.getClient()
-					Client.global('cart')
-				}
+				const Basket = await import('/-cart/Basket.js').then(r => r.default)
+				const ans = await Basket.add(block.dataset, input.value)
 			})
 			const del = block.querySelector('.del')
 			del.addEventListener('click', async () => {
-				const request = await import('/-dialog/request.js').then(r => r.default)
-				request('/-cart/set-remove', {args: block.dataset, global: 'cart'})
+				const Basket = await import('/-cart/Basket.js').then(r => r.default)
+				const ans = await Basket.remove(block.dataset)
 			})
 		}
 		recalc()

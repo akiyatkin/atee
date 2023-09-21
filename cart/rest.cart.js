@@ -5,6 +5,16 @@ import rest_user from '/-user/rest.user.js'
 import Cart from "/-cart/Cart.js"
 const rest = new Rest(rest_funcs, rest_vars, rest_user)
 
+
+rest.addArgument('source', ['escape'])
+rest.addArgument('content', ['escape'])
+rest.addArgument('campaign', ['escape'])
+rest.addArgument('medium', ['escape'])
+rest.addArgument('term', ['escape'])
+rest.addArgument('referrer_host', ['escape'])
+
+rest.addVariable('utms', view => view.gets(['referrer_host', 'source', 'content', 'campaign', 'medium', 'term']))
+
 rest.addArgument('order_id', ['int'], async (view, order_id) => {
 	const { user, db } = await view.gets(['user', 'db'])
 	if (user.manager) return order_id
