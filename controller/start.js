@@ -1,5 +1,8 @@
-import { Server } from '/-controller/Server.js'
-import fs from 'fs/promises'
+import Server from '/-controller/Server.js'
+import config from '/-config'
 
-const { APP_PORT = 8888, APP_IP = null } = process.env;
-Server.follow(APP_PORT, APP_IP)
+const conf = await config('controller')
+const PORT = process.env[conf.port.env] || conf.port.def
+const IP = process.env[conf.ip.env] || conf.ip.def
+
+Server.follow(PORT, IP)

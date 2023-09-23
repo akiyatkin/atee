@@ -1,4 +1,12 @@
 {
+	"port":{
+		"def":8888,
+		"env":"APP_PORT"
+	},
+	"ip":{
+		"def":null,
+		"env":"APP_IP"
+	},
 	"access":"admin",
 	"403":{
 		"indexOf":["package.json","layers.json","package-lock.json","nodemon.json"],

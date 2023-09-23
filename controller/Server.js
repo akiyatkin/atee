@@ -15,7 +15,7 @@ import Visitor from './Visitor.js'
 
 const conf = await config('controller')
 
-export const Server = {
+const Server = {
 	follow: (PORT = 8888, IP = "127.0.0.1") => {
 		const server = http.createServer()
 		server.on('request', async (request, response) => {
@@ -232,7 +232,7 @@ const runLayers = async (layers, fn, parent) => {
 	}
 	return Promise.all(promises)
 }
-export const controller = async ({ vt, st, ut, layers, theme }, visitor, bread) => {
+const controller = async ({ vt, st, ut, layers, theme }, visitor, bread) => {
 	const ans = {
 		html: '',
 		status: 200,
@@ -272,3 +272,5 @@ export const controller = async ({ vt, st, ut, layers, theme }, visitor, bread) 
 	}
 	return ans
 }
+
+export default Server
