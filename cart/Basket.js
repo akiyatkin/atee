@@ -3,7 +3,9 @@ import UTM from '/-form/UTM.js'
 
 const Basket = {}
 
-Basket.setUtms = async (args) => {
+window.Basket = Basket
+
+Basket.setUtms = async (args = {}) => {
 	const list = await UTM.get();
 	list.reverse()
 	let row = list.find(row => {
@@ -15,24 +17,27 @@ Basket.setUtms = async (args) => {
 		utms.campaign = params.get("utm_campaign") || ''
 		utms.medium = params.get("utm_medium") || ''
 		utms.term = params.get("utm_term") || ''
-		row.utms = utms
+
+		//?utm_source=Яндекс&utm_content=Реклама&utm_campaign=Эксперимент&utm_medium=РСЯ&utm_term=купить улей
 		for (const i in utms) {
 			if (utms[i]) {
 				const ref = new URL(row.referrer)
-				utms.referrer_host = ref.host
+				if (loc.host != ref.host) {
+					utms.referrer_host = ref.host
+				} else {
+					utms.referrer_host = ''
+				}
+				row.utms = utms
 				return true
 			}
 		}
+		
 	})
 	if (!row) {
 		row = list.find(row => {
 			const loc = new URL(row.href)
 			const ref = new URL(row.referrer)
 			if (loc.host == ref.host) return false
-			//if (ref.host == 'mail.yandex.ru') return false
-			//if (ref.host == 'mail.ru') return false
-			//if (ref.host == 'gmail.com') return false
-
 			const utms = {}	
 			utms.referrer_host = ref.host
 			utms.source = ''
@@ -40,19 +45,17 @@ Basket.setUtms = async (args) => {
 			utms.campaign = ''
 			utms.medium = ''
 			utms.term = ''
-
+			row.utms = utms
 			return true
 		})
 	}
-
-
 	if (row) {
 		args.source = row.utms.source
 		args.content = row.utms.content
 		args.campaign = row.utms.campaign
 		args.medium = row.utms.medium
 		args.term = row.utms.term
-		args.referrer_host = utms.referrer_host
+		args.referrer_host = row.utms.referrer_host
 	} else {
 		args.source = ''
 		args.content = ''
@@ -61,6 +64,7 @@ Basket.setUtms = async (args) => {
 		args.term = ''
 		args.referrer_host = ''
 	}
+	return args
 }
 
 Basket.remove = async (args) => {

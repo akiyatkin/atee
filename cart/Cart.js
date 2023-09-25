@@ -380,7 +380,8 @@ Cart.create = async (view, user, utms) => {
 	const user_id = user.user_id
 
 	const fields = [
-		'name','phone','address','tk','zip','transport','city_id','pay','pvz','commentuser'
+		'name','phone','address','tk','zip','transport','city_id','pay','pvz','commentuser',
+		'source', 'content', 'campaign', 'medium', 'term', 'referrer_host'
 	]
 	//Берём данные из прошлой заявки у которой автор этот пользователь
 
@@ -413,6 +414,21 @@ Cart.create = async (view, user, utms) => {
 	row['email'] = user['email'] || ''
 	row['order_nick'] = await Cart.createNick(view, user)
 	row['user_id'] = user_id
+
+
+	let isnewutms = false
+	for (const uname in utms) {
+		if (utms[uname]) {
+			isnewutms = true
+			break
+		}
+	}
+	if (isnewutms) {
+		for (const uname in utms) {
+			row[uname] = utms[uname]
+			row[uname + '_nick'] = nicked(utms[uname])
+		}
+	}
 
 	const order_id = await db.insertId(`
 		INSERT INTO cart_orders (${Object.keys(row).join(',')}, datecreate, datewait, dateedit) 

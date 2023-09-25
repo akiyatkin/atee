@@ -7,13 +7,16 @@ const conf = await fetch('/-config/get?name=recaptcha').then(r => r.json()).then
 let addinputs = async (form) => {
 	if (forms.has(form)) return
 	forms.add(form)
+	
+
+	//Заглушка чтобы ничего не сломалось. UTM в письмо подставлять тупо, так как на письма отвечают. 
+	//Метки нужно сохранять и показывать в админке. Пример Basket.js setUtms.
 	const utms = document.createElement("input")
 	utms.type = "hidden"
 	utms.name = "utms"
+	utms.value = "[]"
 	form.appendChild(utms)
-	const UTM = await import('/-form/UTM.js').then(r => r.default)
-	const res = await UTM.get()
-	utms.value = JSON.stringify(res)
+	
 	const captha = document.createElement("input")
 	captha.type = "hidden"
 	captha.name = "g-recaptcha-response"

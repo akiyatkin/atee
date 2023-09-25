@@ -432,7 +432,6 @@ const showSubmit = (data, env) => `
 	<div class="formfield submit">
 		<div style="display:flex; justify-content: space-between; align-items: center;">
 			<div>
-				
 				<button class="a clear">Очистить</button>
 			</div>
 			<button type="submit" data-order_id=${data.order.order_id}>Отправить</button>
@@ -520,6 +519,14 @@ const showSubmit = (data, env) => `
 						return
 					}
 				}
+				
+				//const utms = document.createElement("input")
+				//utms.type = "hidden"
+				//utms.name = "utms"
+				//utms.value = "[]"
+				//form.appendChild(utms)
+
+
 				setres(res, 'loader')
 				const ans = await import('/-dialog/submit.js').then(r => r.default(form, {tpl:'${env.layer.tpl}', sub:'MSG'}))
 				if (ans.result) {

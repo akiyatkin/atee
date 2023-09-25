@@ -40,8 +40,6 @@ CREATE TABLE IF NOT EXISTS `cart_orders` (
 	`medium_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
 	`term_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
 
-
-
 	`count` SMALLINT unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш количества позиций(строчек) в корзине. Для сводной таблицы МЕНЕДЖЕРА',
 	`sum` INT unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш суммы заказа без стоимости доставки. Для сводной таблицы МЕНЕДЖЕРА',
 

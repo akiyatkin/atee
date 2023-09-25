@@ -104,7 +104,17 @@ tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
 	<table>
 		<thead>
 			<tr>
-				<td>Заказ</td><td>ФИО</td><td>Email</td><td>Телефон</td><td>Позиций</td><td>Сумма</td><td>Статус</td><td>Изменения</td><td></td>
+				<td>Заказ</td>
+				<td>ФИО</td>
+				<td>Email</td>
+				<td>Телефон</td>
+				<td>Позиций</td>
+				<td>Сумма</td>
+				<td>Статус</td>
+				<td>Изменения</td>
+				<td>Откуда</td>
+				<td>UTM</td>
+				<td></td>
 			</tr>
 		</thead>
 		<tbody>
@@ -199,6 +209,16 @@ tpl.showOrder = (data, env, row) => `
 		</td>
 		<td style="white-space: nowrap;">
 			${new Date(row.dateedit * 1000).toLocaleString('ru-RU', { minute: 'numeric', hour: 'numeric', year: 'numeric', month: 'numeric', day: 'numeric' })}
+		</td>
+		<td>
+			${row.referrer_host || ''}
+		</td>
+		<td>
+			${row.source || ''}
+			${row.campaign || ''}
+			${row.medium || ''}
+			${row.content || ''}
+			${row.term || ''}
 		</td>
 		<td>
 			<button title="Удалить" data-order_id="${row.order_id}" data-order_nick="${row.order_nick}" class="a delete">X</button>

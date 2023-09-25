@@ -144,6 +144,10 @@ rest.addResponse('set-status', async view => {
 })
 rest.addResponse('set-submit', async view => {
 	const { db, base, terms, active_id: order_id, user, user_id } = await view.gets(['db', 'base', 'terms', 'user#required', 'user_id', 'active_id#required'])
+
+	const utms = await view.get('utms')
+
+	
 	const order = await Cart.getOrder(view, order_id)
 	//if (!order.count) return view.err('В заказе нет товаров', 422) интерфейс не позволит это отправить, но если такое произойдёт проблема не сервера, пофиг
 	// 'address' - защита только на клиенте
