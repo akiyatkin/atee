@@ -5,49 +5,59 @@ const Basket = {}
 
 window.Basket = Basket
 
-Basket.setUtms = async (args = {}) => {
-	const list = await UTM.get();
-	list.reverse()
-	let row = list.find(row => {
-		const utms = {}
-		const loc = new URL(row.href)
-		const params = loc.searchParams
-		utms.source = params.get("utm_source") || ''
-		utms.content = params.get("utm_content") || ''
-		utms.campaign = params.get("utm_campaign") || ''
-		utms.medium = params.get("utm_medium") || ''
-		utms.term = params.get("utm_term") || ''
+const fixolddata = href => {
+	if (/^http/.test(href)) return href
+	return 'http://'+href
+}
 
-		//?utm_source=Яндекс&utm_content=Реклама&utm_campaign=Эксперимент&utm_medium=РСЯ&utm_term=купить улей
-		for (const i in utms) {
-			if (utms[i]) {
-				const ref = new URL(row.referrer)
-				if (loc.host != ref.host) {
-					utms.referrer_host = ref.host
-				} else {
-					utms.referrer_host = ''
+Basket.setUtms = async (args = {}) => {
+	const list = await UTM.get().catch(r => [])
+	list.reverse()
+	let row
+	try {
+		row = list.find(row => {
+			const utms = {}
+			const loc = new URL(fixolddata(row.href))
+			const params = loc.searchParams
+			utms.source = params.get("utm_source") || ''
+			utms.content = params.get("utm_content") || ''
+			utms.campaign = params.get("utm_campaign") || ''
+			utms.medium = params.get("utm_medium") || ''
+			utms.term = params.get("utm_term") || ''
+
+			//?utm_source=Яндекс&utm_content=Реклама&utm_campaign=Эксперимент&utm_medium=РСЯ&utm_term=купить улей
+			for (const i in utms) {
+				if (utms[i]) {
+					const ref = new URL(fixolddata(row.referrer))
+					if (loc.host != ref.host) {
+						utms.referrer_host = ref.host
+					} else {
+						utms.referrer_host = ''
+					}
+					row.utms = utms
+					return true
 				}
+			}
+			
+		})
+		if (!row) {
+			row = list.find(row => {
+				const loc = new URL(fixolddata(row.href))
+				const ref = new URL(fixolddata(row.referrer))
+				if (loc.host == ref.host) return false
+				const utms = {}	
+				utms.referrer_host = ref.host
+				utms.source = ''
+				utms.content = ''
+				utms.campaign = ''
+				utms.medium = ''
+				utms.term = ''
 				row.utms = utms
 				return true
-			}
+			})
 		}
-		
-	})
-	if (!row) {
-		row = list.find(row => {
-			const loc = new URL(row.href)
-			const ref = new URL(row.referrer)
-			if (loc.host == ref.host) return false
-			const utms = {}	
-			utms.referrer_host = ref.host
-			utms.source = ''
-			utms.content = ''
-			utms.campaign = ''
-			utms.medium = ''
-			utms.term = ''
-			row.utms = utms
-			return true
-		})
+	} catch (e) {
+		row = false
 	}
 	if (row) {
 		args.source = row.utms.source
