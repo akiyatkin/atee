@@ -426,6 +426,12 @@ const showOrders = (data, env) => `
 `
 const showOrder = (data, env, order) => `<button title="${TITLES[order.status]}" ${data.order.order_id == order.order_id ? 'disabled ' : ''}data-order_id="${order.order_id}" style="${order.status == 'complete' ? 'color:green':''} ${order.status == 'cancel' ? 'color:gray; text-decoration: line-through':''} ${order.status == 'wait' ? 'color:red':''}" class="a">${order.order_nick}</button>`
 const showSubmit = (data, env) => `
+	<input type="hidden" name="source" value="">
+	<input type="hidden" name="content" value="">
+	<input type="hidden" name="campaign" value="">
+	<input type="hidden" name="medium" value="">
+	<input type="hidden" name="term" value="">
+	<input type="hidden" name="referrer_host" value="">
 	<div style="max-width: 500px;">
 		${checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на усфловиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}
 	</div>
@@ -520,11 +526,17 @@ const showSubmit = (data, env) => `
 					}
 				}
 				
-				//const utms = document.createElement("input")
-				//utms.type = "hidden"
-				//utms.name = "utms"
-				//utms.value = "[]"
-				//form.appendChild(utms)
+				//const input = form.
+				const Basket = await import('/-cart/Basket.js').then(r => r.default)
+				const utms = await Basket.setUtms()
+				form.elements.source.value = utms.source
+				form.elements.content.value = utms.content
+				form.elements.campaign.value = utms.campaign
+				form.elements.medium.value = utms.medium
+				form.elements.term.value = utms.term
+				form.elements.referrer_host.value = utms.referrer_host
+
+				
 
 
 				setres(res, 'loader')

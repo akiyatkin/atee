@@ -145,7 +145,7 @@ rest.addResponse('set-status', async view => {
 rest.addResponse('set-submit', async view => {
 	const { db, base, terms, active_id: order_id, user, user_id } = await view.gets(['db', 'base', 'terms', 'user#required', 'user_id', 'active_id#required'])
 
-	const utms = await view.get('utms')
+	
 
 	
 	const order = await Cart.getOrder(view, order_id)
@@ -157,9 +157,15 @@ rest.addResponse('set-submit', async view => {
 		//await Cart.setPartner(db, order_id, partner)
 		await Cart.recalcOrder(db, base, order_id, order.partner)
 		await Cart.freeze(db, base, order_id)
+
+		const utms = await view.get('utms')
+		Cart.updateUtms(db, order_id, utms)
+
 		await Cart.setStatus(db, order_id, 'check')
-		await Cart.setDate(db, order_id, 'check')
-		
+
+
+
+		await Cart.setDate(db, order_id, 'check')		
 		const r1 = Cart.sendToAdmin(view, 'tocheck', order_id)
 		const r2 = Cart.sendToUser(view, 'tocheck', order_id)
 		if ((await Promise.all([r1, r2])).some(r => !r)) return view.err('Не удалось отправить письмо.', 500)
@@ -206,8 +212,8 @@ rest.addResponse('set-add', async view => {
 	const { db, item, count } = await view.gets(['db', 'item#required', 'count'])
 	
 	const utms = await view.get('utms')
-
 	const order_id = await Cart.castWaitActive(view, active_id, utms)
+	await Cart.updateUtms(db, order_id, utms)
 
 	let orderrefresh = false
 	if (active_id != order_id) orderrefresh = true
@@ -227,8 +233,9 @@ rest.addResponse('set-remove', async view => {
 	if (!active_id) return view.err('Заказ не найден')
 
 	const utms = await view.get('utms')
-
 	const order_id = await Cart.castWaitActive(view, active_id, utms)
+	await Cart.updateUtms(db, order_id, utms)
+
 	await Cart.setPartner(db, order_id, partner)
 	await Cart.removeItem(db, order_id, item)
 	await Cart.recalcOrder(db, base, order_id, partner)

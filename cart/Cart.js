@@ -303,6 +303,11 @@ Cart.removeItem = async (db, order_id, item) => {
 	`, {
 		order_id, ...item
 	})
+	await db.exec(`
+		UPDATE cart_orders 
+		SET dateedit = now()
+		WHERE order_id = :order_id
+	`, {order_id})
 	// await Cart.recalcOrder(db, order_id)
 	// const order = await Cart.getOrder(db, order_id)
 	// await db.exec(`
@@ -445,6 +450,33 @@ Cart.setDate = async (db, order_id, status) => {
 		SET date${status} = now()
 		WHERE order_id = ${order_id}
 	`)
+}
+Cart.updateUtms = async (db, order_id, utms) => {
+	utms['referrer_host_nick'] = nicked(utms.referrer_host)
+	utms['source_nick'] = nicked(utms.source)
+	utms['content_nick'] = nicked(utms.content)
+	utms['campaign_nick'] = nicked(utms.campaign)
+	utms['medium_nick'] = nicked(utms.medium)
+	utms['term_nick'] = nicked(utms.term)	
+
+	await db.exec(`
+		UPDATE cart_orders 
+		SET 
+			referrer_host = :referrer_host,
+			source = :source,
+			content = :content,
+			campaign = :campaign,
+			medium = :medium,
+			term = :term,
+			referrer_host_nick = :referrer_host_nick,
+			source_nick = :source_nick,
+			content_nick = :content_nick,
+			campaign_nick = :campaign_nick,
+			medium_nick = :medium_nick,
+			term_nick = :term_nick
+		WHERE 
+			order_id = :order_id
+	`, {order_id, ...utms})
 }
 Cart.setStatus = async (db, order_id, status) => {
 	return await db.exec(`
