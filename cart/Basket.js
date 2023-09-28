@@ -99,8 +99,10 @@ Basket.add = async (args, count = 1, nocopy = false) => {
 		Dialog.alert(ans.msg || 'Ошибка на сервере')
 		return ans
 	}
-	const Client = await window.getClient()
-	await Client.global('cart')
+	if (ans.newwaitorder) {
+		const Client = await window.getClient()
+		await Client.global('cart')
+	}
 	const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
 	if (metrikaid) {
 		console.log('Goal.reach basket')

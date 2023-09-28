@@ -125,7 +125,9 @@ const Cart = {
 			if (wait_id) {
 				//Содержание order_id надо перенести в wait_id и удалить order_id
 				//Чтобы переносить надо знать есть ли уже такая позиция в заявке
-				const items = await db.all(`select count, model_nick, brand_nick, item_num from cart_basket where order_id = :order_id`, {order_id})
+				const items = await db.all(`
+					select count, model_nick, brand_nick, item_num from cart_basket where order_id = :order_id
+				`, {order_id})
 				for (const item of items) {
 					await Cart.addItem(db, wait_id, item, item.count)
 				}
@@ -133,16 +135,60 @@ const Cart = {
 					REPLACE INTO cart_actives (user_id, order_id) VALUES(:user_id, :wait_id)
 				`, {user_id: newuser.user_id, wait_id})
 
-				await db.affectedRows('DELETE from cart_orders where order_id = :order_id', {order_id})
+				const oldorder = await Cart.getOrder(db, order_id)
 
-				// await db.affectedRows(`
-				// 	UPDATE cart_orders
-				// 	SET user_id = :user_id
-				// 	WHERE order_id = :order_id
-				// `, {
-				// 	order_id, 
-				// 	user_id: newuser.user_id
-				// })
+				if (oldorder.name) {
+					await db.affectedRows(`
+						UPDATE cart_orders
+					 	SET name = :name
+					 	WHERE order_id = :order_id
+					`, {
+						name: oldorder.name,
+					 	order_id: wait_id
+					})
+				}
+				if (oldorder.phone) {
+					await db.affectedRows(`
+						UPDATE cart_orders
+					 	SET phone = :phone
+					 	WHERE order_id = :order_id
+					`, {
+						phone: oldorder.phone,
+					 	order_id: wait_id
+					})
+				}
+				if (oldorder.email) {
+					await db.affectedRows(`
+						UPDATE cart_orders
+					 	SET email = :email
+					 	WHERE order_id = :order_id
+					`, {
+						email: oldorder.email,
+					 	order_id: wait_id
+					})
+				}
+				if (oldorder.address) {
+					await db.affectedRows(`
+						UPDATE cart_orders
+					 	SET address = :address
+					 	WHERE order_id = :order_id
+					`, {
+						address: oldorder.address,
+					 	order_id: wait_id
+					})
+				}
+				if (oldorder.commentuser) {
+					await db.affectedRows(`
+						UPDATE cart_orders
+					 	SET commentuser = :commentuser
+					 	WHERE order_id = :order_id
+					`, {
+						commentuser: oldorder.commentuser,
+					 	order_id: wait_id
+					})
+				}
+				
+				await db.affectedRows('DELETE from cart_orders where order_id = :order_id', {order_id})
 				
 			} else {
 				//Изменили автора заказа и дали права

@@ -213,6 +213,7 @@ rest.addResponse('set-add', async view => {
 
 	const utms = await view.get('utms')
 	const order_id = await Cart.castWaitActive(view, active_id, utms, nocopy)
+	view.ans.newwaitorder = order_id != active_id
 	await Cart.updateUtms(db, order_id, utms)
 
 	let orderrefresh = false
