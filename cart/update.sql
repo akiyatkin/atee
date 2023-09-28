@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `cart_orders` (
 	`medium` varchar(31) NOT NULL DEFAULT '' COMMENT '',
 	`term` varchar(31) NOT NULL DEFAULT '' COMMENT '',
 
-	`referrer_host_nick` varchar(31) NOT NULL DEFAULT '' COMMENT '',
+	`referrer_host_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
 	`source_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
 	`content_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
 	`campaign_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',

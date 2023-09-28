@@ -209,10 +209,10 @@ rest.addResponse('set-submit', async view => {
 
 rest.addResponse('set-add', async view => {
 	let { base, active_id, partner } = await view.gets(['base', 'active_id', 'partner'])
-	const { db, item, count } = await view.gets(['db', 'item#required', 'count'])
-	
+	const { db, item, count, nocopy } = await view.gets(['db', 'item#required', 'count', 'nocopy'])
+
 	const utms = await view.get('utms')
-	const order_id = await Cart.castWaitActive(view, active_id, utms)
+	const order_id = await Cart.castWaitActive(view, active_id, utms, nocopy)
 	await Cart.updateUtms(db, order_id, utms)
 
 	let orderrefresh = false

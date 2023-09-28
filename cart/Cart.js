@@ -121,7 +121,7 @@ const Cart = {
 		const order_id = await Cart.getWaitId(db, olduser.user_id) //order_id долна быть или удалена или перенесена
 		if (order_id) {
 			//У olduser есть активная заявка, надо позиции из неё пернести в заявку newuser
-			const wait_id = await Cart.getWaitId(db, newuser.user_id)
+			let wait_id = await Cart.getWaitId(db, newuser.user_id)
 			if (wait_id) {
 				//Содержание order_id надо перенести в wait_id и удалить order_id
 				//Чтобы переносить надо знать есть ли уже такая позиция в заявке
@@ -133,7 +133,17 @@ const Cart = {
 					REPLACE INTO cart_actives (user_id, order_id) VALUES(:user_id, :wait_id)
 				`, {user_id: newuser.user_id, wait_id})
 
-				await db.affectedRows('DELETE from cart_orders where order_id = :order_id', {order_id})				
+				await db.affectedRows('DELETE from cart_orders where order_id = :order_id', {order_id})
+
+				// await db.affectedRows(`
+				// 	UPDATE cart_orders
+				// 	SET user_id = :user_id
+				// 	WHERE order_id = :order_id
+				// `, {
+				// 	order_id, 
+				// 	user_id: newuser.user_id
+				// })
+				
 			} else {
 				//Изменили автора заказа и дали права
 				await Cart.grant(db, newuser.user_id, order_id)
@@ -159,7 +169,7 @@ const Cart = {
 		`, { user_id })
 		return wait_id
 	},
-	castWaitActive: async (view, active_id, utms) => {
+	castWaitActive: async (view, active_id, utms, nocopy = false) => {
 		let { db, user } = await view.gets(['db', 'user'])
 		if (!user) {
 			user = await User.create(view)
@@ -179,31 +189,33 @@ const Cart = {
 		if (!nactive_id) {
 			//Другой активной нет, надо создать и скопировать
 			nactive_id = await Cart.create(view, user, utms)
-			await db.exec(`
-				INSERT INTO cart_basket (
-					order_id,
-					model_nick,
-					brand_nick,
-					item_num,
-					hash,
-					json,
-					count,
-					dateadd,
-					dateedit 
-				)
-				SELECT 
-					:nactive_id,
-					model_nick,
-					brand_nick,
-					item_num,
-					hash,
-					json,
-					count,
-					now(),
-					now()
-				FROM cart_basket
-				WHERE order_id = :active_id
-			`, {active_id, nactive_id})
+			if (!nocopy) {
+				await db.exec(`
+					INSERT INTO cart_basket (
+						order_id,
+						model_nick,
+						brand_nick,
+						item_num,
+						hash,
+						json,
+						count,
+						dateadd,
+						dateedit 
+					)
+					SELECT 
+						:nactive_id,
+						model_nick,
+						brand_nick,
+						item_num,
+						hash,
+						json,
+						count,
+						now(),
+						now()
+					FROM cart_basket
+					WHERE order_id = :active_id
+				`, {active_id, nactive_id})
+			}
 		} else {
 			await db.exec(`
 				UPDATE cart_actives

@@ -8,11 +8,20 @@ export default cards
 
 cards.LIST = (data, env) => `
 	<style>
-		${env.scope} .listcards { grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)) }
-		@media (max-width:767px) {
+		/*${env.scope} .listcards { 
+			grid-template-columns: repeat(auto-fill, minmax(32ch, 1fr))
+			grid-template-columns: repeat(auto-fill, minmax(28px, 1fr))
+		}*/
+		${env.scope} .listcards { 
+			grid-template-columns: 1fr 1fr 1fr 1fr
+		}
+		@media (max-width:1400px) {
+			${env.scope} .listcards { grid-template-columns: 1fr 1fr 1fr }
+		}
+		@media (max-width:900px) {
 			${env.scope} .listcards { grid-template-columns: 1fr 1fr }
 		}
-		@media (max-width:360px) {
+		@media (max-width:350px) {
 			${env.scope} .listcards { grid-template-columns: 1fr }
 		}
 	</style>
@@ -93,7 +102,9 @@ cards.props = (data, env, mod) => `
 	</div>
 `
 cards.prop = {
-	default: (data, env, mod, pr, title, val) => `
+	default: (data, env, mod, pr, title, val) => cards.prop.justwithtitle(data, env, mod, pr, title, val),
+	//depricated
+	default3: (data, env, mod, pr, title, val) => ` 
 		<div style="margin: 0.25rem 0; display: flex">
 			<div style="padding-right: 0.5rem">${title}:</div>
 			<div title="${pr.value}" 
@@ -141,6 +152,11 @@ cards.prop = {
 	just: (data, env, mod, pr, title, val) => `
 		<div style="margin: 0.25rem 0">
 			${val}
+		</div>
+	`,
+	justwithtitle: (data, env, mod, pr, title, val) => `
+		<div style="margin: 0.25rem 0">
+			${title}: ${val}
 		</div>
 	`,
 	justold: (data, env, mod, pr, title, val) => `

@@ -68,9 +68,22 @@ tpl.USER = (data, env) => `
 	</div>
 `
 
+const getWaitOrder = (orders) => {
+	const waitorder = orders.find(o => o.status == 'wait')
+	return waitorder
+}
+const getWaitOrderId = (orders) => {
+	const waitorder = getWaitOrder(orders)
+	if (!waitorder) return 0
+	return waitorder.order_id
+}
+const getWaitOrderCount = (orders) => {
+	const waitorder = getWaitOrder(orders)
+	if (!waitorder) return 0
+	return waitorder.count
+}
 tpl.CART = (data, env) => panel.isShowPanel(data) ? `
-	<button title="На ${cost((data.list||[]).reduce((val, pos) => val + pos.sum, 0))}${common.unit()}" 
-		style="cursor:pointer; background: transparent;" class="header_table_cart transparent">
+	<button	style="cursor:pointer; background: transparent;" class="header_table_cart transparent">
 		<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 			<path d="M22.7141 1.28564H20.7764C19.8439 1.28564 19.035 1.9302 18.8269 2.83927L17.646 7.99685" 
 				fill="transparent"
@@ -81,7 +94,7 @@ tpl.CART = (data, env) => panel.isShowPanel(data) ? `
 			<path d="M3.85714 22.2856C4.33053 22.2856 4.71429 21.9018 4.71429 21.4284C4.71429 20.955 4.33053 20.5713 3.85714 20.5713C3.38376 20.5713 3 20.955 3 21.4284C3 21.9018 3.38376 22.2856 3.85714 22.2856Z" fill="#4147D5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 			<path d="M15 22.2856C15.4734 22.2856 15.8571 21.9018 15.8571 21.4284C15.8571 20.955 15.4734 20.5713 15 20.5713C14.5266 20.5713 14.1428 20.955 14.1428 21.4284C14.1428 21.9018 14.5266 22.2856 15 22.2856Z" fill="#4147D5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 		</svg>
-		<span class="header_table_cart_num">${data.list?.length || 0}</span>
+		<span class="header_table_cart_num">${getWaitOrderCount(data.orders)}</span>
 	</button>
 	<script>
 		(btn => {
@@ -89,10 +102,20 @@ tpl.CART = (data, env) => panel.isShowPanel(data) ? `
 			btn.addEventListener('click', async e => {
 				e.preventDefault()
 				e.stopPropagation()
-				
 				const animate = await import('/-controller/animate.js').then(r => r.default)
 				animate('a', btn, 'opacity')
 				
+				const order_id = ${getWaitOrderId(data.orders)}
+
+				if (order_id) {
+					const ans = await fetch('/-cart/set-newactive?order_id=' + order_id).then(r => r.json()).catch(e => {
+						console.log(e)
+						return {msg:'Ошибка на сервере'}
+					})
+					const Client = await window.getClient()
+					Client.global('cart')
+				}
+
 				const panel = document.querySelector('#PANEL .panel')
 				const Panel = await import('/-cart/Panel.js').then(r => r.default)
 				Panel.toggle(panel)

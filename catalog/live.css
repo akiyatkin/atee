@@ -75,6 +75,6 @@
 	grid-template-columns: 1fr max-content;
 }
 .liveform .liveselect:hover {
-	background-color: var(--color-link, lightblue);
+	background-color: var(--link-color, lightblue);
 	color: white;
 }
