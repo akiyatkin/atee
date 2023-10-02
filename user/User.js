@@ -29,8 +29,8 @@ const User = {
 		const token = crypto.randomBytes(12).toString('hex')
 		return token
 	},
-	create: async view => {
-		const db = await view.get('db')
+	create: async db => {
+		db = db.gets ? await db.get('db') : db
 		const token = User.createToken()
 		const password = token.substr(0, 6)
 		const timezone = Intl.DateTimeFormat ? Intl.DateTimeFormat().resolvedOptions().timeZone : ''

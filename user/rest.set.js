@@ -106,6 +106,16 @@ rest.addAction('set-signin-email', async (view, src) => {
 	await User.sendin(view, userbyemail)
 	return view.ret('Вам отправлено письмо со ссылкой для входа.')
 })
+
+rest.addAction('set-user-id', async (view, src) => {
+	const user = await view.get('user')	
+	const db = await view.get('db')	
+	if (!user) user = await User.create(db)
+	view.ans.user_id = user.user_id
+	view.ans.user_token = user.token
+	return view.ret()
+})
+
 rest.addAction('set-signup-email', async (view, src) => {
 	let { user, email, db } = await view.gets(['user', 'email#required','db','start','recaptcha'])	
 	if (!user) { //'user#create'
