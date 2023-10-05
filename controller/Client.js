@@ -7,8 +7,8 @@ import Theme from '/-controller/Theme.js'
 export const Client = {
 	search:'',
 	access_promise: null,
-	follow: (root) => {
-		Client.search = fixsearch(Client.getSearch())
+	follow: (root, search) => {
+		Client.search = fixsearch(search || Client.getSearch())
 		const get = Object.fromEntries(new URLSearchParams(location))
 		Client.bread = new Bread(Client.search, get, Client.search, root)
 		Client.theme = Theme.harvest(get, document.cookie)
@@ -38,11 +38,13 @@ export const Client = {
 	popstate: (event) => {
 		const moment = Date.now()
 		if (Client.lastpop + 1000 * 2 < moment) { //Прошлый переход должен закончиться как 2 секунды.
-			//На практике назад может нажиматься несколько раз и соранится прокрутка до восстановления прошлого значения, тоесть собьётся
+			//На практике назад может нажиматься несколько раз и сохранится прокрутка до восстановления прошлого значения, тоесть собьётся
 			Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 		}
 		Client.lastpop = moment
 		const search = Client.getSearch()
+		console.log('Куда', search)
+		console.log('Откуда', Client.search)
 		const promise = Client.crossing(search)
 		if (event.state?.view == Client.view) { //Вперёд
 			const { cursor } = event.state

@@ -108,9 +108,12 @@ rest.addAction('set-signin-email', async (view, src) => {
 })
 
 rest.addAction('set-user-id', async (view, src) => {
-	const user = await view.get('user')	
+	let user = await view.get('user')	
 	const db = await view.get('db')	
-	if (!user) user = await User.create(db)
+	if (!user) {
+		user = await User.create(db)
+		User.setCookie(view, user)
+	}
 	view.ans.user_id = user.user_id
 	view.ans.user_token = user.token
 	return view.ret()

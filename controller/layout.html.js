@@ -19,8 +19,9 @@ controller.HEAD = (data, env) =>
 				event.preventDefault()
 				getClient().then(Client => Client.click(a))
 			}
+			const search = decodeURI(location.pathname + location.search)
 			const popstate = event => {
-				getClient().then(Client => Client.popstate(event))
+				getClient().then(Client => Client.popstate(event, search))
 			}
 			window.waitClient = promise => waitClient.stack.push(promise)
 			window.waitClient.stack = []
@@ -37,7 +38,7 @@ controller.HEAD = (data, env) =>
 							update_time: time,
 							access_time: time
 						}
-						Client.follow('${env.bread.root}')
+						Client.follow('${env.bread.root}', search)
 						resolve(Client)
 					}).catch(reject)
 				})
