@@ -134,7 +134,9 @@ export const Dialog = {
 
 	hide: popup => {
 		//document.getElementsByTagName('html')[0].style.overscrollY = ''
+		popup = popup || Dialog.parents.shift()
 		popup = popup.tagName ? popup : document.getElementById(popup)
+
 		const dialog = popup.children[0]
 		const i = Dialog.parents.indexOf(popup)
 		if (~i) Dialog.parents.splice(i, 1)
