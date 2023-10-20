@@ -89,9 +89,15 @@ Basket.remove = async (args) => {
 	await Client.global('cart')
 	return ans
 }
+Basket.addButton = async (args, count = 1, nocopy = false) => {
+	const ans = await Basket.add(args, count, nocopy)
+	if (ans.newwaitorder) return
+	const Client = await window.getClient()
+	await Client.global('cart')
+}
 Basket.add = async (args, count = 1, nocopy = false) => {
 	args.count = count
-	args.nocopy = Number(nocopy == 'nocopy')
+	args.nocopy = Number(nocopy == 'nocopy') //Копировать или создать пустую
 	await Basket.setUtms(args)
 	const ans = await send('/-cart/set-add', args)
 	if (!ans.result) {

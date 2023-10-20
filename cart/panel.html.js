@@ -438,9 +438,9 @@ const showSubmit = (data, env) => `
 	<div class="formfield submit">
 		<div style="display:flex; justify-content: space-between; align-items: center;">
 			<div>
-				<button class="a clear">Очистить</button>
+				<button class="a clear" data-order_id="${data.order.order_id}">Очистить</button>
 			</div>
-			<button type="submit" data-order_id=${data.order.order_id}>Отправить</button>
+			<button type="submit" data-order_id="${data.order.order_id}">Отправить</button>
 		</div>
 		${tpl.svgres('optional')}
 	</div>
@@ -551,20 +551,19 @@ const showSubmit = (data, env) => `
 				}
 			})
 			const btnclear = form.querySelector('.clear')
-			btnclear.addEventListener('click', () => {
-				for (const field of form.querySelectorAll('.formfield')) {
-					const res = field.querySelector('.res')
-					if (!res) continue
-					let input = field.querySelector('input')
-					if (!input) input = field.querySelector('textarea')
-					if (!input) continue
-					input.value = ''
-					input.dispatchEvent(new Event("input"))
-					input.dispatchEvent(new Event("change"))
+			btnclear.addEventListener('click', async (e) => {
+				e.preventDefault()
+				const order_id = btnclear.dataset.order_id
+				const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+
+				const ans = await sendit(btnclear, '/-cart/set-clear', {order_id})
+				if (ans.msg) {
+					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+					Dialog.alert(ans.msg)
 				}
+				const Client = await window.getClient()
+				Client.global('cart')
 			})
-				
-				
 		})(document.currentScript.parentElement)
 	</script>
 `

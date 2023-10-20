@@ -287,8 +287,8 @@ Cart.createNick = async (view, user) => {
 	const order_nick = days + '-' + user.user_id + '-' + num
 	return order_nick
 }
-Cart.saveFiled = async (view, order_id, field, value) => {
-	const { db } = await view.gets(['db'])
+Cart.saveFiled = async (db, order_id, field, value) => {
+	db = db.gets ? await db.get('db') : db
 	return await db.exec(`
 		UPDATE cart_orders 
 		SET ${field} = :value, dateedit = now()
