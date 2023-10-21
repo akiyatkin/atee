@@ -146,6 +146,10 @@ rest.addResponse('set-status', async view => {
 rest.addResponse('set-clear', async view => {
 	const db = await view.get('db')	
 	const order_id = await view.get('order_id#required')
+
+	const order = await Cart.getOrder(db, order_id)
+	if (order.status != 'wait') return view.err('Заказ уже отправлен менеджеру')
+
 	for (const field of ['name', 'phone','email','address','commentuser']) {
 		Cart.saveFiled(db, order_id, field, '')
 	}
@@ -158,7 +162,7 @@ rest.addResponse('set-submit', async view => {
 	
 
 	
-	const order = await Cart.getOrder(view, order_id)
+	const order = await Cart.getOrder(db, order_id)
 	//if (!order.count) return view.err('В заказе нет товаров', 422) интерфейс не позволит это отправить, но если такое произойдёт проблема не сервера, пофиг
 	// 'address' - защита только на клиенте
 	for (const check of ['email','name','phone']) if (!order[check]) return view.err('Заполнены не все поля', 422)
@@ -255,7 +259,7 @@ rest.addResponse('set-remove', async view => {
 })
 rest.addResponse('set-field', async view => {
 	const { db, field, value, active_id, user } = await view.gets(['db', 'field', 'value', 'user', 'active_id#required'])
-	const order = await Cart.getOrder(view, active_id)
+	const order = await Cart.getOrder(db, active_id)
 	if (order[field] == value) return view.ret('Данные сохранены')
 	if (order.status != 'wait') return view.err('Заказ уже отправлен менеджеру', 422)
 	const errorsave = async msg => {
