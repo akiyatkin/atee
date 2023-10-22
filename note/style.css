@@ -1,0 +1,121 @@
+
+.notewrapper {
+	opacity:1!important;
+}
+.notewrapper .note {
+	outline: none; 
+	line-height: 1.3;
+	padding:1ch 1ch;
+	font-family: monospace;
+	border:none;
+	font-size: inherit;
+	
+	display: inline-block;
+	width:100%;
+	white-space: pre-wrap;
+	overflow: hidden;
+	word-wrap: break-word;
+	tab-size: 3;
+	caret-color: black;
+/*	caret-color: transparent;*/
+	background-color: color-mix(in srgb, pink 5%, transparent);
+}
+.notewrapper .note:focus-visible {
+	background-color: transparent;
+}
+
+.notewrapper .note[placeholder]:empty:before {
+	content: attr(placeholder);
+	color: #555; 
+}
+.notewrapper .note[placeholder]:empty:focus:before {
+	content: '';
+}
+
+.notewrapper .note {
+	grid-column: 1 / 2;
+	grid-row: 1 / 2;
+}
+.notewrapper .area {
+	resize: none;
+}
+.notewrapper .area {
+	color: rgba(0,0,0,1);
+}
+.notewrapper .view {
+	color: transparent;
+}
+.notewrapper {
+	display: grid;
+	overflow-y: auto;
+}
+
+
+.notewrapper .cursor {
+	transform: scale(0);
+	background-color: rgba(12, 123, 214, 0.5);
+	position: relative;
+	margin-left: -1px;
+	animation: 1s infinite running notelic_scale;
+}
+.notewrapper .select.red {
+	background-color: color-mix(in srgb, red 10%, transparent);
+}
+.notewrapper .select.yellow {
+	background-color: color-mix(in srgb, yellow 60%, transparent);
+}
+.notewrapper .select.green {
+	background-color: color-mix(in srgb, green 10%, transparent);
+}
+.notewrapper .select.orange {
+	background-color: color-mix(in srgb, orange 10%, transparent);
+}
+.notewrapper .select.blue {
+	background-color: color-mix(in srgb, blue 10%, transparent);
+}
+
+.notewrapper .cursor.red {
+	border-right:1px solid red;
+	
+}
+.notewrapper .cursor.yellow {
+	border-right:1px solid yellow;
+	animation-delay: 0.25s;
+	
+}
+.notewrapper .cursor.green {
+	border-right:1px solid green;
+	animation-delay: 0.5s;
+}
+.notewrapper .cursor.orange {
+	border-right:1px solid orange;
+	
+}
+.notewrapper .cursor.blue {
+	border-right:1px solid blue;
+}
+
+@media print {
+	.notewrapper .note.area {
+		display: none;
+	}
+	.notewrapper .note.view {
+		background-color: white;
+		color:black;
+		display: block;
+	}
+}
+@keyframes notelic_scale {
+	0% {
+		opacity: 1;
+	}
+	25% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 0;
+	}
+}
