@@ -24,7 +24,7 @@ note.ROOT = (data, env) => note.checkErr(data, env) || `
 	<div class="notewrapper">
 		<div class="note view" 
 			aria-hidden="true"
-			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь">${Note.makeHTML(data.note.text, data.note.cursors)}<br><br></div>
+			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь">${Note.makeHTML(data.note.text, data.note.cursors)}<br></div>
 		<textarea autocomplete="off" class="note area" 
 			spellcheck="false"
 			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь" role="textbox" 
