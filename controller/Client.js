@@ -43,8 +43,8 @@ export const Client = {
 		}
 		Client.lastpop = moment
 		const search = Client.getSearch()
-		console.log('Куда', search)
-		console.log('Откуда', Client.search)
+		//console.log('Куда', search)
+		//console.log('Откуда', Client.search)
 		const promise = Client.crossing(search)
 		if (event.state?.view == Client.view) { //Вперёд
 			const { cursor } = event.state
