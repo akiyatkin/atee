@@ -185,6 +185,7 @@ ${data.note.text}</textarea>
 						ordain: ++note.ordain, //Важен для my
 						cursor: Note.getCursor(note)
 					}
+					note.lastchange = change
 					note.text = text_after
 
 					for (const i in note.cursors) {
