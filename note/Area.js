@@ -85,24 +85,19 @@ Area.keydown = async (area, e) => {
 		}
 
 	} else if (e.keyCode === 13) { //Enter
-		let r = false
-		if (area.selectionStart == area.selectionEnd) {
-			
-			//const sel = getStartline(text, area.selectionStart)
-
-			let sel = area.selectionStart - 1 // find start of the current line
-			const text = area.value
-			while (sel > 0 && text[sel - 1] != '\n') sel--
-			const lineStart = sel
-			while (text[sel] == ' ' || text[sel]=='\t') sel++
-			if (sel > lineStart) { // Insert carriage return and indented text
-				r = true
-				document.execCommand('insertText', false, "\n" + text.substr(lineStart, sel - lineStart))
-			}
+		const text = area.value
+		let sel = area.selectionEnd - 1 // find start of the current line
+		while (sel > 0 && text[sel - 1] != '\n') sel--
+		let flineStart = sel
+		while (text[sel] == ' ' || text[sel]=='\t') sel++
+		const slineStart = Math.min(sel, area.selectionEnd)
+		let smb = text[slineStart]
+		let prefix = ''	
+		if (text[slineStart + 1] == ' ' && ~['+','-'].indexOf(smb) && text[slineStart + 2].trim()) {
+			if (smb == '+') smb = '-'
+			prefix = smb + ' '
 		}
-		if (!r) {
-			document.execCommand('insertText', false, "\n")
-		}
+		document.execCommand('insertText', false, "\n" + text.substr(flineStart, slineStart - flineStart) + prefix)
 	} else if (e.keyCode === 9) { // Tab newinput
 		if (area.selectionStart == area.selectionEnd) {
 			if (!e.shiftKey) {
@@ -118,6 +113,8 @@ Area.keydown = async (area, e) => {
 		
 			let selStart = area.selectionStart
 			let selEnd = area.selectionEnd
+			let initStart = area.selectionStart
+			let initEnd = area.selectionEnd
 			const orgEnd = area.selectionEnd
 			const text = area.value
 
@@ -143,12 +140,24 @@ Area.keydown = async (area, e) => {
 					lines[i] = "\t" + lines[i]
 				}
 			}
+			const count = lines.length
 			lines = lines.join('\n')
+			const direction = area.selectionDirection
 			area.selectionStart = selStart
 			area.selectionEnd = selStart + lines.length - add
 			document.execCommand('insertText', false, lines)
-			area.selectionStart = selStart
-			area.selectionEnd = orgEnd + add
+			
+			if (e.shiftKey) {
+				area.selectionStart = (initStart || 1) - (add ? 1 : 0)
+				area.selectionEnd = orgEnd + add
+			} else {
+				area.selectionStart = initStart + 1
+				area.selectionEnd = initEnd + count	
+			}
+
+			
+			
+			area.selectionDirection = direction
 		}
 	}
 }
