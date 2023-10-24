@@ -134,7 +134,9 @@ ${data.note.text}</textarea>
 				})
 				
 				
-				
+				note.area.addEventListener('dragstart', e => {
+					e.preventDefault()
+				})
 				note.area.addEventListener('beforeinput', async e => {
 					/*
 						aob - before, remove
@@ -142,6 +144,8 @@ ${data.note.text}</textarea>
 					*/
 					if (note.inputpromise.start) return
 					const aob = note.area.textLength
+					//let edge = note.area.selectionEnd
+					//const ao = note.area.selectionEnd
 					const text_before = note.area.value
 					note.inputpromise = new Promise(resolve => note.area.addEventListener('input', async () => {
 						const Note = await import('/-note/Note.js').then(r => r.default)
@@ -170,8 +174,9 @@ ${data.note.text}</textarea>
 					let a = -1
 					while (++a < ao) if (text_before[a] != text_after[a]) break //Поиск первого отличия с начала текста
 
-					let n = an - a
 					let o = ao - a
+					let n = an - a
+
 					if (n < 0) {
 						a += n
 						n = an - a
