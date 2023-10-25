@@ -291,7 +291,10 @@ const Note = {
 							note.text = signal.text
 							note.area.value = note.text
 							Note.viewHTML(note)
-							
+						} else if (signal.type == 'joined') {
+							if (signal.user_id == note.user_id) {
+								note.area.classList.add(signal.color)
+							}
 						} else if (signal.type == 'rename') {
 							const Client = await window.getClient()
 							Client.reloaddiv('NOTES')

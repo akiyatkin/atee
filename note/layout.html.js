@@ -18,14 +18,14 @@ note.checkErr = (data, env) => data.result ? '': `
 note.ROOT = (data, env) => note.checkErr(data, env) || `
 	<style>
 		${env.scope} .notewrapper {
-			opacity:0;
+			opacity:0;	
 		}
 	</style>
-	<div class="notewrapper">
+	<div class="notewrapper ready">
 		<div class="note view" 
 			aria-hidden="true"
 			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь">${Note.makeHTML(data.note.text, data.note.cursors)}<br></div>
-		<textarea autocomplete="off" class="note area" 
+		<textarea autocomplete="off" class="note area ${data.note.color || ''}" 
 			spellcheck="false"
 			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь" role="textbox" 
 			tabindex="0">

@@ -19,10 +19,5 @@
 	"dependencies": {
 		"probe-image-size": "^7.2.3",
 		"@notionhq/client": "^1.0.4"
-	},
-	"dependencies2": {
-		"@atee/controller": "https://gitpkg.now.sh/akiyatkin/atee/controller?main",
-		"@atee/config": "https://gitpkg.now.sh/akiyatkin/atee/config?main",
-		"@atee/rest": "https://gitpkg.now.sh/akiyatkin/atee/rest?main"
 	}
 }
