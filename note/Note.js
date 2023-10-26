@@ -291,7 +291,14 @@ const Note = {
 							note.text = signal.text
 							note.area.value = note.text
 							Note.viewHTML(note)
+						} else if (signal.type == 'leave') {
+							console.log('leave')
+							const Client = await window.getClient()
+							Client.reloaddiv('FOOTER')
 						} else if (signal.type == 'joined') {
+							console.log('joined')
+							const Client = await window.getClient()
+							Client.reloaddiv('FOOTER')
 							if (signal.user_id == note.user_id) {
 								note.area.classList.add(signal.color)
 							}
