@@ -17,18 +17,39 @@ const showFilter = (data, filter, env) => `
 `
 
 
-filters.item = (data, env, filter, v) => getp(data, filter.prop_nick)[v.value_nick] ? 
+filters.itemChoiced = (data, env, filter, v) => filter.multi ? 
+	`<a class="clearlink" title="Отменить выбор" 
+		style="display: inline-block; margin-top:0.3em; border-color: transparent; color:inherit;" 
+		class="a" data-scroll="none" rel="nofollow" 
+		href="${env.crumb}${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}.${v.value_nick}">
+		<span class="value">${v.value_title}</span><sup style="position: absolute; margin-left:-2px; margin-top:-2px" class="krest">&nbsp;✕</sup>
+	</a>` : 
 	`<a class="clearlink" title="Отменить выбор" 
 		style="display: inline-block; margin-top:0.3em; border-color: transparent; color:inherit;" 
 		class="a" data-scroll="none" rel="nofollow" 
 		href="${env.crumb}${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}">
 		<span class="value">${v.value_title}</span><sup style="position: absolute; margin-left:-2px; margin-top:-2px" class="krest">&nbsp;✕</sup>
-	</a>` : 
+	</a>`
+
+filters.itemChoice = (data, env, filter, v) => filter.multi ? 
+	`<a title="Выбрать" 
+		style="opacity: ${v.mute ?'0.3':'1'}; margin-top:0.3em; display:inline-block;" 
+		class="a" data-scroll="none" rel="nofollow" 
+		href="${env.crumb}${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}.${v.value_nick}=1">
+		${v.value_title}</a>` : 
 	`<a title="Выбрать" 
 		style="opacity: ${v.mute ?'0.3':'1'}; margin-top:0.3em; display:inline-block;" 
 		class="a" data-scroll="none" rel="nofollow" 
 		href="${env.crumb}${links.addm(data)}${filter.type!='brand'?'more.':''}${filter.prop_nick}::.${v.value_nick}=1">
 		${v.value_title}</a>`
+
+
+
+filters.item = (data, env, filter, v) => getp(data, filter.prop_nick)[v.value_nick] ? 
+	 filters.itemChoiced(data, env, filter, v) : filters.itemChoice(data, env, filter, v)
+
+
+
 
 filters.option = (data, filter, v) => getp(data, filter.prop_nick)[v.value_nick] ? `
 		<option value="${v.value_nick}" selected>${v.value_title}</option>
@@ -240,7 +261,9 @@ filters.props = {
 	row: (data, filter, env) => filters.block(
 		filter.prop_title, 
 		`
-			<span style="white-space:nowrap; margin-right:0.7em;">${filter.values.map(v => filters.item(data, env, filter, v)).join(',</span> <span style="white-space:nowrap; margin-right:0.7em">')}</span>
+			<span style="white-space:nowrap; margin-right:0.7em;">${
+				filter.values.map(v => filters.item(data, env, filter, v)).join(',</span> <span style="white-space:nowrap; margin-right:0.7em">')
+			}</span>
 		`, filter.opt.descr
 	)
 }

@@ -171,6 +171,7 @@ rest.addVariable('md', async (view) => {
 		else delete md.search
 		delete md.value
 	}
+	if (typeof(md.group) != 'object') delete md.group
 	if (md.group) {
 		const groups = await Catalog.getGroups(view)
 		for (const group_nick in md.group) {
@@ -178,6 +179,8 @@ rest.addVariable('md', async (view) => {
 		}
 		if (!Object.keys(md.group).length) delete md.group
 	}
+
+	if (typeof(md.brand) != 'object') delete md.brand
 	if (md.brand) {
 		const brands = await Catalog.getBrands(db)
 		for (const brand_nick in md.brand) {
@@ -185,6 +188,8 @@ rest.addVariable('md', async (view) => {
 		}
 		if (!Object.keys(md.brand).length) delete md.brand
 	}
+
+	if (typeof(md.more) != 'object') delete md.more
 	if (md.more) {
 		for (const prop_nick in md.more) {
 			const check_prop_nick = nicked(prop_nick)
