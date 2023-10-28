@@ -21,7 +21,7 @@ note.ROOT = (data, env) => note.checkErr(data, env) || `
 			opacity:0;	
 		}
 	</style>
-	<div class="notewrapper ready">
+	<div class="notewrapper">
 		<div class="note view" 
 			aria-hidden="true"
 			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь">${Note.makeHTML(data.note.text, data.note.cursors)}<br></div>
@@ -31,11 +31,12 @@ note.ROOT = (data, env) => note.checkErr(data, env) || `
 			tabindex="0">
 ${data.note.text}</textarea>
 		<script>
-			(div => {
+			(wrap => {
 				const note = ${JSON.stringify(data.note)}
 				window.note = note
 				//console.log(note.cursors)
-				note.area = div.getElementsByClassName('area')[0]
+				note.area = wrap.getElementsByClassName('area')[0]
+				note.wrap = wrap
 
 				let beforecursor = {
 					start: Number(note.cursor_start),
@@ -46,7 +47,7 @@ ${data.note.text}</textarea>
 				note.area.selectionEnd = beforecursor.start + beforecursor.size
 				note.area.selectionDirection = beforecursor.direction ? 'forward' : 'backward'
 
-				note.view = div.querySelector('.view')
+				note.view = wrap.querySelector('.view')
 				note.waitchanges = []
 				note.ordain = 0
 				note.inputpromise = new Promise(async resolve => {
@@ -81,12 +82,13 @@ ${data.note.text}</textarea>
 				
 				
 				note.area.addEventListener('focus', async e => {
-
+					wrap.classList.add('focus')
 					const Note = await note.inputpromise
 					const cursor = Note.getCursor(note)
 					Note.send(note, {signal:{type:'focus', cursor, base:note.rev}})
 				})
 				note.area.addEventListener('blur', async e => {
+					wrap.classList.remove('focus')
 					const Note = await note.inputpromise
 					Note.send(note, {signal:{type:'blur', base:note.rev}})
 				})

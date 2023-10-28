@@ -82,22 +82,52 @@ const Note = {
 		
 	},
 	viewHTML: (note) => {
-		const html = Note.makeHTML(note.text, note.cursors)
+		const html = Note.makeHTML(note.text, note.cursors, note.waitchanges)
 		note.view.innerHTML = html + '<br>'
 	},
-	makeHTML: (text, cursors) => {
-		//console.log('cursors', cursors)
-		//const colors = ['red', 'green','blue','orange','yellow']
-		//for (const user_id in cursors) {
-			//cursors[user_id].color = colors.shift() || 'gray'
-		//}
-
+	makeHTML: (text, cursors, waitchanges = []) => {
 		cursors = Object.values(cursors)
+
+		// [2,3,4,5] - надо подсветить 2 после применения 3,4,5
+		const lastchange = waitchanges[waitchanges.length - 1]
+		const debug = lastchange && lastchange.insert == '4' && waitchanges.length == 5
+			
+		const changes = [...waitchanges]
+		const marks = []
+
+		const steps = []
+		while (changes.length) {
+			const change = {...changes.pop()}
+			const mark = {
+				color: 'mute',
+				start: change.start,
+				size: change.insert.length
+			}
+			
+			Move.cursorAfter(mark, steps)
+			// if (debug) {
+			// 	console.log([...steps], mark)
+			// }
+			// if (change.insert == '1' && steps.length == 5) {
+			// 	console.log(mark, steps.length, steps, [...waitchanges])
+			// }
+			// changes.reverse()
+			//Move.changeAfter(change, changes.toReversed())
+			// changes.reverse()
+			steps.unshift(change)
+			marks.push(mark)
+		}
+		if (debug) {
+			console.log(marks)
+		}
+		for (const mark of marks) cursors.push(mark)
+		
+
 		cursors.sort((a, b) => a.start - b.start)
 		
 		
 		
-
+		//console.log(cursors)
 		const splits = {}
 		splits[0] = {pos:0, start:{}, end: {}, blinks: []}
 		for (const {color, start, size, direction} of cursors) {
@@ -106,10 +136,13 @@ const Note = {
 			if (!splits[start]) splits[start] = {pos: start, start:{}, end:{}, blinks:[]}
 			if (!splits[end]) splits[end] = {pos: end, start:{}, end:{}, blinks:[]}
 
-			if (direction) {
+
+			if (direction === 1) {
 				splits[end].blinks.push(color)
-			} else {
+			} else if (direction === 0) {
 				splits[start].blinks.push(color)
+			} else {
+				//подсветка без курсора
 			}
 
 			if (!size) continue
@@ -148,7 +181,15 @@ const Note = {
 			prev = light.pos
 		}
 		lights.reverse()
-
+		/*
+			[
+				{pos:10, part, blinks:[gray], colors:[blue]}
+				{pos:20, part, colors:[blue green]}
+				{pos:30, part, colors:[green]}
+				{pos:40, part }
+				{pos:50, part, blinks:[brown red]}
+			]
+		*/
 		
 		let html = ''
 		for (const light of lights) {
@@ -164,15 +205,7 @@ const Note = {
 			}
 		}
 		return html
-		/*
-			[
-				{pos:10, part, blinks:[gray], colors:[blue]}
-				{pos:20, part, colors:[blue green]}
-				{pos:30, part, colors:[green]}
-				{pos:40, part }
-				{pos:50, part, blinks:[brown red]}
-			]
-		*/
+		
 		/*
 			`
 				
@@ -268,7 +301,7 @@ const Note = {
 
 				const socket = new WebSocket(protocol + '://'+ wshost + `/?rev=${note.rev}&date_load=${note.now}&note_id=${note.note_id}&note_token=${note.token}&user_id=${note.user_id}&user_token=${note.user_token}`)
 				socket.addEventListener('open', e => {
-					note.area.disabled = false
+					note.wrap.classList.add('joined')
 					return resolve(socket)
 				})
 				const error = async e => {
@@ -325,6 +358,7 @@ const Note = {
 							note.rev = change.rev
 							//Note.send(note, {signal:{type:'base', base:note.rev}})
 							note.waitchanges.shift()
+							Note.viewHTML(note)
 							return
 						} else {
 							Note.changeHTML(note, change)
@@ -334,7 +368,8 @@ const Note = {
 					}
 				})
 				socket.addEventListener('close', event => {
-					note.area.disabled = true
+					console.log('disabled', true)
+					note.wrap.classList.remove('joined')
 					delete note.socket
 				})
 				const cancel = () => {

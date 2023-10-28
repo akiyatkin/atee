@@ -8,11 +8,15 @@ const Area = {}
 // 	return str.slice(0, index) + (add || "") + str.slice(index + count);
 // }
 
+const isSpace = (smb) => {
+	if (smb == '\t') return true
+	if (smb == ' ') return true
+}
 const getStartline = (text, pos) => {
 	let startline = pos // find start of the current line
 	while (startline > 0 && text[startline - 1] != '\n') startline--
-	if (text[pos - 1] != '\t') {
-		while (startline < text.length && (text[startline] == '\t' || text[startline] == ' ')) startline++
+	if (!isSpace(text[pos - 1])) {
+		while (startline < text.length && (isSpace(text[startline]))) startline++
 	}
 	return startline
 }
@@ -89,7 +93,7 @@ Area.keydown = async (area, e) => {
 		let sel = area.selectionEnd - 1 // find start of the current line
 		while (sel > 0 && text[sel - 1] != '\n') sel--
 		let flineStart = sel
-		while (text[sel] == ' ' || text[sel]=='\t') sel++
+		while (isSpace(text[sel])) sel++
 		const slineStart = Math.min(sel, area.selectionEnd)
 		let smb = text[slineStart]
 		let prefix = ''	
@@ -104,7 +108,7 @@ Area.keydown = async (area, e) => {
 				document.execCommand('insertText', false, "\t")
 				//area.dispatchEvent(new Event('input', { bubbles: true, cancelable: true}))
 			} else {
-				if (area.selectionStart > 0 && area.value[area.selectionStart - 1] == '\t') {
+				if (area.selectionStart > 0 && isSpace(area.value[area.selectionStart - 1])) {
 					document.execCommand('delete')
 					//area.dispatchEvent(new Event('input', { bubbles: true, cancelable: true}))
 				}
@@ -123,9 +127,9 @@ Area.keydown = async (area, e) => {
 
 
 			let lines = text.substr(selStart, selEnd - selStart).split('\n') // Get selected text
+			lines = lines.filter(l => l)
 			let add = 0
 			for (let i = 0; i < lines.length; i++) { // Insert tabs
-				if (i == lines.length-1 && lines[i].length == 0) continue; // Don't indent last line if cursor at start of line
 				if (e.shiftKey) { // Tab or Shift+Tab?
 					if (lines[i].startsWith('\t')) {
 						add = add - 1
@@ -134,13 +138,13 @@ Area.keydown = async (area, e) => {
 						add = add - 4
 						lines[i] = lines[i].substr(4)
 					}
-				}
-				else {
+				} else {
 					add = add + 1
 					lines[i] = "\t" + lines[i]
 				}
 			}
 			const count = lines.length
+
 			lines = lines.join('\n')
 			const direction = area.selectionDirection
 			area.selectionStart = selStart
@@ -148,15 +152,13 @@ Area.keydown = async (area, e) => {
 			document.execCommand('insertText', false, lines)
 			
 			if (e.shiftKey) {
-				area.selectionStart = (initStart || 1) - (add ? 1 : 0)
+				area.selectionStart = (initStart || 0) - (add ? 1 : 0)
 				area.selectionEnd = orgEnd + add
 			} else {
 				area.selectionStart = initStart + 1
+
 				area.selectionEnd = initEnd + count	
 			}
-
-			
-			
 			area.selectionDirection = direction
 		}
 	}

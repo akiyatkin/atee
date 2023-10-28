@@ -1,4 +1,5 @@
 const Move = {
+	debug: true,
 	changeAfter: (change, list, wait = false) => {
 		/*
 			change
@@ -14,9 +15,10 @@ const Move = {
 		const ao = a + o
 		
 		//const rechanges = changes//.toReversed()
-		list.reverse()
-
-		for (const hang of list) {
+		//list.reverse()
+		for (let i = list.length - 1; i >= 0; i--) {
+			const hang = list[i]
+		//for (const hang of list) {
 			const z = hang.start
 			const x = hang.insert.length
 			const y = hang.remove.length
@@ -60,7 +62,7 @@ const Move = {
 				
 			} else if (ao <= z) {
 				//console.log('[]()') //hang справа
-				return
+				continue
 			} else if (zy <= a) { 
 				// ()[] hang слева
 				change.start += x - y
@@ -126,7 +128,7 @@ const Move = {
 				change.remove = change.remove.substr(0, n - w + x - y)
 			}
 		}
-		list.reverse()
+		//list.reverse()
 	},
 	cursorAfter: (cursor, list) => {
 		/*
@@ -143,8 +145,10 @@ const Move = {
 		const an = a + n
 		const ao = a + o
 		
-		list.reverse()
-		for (const hang of list) {
+		//list.reverse()
+		for (let i = list.length - 1; i >= 0; i--) {
+			const hang = list[i]
+		//for (const hang of list) {
 			const z = hang.start
 			const x = hang.insert.length
 			const y = hang.remove.length
@@ -160,13 +164,14 @@ const Move = {
 				cursor.size = 0
 			} else if (ao <= z) {
 				//console.log('[]()') // hang справа
-				return
+				continue
 			} else if (zy <= a) { 
 				//console.log('()[]', hang, cursor) // hang слева
 				cursor.start += x - y
 			} else if (a <= z && zy <= ao) {
 				//console.log('[()]') // hang внутри
 				cursor.size += x - y
+				if (cursor.size < 0) cursor.size = 0
 			} else if (a <= z && ao <= zy && ao <= zy) {
 				//console.log('[(])') // hang захватывает справа
 				// a[q(w]e)
@@ -178,6 +183,7 @@ const Move = {
 				const e = we - w
 				const qwe = q + we
 				cursor.size = q
+				if (cursor.size < 0) cursor.size = 0
 			} else if (z <= a && zy <= ao && zy <= ao) {
 				//console.log('([)]') //hang захватывает слева
 				// z(q[w)]
@@ -187,9 +193,10 @@ const Move = {
 				const w = qw - q
 				cursor.start = a + w
 				cursor.size = n - w + x - y
+				if (cursor.size < 0) cursor.size = 0
 			}
 		}
-		list.reverse()
+		//list.reverse()
 	}
 }
 export default Move

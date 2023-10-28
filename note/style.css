@@ -1,14 +1,6 @@
-
 .notewrapper {
 	opacity:1!important;
 }
-/*.notewrapper {
-	transition: border 0.3s;
-	border-top:1px color-mix(in srgb, pink, gray) solid;
-}
-.notewrapper.ready {
-	border-top:1px color-mix(in srgb, pink 20%, transparent) solid;	
-}*/
 .notewrapper .note {
 	outline: none; 
 	line-height: 1.3;
@@ -16,20 +8,41 @@
 	font-family: monospace;
 	border:none;
 	font-size: inherit;
-	
 	display: inline-block;
 	width:100%;
 	white-space: pre-wrap;
 	overflow: hidden;
 	word-wrap: break-word;
 	tab-size: 3;
-/*	caret-color: black;*/
-/*	caret-color: transparent;*/
-	background-color: color-mix(in srgb, pink 5%, transparent);
+	grid-column: 1 / 2;
+	grid-row: 1 / 2;
+	margin:0;
+	border:none;
 }
-.notewrapper .note:focus-visible {
+
+.notewrapper .area {
+	color:transparent;
+	/*font-smooth: never;
+	-webkit-font-smoothing: none;*/
+	resize: none;
+	color: rgba(0,0,0,0.3);
 	background-color: transparent;
 }
+.notewrapper .view {
+	pointer-events: none;
+	/*color: transparent;
+	color: rgba(0,0,0,1);*/
+	color: black;
+	background-color: color-mix(in srgb, pink 20%, transparent);
+	transition: background-color 0.1s;
+}
+.notewrapper.focus .view {
+/*	background-color: white;*/
+}
+.notewrapper.joined .view {
+	background-color: white;
+}
+
 
 .notewrapper .note[placeholder]:empty:before {
 	content: attr(placeholder);
@@ -39,23 +52,7 @@
 	content: '';
 }
 
-.notewrapper .note {
-	grid-column: 1 / 2;
-	grid-row: 1 / 2;
-}
-.notewrapper .area {
 
-}
-
-.notewrapper .area {
-	resize: none;
-}
-.notewrapper .area {
-	color: rgba(0,0,0,1);
-}
-.notewrapper .view {
-	color: transparent;
-}
 .notewrapper {
 	display: grid;
 	overflow-y: auto;
@@ -104,18 +101,21 @@
 .notewrapper .area.blue {
 	caret-color: blue;
 }
-/*.notewrapper .area.red::selection {
-	background-color: rgba(51, 103, 209, 0.2);
-}*/
+
+
+.notewrapper .select.mute {
+	background-color: transparent;
+	color: rgba(0,0,0,0.7);
+	color: transparent;
+}
+
 
 .notewrapper .cursor.red {
-	border-right:1px solid red;
-	
+	border-right:1px solid red;	
 }
 .notewrapper .cursor.yellow {
 	border-right:1px solid yellow;
 	animation-delay: 0.25s;
-	
 }
 .notewrapper .cursor.green {
 	border-right:1px solid green;
@@ -123,11 +123,12 @@
 }
 .notewrapper .cursor.orange {
 	border-right:1px solid orange;
-	
 }
 .notewrapper .cursor.blue {
 	border-right:1px solid blue;
 }
+
+
 
 @media print {
 	.notewrapper .note.area {
