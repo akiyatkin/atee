@@ -169,14 +169,14 @@ const Move = {
 
 			
 			} else if (z <= a && ao < zx) { 
-				console.log('([])', 'hang вокруг', hang, cursor)
+				//console.log('([])', 'hang вокруг', hang, cursor)
 				cursor.start = z + x// - y
 				cursor.size = 0
 			} else if (ao <= z) {
-				console.log('[]()', 'hang справа')
+				//console.log('[]()', 'hang справа')
 				continue
 			} else if (zy <= a) { 
-				console.log('()[]', 'hang слева', hang, cursor)
+				//console.log('()[]', 'hang слева', hang, cursor)
 				cursor.start += x - y
 			} else if (a <= z && zy <= ao) {
 				//console.log('[()]') // hang внутри
