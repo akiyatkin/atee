@@ -1,5 +1,5 @@
 const Move = {
-	debug: true,
+	debug: false,
 	changeAfter: (change, list, wait = false) => {
 		/*
 			change
@@ -8,15 +8,20 @@ const Move = {
 			hang
 			z(y|x)v
 		*/
-		const a = change.start
-		const n = change.insert.length
-		const o = change.remove.length
-		const an = a + n
-		const ao = a + o
+		
 		
 		//const rechanges = changes//.toReversed()
 		//list.reverse()
-		for (let i = list.length - 1; i >= 0; i--) {
+		//for (let i = list.length - 1; i >= 0; i--) {
+		for (let i = 0, l = list.length; i < l; i++) {
+
+			const a = change.start
+			const n = change.insert.length
+			const o = change.remove.length
+			const an = a + n
+			const ao = a + o
+
+
 			const hang = list[i]
 		//for (const hang of list) {
 			const z = hang.start
@@ -28,8 +33,8 @@ const Move = {
 			if (false) {
 
 			
-			} else if (z <= a && ao <= zx) { 
-				// console.log('([])')
+			} else if (z <= a && ao < zx) { 
+				//console.log('([])','hang вокруг', hang, {...change})
 				// asd234sdf
 				
 				/*
@@ -54,20 +59,20 @@ const Move = {
 				
 				change.remove = ''
 
-				if (hang.insert == change.insert) {
-					//change.cursor.start += hang.insert.length
-					change.insert = ''
-				}
+				// if (hang.insert == change.insert) {
+				// 	//change.cursor.start += hang.insert.length
+				// 	change.insert = ''
+				// }
 				
 				
 			} else if (ao <= z) {
-				//console.log('[]()') //hang справа
-				continue
+				//console.log('[]()', 'hang справа', hang, {...change})
+				
 			} else if (zy <= a) { 
-				// ()[] hang слева
+				//console.log('()[]','hang слева', hang)
 				change.start += x - y
 			} else if (a <= z && zy <= ao) {
-				//console.log('[()]', change.remove)
+				//console.log('[()]')
 
 				// a[q(x)e)d]
 				/*
@@ -98,7 +103,7 @@ const Move = {
 
 				
 			} else if (a <= z && ao <= zy && ao <= zy) {
-				// console.log('[(])', change.remove)
+				//console.log('[(])')
 				/*
 
 
@@ -118,7 +123,7 @@ const Move = {
 				change.remove = change.remove.substr(0, q)
 
 			} else if (z <= a && zy <= ao && zy <= ao) {
-				// console.log('([)]', change.remove)
+				//console.log('([)]')
 				// z(q[w)]
 				const zq = a
 				const q = zq - z
@@ -139,14 +144,19 @@ const Move = {
 			z(y)v
 			z(x)v
 		*/
-		const a = cursor.start
-		const n = cursor.size
-		const o = n
-		const an = a + n
-		const ao = a + o
+		
 		
 		//list.reverse()
-		for (let i = list.length - 1; i >= 0; i--) {
+		//for (let i = list.length - 1; i >= 0; i--) {
+		for (let i = 0, l = list.length; i < l; i++) {
+
+			const a = cursor.start
+			const n = cursor.size
+			const o = n
+			const an = a + n
+			const ao = a + o
+
+
 			const hang = list[i]
 		//for (const hang of list) {
 			const z = hang.start
@@ -158,15 +168,15 @@ const Move = {
 			if (false) {
 
 			
-			} else if (z <= a && ao <= zx) { 
-				//console.log('([])', hang, cursor) // hang вокруг
+			} else if (z <= a && ao < zx) { 
+				console.log('([])', 'hang вокруг', hang, cursor)
 				cursor.start = z + x// - y
 				cursor.size = 0
 			} else if (ao <= z) {
-				//console.log('[]()') // hang справа
+				console.log('[]()', 'hang справа')
 				continue
 			} else if (zy <= a) { 
-				//console.log('()[]', hang, cursor) // hang слева
+				console.log('()[]', 'hang слева', hang, cursor)
 				cursor.start += x - y
 			} else if (a <= z && zy <= ao) {
 				//console.log('[()]') // hang внутри

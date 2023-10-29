@@ -5,6 +5,9 @@ const escapeText = (text) => text.replace(/[<>]/g, tag => ({"<": '&lt;','>': '&g
 const splice = (text, start, size, chunk) => {
 	return text.slice(0, start) + chunk + text.slice(start + size)
 }
+if (Move.debug && globalThis.window) {
+	window.Test = await import('/-note/Test.js').then(r => r.default)
+}
 const Note = {
 	getCursor: (note) => ({
 		start: note.area.selectionStart,
@@ -17,44 +20,20 @@ const Note = {
 		return splice(text, change.start, change.remove.length, change.insert)
 	},
 	cursorHTML: async (note, cursor) => {
-		//console.log('cursor', note.waitchanges.length)
+		
 		if (cursor.user_id != note.user_id) {
 			Move.cursorAfter(cursor, note.waitchanges)
 			note.cursors[cursor.user_id] = cursor
 			Note.viewHTML(note)
 		}
 	},
-	test: () => {
-		const cursor = {"start":3,"size":0,"base":2535,"direction":1,"user_id":"1","color":"red"}
-		const hang = {"start":3,"remove":"4","insert":"","base":2535,"ordain":1,"cursor":{"start":3,"size":0,"base":2535,"direction":1}}
-
-		/*
-			cursor
-			a[n]b
-			
-			rewind
-			z(y)v
-			z(x)v
-
-			a = 3
-			ao = 3
-			an = 3
-
-
-			z = 3
-			y = 1
-		*/
-
-		console.log(cursor)
-		Move.cursorAfter(cursor, [hang])
-		console.log(cursor)
-	},
 	changeHTML: async (note, change) => {
 		//Пришёл change с сервера не моего сокета, но моего пользователя может быть
 		
-		Move.changeAfter(change, note.waitchanges, true)
+		Move.changeAfter(change, note.waitchanges)
 
 		const mycursor = Note.getCursor(note)
+
 		Move.cursorAfter(mycursor, [change])
 
 		for (const i in note.cursors) {
@@ -62,8 +41,10 @@ const Note = {
 			Move.cursorAfter(cursor, [change])
 		}
 		if (change.cursor.user_id != note.user_id) {
+			if (change.insert == '1') {
+				console.log({...change.cursor}, {...note.waitchanges})
+			}
 			Move.cursorAfter(change.cursor, note.waitchanges)
-
 			note.cursors[change.cursor.user_id] = change.cursor
 		}
 
@@ -90,7 +71,7 @@ const Note = {
 
 		// [2,3,4,5] - надо подсветить 2 после применения 3,4,5
 		const lastchange = waitchanges[waitchanges.length - 1]
-		const debug = lastchange && lastchange.insert == '4' && waitchanges.length == 5
+		
 			
 		const changes = [...waitchanges]
 		const marks = []
@@ -103,23 +84,11 @@ const Note = {
 				start: change.start,
 				size: change.insert.length
 			}
-			
 			Move.cursorAfter(mark, steps)
-			// if (debug) {
-			// 	console.log([...steps], mark)
-			// }
-			// if (change.insert == '1' && steps.length == 5) {
-			// 	console.log(mark, steps.length, steps, [...waitchanges])
-			// }
-			// changes.reverse()
-			//Move.changeAfter(change, changes.toReversed())
-			// changes.reverse()
 			steps.unshift(change)
 			marks.push(mark)
 		}
-		if (debug) {
-			console.log(marks)
-		}
+		
 		for (const mark of marks) cursors.push(mark)
 		
 
@@ -127,7 +96,7 @@ const Note = {
 		
 		
 		
-		//console.log(cursors)
+		
 		const splits = {}
 		splits[0] = {pos:0, start:{}, end: {}, blinks: []}
 		for (const {color, start, size, direction} of cursors) {
@@ -281,7 +250,6 @@ const Note = {
 														
 
 		const data = JSON.stringify({signal, cursor, change})
-		//console.log('send', data)
 
 		if (Move.debug) {
 			setTimeout(() => {
@@ -291,7 +259,6 @@ const Note = {
 		} else {
 			socket.send(data)
 		}
-		
 	},
 	open: (note) => {
 		const wshost = ~location.host.indexOf('127.0.0.1') ? '127.0.0.1:8889' : 'ws.' + location.host
@@ -301,12 +268,18 @@ const Note = {
 
 				const socket = new WebSocket(protocol + '://'+ wshost + `/?rev=${note.rev}&date_load=${note.now}&note_id=${note.note_id}&note_token=${note.token}&user_id=${note.user_id}&user_token=${note.user_token}`)
 				socket.addEventListener('open', e => {
+					for (const change of note.waitchanges) {
+						if (!change.error) continue
+						change.error = false
+						Note.send(note, {change})
+					}
 					note.wrap.classList.add('joined')
 					return resolve(socket)
 				})
 				const error = async e => {
-					//console.log('error', e)
-					//note.area.disabled = true
+					for (const change of note.waitchanges) {
+						change.error = true
+					}
 					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 					Dialog.alert('Упс, что-то пошло не так. Нет соединения с сервером. <br>Обновите страницу или попробуйте продолжить позже.')
 				}
@@ -325,11 +298,9 @@ const Note = {
 							note.area.value = note.text
 							Note.viewHTML(note)
 						} else if (signal.type == 'leave') {
-							console.log('leave')
 							const Client = await window.getClient()
 							Client.reloaddiv('FOOTER')
 						} else if (signal.type == 'joined') {
-							console.log('joined')
 							const Client = await window.getClient()
 							Client.reloaddiv('FOOTER')
 							if (signal.user_id == note.user_id) {
@@ -343,13 +314,14 @@ const Note = {
 							//Note.viewHTML(note)
 						} else if (signal.type == 'focus') {
 							if (signal.cursor.user_id != note.user_id) {
+								Move.cursorAfter(signal.cursor, note.waitchanges)
 								note.cursors[signal.cursor.user_id] = signal.cursor
 								Note.viewHTML(note)
 							}
 						}
 					}
 					await note.inputpromise
-					//console.log('message', my, change, cursor, signal)
+					
 
 					if (cursor) {
 						Note.cursorHTML(note, cursor)
@@ -359,8 +331,11 @@ const Note = {
 							//Note.send(note, {signal:{type:'base', base:note.rev}})
 							note.waitchanges.shift()
 							Note.viewHTML(note)
-							return
 						} else {
+							for (const wait of note.waitchanges) {
+								Move.changeAfter(wait, [change])
+
+							}
 							Note.changeHTML(note, change)
 						}
 						//const data = JSON.stringify({signal:{type:'base', base:note.rev}})
@@ -368,7 +343,6 @@ const Note = {
 					}
 				})
 				socket.addEventListener('close', event => {
-					console.log('disabled', true)
 					note.wrap.classList.remove('joined')
 					delete note.socket
 				})
