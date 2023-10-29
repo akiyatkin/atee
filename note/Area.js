@@ -73,28 +73,32 @@ Area.keydown = async (area, e) => {
 	} else if (e.keyCode === MINUS) { //Minus
 		if (e.shiftKey) {
 			const text = area.value
-			let sel = area.selectionEnd - 1 // find start of the current line
-			while (sel > 0 && text[sel - 1] != '\n') sel--
-			let flineStart = sel
-			while (isSpace(text[sel])) sel++
-			const slineStart = Math.min(sel, area.selectionEnd)
-			let smb = text[slineStart]
+			// if (text[area.selectionEnd] == '\n') {
+			// 	document.execCommand('insertText', false, "-")
+			// } else {
+				let sel = area.selectionEnd - 1 // find start of the current line
+				while (sel > 0 && text[sel - 1] != '\n') sel--
+				let flineStart = sel
+				while (isSpace(text[sel])) sel++
+				const slineStart = Math.min(sel, area.selectionEnd)
+				let smb = text[slineStart]
 
-			const selStart = area.selectionStart
-			const selEnd = area.selectionEnd
-			if (!~['+','-'].indexOf(smb)) {
-				area.selectionStart = slineStart
-				area.selectionEnd = slineStart
-				document.execCommand('insertText', false, "- ")
-				area.selectionStart = selStart + 2
-				area.selectionEnd = selEnd + 2
-			} else {
-				area.selectionStart = slineStart
-				area.selectionEnd = slineStart + 1
-				document.execCommand('insertText', false, "-")
-				area.selectionStart = selStart
-				area.selectionEnd = selEnd
-			}
+				const selStart = area.selectionStart
+				const selEnd = area.selectionEnd
+				if (!~['+','-'].indexOf(smb)) {
+					area.selectionStart = slineStart
+					area.selectionEnd = slineStart
+					document.execCommand('insertText', false, "- ")
+					area.selectionStart = selStart + 2
+					area.selectionEnd = selEnd + 2
+				} else {
+					area.selectionStart = slineStart
+					area.selectionEnd = slineStart + 1
+					document.execCommand('insertText', false, "-")
+					area.selectionStart = selStart
+					area.selectionEnd = selEnd
+				}
+			//}
 			
 		} else {
 			document.execCommand('insertText', false, "-")
@@ -102,28 +106,31 @@ Area.keydown = async (area, e) => {
 	} else if (e.keyCode === PLUS) { //Plus
 		if (e.shiftKey) {
 			const text = area.value
-			let sel = area.selectionEnd - 1 // find start of the current line
-			while (sel > 0 && text[sel - 1] != '\n') sel--
-			let flineStart = sel
-			while (isSpace(text[sel])) sel++
-			const slineStart = Math.min(sel, area.selectionEnd)
-			let smb = text[slineStart]
-			const selStart = area.selectionStart
-			const selEnd = area.selectionEnd
-			if (!~['+','-'].indexOf(smb)) {
-				area.selectionStart = slineStart
-				area.selectionEnd = slineStart
-				document.execCommand('insertText', false, "+ ")
-				area.selectionStart = selStart + 2
-				area.selectionEnd = selEnd + 2
-			} else {
-				area.selectionStart = slineStart
-				area.selectionEnd = slineStart + 1
-				document.execCommand('insertText', false, "+")
-				area.selectionStart = selStart
-				area.selectionEnd = selEnd
-			}
-			
+			// if (text[area.selectionEnd] == '\n') {
+			// 	document.execCommand('insertText', false, "+")
+			// } else {
+				let sel = area.selectionEnd - 1 // find start of the current line
+				while (sel > 0 && text[sel - 1] != '\n') sel--
+				let flineStart = sel
+				while (isSpace(text[sel])) sel++
+				const slineStart = Math.min(sel, area.selectionEnd)
+				let smb = text[slineStart]
+				const selStart = area.selectionStart
+				const selEnd = area.selectionEnd
+				if (!~['+','-'].indexOf(smb)) {
+					area.selectionStart = slineStart
+					area.selectionEnd = slineStart
+					document.execCommand('insertText', false, "+ ")
+					area.selectionStart = selStart + 2
+					area.selectionEnd = selEnd + 2
+				} else {
+					area.selectionStart = slineStart
+					area.selectionEnd = slineStart + 1
+					document.execCommand('insertText', false, "+")
+					area.selectionStart = selStart
+					area.selectionEnd = selEnd
+				}
+			//}
 		} else {
 			document.execCommand('insertText', false, "+")
 		}
@@ -171,7 +178,7 @@ Area.keydown = async (area, e) => {
 				if (smb == '+') smb = '-'
 				prefix = smb + ' '
 			} else {
-				area.selectionStart = slineStart
+				//area.selectionStart = slineStart
 			}
 		}
 		document.execCommand('insertText', false, "\n" + text.substr(flineStart, slineStart - flineStart) + prefix)
