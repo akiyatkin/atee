@@ -166,11 +166,13 @@ Area.keydown = async (area, e) => {
 		const slineStart = Math.min(sel, area.selectionEnd)
 		let smb = text[slineStart]
 		let prefix = ''	
-		if (text[slineStart + 1] == ' ' && ~['+','-'].indexOf(smb) && text[slineStart + 2] && text[slineStart + 2].trim()) {
-			if (smb == '+') smb = '-'
-			prefix = smb + ' '
-		} else {
-			area.selectionStart = slineStart
+		if (text[slineStart + 1] == ' ' && ~['+','-'].indexOf(smb) && text[slineStart + 2]) {
+			if (text[slineStart + 2].trim()) {
+				if (smb == '+') smb = '-'
+				prefix = smb + ' '
+			} else {
+				area.selectionStart = slineStart
+			}
 		}
 		document.execCommand('insertText', false, "\n" + text.substr(flineStart, slineStart - flineStart) + prefix)
 	} else if (e.keyCode === TAB) { // Tab newinput
