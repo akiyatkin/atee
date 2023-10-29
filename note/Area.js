@@ -97,7 +97,7 @@ Area.keydown = async (area, e) => {
 		const slineStart = Math.min(sel, area.selectionEnd)
 		let smb = text[slineStart]
 		let prefix = ''	
-		if (text[slineStart + 1] == ' ' && ~['+','-'].indexOf(smb) && text[slineStart + 2].trim()) {
+		if (text[slineStart + 1] == ' ' && ~['+','-'].indexOf(smb) && text[slineStart + 2] && text[slineStart + 2].trim()) {
 			if (smb == '+') smb = '-'
 			prefix = smb + ' '
 		}
