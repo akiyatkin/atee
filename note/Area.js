@@ -166,22 +166,34 @@ Area.keydown = async (area, e) => {
 
 	} else if (e.keyCode === ENTER) { //Enter
 		const text = area.value
-		let sel = area.selectionEnd - 1 // find start of the current line
-		while (sel > 0 && text[sel - 1] != '\n') sel--
-		let flineStart = sel
-		while (isSpace(text[sel])) sel++
-		const slineStart = Math.min(sel, area.selectionEnd)
-		let smb = text[slineStart]
-		let prefix = ''	
-		if (text[slineStart + 1] == ' ' && ~['+','-'].indexOf(smb) && text[slineStart + 2]) {
-			if (text[slineStart + 2].trim()) {
-				if (smb == '+') smb = '-'
-				prefix = smb + ' '
-			} else {
-				//area.selectionStart = slineStart
+		let sel = area.selectionStart - 1 // find start of the current line
+		const myEnd = area.selectionEnd
+		const myStart = area.selectionStart
+		if (text[myEnd - 1] == '\n') {
+			document.execCommand('insertText', false, "\n")
+		
+			
+			//document.execCommand('insertText', false, "\n")
+		} else {
+			const exception = text[myStart - 2] && ~['+','-'].indexOf(text[myStart - 2])
+			if (exception) area.selectionStart = myStart - 2
+			//const end
+			while (sel > 0 && text[sel - 1] != '\n') sel--
+			let flineStart = sel
+			while (isSpace(text[sel])) sel++
+			const slineStart = Math.min(sel, area.selectionEnd)
+			let smb = text[slineStart]
+			let prefix = ''	
+			if (text[slineStart + 1] == ' ' && ~['+','-'].indexOf(smb) && text[slineStart + 2]) {
+				if (text[slineStart + 2].trim()) {
+					if (smb == '+') smb = '-'
+					prefix = smb + ' '
+				} else {
+					//area.selectionStart = slineStart
+				}
 			}
+			document.execCommand('insertText', false, "\n" + text.substr(flineStart, slineStart - flineStart) + prefix)
 		}
-		document.execCommand('insertText', false, "\n" + text.substr(flineStart, slineStart - flineStart) + prefix)
 	} else if (e.keyCode === TAB) { // Tab newinput
 		if (area.selectionStart == area.selectionEnd) {
 			if (!e.shiftKey) {
