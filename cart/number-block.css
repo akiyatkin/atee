@@ -33,6 +33,9 @@
 	padding:3px;
 	background-color: transparent;
 }
+.number-block button:hover {
+	background-color: transparent;
+}
 
 .number-block .minus {
 	border-radius: var(--radius, 10px) 0 0 var(--radius, 10px);

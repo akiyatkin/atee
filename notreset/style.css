@@ -54,6 +54,7 @@ button.transparent::before,
 }
 .button.transparent:hover,
 button.transparent:hover {
+	background: transparent;
 	border: none;
 	color: inherit;
 }
