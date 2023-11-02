@@ -66,41 +66,25 @@
 	margin-left: -1px;
 	animation: 1s infinite running notelic_scale;
 }
-.notewrapper .area.red::selection, 
-.notewrapper .select.red {
-	background-color: color-mix(in srgb, red 10%, transparent);
+
+
+
+.notewrapper .area::selection,
+.notewrapper .select {
+	background-color: hsla(var(--hue), 50%, 50%, 20%)
 }
-.notewrapper .area.red {
-	caret-color: red;
+.notewrapper .area {
+	caret-color: hsl(var(--hue), 50%, 50%);
 }
-.notewrapper .area.yellow::selection, 
-.notewrapper .select.yellow {
-	background-color: color-mix(in srgb, yellow 60%, transparent);
+
+.notewrapper .cursor {
+	border-right:1px solid hsl(var(--hue), 50%, 50%);
 }
-.notewrapper .area.yellow {
-	caret-color: yellow;
-}
-.notewrapper .area.green::selection, 
-.notewrapper .select.green {
-	background-color: color-mix(in srgb, green 10%, transparent);
-}
-.notewrapper .area.green {
-	caret-color: green;
-}
-.notewrapper .area.orange::selection, 
-.notewrapper .select.orange {
-	background-color: color-mix(in srgb, orange 10%, transparent);
-}
-.notewrapper .area.orange {
-	caret-color: orange;
-}
-.notewrapper .area.blue::selection, 
-.notewrapper .select.blue {
-	background-color: color-mix(in srgb, blue 10%, transparent);
-}
-.notewrapper .area.blue {
-	caret-color: blue;
-}
+
+
+
+
+
 
 
 .notewrapper .select.mute {
@@ -109,24 +93,6 @@
 	color: transparent;
 }
 
-
-.notewrapper .cursor.red {
-	border-right:1px solid red;	
-}
-.notewrapper .cursor.yellow {
-	border-right:1px solid yellow;
-	animation-delay: 0.25s;
-}
-.notewrapper .cursor.green {
-	border-right:1px solid green;
-	animation-delay: 0.5s;
-}
-.notewrapper .cursor.orange {
-	border-right:1px solid orange;
-}
-.notewrapper .cursor.blue {
-	border-right:1px solid blue;
-}
 
 
 

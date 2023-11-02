@@ -14,7 +14,6 @@ const Note = {
 		size: note.area.selectionEnd - note.area.selectionStart,
 		base: note.rev,
 		direction: Number(note.area.selectionDirection == 'forward')
-		//ordain: ++note.ordain //Важен для change если my
 	}),
 	makeTEXT: (text, change) => {
 		return splice(text, change.start, change.remove.length, change.insert)
@@ -41,9 +40,6 @@ const Note = {
 			Move.cursorAfter(cursor, [change])
 		}
 		if (change.cursor.user_id != note.user_id) {
-			if (change.insert == '1') {
-				console.log({...change.cursor}, {...note.waitchanges})
-			}
 			Move.cursorAfter(change.cursor, note.waitchanges)
 			note.cursors[change.cursor.user_id] = change.cursor
 		}
@@ -80,7 +76,7 @@ const Note = {
 		while (changes.length) {
 			const change = {...changes.pop()}
 			const mark = {
-				color: 'mute',
+				hue: 360, //mute
 				start: change.start,
 				size: change.insert.length
 			}
@@ -99,7 +95,7 @@ const Note = {
 		
 		const splits = {}
 		splits[0] = {pos:0, start:{}, end: {}, blinks: []}
-		for (const {color, start, size, direction} of cursors) {
+		for (const {hue, start, size, direction} of cursors) {
 			const end = start + size
 
 			if (!splits[start]) splits[start] = {pos: start, start:{}, end:{}, blinks:[]}
@@ -107,16 +103,16 @@ const Note = {
 
 
 			if (direction === 1) {
-				splits[end].blinks.push(color)
+				splits[end].blinks.push(hue)
 			} else if (direction === 0) {
-				splits[start].blinks.push(color)
+				splits[start].blinks.push(hue)
 			} else {
 				//подсветка без курсора
 			}
 
 			if (!size) continue
-			splits[start].start[color] = color
-			splits[end].end[color] = color
+			splits[start].start[hue] = hue
+			splits[end].end[hue] = hue
 		}
 
 		
@@ -130,11 +126,11 @@ const Note = {
 
 		const going = []
 		for (const pos of lights) {
-			for (const color of pos.start) {
-				going.push(color)
+			for (const hue of pos.start) {
+				going.push(hue)
 			}
-			for (const color of pos.end) {
-				going.splice(going.indexOf(color), 1)
+			for (const hue of pos.end) {
+				going.splice(going.indexOf(hue), 1)
 			}
 			pos.colors = going.slice()
 			delete pos.end
@@ -162,11 +158,16 @@ const Note = {
 		
 		let html = ''
 		for (const light of lights) {
-			for (const color of light.blinks) {
-				html += `<span class="cursor ${color}"></span>`
+			for (const hue of light.blinks) {
+				html += `<span style="--hue: ${hue}" class="cursor"></span>`
 			}
-			for (const color of light.colors) {
-				html += `<span class="select ${color}">`
+			for (const hue of light.colors) {
+				if (hue == 360) { //mute
+					html += `<span class="select mute">`
+				} else {
+					html += `<span style="--hue: ${hue}" class="select">`	
+				}
+				
 			}
 			html += light.part
 			for (const color of light.colors) {
@@ -269,17 +270,15 @@ const Note = {
 				const socket = new WebSocket(protocol + '://'+ wshost + `/?rev=${note.rev}&date_load=${note.now}&note_id=${note.note_id}&note_token=${note.token}&user_id=${note.user_id}&user_token=${note.user_token}`)
 				socket.addEventListener('open', e => {
 					for (const change of note.waitchanges) {
-						if (!change.error) continue
-						change.error = false
 						Note.send(note, {change})
 					}
 					note.wrap.classList.add('joined')
 					return resolve(socket)
 				})
 				const error = async e => {
-					for (const change of note.waitchanges) {
-						change.error = true
-					}
+					// for (const change of note.waitchanges) {
+					// 	change.error = true
+					// }
 					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 					Dialog.alert('Упс, что-то пошло не так. Нет соединения с сервером. <br>Обновите страницу или попробуйте продолжить позже.')
 				}
@@ -298,20 +297,21 @@ const Note = {
 							note.area.value = note.text
 							Note.viewHTML(note)
 						} else if (signal.type == 'leave') {
+							delete note.cursors[signal.user_id]
 							const Client = await window.getClient()
 							Client.reloaddiv('FOOTER')
 						} else if (signal.type == 'joined') {
 							const Client = await window.getClient()
 							Client.reloaddiv('FOOTER')
 							if (signal.user_id == note.user_id) {
-								note.area.classList.add(signal.color)
+								note.area.style = "--hue: " + signal.hue
 							}
 						} else if (signal.type == 'rename') {
 							const Client = await window.getClient()
 							Client.reloaddiv('NOTES')
 						} else if (signal.type == 'blur') {
 							//delete note.cursors[signal.user_id]
-							//Note.viewHTML(note)
+							Note.viewHTML(note)
 						} else if (signal.type == 'focus') {
 							if (signal.cursor.user_id != note.user_id) {
 								Move.cursorAfter(signal.cursor, note.waitchanges)

@@ -25,7 +25,7 @@ note.ROOT = (data, env) => note.checkErr(data, env) || `
 		<div class="note view" 
 			aria-hidden="true"
 			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь">${Note.makeHTML(data.note.text, data.note.cursors)}<br></div>
-		<textarea autocomplete="off" class="note area ${data.note.color || ''}" 
+		<textarea autocomplete="off" style="--hue: ${data.note.hue}" class="note area ${data.note.color || ''}" 
 			spellcheck="false"
 			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь" role="textbox" 
 			tabindex="0">
@@ -49,7 +49,6 @@ ${data.note.text}</textarea>
 
 				note.view = wrap.querySelector('.view')
 				note.waitchanges = []
-				note.ordain = 0
 				note.inputpromise = new Promise(async resolve => {
 					const Note = await import('/-note/Note.js').then(r => r.default)
 					const Move = await import('/-note/Move.js').then(r => r.default)
@@ -134,6 +133,7 @@ ${data.note.text}</textarea>
 					const Note = await note.inputpromise
 					const cursor = Note.getCursor(note)
 					if (cursor.size) return //select
+					console.log('cursor', cursor.start)
 					Note.send(note, {cursor})
 				})
 				
@@ -191,7 +191,6 @@ ${data.note.text}</textarea>
 						remove: text_before.substr(a, o),
 						insert: text_after.substr(a, n),
 						base: note.rev,
-						ordain: ++note.ordain, //Важен для my
 						cursor: Note.getCursor(note)
 					}
 					note.lastchange = change
