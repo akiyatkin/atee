@@ -70,6 +70,7 @@ const runByLayer = (rule, fn) => {
 		Layers.runByRootLayer(rule.root, fn)
 	})
 }
+
 const applyframes = (rule) => {
 	if (!rule.frame) return
 	const frame = rule.frame
@@ -104,6 +105,13 @@ export default class Layers {
 	}
 	static getParsedIndex(rule, timings, bread, interpolate, theme) {
 		const {index, status, depth} = Layers.getIndex(rule, bread)
+
+		let check = ''
+		if (index.checktpl) {
+			const crumb = bread.getCrumb(depth)
+			check = interpolate(index.checktpl, timings, {}, bread, crumb, theme)
+		}
+		
 		if (!index) return []
 		Layers.runByRootLayer(index.root, layer => {
 			const crumb = bread.getCrumb(layer.depth)
@@ -131,7 +139,7 @@ export default class Layers {
 				layer.json = rule.json[ts]
 			}
 		})
-		return { index, status }
+		return { index, status, check }
 	}
 	static collectPush(rule, timings, bread, root, interpolate, theme) {
 		const push = []
@@ -157,7 +165,6 @@ export default class Layers {
 		const rule = structuredClone(source)
 		
 		applyframes(rule) //встраиваем фреймы
-		
 		wakeup(rule) //объекты слоёв
 		spread(rule) //layout в childs самодостаточный
 		
@@ -208,7 +215,9 @@ export default class Layers {
 			if (!index) depth = null
 			break
 		}
-		return {index, depth, status}
+		return {
+			index, depth, status
+		}
 	}
 	static runByIndex (rule, fn, path = [], depth = 0) {
 		fn(rule, path, depth)

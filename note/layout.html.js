@@ -34,7 +34,6 @@ ${data.note.text}</textarea>
 			(wrap => {
 				const note = ${JSON.stringify(data.note)}
 				window.note = note
-				//console.log(note.cursors)
 				note.area = wrap.getElementsByClassName('area')[0]
 				note.wrap = wrap
 
@@ -133,7 +132,6 @@ ${data.note.text}</textarea>
 					const Note = await note.inputpromise
 					const cursor = Note.getCursor(note)
 					if (cursor.size) return //select
-					console.log('cursor', cursor.start)
 					Note.send(note, {cursor})
 				})
 				

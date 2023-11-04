@@ -7,7 +7,7 @@ const sendit = async (div, action, post) => {
 	div.title = "В процессе ..."
 	sendit.setClass(div, 'process')
 	const ans = await send(action, post)
-	//div.title = ans.msg || "Сохранено"
+	div.title = ans.msg || "Сохранено"
 	setTimeout(() => {
 		div.counter--
 		if (div.counter) return

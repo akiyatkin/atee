@@ -3,7 +3,7 @@ import path from 'path'
 import { readFile, utimes } from "fs/promises"
 import Rest from "/-rest"
 import Bread from '/-controller/Bread.js'
-import { router } from './router.js'
+import { router, loadJSON } from './router.js'
 import { Access } from '/-controller/Access.js'
 import { Once } from './Once.js'
 import Layers from '/-controller/Layers.js'
@@ -101,20 +101,37 @@ rest.addResponse('get-layers', async view => {
 		Theme.set(view, theme)
 	}
 
+
 	const interpolate = (val, timings, layer, bread, crumb, theme) => {
 		const look = { bread, timings, theme }
 		const env = { layer, crumb, ...look }
-		env.sid = 'sid-' + (layer.div || layer.name) + '-' + layer.sub + '-'
-		env.scope = layer.div ? '#' + layer.div : 'html'
+		if (layer) {
+			env.sid = 'sid-' + (layer.div || layer.name) + '-' + layer.sub + '-'
+			env.scope = layer.div ? '#' + layer.div : 'html'
+		}
 		return new Function(
 			'env', 'host', 'timings', 'layer', 'bread', 'crumb', 'theme',
 			'return `'+val+'`'
 		)(env, host, timings, layer, bread, crumb, theme)
 	}
 
-	const { index: nopt, status } = Layers.getParsedIndex(rule, timings, bread, interpolate, theme) //{ index: {push, root}, status }
+	const { index: nopt, status, check } = Layers.getParsedIndex(rule, timings, bread, interpolate, theme) //{ index: {push, root}, status }
 	
 	if (!nopt?.root) return view.err()
+
+	if (check) {
+		const {ans} = await loadJSON(check, view.visitor)
+		if (ans.redirect) {
+			view.ans.layers = []
+			view.ans.redirect = ans.redirect
+			return view.ret()
+		}
+	}
+	
+		
+		
+	
+	view.ans.checks = nopt.checks
 	view.status = status
 	view.ans.theme = theme
 	if (prev === false) {

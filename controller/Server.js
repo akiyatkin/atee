@@ -108,29 +108,38 @@ const Server = {
 				let json = a.ans
 				let status = a.status
 				if (!json) return error_before(500, 'layers have bad definition')
-				if (!json.layers) return error_before(500, 'layers not defined')
-				if (!json.layers.length) return error_before(500, 'layers empty')
-				const bread = new Bread(route.path, route.get, route.search, json.root) //root+path+get = search
 				let info
-				try {
-					info = await controller(json, visitor, bread) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
-					status = Math.max(info.status, status)
-				} catch (e) {
-					console.error(bread.path, e)
-					status = e.status || 500
-					const root = bread.root ? '/' + bread.root + '/' : '/'
-					req.nt = root + status
-					const a = await meta.get('get-layers', req, visitor)
-					json = a.ans
-				
+				const headers = []
+				if (json.redirect) {
+					status = 301	
+					headers['Location'] = json.redirect
+					info = { nostore: true, html: '' }
+					//return view.err('', 301)
+				} else {
+					if (!json.layers) return error_before(500, 'layers not defined')
+					if (!json.layers.length) return error_before(500, 'layers empty')
+					const bread = new Bread(route.path, route.get, route.search, json.root) //root+path+get = search
 					
-					info = await controller(json, visitor, bread)
+					try {
+						info = await controller(json, visitor, bread) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
+						status = Math.max(info.status, status)
+					} catch (e) {
+						console.error(bread.path, e)
+						status = e.status || 500
+						const root = bread.root ? '/' + bread.root + '/' : '/'
+						req.nt = root + status
+						const a = await meta.get('get-layers', req, visitor)
+						json = a.ans
+					
+						
+						info = await controller(json, visitor, bread)
+					}
+					if (json.push?.length) response.setHeader('Link', json.push.join(','));
 				}
-				if (json.push?.length) response.setHeader('Link', json.push.join(','));
 				response.writeHead(status, {
 					'Content-Type': conf.types['html'] + '; charset=utf-8',
 					'Cache-Control': info.nostore ? 'no-store' : 'public, max-age=31536000',
-					...json.headers
+					...headers
 				})
 				return response.end(info.html)
 			} else { //Это может быть новый проект без всего

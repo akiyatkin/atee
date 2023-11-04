@@ -273,6 +273,7 @@ const Note = {
 						Note.send(note, {change})
 					}
 					note.wrap.classList.add('joined')
+					window.getClient().then(Client => Client.reloaddiv('NOTES'))
 					return resolve(socket)
 				})
 				const error = async e => {
@@ -296,6 +297,15 @@ const Note = {
 							note.text = signal.text
 							note.area.value = note.text
 							Note.viewHTML(note)
+						} else if (signal.type == 'reject') {
+							const Client = await window.getClient()
+							Client.reloaddiv('FOOTER')
+							if (signal.user_id == note.user_id) {
+								Client.reloaddiv('NOTES')
+								Client.go('/')
+								const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+								Dialog.alert('Ваш доступ к заметке был отозван. Такие дела.')	
+							}
 						} else if (signal.type == 'leave') {
 							delete note.cursors[signal.user_id]
 							const Client = await window.getClient()

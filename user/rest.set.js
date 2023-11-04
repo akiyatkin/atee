@@ -2,15 +2,21 @@
 import Rest from '/-rest'
 import User from '/-user/User.js'
 import crypto from 'crypto'
+
+const rest = new Rest()
+
 import rest_admin from '/-controller/rest.admin.js'
+rest.extra(rest_admin) //rest_user, rest_mail, rest_admin
 import rest_user from '/-user/rest.user.js'
+rest.extra(rest_user)
 import rest_mail from "/-mail/rest.mail.js"
+rest.extra(rest_mail)
 
 import { whereisit } from '/-controller/whereisit.js'
 import fs from "fs/promises"
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
-const rest = new Rest(rest_user, rest_mail, rest_admin)
+
 
 rest.addArgument('token', ['string'])
 rest.addArgument('code', ['string'])
