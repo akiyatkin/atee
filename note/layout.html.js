@@ -1,9 +1,8 @@
 const note = {}
 
 note.css = ['/-note/style.css']
-
-
 import Note from '/-note/Note.js'
+
 note.checkErr = (data, env) => data.result ? '': `
 	<div class="container">
 		<h1>Ошибка</h1>
@@ -16,23 +15,27 @@ note.checkErr = (data, env) => data.result ? '': `
 	</div>
 `
 note.ROOT = (data, env) => note.checkErr(data, env) || `
+	${note.show(data.note)}
+`
+
+note.show = (note) => `
 	<style>
-		${env.scope} .notewrapper {
+		.notewrapper {
 			opacity:0;	
 		}
 	</style>
 	<div class="notewrapper">
 		<div class="note view" 
 			aria-hidden="true"
-			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь">${Note.makeHTML(data.note.text, data.note.cursors)}<br></div>
-		<textarea autocomplete="off" style="--hue: ${data.note.hue}" class="note area ${data.note.color || ''}" 
+			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь">${Note.makeHTML(note.text, note.cursors)}<br></div>
+		<textarea autocomplete="off" style="--hue: ${note.hue}" class="note area" 
 			spellcheck="false"
 			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь" role="textbox" 
 			tabindex="0">
-${data.note.text}</textarea>
+${note.text}</textarea>
 		<script>
 			(wrap => {
-				const note = ${JSON.stringify(data.note)}
+				const note = ${JSON.stringify(note)}
 				window.note = note
 				note.area = wrap.getElementsByClassName('area')[0]
 				note.wrap = wrap
@@ -210,5 +213,6 @@ ${data.note.text}</textarea>
 		</script>
 	</div>
 `
+
 
 export default note

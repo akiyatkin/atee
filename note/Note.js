@@ -19,7 +19,6 @@ const Note = {
 		return splice(text, change.start, change.remove.length, change.insert)
 	},
 	cursorHTML: async (note, cursor) => {
-		
 		if (cursor.user_id != note.user_id) {
 			Move.cursorAfter(cursor, note.waitchanges)
 			note.cursors[cursor.user_id] = cursor
@@ -261,19 +260,21 @@ const Note = {
 			socket.send(data)
 		}
 	},
+	getLink: (note) => {
+		const wshost = note.wshost
+		const protocol = location.protocol === "https:" ? "wss" : "ws"
+		return protocol + '://'+ wshost + `/?rev=${note.rev}&date_load=${note.now}&note_id=${note.note_id}&note_token=${note.token}&user_id=${note.user_id}&user_token=${note.user_token}`
+	},
 	open: (note) => {
-		const wshost = ~location.host.indexOf('127.0.0.1') ? '127.0.0.1:8889' : 'ws.' + location.host
 		if (!note.socket) {
 			const socket = new Promise((resolve, reject) => {
-				const protocol = location.protocol === "https:" ? "wss" : "ws"
-
-				const socket = new WebSocket(protocol + '://'+ wshost + `/?rev=${note.rev}&date_load=${note.now}&note_id=${note.note_id}&note_token=${note.token}&user_id=${note.user_id}&user_token=${note.user_token}`)
+				const link = Note.getLink(note)
+				const socket = new WebSocket(link)
 				socket.addEventListener('open', e => {
 					for (const change of note.waitchanges) {
 						Note.send(note, {change})
 					}
 					note.wrap.classList.add('joined')
-					window.getClient().then(Client => Client.reloaddiv('NOTES'))
 					return resolve(socket)
 				})
 				const error = async e => {
@@ -285,42 +286,30 @@ const Note = {
 				}
 				socket.addEventListener('error', error)
 				socket.addEventListener('message', async event => {
-					
-					
 					const {payload, my} = JSON.parse(event.data)
 					const {cursor, change, signal} = payload
-
-					
 					if (signal) {
+						signal.myuser = signal.user_id == note.user_id
+						signal.my = my
+						note.wrap.dispatchEvent(new CustomEvent("note-signal", { detail: signal }))
 						if (signal.type == 'reset') {
 							note.rev = signal.rev
 							note.text = signal.text
 							note.area.value = note.text
 							Note.viewHTML(note)
 						} else if (signal.type == 'reject') {
-							const Client = await window.getClient()
-							Client.reloaddiv('FOOTER')
-							if (signal.user_id == note.user_id) {
-								Client.reloaddiv('NOTES')
-								Client.go('/')
+							if (signal.myuser) {
 								const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-								Dialog.alert('Ваш доступ к заметке был отозван. Такие дела.')	
+								Dialog.alert('Ваш доступ был отозван. Такие дела.')	
 							}
 						} else if (signal.type == 'leave') {
 							delete note.cursors[signal.user_id]
-							const Client = await window.getClient()
-							Client.reloaddiv('FOOTER')
 						} else if (signal.type == 'joined') {
-							const Client = await window.getClient()
-							Client.reloaddiv('FOOTER')
 							if (signal.user_id == note.user_id) {
 								note.area.style = "--hue: " + signal.hue
 							}
 						} else if (signal.type == 'rename') {
-							const Client = await window.getClient()
-							Client.reloaddiv('NOTES')
 						} else if (signal.type == 'blur') {
-							//delete note.cursors[signal.user_id]
 							Note.viewHTML(note)
 						} else if (signal.type == 'focus') {
 							if (signal.cursor.user_id != note.user_id) {
