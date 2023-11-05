@@ -99,12 +99,12 @@ ${data.note.text}</textarea>
 				
 
 				note.area.addEventListener('keydown', async e => {
-					alert(e.keyCode)
 					if (~[HOME, END].indexOf(e.keyCode)) { //input ради preventDefault стандартного действия, нет input
 						e.preventDefault() 
 						const Area = await import('/-note/Area.js').then(r => r.default)
 						await Area.keydown(note.area, e)
 					}
+
 					if (~[ENTER, TAB, PLUS, MINUS, PLUSLINE, MINUSLINE].indexOf(e.keyCode)) { //input ради preventDefault стандартного ввода, есть input
 						e.preventDefault()
 						note.area.dispatchEvent(new Event('beforeinput', { bubbles: true, cancelable: true}))
@@ -119,6 +119,11 @@ ${data.note.text}</textarea>
 						const cursor = Note.getCursor(note)
 						if (cursor.size) return //select
 						Note.send(note, {cursor})
+					}
+					if (e.keyCode == 229) {
+						const Area = await import('/-note/Area.js').then(r => r.default)
+						Area.keyup(note.area, e)
+						
 					}
 				})
 				note.area.addEventListener('select', async e => {

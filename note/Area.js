@@ -64,6 +64,17 @@ const setMarker = (area, symbol) => {
 		area.selectionEnd = selEnd
 	}
 }
+Area.keyup = async (area, e) => {
+	const symbol = note.area.value[note.area.selectionStart - 1]
+	const symbolprev = note.area.value[note.area.selectionStart - 2]
+	alert(symbolprev + ' ' + symbol)
+	// ~[PLUSLINE, MINUSLINE].indexOf(e.keyCode)) { //input ради preventDefault стандартного ввода, есть input
+		console.log()
+		//note.area.dispatchEvent(new Event('beforeinput', { bubbles: true, cancelable: true}))
+		//const Area = await import('/-note/Area.js').then(r => r.default)
+		//await Area.keydown(note.area, e)
+	//}	
+}
 Area.keydown = async (area, e) => {
 	if (e.keyCode === HOME) { //Home
 		const text = area.value
@@ -128,8 +139,8 @@ Area.keydown = async (area, e) => {
 			area.selectionStart = selStart - 1
 			document.execCommand('insertText', false, '')
 			setMarker(area, '-')
-		} else if (e.shiftKey) {
-			setMarker(area, '-')
+		// } else if (e.shiftKey) {
+		// 	setMarker(area, '-')
 		} else {
 			document.execCommand('insertText', false, "-")
 		}
@@ -141,8 +152,8 @@ Area.keydown = async (area, e) => {
 			area.selectionStart = selStart - 1
 			document.execCommand('insertText', false, '')
 			setMarker(area, '+')
-		} else if (e.shiftKey) {
-			setMarker(area, '+')
+		// } else if (e.shiftKey) {
+		// 	setMarker(area, '+')
 		} else {
 			document.execCommand('insertText', false, "+")
 		}
