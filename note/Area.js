@@ -36,8 +36,34 @@ const DOWN = 40
 const A = 65
 const PLUS = 107
 const MINUS = 109
+const PLUSLINE = 187
+const MINUSLINE = 189
 
-
+const setMarker = (area, symbol) => {
+	const selStart = area.selectionStart
+	const selEnd = area.selectionEnd
+	const text = area.value
+	let sel = area.selectionEnd - 1 // find start of the current line
+	while (sel > 0 && text[sel - 1] != '\n') sel--
+	let flineStart = sel
+	while (isSpace(text[sel])) sel++
+	const slineStart = Math.min(sel, area.selectionEnd)
+	let smb = text[slineStart]
+	
+	if (!~['+','-'].indexOf(smb)) {
+		area.selectionStart = slineStart
+		area.selectionEnd = slineStart
+		document.execCommand('insertText', false, symbol + " ")
+		area.selectionStart = selStart + 2
+		area.selectionEnd = selEnd + 2
+	} else {
+		area.selectionStart = slineStart
+		area.selectionEnd = slineStart + 1
+		document.execCommand('insertText', false, symbol)
+		area.selectionStart = selStart
+		area.selectionEnd = selEnd
+	}
+}
 Area.keydown = async (area, e) => {
 	if (e.keyCode === HOME) { //Home
 		const text = area.value
@@ -70,67 +96,53 @@ Area.keydown = async (area, e) => {
 				
 			}
 		}
-	} else if (e.keyCode === MINUS) { //Minus
+	} else if (e.keyCode === MINUSLINE) {
+		const selStart = area.selectionStart
+		const text = area.value
+		if (text[selStart - 1] == '/') {
+			area.selectionStart = selStart - 1
+			document.execCommand('insertText', false, '')
+			setMarker(area, '-')
+		} else {
+			document.execCommand('insertText', false, "-")
+		}
+	} else if (e.keyCode === PLUSLINE) {
 		if (e.shiftKey) {
+			const selStart = area.selectionStart
 			const text = area.value
-			// if (text[area.selectionEnd] == '\n') {
-			// 	document.execCommand('insertText', false, "-")
-			// } else {
-				let sel = area.selectionEnd - 1 // find start of the current line
-				while (sel > 0 && text[sel - 1] != '\n') sel--
-				let flineStart = sel
-				while (isSpace(text[sel])) sel++
-				const slineStart = Math.min(sel, area.selectionEnd)
-				let smb = text[slineStart]
-
-				const selStart = area.selectionStart
-				const selEnd = area.selectionEnd
-				if (!~['+','-'].indexOf(smb)) {
-					area.selectionStart = slineStart
-					area.selectionEnd = slineStart
-					document.execCommand('insertText', false, "- ")
-					area.selectionStart = selStart + 2
-					area.selectionEnd = selEnd + 2
-				} else {
-					area.selectionStart = slineStart
-					area.selectionEnd = slineStart + 1
-					document.execCommand('insertText', false, "-")
-					area.selectionStart = selStart
-					area.selectionEnd = selEnd
-				}
-			//}
-			
+			if (text[selStart - 1] == '/') {
+				area.selectionStart = selStart - 1
+				document.execCommand('insertText', false, '')
+				setMarker(area, '+')
+			} else {
+				document.execCommand('insertText', false, "+")
+			}
+		} else {
+			document.execCommand('insertText', false, "=")
+		}
+		
+	} else if (e.keyCode === MINUS) { //Minus
+		const selStart = area.selectionStart
+		const text = area.value
+		if (text[selStart - 1] == '/') {
+			area.selectionStart = selStart - 1
+			document.execCommand('insertText', false, '')
+			setMarker(area, '-')
+		} else if (e.shiftKey) {
+			setMarker(area, '-')
 		} else {
 			document.execCommand('insertText', false, "-")
 		}
 	} else if (e.keyCode === PLUS) { //Plus
-		if (e.shiftKey) {
-			const text = area.value
-			// if (text[area.selectionEnd] == '\n') {
-			// 	document.execCommand('insertText', false, "+")
-			// } else {
-				let sel = area.selectionEnd - 1 // find start of the current line
-				while (sel > 0 && text[sel - 1] != '\n') sel--
-				let flineStart = sel
-				while (isSpace(text[sel])) sel++
-				const slineStart = Math.min(sel, area.selectionEnd)
-				let smb = text[slineStart]
-				const selStart = area.selectionStart
-				const selEnd = area.selectionEnd
-				if (!~['+','-'].indexOf(smb)) {
-					area.selectionStart = slineStart
-					area.selectionEnd = slineStart
-					document.execCommand('insertText', false, "+ ")
-					area.selectionStart = selStart + 2
-					area.selectionEnd = selEnd + 2
-				} else {
-					area.selectionStart = slineStart
-					area.selectionEnd = slineStart + 1
-					document.execCommand('insertText', false, "+")
-					area.selectionStart = selStart
-					area.selectionEnd = selEnd
-				}
-			//}
+		const selStart = area.selectionStart
+		const text = area.value
+
+		if (text[selStart - 1] == '/') {
+			area.selectionStart = selStart - 1
+			document.execCommand('insertText', false, '')
+			setMarker(area, '+')
+		} else if (e.shiftKey) {
+			setMarker(area, '+')
 		} else {
 			document.execCommand('insertText', false, "+")
 		}
