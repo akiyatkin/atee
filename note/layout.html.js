@@ -211,18 +211,6 @@ ${data.note.text}</textarea>
 					Note.send(note, {change})
 				})
 
-				note.area.addEventListener('input', async e => {
-					const symbol = note.area.value[note.area.selectionStart - 2]
-					console.log(symbol)
-					if (symbol == '/') {
-						setTimeout(async () => {
-							const Area = await import('/-note/Area.js').then(r => r.default)
-							Area.control(note.area, e)
-						}, 1000)
-						
-					}
-				})
-
 				note.inputpromise.then(Note => Note.open(note))
 			})(document.currentScript.parentNode)
 		</script>
