@@ -22,6 +22,7 @@ note.ROOT = (data, env) => note.checkErr(data, env) || `
 		}
 	</style>
 	<div class="notewrapper">
+		<div id="DEBUG"></div>
 		<div class="note view" 
 			aria-hidden="true"
 			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь">${Note.makeHTML(data.note.text, data.note.cursors)}<br></div>
@@ -97,6 +98,9 @@ ${data.note.text}</textarea>
 				
 
 				note.area.addEventListener('keydown', async e => {
+					const DEBUG = document.getElementById('DEBUG')
+					DEBUG.innerHTML = e.keyCode
+					
 					if (~[HOME, END].indexOf(e.keyCode)) { //input ради preventDefault стандартного действия, нет input
 						e.preventDefault() 
 						const Area = await import('/-note/Area.js').then(r => r.default)
