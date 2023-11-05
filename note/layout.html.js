@@ -105,7 +105,8 @@ ${data.note.text}</textarea>
 						await Area.keydown(note.area, e)
 					}
 
-					if (~[ENTER, TAB, PLUS, MINUS, PLUSLINE, MINUSLINE].indexOf(e.keyCode)) { //input ради preventDefault стандартного ввода, есть input
+					//, PLUS, MINUS, PLUSLINE, MINUSLINE
+					if (~[ENTER, TAB].indexOf(e.keyCode)) { //input ради preventDefault стандартного ввода, есть input
 						e.preventDefault()
 						note.area.dispatchEvent(new Event('beforeinput', { bubbles: true, cancelable: true}))
 						const Area = await import('/-note/Area.js').then(r => r.default)
@@ -148,17 +149,15 @@ ${data.note.text}</textarea>
 						aob - before, remove
 						anb - after, insert
 					*/
-					if (e.keyCode == 229) {
-						const Area = await import('/-note/Area.js').then(r => r.default)
-						Area.keyup(note.area, e)
-						
-					}
 					if (note.inputpromise.start) return
 					const aob = note.area.textLength
-					//let edge = note.area.selectionEnd
-					//const ao = note.area.selectionEnd
 					const text_before = note.area.value
 					note.inputpromise = new Promise(resolve => note.area.addEventListener('input', async () => {
+						const symbol = note.area.value[note.area.selectionStart - 2]
+						if (symbol == '/') {
+							const Area = await import('/-note/Area.js').then(r => r.default)
+							Area.control(note.area, e)
+						}
 						const Note = await import('/-note/Note.js').then(r => r.default)
 						await checkUser(note)
 						resolve(Note)
@@ -212,6 +211,17 @@ ${data.note.text}</textarea>
 					Note.send(note, {change})
 				})
 
+				note.area.addEventListener('input', async e => {
+					const symbol = note.area.value[note.area.selectionStart - 2]
+					console.log(symbol)
+					if (symbol == '/') {
+						setTimeout(async () => {
+							const Area = await import('/-note/Area.js').then(r => r.default)
+							Area.control(note.area, e)
+						}, 1000)
+						
+					}
+				})
 
 				note.inputpromise.then(Note => Note.open(note))
 			})(document.currentScript.parentNode)

@@ -64,16 +64,17 @@ const setMarker = (area, symbol) => {
 		area.selectionEnd = selEnd
 	}
 }
-Area.keyup = async (area, e) => {
+Area.control = async (area) => {
 	const symbol = note.area.value[note.area.selectionStart - 1]
-	const symbolprev = note.area.value[note.area.selectionStart - 2]
-	alert(symbolprev + ' ' + symbol)
-	// ~[PLUSLINE, MINUSLINE].indexOf(e.keyCode)) { //input ради preventDefault стандартного ввода, есть input
-		console.log()
-		//note.area.dispatchEvent(new Event('beforeinput', { bubbles: true, cancelable: true}))
-		//const Area = await import('/-note/Area.js').then(r => r.default)
-		//await Area.keydown(note.area, e)
-	//}	
+	if (!~['+','-'].indexOf(symbol)) return
+	const selStart = area.selectionStart
+	area.selectionStart = selStart - 2
+	document.execCommand('insertText', false, '')
+	if (symbol == '+') {
+		setMarker(area, '+')
+	} else if (symbol == '-') {
+		setMarker(area, '-')
+	}
 }
 Area.keydown = async (area, e) => {
 	if (e.keyCode === HOME) { //Home
