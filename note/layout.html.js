@@ -120,11 +120,11 @@ ${data.note.text}</textarea>
 						if (cursor.size) return //select
 						Note.send(note, {cursor})
 					}
-					if (e.keyCode == 229) {
+					//if (e.keyCode == 229) {
 						const Area = await import('/-note/Area.js').then(r => r.default)
 						Area.keyup(note.area, e)
 						
-					}
+					//}
 				})
 				note.area.addEventListener('select', async e => {
 					if (note.inputpromise.start) return
