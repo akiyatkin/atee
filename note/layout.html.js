@@ -97,7 +97,9 @@ ${data.note.text}</textarea>
 
 				note.area.focus()
 				
+
 				note.area.addEventListener('keydown', async e => {
+					alert(e.keyCode)
 					if (~[HOME, END].indexOf(e.keyCode)) { //input ради preventDefault стандартного действия, нет input
 						e.preventDefault() 
 						const Area = await import('/-note/Area.js').then(r => r.default)
