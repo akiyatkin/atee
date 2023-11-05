@@ -36,8 +36,6 @@ const DOWN = 40
 const A = 65
 const PLUS = 107
 const MINUS = 109
-const PLUSLINE = 187
-const MINUSLINE = 189
 
 const setMarker = (area, symbol) => {
 	const selStart = area.selectionStart
@@ -108,56 +106,31 @@ Area.keydown = async (area, e) => {
 				
 			}
 		}
-	} else if (e.keyCode === MINUSLINE) {
-		const selStart = area.selectionStart
-		const text = area.value
-		if (text[selStart - 1] == '/') {
-			area.selectionStart = selStart - 1
-			document.execCommand('insertText', false, '')
-			setMarker(area, '-')
-		} else {
-			document.execCommand('insertText', false, "-")
-		}
-	} else if (e.keyCode === PLUSLINE) {
-		if (e.shiftKey) {
-			const selStart = area.selectionStart
-			const text = area.value
-			if (text[selStart - 1] == '/') {
-				area.selectionStart = selStart - 1
-				document.execCommand('insertText', false, '')
-				setMarker(area, '+')
-			} else {
-				document.execCommand('insertText', false, "+")
-			}
-		} else {
-			document.execCommand('insertText', false, "=")
-		}
-		
-	} else if (e.keyCode === MINUS) { //Minus
-		const selStart = area.selectionStart
-		const text = area.value
-		if (text[selStart - 1] == '/') {
-			area.selectionStart = selStart - 1
-			document.execCommand('insertText', false, '')
-			setMarker(area, '-')
-		// } else if (e.shiftKey) {
-		// 	setMarker(area, '-')
-		} else {
-			document.execCommand('insertText', false, "-")
-		}
-	} else if (e.keyCode === PLUS) { //Plus
-		const selStart = area.selectionStart
-		const text = area.value
+	// } else if (e.keyCode === MINUS) { //Minus
+	// 	const selStart = area.selectionStart
+	// 	const text = area.value
+	// 	if (text[selStart - 1] == '/') {
+	// 		area.selectionStart = selStart - 1
+	// 		document.execCommand('insertText', false, '')
+	// 		setMarker(area, '-')
+	// 	// } else if (e.shiftKey) {
+	// 	// 	setMarker(area, '-')
+	// 	} else {
+	// 		document.execCommand('insertText', false, "-")
+	// 	}
+	// } else if (e.keyCode === PLUS) { //Plus
+	// 	const selStart = area.selectionStart
+	// 	const text = area.value
 
-		if (text[selStart - 1] == '/') {
-			area.selectionStart = selStart - 1
-			document.execCommand('insertText', false, '')
-			setMarker(area, '+')
-		// } else if (e.shiftKey) {
-		// 	setMarker(area, '+')
-		} else {
-			document.execCommand('insertText', false, "+")
-		}
+	// 	if (text[selStart - 1] == '/') {
+	// 		area.selectionStart = selStart - 1
+	// 		document.execCommand('insertText', false, '')
+	// 		setMarker(area, '+')
+	// 	// } else if (e.shiftKey) {
+	// 	// 	setMarker(area, '+')
+	// 	} else {
+	// 		document.execCommand('insertText', false, "+")
+	// 	}
 	} else if (e.keyCode === END) { //End
 		const text = area.value
 		const endlineFromEnd = getEndline(text, area.selectionEnd)

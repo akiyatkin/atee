@@ -76,11 +76,6 @@ ${data.note.text}</textarea>
 				const UP = 38
 				const DOWN = 40
 				const A = 65
-				const PLUS = 107
-				const MINUS = 109
-				const PLUSLINE = 187
-				const MINUSLINE = 189
-
 				
 				
 				note.area.addEventListener('focus', async e => {
@@ -104,8 +99,7 @@ ${data.note.text}</textarea>
 						const Area = await import('/-note/Area.js').then(r => r.default)
 						await Area.keydown(note.area, e)
 					}
-
-					//, PLUS, MINUS, PLUSLINE, MINUSLINE
+					
 					if (~[ENTER, TAB].indexOf(e.keyCode)) { //input ради preventDefault стандартного ввода, есть input
 						e.preventDefault()
 						note.area.dispatchEvent(new Event('beforeinput', { bubbles: true, cancelable: true}))

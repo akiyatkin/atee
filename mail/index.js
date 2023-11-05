@@ -32,11 +32,28 @@ const Mail = {
 		const info = Mail.saveSend(opt)
 		return info
 	},
-	toUser: (subject, html, email) => {
-		const r = conf.to.split(',')
-		const replayto = r[0].trim()
+	toUser: (subject, html, email, replayto) => {
+		if (!replayto) {
+			const r = conf.to.split(',')
+			replayto = r[0].trim()
+		}
 		const opt = {
 			from: conf.from, 
+			to: email,
+			replyTo: replayto,
+			subject,
+			html
+		}
+		const info = Mail.saveSend(opt)
+		return info
+	},
+	toUserFrom: (subject, html, email, replayto) => {
+		if (!replayto) {
+			const r = conf.to.split(',')
+			replayto = r[0].trim()
+		}
+		const opt = {
+			from: replayto || conf.from, 
 			to: email,
 			replyTo: replayto,
 			subject,

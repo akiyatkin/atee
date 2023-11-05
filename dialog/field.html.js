@@ -560,7 +560,7 @@ field.date = ({name, action, label = '', value = '', onlyfuture = false}) => {
 }
 
 //approved
-field.textok = ({name, label, action, value, newvalue = '', go, reloaddiv, goid, type = 'text'}) => {
+field.textok = ({name, label, action, value, newvalue = '', go, clear = false, reloaddiv, goid, type = 'text'}) => {
 	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label ${value ? 'success' : 'submit'}">
@@ -588,6 +588,7 @@ field.textok = ({name, label, action, value, newvalue = '', go, reloaddiv, goid,
 							const goid = "${goid ? goid : ''}"
 							if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
 							if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
+							if (ans.result && ${!!clear}) field.value = ''
 							field.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 						} else {
 							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
