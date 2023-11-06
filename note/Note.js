@@ -9,7 +9,7 @@ if (Move.debug && globalThis.window) {
 	window.Test = await import('/-note/Test.js').then(r => r.default)
 }
 const Note = {
-	escapeText: (text) => text.replace(/[<>&]/g, tag => ({"<": '&lt;','>': '&gt;','&': '&amp;'})[tag] || tag)
+	escapeText: (text) => text.replace(/[<>&]/g, tag => ({"<": '&lt;','>': '&gt;','&': '&amp;'})[tag] || tag),
 	getCursor: (note) => ({
 		start: note.area.selectionStart,
 		size: note.area.selectionEnd - note.area.selectionStart,
