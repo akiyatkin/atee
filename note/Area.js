@@ -172,8 +172,8 @@ Area.keydown = async (area, e) => {
 			
 			//document.execCommand('insertText', false, "\n")
 		} else {
-			const exception = text[myStart - 2] && ~['+','-'].indexOf(text[myStart - 2])
-			if (exception) area.selectionStart = myStart - 2
+			//const exception = text[myStart - 2] && ~['+','-'].indexOf(text[myStart - 2])
+			//if (exception) area.selectionStart = myStart - 2
 			//const end
 			while (sel > 0 && text[sel - 1] != '\n') sel--
 			let flineStart = sel
