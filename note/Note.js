@@ -62,6 +62,7 @@ const Note = {
 		note.view.innerHTML = html + '<br>'
 	},
 	makeHTML: (text, cursors, waitchanges = []) => {
+
 		cursors = Object.values(cursors)
 
 		// [2,3,4,5] - надо подсветить 2 после применения 3,4,5
@@ -168,7 +169,8 @@ const Note = {
 				}
 				
 			}
-			html += light.part
+			html += light.part.replaceAll('&','&amp;')
+			//html += light.part
 			for (const color of light.colors) {
 				html += '</span>'
 			}

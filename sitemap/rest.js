@@ -96,6 +96,7 @@ rest.addResponse('get-head', async view => {
 			console.log(e)
 			return {ans:{result:0}}
 		})
+		if (reans.nostore) view.nostore = true
 		head = {...head, ...reans.ans}
 	}
 
@@ -109,7 +110,8 @@ rest.addResponse('get-head', async view => {
 			head.canonical = env.crumb + head.canonical
 		}
 	}
-	return {ans:head}
+	view.ans = head
+	return view.ret()
 })
 
 

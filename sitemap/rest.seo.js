@@ -58,9 +58,11 @@ rest.addVariable('data', async view => {
 		if (!head.headings) continue
 		for (const i in head.headings) {
 			const heading = head.headings[i]
+			if (!Object.values(head.headings[i].childs).length) continue
 			heading.modified ??= modified
 			heading.href = href
 			headings.push(heading)
+
 		}
 	}
 	return {list, headings}
