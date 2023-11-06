@@ -7,7 +7,7 @@ const inActive = new Promise(resolve => {
         // window.removeEventListener('click', init)
         window.removeEventListener('mouseover', init)
         // window.removeEventListener('resize', init)
-        //window.removeEventListener('keypress', init)
+        window.removeEventListener('keydown', init)
         window.removeEventListener('touchstart', init)
         //window.removeEventListener('scroll', init)
         //if (base) base.removeEventListener('blur', init)
@@ -19,7 +19,7 @@ const inActive = new Promise(resolve => {
     // window.addEventListener('click', init)
     window.addEventListener('mouseover', init)
     // window.addEventListener('resize', init)
-    //window.addEventListener('keypress', init)
+    window.addEventListener('keydown', init)
     window.addEventListener('touchstart', init)
     
     //if (base) base.addEventListener('blur', init)
