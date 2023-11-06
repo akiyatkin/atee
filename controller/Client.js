@@ -203,6 +203,7 @@ export const Client = {
 		for (const layer of layers) {
 			layer.sys = {}
 			const div = document.getElementById(layer.div)
+			//if (!div) continue; //слой может быть в onlyclient и ещё не показался если какое-то обновление сразу после загрузки
 			layer.sys.div = div
 			layer.sys.execute = createPromise()
 			if (promise) promise.started.finally(() => {
@@ -245,6 +246,7 @@ export const Client = {
 		const scripts = []
 		for (const layer of json.layers) {
 			const elements = layer.sys.template.content
+			//if (!layer.sys.div) continue; //слой может быть в onlyclient и ещё не показался если какое-то обновление сразу после загрузки
 			layer.sys.div.replaceChildren(elements)
 			window.waitClient.stack.push(evalScripts(layer.sys.div))
 			const promise = Promise.all(window.waitClient.stack)
