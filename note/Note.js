@@ -169,8 +169,8 @@ const Note = {
 				}
 				
 			}
-			html += light.part.replaceAll('&','&amp;')
-			//html += light.part
+			//html += light.part.replaceAll('&','&amp;')
+			html += light.part
 			for (const color of light.colors) {
 				html += '</span>'
 			}

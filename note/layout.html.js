@@ -32,7 +32,7 @@ note.show = (note) => `
 			spellcheck="false"
 			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь" role="textbox" 
 			tabindex="0">
-${note.text.replaceAll('&','&amp;')}</textarea>
+${note.text}</textarea>
 		<script>
 			(wrap => {
 				const note = ${JSON.stringify(note)}
