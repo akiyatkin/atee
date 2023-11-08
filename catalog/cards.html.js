@@ -27,17 +27,19 @@ cards.LIST = (data, env) => `
 	</style>
 	${cards.badgecss(data, env)}
 	<div class="listcards" style="display: grid;  grid-gap: 20px">	
-		${data.list?.map(mod => cards.card(data, env, mod)).join('')}
+		${data.list.map(mod => cards.card(data, env, mod)).join('')}
 	</div>
 	${(data.pagination?.page == 1 && data.pagination?.last > 1) ? cards.scriptRemoveSuperfluous(data) : ''}
 `
 cards.scriptRemoveSuperfluous = (data) => `
 	<script>
 		(async listcards => {
+			listcards.style.opacity = '0'
 			const numberOfCards = await import('/-catalog/numberOfCards.js').then(r => r.default)
 			//Надо чтобы всегда было 2 ряда, не больше
 			const count = numberOfCards(${data.limit})
 			while (listcards.children.length > count) listcards.children[count].remove()
+			listcards.style.opacity = '1'
 		})(document.currentScript.previousElementSibling)
 	</script>
 `

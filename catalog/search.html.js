@@ -115,7 +115,7 @@ tpl.pagt.link = (data, env, scroll = '', title, page) => `
 tpl.pagt.disabled = (data, env, scroll, title) => `
 	<span style="opacity: 0.3">${title}</span>
 `
-tpl.listcards = (data, env) => `	
+tpl.listcards = (data, env) => `
 	<div style="margin-top:1rem; margin-bottom: 2rem">
 		${cards.LIST(data, env)}
 	</div>

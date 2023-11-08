@@ -174,8 +174,8 @@ rest.addResponse('get-search-groups', async (view) => {
 	const { base, db, value, md, partner, options} = await view.gets(['base', 'db','value','md','partner', 'options'])
 	view.ans.m = md.m
 	view.ans.md = md
-	let type = ''
 
+	let type = ''
 	if (md.search && md.group && md.brand) type = 'Поиск по группе бренда'
 	if (!md.search && md.group && md.brand) type = 'Группа бренда'
 	if (md.search && !md.group && md.brand) type = 'Поиск по бренду'
@@ -268,6 +268,20 @@ rest.addResponse('get-search-list', async (view) => {
 	view.ans.m = md.m
 	view.ans.md = md
 	const {from, where, sort} = await Catalog.getmdwhere(view, md, partner)
+
+
+	let type = ''
+	if (md.search && md.group && md.brand) type = 'Поиск по группе бренда'
+	if (!md.search && md.group && md.brand) type = 'Группа бренда'
+	if (md.search && !md.group && md.brand) type = 'Поиск по бренду'
+	if (md.search && md.group && !md.brand) type = 'Поиск в группе'
+	if (!md.search && !md.group && md.brand) type = 'Бренд'
+	if (md.search && !md.group && !md.brand) type = 'Поиск'
+	if (!md.search && md.group && !md.brand) type = 'Группа'
+	if (type && md.more) type += ' с фильтром'
+	if (!type && md.more) type += 'Фильтр'
+	view.ans.type = type
+
 	
 	const group = await Catalog.getMainGroup(view, md)
 	if (!group) return view.err('Нет данных')
