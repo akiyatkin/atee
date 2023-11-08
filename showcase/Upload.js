@@ -373,6 +373,7 @@ export class Upload {
 					props.push(prop)
 				}
 			}
+
 			const indexes = {}
 			for (const i in head_nicks) {
 				const prop_nick = head_nicks[i]
@@ -551,7 +552,7 @@ export class Upload {
 
 				
 				
-
+				
 				
 				for (const new_prop_title in handlers) {
 					const tpl = handlers[new_prop_title]
@@ -598,6 +599,7 @@ export class Upload {
 						}
 						continue //Пустое значение.. с прайсом итак было удалено
 					}
+
 					let value_titles = []
 					if (prop.type == 'text' || ~options.justonevalue_nicks.indexOf(prop.prop_nick)) {
 						value_titles = [value_title]
@@ -655,6 +657,7 @@ export class Upload {
 							const number = base.toNumber(value_title)
 							if (number === false || number === ''){
 								omissions[sheet].emptyprops[prop_title] ??= []
+
 								omissions[sheet].emptyprops[prop_title].push(row)
 								continue
 							}
@@ -682,6 +685,7 @@ export class Upload {
 					quantity++
 					omissions[sheet].loadedrow++
 				}
+				
 			}
 		}
 		const searches = await db.all(`

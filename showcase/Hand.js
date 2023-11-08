@@ -30,7 +30,9 @@ class Hand {
 		const nick = tonick(from)
 		const index = indexes[nick]
 		if (!index) return ''
-		return row[index] ?? ''
+		let value = row[index] ?? ''
+		value = parseFloat(value)
+		return value
 	}
 	get (from) {
 		if (from) return this.getFrom(from)
