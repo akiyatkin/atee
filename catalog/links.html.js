@@ -4,7 +4,14 @@ import common from "/-catalog/common.html.js"
 const links = {}
 export default links
 links.root = '/catalog'
-links.model = (data, env, mod) => `${links.root}/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}`
+
+const getItemIndex = (mod) => {
+	const item_index = (mod.item_num || mod.items[0].item_num) - 1
+	if (item_index) return '/' + item_index
+	return ''
+}
+
+links.model = (data, env, mod) => `${links.root}/${mod.brand_nick}/${mod.model_nick}${getItemIndex(mod)}`
 links.brand = (data, env, mod) => `${links.root}/${mod.brand_nick}${links.setm(data)}`
 links.search = (val, env) => `${links.root}/${nicked(val)}`
 

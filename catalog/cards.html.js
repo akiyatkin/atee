@@ -132,13 +132,13 @@ cards.prop = {
 			? `<b>${mod.brand_title}</b>` : `<a href="${links.root}/${links.addm(data)}brand::.${mod.brand_nick}=1">${mod.brand_title}</a>`
 	),
 	model: (data, env, mod, pr, title, val) => cards.prop.just(data, env, mod, pr, title, 
-		`<a href="${links.root}/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${val}</a>`
+		`<a href="${links.model(data, env, mod)}">${val}</a>`
 	),
 	modelhidden: (data, env, mod, pr, title, val) => cards.prop.just(data, env, mod, pr, title, 
-		`<a style="color:inherit; border:none;" href="${links.root}/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${val}</a>`
+		`<a style="color:inherit; border:none;" href="${links.model(data, env, mod)}">${val}</a>`
 	),
 	modelhiddenwrap: (data, env, mod, pr, title, val) => cards.prop.justwrap(data, env, mod, pr, title, 
-		`<a style="color:inherit; border:none; white-space: normal;" href="${links.root}/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${val}</a>`
+		`<a style="color:inherit; border:none; white-space: normal;" href="${links.model(data, env, mod)}">${val}</a>`
 	),
 	group: (data, env, mod, pr, title, val) => cards.prop.p(data, env, mod, pr, title, 
 		`<a style="max-width:100%" href="${links.root}/${mod.group_nick}"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block">${mod.group_title}</span></a>`

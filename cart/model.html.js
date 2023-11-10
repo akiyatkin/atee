@@ -19,7 +19,7 @@ tpl.ITEM = (data, env) => {
 	const mod = data.mod
 	if (!mod) return ''
 	if (mod.items.length == 1) {
-		if (mod.Цена) return showModelBuy(data, env, mod)
+		if (mod.Цена) return tpl.showModelBuy(data, env, mod)
 		return origButton(data, env, mod)	
 	}
 	//if (!mod.Цена) return origButton(data, env, mod)	//Добавить в корзину точно ничего нельзя
@@ -30,7 +30,7 @@ tpl.ITEM = (data, env) => {
 	const prop_titles = ["Позиция","Арт"]
 	const html = filters.block("", showIprops(data, env, mod, prop_titles)) + showCost(item)
 	if (!item.Цена) return html + origButton(data, env, mod, item)
-	return html + showItemsBuy(data, env, mod, item)
+	return html + tpl.showItemsBuy(data, env, mod, item)
 }
 
 
@@ -70,7 +70,7 @@ const showCost = (item) => item.Цена ? `
 	</p>
 `
 
-const showItemsBuy = (data, env, mod, item) => `
+tpl.showItemsBuy = (data, env, mod, item) => `
 	<p align="left">
 		<button 
 		data-brand_nick="${mod.brand_nick}"
@@ -90,7 +90,7 @@ const showItemsBuy = (data, env, mod, item) => `
 		</script>
 	</p>
 `
-const showModelBuy = (data, env, mod) => `
+tpl.showModelBuy = (data, env, mod) => `
 	<p align="right">
 		<button 
 		data-brand_nick="${mod.brand_nick}"

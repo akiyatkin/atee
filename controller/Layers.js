@@ -8,7 +8,7 @@ const split = (sep, str) => {
 	const i = str.indexOf(sep)
 	return ~i ? [str.slice(0, i), str.slice(i + 1)] : [str]
 }
-const wakeup = (rule, depth = 0) => {
+const wakeup = (root, rule, depth = 0) => {
 	if (!rule) return 
 	if (!rule.layout) return
 	for (const pts in rule.layout) {
@@ -20,8 +20,8 @@ const wakeup = (rule, depth = 0) => {
 			const sid = [div, name, sub, frame].join('-')
 			//const ts = fi(name, ':' + sub)
 			const layer = { sid, ts, tsf, name, sub, div, depth, tpl:null, html: null, json:null, layers: null}
-			if (rule.onlyclient && ~rule.onlyclient.indexOf(ts)) layer.onlyclient = true
-			if (rule.global && rule.global[ts]) layer.global = rule.global[ts]
+			if (root.onlyclient && ~root.onlyclient.indexOf(ts)) layer.onlyclient = true
+			if (root.global && root.global[ts]) layer.global = root.global[ts]
 			if (frame) {
 				layer.frame = frame
 				layer.frameid = frame ? 'FRAMEID-' + frame.replaceAll('.','-') : ''
@@ -30,9 +30,9 @@ const wakeup = (rule, depth = 0) => {
 		}
 	}
 
-	wakeup(rule.child, depth + 1)
+	wakeup(root, rule.child, depth + 1)
 	if (rule.childs) for (const path in rule.childs) {
-		wakeup(rule.childs[path], depth + 1)
+		wakeup(root, rule.childs[path], depth + 1)
 	}
 }
 const spread = (rule, parent) => { //всё что в layout root переносим в свой child или childs
@@ -165,7 +165,7 @@ export default class Layers {
 		const rule = structuredClone(source)
 		
 		applyframes(rule) //встраиваем фреймы
-		wakeup(rule) //объекты слоёв
+		wakeup(rule, rule) //объекты слоёв
 		spread(rule) //layout в childs самодостаточный
 		
 		const tsf = rule.index

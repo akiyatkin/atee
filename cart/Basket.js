@@ -90,6 +90,7 @@ Basket.remove = async (args) => {
 	return ans
 }
 Basket.addButton = async (args, count = 1, nocopy = false) => {
+	args = Object.assign({}, args) 
 	const ans = await Basket.add(args, count, nocopy)
 	if (ans.newwaitorder) return
 	const Client = await window.getClient()

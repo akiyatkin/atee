@@ -76,9 +76,23 @@ rest.addResponse('get-model-head', async (view) => {
 
 
 rest.addResponse('get-model', async (view) => {
-	const { model, base, md, db, brand_nick, model_nick, partner } = await view.gets(['model', 'base', 'md', 'db', 'brand_nick','model_nick','partner'])
+	
+	const model = await view.get('model')
+
+	const base = await view.get('base')
+
+	const md = await view.get('md')
+	
+	const db = await view.get('db')
+
+	
+
+	const { brand_nick, model_nick, partner } = await view.gets(['brand_nick','model_nick','partner'])
+
+
 	view.ans.m = md.m
 	view.ans.md = md
+
 	
 	view.ans.partner = partner?.key || ''
 	view.ans.brand = await Catalog.getBrandByNick(db, brand_nick)
