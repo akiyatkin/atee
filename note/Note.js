@@ -1,6 +1,7 @@
 import Acc from '/-user/Acc.js'
 import Move from '/-note/Move.js'
 import send from '/-dialog/send.js'
+import escapeText from '/-note/escapeText.js'
 
 const splice = (text, start, size, chunk) => {
 	return text.slice(0, start) + chunk + text.slice(start + size)
@@ -8,8 +9,9 @@ const splice = (text, start, size, chunk) => {
 if (Move.debug && globalThis.window) {
 	window.Test = await import('/-note/Test.js').then(r => r.default)
 }
-const Note = {
-	escapeText: (text) => text.replace(/[<>&]/g, tag => ({"<": '&lt;','>': '&gt;','&': '&amp;'})[tag] || tag),
+
+
+const Note = {	
 	getCursor: (note) => ({
 		start: note.area.selectionStart,
 		size: note.area.selectionEnd - note.area.selectionStart,
@@ -143,7 +145,7 @@ const Note = {
 		let prev = text.length
 		for (const light of lights) {
 			const size = prev - light.pos
-			light.part = Note.escapeText(text.substr(light.pos, size))
+			light.part = escapeText(text.substr(light.pos, size))
 			prev = light.pos
 		}
 		lights.reverse()

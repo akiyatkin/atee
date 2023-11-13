@@ -2,6 +2,7 @@ const note = {}
 
 note.css = ['/-note/style.css']
 import Note from '/-note/Note.js'
+import escapeText from '/-note/escapeText.js'
 
 note.checkErr = (data, env) => data.result ? '': `
 	<div class="container">
@@ -32,7 +33,7 @@ note.show = (note) => `
 			spellcheck="false"
 			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь" role="textbox" 
 			tabindex="0">
-${Note.escapeText(note.text)}</textarea>
+${escapeText(note.text)}</textarea>
 		<script>
 			(wrap => {
 				const note = ${JSON.stringify(note)}

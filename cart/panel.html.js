@@ -96,7 +96,7 @@ tpl.ROOT = (data, env) => `
 /*				overflow: auto;*/
 				overflow-y: scroll;
 				-ms-overflow-style: none;  /* Internet Explorer 10+ */
-    			scrollbar-width: none;  /* Firefox */
+				scrollbar-width: none;  /* Firefox */
 
 				pointer-events: visiblePainted;
 
@@ -110,7 +110,7 @@ tpl.ROOT = (data, env) => `
 				}
 			}
 			${env.scope} .panel .body::-webkit-scrollbar { 
-			    display: none;  /* Safari and Chrome */
+				display: none;  /* Safari and Chrome */
 			}
 			
 			
@@ -549,6 +549,21 @@ const showSubmit = (data, env) => `
 				} else {
 					setres(res, 'error', ans.msg) 
 				}
+
+				if (ans.result) {
+					window.dataLayer = window.dataLayer || []
+					dataLayer.push({
+						"ecommerce": {
+							"currencyCode": "RUB",
+							"purchase": {
+								"actionField": {
+									"id" : btn.dataset.order_id
+								},
+								"products": ans.products
+							}
+						}
+					})
+				}
 			})
 			const btnclear = form.querySelector('.clear')
 			btnclear.addEventListener('click', async (e) => {
@@ -594,8 +609,8 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 		<style>
 			${env.scope} .list {
 				width: fit-content;
-			    max-width: 100%;
-			    margin: 0 auto;
+				max-width: 100%;
+				margin: 0 auto;
 				display: grid;
 				grid-template-columns: max-content 1fr 1fr;
 				gap: 1rem;
@@ -651,6 +666,7 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 	
 	<script type="module">
 		import Panel from '/-cart/Panel.js'
+		import Ecommerce from '/-cart/Ecommerce.js'
 		import pantpl from "${env.layer.tpl}"
 		const div = document.getElementById("${env.layer.div}")
 		const body = div.closest('.body')
@@ -673,23 +689,92 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 		}
 		panel.classList.add('up')
 		for (const block of panel.querySelectorAll('.blocksum')) {
-			const mod = block.dataset
+			const modd = block.dataset
 			const input = block.querySelector('input[type=number]')
 			const modsum = block.querySelector('.modsum')
-			state.list.push(mod)
+			state.list.push(modd)
 			input.addEventListener('input', async () => {
-				mod.count = input.value
-				mod.sum = mod.cost * mod.count
-				modsum.innerHTML = pantpl.SUM(mod.sum)
+				if (input.value < 0) input.value = 1
+				if (input.value > 1000) input.value = 1000
+
+				const oldcount = modd.count
+				modd.count = input.value
+				const diff = modd.count - oldcount
+				modd.sum = modd.cost * modd.count
+				modsum.innerHTML = pantpl.SUM(modd.sum)
 				recalc()
 				title.innerHTML = pantpl.TITLE(state)
 				const Basket = await import('/-cart/Basket.js').then(r => r.default)
-				const ans = await Basket.add(block.dataset, input.value)
+				const ans = await Basket.add(modd, input.value)
+
+				window.dataLayer = window.dataLayer || []
+				if (diff < 0) {
+					dataLayer.push({
+						"ecommerce": {
+							"currencyCode": "RUB",
+							"remove": {
+								"products": [
+									{
+										"id": modd.model_nick,
+										"brand": modd.brand_title,
+										"name": modd.name,
+										"price": modd.cost,
+										"category": modd.group_title,
+										"quantity": diff * -1,
+										"variant" : modd.variant,
+										"list": "Корзина"
+									}
+								]
+							}
+						}
+					})
+				}
+				if (diff > 0) {
+					dataLayer.push({
+						"ecommerce": {
+							"currencyCode": "RUB",
+							"add": {
+								"products": [
+									{
+										"id": modd.model_nick,
+										"name": modd.name,
+										"category": modd.group_title,
+										"brand": modd.brand_title,
+										"price": modd.cost,
+										"quantity": diff,
+										"variant" : modd.variant,
+										"list": "Корзина"
+									}
+								]
+							}
+						}
+					})
+				}
 			})
 			const del = block.querySelector('.del')
 			del.addEventListener('click', async () => {
 				const Basket = await import('/-cart/Basket.js').then(r => r.default)
-				const ans = await Basket.remove(block.dataset)
+				const ans = await Basket.remove(modd)
+				window.dataLayer = window.dataLayer || []
+				dataLayer.push({
+					"ecommerce": {
+						"currencyCode": "RUB",
+						"remove": {
+							"products": [
+								{
+									"id": modd.model_nick,
+									"brand": modd.brand_title,
+									"name": modd.name,
+									"price": modd.cost,
+									"category": modd.group_title,
+									"quantity": diff * -1,
+									"variant" : input.value,
+									"list": "Корзина"
+								}
+							]
+						}
+					}
+				})
 			})
 		}
 		recalc()
@@ -713,10 +798,14 @@ tpl.showPos = (mod, env) => `
 		<div><b>${cost(mod.Цена)}${common.unit()}</b></div>
 	</div>
 	<div class="cost blocksum" 
+	data-name="${mod['Наименование'] || mod.model_title}"
 	data-partner="${env.theme.partner}"
 	data-brand_nick="${mod.brand_nick}" 
+	data-brand_title="${mod.brand_title}" 
+	data-group_title="${mod.group_title}" 
 	data-model_nick="${mod.model_nick}"
 	data-item_num="${mod.item_num}"
+	data-variant="${getv(mod, 'Позиция') || mod.item_num}"
 	data-sum="${mod.sum}"
 	data-cost="${mod.Цена || 0}" 
 	data-count="${mod.count || 0}">

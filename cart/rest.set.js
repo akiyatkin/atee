@@ -156,10 +156,9 @@ rest.addResponse('set-clear', async view => {
 	await db.affectedRows('DELETE from cart_basket where order_id = :order_id', {order_id})
 	return view.ret()
 })
+const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
 rest.addResponse('set-submit', async view => {
 	const { db, base, terms, active_id: order_id, user, user_id } = await view.gets(['db', 'base', 'terms', 'user#required', 'user_id', 'active_id#required'])
-
-	
 
 	
 	const order = await Cart.getOrder(db, order_id)
@@ -172,6 +171,24 @@ rest.addResponse('set-submit', async view => {
 		await Cart.recalcOrder(db, base, order_id, order.partner)
 		await Cart.freeze(db, base, order_id)
 
+
+		const list = await Cart.getBasket(db, base, order_id, order.freeze, order.partner)
+		const products = list.map((mod) => {
+			const product = {
+				"id": mod.model_nick,
+				"name" : mod['Наименование'] || mod.model_title,
+				"price": mod['Цена'],
+				"brand": mod.brand_title,
+				"variant": getv(mod, "Позиция") || mod.item_num,
+				"quantity": mod.count,
+				"category": mod.group_title
+			}
+			return product
+		})
+		view.ans.products = products
+
+
+
 		const utms = await view.get('utms')
 		Cart.updateUtms(db, order_id, utms)
 
@@ -182,7 +199,7 @@ rest.addResponse('set-submit', async view => {
 		await Cart.setDate(db, order_id, 'check')		
 		const r1 = Cart.sendToAdmin(view, 'tocheck', order_id)
 		const r2 = Cart.sendToUser(view, 'tocheck', order_id)
-		if ((await Promise.all([r1, r2])).some(r => !r)) return view.err('Не удалось отправить письмо.', 500)
+		if ((await Promise.all([r1, r2])).some(r => !r)) return view.ret('Не удалось отправить письмо.')
 
 		return view.ret('Спасибо за заказ. Менеджер оповещён, ответит в течение 24 часов, как можно скорее.')
 	}

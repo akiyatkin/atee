@@ -9,7 +9,7 @@ export default rest
 
 
 rest.addVariable('user', async (view, src) => {
-	const { db } = await view.gets(['db'])
+	const db = await view.get('db')
 	view.nostore = true
 	const user = await User.harvest(view)
 	if (user && user.date_active + 60 < Date.now() / 1000) {

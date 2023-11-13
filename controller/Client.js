@@ -416,11 +416,11 @@ const loadAll = (layers, promises = [], proc = {}) => {
 		if (!layer.json) continue
 		let promise = proc[layer.json]
 		if (!promise) promise = fetch(layer.json).then(res => {
-			if (res.status != 200 && res.status != 422) {
-				console.log(4, res, layer)
-				if (!layer.onlyclient) location.reload()
-				return new Promise(() => {})//reload сразу не происходит, надо зависнуть
-			}
+			// if (res.status != 200 && res.status != 422) {
+			// 	console.log(4, res, layer)
+			// 	if (!layer.onlyclient) location.reload()
+			// 	return new Promise(() => {})//reload сразу не происходит, надо зависнуть
+			// }
 			const type = res.headers.get('Content-Type')
 			if (~type.indexOf('text/html')) return res.text()
 			return res.json()
