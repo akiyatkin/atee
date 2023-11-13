@@ -18,7 +18,10 @@ note.checkErr = (data, env) => data.result ? '': `
 note.ROOT = (data, env) => note.checkErr(data, env) || `
 	${note.show(data.note)}
 `
-
+const removeProp = (note, prop) => {
+	delete note[prop]
+	return note
+}
 note.show = (note) => `
 	<style>
 		.notewrapper {
@@ -36,7 +39,9 @@ note.show = (note) => `
 ${escapeText(note.text)}</textarea>
 		<script>
 			(wrap => {
-				const note = ${JSON.stringify(note)}
+				//const note = JSON.stringify(note).replaceAll('</','<\\/')
+				const note = ${JSON.stringify(removeProp(note, 'text'))}
+
 				window.note = note
 				note.area = wrap.getElementsByClassName('area')[0]
 				note.wrap = wrap
