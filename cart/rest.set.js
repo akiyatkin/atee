@@ -144,15 +144,35 @@ rest.addResponse('set-status', async view => {
 })
 
 rest.addResponse('set-clear', async view => {
-	const db = await view.get('db')	
+	const db = await view.get('db')
+	const base = await view.get('base')
 	const order_id = await view.get('order_id#required')
 
 	const order = await Cart.getOrder(db, order_id)
 	if (order.status != 'wait') return view.err('Заказ уже отправлен менеджеру')
 
+
+	const list = await Cart.getBasket(db, base, order_id, order.freeze, order.partner)
+	const products = list.map((mod) => {
+		const product = {
+			"id": mod.model_nick,
+			"name" : mod['Наименование'] || mod.model_title,
+			"price": mod['Цена'],
+			"brand": mod.brand_title,
+			"variant": getv(mod, "Позиция") || mod.item_num,
+			"quantity": mod.count,
+			"category": mod.group_title
+		}
+		return product
+	})
+	view.ans.products = products
+
+
 	for (const field of ['name', 'phone','email','address','commentuser']) {
 		Cart.saveFiled(db, order_id, field, '')
 	}
+	
+
 	await db.affectedRows('DELETE from cart_basket where order_id = :order_id', {order_id})
 	return view.ret()
 })

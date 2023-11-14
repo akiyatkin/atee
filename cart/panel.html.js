@@ -576,6 +576,17 @@ const showSubmit = (data, env) => `
 					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 					Dialog.alert(ans.msg)
 				}
+				if (ans.result) {
+					window.dataLayer = window.dataLayer || []
+					dataLayer.push({
+						"ecommerce": {
+							"currencyCode": "RUB",
+							"remove": {
+								"products": ans.products
+							}
+						}
+					})
+				}
 				const Client = await window.getClient()
 				Client.global('cart')
 			})
@@ -767,8 +778,8 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 									"name": modd.name,
 									"price": modd.cost,
 									"category": modd.group_title,
-									"quantity": diff * -1,
-									"variant" : input.value,
+									"quantity": input.value,
+									"variant" : modd.variant,
 									"list": "Корзина"
 								}
 							]

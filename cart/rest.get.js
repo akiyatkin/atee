@@ -172,18 +172,18 @@ rest.addResponse('get-added', async view => {
 	const brand_nick = await view.get('brand_nick')
 	const model_nick = await view.get('model_nick')
 	const item_num = await view.get('item_num')
+	const user_id = await view.get('user_id')
+	const wait_id = await Cart.getWaitId(db, user_id)
 	
-	const active_id = await view.get('active_id')
 	view.ans.count = 0
-	if (!active_id) return view.ret()
-
+	if (!wait_id) return view.ret()
 	view.ans.count = await db.col(`
 		SELECT count FROM cart_basket 
-		WHERE order_id = :active_id 
+		WHERE order_id = :wait_id 
 			and item_num = :item_num 
 			and model_nick = :model_nick
 			and brand_nick = :brand_nick
-	`, {active_id, brand_nick, model_nick, item_num })
+	`, {wait_id, brand_nick, model_nick, item_num })
 
 	return view.ret()
 })
