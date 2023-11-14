@@ -39,12 +39,12 @@ note.show = (note) => `
 ${escapeText(note.text)}</textarea>
 		<script>
 			(wrap => {
-				//const note = JSON.stringify(note).replaceAll('</','<\\/')
 				const note = ${JSON.stringify(removeProp(note, 'text'))}
 
 				window.note = note
 				note.area = wrap.getElementsByClassName('area')[0]
 				note.wrap = wrap
+				note.text = note.area.value
 
 				let beforecursor = {
 					start: Number(note.cursor_start),

@@ -5,6 +5,15 @@ import Move from '@atee/note/Move.js'
 const WS = {}
 
 WS.NOTES = {}
+WS.start = async () => {
+	const db = await new Db().connect()
+	if (!db) throw 'Нет соединения с базой данных при первом соединении'
+	db.db.release()
+	await db.exec(`
+		UPDATE note_stats
+		SET focus = 0, open = 0
+	`)
+}
 WS.closeState = async (note_id, state) => {
 	const user_id = state.user_id
 	const note = await WS.getNote(note_id)

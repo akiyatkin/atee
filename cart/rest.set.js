@@ -165,7 +165,7 @@ rest.addResponse('set-clear', async view => {
 		}
 		return product
 	})
-	view.ans.products = products
+	view.ans.products = products.filter(mod => mod.count)
 
 
 	for (const field of ['name', 'phone','email','address','commentuser']) {
@@ -205,7 +205,7 @@ rest.addResponse('set-submit', async view => {
 			}
 			return product
 		})
-		view.ans.products = products
+		view.ans.products = products.filter(mod => mod.count)
 
 
 
