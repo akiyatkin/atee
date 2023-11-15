@@ -128,7 +128,7 @@ WS.setChange = (state, note, change) => {
 	WS.sendToEveryone(state.ws, note, {change})
 	//console.log('change', change.base, 'rev', change.rev, 'hangchanges', state.hangchanges.length)
 	WS.setSearch(note)
-	if (change.start > 255) WS.setTitle(note)
+	if (change.start < 255) WS.setTitle(state.ws, note)
 }
 
 let search_timer = false
@@ -151,8 +151,9 @@ WS.setSearch = (note) => {
 		`, {note_id, search})
 	}, 10000) //индексируем с задержкой
 }
-WS.setTitle = (note) => {
+WS.setTitle = (ws, note) => {
 	const db = note.db
+	const note_id = note.note_id
 	const title = clearText((note.text.match(/\s*(.*)\n*/)?.[1] || '').slice(0,255).trim())
 	if (note.title == title) return
 	note.title = title
@@ -162,7 +163,7 @@ WS.setTitle = (note) => {
 		SET title = :title, nick = :nick
 		WHERE note_id = :note_id
 	`, {note_id, title, nick}).then(r => {
-		WS.sendSignal(state.ws, note, 'rename')
+		WS.sendSignal(ws, note, 'rename')
 	})
 }
 WS.sendSignal = (ws, note, type, signal = {}) => {

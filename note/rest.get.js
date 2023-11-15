@@ -7,9 +7,9 @@ import rest_user from "/-user/rest.user.js"
 rest.extra(rest_user)
 import rest_funcs from "/-rest/rest.funcs.js"
 rest.extra(rest_funcs)
-import rest_note from "/-rest.note.js"
+import rest_note from "/-note/rest.note.js"
 rest.extra(rest_note)
-import User from "/-user/User.js"
+
 // rest.addArgument('note_id', ['int#required'])
 // rest.addArgument('token', ['string'])
 // rest.addArgument('rev', ['int#required'])
@@ -18,19 +18,7 @@ import NoteDB from "/-note/NoteDB.js"
 
 import config from "/-config"
 
-
-rest.addResponse('get-all', async view => {
-	const db = await view.get('db')
-	const user_id = await view.get('user_id#required')
-	view.ans.list = await db.all(`
-		SELECT nn.text, nn.note_id, nn.title 
-		FROM note_notes nn, notelic_usernotes un
-		WHERE nn.note_id = un.note_id and un.user_id = :user_id 
-		and nn.title != ''
-	`, {user_id})
-	return view.ret()
-})
-rest.addResponse('get-note-head', async view => {
+rest.addResponse('get-head', async view => {
 	const note = await view.get('note')
 	if (!note) {
 		view.ans.title = 'Заметка не найдена'
@@ -46,10 +34,8 @@ rest.addResponse('get-page-sitemap', async view => {
 		const note_id = conf.pages[page]
 		const note = await NoteDB.getNote(db, note_id)
 		const title = note.title || 'Пустая заметка'
-
 		childs[page] = {name: title}
 	}
-
 	view.ans = {
 		headings:[{
 			title: 'Страницы',
