@@ -301,7 +301,7 @@ field.radio = ({name, action = '', value = '', values}) => `
 field.switch = ({name, action, value, values}) => {
 	return `
 	<span>
-		<button class="a" style="display: inline-block; cursor:pointer; padding:calc(.75rem / 3) 0">${values[value || ""]}</button>
+		<button class="a" style="display: inline-block; cursor:pointer;">${values[value || ""]}</button>
 		<script>
 			(btn => {
 				btn.addEventListener('click', async () => {
