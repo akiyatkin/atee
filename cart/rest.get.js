@@ -173,9 +173,11 @@ rest.addResponse('get-added', async view => {
 	const model_nick = await view.get('model_nick')
 	const item_num = await view.get('item_num')
 	const user_id = await view.get('user_id')
+	view.ans.count = 0
+	if (!user_id) return view.ret()
 	const wait_id = await Cart.getWaitId(db, user_id)
 	
-	view.ans.count = 0
+	
 	if (!wait_id) return view.ret()
 	view.ans.count = await db.col(`
 		SELECT count FROM cart_basket 
