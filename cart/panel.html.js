@@ -335,7 +335,7 @@ const showEmpty = (data, env) => `
 `
 tpl.showForm = (data, env) => `
 		
-		<form data-order_id="${data.order.order_id}" data-goal="cart" action="/-cart/set-submit?partner=${env.theme.partner || ''}" style="clear:both; border-radius:var(--radius, 10px); display: grid; gap:1rem; ">
+		<form data-order_nick="${data.order.order_nick}" data-goal="cart" action="/-cart/set-submit?partner=${env.theme.partner || ''}" style="clear:both; border-radius:var(--radius, 10px); display: grid; gap:1rem; ">
 			<div class="float-label icon name formfield">
 				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
 				<label for="${env.sid}name">Получатель (ФИО)</label>
@@ -557,7 +557,7 @@ const showSubmit = (data, env) => `
 							"currencyCode": "RUB",
 							"purchase": {
 								"actionField": {
-									"id" : form.dataset.order_id
+									"id" : form.dataset.order_nick
 								},
 								"products": ans.products
 							}
