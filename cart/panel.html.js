@@ -335,7 +335,7 @@ const showEmpty = (data, env) => `
 `
 tpl.showForm = (data, env) => `
 		
-		<form data-goal="cart" action="/-cart/set-submit?partner=${env.theme.partner || ''}" style="clear:both; border-radius:var(--radius, 10px); display: grid; gap:1rem; ">
+		<form data-order-id="${data.order.order_id}" data-goal="cart" action="/-cart/set-submit?partner=${env.theme.partner || ''}" style="clear:both; border-radius:var(--radius, 10px); display: grid; gap:1rem; ">
 			<div class="float-label icon name formfield">
 				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
 				<label for="${env.sid}name">Получатель (ФИО)</label>
@@ -512,8 +512,8 @@ const showSubmit = (data, env) => `
 			}
 			form.addEventListener('submit', async e => {
 				e.preventDefault()
-				const btn = form.querySelector('.submit')
-				const res = btn.getElementsByClassName('res')[0]
+				const btndiv = form.querySelector('.submit')
+				const res = btndiv.getElementsByClassName('res')[0]
 				for (const r of form.getElementsByClassName('res')) {
 					if (r == res) continue
 					const showcls = r.querySelector('.show').classList
@@ -557,7 +557,7 @@ const showSubmit = (data, env) => `
 							"currencyCode": "RUB",
 							"purchase": {
 								"actionField": {
-									"id" : btn.dataset.order_id
+									"id" : form.dataset.order_id
 								},
 								"products": ans.products
 							}
