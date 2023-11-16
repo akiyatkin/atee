@@ -208,7 +208,9 @@ WS.connection = (ws, request) => {
 		const note = await WS.getNote(args.note_id, user_id)
 		
 		WS.checkReject(note, state).then(is => {
-			if (!is) return WS.sendSignal(ws, note, 'reject', {user_id})	
+			if (!is) {
+				return WS.sendSignal(ws, note, 'reject', {user_id})	
+			}
 		})
 		
 		if (change) WS.setChange(state, note, change)
