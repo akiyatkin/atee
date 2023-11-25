@@ -417,6 +417,8 @@ export class Upload {
 				}
 				if (!prop) {
 					//continue //Записываем и обрабатываем только то что есть в props
+					// if (new_prop_title == 'Цена') continue
+					// if (new_prop_title == 'Старая Цена') continue
 					prop = {
 						auto:true, //Автоматическое свойство, о его отсутствии в данных не надо ругаться
 						prop_title: new_prop_title

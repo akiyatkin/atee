@@ -296,7 +296,7 @@ const Note = {
 					if (signal) {
 						signal.myuser = signal.user_id == note.user_id
 						signal.my = my
-						note.wrap.dispatchEvent(new CustomEvent("note-signal", { detail: signal }))
+						note.wrap.dispatchEvent(new CustomEvent("note-signal", { bubbles: false, detail: signal }))
 						if (signal.type == 'reset') {
 							note.rev = signal.rev
 							note.text = signal.text

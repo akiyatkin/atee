@@ -163,7 +163,7 @@ WS.setTitle = (ws, note) => {
 		SET title = :title, nick = :nick
 		WHERE note_id = :note_id
 	`, {note_id, title, nick}).then(r => {
-		WS.sendSignal(ws, note, 'rename')
+		WS.sendSignal(ws, note, 'rename', {title, nick})
 	})
 }
 WS.sendSignal = (ws, note, type, signal = {}) => {

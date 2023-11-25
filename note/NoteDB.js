@@ -1,9 +1,12 @@
 import config from '@atee/config'
-
+import nicked from '/-nicked'
 const NoteDB = {}
 
 
-NoteDB.create = db => db.insertId(`INSERT INTO note_notes (text) values ('')`)
+NoteDB.create = (db, title = '') => {
+	const nick = nicked(title)
+	return db.insertId(`INSERT INTO note_notes (text, title, nick) values (:title, :title, :nick)`, {title, nick})
+}
 
 NoteDB.getNote = async (db, note_id) => {
 	const note = await db.fetch('SELECT UNIX_TIMESTAMP(now()) as now, nick, text, UNIX_TIMESTAMP(date_create) as date_create, title, rev, note_id FROM note_notes WHERE note_id = :note_id', {note_id})
