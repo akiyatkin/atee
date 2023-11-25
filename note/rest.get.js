@@ -162,7 +162,7 @@ rest.addResponse('get-note-props', async (view) => {
 		SELECT
 			u.email,
 			un.user_id, 
-			wu.name, 
+			nu.name, 
 			wu.hue,
 			un.open,
 			un.focus,
@@ -170,8 +170,9 @@ rest.addResponse('get-note-props', async (view) => {
 			UNIX_TIMESTAMP(un.date_change) as date_change
 		FROM 
 			note_stats un
-			LEFT JOIN user_uemails u ON (u.user_id = un.user_id and un.ordain = 1)
+			LEFT JOIN user_uemails u ON (u.user_id = un.user_id and u.ordain = 1)
 			LEFT JOIN note_users wu ON (u.user_id = wu.user_id)
+			LEFT JOIN notelic_users nu ON (u.user_id = nu.user_id)
 		WHERE note_id = :note_id
 	`, note)
 
