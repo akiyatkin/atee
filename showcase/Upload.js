@@ -1138,8 +1138,11 @@ export class Upload {
 
 						for (const j in item[i]) {
 							const v_title = item[i][j]
-							if (v_title.replace) v_title = v_title.replace(/\s/g,'')
-							let number = parseFloat(v_title)
+							
+							let number = v_title
+							if (number.replace) number = number.replace(/\s/g,'')
+							number = parseFloat(number)
+
 							if (isNaN(number)) {
 								msgs.push(`
 									<b>${heads.head_titles[i]}</b> ${type} <b>${v_title}</b>. 
