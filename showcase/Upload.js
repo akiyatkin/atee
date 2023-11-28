@@ -1138,6 +1138,7 @@ export class Upload {
 
 						for (const j in item[i]) {
 							const v_title = item[i][j]
+							if (v_title.replace) v_title = v_title.replace(/\s/g,'')
 							let number = parseFloat(v_title)
 							if (isNaN(number)) {
 								msgs.push(`

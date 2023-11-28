@@ -31,6 +31,7 @@ class Hand {
 		const index = indexes[nick]
 		if (!index) return ''
 		let value = row[index] ?? ''
+		if (value.replace) value = value.replace(/\s/g,'')
 		value = parseFloat(value)
 		return value
 	}

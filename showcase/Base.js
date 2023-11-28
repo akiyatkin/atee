@@ -266,6 +266,7 @@ class Base {
 		return options.props[prop_title] ?? {prop_title, prop_nick:nicked(prop_title), value_title:prop_title, value_nick:prop_title}
 	}
 	toNumber(number) {
+		if (number.replace) number = number.replace(/\s/g,'')
 		number = parseFloat(number)
 		if (isNaN(number)) return false
 		const LIM = 8
