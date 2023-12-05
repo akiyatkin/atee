@@ -37,7 +37,7 @@ const User = {
 		const new_id = await db.insertId(`
 			INSERT INTO user_users (timezone, password, token, date_token, date_create, date_active) 
 			VALUES(:timezone, :password, :token, now(), now(), now())
-		`,{timezone, password, token});
+		`, {timezone, password, token})
 		if (!new_id) return false
 		const newuser = await User.getUserById(db, new_id)
 		return newuser

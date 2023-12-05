@@ -218,7 +218,7 @@ const Cart = {
 	castWaitActive: async (view, active_id, utms, nocopy = false) => {
 		let { db, user } = await view.gets(['db', 'user'])
 		if (!user) {
-			user = await User.create(view)
+			user = await User.create(db)
 			User.setCookie(view, user)
 		}
 		if (!active_id) return Cart.create(view, user, utms)
