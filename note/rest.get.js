@@ -151,42 +151,9 @@ rest.addResponse('get-stat', async view => {
 	view.ans.stat = stat
 	return view.ret()
 })
-rest.addResponse('get-note-props', async (view) => {
-	const note = await view.get('note#required')
-	const db = await view.get('db')
-	view.ans.user_id = await view.get('user_id')
-	
-	
-
-	view.ans.users = await db.all(`
-		SELECT
-			u.email,
-			un.user_id, 
-			nu.name, 
-			wu.hue,
-			un.open,
-			un.focus,
-			UNIX_TIMESTAMP(un.date_close) as date_close,
-			UNIX_TIMESTAMP(un.date_change) as date_change
-		FROM 
-			note_stats un
-			LEFT JOIN user_uemails u ON (u.user_id = un.user_id and u.ordain = 1)
-			LEFT JOIN note_users wu ON (u.user_id = wu.user_id)
-			LEFT JOIN notelic_users nu ON (u.user_id = nu.user_id)
-		WHERE note_id = :note_id
-	`, note)
 
 
-	note.usercount = view.ans.users.length
 
-	note.useronline = view.ans.users.filter(user => user.open).length
-	note.userguests = view.ans.users.filter(user => !user.email).length
-	note.useremails = view.ans.users.filter(user => user.email).length
-
-	view.ans.note = note
-
- 	return view.ret()
-})
 
 
 

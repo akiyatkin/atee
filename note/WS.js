@@ -63,21 +63,22 @@ WS.setCursor = (state, note, cursor) => {
 	cursor.hue = state.hue
 	Move.cursorAfter(cursor, state.hangchanges)
 	cursor.rev = note.rev
-	WS.saveCursor(db, note_id, cursor)
+	WS.saveCursor(db, note_id, cursor, true)
 	WS.sendToEveryone(state.ws, note, {cursor})
 }
-WS.saveCursor = (db, note_id, cursor, ischange) => {
+WS.saveCursor = (db, note_id, cursor, my, ischange) => {
 	const user_id = cursor.user_id
 	db.exec(`
 		UPDATE note_stats
 		SET 
-			${ischange ? 'date_change = now(),' : ''} 
+			${ischange ? 'date_change = now(), count_changes = count_changes + 1, ' : ''} 
 			date_cursor = now(), 
 			cursor_start = :start, 
 			cursor_size = :size, 
 			cursor_direction = :direction
 		WHERE note_id = :note_id and user_id = :user_id
 	`, {...cursor, note_id})
+	
 }
 const splice = (text, start, size, chunk) => text.slice(0, start) + chunk + text.slice(start + size)
 const clearText = (text) => text.replace(/<(.|\n)*?>/g, '')
@@ -89,15 +90,27 @@ WS.setChange = (state, note, change) => {
 	change.rev = state.rev = ++note.rev
 
 	const db = note.db
-	note.db.exec(`
-		UPDATE note_notes
-		SET text = :text, rev = :rev
-		WHERE note_id = :note_id
-	`, note)
-
-
 	const user_id = state.user_id
 	const note_id = note.note_id
+
+	db.exec(`
+		INSERT INTO note_history (note_id, date_edit, editor_id, text, title, rev, search)
+		SELECT n.note_id, n.date_edit, n.editor_id, n.text, n.title, n.rev, n.search
+		FROM note_notes n WHERE note_id = :note_id and date_edit != date(now())
+	`, {note_id})
+
+	db.exec(`
+		UPDATE note_notes
+		SET text = :text, rev = :rev, date_edit = now(), editor_id = :user_id
+		WHERE note_id = :note_id
+	`, {
+		text: note.text,
+		rev: note.rev,
+		note_id, user_id
+	})
+
+
+	
 
 
 	
@@ -105,7 +118,7 @@ WS.setChange = (state, note, change) => {
 	
 
 	Move.cursorAfter(change.cursor, state.hangchanges)
-	WS.saveCursor(db, note_id, change.cursor, true)
+	WS.saveCursor(db, note_id, change.cursor, true, true)
 	
 	db.all(`SELECT 
 			user_id,
@@ -221,7 +234,7 @@ WS.connection = (ws, request) => {
 
 	db.exec(`
 		UPDATE note_stats
-		SET date_load = FROM_UNIXTIME(:date_load), date_open = now(), open = 1
+		SET date_load = FROM_UNIXTIME(:date_load), date_open = now(), count_opens = count_opens + 1, open = 1
 		WHERE note_id = :note_id and user_id = :user_id
 	`, {user_id, note_id, date_load: args.date_load}).then(r => {
 		WS.sendSignal(ws, note, 'joined', {user_id, hue: state.hue})
@@ -300,11 +313,11 @@ WS.verifyClient = async (info) => {
 	}
 
 	await (async () => {
-		const ismy = await db.col(`SELECT note_id as ismy FROM note_stats  WHERE note_id = :note_id and user_id = :user_id`, args)
-		if (!ismy) {
+		const isstat = await db.col(`SELECT note_id FROM note_stats  WHERE note_id = :note_id and user_id = :user_id`, args)
+		if (!isstat) {
 			db.exec(`
-				INSERT INTO note_stats (note_id, user_id, date_appointment)
-				VALUES (:note_id, :user_id, now())
+				INSERT INTO note_stats (note_id, user_id)
+				VALUES (:note_id, :user_id
 			`, args)
 		}
 	})()

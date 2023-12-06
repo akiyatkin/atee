@@ -77,7 +77,7 @@ rest.addResponse('set-create', async view => {
 		note = {
 			token: User.createToken()	
 		}
-		note.note_id = await NoteDB.create(db)
+		note.note_id = await NoteDB.create(db, user.user_id)
 		await db.insertId(`
 			INSERT INTO notelic_notes (token, note_id)
 			VALUES (:token, :note_id)

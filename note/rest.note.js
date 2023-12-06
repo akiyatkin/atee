@@ -22,4 +22,6 @@ rest.addArgument('page', async (view, name) => {
 })
 rest.addArgument('hue', ['int'])
 
+rest.addArgument('rev', ['int'])
+
 export default rest

@@ -2,14 +2,96 @@ import config from '@atee/config'
 import nicked from '/-nicked'
 const NoteDB = {}
 
+NoteDB.getPropsRev = async (db, note_id, rev) => {
+	const note = await db.fetch(`
+		SELECT
+			UNIX_TIMESTAMP(n.date_edit) as date_edit,
+			n.rev, 
+			n.note_id,
+			n.title,
+			n.text,
+			e.email as editor_email
+		FROM note_history n
+		LEFT JOIN user_uemails e on (e.user_id = n.editor_id and e.ordain = 1)
+		WHERE note_id = :note_id
+	`, {note_id})
 
-NoteDB.create = (db, title = '') => {
+	return note
+}
+NoteDB.getProps = async (db, note_id) => {
+	const note = await db.fetch(`
+		SELECT
+			UNIX_TIMESTAMP(n.date_edit) as date_edit,
+			UNIX_TIMESTAMP(n.date_create) as date_create,
+			n.rev, 
+			n.note_id,
+			n.title,
+			n.nick,
+			c.email as create_email, 
+			e.email as editor_email
+		FROM note_notes n
+		LEFT JOIN user_uemails c on (c.user_id = n.creater_id and c.ordain = 1)
+		LEFT JOIN user_uemails e on (e.user_id = n.editor_id and e.ordain = 1)
+		WHERE note_id = :note_id
+	`, {note_id})
+
+	note.users = await db.all(`
+		SELECT
+			u.email,
+			un.user_id, 
+			wu.hue,
+			un.open,
+			un.focus,
+			un.count_opens,
+			un.count_changes,
+			UNIX_TIMESTAMP(un.date_close) as date_close,
+			UNIX_TIMESTAMP(un.date_change) as date_change
+		FROM 
+			note_stats un
+			LEFT JOIN user_uemails u ON (u.user_id = un.user_id and u.ordain = 1)
+			LEFT JOIN note_users wu ON (u.user_id = wu.user_id)
+		WHERE note_id = :note_id
+	`, note)
+	note.usercount = note.users.length
+	note.useronline = note.users.filter(user => user.open).length
+	note.userguests = note.users.filter(user => !user.email).length
+	note.useremails = note.users.filter(user => user.email).length
+
+	note.history = await db.all(`
+		SELECT
+			UNIX_TIMESTAMP(n.date_edit) as date_edit,
+			e.email as editor_email, 
+			n.rev,
+			wu.hue
+		FROM 
+			note_history n
+			LEFT JOIN user_uemails e on (e.user_id = n.editor_id and e.ordain = 1)
+			LEFT JOIN note_users wu ON (wu.user_id = n.editor_id)
+		WHERE note_id = :note_id
+	`, {note_id})
+
+	return note
+}
+NoteDB.create = (db, user_id, title = '') => {
 	const nick = nicked(title)
-	return db.insertId(`INSERT INTO note_notes (text, title, nick) values (:title, :title, :nick)`, {title, nick})
+	return db.insertId(`
+		INSERT INTO note_notes (text, editor_id, creater_id, title, nick) 
+		VALUES (:title, :user_id, :user_id, :title, :nick)
+	`, {title, nick, user_id})
 }
 
 NoteDB.getNote = async (db, note_id) => {
-	const note = await db.fetch('SELECT UNIX_TIMESTAMP(now()) as now, nick, text, UNIX_TIMESTAMP(date_create) as date_create, title, rev, note_id FROM note_notes WHERE note_id = :note_id', {note_id})
+	const note = await db.fetch(`
+		SELECT 
+			nick, text, title, rev, note_id, 
+			UNIX_TIMESTAMP(now()) as now, 
+			UNIX_TIMESTAMP(date_create) as date_create, 
+			UNIX_TIMESTAMP(date_edit) as date_edit
+		FROM 
+			note_notes 
+		WHERE 
+			note_id = :note_id
+	`, {note_id})
 	return note
 }
 NoteDB.getNoteArea = async (db, note_id, user) => {
