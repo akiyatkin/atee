@@ -82,6 +82,7 @@ controller.HEAD = (data, env) =>
 				if (name == 'deleted') name = ''
 				return name
 			}
+
 			const fromGET = () => {
 				let name = location.search.match('[\?|&]theme=([^&]*)')
 				if (name) return decodeURIComponent(name[1])
@@ -93,9 +94,9 @@ controller.HEAD = (data, env) =>
 				if (tplname == cookiename) return
 				const Client = await window.getClient()
 				if (cookiename) {
-					await Client.replaceState(location.href + (location.search ? '&' : '?') + 'theme=' + cookiename)	
+					await Client.replaceState(location.pathname + location.search + (location.search ? '&' : '?') + 'theme=' + cookiename)	
 				} else {
-					await Client.replaceState(location.href + (location.search ? '&' : '?') + 'theme=')	
+					await Client.replaceState(location.pathname + location.search + (location.search ? '&' : '?') + 'theme=')	
 				}
 				
 			}
