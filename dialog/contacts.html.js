@@ -40,12 +40,8 @@ const checkbox = (name, title, checked) => `
 		<label for="contacts_${name}">${title}</label>
 	</div>
 `
-cont.CONTACTS = (data, env) => `
-	<div style="max-width:500px">
-		<h1>Форма для связи</h1>
-		<p>
-			Менеджер ответит на указанные контакты в&nbsp;рабочее&nbsp;время.
-		</p>
+cont.FORM = (data, env) => `
+	<form action="/-dialog/set-contacts" data-goal="contacts">
 		<style>
 			${env.scope} .grid {
 				display: grid; 
@@ -56,45 +52,53 @@ cont.CONTACTS = (data, env) => `
 				margin-bottom: 1rem;
 			}
 		</style>
-		<form action="/-dialog/set-contacts" data-goal="contacts">
-			<div class="grid">
-				<div class="float-label icon name">
-					<input id="${env.sid}name" name="name" type="text" placeholder="Ваше имя">
-					<label for="${env.sid}name">Ваше имя</label>
-				</div>
-				<div class="float-label icon org">
-					<input id="${env.sid}org" name="org" type="text" placeholder="Организация">
-					<label for="${env.sid}org">Организация</label>
-				</div>
-				<div class="float-label icon phone">
-					<input id="${env.sid}phone" required name="phone" type="tel" placeholder="Телефон">
-					<label for="${env.sid}phone">Телефон *</label>
-				</div>
-				<div class="float-label icon mail">
-					<input id="${env.sid}email" name="email" type="email" placeholder="Email">
-					<label for="${env.sid}email">Email</label>
-				</div>
+		<div class="grid">
+			<div class="float-label icon name">
+				<input id="${env.sid}name" name="name" type="text" placeholder="Ваше имя">
+				<label for="${env.sid}name">Ваше имя</label>
 			</div>
-			<div class="float-label">
-				<textarea id="${env.sid}text" name="text" rows="4" placeholder="Сообщение">${data?.text || ''}</textarea>
-				<label for="${env.sid}text">Сообщение</label>
+			<div class="float-label icon org">
+				<input id="${env.sid}org" name="org" type="text" placeholder="Организация">
+				<label for="${env.sid}org">Организация</label>
 			</div>
-			<div style="max-width: 500px;">
-				${checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на условиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}
+			<div class="float-label icon phone">
+				<input id="${env.sid}phone" required name="phone" type="tel" placeholder="Телефон">
+				<label for="${env.sid}phone">Телефон *</label>
 			</div>
-			<p align="right">
-				<button type="submit">Отправить</button>
-			</p>
-		</form>
-		<script>
-			(form => {
-				import("/-form/Autosave.js").then(r => r.default.init(form))
-				form.addEventListener('submit', e => {
-					e.preventDefault()
-					import('/-dialog/submit.js').then(r => r.default(form, {tpl:'${env.layer.tpl}', sub:'MSG'}))
-				})
-			})(document.currentScript.previousElementSibling)
-		</script>
+			<div class="float-label icon mail">
+				<input id="${env.sid}email" name="email" type="email" placeholder="Email">
+				<label for="${env.sid}email">Email</label>
+			</div>
+		</div>
+		<div class="float-label">
+			<textarea id="${env.sid}text" name="text" rows="4" placeholder="Сообщение">${data?.text || ''}</textarea>
+			<label for="${env.sid}text">Сообщение</label>
+		</div>
+		<div style="max-width: 500px;">
+			${checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на условиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}
+		</div>
+		<p align="right">
+			<button type="submit">Отправить</button>
+		</p>
+	</form>
+	<script>
+		(form => {
+			import("/-form/Autosave.js").then(r => r.default.init(form))
+			form.addEventListener('submit', e => {
+				e.preventDefault()
+				import('/-dialog/submit.js').then(r => r.default(form, {tpl:'${env.layer.tpl}', sub:'MSG'}))
+			})
+		})(document.currentScript.previousElementSibling)
+	</script>
+`
+cont.CONTACTS = (data, env) => `
+	<div style="max-width:500px">
+		<h1>Форма для связи</h1>
+		<p>
+			Менеджер ответит на указанные контакты в&nbsp;рабочее&nbsp;время.
+		</p>
+		
+		${cont.FORM(data, env)}
 	</div>
 `
 cont.SUCCESS = (data, env) => `

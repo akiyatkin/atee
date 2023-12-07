@@ -355,7 +355,7 @@ tpl.showForm = (data, env) => `
 			${tpl.formMessage(data, env)}
 			
 			
-			${data.order.partner ? showPartner(data, env) : '' }
+			${data.order.partner ? tpl.showPartner(data, env) : '' }
 			
 			<div class="float-label formfield">
 				<textarea ${data.order.status == 'wait' ? '' : 'disabled'} placeholder="Комментарий" id="${env.sid}text" 
@@ -380,7 +380,7 @@ tpl.showAddress = (data, env) => `
 		${data.order.status == 'wait' ? tpl.svgres('optional', data.order.address) : ''}
 	</div>
 `
-const showPartner = (data, env) => `
+tpl.showPartner = (data, env) => `
 	<div>
 		Ключ партнёра: <b>${data.order.partner.title}</b>
 	</div>
@@ -541,7 +541,8 @@ const showSubmit = (data, env) => `
 
 				setres(res, 'loader')
 
-				const submit = await import('/-dialog/submit.js').then(r => r.default)
+				//const submit = await import('/-dialog/submit.js').then(r => r.default)
+				const action = await import('/-dialog/action.js').then(r => r.default)
 				const ans = await submit(form, { tpl:'${env.layer.tpl}', sub:'MSG' })
 
 				//const action = await import('/-dialog/action.js').then(r => r.default)
