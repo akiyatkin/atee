@@ -317,7 +317,7 @@ WS.verifyClient = async (info) => {
 		if (!isstat) {
 			db.exec(`
 				INSERT INTO note_stats (note_id, user_id)
-				VALUES (:note_id, :user_id
+				VALUES (:note_id, :user_id)
 			`, args)
 		}
 	})()
