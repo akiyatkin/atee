@@ -189,7 +189,9 @@ const Cart = {
 				}
 				
 				await db.affectedRows('DELETE from cart_orders where order_id = :order_id', {order_id})
-				
+				await db.affectedRows('DELETE from cart_basket where order_id = :order_id', {order_id})
+				await db.affectedRows('DELETE from cart_transports where order_id = :order_id', {order_id})
+
 			} else {
 				//Изменили автора заказа и дали права
 				await Cart.grant(db, newuser.user_id, order_id)
