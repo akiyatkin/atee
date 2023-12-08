@@ -543,7 +543,7 @@ const showSubmit = (data, env) => `
 
 				//const submit = await import('/-dialog/submit.js').then(r => r.default)
 				const action = await import('/-dialog/action.js').then(r => r.default)
-				const ans = await submit(form, { tpl:'${env.layer.tpl}', sub:'MSG' })
+				const ans = await action(form, { tpl:'${env.layer.tpl}', sub:'MSG' })
 
 				//const action = await import('/-dialog/action.js').then(r => r.default)
 				//const ans = await action(form, { tpl:'${env.layer.tpl}', sub:'MSG' })
