@@ -108,8 +108,10 @@ const Server = {
 				let json = a.ans
 				let status = a.status
 				if (!json) return error_before(500, 'layers have bad definition')
+				const headers = a.headers
+				//const headers = []
 				let info
-				const headers = []
+				
 				if (json.redirect) {
 					status = 301	
 					headers['Location'] = json.redirect
