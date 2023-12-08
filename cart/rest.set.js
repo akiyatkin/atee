@@ -45,7 +45,7 @@ rest.addResponse('set-manager-refresh', async view => {
 		`, order).catch(r => false)
 		if (!r) {
 			const order_nick = await db.col('select order_nick from cart_orders where order_id = :order_id', order)
-			res.push('Слишком большая сумма или количество в заказе ' + order_nick)
+			res.push('Слишком большая сумма или количество в заказе ' + order_nick + ':' + order_id)
 		}
 	}
 
