@@ -3,19 +3,44 @@ const Theme = {}
 export default Theme
 
 Theme.parse = (string, sep = '; ') => {
-    const obj = string?.split(sep).reduce((res, item) => {
-        if (!item) return res
-        item = item.replace(/\+/g, '%20')
-        const data = item.split('=')
-        try {
-        	res[decodeURIComponent(data.shift())] = data.length ? decodeURIComponent(data.join('=')) : ''
-        } catch(e) {
-        	//console.log('Ошибка в ' + item, 'Вся строка ' + string, e)
-        	console.log('Пропущен аргумент в запросе decodeURIComponent error ' + item)
-        }
-        return res
-    }, {})
-    return obj || {}
+	// const obj = string?.split(sep).reduce((res, item) => {
+	// 	if (!item) return res
+	// 	item = item.replace(/\%/g, '%25')
+	// 	item = item.replace(/\+/g, '%20')
+	// 	const data = item.split('=')
+	// 	try {
+	// 		res[decodeURIComponent(data.shift())] = data.length ? decodeURIComponent(data.join('=')) : ''
+	// 	} catch(e) {
+	// 		//console.log('Ошибка в ' + item, 'Вся строка ' + string, e)
+	// 		console.log('Пропущен аргумент в запросе decodeURIComponent error ' + item)
+	// 	}
+	// 	return res
+	// }, {})
+	// const obj = string?.split(sep).reduce((res, item) => {
+	// 	if (!item) return res
+	// 	item = item.replace(/\+/g, ' ')
+	// 	const data = item.split('=')
+	// 	try {
+	// 		res[data.shift()] = data.length ? data.join('=') : ''
+	// 	} catch(e) {
+	// 		//console.log('Ошибка в ' + item, 'Вся строка ' + string, e)
+	// 		console.log('Пропущен аргумент в запросе decodeURIComponent error ' + item)
+	// 	}
+	// 	return res
+	// }, {})
+	const obj = string?.split(sep).reduce((res, item) => {
+		if (!item) return res
+		item = item.replace(/\+/g, '%20')
+		const data = item.split('=')
+		try {
+			res[decodeURIComponent(data.shift())] = data.length ? decodeURIComponent(data.join('=')) : ''
+		} catch(e) {
+			//console.log('Ошибка в ' + item, 'Вся строка ' + string, e)
+			console.log('Пропущен аргумент в запросе decodeURIComponent error ' + item)
+		}
+		return res
+	}, {})
+	return obj || {}
 }
 const fromCookie = (cookie) => {
 	let name = cookie.match('(^|;)?theme=([^;]*)(;|$)')

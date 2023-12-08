@@ -168,7 +168,7 @@ const explode = (sep, str) => {
 const userpathparse = (search) => {
 	//У request всегда есть ведущий /слэш
 	search = search.slice(1)
-	try { search = decodeURI(search) } catch { }
+	//try { search = decodeURI(search) } catch { }
 	let [path = '', params = ''] = explode('?', search)
 	const get = Theme.parse(params, '&')
 	const secure = !!~path.indexOf('/.') || path[0] == '.'
