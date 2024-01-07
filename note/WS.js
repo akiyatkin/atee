@@ -94,16 +94,17 @@ WS.setChange = (state, note, change) => {
 	const note_id = note.note_id
 
 	db.exec(`
-		INSERT INTO note_history (note_id, date_edit, editor_id, text, title, rev, search)
-		SELECT n.note_id, n.date_edit, n.editor_id, n.text, n.title, n.rev, n.search
-		FROM note_notes n WHERE note_id = :note_id and date_edit != date(now())
+		INSERT INTO note_history (note_id, date_edit, editor_id, text, title, rev, length, search)
+		SELECT n.note_id, n.date_edit, n.editor_id, n.text, n.title, n.rev, length, n.search
+		FROM note_notes n WHERE note_id = :note_id and date(date_edit) != date(now())
 	`, {note_id})
 
 	db.exec(`
 		UPDATE note_notes
-		SET text = :text, rev = :rev, date_edit = now(), editor_id = :user_id
+		SET text = :text, length = :length, rev = :rev, date_edit = now(), editor_id = :user_id
 		WHERE note_id = :note_id
 	`, {
+		length: note.text.length,
 		text: note.text,
 		rev: note.rev,
 		note_id, user_id

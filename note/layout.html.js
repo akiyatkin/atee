@@ -22,7 +22,7 @@ const removeProp = (note, prop) => {
 	delete note[prop]
 	return note
 }
-note.show = (note) => `
+note.show = (note, placeholder = "Напишите что-нибудь") => `
 	<style>
 		.notewrapper {
 			opacity:0;	
@@ -31,10 +31,10 @@ note.show = (note) => `
 	<div class="notewrapper">
 		<div class="note view" 
 			aria-hidden="true"
-			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь">${Note.makeHTML(note.text, note.cursors)}<br></div>
+			placeholder="${placeholder}" aria-label="${placeholder}">${Note.makeHTML(note.text, note.cursors)}<br></div>
 		<textarea autocomplete="off" style="--hue: ${note.hue}" class="note area" 
 			spellcheck="false"
-			placeholder="Напишите что-нибудь" aria-label="Напишите что-нибудь" role="textbox" 
+			placeholder="${placeholder}" aria-label="${placeholder}" role="textbox" 
 			tabindex="0">
 ${escapeText(note.text)}</textarea>
 		<script>

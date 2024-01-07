@@ -131,7 +131,7 @@ filters.props = {
 									const { value_nick, direction, click } = range.getValue(input, ${filter.min}, ${filter.max}, ${data.md.more?.[filter.prop_nick]?.from ? '"from"' : '"upto"'}, ${sliderval(data, filter)})
 									const set = value_nick ? '::.'+direction+'=' + value_nick : ''
 									window.getClient().then(Client => {
-										Client.pushState('/catalog${links.addm(data)}more.${filter.prop_nick}' + set, false)	
+										Client.pushState('/catalog${links.addm(data)}more.${filter.prop_nick}' + set, false)
 									})
 								})
 								input.addEventListener('input', () => {

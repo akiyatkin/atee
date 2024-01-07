@@ -47,6 +47,8 @@ export const Dialog = {
 		const env = { layer, ...look }
 		env.sid = 'sid-' + layer.div + '-' + layer.sub + '-'
 		env.scope = '#' + layer.div
+		const Client = await window.getClient()
+		env.bread = Client.bread
 		await Dialog.frame(popup, tplobj[sub](layer.data, env))
 		
 		Dialog.show(popup, onshow)

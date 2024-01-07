@@ -10,7 +10,7 @@ export const Client = {
 	follow: (root, search) => {
 		Client.search = fixsearch(search || Client.getSearch())
 		const get = Object.fromEntries(new URLSearchParams(location))
-		Client.bread = new Bread(Client.search, get, Client.search, root)
+		Client.bread = new Bread(location.pathname, get, Client.search, root)
 		Client.theme = Theme.harvest(get, document.cookie)
 
 		navigator.serviceWorker?.register('/-controller/sw.js', { scope:'/' })
@@ -183,21 +183,31 @@ export const Client = {
 	show_layers: [],
 	show: (layer) => {
 		//Нужно собрать все вызовы и выполнить разом
+
 		Client.show_layers.push(layer)
 		if (Client.show_promise) return Client.show_promise
 		Client.show_promise = new Promise(resolve => {
 			setTimeout(async () => {
+
+				if (Client.next) await Client.next.promise
+					
 				const json = {layers:Client.show_layers, theme: Client.theme}
-				await Client.commonshow(json, Client.bread)
-				delete Client.show_promise
+				
 				Client.show_layers = []
-				resolve()
+				delete Client.show_promise
+
+				const promise = createPromise('loaded and ready')
+				promise.started = createPromise('already started')
+
+				await Client.commonshow(json, Client.bread, promise, Client.timings)
+				
+				resolve(promise)
+				promise.resolve(Client.search)
 			}, 1)
 		})
 		return Client.show_promise
 	},
-	commonshow: async (json, bread, promise, timings) => {
-		if (!timings) timings = Client.timings
+	commonshow: async (json, bread, promise, timings, debug) => {
 		const layers = json.layers
 		const promises = loadAll(layers)
 		for (const layer of layers) {
@@ -371,7 +381,7 @@ const errmsg = (layer, e) => {
 const interpolate = (val, data, env) => new Function('data', 'env', 'return `'+val+'`')(data, env)
 
 const addHtml = async (template, layer, bread, timings, theme) => {
-	const crumb = bread.getCrumb(layer.depth)
+	const crumb = bread.getCrumb(layer.depth || 0)
 	let html = ''
 	const look = { bread, timings, theme, host:location.host }
 	const env = { layer, crumb, ...look }
@@ -384,6 +394,7 @@ const addHtml = async (template, layer, bread, timings, theme) => {
 			if (!layer.onlyclient) location.reload()
 		})
 	}
+
 	if (layer.sys.html) {
 		html = layer.sys.html
 	} else if (layer.sys.tplobj) {
@@ -395,6 +406,7 @@ const addHtml = async (template, layer, bread, timings, theme) => {
 			html = errmsg(layer, e)
 		}
 	}
+
 	if (template.content.children.length) {
 		const div = template.content.getElementById(layer.div)
 		if (!div) template.content.innerHTML += 'Не найден div ' + layer.div
@@ -431,7 +443,7 @@ const loadAll = (layers, promises = [], proc = {}) => {
 	for (const layer of layers) {
 		if (!layer.sys) layer.sys = {}
 		if (layer.tpl) {
-			if (layer.ts) { //ts это например, index:ROOT означает что есть шаблон
+			if (layer.sub) { //ts это например, index:ROOT означает что есть шаблон
 				let promise = import(layer.tpl).then(res => {
 					layer.sys.tplobj = res.default || res
 				}).catch(e => {

@@ -26,9 +26,9 @@ rest.addResponse('get-head', async view => {
 		view.ans.title = note.title || 'Пустая заметка'
 	}
 })
-rest.addResponse('get-page-sitemap', async view => {
+rest.addResponse('get-sitemap', async view => {
 	const db = await view.get('db')
-	const conf = await config('notelic')
+	const conf = await config('note')
 	const childs = {}
 	for (const page in conf.pages) {
 		const note_id = conf.pages[page]

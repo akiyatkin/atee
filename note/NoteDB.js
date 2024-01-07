@@ -68,16 +68,19 @@ NoteDB.getProps = async (db, note_id) => {
 			LEFT JOIN user_uemails e on (e.user_id = n.editor_id and e.ordain = 1)
 			LEFT JOIN note_users wu ON (wu.user_id = n.editor_id)
 		WHERE note_id = :note_id
+		ORDER BY n.rev DESC
 	`, {note_id})
 
 	return note
 }
-NoteDB.create = (db, user_id, title = '') => {
+NoteDB.create = (db, user_id, text = '') => {
+	const title = text
 	const nick = nicked(title)
+	const length = text.length
 	return db.insertId(`
-		INSERT INTO note_notes (text, editor_id, creater_id, title, nick) 
-		VALUES (:title, :user_id, :user_id, :title, :nick)
-	`, {title, nick, user_id})
+		INSERT INTO note_notes (text, editor_id, creater_id, title, nick, length) 
+		VALUES (:text, :user_id, :user_id, :title, :nick, :length)
+	`, {text, nick, user_id, length, title})
 }
 
 NoteDB.getNote = async (db, note_id) => {
