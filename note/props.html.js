@@ -1,18 +1,12 @@
 import date from "/-words/date.html.js"
 import escapeText from '/-note/escapeText.js'
+import field from "/-dialog/field.html.js"
 
-export const ROOT = (data, env) => data.result ? `
 
-	<h1>${data.note.title || 'Пустая запись'}</h1>
-	
-	<div>Пользователей онлайн ${data.note.useronline}</div>
-	<div>Пользователей ${data.note.usercount}</div>
-	<div>Гостей ${data.note.userguests}</div>
-	<div>Авторизованных ${data.note.useremails}</div>
-	<div>Версия ${data.note.rev}</div>
-	<div>Дата создания ${date.dmy(data.note.date_create)} ${data.note.editor_email || 'Гость'}</div>
-	<div>Последние изменения ${date.dmy(data.note.date_edit)} ${data.note.creater_email || 'Гость'}</div>
+const props = {}
 
+props.showMiddlePart = (data, env) => ''
+props.showTable = (data, env) => `
 	<table style="margin-top:1rem; margin-bottom:2rem">
 		<thead>
 			<tr>
@@ -24,8 +18,23 @@ export const ROOT = (data, env) => data.result ? `
 				<td>Открытий</td>
 			</tr>
 		</thead>
-		${data.note.users.map(user => showUserEmail(data, env, user)).join('')}
+		${data.note.users.map(user => props.showUserEmail(data, env, user)).join('')}
 	</table>
+`
+props.ROOT = (data, env) => data.result ? `
+	<h1>${data.note.title || 'Пустая запись'}</h1>
+	
+	<div>Пользователей онлайн ${data.note.useronline}</div>
+	<div>Пользователей ${data.note.usercount}</div>
+	<div>Гостей ${data.note.userguests}</div>
+	<div>Авторизованных ${data.note.useremails}</div>
+	<div>Версия ${data.note.rev}</div>
+	<div>Дата создания ${date.dmy(data.note.date_create)} ${data.note.editor_email || 'Гость'}</div>
+	<div>Последние изменения ${date.dmy(data.note.date_edit)} ${data.note.creater_email || 'Гость'}</div>
+
+	${props.showTable(data, env)}
+	${props.showMiddlePart(data, env)}
+
 	<h2>История</h2>
 	<table style="margin-top:1rem; margin-bottom:2rem">
 		<thead>
@@ -46,11 +55,11 @@ const showHistory = (data, env, row) => `
 		<td>${row.rev}</td>
 	</tr>
 `
-const showUserEmail = (data, env, user) => `
+props.showUserEmail = (data, env, user) => `
 	
 	<tr style="background-color: hsla(${user.hue}, 50%, 50%, 20%)">
 		<!-- <td>${user.email || 'Гость'}</td> -->
-		<td>${user.email}</td>
+		<td>${user.email || 'Гость'}</td>
 		<td>${user.open ? 'online' : date.dmyhi(user.date_close)}</td>
 		<td>${date.dmyhi(user.date_change)}</td>
 		<td>${user.count_changes}</td>
@@ -58,10 +67,13 @@ const showUserEmail = (data, env, user) => `
 	</tr>
 `
 
-export const REV = (data, env) => data.result ? `
+props.REV = (data, env) => data.result ? `
 
 	<h1>${data.note.title}</h1>
 	<p>Версия ${data.note.rev} от ${date.dmy(data.note.date_edit)}</p>
 	<pre wrap>${escapeText(data.note.text)}</pre>
 	
 ` : `<h1>Ошибка</h1><p>${data.msg}</p>`
+
+
+export default props
