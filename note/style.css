@@ -1,6 +1,7 @@
 .notewrapper {
 	height:100%;
 	opacity:1!important;
+	--color: pink;
 }
 .notewrapper .note {
 	outline: none; 
@@ -29,12 +30,15 @@
 	color: rgba(0,0,0,0.3);
 	background-color: transparent;
 }
+.notewrapper .area:disabled {
+	background-color: color-mix(in srgb, var(--color) 10%, transparent);
+}
 .notewrapper .view {
 	pointer-events: none;
 	/*color: transparent;
 	color: rgba(0,0,0,1);*/
 	color: black;
-	background-color: color-mix(in srgb, pink 20%, transparent);
+	background-color: color-mix(in srgb, var(--color) 20%, transparent);
 	transition: background-color 0.1s;
 }
 .notewrapper.focus .view {

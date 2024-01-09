@@ -302,6 +302,9 @@ const Note = {
 							note.text = signal.text
 							note.area.value = note.text
 							Note.viewHTML(note)
+						} else if (signal.type == 'onlyview') {
+							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+							Dialog.alert('Доступен только просмотр. Такие дела.')	
 						} else if (signal.type == 'reject') {
 							if (signal.myuser) {
 								const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)

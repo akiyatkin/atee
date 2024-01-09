@@ -197,7 +197,7 @@ WS.connection = (ws, request) => {
 	const args = request.args
 	const note_id = args.note_id
 	const user_id = args.user_id
-	const state = {access_check_timer: false, user_id, ws, rev: args.rev, hangchanges: [], hue: args.hue}
+	const state = {access_check_timer: false, user_id, ws, rev: args.rev, hangchanges: [], hue: args.hue, ismy: args.ismy}
 	const note = args.note
 	const states = note.states
 	state.myindex = states.length
@@ -214,6 +214,9 @@ WS.connection = (ws, request) => {
 	ws.on('error', console.error)
 
 	ws.on('message', async data => {
+
+
+		
 		data = JSON.parse(data.toString())
 		const {change, cursor, signal} = data
 		const base = change?.base || cursor?.base || signal?.base
@@ -223,9 +226,12 @@ WS.connection = (ws, request) => {
 		
 		WS.checkReject(note, state).then(is => {
 			if (!is) {
-				return WS.sendSignal(ws, note, 'reject', {user_id})	
+				return WS.sendSignal(ws, note, 'reject', {user_id})
 			}
 		})
+		if (args.ismy == 'view') {
+			if (change)	return WS.sendSignal(ws, note, 'onlyview', {user_id})
+		}
 		
 		if (change) WS.setChange(state, note, change)
 		if (cursor) WS.setCursor(state, note, cursor)
@@ -288,8 +294,10 @@ WS.verifyClient = async (info) => {
 		date_load: params.get('date_load'),
 		user_token: params.get('user_token')
 	}
+	args.ismy = true
 	const err = msg => {
 		console.log(msg)
+		args.ismy = false
 		return false
 	}
 

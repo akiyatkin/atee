@@ -32,7 +32,7 @@ note.show = (note, placeholder = "Напишите что-нибудь") => `
 		<div class="note view" 
 			aria-hidden="true"
 			placeholder="${placeholder}" aria-label="${placeholder}">${Note.makeHTML(note.text, note.cursors)}<br></div>
-		<textarea autocomplete="off" style="--hue: ${note.hue}" class="note area" 
+		<textarea ${note.ismy=='view' ? 'disabled' : ''} autocomplete="off" style="--hue: ${note.hue}" class="note area" 
 			spellcheck="false"
 			placeholder="${placeholder}" aria-label="${placeholder}" role="textbox" 
 			tabindex="0">
@@ -40,7 +40,6 @@ ${escapeText(note.text)}</textarea>
 		<script>
 			(wrap => {
 				const note = ${JSON.stringify(removeProp(note, 'text'))}
-
 				window.note = note
 				note.area = wrap.getElementsByClassName('area')[0]
 				note.wrap = wrap
@@ -99,8 +98,30 @@ ${escapeText(note.text)}</textarea>
 					Note.send(note, {signal:{type:'blur', base:note.rev}})
 				})
 
-				note.area.focus()
+				note.area.addEventListener('select', async e => {
+					if (note.inputpromise.start) return
+					const Note = await note.inputpromise
+					const cursor = Note.getCursor(note)
+					if (beforecursor.base == cursor.base && beforecursor.size == cursor.size && beforecursor.start == cursor.start && beforecursor.direction == cursor.direction) return
+					
+					beforecursor = cursor
+					Note.send(note, {cursor})
+				})
+				note.area.addEventListener('click', async e => {
+					if (note.inputpromise.start) return
+					const Note = await note.inputpromise
+					const cursor = Note.getCursor(note)
+					if (cursor.size) return //select
+					Note.send(note, {cursor})
+				})
 				
+				note.area.addEventListener('dragstart', e => {
+					e.preventDefault()
+				})
+
+				note.area.focus()
+				note.inputpromise.then(Note => Note.open(note))
+				if (note.ismy == 'view') return
 
 				note.area.addEventListener('keydown', async e => {
 					if (~[HOME, END].indexOf(e.keyCode)) { //input ради preventDefault стандартного действия, нет input
@@ -125,27 +146,6 @@ ${escapeText(note.text)}</textarea>
 						Note.send(note, {cursor})
 					}
 					
-				})
-				note.area.addEventListener('select', async e => {
-					if (note.inputpromise.start) return
-					const Note = await note.inputpromise
-					const cursor = Note.getCursor(note)
-					if (beforecursor.base == cursor.base && beforecursor.size == cursor.size && beforecursor.start == cursor.start && beforecursor.direction == cursor.direction) return
-					
-					beforecursor = cursor
-					Note.send(note, {cursor})
-				})
-				note.area.addEventListener('click', async e => {
-					if (note.inputpromise.start) return
-					const Note = await note.inputpromise
-					const cursor = Note.getCursor(note)
-					if (cursor.size) return //select
-					Note.send(note, {cursor})
-				})
-				
-				
-				note.area.addEventListener('dragstart', e => {
-					e.preventDefault()
 				})
 				note.area.addEventListener('beforeinput', async e => {
 					/*
@@ -213,8 +213,6 @@ ${escapeText(note.text)}</textarea>
 					Note.viewHTML(note)
 					Note.send(note, {change})
 				})
-
-				note.inputpromise.then(Note => Note.open(note))
 			})(document.currentScript.parentNode)
 		</script>
 	</div>
