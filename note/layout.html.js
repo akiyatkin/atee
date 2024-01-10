@@ -119,9 +119,10 @@ ${escapeText(note.text)}</textarea>
 					e.preventDefault()
 				})
 
-				note.area.focus()
+				
 				note.inputpromise.then(Note => Note.open(note))
 				if (note.ismy == 'view') return
+				note.area.focus()
 
 				note.area.addEventListener('keydown', async e => {
 					if (~[HOME, END].indexOf(e.keyCode)) { //input ради preventDefault стандартного действия, нет input

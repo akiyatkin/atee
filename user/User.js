@@ -1,6 +1,7 @@
 import Mail from '/-mail'
 import config from '/-config'
 import crypto from 'crypto'
+import nicked from "/-nicked"
 
 const User = {
 	harvest: async (view) => {
@@ -160,17 +161,19 @@ const User = {
 				user_id = :user_id
 		`, { user_id })
 		const code_verify = crypto.randomBytes(4).toString('hex').toUpperCase()
+		const search = nicked(email)
 		await db.affectedRows(`
 			INSERT INTO 
 				user_uemails
 			SET
 				user_id = :user_id,
 				email = :email,
+				search = :search,
 				code_verify = :code_verify,
 				date_verify = now(),
 				date_add = now(),
 				ordain = 1
-		`, {email, code_verify, user_id})
+		`, {email, search, code_verify, user_id})
 
 		await db.affectedRows(`
 			UPDATE
@@ -231,17 +234,19 @@ const User = {
 				user_id = :user_id
 		`, { user_id })
 		const code_verify = crypto.randomBytes(4).toString('hex').toUpperCase()
+		const search = nicked(email)
 		await db.affectedRows(`
 			INSERT INTO 
 				user_uemails
 			SET
 				user_id = :user_id,
 				email = :email,
+				search = :search,
 				code_verify = :code_verify,
 				date_verify = now(),
 				date_add = now(),
 				ordain = 1
-		`, {email, code_verify, user_id})
+		`, {search, email, code_verify, user_id})
 	},
 	delAllEmail: async (db, user_id) => {
 		return await db.affectedRows(`
