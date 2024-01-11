@@ -54,7 +54,7 @@ rest.addAction('set-logout', async (view, src) => {
 rest.addAction('set-email-verified', async (view, src) => {
 	const { user, code, email, db, token } = await view.gets(['user', 'code','email#required','db','token'])
 	const redirect = (msg, result) => {
-		view.headers['Location'] = User.link + 'result?email=' + email + '&msg=' + encodeURIComponent(msg) 
+		view.headers['Location'] = User.link + '?email=' + email + '&msg=' + encodeURIComponent(msg) 
 		if (!result) {
 			view.headers['Location'] += '&heading=' + encodeURIComponent('Ошибка подтверждения') 
 			return view.err('', 301)
@@ -90,7 +90,7 @@ rest.addAction('set-email-verified', async (view, src) => {
 rest.addAction('set-signin-token', async (view, src) => {
 	const { user, token, db } = await view.gets(['user', 'token', 'db'])
 	const redirect = (msg, result) => {
-		view.headers['Location'] = User.link + 'result?msg=' + encodeURIComponent(msg) 
+		view.headers['Location'] = User.link + '?msg=' + encodeURIComponent(msg) 
 		if (!result) {
 			view.headers['Location'] += '&heading=' + encodeURIComponent('Вход не выполнен') 
 			return view.err('', 301)

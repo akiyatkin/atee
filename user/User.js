@@ -25,7 +25,7 @@ const User = {
 		await db.affectedRows('DELETE from user_uemails where user_id = :user_id', olduser)
 		await db.affectedRows('DELETE from user_uphones where user_id = :user_id', olduser)
 	},
-	link: '/user/',
+	link: '/user/result',
 	createToken: () => {
 		const token = crypto.randomBytes(12).toString('hex')
 		return token
@@ -50,7 +50,7 @@ const User = {
 		
 		const db = await view.get('db')
 		data.vars = await view.gets(['host', 'ip'])
-		data.vars.link = User.link
+		//data.vars.link = User.link
 		if (!email) {
 			const emails = await db.colAll('select email from user_uemails where user_id = :user_id', {user_id})
 			if (!emails.length) return view.err('Не найден адрес для отправки письма', 500)
