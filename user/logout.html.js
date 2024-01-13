@@ -1,3 +1,4 @@
+import field from "/-dialog/field.html.js"
 
 export const ROOT = (data, env) => 
 `<div style="margin-top:1rem"><a href="/user">Личный кабинет</a></div>
@@ -8,16 +9,20 @@ export const ROOT = (data, env) =>
 	<p>Выхода нет. <code>&copy;</code> Сплин  </p>
 ` : `
 	<p>${data.user.email || ''}</p>
-	<form action="/-user/set-logout" data-goal="logout"><button type="submit">Выйти</button></form>
-	<script>
-		(form => {
-			form.addEventListener('submit', e => {
-				e.preventDefault()
-				import('/-dialog/action.js').then(r => r.default(form)).then(async res => {
-					const Client = await window.getClient()
-					Client.reload()
-				})
-			})
-		})(document.currentScript.previousElementSibling)
-	</script>
+
+	${field.button({
+		label:'Выйти', 
+		action:"/-user/set-logout", 
+		go: '/user/signin',
+		reload:true
+	})}
+	<p align="right">
+		${field.button({
+			label:'Удалить аккаунт', 
+			action:"/-user/set-delete", 
+			confirm:"Удалить аккаунт?",
+			go: '/user/signin',
+			reload:true
+		})}
+	</p>
 `)

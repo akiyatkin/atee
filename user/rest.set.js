@@ -45,7 +45,14 @@ rest.addResponse('set-reset', async view => {
 	
 	return view.ret('База обновлена')
 })
-
+rest.addAction('set-delete', async (view, src) => {
+	const user_id = await view.get('user_id#required')
+	const db = await view.get('db')
+	const msg = await User.delete(db, user_id)
+	if (msg) return view.err(msg)
+	User.delCookie(view)
+	return view.ret('Аккаунт удалён')
+})
 rest.addAction('set-logout', async (view, src) => {
 	//const { } = await view.gets(['recaptcha'])
 	User.delCookie(view)
@@ -126,14 +133,18 @@ rest.addAction('set-user-id', async (view, src) => {
 })
 
 rest.addAction('set-signup-email', async (view, src) => {
-	let { user, email, db } = await view.gets(['user', 'email#required','db','start','recaptcha'])	
-	if (!user) { //'user#create'
-		user = await User.create(view)
+	await view.get('start')
+	await view.get('recaptcha')
+	let email = await view.get('email#required')
+	let user = await view.get('user')
+	const db = await view.get('db')	
+	if (!user) {
+		user = await User.create(db)
 		User.setCookie(view, user)
 	}
 	const user_id = user.user_id
 	if (user.email) return view.err('Вы уже зарегистрированы')
-	const userbyemail = await User.getUserByEmail(view, email)
+	const userbyemail = await User.getUserByEmail(db, email)
 	if (userbyemail) {
 		if (userbyemail.user_id == user.user_id) return view.err('Вы уже зарегистрировали этот адрес')
 		return view.err('На указанный email уже есть регистрация')

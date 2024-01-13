@@ -322,7 +322,7 @@ field.switch = ({name, action, value, values}) => {
 }
 
 //approved
-field.button = ({label, action, go, reloaddiv, goid, confirm}) => {
+field.button = ({label, action, args = {}, go, reloaddiv, goid, confirm, reload}) => {
 	return `
 		<span>
 			<button>${label}</button>
@@ -333,7 +333,8 @@ field.button = ({label, action, go, reloaddiv, goid, confirm}) => {
 						const ask = "${confirm || ''}"
 						if (ask && !window.confirm(ask)) return
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
-						const ans = await sendit(btn, '${action}')
+						const args = ${JSON.stringify(args)}
+						const ans = await sendit(btn, '${action}', args)
 						if (ans.msg) {
 							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 							Dialog.alert(ans.msg)
@@ -343,6 +344,7 @@ field.button = ({label, action, go, reloaddiv, goid, confirm}) => {
 						const goid = "${goid ? goid : ''}"
 						if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
 						if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
+						if (ans.result && ${!!reload}) Client.reload()
 					})
 				})(document.currentScript.previousElementSibling)
 			</script>
@@ -376,7 +378,7 @@ field.area = ({name, label, action, value}) => {
 	`
 }
 //approved
-field.text = ({name, label, action, value, type = 'text'}) => {
+field.text = ({name, label, action, args = {}, value, type = 'text'}) => {
 	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label success">
@@ -397,7 +399,9 @@ field.text = ({name, label, action, value, type = 'text'}) => {
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
 						let value = field.value
 						if (~['datetime-local', 'date'].indexOf(field.type)) value = Math.floor(new Date(field.value).getTime() / 1000)
-						const ans = await sendit(float, '${action}', {[field.name]: value})
+						const args = ${JSON.stringify(args)}
+						args[field.name] = value
+						const ans = await sendit(float, '${action}', args)
 						field.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 					})
 					const status = float.querySelector('.status')

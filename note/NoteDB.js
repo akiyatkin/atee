@@ -82,7 +82,28 @@ NoteDB.create = (db, user_id, text = '') => {
 		VALUES (:text, :user_id, :user_id, :title, :nick, :length)
 	`, {text, nick, user_id, length, title})
 }
-
+NoteDB.deleteUser = async (db, user_id) => {
+	//Нельзя удалять пользователя у которого есть ноты? Но ноты о правах ничего не знают
+	await db.exec('UPDATE note_history SET editor_id = null WHERE editor_id = :user_id', {user_id})
+	await db.exec('UPDATE note_notes SET creater_id = null WHERE creater_id = :user_id', {user_id})
+	await db.exec('UPDATE note_notes SET editor_id = null WHERE editor_id = :user_id', {user_id})
+	await db.exec('DELETE from note_stats where user_id = :user_id', {user_id})
+	await db.exec('DELETE from note_users where user_id = :user_id', {user_id})
+}
+NoteDB.delete = async (db, note_id) => {
+	await db.exec(`
+		DELETE FROM note_notes
+		WHERE note_id = :note_id
+	`, {note_id})
+	await db.exec(`
+		DELETE FROM note_stats
+		WHERE note_id = :note_id
+	`, {note_id})
+	await db.exec(`
+		DELETE FROM note_history
+		WHERE note_id = :note_id
+	`, {note_id})
+}
 NoteDB.getNote = async (db, note_id) => {
 	const note = await db.fetch(`
 		SELECT 

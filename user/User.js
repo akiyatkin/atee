@@ -21,9 +21,12 @@ const User = {
 		//Другие мёрджи дополняют этот обработчик через подмену
 		//Зарегистрированного пользователя тоже можно замёрджить. Старый будет удалён, даже если был зарегистрирован
 		//Прошлый пользователь ещё не регистрировался, надо замёрджить и удалить его
-		await db.affectedRows('DELETE from user_users where user_id = :user_id', olduser)
-		await db.affectedRows('DELETE from user_uemails where user_id = :user_id', olduser)
-		await db.affectedRows('DELETE from user_uphones where user_id = :user_id', olduser)
+		await User.delete(db, olduser.user_id)
+	},
+	delete: async (db, user_id) => {
+		await db.exec('DELETE from user_users where user_id = :user_id', {user_id})
+		await db.exec('DELETE from user_uemails where user_id = :user_id', {user_id})
+		await db.exec('DELETE from user_uphones where user_id = :user_id', {user_id})
 	},
 	link: '/user/result',
 	createToken: () => {
