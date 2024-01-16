@@ -97,7 +97,7 @@ rest.addAction('set-email-verified', async (view, src) => {
 rest.addAction('set-signin-token', async (view, src) => {
 	const { user, token, db } = await view.gets(['user', 'token', 'db'])
 	const redirect = (msg, result) => {
-		view.headers['Location'] = User.link + '?msg=' + encodeURIComponent(msg) 
+		view.headers['Location'] = User.link + '?alert=' + encodeURIComponent(msg) 
 		if (!result) {
 			view.headers['Location'] += '&heading=' + encodeURIComponent('Вход не выполнен') 
 			return view.err('', 301)
