@@ -8,9 +8,19 @@ rest.addFunction('string', (view, n) => n != null ? String(n) : '')
 rest.addFunction('checkbox', (view, n) => !!n)
 rest.addFunction('isset', (view, v) => v !== null)
 rest.addFunction('int', (view, n) => Number(n) || 0)
-rest.addFunction('int#required', (view, n, prop) => {
-	n = Number(n) || 0
-	if (!n) return view.err('Требуется ' + prop, 422)
+
+rest.addFunction('mint', ['int'], (view, num, pname) => {
+	if (num > 8000000 || num < -8000000) return view.err('Передано слишком большое число ' + pname)
+	return num
+})
+rest.addFunction('mint#required', ['int'], (view, num, pname) => {
+	if (!n) return view.err('Требуется ' + pname, 422)
+	return n
+})
+
+
+rest.addFunction('int#required', ['int'], (view, n, pname) => {
+	if (!n) return view.err('Требуется ' + pname, 422)
 	return n
 })
 rest.addFunction('array', (view, n) => n ? n.split(',') : [])
