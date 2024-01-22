@@ -50,9 +50,9 @@ rest.addResponse('set-update', async view => {
 
 rest.addArgument('pv', ['checksearch']) //prev
 rest.addArgument('nt', ['checksearch']) //next
-rest.addArgument('vt', ['int']) //view_time
-rest.addArgument('ut', ['int']) //update_time
-rest.addArgument('st', ['int']) //access_time
+rest.addArgument('vt', ['int#0']) //view_time
+rest.addArgument('ut', ['int#0']) //update_time
+rest.addArgument('st', ['int#0']) //access_time
 
 rest.addArgument('rg', ['array']) //globals
 rest.addArgument('rd', ['array']) //reloaddivs

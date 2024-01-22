@@ -222,15 +222,16 @@ export class View {
 			}
 		}
 		
-		for (const n of opt.before || []) {
+		for (const n of opt['before'] || []) {
 			const r = await view.get(n, proc, res, forname);
-			if (r != null) res = r;
+			//if (r != null) 
+			res = r;
 		}
 
 		
-		if (opt['required']) {
-			if (res == null) return view.err(`rest.required ${pname}`);
-		}
+		// if (opt['required']) {
+		// 	if (res == null) return view.err(`rest.required ${pname}`);
+		// }
 
 		if (opt.func) {	
 			const rview = new RecView(view, proc)
@@ -241,7 +242,8 @@ export class View {
 
 		for (const n of opt['after'] || []) {
 			const r = await view.get(n, proc, res, pname);
-			if (r != null) res = r;
+			//if (r != null) 
+			res = r;
 		}
 		return res
 	}

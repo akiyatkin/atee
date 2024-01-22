@@ -313,19 +313,93 @@ field.switch = ({name, action, value, values}) => {
 						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 						Dialog.alert(ans.msg)
 					}
-					if (ans.result) btn.innerHTML = values[status || '']
+					if (ans.result && values[status || '']) btn.innerHTML = values[status || '']
   					btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>
 	</span>`
 }
-
-//approved
-field.button = ({label, action, args = {}, go, reloaddiv, goid, confirm, reload}) => {
+field.prompt = ({ok = 'ОК', recaptcha = false, label = 'Укажите ваш Email', descr, value, name = 'email', type = 'email', action, args = {}, go, reloaddiv, goid, reload}) => {
 	return `
 		<span>
-			<button>${label}</button>
+			<button class="field">${value}</button>
+			<script>
+				(btn => {
+					btn.addEventListener('click', async () => {
+						const Prompt = await import('/-prompt/Prompt.js').then(r => r.default)
+						Prompt.open({
+							type:'${type}',
+							descr: '${descr || ''}',
+							value: '${value || ''}',
+							name:'${name}',
+							placeholder:'${label}',
+							ok: '${ok}',
+							click: async value => {
+								const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
+								const args = ${JSON.stringify(args)}
+								args['${name}'] = value
+								if (${!!recaptcha}) {
+									const recaptcha = await import('/-dialog/recaptcha.js').then(r => r.default)	
+									const token = await recaptcha.getToken()
+									args["g-recaptcha-response"] = token
+								}
+								const ans = await senditmsg(btn, '${action}', args)
+								if (ans.result && ans['${name}']) btn.innerHTML = ans['${name}']
+								if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+								const Client = await window.getClient()
+								const goid = "${goid ? goid : ''}"
+								if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
+								if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
+								if (ans.result && ${!!reload}) Client.reload()
+								return ans.result
+							}
+						})
+					})
+				})(document.currentScript.previousElementSibling)
+			</script>
+		</span>
+	`
+}
+field.search = ({label = 'Поиск', descr, value, name = 'name', search, find = 'find', action, args = {}, go, reloaddiv, goid, reload}) => {
+	return `
+		<span>
+			<button class="field">${value}</button>
+			<script>
+				(btn => {
+					btn.addEventListener('click', async () => {
+						const Search = await import('/-search/Search.js').then(r => r.default)
+						Search.open({
+							action:'${search}',
+							descr: '${descr || ''}',
+							placeholder:'${label}',
+							click: async row => {
+								const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
+								const args = ${JSON.stringify(args)}
+								args['${name}'] = row['${find}']
+
+								const ans = await senditmsg(btn, '${action}', args)
+								if (ans.result && ans['${name}']) btn.innerHTML = ans['${name}']
+								if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+								const Client = await window.getClient()
+								const goid = "${goid ? goid : ''}"
+								if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
+								if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
+								if (ans.result && ${!!reload}) Client.reload()
+								return ans.result
+							}
+						})
+					})
+				})(document.currentScript.previousElementSibling)
+			</script>
+		</span>
+	`
+}
+//approved
+field.button = ({label, name, action, args = {}, go, reloaddiv, goid, confirm, reload}) => {
+	return `
+		<span>
+			<button class="field">${label}</button>
 			<script>
 				(btn => {
 					btn.addEventListener('click', async () => {
@@ -338,8 +412,10 @@ field.button = ({label, action, args = {}, go, reloaddiv, goid, confirm, reload}
 						if (ans.msg) {
 							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 							Dialog.alert(ans.msg)
-							//btn.innerHTML = ans.msg
 						}
+						if (ans.result && ans['${name}']) btn.innerHTML = ans['${name}']
+
+						if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 						const Client = await window.getClient()
 						const goid = "${goid ? goid : ''}"
 						if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
@@ -414,6 +490,7 @@ field.text = ({name, label, action, args = {}, value, type = 'text'}) => {
 		</div>
 	`
 }
+
 
 //approved
 field.percent = ({name, label, action, value}) => {
