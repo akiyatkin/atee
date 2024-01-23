@@ -35,6 +35,7 @@ rest.addFunction('mint', ['int'], (view, num, pname) => {
 	if (num > 8000000 || num < -8000000) return view.err('Передано слишком большое число ' + pname)
 	return num
 })
+rest.addFunction('mint#unsigned', ['mint','unsigned'])
 rest.addFunction('mint#0', ['mint','0'])
 
 rest.addFunction('sint', ['int'], (view, num, pname) => {

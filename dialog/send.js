@@ -5,6 +5,10 @@ import cproc from "/-cproc"
 let count = 0
 const send = (src, params) => cproc(send, src, () => {
 	const options = {}
+	for (const name in params) {
+		const value = params[name]
+		if (value === null) delete params[name]
+	}
 	if (params) {
 		options.method = 'POST'
 		options.headers = { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }

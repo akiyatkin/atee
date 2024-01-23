@@ -298,23 +298,20 @@ field.radio = ({name, action = '', value = '', values}) => `
 	</div>
 `
 //approved
-field.switch = ({name, action, value, values}) => {
+field.switch = ({name, action, value, values, args = {}}) => {
 	return `
 	<span>
-		<button class="a" style="display: inline-block; cursor:pointer;">${values[value || ""]}</button>
+		<button class="a field" style="display: inline-block; cursor:pointer;">${values[value || ""]}</button>
 		<script>
 			(btn => {
 				btn.addEventListener('click', async () => {
-					const send = await import('/-dialog/send.js').then(r => r.default)
-					const ans = await send('${action}')
+					const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
+					const args = ${JSON.stringify(args)}
+					const ans = await senditmsg(btn, '${action}', args)
 					const status = ans['${name}']
 					const values = ${JSON.stringify(values)}
-					if (ans.msg) {
-						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-						Dialog.alert(ans.msg)
-					}
 					if (ans.result && values[status || '']) btn.innerHTML = values[status || '']
-  					btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+					if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>
@@ -361,7 +358,10 @@ field.prompt = ({ok = 'ОК', recaptcha = false, label = 'Укажите ваш 
 		</span>
 	`
 }
-field.search = ({label = 'Поиск', descr, value, name = 'name', search, find = 'find', action, args = {}, go, reloaddiv, goid, reload}) => {
+
+
+
+field.search = ({label = 'Поиск', descr, value, name = 'name', search, find = 'find', action, confirm, args = {}, go, reloaddiv, goid, reload}) => {
 	return `
 		<span>
 			<button class="field">${value}</button>
@@ -369,9 +369,15 @@ field.search = ({label = 'Поиск', descr, value, name = 'name', search, find
 				(btn => {
 					btn.addEventListener('click', async () => {
 						const Search = await import('/-search/Search.js').then(r => r.default)
+						let descr = '${descr || ''}'
+						const ask = "${confirm || ''}"
+						if (ask && !window.confirm(ask)) return
+						if (!descr && ask) descr = ask
+
+
 						Search.open({
 							action:'${search}',
-							descr: '${descr || ''}',
+							descr: descr,
 							placeholder:'${label}',
 							click: async row => {
 								const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
@@ -406,13 +412,10 @@ field.button = ({label, name, action, args = {}, go, reloaddiv, goid, confirm, r
 						if (btn.classList.contains('process')) return
 						const ask = "${confirm || ''}"
 						if (ask && !window.confirm(ask)) return
-						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+						const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 						const args = ${JSON.stringify(args)}
-						const ans = await sendit(btn, '${action}', args)
-						if (ans.msg) {
-							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-							Dialog.alert(ans.msg)
-						}
+						const ans = await senditmsg(btn, '${action}', args)
+						
 						if (ans.result && ans['${name}']) btn.innerHTML = ans['${name}']
 
 						if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))

@@ -220,4 +220,48 @@ ${escapeText(note.text)}</textarea>
 `
 
 
+note.button = ({label = 'Укажите ваш Email', descr, value, name = 'title', type = 'email', action, args = {}, go, reloaddiv, goid, reload}) => {
+	return `
+		<span>
+			<button class="field">${value}</button>
+			<script>
+				(btn => {
+					btn.addEventListener('click', async () => {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						let args = ${JSON.stringify(args)}
+						for (const name in args) {
+							const value = args[name]
+							if (value === null) delete args[name]
+						}
+						const params = args ? '?' + new URLSearchParams(args).toString() : ''
+						const json = '${action}' + params
+						const popup = await Dialog.open({
+							conf:{
+								placeholder:'${label}',
+							},
+							json,
+							tpl:"/-note/layout.html.js",
+							sub:"POPUP"
+						}, btn.parentNode, () => {}, async popup => {
+							const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
+							const ans = await senditmsg(btn, json)
+							btn.innerHTML = ans.note.title || '${label}'
+							if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+							const Client = await window.getClient()
+							if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
+							if (ans.result && ${!!reload}) Client.reload()
+						})
+					})
+				})(document.currentScript.previousElementSibling)
+			</script>
+		</span>
+	`
+}
+
+note.POPUP = (data, env) => `
+
+	${data.note ? note.show(data.note) : data.msg}
+`
+
+
 export default note
