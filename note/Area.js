@@ -62,6 +62,7 @@ const setMarker = (area, symbol) => {
 		area.selectionEnd = selEnd
 	}
 }
+
 Area.control = async (area) => {
 	const symbol = note.area.value[note.area.selectionStart - 1]
 	if (!~['+','-'].indexOf(symbol)) return

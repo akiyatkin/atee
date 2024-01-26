@@ -20,9 +20,13 @@ class RecView {
 		
 		return this.view.get(name, this.pproc, parentvalue, parentname)
 	}
+
 	gets (ar) {
 		return this.view.gets(ar, this.pproc)
 	}
+	// catch (...args) {
+	// 	return this.view.catch(...args)
+	// }
 	err (...args) {
 		return this.view.err(...args)
 	}
@@ -247,7 +251,16 @@ export class View {
 		}
 		return res
 	}
-	
+	// async catch(pname) {
+	// 	const view = this
+	// 	try {
+	// 		const data = await view.get(pname)
+	// 		return data
+	// 	} catch (e) {
+	// 		if (e instanceof ViewException) return e.ans
+	// 		throw e
+	// 	}
+	// }
 	async get (pname, pproc, parentvalue = null, parentname = null) {
 		const view = this
 

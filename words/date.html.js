@@ -15,4 +15,10 @@ date.dmyhi = (time) => {
 	if (!time) return ''
 	return intlhi.format(time * 1000)
 }
+date.input = (time) => {
+	const now = time ? new Date(time * 1000) : new Date()
+	const day = ("0" + now.getDate()).slice(-2)
+	const month = ("0" + (now.getMonth() + 1)).slice(-2)
+	return now.getFullYear()+"-"+(month)+"-"+(day)
+}
 export default date

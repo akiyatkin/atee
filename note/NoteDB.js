@@ -1,5 +1,6 @@
 import config from '@atee/config'
 import nicked from '/-nicked'
+import WS from '/-note/WS.js'
 const NoteDB = {}
 
 NoteDB.getPropsRev = async (db, note_id, rev) => {
@@ -82,6 +83,14 @@ NoteDB.create = (db, user_id, text = '') => {
 		VALUES (:text, :user_id, :user_id, :title, :nick, :length)
 	`, {text, nick, user_id, length, title})
 }
+// NoteDB.insert = async (db, note_id, insert, user_id) => {
+// 	const note = await NoteDB.getNote(db, note_id)
+// 	note.db = db
+// 	let title_index = note.text.indexOf(/\n/)
+// 	if (title_index == -1) title_index = note.text.length
+// 	note.text = splice(note.text, title_index, 0, '\n' + insert)
+// 	WS.setSearch(note)
+// }
 NoteDB.deleteUser = async (db, user_id) => {
 	//Нельзя удалять пользователя у которого есть ноты? Но ноты о правах ничего не знают
 	await db.exec('UPDATE note_history SET editor_id = null WHERE editor_id = :user_id', {user_id})

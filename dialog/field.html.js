@@ -364,7 +364,7 @@ field.prompt = ({ok = 'ОК', recaptcha = false, label = 'Укажите ваш 
 field.search = ({label = 'Поиск', descr, value, name = 'name', search, find = 'find', action, confirm, args = {}, go, reloaddiv, goid, reload}) => {
 	return `
 		<span>
-			<button class="field">${value}</button>
+			<button class="field">${value||label}</button>
 			<script>
 				(btn => {
 					btn.addEventListener('click', async () => {

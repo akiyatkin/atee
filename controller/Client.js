@@ -9,7 +9,7 @@ export const Client = {
 	access_promise: null,
 	follow: (root, search) => {
 		Client.search = fixsearch(search || Client.getSearch())
-		const get = Object.fromEntries(new URLSearchParams(location))
+		const get = Object.fromEntries(new URLSearchParams(location.search))
 		Client.bread = new Bread(location.pathname, get, Client.search, root)
 		Client.theme = Theme.harvest(get, document.cookie)
 

@@ -148,11 +148,7 @@ ${escapeText(note.text)}</textarea>
 					}
 					
 				})
-				note.area.addEventListener('beforeinput', async e => {
-					/*
-						aob - before, remove
-						anb - after, insert
-					*/
+				const beforeinput = async (note) => {
 					if (note.inputpromise.start) return
 					const aob = note.area.textLength
 					const text_before = note.area.value
@@ -160,7 +156,7 @@ ${escapeText(note.text)}</textarea>
 						const symbol = note.area.value[note.area.selectionStart - 2]
 						if (symbol == '/') {
 							const Area = await import('/-note/Area.js').then(r => r.default)
-							Area.control(note.area, e)
+							Area.control(note.area)
 						}
 						const Note = await import('/-note/Note.js').then(r => r.default)
 						await checkUser(note)
@@ -213,6 +209,13 @@ ${escapeText(note.text)}</textarea>
 					note.waitchanges.push(change)
 					Note.viewHTML(note)
 					Note.send(note, {change})
+				}
+				note.area.addEventListener('beforeinput', e => {
+					/*
+						aob - before, remove
+						anb - after, insert
+					*/
+					beforeinput(note)
 				})
 			})(document.currentScript.parentNode)
 		</script>

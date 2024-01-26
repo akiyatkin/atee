@@ -82,22 +82,27 @@ WS.saveCursor = (db, note_id, cursor, my, ischange) => {
 }
 const splice = (text, start, size, chunk) => text.slice(0, start) + chunk + text.slice(start + size)
 const clearText = (text) => text.replace(/<(.|\n)*?>/g, '')
+WS.saveHistory = (note) => {
+	note.db.exec(`
+		INSERT INTO note_history (note_id, date_edit, editor_id, text, title, rev, length, search)
+		SELECT n.note_id, n.date_edit, n.editor_id, n.text, n.title, n.rev, length, n.search
+		FROM note_notes n WHERE note_id = :note_id and date(date_edit) != date(now())
+	`, note)
+}
 WS.setChange = (state, note, change) => {
 	Move.changeAfter(change, state.hangchanges)
 	
+	const db = note.db
+	const user_id = state.user_id
+	const note_id = note.note_id
 	
 	note.text = splice(note.text, change.start, change.remove.length, change.insert)
 	change.rev = state.rev = ++note.rev
 
-	const db = note.db
-	const user_id = state.user_id
-	const note_id = note.note_id
+	
 
-	db.exec(`
-		INSERT INTO note_history (note_id, date_edit, editor_id, text, title, rev, length, search)
-		SELECT n.note_id, n.date_edit, n.editor_id, n.text, n.title, n.rev, length, n.search
-		FROM note_notes n WHERE note_id = :note_id and date(date_edit) != date(now())
-	`, {note_id})
+	WS.saveHistory(note)
+	
 
 	db.exec(`
 		UPDATE note_notes
