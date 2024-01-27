@@ -136,18 +136,19 @@ rest.addAction('set-signup-email', async (view, src) => {
 	await view.get('start')
 	await view.get('recaptcha')
 	let email = await view.get('email#required')
-	let user = await view.get('user')
 	const db = await view.get('db')	
+	
+	let user = await view.get('user')
+	if (user?.email) return view.err('Вы уже зарегистрированы')
+	const user_id = user.user_id
+	const userbyemail = await User.getUserByEmail(db, email)
+	if (userbyemail) {
+		if (userbyemail.user_id == user?.user_id) return view.err('Вы уже зарегистрировали этот адрес')
+		return view.err('На указанный email уже есть регистрация')
+	}
 	if (!user) {
 		user = await User.create(db)
 		User.setCookie(view, user)
-	}
-	const user_id = user.user_id
-	if (user.email) return view.err('Вы уже зарегистрированы')
-	const userbyemail = await User.getUserByEmail(db, email)
-	if (userbyemail) {
-		if (userbyemail.user_id == user.user_id) return view.err('Вы уже зарегистрировали этот адрес')
-		return view.err('На указанный email уже есть регистрация')
 	}
 	//email свободен можно записать
 	await User.signup(view, user_id, email)

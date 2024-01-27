@@ -65,7 +65,6 @@ const Note = {
 		note.view.innerHTML = html + '<br>'
 	},
 	makeHTML: (text, cursors, waitchanges = []) => {
-
 		cursors = Object.values(cursors)
 
 		// [2,3,4,5] - надо подсветить 2 после применения 3,4,5

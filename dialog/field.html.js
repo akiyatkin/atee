@@ -317,10 +317,10 @@ field.switch = ({name, action, value, values, args = {}}) => {
 		</script>
 	</span>`
 }
-field.prompt = ({ok = 'ОК', recaptcha = false, label = 'Укажите ваш Email', descr, value, name = 'email', type = 'email', action, args = {}, go, reloaddiv, goid, reload}) => {
+field.prompt = ({ok = 'ОК', unit = '', recaptcha = false, label = 'Укажите ваш Email', descr, value, name = 'email', type = 'email', action, args = {}, go, reloaddiv, goid, reload}) => {
 	return `
 		<span>
-			<button class="field">${value}</button>
+			<button class="field">${value}${unit}</button>
 			<script>
 				(btn => {
 					btn.addEventListener('click', async () => {
@@ -342,7 +342,7 @@ field.prompt = ({ok = 'ОК', recaptcha = false, label = 'Укажите ваш 
 									args["g-recaptcha-response"] = token
 								}
 								const ans = await senditmsg(btn, '${action}', args)
-								if (ans.result && ans['${name}']) btn.innerHTML = ans['${name}']
+								if (ans.result && ans['${name}']) btn.innerHTML = ans['${name}'] + '${unit}'
 								if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 								const Client = await window.getClient()
 								const goid = "${goid ? goid : ''}"

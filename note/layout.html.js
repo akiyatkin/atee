@@ -19,8 +19,9 @@ note.ROOT = (data, env) => note.checkErr(data, env) || `
 	${note.show(data.note)}
 `
 const removeProp = (note, prop) => {
-	delete note[prop]
-	return note
+	const mynote = {...note}
+	delete mynote[prop]
+	return mynote
 }
 note.show = (note, placeholder = "Напишите что-нибудь") => `
 	<style>
@@ -32,7 +33,7 @@ note.show = (note, placeholder = "Напишите что-нибудь") => `
 		<div class="note view" 
 			aria-hidden="true"
 			placeholder="${placeholder}" aria-label="${placeholder}">${Note.makeHTML(note.text, note.cursors)}<br></div>
-		<textarea ${note.ismy=='view' ? 'disabled' : ''} autocomplete="off" style="--hue: ${note.hue}" class="note area" 
+		<textarea ${note.ismy == 'view' ? 'disabled' : ''} autocomplete="off" style="--hue: ${note.hue}" class="note area" 
 			spellcheck="false"
 			placeholder="${placeholder}" aria-label="${placeholder}" role="textbox" 
 			tabindex="0">
