@@ -317,7 +317,11 @@ field.switch = ({name, action, value, values, args = {}}) => {
 		</script>
 	</span>`
 }
-field.prompt = ({ok = 'ОК', unit = '', recaptcha = false, label = 'Укажите ваш Email', descr, value, name = 'email', type = 'email', action, args = {}, go, reloaddiv, goid, reload}) => {
+field.prompt = ({
+		ok = 'ОК', unit = '', recaptcha = false, label = 'Укажите ваш Email', descr,
+		input,
+		value = '', name = 'email', type = 'email', action, args = {}, go, reloaddiv, goid, reload
+	}) => {
 	return `
 		<span>
 			<button class="field">${value}${unit}</button>
@@ -328,7 +332,7 @@ field.prompt = ({ok = 'ОК', unit = '', recaptcha = false, label = 'Укажи�
 						Prompt.open({
 							type:'${type}',
 							descr: '${descr || ''}',
-							value: '${value || ''}',
+							value: '${input ?? value}',
 							name:'${name}',
 							placeholder:'${label}',
 							ok: '${ok}',
