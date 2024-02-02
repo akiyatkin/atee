@@ -177,6 +177,7 @@ const getHTML = async (layer, env, visitor) => {
 		})
 		data = reans.ans || {}
 		nostore = nostore || reans.nostore
+		status = Math.max(reans.status, status)
 	}
 	//Статика
 	
@@ -266,7 +267,6 @@ const controller = async ({ vt, st, ut, layers, theme }, visitor, bread) => {
 			const html = ROOT(layer, env)
 			doc.insert(html, layer.div)
 		} else {
-
 			const { nostore, html, status } = await getHTML(layer, env, visitor)
 			ans.nostore = Math.max(ans.nostore, nostore)
 			ans.status = Math.max(ans.status, status)

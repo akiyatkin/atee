@@ -21,10 +21,20 @@ const rest = new Rest(rest_funcs, rest_seo, rest_pages, rest_path)
 
 
 rest.addVariable('bread', async view => {
-	const { path, root } = await view.gets(['path','root'])
+	const { path, root, search } = await view.gets(['search', 'path','root'])
+	
+
+	const searchParams = new URLSearchParams(search)
+	const params = {}
+	for (const [key, value] of searchParams.entries()) params[key] = value
+
 	const req = {...view.req}
 	delete req.path
 	delete req.root
+	Object.assign(req, params)
+
+	
+
 	const bread = new Bread(path, req, path, root)
 	return bread
 })
@@ -58,8 +68,10 @@ rest.addVariable('env', async view => {
 
 const interpolate = (val, env) => new Function('env', 'return `'+val+'`')(env)
 rest.addResponse('get-head', async view => {
+	const {rule, source, visitor, root, bread, theme, timings } = await view.gets(['rule', 'source', 'visitor', 'root', 'bread', 'theme', 'timings'])
 
-	const { rule, source, visitor, root, bread, theme, timings } = await view.gets(['rule', 'source', 'visitor', 'root', 'bread', 'theme', 'timings'])
+	
+	
 	
 	//view.ans = rule //Тотже объект что и source но теперь со свойством root в каждом child и childs и в корне
 	

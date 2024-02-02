@@ -139,8 +139,9 @@ rest.addAction('set-signup-email', async (view, src) => {
 	const db = await view.get('db')	
 	
 	let user = await view.get('user')
+
 	if (user?.email) return view.err('Вы уже зарегистрированы')
-	const user_id = user.user_id
+	let user_id = user.user_id
 	const userbyemail = await User.getUserByEmail(db, email)
 	if (userbyemail) {
 		if (userbyemail.user_id == user?.user_id) return view.err('Вы уже зарегистрировали этот адрес')
@@ -148,6 +149,7 @@ rest.addAction('set-signup-email', async (view, src) => {
 	}
 	if (!user) {
 		user = await User.create(db)
+		user_id = user.user_id
 		User.setCookie(view, user)
 	}
 	//email свободен можно записать

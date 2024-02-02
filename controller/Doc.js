@@ -33,7 +33,7 @@ export class Doc {
         if (!div) for (const div in this.divs) {
             //throw `Не найден div ${div}`
             //console.log(`Не найден div ${div}`)
-            html = html + `Не найден div ${div}`
+            html = html + ` Не найден div ${div}. `
         }
         return html
     }

@@ -26,7 +26,7 @@ rest.addArgument('order_id', ['int'], async (view, order_id) => {
 		FROM cart_userorders uo
 		WHERE uo.order_id = :order_id and uo.user_id = :user_id
 	`, {order_id, user_id: user.user_id})
-	if (!check_id) return view.err('Недостаточно прав '+user.email, 401)
+	if (!check_id) return view.err('Недостаточно прав '+user.email, 403)
 	return check_id
 })
 rest.addArgument('status', (view, status) => {

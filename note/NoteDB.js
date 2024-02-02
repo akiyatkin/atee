@@ -14,8 +14,8 @@ NoteDB.getPropsRev = async (db, note_id, rev) => {
 			e.email as editor_email
 		FROM note_history n
 		LEFT JOIN user_uemails e on (e.user_id = n.editor_id and e.ordain = 1)
-		WHERE note_id = :note_id
-	`, {note_id})
+		WHERE note_id = :note_id and n.rev = :rev
+	`, {note_id, rev})
 
 	return note
 }

@@ -10,6 +10,13 @@ import rest_path from '/-controller/rest.path.js'
 
 const rest = new Rest(rest_funcs, rest_path)
 
+rest.addArgument('search', ['string'], (view, search) => {
+	try {
+		return decodeURI(search)
+	} catch (e) {
+		return ''
+	}
+})
 rest.addVariable('source', async view => {
 	const { root } = await view.gets(['root'])
 	const layers = Layers.getInstance(root)

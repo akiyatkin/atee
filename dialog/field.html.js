@@ -377,17 +377,15 @@ field.search = ({label = 'Поиск', descr, value, name = 'name', search, find
 						const ask = "${confirm || ''}"
 						if (ask && !window.confirm(ask)) return
 						if (!descr && ask) descr = ask
-
-
 						Search.open({
 							action:'${search}',
 							descr: descr,
 							placeholder:'${label}',
-							click: async row => {
+							click: async (row, need) => {
 								const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 								const args = ${JSON.stringify(args)}
 								args['${name}'] = row['${find}']
-
+								args['search'] = need.value
 								const ans = await senditmsg(btn, '${action}', args)
 								if (ans.result && ans['${name}']) btn.innerHTML = ans['${name}']
 								if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
@@ -406,10 +404,10 @@ field.search = ({label = 'Поиск', descr, value, name = 'name', search, find
 	`
 }
 //approved
-field.button = ({label, name, action, args = {}, go, reloaddiv, goid, confirm, reload}) => {
+field.button = ({label, name, cls = '', action, args = {}, go, reloaddiv, goid, confirm, reload}) => {
 	return `
 		<span>
-			<button class="field">${label}</button>
+			<button class="field ${cls}">${label}</button>
 			<script>
 				(btn => {
 					btn.addEventListener('click', async () => {

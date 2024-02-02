@@ -17,10 +17,12 @@ export const evalScripts = async div => {
 				fresh.addEventListener('ready', resolve)
 				if (old.id) {
 					fresh.textContent = old.textContent + `;(script => {
+						if (!script) return
 						script.dispatchEvent(new Event("ready"))
 					})(document.getElementById("${fresh.id}"))`
 				} else {
 					fresh.textContent = old.textContent + `;(script => {
+						if (!script) return
 						script.removeAttribute('id')
 						script.dispatchEvent(new Event("ready"))
 					})(document.getElementById("${fresh.id}"))`

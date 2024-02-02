@@ -9,6 +9,11 @@ export default class Bread {
 	depth = null //Глубина запроса, или последний индекс в crumbs
 	constructor (path, get, href, root) {
 		this.href = href
+		
+		const r = href.split('?')
+		r.shift()
+		this.search = r.join('?')
+
 		this.root = root
 		this.get = get
 		this.path = path
