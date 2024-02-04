@@ -106,11 +106,11 @@ export default class Layers {
 	static getParsedIndex(rule, timings, bread, interpolate, theme) {
 		const {index, status, depth} = Layers.getIndex(rule, bread)
 
-		let check = ''
 		if (index.checktpl) {
 			const crumb = bread.getCrumb(depth)
-			check = interpolate(index.checktpl, timings, {}, bread, crumb, theme)
+			index.check = interpolate(index.checktpl, timings, {}, bread, crumb, theme)
 		}
+		
 		
 		if (!index) return []
 		Layers.runByRootLayer(index.root, layer => {
@@ -139,7 +139,7 @@ export default class Layers {
 				layer.json = rule.json[ts]
 			}
 		})
-		return { index, status, check }
+		return { index, status }
 	}
 	static collectPush(rule, timings, bread, root, interpolate, theme) {
 		const push = []
