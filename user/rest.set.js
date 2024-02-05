@@ -63,10 +63,10 @@ rest.addAction('set-email-verified', async (view, src) => {
 	const redirect = (msg, result) => {
 		view.headers['Location'] = User.link + '?email=' + email + '&msg=' + encodeURIComponent(msg) 
 		if (!result) {
-			view.headers['Location'] += '&heading=' + encodeURIComponent('Ошибка подтверждения') 
+			view.headers['Location'] += '&alert=' + encodeURIComponent('Ошибка подтверждения') 
 			return view.err('', 301)
 		}
-		view.headers['Location'] += '&result=1&heading=' + encodeURIComponent('Адрес подтверждён') 
+		view.headers['Location'] += '&result=1&alert=' + encodeURIComponent('Адрес подтверждён') 
 		return view.ret('', 301)
 	}
 	const newuser = await User.getUserByToken(view, token)
@@ -99,10 +99,10 @@ rest.addAction('set-signin-token', async (view, src) => {
 	const redirect = (msg, result) => {
 		view.headers['Location'] = User.link + '?alert=' + encodeURIComponent(msg) 
 		if (!result) {
-			view.headers['Location'] += '&heading=' + encodeURIComponent('Вход не выполнен') 
+			view.headers['Location'] += '&alert=' + encodeURIComponent('Вход не выполнен') 
 			return view.err('', 301)
 		}
-		view.headers['Location'] += '&result=1&heading=' + encodeURIComponent('Вход выполнен') 
+		view.headers['Location'] += '&result=1&alert=' + encodeURIComponent('Вход выполнен') 
 		return view.ret('', 301)
 	}
 	const newuser = await User.getUserByToken(view, token)
