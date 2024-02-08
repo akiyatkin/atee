@@ -319,18 +319,22 @@ field.switch = ({name, action, value, values, args = {}}) => {
 }
 field.prompt = ({
 		ok = 'ОК', unit = '', recaptcha = false, label = 'Укажите ваш Email', descr,
+		cls = '',
+		layer = false,
 		input,
 		value = '', name = 'email', type = 'email', action, args = {}, go, reloaddiv, goid, reload
 	}) => {
 	return `
 		<span>
-			<button class="field">${value}${unit}</button>
+			<button class="field ${cls}">${value}${unit}</button>
 			<script>
 				(btn => {
 					btn.addEventListener('click', async () => {
 						const Prompt = await import('/-prompt/Prompt.js').then(r => r.default)
+						const layer = ${JSON.stringify(layer)}
 						Prompt.open({
 							type:'${type}',
+							layer,
 							descr: '${descr || ''}',
 							value: '${input ?? value}',
 							name:'${name}',

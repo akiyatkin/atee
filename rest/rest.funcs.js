@@ -16,7 +16,7 @@ rest.addFunction('required', async (view, value, pname) => {
 })
 
 rest.addFunction('unsigned', async (view, value, pname) => {
-	if (value && value < 0) return view.err('Принимаются только положительные значения' + pname, 422)	
+	if (value && value < 0) return view.err('Принимаются только положительные значения ' + pname, 422)	
 	return value
 })
 
