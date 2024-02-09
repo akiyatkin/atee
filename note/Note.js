@@ -344,6 +344,7 @@ const Note = {
 							}
 							Note.changeHTML(note, change)
 						}
+						note.wrap.dispatchEvent(new CustomEvent("note-change", { bubbles: false, detail: change }))
 						//const data = JSON.stringify({signal:{type:'base', base:note.rev}})
 						//socket.send(data)
 					}

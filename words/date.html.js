@@ -15,6 +15,17 @@ date.dmyhi = (time) => {
 	if (!time) return ''
 	return intlhi.format(time * 1000)
 }
+
+const intldm = new Intl.DateTimeFormat("ru-RU", {
+ 	month: "long",
+	day: "numeric"
+})
+
+date.dm = (time) => {
+	if (!time) return ''
+	return intldm.format(time * 1000)
+}
+
 date.input = (time) => {
 	const now = time ? new Date(time * 1000) : new Date()
 	const day = ("0" + now.getDate()).slice(-2)

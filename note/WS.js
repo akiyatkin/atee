@@ -146,6 +146,10 @@ WS.setChange = (state, note, change) => {
 	change.cursor.hue = state.hue
 	WS.sendToEveryone(state.ws, note, {change})
 	//console.log('change', change.base, 'rev', change.rev, 'hangchanges', state.hangchanges.length)
+	WS.setUpdate(state, note, change)
+	
+}
+WS.setUpdate = (state, note, change) => {
 	WS.setSearch(note)
 	if (change.start < 255) WS.setTitle(state.ws, note)
 }
@@ -156,19 +160,22 @@ WS.setSearch = (note) => {
 	search_timer = true
 	setTimeout(() => {
 		search_timer = false
-		const db = note.db
-		const note_id = note.note_id
-
-		let search = nicked(note.text)
-		search = search.split('-')
-		search = unique(search).sort().join(' ')
-		search = ' ' + search //Поиск выполняется по началу ключа с пробелом '% key%'
-		db.exec(`
-			UPDATE note_notes
-			SET search = :search
-			WHERE note_id = :note_id
-		`, {note_id, search})
+		WS.writeSearch(note)
 	}, 10000) //индексируем с задержкой
+}
+WS.writeSearch = (note) => {
+	const db = note.db
+	const note_id = note.note_id
+
+	let search = nicked(note.text)
+	search = search.split('-')
+	search = unique(search).sort().join(' ')
+	search = ' ' + search //Поиск выполняется по началу ключа с пробелом '% key%'
+	db.exec(`
+		UPDATE note_notes
+		SET search = :search
+		WHERE note_id = :note_id
+	`, {note_id, search})
 }
 WS.setTitle = (ws, note) => {
 	const db = note.db
