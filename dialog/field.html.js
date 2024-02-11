@@ -350,7 +350,8 @@ field.prompt = ({
 									args["g-recaptcha-response"] = token
 								}
 								const ans = await senditmsg(btn, '${action}', args)
-								if (ans.result && ans['${name}']) btn.innerHTML = ans['${name}'] + '${unit}'
+								if (ans.result && (ans['${name}'] || ans['${name}'] == 0)) btn.innerHTML = ans['${name}'] + '${unit}'
+
 								if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 								const Client = await window.getClient()
 								const goid = "${goid ? goid : ''}"
@@ -422,7 +423,7 @@ field.button = ({label, name, cls = '', action, args = {}, go, reloaddiv, goid, 
 						const args = ${JSON.stringify(args)}
 						const ans = await senditmsg(btn, '${action}', args)
 						
-						if (ans.result && ans['${name}']) btn.innerHTML = ans['${name}']
+						if (ans.result && (ans['${name}'] || ans['${name}'] == 0)) btn.innerHTML = ans['${name}']
 
 						if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 						const Client = await window.getClient()
