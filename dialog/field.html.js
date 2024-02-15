@@ -377,7 +377,7 @@ field.search = ({label = 'Поиск', descr, value, name = 'name', search, find
 			<script>
 				(btn => {
 					btn.addEventListener('click', async () => {
-						const Search = await import('/-search/Search.js').then(r => r.default)
+						const Search = await import('/-dialog/search/Search.js').then(r => r.default)
 						let descr = '${descr || ''}'
 						const ask = "${confirm || ''}"
 						if (ask && !window.confirm(ask)) return
@@ -392,7 +392,7 @@ field.search = ({label = 'Поиск', descr, value, name = 'name', search, find
 								args['${name}'] = row['${find}']
 								args['search'] = need.value
 								const ans = await senditmsg(btn, '${action}', args)
-								if (ans.result && ans['${name}']) btn.innerHTML = ans['${name}']
+								if (ans.result && (ans['${name}'] || ans['${name}'] == 0)) btn.innerHTML = ans['${name}']
 								if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 								const Client = await window.getClient()
 								const goid = "${goid ? goid : ''}"

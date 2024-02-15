@@ -263,7 +263,9 @@ WS.connection = (ws, request) => {
 		WS.sendSignal(ws, note, 'reset', {text: note.text, rev: note.rev})
 	}
 }
-WS.isAccept = (note, state) => {}
+WS.isAccept = (note, state) => {
+	return false
+}
 WS.checkReject = async (note, state) => {
 	const db = note.db
 	if (state.access_check_timer) return true

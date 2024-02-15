@@ -114,7 +114,7 @@ export class View {
 	status = 200
 	ext = 'json'
 	headers = {}
-	proc = []
+	proc = {}
 	store = {}
 	setCookie (name, value) {
 		const view = this
@@ -365,7 +365,7 @@ export class Rest {
 		this.afterlisteners.push(callback)
 	}
 
-	list = []
+	list = {}
 	extras = []
 	constructor (...extras) {
 		this.extras = []
@@ -414,7 +414,7 @@ export class Rest {
 		}
 	}
 	findopt (pname) {
-		if (this.list[pname]) return this.list[pname]
+		if (Object.hasOwn(this.list, pname)) return this.list[pname]
 		for (const m of this.extras) {
 			const opt = m.findopt(pname)
 			if (opt) return opt

@@ -210,12 +210,14 @@ rest.addResponse('get-note-check', async view => {
 
 
 rest.addResponse('get-note', async (view) => {
-	const note = await view.get('note#area')
+	
 	const user = await view.get('user')
-	if (!note) return view.err('Заметка не найден')
 	const db = await view.get('db')
-	//view.ans.note2 = await NoteDB.getNoteArea(db, 71, user)
+
+	const note = await view.get('note#area')
 	view.ans.note = note
+	if (!note) return view.err('Заметка не найден')
+	
  	return view.ret()
 })
 

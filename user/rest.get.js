@@ -7,13 +7,12 @@ const rest = new Rest(rest_db, rest_user)
 export default rest
 
 rest.addResponse('get-user', async view => {
-	const { user } = await view.gets(['user'])
-	view.ans.user = user
+	const user = view.ans.user = await view.get('user')
 	return view.ret()
 })
 rest.addResponse('get-settings', async view => {
 	await view.get('admin')
-	const { db } = await view.gets(['db'])
+	const db = await view.get('db')
 	const tables = [
 		'user_users',	
 		'user_uemails', 

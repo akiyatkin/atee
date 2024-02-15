@@ -46,6 +46,21 @@ const User = {
 		const newuser = await User.getUserById(db, new_id)
 		return newuser
 	},
+	sendSub: async (sub, data) => {
+		if (!data.vars?.host) return false
+		if (!data.user_id || !data.user) return false
+		const user_id = data.user_id || data.user.user_id
+		let email = data.email
+		if (!email) return false
+		const tpl = await import('/-user/mail.html.js').then(res => res.default)
+		if (!tpl[sub]) return false
+		if (!tpl[sub + '_subject']) false
+		const subject = tpl[sub + '_subject'](data)
+		const html = tpl[sub](data)
+		const r = await Mail.toUser(subject, html, email)
+		if (!r) return false
+		return true
+	},
 	sendEmail: async (view, sub, data) => {
 		if (!data.user_id && !data.user) return view.err('Не указан пользователь', 500)
 		const user_id = data.user_id || data.user.user_id
@@ -59,7 +74,7 @@ const User = {
 			if (!emails.length) return view.err('Не найден адрес для отправки письма', 500)
 			email = emails.join(',')
 		}
-		if (!data.user && data.user_id) data.user = await User.getUserById(view, data.user_id)
+		if (!data.user && data.user_id) data.user = await User.getUserById(db, data.user_id)
 		
 
 		const tpl = await import('/-user/mail.html.js').then(res => res.default)
@@ -150,11 +165,12 @@ const User = {
 	sendin: (view, user) => {
 		return User.sendEmail(view, 'sendin', {user})
 	},
-	signup: (view, user_id, email) => { //depricated
-		return User.sendup(view, user_id, email)
-	},
-	sendup: async (view, user_id, email) => {
+	signup: async (view, user_id, email) => { //depricated
+		const host = await view.get('host')
 		const db = await view.get('db')
+		return User.sendup(db, user_id, email, host)
+	},
+	sendup: async (db, user_id, email, host) => {
 		await db.affectedRows(`
 			UPDATE
 				user_uemails
@@ -186,7 +202,11 @@ const User = {
 			WHERE
 				user_id = :user_id
 		`, {user_id})
-		return await User.sendEmail(view, 'sendup', {user_id, email, code_verify})
+
+		const data = {user_id, email, code_verify}
+		data.vars = {host}
+		data.user = await User.getUserById(db, data.user_id)
+		return await User.sendSub('sendup', data)
 	},
 	addPhone: async (db, user_id, phone) => {
 		await db.affectedRows(`

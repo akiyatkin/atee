@@ -1,8 +1,8 @@
 import Rest from "/-rest"
-import funcs from '/-rest/rest.funcs.js'
+import rest_funcs from '/-rest/rest.funcs.js'
 import config from '/-config'
 import UTM from '/-form/UTM.js'
-const rest = new Rest(funcs)
+const rest = new Rest(rest_funcs)
 import Mail from '/-mail'
 
 rest.addArgument('g-recaptcha-response')
@@ -36,7 +36,7 @@ rest.addFunction('toemail#required', ['toemail'], (view, email) => {
 })
 
 rest.addArgument('email', ['toemail'])
-rest.addVariable('email#required', (view) => view.get('email'), ['toemail#required'])
+rest.addVariable('email#required', ['email','required'])
 
 rest.addArgument('phone', ['string'], (view, phone) => {
 	if (!phone) return phone
