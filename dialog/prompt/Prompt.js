@@ -2,10 +2,10 @@ import nicked from "/-nicked"
 import createPromise from "/-controller/createPromise.js"
 import Dialog from "/-dialog/Dialog.js"
 
-const link = document.createElement('link')
-link.rel = 'stylesheet'
-link.href = '/-search/search.css'
-document.head.prepend(link)
+// const link = document.createElement('link')
+// link.rel = 'stylesheet'
+// link.href = '/-dialog/search/search.css'
+// document.head.prepend(link)
 
 const cls = (div, cls) => div.getElementsByClassName(cls)
 const tag = (div, tag) => div.getElementsByTagName(tag)
@@ -14,7 +14,7 @@ const Prompt = {
 	open: async conf => {
 		const popup = await Dialog.open({
 			conf,
-			tpl:"/-prompt/prompt.html.js",
+			tpl:"/-dialog/prompt/prompt.html.js",
 			sub:"POPUP"
 		})
 		if (conf.layer) {

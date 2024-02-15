@@ -330,7 +330,7 @@ field.prompt = ({
 			<script>
 				(btn => {
 					btn.addEventListener('click', async () => {
-						const Prompt = await import('/-prompt/Prompt.js').then(r => r.default)
+						const Prompt = await import('/-dialog/prompt/Prompt.js').then(r => r.default)
 						const layer = ${JSON.stringify(layer)}
 						Prompt.open({
 							type:'${type}',

@@ -4,7 +4,7 @@ import Dialog from "/-dialog/Dialog.js"
 
 const link = document.createElement('link')
 link.rel = 'stylesheet'
-link.href = '/-search/search.css'
+link.href = '/-dialog/search/search.css'
 document.head.prepend(link)
 
 const cls = (div, cls) => div.getElementsByClassName(cls)
@@ -14,7 +14,7 @@ export const Search = {
 	open: async conf => {
 		const popup = await Dialog.open({
 			conf,
-			tpl:"/-search/search.html.js",
+			tpl:"/-dialog/search/search.html.js",
 			sub:"POPUP"
 		})
 		const form = popup.getElementsByTagName('form')[0]
@@ -36,7 +36,7 @@ export const Search = {
 	getMenu: async form => {
 		let div = cls(form, 'searchmenu')[0]
 		if (div) return div
-		const tplobj = await import('/-search/search.html.js')
+		const tplobj = await import('/-dialog/search/search.html.js')
 		const html = tplobj.MENU()
 		form.classList.add('searchform')
 		form.insertAdjacentHTML('beforeEnd', html)
@@ -106,7 +106,7 @@ export const Search = {
 	 	const body = cls(menu, 'searchbody')[0]
 	 	body.classList.remove('mute')
 	 	const state = Search.getState(form)
-		const tplobj = await import('/-search/search.html.js')
+		const tplobj = await import('/-dialog/search/search.html.js')
 
 		if (!ans.list.length) {
 			title.innerHTML = tplobj.TITLEBODY({ ...need, ans })
@@ -151,7 +151,7 @@ export const Search = {
 				state.partner = need.partner
 				body.classList.add('mute')
 				Search.fetch(form, need)
-				const tplobj = await import('/-search/search.html.js')
+				const tplobj = await import('/-dialog/search/search.html.js')
 				title.innerHTML = tplobj.TITLE(need)
 				
 			}
