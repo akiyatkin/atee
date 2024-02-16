@@ -123,7 +123,12 @@ ${escapeText(note.text)}</textarea>
 				
 				note.inputpromise.then(Note => Note.open(note))
 				if (note.ismy == 'view') return
+				
+				//window.addEventListener('crossing', () => {
+				//	console.log('curret focus')
 				note.area.focus()
+				//}, {once: true})
+				
 
 				note.area.addEventListener('keydown', async e => {
 					if (~[HOME, END].indexOf(e.keyCode)) { //input ради preventDefault стандартного действия, нет input

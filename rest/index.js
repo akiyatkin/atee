@@ -555,7 +555,11 @@ export class Rest {
 		} else {
 			before = a1
 		}
-		if (after === true) replace = true
+		if (after === true) {
+			after = null
+			replace = true
+		}
+
 
 		
 		const opt = this.findopt(pname)

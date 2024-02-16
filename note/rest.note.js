@@ -56,6 +56,8 @@ rest.addVariable('note#area', ['note', 'area'])
 rest.addVariable('note#area#required', ['note', 'area', 'required'])
 
 
+rest.addArgument('id', ['int#required'])
+rest.addArgument('next_id', ['int'])
 
 rest.addArgument('note_id', ['int','unsigned'])
 rest.addVariable('note_id#accept', ['note_id','accept'])

@@ -1,7 +1,7 @@
 import User from "/-user/User.js"
 import config from "/-config"
 import Rest from "/-rest"
-const rest = new Rest(rest_db)
+const rest = new Rest()
 import rest_db from "/-db/rest.db.js"
 rest.extra(rest_db)
 import rest_user from "/-user/rest.user.js"

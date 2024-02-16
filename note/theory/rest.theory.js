@@ -15,8 +15,7 @@ rest.addArgument('search', ['nicked'], (view, search) => {
 	return search
 })
 rest.addArgument('note_id', ['int#required'])
-rest.addArgument('id', ['int#required'])
-rest.addArgument('next_id', ['int'])
+
 
 rest.addArgument('page', async (view, name) => {
 	const conf = await config('notelic')

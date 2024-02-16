@@ -44,7 +44,7 @@ tpl.BUTTON = (data, env) => data.user?.manager ? `
 	<div style="position: relative;">
 		<p style="position: absolute; right:0; z-index: 1">
 			<a href="/theory/all">Открыть всё</a>
-			${field.button({label:"Cоздать", action:"/-theory/set-note-create", go:"/note/", goid:"note_id"})}
+			${field.button({label:"Cоздать", action:"/-note/theory/set-note-create", go:"/note/", goid:"note_id"})}
 		</p>
 	</div>
 ` : ''
@@ -80,8 +80,8 @@ tpl.showList = (data, env) => `
 			const send = await import('/-dialog/send.js').then(r => r.default)
 			const ans = await send('/-user/get-user')
 			if (!ans.user?.manager) return
-			const Drag = await import('/-theory/Drag.js').then(r => r.default)
-			Drag.make(div, '/-theory/set-note-ordain')
+			const Drag = await import('/-note/theory/Drag.js').then(r => r.default)
+			Drag.make(div, '/-note/theory/set-note-ordain')
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
@@ -105,7 +105,7 @@ tpl.CONTROL = (data, env) => {
 				${
 					field.button({
 						label:"Удалить", 
-						action:"/-theory/set-note-delete?note_id=" + data.note.note_id, 
+						action:"/-note/theory/set-note-delete?note_id=" + data.note.note_id, 
 						go:'/theory', 
 						confirm:'Вы точно хотите удалить запись?'
 					})
@@ -115,7 +115,7 @@ tpl.CONTROL = (data, env) => {
 				${
 					field.switch({
 						name:'published', 
-						action:'/-theory/set-switch-published?note_id=' + data.note.note_id, 
+						action:'/-note/theory/set-switch-published?note_id=' + data.note.note_id, 
 						value: data.note.published, 
 						values: {'': 'Не опубликовано','1':'Опубликовано'}
 					})
