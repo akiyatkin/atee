@@ -91,6 +91,7 @@ NoteDB.create = (db, user_id, text = '') => {
 // 	note.text = splice(note.text, title_index, 0, '\n' + insert)
 // 	WS.setSearch(note)
 // }
+
 NoteDB.deleteUser = async (db, user_id) => {
 	//Нельзя удалять пользователя у которого есть ноты? Но ноты о правах ничего не знают
 	await db.exec('UPDATE note_history SET editor_id = null WHERE editor_id = :user_id', {user_id})

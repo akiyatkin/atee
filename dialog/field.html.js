@@ -409,7 +409,7 @@ field.search = ({label = 'Поиск', descr, value, name = 'name', search, find
 	`
 }
 //approved
-field.button = ({label, name, cls = '', action, args = {}, go, reloaddiv, goid, confirm, reload}) => {
+field.button = ({label, name = '', cls = '', action, args = {}, go = '', reloaddiv = '', goid = '', confirm, reload}) => {
 	return `
 		<span>
 			<button class="field ${cls}">${label}</button>
@@ -422,15 +422,15 @@ field.button = ({label, name, cls = '', action, args = {}, go, reloaddiv, goid, 
 						const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 						const args = ${JSON.stringify(args)}
 						const ans = await senditmsg(btn, '${action}', args)
-						
-						if (ans.result && (ans['${name}'] || ans['${name}'] == 0)) btn.innerHTML = ans['${name}']
 
 						if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 						const Client = await window.getClient()
-						const goid = "${goid ? goid : ''}"
-						if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
-						if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
-						if (ans.result && ${!!reload}) Client.reload()
+						
+						if (!ans.result) return
+						if (${!!name} && (ans["${name}"] || ans["${name}"] == 0)) btn.innerHTML = ans["${name}"]
+						if (${!!reloaddiv}) Client.reloaddiv("${reloaddiv}")
+						if (${!!go}) Client.go("${go}" + ("${goid}" ? ans["${goid}"] : ''))
+						if (${!!reload}) Client.reload()
 					})
 				})(document.currentScript.previousElementSibling)
 			</script>
