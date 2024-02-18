@@ -99,6 +99,7 @@ ${escapeText(note.text)}</textarea>
 					Note.send(note, {signal:{type:'blur', base:note.rev}})
 				})
 
+
 				note.area.addEventListener('select', async e => {
 					if (note.inputpromise.start) return
 					const Note = await note.inputpromise
@@ -126,7 +127,7 @@ ${escapeText(note.text)}</textarea>
 				
 				//window.addEventListener('crossing', () => {
 				//	console.log('curret focus')
-				note.area.focus()
+				//note.area.focus()
 				//}, {once: true})
 				
 

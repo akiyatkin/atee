@@ -38,7 +38,7 @@ tpl.ROOT = (data, env) => `
 		})(document.currentScript.previousElementSibling)
 	</script>
 	<div id="BUTTON"></div>
-	<div id="LIST" style="margin-top:2rem; display: grid; gap: 0.5rem"></div>
+	<div id="LIST" style="margin-top:2rem; margin-bottom: 2rem; display: grid; gap: 0.5rem"></div>
 `
 tpl.BUTTON = (data, env) => data.user?.manager ? `
 	<div style="position: relative;">
@@ -161,7 +161,7 @@ tpl.PAGE = (data, env) => (data.result ? `
 `) 
 
 + `
-	<div id="CONTROL"></div>
+	<div style="margin-bottom:2rem" id="CONTROL"></div>
 `
 tpl.showLink = (note) => note ? `
 	<a href="/theory/note/${note.note_id}-${note.nick}">${note.title || 'Пустая запись'}</a>
