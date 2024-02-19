@@ -123,7 +123,7 @@ tpl.CONTROL = (data, env) => {
 
 
 
-				<a href="/note/${env.crumb.name.split('-').shift()}">Изменить</a>
+				<a target="about:blank" href="/note/${env.crumb.name.split('-').shift()}">Изменить</a>
 			</p>
 		` 
 	} else {

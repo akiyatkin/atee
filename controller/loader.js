@@ -12,7 +12,8 @@ const checkfromroot = async (path, context, defaultResolve) => {
 export const resolve = async (specifier, context, defaultResolve) => {
 	const key = specifier[0] === '/' ? specifier : specifier + context.parentURL //conditions, importAssertions не могут различваться у одного parentURL и specifier
 	if (resolve.cache[key]) return resolve.cache[key]
-	const res = await (async () => {
+
+	const res = (async () => {
 		let res
 		if (specifier[0] === '/') {
 			specifier = specifier.slice(1)
@@ -29,12 +30,15 @@ export const resolve = async (specifier, context, defaultResolve) => {
 
 			}
 		}
+		const r = await defaultResolve(specifier, context, defaultResolve) //Проверка относительного адреса
 		
-		return defaultResolve(specifier, context, defaultResolve) //Проверка относительного адреса
-	})().catch(e => {
+		return r
+	})().then(res => {
+		res.shortCircuit = true
+		return res
+	}).catch(e => {
 		throw e
 	})
-	res.shortCircuit = true
 	resolve.cache[key] = res
 	return res
 }

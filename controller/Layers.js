@@ -105,14 +105,11 @@ export default class Layers {
 	}
 	static getParsedIndex(rule, timings, bread, interpolate, theme) {
 		const {index, status, depth} = Layers.getIndex(rule, bread)
-
+		if (!index) return []
 		if (index.checktpl) {
 			const crumb = bread.getCrumb(depth)
 			index.check = interpolate(index.checktpl, timings, {}, bread, crumb, theme)
 		}
-		
-		
-		if (!index) return []
 		Layers.runByRootLayer(index.root, layer => {
 			const crumb = bread.getCrumb(layer.depth)
 			const {ts, tsf} = layer

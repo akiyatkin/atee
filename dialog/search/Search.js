@@ -119,8 +119,8 @@ export const Search = {
 		let i = 0
 		for (const btn of body.getElementsByTagName('button')) {
 			const index = i++
-			btn.addEventListener('click', () => {
-				const r = state.click(ans.list[index], need)
+			btn.addEventListener('click', async () => {
+				const r = await state.click(ans.list[index], need)
 				if (r === null || r) Dialog.hide()
 			})
 		}

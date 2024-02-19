@@ -68,8 +68,10 @@ CONT_DIRECTS.sort(fnsort)
 
 const webresolve = async search => {
 	const href = pathToFileURL('./').href
-	const src = await import.meta.resolve(search, href)
-	return fileURLToPath(src)
+	let src = await import.meta.resolve(search, href)
+	if (src) src = fileURLToPath(src)
+	if (src) await fs.access(src)
+	return src
 }
 
 // const webresolve = async search => {
@@ -156,7 +158,11 @@ const getSrcName = (str) => {
 	return ~i && !name ? '' : name
 }
 const getExt = (str) => {
+	const c1 = str.lastIndexOf('/')
+	const c2 = str.lastIndexOf('\\')
+	const c = Math.max(c1, c2)
 	const i = str.lastIndexOf('.')
+	if (c > i) return ''
 	return ~i ? str.slice(i + 1) : ''
 }
 
@@ -185,7 +191,9 @@ export const router = async (search, debug) => {
 	let cont = false
 
 	//if (ext) {
+	
 	const src = await webresolve('/' + path).catch(e => false)
+
 	const name = src ? getSrcName(src) : ''
 
 	if (src && name) { //найден файл

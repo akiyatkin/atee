@@ -2,8 +2,10 @@ import fs from 'fs/promises'
 import { pathToFileURL, fileURLToPath } from 'url'
 const webresolve = async search => {
 	const href = pathToFileURL('./').href
-	const src = await import.meta.resolve(search, href)
-	return fileURLToPath(src)
+	let src = await import.meta.resolve(search, href)
+	if (src) src = fileURLToPath(src)
+	if (src) await fs.access(src)
+	return src
 }
 const searchJSON = async src => JSON.parse(await fs.readFile(await webresolve(src)))
 const importJSON = src => import(src, {assert:{type:'json'}}).then(e => e.default)
