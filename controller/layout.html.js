@@ -8,7 +8,9 @@ controller.HEAD = (data, env) =>
 		<script>//Делаем SPA переходы
 			const isSuitable = a => {
 				const search = a.getAttribute('href')
-				if (!search || search[1] == '-') return
+				const it = search.indexOf('.')
+				const is = search.indexOf('/')
+				if (!search || search[1] == '-' || it > is) return
 				if (a.getAttribute('target')) return
 				if (/^\\w+:/.test(search)) return
 				return true
