@@ -10,8 +10,7 @@ table {
     max-width: fit-content;
 }
 
-th, 
-td {
+th, td {
 	padding: 0.6em 1em;
 	text-align: left;
 	border-bottom: 1px solid #ddd;
