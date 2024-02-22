@@ -5,7 +5,7 @@
 	scroll-behavior: smooth;
 	/*scroll-snap-type: x proximity;*/
 	/*scroll-snap-type: x mandatory;*/
-	scrollbar-width: thin;
+/*	scrollbar-width: thin;*/
 }
 .sliderNeo::-webkit-scrollbar {
 	height: 2px;

@@ -81,7 +81,7 @@ WS.saveCursor = (db, note_id, cursor, my, ischange) => {
 	
 }
 const splice = (text, start, size, chunk) => text.slice(0, start) + chunk + text.slice(start + size)
-const clearText = (text) => text.replace(/<(.|\n)*?>/g, '')
+const clearText = (text) => text.replace(/<(.|\n)*?>/g, '').replace('<','').replace('>','')
 WS.saveHistory = (note) => {
 	note.db.exec(`
 		INSERT INTO note_history (note_id, date_edit, editor_id, text, title, rev, length, search)
