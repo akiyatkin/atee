@@ -298,7 +298,7 @@ field.radio = ({name, action = '', value = '', values}) => `
 	</div>
 `
 //approved
-field.switch = ({name, action, value, values, args = {}}) => {
+field.switch = ({name, reloaddiv, go, goid, reload, action, value, values, args = {}}) => {
 	return `
 	<span>
 		<button class="a field" style="display: inline-block; cursor:pointer;">${values[value || ""]}</button>
@@ -308,10 +308,20 @@ field.switch = ({name, action, value, values, args = {}}) => {
 					const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 					const args = ${JSON.stringify(args)}
 					const ans = await senditmsg(btn, '${action}', args)
+					
 					const status = ans['${name}']
+					if (!ans.result) return 
+
 					const values = ${JSON.stringify(values)}
-					if (ans.result && values[status || '']) btn.innerHTML = values[status || '']
-					if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+					if (values[status || '']) btn.innerHTML = values[status || '']
+					
+					btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+					const Client = await window.getClient()
+
+					if (${!!reloaddiv}) Client.reloaddiv("${reloaddiv}")
+					if (${!!go}) Client.go("${go}" + ("${goid}" ? ans["${goid}"] : ''))
+					if (${!!reload}) Client.reload()
+
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>
@@ -423,10 +433,9 @@ field.button = ({label, name = '', cls = '', action, args = {}, go = '', reloadd
 						const args = ${JSON.stringify(args)}
 						const ans = await senditmsg(btn, '${action}', args)
 
-						if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+						if (!ans.result) return 
+						btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 						const Client = await window.getClient()
-						
-						if (!ans.result) return
 						if (${!!name} && (ans["${name}"] || ans["${name}"] == 0)) btn.innerHTML = ans["${name}"]
 						if (${!!reloaddiv}) Client.reloaddiv("${reloaddiv}")
 						if (${!!go}) Client.go("${go}" + ("${goid}" ? ans["${goid}"] : ''))

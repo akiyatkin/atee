@@ -31,7 +31,7 @@ export const TITLE = data => `
 	<i>${data.query}...</i>
 `
 export const TITLEBODY = data => data.ans.result ? `
-	${data.query ? pquery(data) : ''} ${data.ans.count} ${words(data.ans.count, 'запись','записи','записей')}
+	${data.query ? pquery(data) : ''} ${data.ans.count || 0} ${words(data.ans.count || 0, 'запись','записи','записей')}
 ` : 'Ошибка на сервере'
 const countmodels = (count) => ``
 

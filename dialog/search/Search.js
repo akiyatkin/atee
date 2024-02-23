@@ -119,14 +119,21 @@ export const Search = {
 		let i = 0
 		for (const btn of body.getElementsByTagName('button')) {
 			const index = i++
-			btn.addEventListener('click', async () => {
+			btn.addEventListener('click', async (e) => {
+				if (!e.pointerType) {
+					if (!need.hash) {
+						return e.preventDefault() //Enter в input генерирует click по ближайшей кнопке
+					}
+					
+				}
+				e.preventDefault()
 				const r = await state.click(ans.list[index], need)
 				if (r === null || r) Dialog.hide()
 			})
 		}
 	},
 	getNeed: async input => {
-		const { default:getNeed } = await import('/-nicked/getNeed.js')
+		const getNeed = await import('/-nicked/getNeed.js').then(r => r.default)
 		const need = getNeed(input)
 		const Theme = await import('/-controller/Theme.js').then(r => r.default)
 		const theme = Theme.get()
@@ -134,6 +141,7 @@ export const Search = {
 		return need
 	},
 	init: (form, click) => {
+
 		const state = Search.getState(form)
 		state.click = click
 		const input = form.elements.search
@@ -157,8 +165,22 @@ export const Search = {
 			}
 		}
 
-		form.addEventListener('submit', e => {
-			return e.preventDefault()
+		form.addEventListener('submit', async e => {
+			e.preventDefault()
+			//if (e.pointerType) return
+			//Enter в input из-за проверки pointerType не кликает по кнопке
+
+			// const ans = await Search.fetch_promise
+			// const need = await Search.getNeed(input)
+			// console.log('asdf', ans, need)
+			// if (ans && need.hash) {
+			// 	const r = await state.click(ans.list[0], need)
+			// 	if (r === null || r) Dialog.hide()
+			// } else {
+			// 	//чтобы нажался Enter надо что-то напечатать
+			// 	//const r = await state.click({}, need)
+			// 	//if (r === null || r) Dialog.hide()
+			// }
 		})
 
 		if (document.activeElement == input) searchfrominput()
@@ -166,6 +188,7 @@ export const Search = {
 			//if (!input.value) return
 			searchfrominput()
 		})
+
 		//input.addEventListener('click', searchfrominput)
 		input.addEventListener('input', searchfrominput)
 		const getPath = el => {
@@ -175,12 +198,14 @@ export const Search = {
 			}
 			return path
 		}
+
 		document.body.addEventListener('keydown', async e => {
 			if (e.which != 27) return //ESC
 			if (!form.closest('body')) return
 			const menu = await Search.getMenu(form)
 			menu.classList.remove('show') //Скрываем меню
 		})
+
 		document.body.addEventListener('keyup', async e => {
 			if (e.which != 9) return //TAB
 			if (!form.closest('body')) return
