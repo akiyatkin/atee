@@ -14,5 +14,6 @@ export default cls => {
 	script.addEventListener('load', resolve)
 	script.addEventListener('error', reject)
 	script.src = script.dataset.src
+	delete script.dataset.src
 	return script.load
 }

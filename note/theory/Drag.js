@@ -1,6 +1,6 @@
 const Drag = {}
 
-Drag.make = (div, actionsave) => {
+Drag.make = (div, actionsave, callback) => {
 	let activeElement
 	let nextElement = false
 	div.addEventListener('dragstart', (event) => {
@@ -24,12 +24,14 @@ Drag.make = (div, actionsave) => {
 		const next_id = nextElement === null ? 0 : nextElement.dataset.id
 		nextElement = false
 		if (!actionsave) return
+		let ans
 		if (typeof actionsave == 'function') {
-			actionsave({id, next_id})
+			ans = await actionsave({id, next_id})
 		} else {
 			const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-			const ans = await senditmsg(div, actionsave, {id, next_id})	
+			ans = await senditmsg(div, actionsave, {id, next_id})	
 		}
+		if (callback) callback(ans)
 	})
 	div.addEventListener('dragover', (event) => {
 		if (!activeElement) return

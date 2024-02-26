@@ -11,7 +11,7 @@ rest.addFunction('0', (view, v) => v || 0)
 
 
 rest.addFunction('required', async (view, value, pname) => {
-	if (value == null || value == '') return view.err('Требуется ' + pname, 422)
+	if (value == null || value == '') return view.err('Требуется ' + pname.split('#')[0], 422)
 	return value
 })
 
