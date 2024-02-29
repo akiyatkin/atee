@@ -8,22 +8,23 @@ rest.addFunction('string', (view, n) => n != null ? String(n) : '')
 rest.addFunction('checkbox', (view, n) => !!n)
 rest.addFunction('isset', (view, v) => v !== null)
 rest.addFunction('0', (view, v) => v || 0)
+rest.addFunction('null', (view, v) => v === '' ? null : v)
 
 
 rest.addFunction('required', async (view, value, pname) => {
-	if (value == null || value == '') return view.err('Требуется ' + pname.split('#')[0], 422)
+	if (value === null || value === '') return view.err('Требуется ' + pname.split('#')[0], 422)
 	return value
 })
 
 rest.addFunction('unsigned', async (view, value, pname) => {
-	if (value && value < 0) return view.err('Принимаются только положительные значения ' + pname, 422)	
+	if (value && value < 0) return view.err('Принимаются только положительные значения ' + pname.split('#')[0], 422)	
 	return value
 })
 
 
 
 rest.addFunction('int', (view, n, pname) => {
-	if (!n) return n //'0' - true
+	if (!n) return n //'0' - true, '' = null
 	n = Number(n)
 	if (isNaN(n)) return view.err('Некорректное число ' + pname)
 	else return n

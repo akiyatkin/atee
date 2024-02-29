@@ -19,12 +19,9 @@ field.images = ({name = 'file', file_id_name = 'file_id', action, files, remove}
 					let promise = Promise.resolve()
 					const upload = async (file) => {
 						//return new Promise(resolve => setTimeout(() => resolve({src:"/data/files/org_id/graph_id/audit_id/item_nick/02.png", file_id:777}), 1000))
-						const formData = new FormData()
-						formData.append('${name}', file)
-						const ans = await fetch("${action}", {
-							method: "POST",
-							body: formData
-						}).then(r => r.json())
+						const body = new FormData()
+						body.append('${name}', file)
+						const ans = await fetch("${action}", {method: "POST", body}).then(r => r.json())
 						if (ans.msg) {
 							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 							Dialog.alert(ans.msg)
