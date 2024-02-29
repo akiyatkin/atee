@@ -25,6 +25,7 @@
 		"mp4":"video/mp4",
 		"map":"application/javascript",
 		"zip":"application/zip",
+		"rar":"application/vnd.rar",
 		"tpl":"text/plain",
 		"txt": "text/plain",
 		"json": "application/json",

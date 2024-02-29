@@ -7,6 +7,7 @@ import Mail from '/-mail'
 
 rest.addArgument('g-recaptcha-response')
 rest.addVariable('recaptcha', async (view) => {
+	view.nostore = true
 	const gresponse = await view.get('g-recaptcha-response')
 	const visitor = await view.get('visitor')
 	const ip = visitor.client.ip
