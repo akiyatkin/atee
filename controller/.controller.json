@@ -26,6 +26,7 @@
 		"map":"application/javascript",
 		"zip":"application/zip",
 		"rar":"application/vnd.rar",
+		"7z": "application/x-7z-compressed",
 		"tpl":"text/plain",
 		"txt": "text/plain",
 		"json": "application/json",

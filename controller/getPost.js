@@ -37,14 +37,14 @@ export const getPost = (request) => {
 				info.result = false
 				if (!~conf.busboy.types.indexOf(info.mimeType)){
 					file.resume()
-					info.msg = 'getPost ERROR: Invalid file format'
+					info.msg = 'getPost ERROR: Invalid file format ' + info.mimeType
 					console.log(info.msg)
 					return
 				}
 				
 				if (!conf.types[info.ext]) {
 					file.resume()
-					info.msg = 'getPost ERROR: Invalid file extension'
+					info.msg = 'getPost ERROR: Invalid file extension ' + info.ext
 					console.log(info.msg)
 					return
 				}
