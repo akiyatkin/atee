@@ -12,6 +12,10 @@ const busboy = require('busboy')
 const timer = Math.round(Date.now() / 1000)
 let count = 0
 
+const getExt = (str) => {
+    const i = str.lastIndexOf('.')
+    return ~i ? str.slice(i + 1) : ''
+}
 
 
 export const getPost = (request) => {
@@ -26,31 +30,35 @@ export const getPost = (request) => {
 				limits : conf.busboy.limits
 			})
 			bb.on('file', (name, file, info) => {
+				if (!info.filename) return file.resume()
+
+				formData[name] = info
+				info.ext = getExt(info.filename)
+				info.result = false
 				if (!~conf.busboy.types.indexOf(info.mimeType)){
 					file.resume()
-					console.log('getPost ERROR: Invalid file format')
+					info.msg = 'getPost ERROR: Invalid file format'
+					console.log(info.msg)
 					return
 				}
-				let ext
-				for (const e in conf.types) {
-					const type = conf.types[e]
-					if (type != info.mimeType) continue
-					ext = e
-					break
-				}
-				if (!ext) {
+				
+				if (!conf.types[info.ext]) {
 					file.resume()
-					console.log('getPost ERROR: Invalid format')
+					info.msg = 'getPost ERROR: Invalid file extension'
+					console.log(info.msg)
 					return
 				}
 
-				const tempsrc = path.join(os.tmpdir(), `busboy-upload-${timer}-${++count}.${ext}`)
+				const tempsrc = path.join(os.tmpdir(), `busboy-upload-${timer}-${++count}.${info.ext}`)
 				file.pipe(fs.createWriteStream(tempsrc))
 				info.src = tempsrc
-				formData[name] = info
+				info.result = true
+				
 				file.on('limit', () => {
-					console.log('getPost ERROR: Invalid file size or reached other limit. File truncated.', name, info)
-					delete formData[name]
+					info.msg = 'getPost ERROR: Invalid file size or reached other limit. File truncated.'
+					console.log(info.msg, name, info)
+					info.result = false
+					delete info.src
 				})
 			})
 			bb.on('field', (name, val, info) => {
