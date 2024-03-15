@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS `user_uemails` (
   `date_verify` DATETIME NOT NULL COMMENT 'Дата, когда создан и отправлен код верификации',
   `date_verified` DATETIME NULL DEFAULT NULL COMMENT 'Дата, когда получено подтверждение',
   `date_add` DATETIME NOT NULL COMMENT 'Дата добавления при регистрации или при добавлении ещё одного',
+  `search` varchar(255) NOT NULL DEFAULT '',
   UNIQUE INDEX (`email`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1;
 
