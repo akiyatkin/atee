@@ -64,6 +64,11 @@ rest.addVariable('text#required', async (view) => {
 rest.addArgument('org', ['escape'])
 rest.addArgument('name', ['escape'])
 
+rest.addVariable('name#required', ['name'], (view, name) => {
+	if (!name) return view.err('Укажите, пожалуйста, контактное лицо!')
+	return name
+})
+
 rest.addArgument('terms',['checkbox'], (view, terms) => {
 	if (!terms) return view.err('Требуется согласие на обработку персональных данных')
 })
