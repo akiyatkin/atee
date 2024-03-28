@@ -108,7 +108,6 @@ export const Dialog = {
 			Dialog.hide(popup)
 		}, true)
 		const div = cls('dialogcontent', dialog)[0]
-		
 		div.innerHTML = html
 		await evalScripts(div)
 		return popup
