@@ -1,8 +1,11 @@
 export const cost = (cost, inp = '&nbsp;') => {
-	if (!cost) return 0
+	if (!cost) return '0'
 	cost = String(cost)
 	const ar = cost.split(/[,\.]/)
-	cost = ar[0];
+	cost = ar[0]
+	const sign = cost[0] == '-' ? '-' : ''
+	cost = cost.replace('-','')
+	
 	const l = cost.length;
 	//cost = Number(cost)
 	if (l > 4) { //10000 = 10 000
@@ -17,8 +20,8 @@ export const cost = (cost, inp = '&nbsp;') => {
 			cost = start + inp + last
 		}	
 	}
-	if (ar[1]) cost += '.'+ar[1]
-	return cost;
+	if (l < 3 && ar[1]) cost += '.' +ar[1]
+	return sign + cost;
 
 }
 export default cost
