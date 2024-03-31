@@ -27,6 +27,7 @@ const User = {
 		await db.exec('DELETE from user_users where user_id = :user_id', {user_id})
 		await db.exec('DELETE from user_uemails where user_id = :user_id', {user_id})
 		await db.exec('DELETE from user_uphones where user_id = :user_id', {user_id})
+		//Можно вернуть строку с сообщением
 	},
 	link: '/user/result',
 	createToken: () => {

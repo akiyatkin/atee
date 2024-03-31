@@ -898,6 +898,7 @@ export class Upload {
 	}
 	async loadTable (name, msgs = []) {
 		const { upload, visitor, options, view, db, config, base } = this
+
 		let duration = Date.now()
 		const oldcost = await upload.receiveProp('Старая цена')
 		const cost = await upload.receiveProp('Цена')
@@ -906,14 +907,15 @@ export class Upload {
 		if (!file) return false
 
 		const brand_title = options.tables?.[name]?.brand || name
-
+		
 		const {groups, models, sheets, brands} = await Excel.loadTable(visitor, dir + file, brand_title, base, msgs, options.root_title)
+		if (!sheets) return false
 		const values = {}
 		const bonds = {}
 		const props = {}
 		const table_title = name
 		const table_nick = base.onicked(name)
-								
+										
 		for (const sheet_title in sheets) {
 			const { descr, heads, indexes } = sheets[sheet_title]
 			heads.head_titles.forEach((prop_title, i) => {

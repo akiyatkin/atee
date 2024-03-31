@@ -112,8 +112,10 @@ tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
 				<td>Сумма</td>
 				<td>Статус</td>
 				<td>Изменения</td>
+				<td>Адрес</td>
 				<td>Откуда</td>
 				<td>UTM</td>
+
 				<td></td>
 			</tr>
 		</thead>
@@ -207,8 +209,12 @@ tpl.showOrder = (data, env, row) => `
 		<td>
 			<button title="Изменить статус" data-status="${row.status}" data-order_id="${row.order_id}" class="a status">${tpl.STATUSES[row.status]}</button>
 		</td>
+
 		<td style="white-space: nowrap;">
 			${new Date(row.dateedit * 1000).toLocaleString('ru-RU', { minute: 'numeric', hour: 'numeric', year: 'numeric', month: 'numeric', day: 'numeric' })}
+		</td>
+		<td>
+			${row.address}
 		</td>
 		<td>
 			${row.referrer_host || ''}

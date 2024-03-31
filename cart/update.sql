@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS `cart_orders` (
 	`order_id` MEDIUMINT unsigned NOT NULL AUTO_INCREMENT,
-	`user_id` MEDIUMINT unsigned NOT NULL COMMENT 'Автор кто непосредственно создал заказ, владельцы указаны в cart_userorders',    
+	`user_id` MEDIUMINT unsigned NULL COMMENT 'Пользователь может быть удалён. Заказ останется. Надо сообщить что пользователь удалился. Автор кто непосредственно создал заказ, владельцы указаны в cart_userorders',    
 	`order_nick` varchar(31) NOT NULL COLLATE latin1_bin COMMENT 'Номер из даты с проверкой уникальности',
 	`commentuser` TEXT NOT NULL DEFAULT '' COMMENT '',
 	`commentmanager` TEXT NOT NULL DEFAULT '' COMMENT '',

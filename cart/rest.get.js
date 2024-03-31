@@ -138,6 +138,7 @@ rest.addResponse('get-manager-orders', async view => {
 			order_id,
 			name,
 			email,
+			address,
 
 			referrer_host,
 			source,

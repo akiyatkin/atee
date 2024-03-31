@@ -117,6 +117,15 @@ const Cart = {
 		const html = tpl[sub](data)
 		return {subject, html, email}
 	},
+	deleteUser: async (db, user_id) => {
+		await db.exec(`
+			UPDATE cart_orders
+		 	SET user_id = null
+		 	WHERE user_id = :user_id
+		`, {user_id})
+		await db.exec('DELETE from cart_userorders where user_id = :user_id', {user_id})
+		await db.exec('DELETE from cart_actives where user_id = :user_id', {user_id})
+	},
 	mergeuser: async (db, olduser, newuser) => { //olduser будет удалён
 		const order_id = await Cart.getWaitId(db, olduser.user_id) //order_id долна быть или удалена или перенесена
 		if (order_id) {

@@ -7,6 +7,7 @@ import Files from "./Files.js"
 export const Excel = {
 	read: async (visitor, src) => {
 		const info = Files.nameInfo(src)
+
 		if (info.ext == 'xlsx') return await xlsx.read(visitor, src)
 		if (info.ext == 'js') {
 			const rest = await import('/' + src).then(r => r.default)
@@ -34,7 +35,9 @@ export const Excel = {
 		return { sheets }
 	},
 	loadTable: async (visitor, src, brand, base, msgs = [], root_title) => {
+
 		const listsheets = await Excel.read(visitor, src)
+		if (!listsheets) return false
 		const models = {}
 		const root = root_title
 		const root_nick = base.onicked(root)
