@@ -26,12 +26,13 @@ export const getPost = (request) => {
 			const conf = await config('controller')
 			const formData = {}
 			const bb = busboy({ 
+				defParamCharset: 'utf8',
 				headers: request.headers,
 				limits : conf.busboy.limits
 			})
 			bb.on('file', (name, file, info) => {
+				//const { filename, encoding, mimeType } = info;
 				if (!info.filename) return file.resume()
-
 				formData[name] = info
 				info.ext = getExt(info.filename)
 				info.result = false
