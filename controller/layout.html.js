@@ -3,7 +3,7 @@ export default controller
 
 controller.HEAD = (data, env) => 
 `<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<!-- <meta name="viewport" content="width=device-width, initial-scale=1"> -->
 		<!-- <base href="${env.crumb == '/' ? '/' : env.crumb + '/'}"> -->
 		<script>//Делаем SPA переходы
 			const isSuitable = a => {
