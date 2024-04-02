@@ -13,15 +13,20 @@ rest.addArgument('gid')
 rest.addArgument('range', ['string'], (view, n) => n || 'A1:G1000')
 
 rest.addResponse('get-table', async view => {
-	const { gid, range } = await view.gets(['gid','range'])
+	const gid = await view.get('gid')
+	const range = await view.get('range')
+
 	view.ans.table = await drive.getTable(gid, range)
+	if (!view.ans.table) return view.err()
 	return view.ret()
 })
 
 
-// rest.addResponse('get-rows', async view => {
-// 	const { gid, range } = await view.gets(['gid','range'])
-// 	const cachesrc = await drive.cacheRows(gid, range)
-// 	view.ans = createReadStream(cachesrc)
-// 	return view.ret()
-// })
+rest.addResponse('get-rows', async view => {
+	const gid = await view.get('gid')
+	const range = await view.get('range')
+
+	view.ans.rows = await drive.getRows(gid, range)
+	if (!view.ans.rows) return view.err()
+	return view.ret()
+})

@@ -32,13 +32,22 @@ rest.addResponse('get-access', async view => {
 })
 
 rest.addArgument('go', ['string']) //Ссылка куда перейти. Как есть попадает в заголовок Location 301
+
+
 rest.addResponse('set-access', async view => {
-	const { go } = await view.gets(['admin','go'])
+	//await view.get('admin')
+
 	Access.setAccessTime()
+
+	const go = await view.get('go')
 	if (!go) return view.ret()
-	view.headers.Location = go
+	view.headers.Location = encodeURI(go)
 	return view.ret('', 301)
 })
+
+
+
+
 rest.addResponse('set-update', async view => {
 	await view.gets(['admin'])
 	const time = new Date();
@@ -219,5 +228,6 @@ rest.addResponse('set-admin', async (view) => {
 		}
 	}
 })
+
 
 export default rest
