@@ -10,7 +10,10 @@ controller.HEAD = (data, env) =>
 				const search = a.getAttribute('href')
 				const it = search.indexOf('.')
 				const is = search.indexOf('/')
-				if (!search || search[1] == '-' || it > is) return
+				const iq = search.indexOf('?')
+
+				
+				if (!search || search[1] == '-' || (it > is && !iq)) return
 				if (a.getAttribute('target')) return
 				if (/^\\w+:/.test(search)) return
 				return true

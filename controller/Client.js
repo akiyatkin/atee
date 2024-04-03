@@ -463,7 +463,10 @@ const loadAll = (layers, promises = [], proc = {}) => {
 			}
 		} else if (layer.html) {
 			let promise = fetch(layer.html).then(res => {
-				if (res.status != 200) {
+				if (
+						res.status != 200 
+						//&& res.status != 404
+					) {
 					console.log(5, res)
 					location.reload()
 					return new Promise(() => {})//reload сразу не происходит, надо зависнуть

@@ -339,6 +339,11 @@ rest.addResponse('get-search-list', async (view) => {
 	}
 	const res = { list, brand, pagination, count:total, countonpage }
 	Object.assign(view.ans, res)
+	if (md.search) {
+		if (!list.length) {
+			return view.ret('Позиций не найдено', 404)
+		}
+	}
 	return view.ret()
 })
 rest.addResponse('get-search-head', async (view) => {
