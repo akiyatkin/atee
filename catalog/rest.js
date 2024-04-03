@@ -71,6 +71,10 @@ rest.addResponse('get-model-head', async (view) => {
 	}
 	view.ans.mod = model
 	view.ans.title = `${model.brand_title} ${model.model_title} ${common.propval(model,'Наименование') || ''}`
+	if (model.Описание) view.ans.description = model.Описание
+	if (model.images) {
+		view.ans.image_src = /^http/.test(model.images[0]) ? model.images[0] : '/' + model.images[0]
+	}
 	return view.ret()		
 })
 
@@ -358,6 +362,8 @@ rest.addResponse('get-search-head', async (view) => {
 	}
 	if (value) view.ans.thisischild = true
 	if (view.ans.canonical) view.ans.canonical = '/' + view.ans.canonical
+
+	if (md.search) view.ans.title += ' ' + md.search
 	return view.ret()
 })
 rest.addResponse('get-search-sitemap', async (view) => {
