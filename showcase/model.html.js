@@ -13,7 +13,7 @@ const showmodel = (mod) => `
 	</div>
 `
 const showitem = (item) => `
-	<h1>${item.item_num}</h1>
+	<h1>${item.item_num || 1}</h1>
 	<div><b>Таблица</b>: ${item.table_title}</div>
 	${mapobj(item.more, showprop).join('')}
 	<div><b>Порядок</b>: ${item.ordain}</div>

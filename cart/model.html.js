@@ -75,7 +75,7 @@ tpl.showItemsBuy = (data, env, mod, item) => `
 		<button 
 		data-brand_nick="${mod.brand_nick}"
 		data-model_nick="${mod.model_nick}"
-		data-item_num="${item.item_num}"
+		data-item_num="${item.item_num || 1}"
 		data-partner="${env.theme.partner || ''}"
 		style="font-size:1.2rem;">
 			Добавить в корзину
@@ -95,8 +95,8 @@ tpl.showModelBuy = (data, env, mod) => `
 		<button 
 		data-brand_nick="${mod.brand_nick}"
 		data-model_nick="${mod.model_nick}"
-		data-item_num="${mod.item_num}"
-		data-partner="${env.theme.partner}"
+		data-item_num="${mod.item_num || 1}"
+		data-partner="${env.theme.partner || ''}"
 		style="font-size:1.2rem;">
 			Добавить в корзину
 		</button>
