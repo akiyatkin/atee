@@ -100,7 +100,7 @@ rest.addResponse('get-model', async (view) => {
 	
 	view.ans.partner = partner?.key || ''
 	view.ans.brand = await Catalog.getBrandByNick(db, brand_nick)
-	if (!model) return view.err()
+	if (!model) return view.err('Модель не найдена', 404)
 	if (model.texts) {
 		model.texts = await Promise.all(model.texts.map(src => {
 			const ext = (i => ~i ? src.slice(i + 1) : '')(src.lastIndexOf('.'))
@@ -339,11 +339,11 @@ rest.addResponse('get-search-list', async (view) => {
 	}
 	const res = { list, brand, pagination, count:total, countonpage }
 	Object.assign(view.ans, res)
-	if (md.search) {
-		if (!list.length) {
-			return view.ret('Позиций не найдено', 404)
-		}
-	}
+	// if (md.search) {
+	// 	if (!list.length) {
+	// 		return view.ret('Позиций не найдено', 404)
+	// 	}
+	// }
 	return view.ret()
 })
 rest.addResponse('get-search-head', async (view) => {

@@ -259,6 +259,7 @@ const controller = async ({ vt, st, ut, layers, theme }, visitor, bread) => {
 
 		const env = { layer, ...look }
 		env.crumb = look.bread.getCrumb(layer.depth)
+
 		env.sid = 'sid-' + (layer.div || layer.name) + '-' + layer.sub + '-'
 		env.scope = layer.div ? '#' + layer.div : 'html'
 

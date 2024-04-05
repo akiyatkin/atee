@@ -176,6 +176,10 @@ const userpathparse = (search) => {
 	search = search.slice(1)
 	//try { search = decodeURI(search) } catch { }
 	let [path = '', params = ''] = explode('?', search)
+	try {
+		path = decodeURIComponent(path)
+	} catch {
+	}
 	const get = Theme.parse(params, '&')
 	const secure = !!~path.indexOf('/.') || path[0] == '.'
 	return {secure, path, get}
