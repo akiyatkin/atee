@@ -301,9 +301,11 @@ field.switch = ({name, reloaddiv, go, goid, reload, action, value, values, args 
 		<button class="a field" style="display: inline-block; cursor:pointer;">${values[value || ""]}</button>
 		<script>
 			(btn => {
-				btn.addEventListener('click', async () => {
+				btn.addEventListener('click', async (e) => {
+
 					const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 					const args = ${JSON.stringify(args)}
+					args.ctrl = e.ctrlKey ? 'yes' : ''
 					const ans = await senditmsg(btn, '${action}', args)
 					
 					const status = ans['${name}']
