@@ -62,10 +62,27 @@ const setMarker = (area, symbol) => {
 		area.selectionEnd = selEnd
 	}
 }
-
+const setTab = (area, symbol) => {
+	const selStart = area.selectionStart
+	const selEnd = area.selectionEnd
+	const text = area.value
+	let sel = area.selectionEnd - 1 // find start of the current line
+	while (sel > 0 && text[sel - 1] != '\n') sel--
+	let flineStart = sel
+	while (isSpace(text[sel])) sel++
+	const slineStart = Math.min(sel, area.selectionEnd)
+	let smb = text[slineStart]
+	
+	
+	area.selectionStart = slineStart
+	area.selectionEnd = slineStart
+	document.execCommand('insertText', false, "\t")
+	area.selectionStart = selStart + 2
+	area.selectionEnd = selEnd + 2
+}
 Area.control = async (area) => {
 	const symbol = area.value[area.selectionStart - 1]
-	if (!~['+','-'].indexOf(symbol)) return
+	if (!~['+','-','t'].indexOf(symbol)) return
 	const selStart = area.selectionStart
 	area.selectionStart = selStart - 2
 	document.execCommand('insertText', false, '')
@@ -73,6 +90,8 @@ Area.control = async (area) => {
 		setMarker(area, '+')
 	} else if (symbol == '-') {
 		setMarker(area, '-')
+	} else if (symbol == 't') {
+		setTab(area)
 	}
 }
 Area.keydown = async (area, e) => {
