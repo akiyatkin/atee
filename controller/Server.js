@@ -57,7 +57,8 @@ const Server = {
 					console.error(e)				
 				}
 				
-				if (!reans?.ans) return error_before(500, 'Not a suitable answer')
+				if (!reans?.ans) return error_before(404, 'Empty answer')
+				//if (!reans?.ans) return error_before(500, 'Not a suitable answer')
 
 				const headers = {}
 				if (conf.types[reans.ext]) {

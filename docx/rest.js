@@ -25,12 +25,12 @@ const nameInfo = (file, isFile = true) => {
 	if (file == 'Thumbs.db') secure = true
 
 	
-	//Цифры в конце после нижнего подчёркивания
-	match = name.match(/^(.*)_(\d+)$/)
-	if (match) {
-		num = match[2]
-		name = match[1]
-	}
+	// //Цифры в конце после нижнего подчёркивания
+	// match = name.match(/^(.*)_(\d+)$/)
+	// if (match) {
+	// 	num = match[2]
+	// 	name = match[1]
+	// }
 	
 	//Цифры в начале
 	match = name.match(/^(\d+)[\s](.*)$/)
@@ -109,14 +109,28 @@ rest.addResponse('get-sitemap', async view => {
 })
 rest.addResponse('get-html', async view => {
 	const { src, visitor } = await view.gets(['src','visitor'])
+
 	const index = src.lastIndexOf('/')
 	if (!index) index = 0
 	const name = src.slice(index + 1)
-	const dir = src.slice(0, index + 1)
-	
+	const dir = src.slice(0, index + 1)	
+
 	const list = await getList(dir)
+
+	
+
 	const finfo = list.find(finfo => finfo.name == name)
-	if (!finfo) return {ans:'', ext:'html', status:404}
+
+	if (!finfo) {
+		return {
+			ans:'', 
+			ext:'html', 
+			status: '404'
+		}
+	}
+
+
+
 	const html = await fs.readFile(finfo.htmlsrc, 'utf8')
 	return {ans:html, ext:'html', status:200}
 	// const data = await docx.read(Access, src)
