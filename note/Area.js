@@ -1,3 +1,4 @@
+import date from "/-words/date.html.js"
 const Area = {}
 // const splice = (str, index, count, add) => {
 // 	if (index < 0) {
@@ -37,7 +38,9 @@ const A = 65
 const PLUS = 107
 const MINUS = 109
 
-const setMarker = (area, symbol) => {
+const setControlMarker = (area, symbol) => {
+	area.selectionStart = area.selectionStart - 2
+	document.execCommand('insertText', false, '')
 	const selStart = area.selectionStart
 	const selEnd = area.selectionEnd
 	const text = area.value
@@ -62,8 +65,11 @@ const setMarker = (area, symbol) => {
 		area.selectionEnd = selEnd
 	}
 }
-const setTab = (area, symbol) => {
+const setControlT = (area, symbol = 't') => {
+	area.selectionStart = area.selectionStart - 2
+	document.execCommand('insertText', false, '')
 	const selStart = area.selectionStart
+	
 	const selEnd = area.selectionEnd
 	const text = area.value
 	let sel = area.selectionEnd - 1 // find start of the current line
@@ -80,18 +86,58 @@ const setTab = (area, symbol) => {
 	area.selectionStart = selStart + 2
 	area.selectionEnd = selEnd + 2
 }
+const setControlD = (area, symbol = 'd') => {
+	area.selectionStart = area.selectionStart - 2
+	const selStart = area.selectionStart
+	const selEnd = area.selectionEnd
+
+	const date = new Date()
+	let month = date.getMonth() + 1
+	if (month < 10) month = '0' + month
+
+	let day = date.getDay()
+	if (day < 10) day = '0' + day
+
+	const str = day + '.' + month + ' '
+
+
+	document.execCommand('insertText', false, str)
+	area.selectionStart = selStart + str.length
+	area.selectionEnd = area.selectionStart
+}
+const setControlH = (area, symbol = 'm') => {
+	area.selectionStart = area.selectionStart - 2
+	const selStart = area.selectionStart
+	const selEnd = area.selectionEnd
+
+	const date = new Date()
+	
+	let hours = date.getHours()
+	if (hours < 10) hours = '0' + hours
+
+	let minutes = date.getMinutes()
+	if (minutes < 10) minutes = '0' + minutes
+
+	const str = hours + ':' + minutes + '#'
+
+
+	document.execCommand('insertText', false, str)
+	area.selectionStart = selStart + str.length
+	area.selectionEnd = area.selectionStart
+}
 Area.control = async (area) => {
 	const symbol = area.value[area.selectionStart - 1]
-	if (!~['+','-','t'].indexOf(symbol)) return
-	const selStart = area.selectionStart
-	area.selectionStart = selStart - 2
-	document.execCommand('insertText', false, '')
+	
 	if (symbol == '+') {
-		setMarker(area, '+')
+		setControlMarker(area, '+')
 	} else if (symbol == '-') {
-		setMarker(area, '-')
+		setControlMarker(area, '-')
 	} else if (symbol == 't') {
-		setTab(area)
+		setControlT(area)
+	} else if (symbol == 'd') {
+		setControlD(area)
+	} else if (symbol == 'h') {
+		setControlH(area)
 	}
 }
 Area.keydown = async (area, e) => {
