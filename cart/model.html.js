@@ -17,19 +17,22 @@ const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : '
 
 tpl.ITEM = (data, env) => {
 	const mod = data.mod
+
 	if (!mod) return ''
 	if (mod.items.length == 1) {
 		if (mod.Цена) return tpl.showModelBuy(data, env, mod)
 		return origButton(data, env, mod)	
 	}
+
 	//if (!mod.Цена) return origButton(data, env, mod)	//Добавить в корзину точно ничего нельзя
 	let item_index = env.crumb.child?.name || 0
 	if (!mod.items[item_index]) item_index = 0
 	const item = mod.items[item_index]
 	
 	const prop_titles = ["Позиция","Арт"]
-	const html = filters.block("", showIprops(data, env, mod, prop_titles)) + showCost(item)
-	if (!item.Цена) return html + origButton(data, env, mod, item)
+	const html = filters.block("", showIprops(data, env, mod, prop_titles)) + showItemIfCost(mod, item)
+
+	if (!item.Цена && !mod.Цена) return html + origButton(data, env, mod, item)
 	return html + tpl.showItemsBuy(data, env, mod, item)
 }
 
@@ -60,15 +63,15 @@ const showIprops = (data, env, mod, prop_titles) => {
 		${values.map((v, index) => getitem(data, env, v, index)).join('<span style="display: inline-block; width:1ch"></span>')}
 	</span>`
 }
-const showCost = (item) => item.Цена ? `
+const showItemIfCost = (mod, item) => mod.Цена ? '' : (item.Цена ? `
 	<p>
-		<big><b>${cost(item.Цена)}${common.unit()}</b></big>
+		<big><b>${cost(item.Цена || mod.Цена)}${common.unit()}</b></big>
 	</p>
 `: `
 	<p>
 		<big><b>Цена по запросу</b></big>
 	</p>
-`
+`)
 
 tpl.showItemsBuy = (data, env, mod, item) => `
 	<p align="left">
