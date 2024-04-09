@@ -24,7 +24,9 @@ tpl.GROUPS = (data, env) => data.result ? `
 			}
 			@media (max-width: 768px) {
 				${env.scope} > .grid {
-					display: grid; grid-gap: 1rem; grid-template-columns: 1fr;
+					display: grid; 
+					grid-gap: 1rem; 
+					grid-template-columns: 1fr;
 				}
 			}
 		</style>
@@ -33,7 +35,7 @@ tpl.GROUPS = (data, env) => data.result ? `
 		</div>
 		<div id="FILTERS"></div>
 	</div>
-` : `<h1>${data.root_title}</h1>`
+` : `<h1>${data.root_title}</h1><div id="FILTERS"></div>`
 tpl.PAGINATION = (data, env) => ti.bs(data.result) && `
 	${tpl.pag(data, env, 'none')}
 `

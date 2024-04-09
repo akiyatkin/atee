@@ -154,7 +154,7 @@ const Server = {
 }
 
 const errmsg = (layer, e, msg = '') => `
-	<pre>${msg}<code>${layer.ts}<br>${e.toString()}${console.log(e) || ''}</code></pre>
+	<pre>${msg}<code>${layer.ts}<br>${e.toString()}${console.log(msg, e) || ''}</code></pre>
 `
 
 const interpolate = (val, data, env) => new Function('data', 'env', 'return `'+val+'`')(data, env)
@@ -210,7 +210,7 @@ const getHTML = async (layer, env, visitor) => {
 			tplobj = await import(layer.tpl).catch(e => {
 				e.tpl = layer.tpl
 
-				html = errmsg(layer, e) //Ошибка покажется вместо шаблона
+				html = errmsg(layer, e, layer.sub) //Ошибка покажется вместо шаблона
 				status = 500
 				nostore = true
 				//08.03 throw e
@@ -225,7 +225,7 @@ const getHTML = async (layer, env, visitor) => {
 				try {
 					html = tplobj[layer.sub](data, env)
 				} catch(e) {
-					html = errmsg(layer, e) //Ошибка покажется вместо шаблона
+					html = errmsg(layer, e, layer.sub) //Ошибка покажется вместо шаблона
 					status = 500
 				}
 			}

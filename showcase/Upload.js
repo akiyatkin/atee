@@ -1173,7 +1173,7 @@ export class Upload {
 					}
 					if (type == 'file') {
 						msgs.push(`
-							<b>${heads.head_titles[i]}</b> ${type} <b>${v_title}</b>. 
+							<b>${heads.head_titles[i]}</b> ${type}. 
 							Значение не сохранено, так как поля типа file определяются отдельно. 
 							Файл ${name}, лист ${sheet_title}. 
 						`)
@@ -1456,7 +1456,7 @@ export class Upload {
 		for (const {model_id, item_num, src} of listsrc) {
 			const src_nick = nicked(src).slice(-255)
 			const files = await db.all(`
-				SELECT f.file_id, f.destiny, f.ordain, f.src from showcase_files f
+				SELECT f.file_id, f.destiny, f.ext, f.ordain, f.src from showcase_files f
 				where f.src_nick like '${src_nick}%'
 			`)
 

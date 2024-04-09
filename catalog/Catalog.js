@@ -103,11 +103,15 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 				item[prop_title] = unique(item[prop_title])
 				const prop = await base.getPropByTitle(prop_title)
 				if (prop.type == 'file') continue
+				// if (prop.type == 'number') {
+				// 	item[prop_title] = 'asdf'
+				// } else {
 				//if (~['item_num'].indexOf(prop_title)) continue
 				item[prop_title] = item[prop_title].join(', ')
 				// if (prop.type == 'number' && ~options.justonevalue_nicks.indexOf(prop.prop_nick)) {
 				// 	item[prop_title] = Number(item[prop_title])
 				// }
+				//}
 			}
 		}
 	}
@@ -138,6 +142,7 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 			for (const prop in item) {
 				if (model_props[prop] == null) continue //свойство модели остаётся у модели
 				const val = item[prop]
+
 				if (Array.isArray(val)) {
 					const iv = val.join(', ')
 					const mv = model_props[prop].join(', ')
@@ -207,7 +212,15 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 				}
 			}
 			if (!ar.length) return false
-			pr.value = ar.join(', ')
+			
+			if (pr.type == 'number' && ar.length) {
+				const min = Math.min(...ar)
+				const max = Math.max(...ar)
+				if (min == max) pr.value = min
+				else pr.value = min + ' &mdash; ' + max
+			} else {
+				pr.value = ar.join(', ')	
+			}
 			return true
 		})
 	}

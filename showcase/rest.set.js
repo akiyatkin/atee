@@ -429,8 +429,10 @@ rest.addResponse('set-prices-load', async view => {
 	return view.ret('Внесено ' + row.quantity)
 })
 
-rest.addResponse('set-load', async view => { //Для ручного перехода, при сохранении ссылки
-	await view.gets(['admin', 'start']) //Нужно подменять в проекте если требуется разрешить неавторизованному пользователю
+rest.addResponse('set-load', async view => { //Для ручного перехода, при сохранении ссылки	
+	//await view.get('admin')
+	
+	await view.get('start')
 	const { upload } = await view.gets(['upload'])
 	const res = await upload.applyall()
 	const Location = '/catalog?alert=' + encodeURIComponent(res.msg)
