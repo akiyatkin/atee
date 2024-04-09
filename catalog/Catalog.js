@@ -217,7 +217,7 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 				const min = Math.min(...ar)
 				const max = Math.max(...ar)
 				if (min == max) pr.value = min
-				else pr.value = min + ' &mdash; ' + max
+				else pr.value = `<nobr>${min}&mdash;${max}</nobr>`
 			} else {
 				pr.value = ar.join(', ')	
 			}
