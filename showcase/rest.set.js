@@ -433,7 +433,7 @@ rest.addResponse('set-load', async view => { //Для ручного перех�
 	//await view.get('admin')
 	
 	await view.get('start')
-	const { upload } = await view.gets(['upload'])
+	const upload = await view.get('upload')
 	const res = await upload.applyall()
 	const Location = '/catalog?alert=' + encodeURIComponent(res.msg)
 	view.headers = { Location }
