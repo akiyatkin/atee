@@ -13,20 +13,24 @@ cards.LIST = (data, env) => `
 			grid-template-columns: repeat(auto-fill, minmax(28px, 1fr))
 		}*/
 		${env.scope} .listcards { 
+			grid-gap: 2em;
 			grid-template-columns: 1fr 1fr 1fr 1fr
 		}
 		@media (max-width:1400px) {
 			${env.scope} .listcards { grid-template-columns: 1fr 1fr 1fr }
 		}
 		@media (max-width:900px) {
-			${env.scope} .listcards { grid-template-columns: 1fr 1fr }
+			${env.scope} .listcards { 
+				grid-gap: 1em;
+				grid-template-columns: 1fr 1fr 
+			}
 		}
 		@media (max-width:350px) {
 			${env.scope} .listcards { grid-template-columns: 1fr }
 		}
 	</style>
 	${cards.badgecss(data, env)}
-	<div class="listcards" style="display: grid;  grid-gap: 1em">	
+	<div class="listcards" style="display: grid;">	
 		${data.list.map(mod => cards.card(data, env, mod)).join('')}
 	</div>
 	${(data.pagination?.page == 1 && data.pagination?.last > 1) ? cards.scriptRemoveSuperfluous(data) : ''}

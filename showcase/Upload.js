@@ -1128,8 +1128,8 @@ export class Upload {
 					const prop_nick = heads.head_nicks[i]
 					const prop_title = heads.head_titles[i]
 					const type = await base.getPropTypeByNick(prop_nick)
-
-					if (type != 'text' && !~options.justonevalue_nicks.indexOf(prop_nick)) {
+					const justone = ~options.justonevalue_nicks.indexOf(prop_nick)
+					if (type != 'text' && !justone) {
 						item[i] = String(value_title).split(',').map(v => v.trim()).filter(v => v)
 					} else {
 						item[i] = [value_title]
@@ -1143,7 +1143,12 @@ export class Upload {
 							
 							let number = v_title
 							if (number.replace) number = number.replace(/\s/g,'')
-							number = parseFloat(number)
+							if (justone) {
+								number = parseFloat(number.replace(',','.'))
+							} else {
+								number = parseFloat(number)
+							}
+							
 
 							if (isNaN(number)) {
 								msgs.push(`

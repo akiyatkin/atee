@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS `showcase_models` (
 
 CREATE TABLE IF NOT EXISTS `showcase_items` (
 	`model_id` MEDIUMINT unsigned NOT NULL COMMENT '',
-	`item_num` TINYINT unsigned NOT NULL COMMENT '',
+	`item_num` SMALLINT unsigned NOT NULL COMMENT '',
 	`ordain` MEDIUMINT unsigned NOT NULL COMMENT '',
 	`table_id` SMALLINT unsigned COMMENT '',
 	INDEX (ordain),
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS `showcase_items` (
 
 CREATE TABLE IF NOT EXISTS `showcase_iprops` (
 	`model_id` MEDIUMINT unsigned NOT NULL COMMENT '',
-	`item_num` TINYINT unsigned NOT NULL COMMENT '',
+	`item_num` SMALLINT unsigned NOT NULL COMMENT '',
 	`prop_id` SMALLINT unsigned NOT NULL COMMENT '65 тыс',
 	`value_id` MEDIUMINT unsigned NULL COMMENT '16 млн',
 	`bond_id` MEDIUMINT unsigned NULL COMMENT '16 млн',

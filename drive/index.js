@@ -33,6 +33,7 @@ export const drive = {
 			console.log('drive', gid, sheet, range, e.code)
 			return []
 		})
+		
 		await fs.writeFile(cachesrc, JSON.stringify(rows))
 		return cachesrc
 	})),	
