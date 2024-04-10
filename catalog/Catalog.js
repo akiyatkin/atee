@@ -684,25 +684,26 @@ Catalog.getFilterConf = async (view, prop, group_id, md, partner) => {
 		if (row.min === row.max) return false
 		filter.min = Number(row.min)
 		filter.max = Number(row.max)
-		const spread = filter.max - filter.min
-		
-		const makefilter = (step) => {
-			filter.step = step
-			filter.min = Math.floor(filter.min / step) * step
-			filter.max = Math.ceil(filter.max / step) * step
-		}
-		if (spread > 1000000) {
-			makefilter(50000)
-		} else if (spread > 100000) {
-			makefilter(5000)
-		} else if (spread > 10000) {
-			makefilter(500)
-		} else if (spread > 1000) {
-			makefilter(50)
-		} else if (spread > 100) {
-			makefilter(5)
-		} else {
-			makefilter(1)
+		if (!filter.step) {
+			const spread = filter.max - filter.min
+			const makefilter = (step) => {
+				filter.step = step
+				filter.min = Math.floor(filter.min / step) * step
+				filter.max = Math.ceil(filter.max / step) * step
+			}
+			if (spread > 1000000) {
+				makefilter(50000)
+			} else if (spread > 100000) {
+				makefilter(5000)
+			} else if (spread > 10000) {
+				makefilter(500)
+			} else if (spread > 1000) {
+				makefilter(50)
+			} else if (spread > 100) {
+				makefilter(5)
+			} else {
+				makefilter(1)
+			}
 		}
 		
 
