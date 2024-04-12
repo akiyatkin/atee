@@ -5,7 +5,28 @@ import links from "/-catalog/links.html.js"
 import filters from "/-catalog/filters.html.js"
 export default tpl
 const origButton = tpl.orderButton
-tpl.orderButton = (data, env, mod) => `<div id="ITEM"></div>`
+tpl.orderButton = (data, env, mod) => `
+	<div id="ITEM"></div>
+	<script type="module">
+		window.dataLayer = window.dataLayer || []
+		dataLayer.push({
+			"ecommerce": {
+				"currencyCode": "RUB",
+				"detail": {
+					"products": [
+						{
+							"id": "${mod.model_nick}",
+							"name" : "${mod.Наименование || mod.model_title}",
+							"price": "${getv(mod, 'Цена') || mod.min || ''}",
+							"brand": "${mod.brand_title}",
+							"category": "${mod.group_title}"
+						}
+					]
+				}
+			}
+		})
+	</script>
+`
 const ischoice = (env, index) => {
 	const item_index = env.crumb.child?.name || 0
 	if (item_index == index) return true
@@ -14,8 +35,10 @@ const ischoice = (env, index) => {
 
 const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
 const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : ''
+const getModItemPropValue = (item, mod, prop_title) => getv(mod, prop_title) || getv(item, prop_title) || ''
 
 tpl.ITEM = (data, env) => {
+
 	const mod = data.mod
 
 	if (!mod) return ''
@@ -73,43 +96,110 @@ const showItemIfCost = (mod, item) => mod.Цена ? '' : (item.Цена ? `
 	</p>
 `)
 
+// tpl.showItemsBuy = (data, env, mod, item) => `
+// 	<p align="left">
+// 		<button 
+// 		data-brand_nick="${mod.brand_nick}"
+// 		data-model_nick="${mod.model_nick}"
+// 		data-item_num="${item.item_num || 1}"
+// 		data-partner="${env.theme.partner || ''}"
+// 		style="font-size:1.2rem;">
+// 			Добавить в корзину
+// 		</button>
+// 		<script>
+// 			(btn => {
+// 				btn.addEventListener('click', async () => {
+// 					const Basket = await import('/-cart/Basket.js').then(r => r.default)
+// 					Basket.addButton(btn.dataset, 1, 'nocopy')
+// 				})
+// 			})(document.currentScript.previousElementSibling)
+// 		</script>
+// 	</p>
+// `
+// tpl.showModelBuy = (data, env, mod) => `
+// 	<p align="right">
+// 		<button 
+// 		data-brand_nick="${mod.brand_nick}"
+// 		data-model_nick="${mod.model_nick}"
+// 		data-item_num="${mod.item_num || 1}"
+// 		data-partner="${env.theme.partner || ''}"
+// 		style="font-size:1.2rem;">
+// 			Добавить в корзину
+// 		</button>
+// 		<script>
+// 			(btn => {
+// 				btn.addEventListener('click', async () => {
+// 					const Basket = await import('/-cart/Basket.js').then(r => r.default)
+// 					Basket.addButton(btn.dataset, 1, 'nocopy')
+// 				})
+// 			})(document.currentScript.previousElementSibling)
+// 		</script>
+// 	</p>
+// `
+
+
+
+tpl.showButtonBuy = (data, env, mod, item = {more:{}}) => `
+	<button 
+	data-brand_nick="${mod.brand_nick}"
+	data-model_nick="${mod.model_nick}"
+	data-item_num="${getModItemPropValue(mod, item, 'item_num')}"
+	data-partner="${env.theme.partner || ''}"
+	style="font-size:1.2rem; opacity: 0">
+		Добавить в корзину
+	</button>
+	<script>
+		(async btn => {
+
+			const send = await import('/-dialog/send.js').then(r => r.default)
+			const ans = await send('/-cart/get-added', btn.dataset)
+			if (!ans.result) {
+				const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+				Dialog.alert(ans.msg)
+			}
+			btn.style.opacity = 1
+			if (ans.count) btn.innerHTML = 'Открыть корзину'
+
+			btn.addEventListener('click', async () => {
+				if (ans.count) {
+					const Panel = await import("/-cart/Panel.js").then(r => r.default)
+					const panel = document.querySelector('.panel')
+					if (!panel) return
+					Panel.up(panel)
+				} else {
+					const Basket = await import('/-cart/Basket.js').then(r => r.default)
+					Basket.addButton(btn.dataset, 1, 'nocopy')
+					window.dataLayer = window.dataLayer || []
+					dataLayer.push({
+						"ecommerce": {
+							"currencyCode": "RUB",    
+							"add": {
+								"products": [
+									{
+										"id": "${mod.model_nick}",
+										"name" : "${getModItemPropValue(mod, item, 'Наименование') || mod.model_title}",
+										"price": "${getModItemPropValue(mod, item, 'Цена')}",
+										"brand": "${mod.brand_title}",
+										"category": "${mod.group_title}",
+										"variant" : "${getModItemPropValue(mod, item, 'Позиция')}",
+										"quantity": 1
+									}
+								]
+							}
+						}
+					})
+				}
+			})
+		})(document.currentScript.previousElementSibling)
+	</script>
+`
 tpl.showItemsBuy = (data, env, mod, item) => `
 	<p align="left">
-		<button 
-		data-brand_nick="${mod.brand_nick}"
-		data-model_nick="${mod.model_nick}"
-		data-item_num="${item.item_num || 1}"
-		data-partner="${env.theme.partner || ''}"
-		style="font-size:1.2rem;">
-			Добавить в корзину
-		</button>
-		<script>
-			(btn => {
-				btn.addEventListener('click', async () => {
-					const Basket = await import('/-cart/Basket.js').then(r => r.default)
-					Basket.addButton(btn.dataset, 1, 'nocopy')
-				})
-			})(document.currentScript.previousElementSibling)
-		</script>
+		${tpl.showButtonBuy(data, env, mod, item)}
 	</p>
 `
-tpl.showModelBuy = (data, env, mod) => `
+tpl.showModelBuy = (data, env, mod, item) => `
 	<p align="right">
-		<button 
-		data-brand_nick="${mod.brand_nick}"
-		data-model_nick="${mod.model_nick}"
-		data-item_num="${mod.item_num || 1}"
-		data-partner="${env.theme.partner || ''}"
-		style="font-size:1.2rem;">
-			Добавить в корзину
-		</button>
-		<script>
-			(btn => {
-				btn.addEventListener('click', async () => {
-					const Basket = await import('/-cart/Basket.js').then(r => r.default)
-					Basket.addButton(btn.dataset, 1, 'nocopy')
-				})
-			})(document.currentScript.previousElementSibling)
-		</script>
+		${tpl.showButtonBuy(data, env, mod, item)}
 	</p>
 `

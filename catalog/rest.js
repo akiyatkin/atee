@@ -409,8 +409,8 @@ rest.addResponse('get-search-sitemap', async (view) => {
 	
 	const models = await db.all(`
 		SELECT m.model_nick, m.model_title, b.brand_nick, b.brand_title
-		FROM showcase_models m, showcase_brands b
-		WHERE m.brand_id = b.brand_id
+		FROM showcase_models m, showcase_brands b, showcase_items i
+		WHERE m.brand_id = b.brand_id and i.item_num = 1 and i.model_id = m.model_id
 	`)
 	childs = {}
 	models.forEach(mod => {

@@ -6,6 +6,9 @@ import common from "/-catalog/common.html.js"
 const cards = {}
 export default cards
 
+const getv = (moditem, prop_title) => moditem[prop_title] ?? moditem.more[prop_title] ?? ''
+const getItemModPropValue = (item, mod, prop_title) => getv(mod, prop_title) || getv(item, prop_title) || ''
+
 cards.LIST = (data, env) => `
 	<style>
 		/*${env.scope} .listcards { 
@@ -73,14 +76,39 @@ cards.badgecss = (data, env) => `
 		}
 	</style>
 `
+
 cards.card = (data, env, mod) => `
 	<div style="
 		min-width: 0; /*fix overflow-text ellipsis*/
 		border-radius: var(--radius); 
 		position:relative; 
 		display:flex; flex-direction: column; justify-content: space-between; box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)" 
- 		class="shadow">
+		class="shadow">
  		${cards.data(data, env, mod)}
+ 		<script>
+			(card => {
+				card.addEventListener('click', () => {	
+					window.dataLayer = window.dataLayer || []
+					dataLayer.push({
+						"ecommerce": {
+					        "currencyCode": "RUB",
+					        "click": {
+					            "products": [
+									{
+										"id": "${mod.model_nick}",
+										"name": "${mod['Наименование'] || mod.model_title}",
+										"price": "${mod['Цена'] || mod.min || ''}",
+										"brand": "${mod.brand_title}",
+										"category": "${mod.group_title}",
+										"list": "${data.type}"
+									}
+								]
+							}
+						}
+					})
+				})
+			})(document.currentScript.parentNode)
+		</script>
  	</div>	
 `
 cards.data = (data, env, mod) => `
@@ -130,7 +158,7 @@ cards.prop = {
 			</div>
 		</div>
 	`,
-	bold: (data, env, mod, pr, title, val) => cards.prop.default(data, env, mod, pr, title, `<b>${val}</b>`),
+	bold: (data, env, mod, pr, title, val) => cards.prop.justwithtitle(data, env, mod, pr, title, `<b>${val}</b>`),
 	brand: (data, env, mod, pr, title, val) => cards.prop.just(data, env, mod, pr, title, 
 		data.md?.brand?.[mod.brand_nick]
 			? `<b>${mod.brand_title}</b>` : `<a href="${links.root}/${links.addm(data)}brand::.${mod.brand_nick}=1">${mod.brand_title}</a>`
@@ -148,11 +176,11 @@ cards.prop = {
 		`<a style="max-width:100%" href="${links.root}/${mod.group_nick}"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block">${mod.group_title}</span></a>`
 	),
 	cost: (data, env, mod, pr, title, val) => cards.prop.bold(data, env, mod, pr, title, `${cost(val)}${common.unit()}`),
-	hideable: (data, env, mod, pr, title, val) => cards.prop.default(data, mod, pr, title, val.length < 30 ? val : `
+	hideable: (data, env, mod, pr, title, val) => cards.prop.justwithtitle(data, mod, pr, title, val.length < 30 ? val : `
 		<span class="a" onclick="this.style.display = 'none'; this.nextElementSibling.style.display = ''">Показать</span>
 		<span onclick="this.style.display = 'none'; this.previousElementSibling.style.display = ''" style="display: none">${val}</span>
 	`),
-	link: (data, env, mod, pr, title, val) => cards.prop.default(data, env, mod, pr, title, 
+	link: (data, env, mod, pr, title, val) => cards.prop.justwithtitle(data, env, mod, pr, title, 
 		`<a href="${links.root}/${links.addm(data)}more.${pr.prop_nick}::.${nicked(val)}=1">${val}</a>`
 	),
 	just: (data, env, mod, pr, title, val) => `
@@ -196,7 +224,7 @@ cards.prop = {
 	`),
 	p: (data, env, mod, pr, title, val) => `<div style="margin: 0.25rem 0;">${val}</div>`,
 	empty: () => '',
-	filter: (data, env, mod, pr, title, val) => cards.prop.default(data, env, mod, pr, title, 
+	filter: (data, env, mod, pr, title, val) => cards.prop.justwithtitle(data, env, mod, pr, title, 
 		val.split(',').filter(r => r).map(value => `<a rel="nofollow" href="${links.val(data, env, mod, pr, value)}">${value}</a>`).join(', ')
 	)
 }

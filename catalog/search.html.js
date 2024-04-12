@@ -7,6 +7,10 @@ import links from "/-catalog/links.html.js"
 const tpl = {}
 export default tpl
 
+
+//const getv = (moditem, prop_title) => moditem[prop_title] ?? moditem.more[prop_title] ?? ''
+//const getItemModPropValue = (item, mod, prop_title) => getv(mod, prop_title) || getv(item, prop_title) || ''
+
 tpl.ROOT = () => `
 	<div id="CATGROUPS"></div>
 	<div id="page"><div id="CATPAG"></div></div>
@@ -117,11 +121,43 @@ tpl.pagt.link = (data, env, scroll = '', title, page) => `
 tpl.pagt.disabled = (data, env, scroll, title) => `
 	<span style="opacity: 0.3">${title}</span>
 `
-tpl.listcards = (data, env) => `
-	<div style="margin-top:1rem; margin-bottom: 2rem">
-		${cards.LIST(data, env)}
-	</div>
-`
+tpl.listcards = (data, env) => {
+	const list = data.list
+
+	const impressions = list.map((mod) => {
+		const impression = {
+			"id": mod.model_nick,
+			"name" : mod['Наименование'] || mod.model_title,
+			"price": mod['Цена'] || mod.min || '',
+			"brand": mod.brand_title,
+			"category": mod.group_title,
+			"list": data.type,
+			"position": 1
+		}
+		return impression
+	})
+
+	return `
+		<div style="margin-top:1rem; margin-bottom: 2rem">
+			${cards.LIST(data, env)}
+		</div>
+		<script>
+			(async div => {
+				const numberOfCards = await import('/-catalog/numberOfCards.js').then(r => r.default)
+				const limit = numberOfCards(${data.limit})
+				const count = Math.min(limit, ${data.list.length})
+				window.dataLayer = window.dataLayer || []
+				const impressions = ${JSON.stringify(impressions)}.slice(0, count)
+				dataLayer.push({
+					"ecommerce": {
+						"currencyCode": "RUB",
+						impressions
+					}
+				})
+			})(document.currentScript.previousElementSibling)
+		</script>
+	`
+}
 tpl.showgroups = (data, env) => `
 	<style>
 		${env.scope} .mute {
