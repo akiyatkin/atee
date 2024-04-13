@@ -29,6 +29,36 @@ Catalog.getItemByNick = async (db, base, brand_nick, model_nick, item_num, partn
 		return item
 	})
 }
+Catalog.mdvalues = async (view, base, md, res = {}) => {
+	const mdvalues = {}
+	const mdprops = {}
+	for (const prop_nick in md.more) {
+		const prop = await base.getPropByNick(prop_nick)
+		mdprops[prop_nick] = prop
+		for (const value_nick in md.more[prop_nick]) {
+			if (prop.type == 'value') {
+				mdvalues[value_nick] = await Catalog.getValueByNick(view, value_nick)
+			} else {
+				let unit = ''
+				if (prop.opt.unit) unit = '&nbsp'+prop.opt.unit
+				let value_title
+				if (value_nick == 'upto') {
+					value_title = 'до ' + md.more[prop_nick][value_nick].replace('-','.')
+				} else if (value_nick == 'from') {
+					value_title = 'от ' + md.more[prop_nick][value_nick].replace('-','.')
+				} else {
+					value_title = Number(value_nick.replace('-','.'))
+				}
+				value_title += unit
+				
+				mdvalues[value_nick] = {value_nick, value_title}
+			}
+		}
+	}
+	res.mdvalues = mdvalues
+	res.mdprops = mdprops
+	return res
+}
 Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item_nums after GROUP_CONCAT(distinct i.item_num separator ','), model_id}]
 	const visitor = base.visitor
 	const options = await Showcase.getOptions(visitor)

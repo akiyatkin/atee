@@ -187,12 +187,12 @@ tpl.group = (data, env, group) => `
 	</div>
 `
 
-tpl.title = (data, env) => html`
+tpl.title = (data, env) => `
 	<style>
 		${env.scope} a.clearlink {
 			white-space: normal; 
 			gap:5px; 
-			display: flex; 
+			display: inline-flex; 
 			align-items: flex-start; color: inherit; 
 			border: none; 
 			text-decoration: none
@@ -218,30 +218,34 @@ tpl.title = (data, env) => html`
 		${(!data.path.length && !data.md.m) ? '<a href="/"><br></a>' : tpl.parenttitle(data, env)}
 	</div>
 	
-	<h1 style="display: flex; clear:both; gap:0 0.6ch; flex-wrap:wrap">
+	<h1 style="clear:both;">
 		${data.title.group_title}
-		${!data.brand || tpl.titlepart(data, env, 'brand', data.brand.brand_title)}
-		${!data.md.search || tpl.titlepart(data, env, 'search', data.md.search)}
-		${!data.md.more || Object.keys(data.md.more).map(prop_nick => {
-			const values = data.md.more[prop_nick]
-			const prop = data.mdprops[prop_nick]
-			if (prop.type == 'value') {
-				return Object.keys(values).map(value_nick => {
-					const value = data.mdvalues[value_nick]
-					return tpl.choice.just(data, env, prop, value)
-				}).join(', ')
-			} else {
-				return Object.keys(values).map(value_nick => {
-					if (value_nick == 'from' || value_nick == 'upto') {
-						return tpl.choice.just(data, env, prop, {value_nick, value_title: (value_nick == 'from' ? 'от ' : 'до ') + values[value_nick] + ' ' + (prop.opt.unit)})
-					} else {
-						return tpl.choice.just(data, env, prop, {value_nick, value_title: value_nick})
-					}
-				}).join(', ')
-			}
-		})}
+		${data.brand ? tpl.titlepart(data, env, 'brand', data.brand.brand_title) : ''}
+		${data.md.search ? tpl.titlepart(data, env, 'search', data.md.search) : ''}
+		${data.md.more ? tpl.showSelected(data, env) : ''}
+		
 	</h1>
 `
+tpl.showSelected = (data, env) => {
+	return Object.keys(data.md.more).map(prop_nick => {
+		const values = data.md.more[prop_nick]
+		const prop = data.mdprops[prop_nick]
+		if (prop.type == 'value' || prop.type == 'number') {
+			return Object.keys(values).map(value_nick => {
+				const value = data.mdvalues[value_nick]
+				return tpl.choice.just(data, env, prop, value)
+			}).join(' ')
+		} else {
+			return Object.keys(values).map(value_nick => {
+				if (value_nick == 'from' || value_nick == 'upto') {
+					return tpl.choice.just(data, env, prop, {value_nick, value_title: (value_nick == 'from' ? 'от ' : 'до ') + values[value_nick] + ' ' + (prop.opt.unit)})
+				} else {
+					return tpl.choice.just(data, env, prop, {value_nick, value_title: value_nick})
+				}
+			}).join(' ')
+		}
+	}).join('')
+}
 tpl.choice = {
 	"just": (data, env, prop, value) => `
 		<a title="${prop.prop_title}" data-scroll="none" class="clearlink" 
