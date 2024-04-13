@@ -3,6 +3,8 @@ import number from "/-cart/number-block.html.js"
 import words from "/-words/words.js"
 import cost from "/-words/cost.js"
 import ago from "/-words/ago.js"
+import date from "/-words/date.html.js"
+
 
 
 const tpl = {}
@@ -321,14 +323,12 @@ const showCrown = () => `
 `
 const showDate = (order, env) => `
 	<p>
-		<!-- ${printDate('Создан', order.datewait)} -->
 		${order.status != 'wait' ? printDate('Оформлен', order.datecheck) : ''}
-		<!-- ${order.status == 'cancel' ? printDate('Отменён', order.datecancel) : ''} 
-		${order.status == 'complete' ? printDate('Выполнен', order.datecomplete) : ''} -->
 	</p>
 `
-const printDate = (title, date) => date ? `
-	${title}: ${ago(date * 1000)}. ${new Date(date * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric' })}<br>	
+
+const printDate = (title, d) => d ? `
+	${title}: ${ago(d * 1000)}. ${date.dmy(d)}<br>	
 ` : ''
 const showEmpty = (data, env) => `
 	${data.order.status == 'wait' ? '<p>В заказе ещё нет товаров</p>' : ''}

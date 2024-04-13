@@ -227,7 +227,9 @@ const Cart = {
 		return wait_id
 	},
 	castWaitActive: async (view, active_id, utms, nocopy = false) => {
-		let { db, user } = await view.gets(['db', 'user'])
+		const db = await view.get('db')
+		let user = await view.get('user')
+		const manager = await view.get('manager')
 		if (!user) {
 			user = await User.create(db)
 			User.setCookie(view, user)
@@ -235,53 +237,84 @@ const Cart = {
 		if (!active_id) return Cart.create(view, user, utms)
 		const order = await Cart.getOrder(db, active_id)
 		if (order.status == 'wait') return active_id
-		let nactive_id = await db.col(`
-			SELECT uo.order_id
-			FROM cart_userorders uo, cart_orders o
-			WHERE uo.order_id != :active_id and uo.order_id = o.order_id and uo.user_id = :user_id and o.status = 'wait'
-		`, {
-			active_id, 
-			user_id:user.user_id
-		})
-		if (!nactive_id) {
-			//Другой активной нет, надо создать и скопировать
-			nactive_id = await Cart.create(view, user, utms)
-			if (!nocopy) {
-				await db.exec(`
-					INSERT INTO cart_basket (
-						order_id,
-						model_nick,
-						brand_nick,
-						item_num,
-						hash,
-						json,
-						count,
-						dateadd,
-						dateedit 
-					)
-					SELECT 
-						:nactive_id,
-						model_nick,
-						brand_nick,
-						item_num,
-						hash,
-						json,
-						count,
-						now(),
-						now()
-					FROM cart_basket
-					WHERE order_id = :active_id
-				`, {active_id, nactive_id})
-			}
-		} else {
+		let nactive_id
+		if (manager) {
+			//Нужно всегда копировать. Умею очищать
+			nactive_id = await Cart.create(view, user, utms, order.order_id)
 			await db.exec(`
-				UPDATE cart_actives
-				SET order_id = :active_id
-				WHERE user_id = :user_id
+				INSERT INTO cart_basket (
+					order_id,
+					model_nick,
+					brand_nick,
+					item_num,
+					hash,
+					json,
+					count,
+					dateadd,
+					dateedit 
+				)
+				SELECT 
+					:nactive_id,
+					model_nick,
+					brand_nick,
+					item_num,
+					hash,
+					json,
+					count,
+					now(),
+					now()
+				FROM cart_basket
+				WHERE order_id = :active_id
+			`, {active_id, nactive_id})
+		} else {
+			nactive_id = await db.col(`
+				SELECT uo.order_id
+				FROM cart_userorders uo, cart_orders o
+				WHERE uo.order_id != :active_id and uo.order_id = o.order_id and uo.user_id = :user_id and o.status = 'wait'
 			`, {
-				active_id: nactive_id, 
+				active_id, 
 				user_id:user.user_id
 			})
+			if (!nactive_id) { 
+				//Другой активной нет, надо создать и скопировать
+				nactive_id = await Cart.create(view, user, utms)
+				if (!nocopy) {
+					await db.exec(`
+						INSERT INTO cart_basket (
+							order_id,
+							model_nick,
+							brand_nick,
+							item_num,
+							hash,
+							json,
+							count,
+							dateadd,
+							dateedit 
+						)
+						SELECT 
+							:nactive_id,
+							model_nick,
+							brand_nick,
+							item_num,
+							hash,
+							json,
+							count,
+							now(),
+							now()
+						FROM cart_basket
+						WHERE order_id = :active_id
+					`, {active_id, nactive_id})
+				}
+			} else {
+				await db.exec(`
+					UPDATE cart_actives
+					SET order_id = :active_id
+					WHERE user_id = :user_id
+				`, {
+					active_id: nactive_id, 
+					user_id:user.user_id
+				})
+			}
 		}
 		return nactive_id
 	}
@@ -299,8 +332,7 @@ Cart.createNick = async (view, user) => {
 	return order_nick
 }
 Cart.saveFiled = async (db, order_id, field, value) => {
-	db = db.gets ? await db.get('db') : db
-	return await db.exec(`
+	return await db.affectedRows(`
 		UPDATE cart_orders 
 		SET ${field} = :value, dateedit = now()
 		WHERE order_id = :order_id
@@ -449,7 +481,7 @@ Cart.grant = async (db, user_id, order_id) => {
 		REPLACE INTO cart_actives (user_id, order_id) VALUES(:user_id, :order_id)
 	`, {user_id, order_id})
 }
-Cart.create = async (view, user, utms) => {
+Cart.create = async (view, user, utms = {}, sorder_id = false) => {
 	const db = await view.get('db')
 	const user_id = user.user_id
 
@@ -463,15 +495,22 @@ Cart.create = async (view, user, utms) => {
 	//'source_nick', 'content_nick', 'campaign_nick', 'medium_nick', 'term_nick', 'referrer_host_nick',
 
 
-
-
-	let row = await db.fetch(`
-		SELECT ${fields.join(',')} 
-		FROM cart_orders 
-		WHERE user_id = :user_id 
-		ORDER BY dateedit DESC
-	`, user)
-
+	let row
+	if (sorder_id) {
+		fields.push('email')
+		row = await db.fetch(`
+			SELECT ${fields.join(',')} 
+			FROM cart_orders 
+			WHERE order_id = :sorder_id
+		`, {sorder_id})
+	} else {
+		row = await db.fetch(`
+			SELECT ${fields.join(',')} 
+			FROM cart_orders 
+			WHERE user_id = :user_id 
+			ORDER BY dateedit DESC
+		`, user)
+	}
 	if (!row) {
 		row = {}
 		fields.forEach(key => row[key] = '')
@@ -485,7 +524,7 @@ Cart.create = async (view, user, utms) => {
 	row['pay'] = row['pay'] || null
 	
 
-	row['email'] = user['email'] || ''
+	row['email'] = row['email'] || user['email'] || ''
 	row['order_nick'] = await Cart.createNick(view, user)
 	row['user_id'] = user_id
 

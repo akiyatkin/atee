@@ -295,13 +295,20 @@ rest.addResponse('set-remove', async view => {
 	return view.ret('Готово')
 })
 rest.addResponse('set-field', async view => {
-	const { db, field, value, active_id, user } = await view.gets(['db', 'field', 'value', 'user', 'active_id#required'])
+	//const { db, field, value, active_id, user } = await view.gets(['db', 'field', 'value', 'user', 'active_id#required'])
+	
+	const db = await view.get('db')
+	const field = await view.get('field')
+	const value = await view.get('value')
+	const active_id = await view.get('active_id#required')
+	const user = await view.get('user')
+
 	const order = await Cart.getOrder(db, active_id)
 	if (order[field] == value) return view.ret('Данные сохранены')
 	if (order.status != 'wait') return view.err('Заказ уже отправлен менеджеру', 422)
 	const errorsave = async msg => {
-		const r = await Cart.saveFiled(view, active_id, field, '')
-		if (!r) return view.err('Ошибка на сервере', 500)
+		const r = await Cart.saveFiled(db, active_id, field, '')
+		if (!r) return view.err('Ошибка на сервере!', 500)
 		return view.err(msg, 422)
 	}
 	if (field == 'name') {
@@ -316,7 +323,7 @@ rest.addResponse('set-field', async view => {
 	} else if (field == 'usercomment') {
 
 	}
-	const r = await Cart.saveFiled(view, active_id, field, value)
+	const r = await Cart.saveFiled(db, active_id, field, value)
 	if (!r) return view.err('Ошибка на сервере', 500)
 	return view.ret('Указанные данные сохранены')
 })
