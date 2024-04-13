@@ -112,7 +112,7 @@ cards.card = (data, env, mod) => `
  	</div>	
 `
 cards.data = (data, env, mod) => `
-	<div style="margin: 0.5rem 1rem; flex-grow:1; display:flex; flex-direction: column; justify-content: space-between">
+	<div style="margin: 1rem 1rem 0.5rem 1rem;; flex-grow:1; display:flex; flex-direction: column; justify-content: space-between">
 		${mod.Наличие || mod.discount ? cards.nalichie(data, env, mod) : ''}
 		<a href="${links.model(data, env, mod)}"
 			style="
