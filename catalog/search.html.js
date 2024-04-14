@@ -35,7 +35,7 @@ tpl.GROUPS = (data, env) => data.result ? `
 			}
 		</style>
 		<div style="display: grid; height: max-content; gap: 0.4em;">
-			${ti.fi(data.childs.length, tpl.showgroups(data, env))}
+			${data.childs.length ? tpl.showgroups(data, env) : ''}
 		</div>
 		<div id="FILTERS"></div>
 	</div>
