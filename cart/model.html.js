@@ -181,7 +181,7 @@ tpl.showButtonBuy = (data, env, mod, item = {more:{}}) => `
 										"price": "${getModItemPropValue(mod, item, 'Цена')}",
 										"brand": "${mod.brand_title}",
 										"category": "${mod.group_title}",
-										"variant" : "${getModItemPropValue(mod, item, 'Позиция')}",
+										"variant" : ${JSON.stringify(getModItemPropValue(mod, item, 'Позиция'))},
 										"quantity": 1
 									}
 								]

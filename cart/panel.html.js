@@ -816,14 +816,14 @@ tpl.showPos = (mod, env) => `
 		<div><b>${cost(mod.Цена)}${common.unit()}</b></div>
 	</div>
 	<div class="cost blocksum" 
-	data-name="${mod['Наименование'] || mod.model_title}"
+	data-name=${JSON.stringify(mod['Наименование'] || mod.model_title)}
 	data-partner="${env.theme.partner || ''}"
 	data-brand_nick="${mod.brand_nick}" 
 	data-brand_title="${mod.brand_title}" 
 	data-group_title="${mod.group_title}" 
 	data-model_nick="${mod.model_nick}"
 	data-item_num="${mod.item_num || 1}"
-	data-variant="${getv(mod, 'Позиция') || mod.item_num}"
+	data-variant=${JSON.stringify(getv(mod, 'Позиция') || mod.item_num)}
 	data-sum="${mod.sum}"
 	data-cost="${mod.Цена || 0}" 
 	data-count="${mod.count || 0}">
