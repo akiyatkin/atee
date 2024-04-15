@@ -118,9 +118,9 @@ const User = {
 			WHERE e.phone = :phone
 		`, { phone })
 	},
-	getUserByPhone: async (db, email) => {
+	getUserByPhone: async (db, phone) => {
 		db = db.gets ? await db.get('db') : db
-		const user_id = await User.getUserIdByPhone(db, email)
+		const user_id = await User.getUserIdByPhone(db, phone)
 		if (!user_id) return false
 		return User.getUserById(db, user_id)
 	},
