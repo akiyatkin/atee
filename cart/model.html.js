@@ -16,7 +16,7 @@ tpl.orderButton = (data, env, mod) => `
 					"products": [
 						{
 							"id": "${mod.model_nick}",
-							"name" : "${mod.Наименование || mod.model_title}",
+							"name" : ${JSON.stringify(mod.Наименование || mod.model_title)},
 							"price": "${getv(mod, 'Цена') || mod.min || ''}",
 							"brand": "${mod.brand_title}",
 							"category": "${mod.group_title}"
@@ -177,7 +177,7 @@ tpl.showButtonBuy = (data, env, mod, item = {more:{}}) => `
 								"products": [
 									{
 										"id": "${mod.model_nick}",
-										"name" : "${getModItemPropValue(mod, item, 'Наименование') || mod.model_title}",
+										"name" : ${JSON.stringify(getModItemPropValue(mod, item, 'Наименование') || mod.model_title)},
 										"price": "${getModItemPropValue(mod, item, 'Цена')}",
 										"brand": "${mod.brand_title}",
 										"category": "${mod.group_title}",

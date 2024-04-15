@@ -96,7 +96,7 @@ cards.card = (data, env, mod) => `
 					            "products": [
 									{
 										"id": "${mod.model_nick}",
-										"name": "${mod['Наименование'] || mod.model_title}",
+										"name" : ${JSON.stringify(mod.Наименование || mod.model_title)},
 										"price": "${mod['Цена'] || mod.min || ''}",
 										"brand": "${mod.brand_title}",
 										"category": "${mod.group_title}",
