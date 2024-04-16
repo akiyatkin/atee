@@ -172,10 +172,18 @@ const getList = (src) => {
 			
 			const t = html.match(/<h1[^>]*>.*?<\/h1>/iu)
 			finfo.heading = t ? t[0].replace(/<\/?[^>]+(>|$)/g, " ").replace(/\s+/," ").trim() : finfo.name
-			let text = html.replace(/<h1[^>]*>.*<\/h1>/iu, "").replace(/<\/?[^>]+(>|$)/g, " ").replace(/\s+/," ").trim()
+			let text = html.replace(/<style([\S\s]*?)>([\S\s]*?)<\/style>/ig, '').replace(/<h1[^>]*>.*<\/h1>/iu, "").replace(/<\/?[^>]+(>|$)/g, " ").replace(/\s+/," ").trim()
+			
+
+			
 			text = text.replace(/\s\./,'.').replace(/\s\!/,'!').replace(/\s\?/,'?').replace(/\s\:/,':').replace(/\s\;/,';')
+
+
+
 			const r = text.match(/.{25}[^\.!]*[\.!]/u)
 			finfo.preview = r ? r[0] : text
+			finfo.preview = finfo.preview.replaceAll(' ,', ',')
+
 			const num = String(finfo.num)
 			if (num.length == 6) {//Принимает 6 цифр годмесяцдень
 				//F - Родительский падеж месяца
