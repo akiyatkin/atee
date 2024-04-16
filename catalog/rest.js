@@ -284,9 +284,15 @@ rest.addResponse('get-search-groups', async (view) => {
 
 
 rest.addResponse('get-search-list', async (view) => {	
-	const { db, value, md, partner, page, count, base, options } = await view.gets(['db','value','md','partner', 'page', 'count', 'base', 'options'])
-	//const { db, value, md, partner, page, count, base, options } = await view.gets(['partner'])
-	//return view.ret()
+	const db = await view.get('db')
+	const value = await view.get('value')
+	const md = await view.get('md')
+	const partner = await view.get('partner')
+	const page = await view.get('page')
+	const count = await view.get('count')
+	const base = await view.get('base')
+	const options = await view.get('options')
+	
 	view.ans.m = md.m
 	view.ans.md = md
 	const {from, where, sort} = await Catalog.getmdwhere(view, md, partner)
