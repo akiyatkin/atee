@@ -11,10 +11,12 @@ controller.HEAD = (data, env) =>
 				const it = search.indexOf('.')
 				const is = search.indexOf('/')
 				const iq = search.indexOf('?')
-
-				
-				if (!search || search[1] == '-' || (it > is && !iq)) return
 				if (a.getAttribute('target')) return
+
+				if (!search) return 
+				if (search[1] == '-') return 
+				if (it > is && !~iq) return
+
 				if (/^\\w+:/.test(search)) return
 				return true
 			}
