@@ -8,17 +8,116 @@ import rest_funcs from "/-rest/rest.funcs.js"
 import config from '/-config'
 import xlsx from '/-xlsx'
 
-const CONFIG = await config('params')
+import drive from '/-drive'
+
+
 
 const rest = new Rest(rest_funcs)
 
 rest.addArgument('name')
+rest.addVariable('table', async view => {
+	const name = await view.get('name')
+	const conf = await config('params')
+
+	if (conf.gid) {
+		return await drive.getTable(conf.gid, 'A1:Z1000', name)
+		
+	} else if (conf.src) {
+		const lists = await xlsx.read(Access, conf.src) || []
+		const table = lists.find(d => d.name == name)
+		if (!table) return view.err('Лист не найден')
+		const rows_source = table.data
+		if (!rows_source) return view.err('Лист не найден')
+		const {descr, rows_table} = dabudi.splitDescr(rows_source)
+		const {head_titles, rows_body} = dabudi.splitHead(rows_table)
+
+		const indexes = {}
+		for (const i in head_titles) {
+			const nick = nicked(head_titles[i])
+			indexes[nick] = i
+		}
+
+		return {name, descr, head_titles, indexes, rows_body}
+	} else {
+		return view.err('Некорректный конфиг', 500)
+	}
+})
+
+import rest_path from '/-controller/rest.path.js'
+rest.extra(rest_path)
+
+rest.addResponse('get-head', async view => {
+	const path = await view.get('path') //Без слэша
+	const table = await view.get('table')
+	for (const row of table.rows_body) {
+		const href = row[table.indexes.razdel]
+		const crumb = row[table.indexes.zapros]
+		if (href + crumb == '/' + path) {
+			const child = {
+				"title": row[table.indexes.title] || '',
+				"description": row[table.indexes.description] || '',
+				"keywords": row[table.indexes.keywords] || '',
+				"image_src": row[table.indexes['image-src']] || ''
+			}
+			Object.assign(view.ans, child)
+			return view.ret()
+		}
+	}
+	return view.err()
+})
+rest.addResponse('get-sitemap', async view => {
+	const table = await view.get('table')
+
+	const heads = {}
+
+	for (const row of table.rows_body) {
+		const href = row[table.indexes.razdel]
+		const crumb = row[table.indexes.zapros]
+		if (crumb[0] == '.') continue
+		const title = row[table.indexes.gruppa]
+		const head = heads[title] ??= {
+			href,
+			title, 
+			childs:{}
+		}
+		delete row[table.indexes.razdel]
+		const child = {
+			"title": row[table.indexes.title] || '',
+			"description": row[table.indexes.description] || '',
+			"keywords": row[table.indexes.keywords] || '',
+			"image_src": row[table.indexes['image-src']] || ''
+		}
+		for (const i in child) if (!child[i]) delete child[i]
+		head.childs[crumb] = child
+	}
+	const headings = Object.values(heads)
+	view.ans.headings = headings
+	return view.ret()
+})
+rest.addResponse('get-table', async view => {
+	const table = await view.get('table')
+	view.ans.table = table
+	return view.ret()
+})
 rest.addResponse('get-menu', async view => {
-	const { name, visitor } = await view.gets(['name', 'visitor'])
-	const lists = await xlsx.read(Access, CONFIG.src)
-	const list = lists.find(d => d.name == name)
-	if (!list) return view.err('Лист не найден')
-	const base = new Base({ visitor })
+	const name = await view.get('name')
+	const conf = await config('params')
+	let list
+
+	if (conf.gid) {
+		const range = 'A1:Z1000'
+		list = {
+			title: name,
+			data: await drive.getRows(conf.gid, range, name)
+		}
+	} else if (conf.src) {
+		const lists = await xlsx.read(Access, conf.src) || []
+		list = lists.find(d => d.name == name)
+		if (!list) return view.err('Лист не найден')
+	} else {
+		return view.err('Некорректный конфиг', 500)
+	}
+	const base = new Base(view)
 	const {descr, rows_table} = Dabudi.splitDescr(list.data)
 	const {heads, rows_body} = Dabudi.splitHead(rows_table, base)
 	const titles = heads.head_titles

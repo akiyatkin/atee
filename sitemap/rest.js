@@ -70,13 +70,9 @@ const interpolate = (val, env) => new Function('env', 'return `'+val+'`')(env)
 rest.addResponse('get-head', async view => {
 	const {rule, source, visitor, root, bread, theme, timings } = await view.gets(['rule', 'source', 'visitor', 'root', 'bread', 'theme', 'timings'])
 
-	
-	
-	
+
 	//view.ans = rule //Тотже объект что и source но теперь со свойством root в каждом child и childs и в корне
-	
-	const { index, depth } = Layers.getIndex(rule, bread)
-	
+	const { index, depth } = Layers.getIndex(rule, bread)	
 	const tpls = {}
 	Layers.runByRootLayer(index.root, ({name}) => {
 		if (!rule.tpl[name]) return
@@ -97,6 +93,7 @@ rest.addResponse('get-head', async view => {
 	const env = { crumb, ...look}
 
 	head = {...head}
+
 
 	head.css = css
 	if (head.jsontpl) {
