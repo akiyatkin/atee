@@ -8,14 +8,14 @@ const showList = (data, env) => `
 		${data.list.map(link).join(', ')}.
 	</p>
 `
-const showLink = item => `<a href="${item.href || '/'}">${item.name||item.title}</a>`
+const showLink = item => `<a href="/${item.href || '/'}">${item.name||item.title}</a>`
 const showBlock = (data, env, heading) => `
 	${heading.title ? showHeading(data, env, heading) : ''}
 	<p>
 		${Object.keys(heading.childs).map(next => 
 			showLink({
 				...heading.childs[next], 
-				href:heading.href ? (heading.href + '/' + next) : next
+				href: heading.href ? (heading.href + '/' + next) : next
 			})
 		).join(', ')}.
 	</p>

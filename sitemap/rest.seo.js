@@ -67,7 +67,7 @@ rest.addVariable('data', async view => {
 			const heading = head.headings[i]
 			if (!Object.values(head.headings[i].childs).length) continue
 			heading.modified ??= modified
-			heading.href = href
+			heading.href ??= href
 			headings.push(heading)
 
 		}
@@ -76,11 +76,11 @@ rest.addVariable('data', async view => {
 })
 
 rest.addResponse('get-data', async view => {
-	const { data } = await view.gets(['data'])
+	const data = await view.get('data')
 	return {ans:data}
 })
 rest.addResponse('sitemap.xml', async view => {
-	const { data: {list, headings} } = await view.gets(['data'])
+	const {list, headings} = await view.get('data')
 	const host = view.visitor.client.host
 	const res = [...list]
 	for (const i in headings) {
@@ -91,7 +91,7 @@ rest.addResponse('sitemap.xml', async view => {
 			res.push({
 				modified, 
 				...heading.childs[next],
-				href: href + (href ? '/'+next : next)
+				href: href ? href + '/' + next : next
 			})
 		}
 	}
