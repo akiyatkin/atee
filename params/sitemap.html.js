@@ -22,13 +22,20 @@ export const ROOT = (data, env) => `
 			}
 		}
 	</style>
-    <h1>Карта сайта</h1>   
-	${data.headings.map(heading => showBlock(data, env, heading)).join('')}
+    ${showBlock(data, env, data)}
+	${data.headings.map(group => showGroup(data, env, group)).join('')}
+`
+const showGroup = (data, env, group) => `
+	<div><a href="${env.crumb}/${group.nick}">${group.title}</a></div>
+`
+//${data.headings.map(heading => showBlock(data, env, heading)).join('')}
+export const GROUP = (data, env) => `
+	${showBlock(data, env, data)}
 `
 const showLink = (item, next) => `
 	<div class="grid">
 		<div style="grid-area: title">
-			<div><a href="${item.href || '/'}">${item.name || item.title || next}</a></div>
+			<div><a href="/${item.href || '/'}">${item.name || item.title || next}</a></div>
 		</div>
 		<div style="grid-area: descr">
 			<div>${item.description ? showDescription(item, next) : ''}</div>
@@ -42,7 +49,7 @@ const showLink = (item, next) => `
 
 `
 const showImage = (item, next) => `
-	<a href="${item.href || '/'}"><img alt="${item.name || item.title || next}" src="${item.image_src}"></a>
+	<a href="/${item.href || '/'}"><img alt="${item.name || item.title || next}" src="${item.image_src}"></a>
 `
 const showKeywords = (item, next) => `
 	${item.keywords}
@@ -51,7 +58,7 @@ const showDescription = (item, next) => `
 	${item.description}
 `
 const showBlock = (data, env, heading) => `
-	${heading.title ? showHeading(data, env, heading) : ''}
+	${heading.title ? showHeading(data, env, heading) : '<h1>Карта сайта</h1>'}
 	${Object.keys(heading.childs).map(next => 
 		showLink({
 			...heading.childs[next], 
@@ -60,5 +67,7 @@ const showBlock = (data, env, heading) => `
 	).join('')}	
 `
 const showHeading = (data, env, heading) => `
+	<div style="float:right; margin-left:1ch"><a href="${env.crumb.parent}">Карта сайта</a></div>
 	<h2>${heading.title}</h2>
+
 `

@@ -385,10 +385,11 @@ rest.addResponse('get-search-sitemap', async (view) => {
 	
 	const options = await Showcase.getOptions(view.visitor)
 	
-	const { db, value } = await view.gets(['db','value'])
+	const db = await view.get('db')
+	const value = await view.get('value')
 
 	view.ans.title = options.root_title
-	view.ans.headings = []
+	view.ans.headings = {}
 
 	const brands = await Catalog.getBrands(db)
 	let childs = {}
@@ -398,10 +399,12 @@ rest.addResponse('get-search-sitemap', async (view) => {
 			name: brand.brand_title
 		}
 	}
-	view.ans.headings.push({
+	view.ans.headings[nicked('Бренды')] = {
 		title:'Бренды',
 		childs:childs
-	})
+	}
+
+
 	const groups = await Catalog.getGroups(view)
 	childs = {}
 	for (const group_nick in groups) {
@@ -411,10 +414,10 @@ rest.addResponse('get-search-sitemap', async (view) => {
 			name: group.group_title
 		}
 	}
-	view.ans.headings.push({
+	view.ans.headings[nicked('Группы')] = {
 		title:'Группы',
 		childs:childs
-	})
+	}
 
 	
 	const models = await db.all(`
@@ -429,10 +432,10 @@ rest.addResponse('get-search-sitemap', async (view) => {
 			"name": mod.brand_title + ' '+mod.model_title
 		}
 	})
-	view.ans.headings.push({
+	view.ans.headings[nicked('Модели')] = {
 		title:'Модели',
 		childs:childs
-	})
+	}
 	return view.ret()
 })
 

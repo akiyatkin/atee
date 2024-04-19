@@ -1,8 +1,9 @@
+import print from "/-words/print.html.js"
 export const ROOT = (data, env) => `
     <h1>Карта сайта</h1>
-    ${data.list ? showList(data, env) : ''}
-	${data.headings.map(heading => showBlock(data, env, heading)).join('')}
+	${Object.values(data.headings).map(heading => showBlock(data, env, heading)).join('')}
 `
+
 const showList = (data, env) => `
 	<p>
 		${data.list.map(link).join(', ')}.

@@ -3,7 +3,13 @@ import Base from '/-showcase/Base.js'
 import nicked from '/-nicked'
 import Access from '/-controller/Access.js'
 import Rest from "/-rest"
+const rest = new Rest()
+
 import rest_funcs from "/-rest/rest.funcs.js"
+rest.extra(rest_funcs)
+
+import rest_seo from "/-sitemap/rest.seo.js"
+rest.extra(rest_seo)
 
 import config from '/-config'
 import xlsx from '/-xlsx'
@@ -12,11 +18,15 @@ import drive from '/-drive'
 
 
 
-const rest = new Rest(rest_funcs)
+
+
 
 rest.addArgument('name')
+rest.addVariable('name#required',['name', 'required'])
+
+
 rest.addVariable('table', async view => {
-	const name = await view.get('name')
+	const name = await view.get('name#required')
 	const conf = await config('params')
 
 	if (conf.gid) {
@@ -41,6 +51,7 @@ rest.addVariable('table', async view => {
 	} else {
 		return view.err('Некорректный конфиг', 500)
 	}
+
 })
 
 import rest_path from '/-controller/rest.path.js'
@@ -50,9 +61,9 @@ rest.addResponse('get-head', async view => {
 	const path = await view.get('path') //Без слэша
 	const table = await view.get('table')
 	for (const row of table.rows_body) {
-		const href = row[table.indexes.razdel]
-		const crumb = row[table.indexes.zapros]
-		if (href + crumb == '/' + path) {
+		const href = row[table.indexes.href]
+		const crumb = row[table.indexes.crumb]
+		if ((href ? href + '/' : '') + crumb == path) {
 			const child = {
 				"title": row[table.indexes.title] || '',
 				"description": row[table.indexes.description] || '',
@@ -66,21 +77,16 @@ rest.addResponse('get-head', async view => {
 	return view.err()
 })
 rest.addResponse('get-sitemap', async view => {
+	
 	const table = await view.get('table')
-
-	const heads = {}
-
+	const headings = {}
 	for (const row of table.rows_body) {
-		const href = row[table.indexes.razdel]
-		const crumb = row[table.indexes.zapros]
+		const href = row[table.indexes.href]
+		const crumb = row[table.indexes.crumb]
 		if (crumb[0] == '.') continue
-		const title = row[table.indexes.gruppa]
-		const head = heads[title] ??= {
-			href,
-			title, 
-			childs:{}
-		}
-		delete row[table.indexes.razdel]
+		const title = row[table.indexes.group]
+		const nick = nicked(title)
+		
 		const child = {
 			"title": row[table.indexes.title] || '',
 			"description": row[table.indexes.description] || '',
@@ -88,12 +94,38 @@ rest.addResponse('get-sitemap', async view => {
 			"image_src": row[table.indexes['image-src']] || ''
 		}
 		for (const i in child) if (!child[i]) delete child[i]
-		head.childs[crumb] = child
+
+		const heading = headings[nick] ??= {
+			title,
+			href,
+			childs:{}
+		}
+		heading.childs[crumb] = child
 	}
-	const headings = Object.values(heads)
 	view.ans.headings = headings
+
 	return view.ret()
 })
+rest.addResponse('get-sitemap-root', async view => {
+	
+
+	const headings = await view.get('headings')
+	Object.assign(view.ans, headings[''] || {})
+	
+	view.ans.headings = Object.entries(headings).map(([nick, heading]) => ({title: heading.title, nick}))
+	return view.ret()
+})
+rest.addArgument('group', ['string'])
+rest.addResponse('get-sitemap-group', async view => {
+	const headings = await view.get('headings')
+	const group = await view.get('group')
+	Object.assign(view.ans, headings[group] || {})
+	return view.ret()
+})
+
+
+
+
 rest.addResponse('get-table', async view => {
 	const table = await view.get('table')
 	view.ans.table = table

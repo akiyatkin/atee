@@ -58,11 +58,15 @@ Sitemap: https://${env.host}/sitemap.xml`
 
 sitemap.SITEMAP_XML = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
 	<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-		${data.map(obj => showUrl(data, env, obj)).join('')}
-	</urlset>`
-const showUrl = (data, env, obj) => `<url>
-	<loc>https://${env.host}${obj.href ? '/' + obj.href : ''}</loc>
-	<lastmod>${obj.modified}</lastmod>
+		${Object.values(data.headings).map(heading => showHeading(data, env, heading)).join('')}		
+	</urlset>
+`
+const showHeading = (data, env, heading) => `
+	${Object.entries(heading.childs).map(([crumb, obj]) => showUrl(data, env, heading.href, crumb, obj)).join('')}
+`
+const showUrl = (data, env, href, crumb, obj) => `<url>
+	<loc>https://${env.host}${href ? '/' + href : ''}/${crumb}</loc>
+	<lastmod>${data.modified}</lastmod>
 	<changefreq>monthly</changefreq>
 	<priority>0.5</priority>
 </url>`

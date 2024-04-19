@@ -82,7 +82,7 @@ rest.addResponse('get-head', async view => {
 
 rest.addResponse('get-sitemap', async view => {
 	const src = await view.get('src')
-	const title = await view.get('title')
+	const title = await view.get('title') || 'Страницы'
 	const index = src.lastIndexOf('/')
 	if (!index) index = 0
 	const name = src.slice(index + 1)
@@ -97,15 +97,14 @@ rest.addResponse('get-sitemap', async view => {
 			title: finfo.heading
 		}
 	}
-	
-	return {
-		ans: {
-			headings:[{
-				title: title || 'Страницы',
-				childs: files
-			}]
+	const nick = nicked(title)
+	view.ans.headings = {
+		[nick]: {
+			title: title,
+			childs: files
 		}
 	}
+	return view.ret()
 })
 rest.addResponse('get-html', async view => {
 	const { src, visitor } = await view.gets(['src','visitor'])

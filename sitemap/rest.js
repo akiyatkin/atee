@@ -67,8 +67,14 @@ rest.addVariable('env', async view => {
 
 
 const interpolate = (val, env) => new Function('env', 'return `'+val+'`')(env)
+
+
+
 rest.addResponse('get-head', async view => {
-	const {rule, source, visitor, root, bread, theme, timings } = await view.gets(['rule', 'source', 'visitor', 'root', 'bread', 'theme', 'timings'])
+	const rule = await view.get('rule')
+	const bread = await view.get('bread')
+	const theme = await view.get('theme')
+	const timings = await view.get('timings')
 
 
 	//view.ans = rule //Тотже объект что и source но теперь со свойством root в каждом child и childs и в корне
@@ -101,7 +107,7 @@ rest.addResponse('get-head', async view => {
 		delete head.jsontpl
 	}
 	if (head.json) {
-		const reans = await loadJSON(head.json, visitor).catch(e => {
+		const reans = await loadJSON(head.json, view.visitor).catch(e => {
 			console.log(e)
 			return {ans:{result:0}}
 		})
@@ -123,5 +129,11 @@ rest.addResponse('get-head', async view => {
 	return view.ret()
 })
 
+
+rest.addResponse('get-data', async view => {
+	const headings = await view.get('headings')
+	view.ans.headings = headings
+	return view.ret()
+})
 
 export default rest
