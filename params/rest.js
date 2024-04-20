@@ -62,16 +62,18 @@ rest.addResponse('get-head', async view => {
 	const table = await view.get('table')
 	for (const row of table.rows_body) {
 		const href = row[table.indexes.href]
-		const crumb = row[table.indexes.crumb]
-		if ((href ? href + '/' : '') + crumb == path) {
-			const child = {
+		const child = row[table.indexes.child]
+		if (child[0] == '.') continue
+		if ((href ? href + '/' : '') + child == path) {
+			const childobj = {
 				"title": row[table.indexes.title] || '',
 				"description": row[table.indexes.description] || '',
 				"keywords": row[table.indexes.keywords] || '',
 				"key": row[table.indexes.key] || '',
 				"image_src": row[table.indexes['image-src']] || ''
 			}
-			Object.assign(view.ans, child)
+			for (const i in childobj) if (!childobj[i]) delete childobj[i]
+			Object.assign(view.ans, childobj)
 			return view.ret()
 		}
 	}
@@ -83,26 +85,24 @@ rest.addResponse('get-sitemap', async view => {
 	const headings = {}
 	for (const row of table.rows_body) {
 		const href = row[table.indexes.href]
-		const crumb = row[table.indexes.crumb]
-		if (crumb[0] == '.') continue
 		const title = row[table.indexes.group]
-		const nick = nicked(title)
-		
-		const child = {
+		const child = row[table.indexes.child]
+		if (child[0] == '.') continue
+		const childobj = {
 			"title": row[table.indexes.title] || '',
 			"description": row[table.indexes.description] || '',
 			"keywords": row[table.indexes.keywords] || '',
 			"key": row[table.indexes.key] || '',
 			"image_src": row[table.indexes['image-src']] || ''
 		}
-		for (const i in child) if (!child[i]) delete child[i]
+		for (const i in childobj) if (!childobj[i]) delete childobj[i]
 
-		const heading = headings[nick] ??= {
+		const heading = headings[nicked(title)] ??= {
 			title,
 			href,
 			childs:{}
 		}
-		heading.childs[crumb] = child
+		heading.childs[child] = childobj
 	}
 	view.ans.headings = headings
 
