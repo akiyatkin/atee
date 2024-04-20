@@ -68,6 +68,7 @@ rest.addResponse('get-head', async view => {
 				"title": row[table.indexes.title] || '',
 				"description": row[table.indexes.description] || '',
 				"keywords": row[table.indexes.keywords] || '',
+				"key": row[table.indexes.key] || '',
 				"image_src": row[table.indexes['image-src']] || ''
 			}
 			Object.assign(view.ans, child)
@@ -91,6 +92,7 @@ rest.addResponse('get-sitemap', async view => {
 			"title": row[table.indexes.title] || '',
 			"description": row[table.indexes.description] || '',
 			"keywords": row[table.indexes.keywords] || '',
+			"key": row[table.indexes.key] || '',
 			"image_src": row[table.indexes['image-src']] || ''
 		}
 		for (const i in child) if (!child[i]) delete child[i]

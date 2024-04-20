@@ -1,4 +1,5 @@
-export const ROOT = (data, env) => `
+import print from "/-words/print.html.js"
+const css = (data, env) => `
 	<style>
 		${env.scope} img {
 			max-width: 100%;
@@ -8,6 +9,7 @@ export const ROOT = (data, env) => `
 			display: grid; gap: 1em; grid-template-columns: 1fr 200px;
 			grid-template-rows: auto 1fr;
 			grid-template-areas: "title image" "descr image";
+			margin-top:1rem; margin-bottom:1rem; 
 		}
 		@media (max-width: 600px) {
 			${env.scope} .grid {
@@ -22,6 +24,9 @@ export const ROOT = (data, env) => `
 			}
 		}
 	</style>
+`
+export const ROOT = (data, env) => `
+	${css(data, env)}
     ${showBlock(data, env, data)}
 	${data.headings.map(group => showGroup(data, env, group)).join('')}
 `
@@ -30,17 +35,24 @@ const showGroup = (data, env, group) => `
 `
 //${data.headings.map(heading => showBlock(data, env, heading)).join('')}
 export const GROUP = (data, env) => `
+	${css(data, env)}
 	${showBlock(data, env, data)}
 `
 const showLink = (item, next) => `
 	<div class="grid">
 		<div style="grid-area: title">
-			<div><a href="/${item.href || '/'}">${item.name || item.title || next}</a></div>
+			<div>
+				<a href="/${item.href || ''}">${item.name || item.title || next}</a><br>
+				<span style="font-size: 12px; color:green">/${item.href || ''}</span>
+				<span style="font-size: 12px; color:brown">${item.key || ''}</span>
+				
+			</div>
 		</div>
 		<div style="grid-area: descr">
-			<div>${item.description ? showDescription(item, next) : ''}</div>
-			<div style="margin-top:1rem; font-style: italic; font-size:12px">${item.keywords ? showKeywords(item, next) : ''}</div>
+			${item.description ? showDescription(item, next) : ''}
+			${item.keywords ? showKeywords(item, next) : ''}
 		</div>
+
 		<div style="grid-area: image;">
 			${item.image_src ? showImage(item, next) : ''}
 		</div>
@@ -49,13 +61,15 @@ const showLink = (item, next) => `
 
 `
 const showImage = (item, next) => `
-	<a href="/${item.href || '/'}"><img alt="${item.name || item.title || next}" src="${item.image_src}"></a>
+	<a href="/${item.href || ''}"><img alt="${item.name || item.title || next}" src="${item.image_src}"></a>
 `
 const showKeywords = (item, next) => `
-	${item.keywords}
+	<div style="font-style: italic; font-size:12px">
+		${item.keywords}
+	</div>
 `
 const showDescription = (item, next) => `
-	${item.description}
+	<div>${item.description}</div>
 `
 const showBlock = (data, env, heading) => `
 	${heading.title ? showHeading(data, env, heading) : '<h1>Карта сайта</h1>'}
