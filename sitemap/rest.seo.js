@@ -37,27 +37,28 @@ rest.addVariable('headings', async view => {
 	Layers.runByIndex(source, (index, path) => {
 		if (~path.indexOf(false)) return
 		let head = index.head
-		const crumb = path[path.length - 1]
+		const child = path[path.length - 1] || ''
 		const href = path.slice(0, -1).join('/')
 		
-		sitemaps.push({...head, href, crumb})		
+		sitemaps.push({...head, href, child})		
 	})
-	
 	const headings = {}
 	for (const head of sitemaps) {
+
 		if (head.hidden) continue
 		const json = head.sitemap || head.json //sitemap возвращает тоже самое что и json но с headings
 		const res = json ? await loadJSON(json, view.visitor).catch(e => console.log('head', href, e)) : false
 		if (res && res.ans) Object.assign(head, res.ans)
 
-		
+
 		if (head.headings) {
 			for (const nick in head.headings) {
 				const fheading = head.headings[nick]
 				
 				const path = []
 				if (head.href) path.push(head.href)
-				if (head.crumb) path.push(head.crumb)
+				if (fheading.href) path.push(fheading.href)
+				if (head.child) path.push(head.child)
 				const href = path.join('/')
 
 				const heading = headings[nick] ??= {title: fheading.title || nick, href, childs:{}}
@@ -69,9 +70,9 @@ rest.addVariable('headings', async view => {
 			const nick = nicked(title)
 			const heading = headings[nick] ??= {title, href: head.href || '', childs:{}}
 			const fresh = {...head}
-			heading.childs[head.crumb || ''] = fresh
+			heading.childs[head.child || ''] = fresh
 			delete fresh.href
-			delete fresh.crumb
+			delete fresh.child
 			delete fresh.headings
 			delete fresh.group
 		}
