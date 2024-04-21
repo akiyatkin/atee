@@ -13,23 +13,23 @@ const Mail = {
 	isEmail: (email) => {
 		return email && email.toLowerCase().match(Mail.emailreg)
 	},
-	saveSend: opt => {
-		csv('data/auto/mail/.mail-v2.csv', opt)
+	saveSend: message => {
+		csv('data/auto/mail/.mail-v2.csv', message)
 		if (!transport) return false
-		const info = transport.sendMail(opt).catch(err => console.log('Mail.saveSend', err))
+		const info = transport.sendMail(message).catch(err => console.log('Mail.saveSend', err))
 		return info
 	},
 	toSupport: (subject, html, email) => {
-		const opt = {
+		const message = {
 			from: conf.from, 
 			to: conf.support,
 			replyTo: null,
 			subject,
 			html
 		}
-		if (email) opt.replyTo = email
+		if (email) message.replyTo = email
 
-		const info = Mail.saveSend(opt)
+		const info = Mail.saveSend(message)
 		return info
 	},
 	toUser: (subject, html, email, replayto) => {
@@ -71,6 +71,27 @@ const Mail = {
 			html
 		}
 		if (email) opt.replyTo = email
+
+		const info = Mail.saveSend(opt)
+		return info
+	},
+	toAdminSplit: (subject, html, email) => {
+		const tos = conf.to.split(',').map(email => email.trim()).filter(email => email)
+		if (!tos.length) return false
+		let r = true
+		for (const to of tos) {
+			r = r && Mail.toUser(subject, html, to, email)
+		}
+		return r
+	},
+	toAdminFrom: (subject, html, email) => {
+		const opt = {
+			from: email, 
+			to: conf.to,
+			replyTo: email,
+			subject,
+			html
+		}
 
 		const info = Mail.saveSend(opt)
 		return info
