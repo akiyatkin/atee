@@ -3,7 +3,8 @@ export default sitemap
 const csslink = src => `<link rel="stylesheet" href="${src}">`
 sitemap.HEAD = (head, env) => `
 	<title>${head?.title??''}</title>
-	<meta name="description" content="${head?.description??''}">
+	<meta name="description" content="${head?.description ?? ''}">
+	<meta name="keywords" content="${head?.keywords ?? ''}">
 	<meta property="og:image" content="${head?.image_src ?? ''}">
 	<link rel="image_src" href="${head?.image_src ?? ''}">
 	<link rel="canonical" href="https://${env.host}${head.canonical??''}">
