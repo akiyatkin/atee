@@ -15,6 +15,7 @@ controller.HEAD = (data, env) =>
 
 				if (!search) return 
 				if (search[1] == '-') return 
+				
 				if (it > is && !~iq) return
 
 				if (/^\\w+:/.test(search)) return
