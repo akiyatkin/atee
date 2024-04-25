@@ -1,12 +1,13 @@
 const yml = {}
 export default yml
+
 yml.ROOT = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
 <yml_catalog date="${new Date().toISOString()}">
 <shop>
 	<name>${env.name||env.host}</name>
 	<company>${env.company||env.host}</company>
 	<url>${env.host}</url>
-	<email>${env.email}</email>
+	<email>${env.email || ''}</email>
 	<currencies>
 		<currency id="RUR" rate="1"/>
 	</currencies>
@@ -27,7 +28,7 @@ yml.category = (group) => `
 yml.pos = (pos, env) => `
  	<offer type="vendor.model" id="${pos.model_id}" available="true">
 		<url>https://${env.host}/catalog/${pos.brand_nick}/${pos.model_nick}</url>
-		<model>${pos.model_title} ${pos.Наименование}</model>
+		<model>${pos.Наименование || pos.model_title}</model>
 		<price>${pos.Цена || pos.min}</price>
 		<currencyId>RUB</currencyId>
 		<categoryId>${pos.group_id}</categoryId>

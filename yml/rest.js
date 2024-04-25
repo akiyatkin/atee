@@ -8,7 +8,7 @@ import rest_funcs from "/-rest/rest.funcs.js"
 import rest_catalog from '/-catalog/rest.vars.js'
 const rest = new Rest(rest_vars, rest_funcs, rest_catalog)
 
-rest.addArgument('feed')
+rest.addArgument('feed', (view, r) => r || 'main')
 
 const tostr = str => {
 	if (!str) return ''
@@ -26,11 +26,17 @@ rest.addResponse('get-feeds', async view => {
 })
 
 rest.addResponse('get-yandex', async view => {
-	const { feed, db, visitor } = await view.gets(['db', 'visitor', 'feed'])
+
+	const feed = await view.get('feed')
+	const db = await view.get('db')
+
+
 	const poss = await yml.data(view, feed)
+
+
 	const conf = await config('yml')
 	const mail = await config('mail')
-	const host = visitor.client.host
+	const host = view.visitor.client.host
 	
 	const data = {}
 	data.groups = await yml.groups(view)
@@ -41,7 +47,7 @@ rest.addResponse('get-yandex', async view => {
 	})
 	data.poss = poss
 	
-	const xml = tpl.ROOT(data, {host, email: mail.to, ...conf})
+	const xml = tpl.ROOT(data, {host, email: mail.main || '', ...conf})
 	return {ext:'xml', ans:xml}
 })
 export default rest

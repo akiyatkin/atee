@@ -16,11 +16,5 @@
 	"bugs": {
 		"url": "https://github.com/akiyatkin/atee/issues"
 	},
-	"homepage": "https://github.com/akiyatkin/atee#readme",
-	"dependencies2": {
-		"@atee/catalog": "https://gitpkg.now.sh/akiyatkin/atee/catalog?main",
-		"@atee/db": "https://gitpkg.now.sh/akiyatkin/atee/db?main",
-		"@atee/config": "https://gitpkg.now.sh/akiyatkin/atee/config?main",
-		"@atee/cproc": "https://gitpkg.now.sh/akiyatkin/atee/cproc?main"
-	}
+	"homepage": "https://github.com/akiyatkin/atee#readme"
 }
