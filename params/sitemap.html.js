@@ -64,7 +64,7 @@ const showImage = (item, next) => `
 	<a href="/${item.href || ''}"><img alt="${item.name || item.title || next}" src="${item.image_src}"></a>
 `
 const showKeywords = (item, next) => `
-	<div style="font-style: italic; font-size:12px">
+	<div style="font-style: italic; font-size:12px; margin-top:1rem">
 		${item.keywords}
 	</div>
 `
