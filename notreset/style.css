@@ -35,6 +35,8 @@ button:not(:disabled) {
 }
 button.transparent,
 .button.transparent {
+	border-radius: 0;
+	text-align: inherit;
 	color:inherit;
 	font-size:inherit;
 	font-family: inherit;
