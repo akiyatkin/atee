@@ -1,6 +1,9 @@
 import print from "/-words/print.html.js"
 const css = (data, env) => `
 	<style>
+		${env.scope} {
+			margin-bottom: 4em;
+		}
 		${env.scope} img {
 			max-width: 100%;
 			height:auto;

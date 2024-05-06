@@ -109,8 +109,6 @@ rest.addResponse('get-sitemap', async view => {
 	return view.ret()
 })
 rest.addResponse('get-sitemap-root', async view => {
-	
-
 	const headings = await view.get('headings')
 	Object.assign(view.ans, headings[''] || {})
 	
@@ -118,6 +116,7 @@ rest.addResponse('get-sitemap-root', async view => {
 	return view.ret()
 })
 rest.addArgument('group', ['string'])
+
 rest.addResponse('get-sitemap-group', async view => {
 	const headings = await view.get('headings')
 	const group = await view.get('group')
