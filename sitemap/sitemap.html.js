@@ -16,7 +16,7 @@ const showBlock = (data, env, heading) => `
 		${Object.keys(heading.childs).map(next => 
 			showLink({
 				...heading.childs[next], 
-				href: heading.href ? (heading.href + '/' + next) : next
+				href: heading.childs[next].href ? (heading.childs[next].href  + '/' + next) : (heading.href ? heading.href  + '/' + next : next)
 			})
 		).join(', ')}.
 	</p>
