@@ -79,10 +79,12 @@ const showBlock = (data, env, heading) => `
 	${Object.keys(heading.childs).map(next => 
 		showLink({
 			...heading.childs[next], 
-			href:heading.href ? (heading.href  + '/' + next) : next
+			href: heading.childs[next].href ? (heading.childs[next].href  + '/' + next) : (heading.href ? heading.href  + '/' + next : next)
 		}, next)
-	).join('')}	
+	).join('')}
 `
+//href: heading.href ? heading.href  + '/' + next : next
+//href: 
 const showHeading = (data, env, heading) => `
 	<div style="float:right; margin-left:1ch"><a href="${env.crumb.parent}">Карта сайта</a></div>
 	<h2>${heading.title}</h2>

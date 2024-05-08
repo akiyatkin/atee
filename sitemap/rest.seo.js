@@ -59,16 +59,16 @@ rest.addVariable('headings', async view => {
 				if (head.href) path.push(head.href)
 				if (fheading.href) path.push(fheading.href)
 				if (head.child) path.push(head.child)
-				const href = path.join('/')
+				
 
-				const heading = headings[nick] ??= {title: fheading.title || nick, href, childs:{}}
+				const heading = headings[nick] ??= {title: fheading.title || nick, childs:{}}
 				Object.assign(heading.childs, fheading.childs)
 			}
 		}
 		if (head.title) { // Это страница
 			const title = head.group || ''
 			const nick = nicked(title)
-			const heading = headings[nick] ??= {title, href: head.href || '', childs:{}}
+			const heading = headings[nick] ??= {title, childs:{}}
 			const fresh = {...head}
 			heading.childs[head.child || ''] = fresh
 			delete fresh.href

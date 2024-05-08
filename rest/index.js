@@ -335,6 +335,8 @@ export class View {
 		if (nostore != null) view.nostore = nostore
 		else if (view.status == 403) view.nostore = true
 		else if (view.status == 500) view.nostore = true
+
+		if (!view.status) view.status = 200
 		throw new ViewException('ready ' + msg, view)
 	}
 
@@ -345,10 +347,10 @@ export class View {
 		//500 - пользователь исправить ошибку не сможет
 		return this.#ready(msg, status, 0, nostore)
 	}
-	nope (msg, status = 200, nostore = null) { //result 0, но вообще ок, такое бывает
+	nope (msg, status = null, nostore = null) { //result 0, но вообще ок, такое бывает
 		return this.#ready(msg, status, 0, nostore)
 	}
-	ret (msg, status = 200, nostore = null) { //Ништяк
+	ret (msg, status = null, nostore = null) { //Ништяк
 		return this.#ready(msg, status, 1, nostore)
 	}
 

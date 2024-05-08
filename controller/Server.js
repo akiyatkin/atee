@@ -132,7 +132,6 @@ const Server = {
 						req.nt = root + status
 						const a = await meta.get('get-layers', req, visitor)
 						json = a.ans
-					
 						
 						info = await controller(json, visitor, bread)
 					}

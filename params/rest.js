@@ -84,11 +84,11 @@ rest.addResponse('get-sitemap', async view => {
 	const table = await view.get('table')
 	const headings = {}
 	for (const row of table.rows_body) {
-		const href = row[table.indexes.href]
 		const title = row[table.indexes.group]
 		const child = row[table.indexes.child]
 		if (child[0] == '.') continue
 		const childobj = {
+			"href": row[table.indexes.href] || '',
 			"title": row[table.indexes.title] || '',
 			"description": row[table.indexes.description] || '',
 			"keywords": row[table.indexes.keywords] || '',
@@ -99,7 +99,6 @@ rest.addResponse('get-sitemap', async view => {
 
 		const heading = headings[nicked(title)] ??= {
 			title,
-			href,
 			childs:{}
 		}
 		heading.childs[child] = childobj

@@ -105,6 +105,7 @@ export default class Layers {
 	}
 	static getParsedIndex(rule, timings, bread, interpolate, theme) {
 		const {index, status, depth} = Layers.getIndex(rule, bread)
+
 		if (!index) return []
 		if (index.checktpl) {
 			const crumb = bread.getCrumb(depth)

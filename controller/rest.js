@@ -127,7 +127,7 @@ rest.addResponse('get-layers', async view => {
 	const { index: nopt, status } = Layers.getParsedIndex(rule, timings, bread, interpolate, theme) //{ index: {push, root}, status }
 	
 	if (!nopt?.root) return view.err()
-
+	
 	if (nopt.check) {
 		const {ans} = await loadJSON(nopt.check, view.visitor)
 		if (ans.redirect) {
@@ -136,12 +136,15 @@ rest.addResponse('get-layers', async view => {
 			return view.ret()
 		}
 	}
+
 	
 		
 		
 	
 	view.ans.checks = nopt.checks
 	view.status = status
+	
+
 	view.ans.theme = theme
 	if (prev === false) {
 		view.ans.push = Layers.collectPush(rule, timings, bread, nopt.root, interpolate, theme)
@@ -166,6 +169,7 @@ rest.addResponse('get-layers', async view => {
 	
 	
 	const { index: popt } = Layers.getParsedIndex(rule, ptimings, pbread, interpolate, ptheme)
+	//view.ans.status = Math.max()
 	if (!popt.root) return view.err()
 
 	
