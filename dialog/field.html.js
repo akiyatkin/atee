@@ -330,7 +330,8 @@ field.prompt = ({
 		ok = 'ОК', unit = '', recaptcha = false, label = 'Укажите ваш Email', descr,
 		cls = '',
 		layer = false,
-		input,
+		input = null,
+		onlyfuture = false,
 		value = '', name = 'email', type = 'email', action, args = {}, go, reloaddiv, goid, reload
 	}) => {
 	return `
@@ -344,8 +345,10 @@ field.prompt = ({
 						Prompt.open({
 							type:'${type}',
 							layer,
+							onlyfuture: ${onlyfuture},
 							descr: '${descr || ''}',
-							value: '${input ?? value}',
+							value: '${value || ''}',
+							input: '${input || ''}',
 							name:'${name}',
 							placeholder:'${label}',
 							ok: '${ok}',
