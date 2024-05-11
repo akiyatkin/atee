@@ -176,6 +176,7 @@ rest.addResponse('set-clear', async view => {
 	await db.affectedRows('DELETE from cart_basket where order_id = :order_id', {order_id})
 	return view.ret()
 })
+
 const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
 rest.addResponse('set-submit', async view => {
 	const { db, base, terms, active_id: order_id, user, user_id } = await view.gets(['db', 'base', 'terms', 'user#required', 'user_id', 'active_id#required'])
@@ -256,6 +257,9 @@ rest.addResponse('set-submit', async view => {
 	}
 	return ready()
 })
+
+
+
 
 
 rest.addResponse('set-add', async view => {
