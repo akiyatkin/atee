@@ -9,7 +9,7 @@
 	"slides":"data/catalog/slides/",
 	"groupicons":"data/catalog/groupicons/",
 	"brandlogos":"data/catalog/brandlogos/",
-	"grouptexts":"data/catalog/grouptexts/",
+	"pages":"data/catalog/pages/",
 	"options":"data/catalog/.options.json",
 	"tpls": "data/catalog/tpls/",
 	"root":"data/catalog/"

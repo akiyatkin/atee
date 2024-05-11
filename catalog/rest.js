@@ -25,7 +25,7 @@ rest.extra(rest_db)
 import rest_catalog from '/-catalog/rest.vars.js'
 rest.extra(rest_catalog)
 
-
+import rest_docx from '/-docx/rest.js'
 
 
 
@@ -191,8 +191,39 @@ rest.addResponse('get-filters', async (view) => {
 	return view.ret()
 })
 
+const getFirst = obj => { for (i in obj) return i }
+const getSearchPageSrc = async (db, options, md, value) => {
+	let nick = nicked(value)
+	if (!nick) nick = getFirst(md.group)
+	if (!nick) nick = getFirst(md.brand)
+	if (!nick) nick = nicked(md.search)
+	if (!nick) nick =  options.root_nick
+	const conf = await config('showcase')
+	const src = conf.pages + nick
+	return src
+}
+rest.addResponse('get-search-page', async (view) => {
+	const db = await view.get('db')
+	const value = await view.get('value')
+	const md = await view.get('md')
+	const options = await view.get('options')
+	
+	const src = await getSearchPageSrc(db, options, md, value)
+	
+	const reans = await rest_docx.get('get-html', { src }, view.visitor)
+	if (reans.status == 404) {
+		reans.ans = `<script>console.log('Статья поиска ${src}')</script>`
+	}	
+	return {...reans, status: 200}
+})
 rest.addResponse('get-search-groups', async (view) => {
-	const { base, db, value, md, partner, options} = await view.gets(['base', 'db','value','md','partner', 'options'])
+	
+	const db = await view.get('db')
+	const value = await view.get('value')
+	const md = await view.get('md')
+	const partner = await view.get('partner')
+	const options = await view.get('options')
+	
 	view.ans.m = md.m
 	view.ans.md = md
 
@@ -248,7 +279,7 @@ rest.addResponse('get-search-groups', async (view) => {
 		childs: groups,
 		path: group.path.map(id => tree[id])
 	}
-	
+	const base = await view.get('base')
 	await Catalog.mdvalues(view, base, md, res)
 	// const mdvalues = {}
 	// const mdprops = {}
@@ -357,7 +388,12 @@ rest.addResponse('get-search-list', async (view) => {
 	return view.ret()
 })
 rest.addResponse('get-search-head', async (view) => {
-	const { value, options, db, md } = await view.gets(['value', 'options', 'db','md'])
+
+	const db = await view.get('db')
+	const value = await view.get('value')
+	const md = await view.get('md')
+	const options = await view.get('options')
+
 	view.ans.m = md.m
 	view.ans.md = md
 	const group = await Catalog.getMainGroup(view, md)
@@ -379,6 +415,13 @@ rest.addResponse('get-search-head', async (view) => {
 	if (view.ans.canonical) view.ans.canonical = '/' + view.ans.canonical
 
 	if (md.search) view.ans.title += ' ' + md.search
+
+	const src = await getSearchPageSrc(db, options, md, value)
+	
+	const reans = await rest_docx.get('get-head', { src }, view.visitor)
+	if (reans.ans.description) view.ans.description = reans.ans.description
+	
+
 	return view.ret()
 })
 rest.addResponse('get-search-sitemap', async (view) => {

@@ -58,7 +58,7 @@ rest.addArgument('src', async (view, src) => {
 })
 rest.addArgument('title', ['escape'])
 rest.addResponse('get-head', async view => {
-	const { src, visitor } = await view.gets(['src','visitor'])
+	const { src } = await view.gets(['src'])
 	const index = src.lastIndexOf('/')
 	if (!index) index = 0
 	const name = src.slice(index + 1)
@@ -107,7 +107,7 @@ rest.addResponse('get-sitemap', async view => {
 	return view.ret()
 })
 rest.addResponse('get-html', async view => {
-	const { src, visitor } = await view.gets(['src','visitor'])
+	const src = await view.get('src')
 
 	const index = src.lastIndexOf('/')
 	if (!index) index = 0
@@ -229,7 +229,7 @@ rest.addArgument('lim', ['array'], async (view, lim) => {
 })
 const dir = 'cache/docx/'
 rest.addResponse('get-list', async view => {
-	const { lim, src, visitor } = await view.gets(['src','visitor', 'lim'])
+	const { lim, src } = await view.gets(['src', 'lim'])
 	if (!/\/$/.test(src)) return view.err()
 	
 	let files = await getList(src)

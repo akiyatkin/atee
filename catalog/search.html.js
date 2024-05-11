@@ -15,7 +15,9 @@ tpl.ROOT = () => `
 	<div id="CATGROUPS"></div>
 	<div id="page"><div id="CATPAG"></div></div>
 	<div id="CATLIST"></div>
+	<div style="margin-top:4em; margin-bottom: 4em" id="CATPAGE"></div>
 `
+
 tpl.GROUPS = (data, env) => data.result ? `
 	${tpl.title(data, env)}
 	<div class="grid">
