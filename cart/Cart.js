@@ -5,6 +5,15 @@ import nicked from '/-nicked'
 
 
 const Cart = {
+	biblio: async (view, db, order_id) => {
+		const order = await Cart.getOrder(db, order_id)
+		const {sum, count} = await db.fetch('select sum, count from cart_orders where order_id = :order_id', {order_id})
+		const data = {sum, count}
+		for (const i of ['order_id', 'name', 'address', 'order_nick', 'phone', 'email']) data[i] = order[i] ?? ''
+		data['text'] = order['commentuser']	
+		const Biblio = await import("/-biblio/index.js").then(r => r.default)
+		await Biblio.save(view, db, order.user_id, 'Заказ', data)
+	},
 	setPartner: async (db, order_id, partner) => {
 		const partnerjson = JSON.stringify(partner)
 		await db.exec(`
