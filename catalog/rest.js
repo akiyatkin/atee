@@ -191,7 +191,7 @@ rest.addResponse('get-filters', async (view) => {
 	return view.ret()
 })
 
-const getFirst = obj => { for (i in obj) return i }
+const getFirst = obj => { for (const i in (obj || {})) return i }
 const getSearchPageSrc = async (db, options, md, value) => {
 	let nick = nicked(value)
 	if (!nick) nick = getFirst(md.group)
