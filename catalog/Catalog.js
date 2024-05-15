@@ -327,7 +327,6 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 
 	//Восстановили сортировку моделей
 	list = ids.map(id => list.find(m => m.model_id == id))
-
 	
 	return list
 }

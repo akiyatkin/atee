@@ -32,6 +32,7 @@
 		"json": "application/json",
 		"js": "application/javascript",
 		"woff2": "font/woff2",
+		"ttf": "font/ttf",
 		"webm": "video/webm",
 		"xml": "application/xml",
 		"html": "text/html",

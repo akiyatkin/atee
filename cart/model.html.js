@@ -43,8 +43,7 @@ tpl.ITEM = (data, env) => {
 
 	if (!mod) return ''
 	if (mod.items.length == 1) {
-		if (mod.Цена) return tpl.showModelBuy(data, env, mod)
-		return origButton(data, env, mod)	
+		return mod.Цена ? tpl.showModelBuy(data, env, mod) : origButton(data, env, mod)
 	}
 
 	//if (!mod.Цена) return origButton(data, env, mod)	//Добавить в корзину точно ничего нельзя
@@ -141,22 +140,19 @@ const showItemIfCost = (mod, item) => mod.Цена ? '' : (item.Цена ? `
 
 tpl.showButtonBuy = (data, env, mod, item = {more:{}}) => `
 	<button 
-	data-brand_nick="${mod.brand_nick}"
-	data-model_nick="${mod.model_nick}"
-	data-item_num="${getModItemPropValue(mod, item, 'item_num')}"
-	data-partner="${env.theme.partner || ''}"
-	style="font-size:1.2rem; opacity: 0">
+		data-brand_nick="${mod.brand_nick}"
+		data-model_nick="${mod.model_nick}"
+		data-item_num="${getModItemPropValue(mod, item, 'item_num')}"
+		data-partner="${env.theme.partner || ''}"
+		style="font-size:1.2rem; opacity: 0">
 		Добавить в корзину
 	</button>
 	<script>
 		(async btn => {
 
-			const send = await import('/-dialog/send.js').then(r => r.default)
-			const ans = await send('/-cart/get-added', btn.dataset)
-			if (!ans.result) {
-				const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-				Dialog.alert(ans.msg)
-			}
+			const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
+			const ans = await senditmsg(btn, '/-cart/get-added', btn.dataset)
+		
 			btn.style.opacity = 1
 			if (ans.count) btn.innerHTML = 'Открыть корзину'
 
