@@ -178,6 +178,8 @@ rest.addResponse('set-clear', async view => {
 })
 
 const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
+
+
 rest.addResponse('set-submit', async view => {
 	const { db, base, terms, active_id: order_id, user, user_id } = await view.gets(['db', 'base', 'terms', 'user#required', 'user_id', 'active_id#required'])
 
@@ -213,14 +215,23 @@ rest.addResponse('set-submit', async view => {
 		const utms = await view.get('utms')
 		Cart.updateUtms(db, order_id, utms)
 
+		
+
 		await Cart.setStatus(db, order_id, 'check')
+		await Cart.setDate(db, order_id, 'check')
+
+		
+
+		const r1 = await Cart.sendToAdmin(view, 'tocheck', order_id)
+		if (!r1) return view.ret('Не удалось отправить письмо менеджеру, позвоните по нашим контактам.')
+
+
+		const r2 = await Cart.sendToUser(view, 'tocheck', order_id)
+		if (!r2) return view.ret('Не удалось отправить письмо клиенту, позвоните по нашим контактам.')
 
 
 
-		await Cart.setDate(db, order_id, 'check')		
-		const r1 = Cart.sendToAdmin(view, 'tocheck', order_id)
-		const r2 = Cart.sendToUser(view, 'tocheck', order_id)
-		if ((await Promise.all([r1, r2])).some(r => !r)) return view.ret('Не удалось отправить письмо.')
+		//if ((await Promise.all([r1, r2])).some(r => !r)) return view.ret('Не удалось отправить письмо.')
 
 		return view.ret('Спасибо за заказ. Менеджер оповещён, ответит в течение 24 часов, как можно скорее.')
 	}
@@ -228,12 +239,16 @@ rest.addResponse('set-submit', async view => {
 		return ready()
 	}
 	let ouser = order.email ? await User.getUserByEmail(view, order.email) : false
+
 	if (user.manager) {
+
 		if (!ouser) {
 			ouser = await User.create(db)
 			await User.sendup(db, ouser.user_id, order.email) //Сохраняем email нового пользователя и отправляем письмо ему
 		}
+
 		if (ouser.user_id != user.user_id) await Cart.grant(db, ouser.user_id, order.order_id) //Указанному пользователю даём доступ к заказу. У него он будет активным
+
 		return ready()
 	}
 

@@ -17,7 +17,7 @@ export const Dabudi = {
 		})) return group_title	
 	},
 	splitDescr: (rows_source) => {
-		const index = rows_source.findIndex(row => {
+		let index = rows_source.findIndex(row => {
 			let count = 0
 			if (!row.some(col => {
 				if (!col) return
@@ -25,13 +25,17 @@ export const Dabudi = {
 				return count > 2
 			})) return
 			return true
-		})
+		})		
+		if (!~index) index = rows_source.length
+		
 		const rows_descr = rows_source.slice(0, index)
+
 		const descr = {}
 		rows_descr.forEach(row => {
 			if (!row[0]) return
 			descr[row[0]] = row[1]
 		})
+
 		const rows_table = rows_source.slice(index)
 		return {descr, rows_table}
 	},

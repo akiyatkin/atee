@@ -99,6 +99,8 @@ const Cart = {
 		}
 	},
 	
+
+
 	sendToUser: async (view, sub, order_id) => {
 		const {subject, html, email} = await Cart.getMailOpt(view, sub, order_id)
 		return Mail.toUser(subject, html, email) //В письме заказа не должно быть аналитики
@@ -106,15 +108,6 @@ const Cart = {
 	sendToAdmin: async (view, sub, order_id) => {
 		const {subject, html, email} = await Cart.getMailOpt(view, sub, order_id)
 		return Mail.toAdmin(subject, html, email) //В письме заказа не должно быть аналитики
-	},
-	getMailData: async (view, sub, order_id) => {
-		const { db, base } = await view.gets(['db','base'])
-		const order = await Cart.getOrder(db, order_id)
-		let list = await Cart.getBasket(db, base, order_id, order.freeze, order.partner)
-		list = list.filter(pos => pos.count > 0)
-		const vars = await view.gets(['host', 'ip'])
-		const data = {order, vars, list}
-		return data
 	},
 	getMailOpt: async (view, sub, order_id) => {
 		const data = await Cart.getMailData(view, sub, order_id)
@@ -126,6 +119,17 @@ const Cart = {
 		const html = tpl[sub](data)
 		return {subject, html, email}
 	},
+	getMailData: async (view, sub, order_id) => {
+		const { db, base } = await view.gets(['db','base'])
+		const order = await Cart.getOrder(db, order_id)
+		let list = await Cart.getBasket(db, base, order_id, order.freeze, order.partner)
+		list = list.filter(pos => pos.count > 0)
+		const vars = await view.gets(['host', 'ip'])
+		const data = {order, vars, list}
+		return data
+	},
+
+
 	deleteUser: async (db, user_id) => {
 		await db.exec(`
 			UPDATE cart_orders

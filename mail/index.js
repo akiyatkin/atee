@@ -14,7 +14,7 @@ const Mail = {
 		return email && email.toLowerCase().match(Mail.emailreg)
 	},
 	saveSend: message => {
-		csv('data/auto/mail/.mail-v2.csv', message)
+		//csv('data/auto/mail/.mail-v2.csv', message)
 		if (!transport) return false
 		const info = transport.sendMail(message).catch(err => console.log('Mail.saveSend', err))
 		return info
