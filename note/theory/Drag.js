@@ -3,8 +3,10 @@ const Drag = {}
 Drag.make = (div, actionsave, callback) => {
 	let activeElement
 	let nextElement = false
+
 	div.addEventListener('dragstart', (event) => {
 		const item = event.target
+		if (!item.classList.contains('item')) return
 		activeElement = item
 		item.classList.add('selected')
 	})
@@ -16,6 +18,7 @@ Drag.make = (div, actionsave, callback) => {
 	}
 
 	div.addEventListener('dragend', async (event) => {
+		if(!activeElement) return false
 		const item = event.target
 		const id = activeElement.dataset.id
 		activeElement = false

@@ -26,7 +26,7 @@ export const Dabudi = {
 			})) return
 			return true
 		})		
-		if (!~index) index = rows_source.length
+		if (index == -1) index = rows_source.length
 		
 		const rows_descr = rows_source.slice(0, index)
 
