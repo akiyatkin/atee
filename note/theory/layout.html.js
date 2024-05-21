@@ -27,7 +27,7 @@ tpl.ROOT = (data, env) => `
 				const nicked = await import('/-nicked').then(r => r.default)
 				const val = nicked(input.value)
 				if (val) Client.go('/theory/search/' + val)
-				else  Client.go('/theory')
+				else Client.go('/theory')
 			}
 			input.addEventListener('input', go)
 			input.addEventListener('focus', go)
