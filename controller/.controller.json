@@ -23,6 +23,7 @@
 	},
 	"types": {
 		"mp4":"video/mp4",
+		"img":"image/jpeg",
 		"map":"application/javascript",
 		"zip":"application/zip",
 		"rar":"application/vnd.rar",

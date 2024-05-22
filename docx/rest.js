@@ -74,6 +74,7 @@ rest.addResponse('get-head', async view => {
 	}
 	return {
 		ans: {
+			image_src: finfo.img,
 			title:finfo.heading, 
 			description:finfo.preview
 		}
@@ -162,7 +163,7 @@ const getList = (src) => {
 				finfo.htmlsrc = await docx.cache(Access, src + finfo.file)
 				const srcimg = dir + cachename + '-' + nicked(finfo.file) + '.img'
 				const isimg = await fs.lstat(srcimg).catch(e => null)
-				if (isimg) finfo.img = srcimg
+				if (isimg) finfo.img = '/' + srcimg
 			} else {
 				finfo.htmlsrc = src + finfo.file
 				const im = html.match(/<img[^>]*src="([^"]*)"[^>]*>/iu)
@@ -178,8 +179,9 @@ const getList = (src) => {
 			text = text.replace(/\s\./,'.').replace(/\s\!/,'!').replace(/\s\?/,'?').replace(/\s\:/,':').replace(/\s\;/,';')
 
 
+			const r = text.match(/.{200}[^\.!]*[\.!]/u)			
+			//const r = text.match(/.{25}[^\.!]*[\.!]/u)
 
-			const r = text.match(/.{25}[^\.!]*[\.!]/u)
 			finfo.preview = r ? r[0] : text
 			finfo.preview = finfo.preview.replaceAll(' ,', ',')
 

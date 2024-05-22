@@ -145,3 +145,21 @@ dialog {
 		display: none!important;
 	}
 }
+
+
+img.right {
+	float:right; 
+	max-width:50%;
+	margin-left:1em;
+	margin-bottom:1em;
+	height: auto
+}
+@media (max-width: 767px) {
+	img.right {
+		float:none; 
+		display: block;
+		margin:1em auto;
+		max-width:100%; 
+		height: auto
+	}
+}

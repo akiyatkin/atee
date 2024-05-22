@@ -63,15 +63,27 @@ rest.addArgument('vals', ['nicks'])
 
 
 rest.addResponse('get-model-head', async (view) => {
-	const { model, db, brand_nick, model_nick, partner, base} = await view.gets(['model', 'db', 'brand_nick','model_nick','partner', 'base'])
+	
+	const model = await view.get('model')
+	const db = await view.get('db')
+	const brand_nick = await view.get('brand_nick')
+	const model_nick = await view.get('model_nick')
+	const partner = await view.get('partner')
+	const base = await view.get('base')
+
+
 	if (!model) {
 		view.ans.brand = await Catalog.getBrandByNick(db, brand_nick)
 		view.ans.title = `${view.ans.brand?.brand_title ?? brand_nick ?? ''} ${model_nick}`
 		return view.ret()
 	}
 	view.ans.mod = model
+
 	view.ans.title = `${model.brand_title} ${model.model_title} ${common.propval(model,'Наименование') || ''}`
-	if (model.Описание) view.ans.description = model.Описание
+	
+	if (model.Описание) {
+		view.ans.description = model.Описание
+	}
 	if (model.images) {
 		view.ans.image_src = /^http/.test(model.images[0]) ? model.images[0] : '/' + model.images[0]
 	}
@@ -419,7 +431,12 @@ rest.addResponse('get-search-head', async (view) => {
 	const src = await getSearchPageSrc(db, options, md, value)
 	
 	const reans = await rest_docx.get('get-head', { src }, view.visitor)
-	if (reans.ans.description) view.ans.description = reans.ans.description
+	if (reans.ans.description) {
+		view.ans.description = reans.ans.description
+	}
+	if (reans.ans.image_src) {
+		view.ans.image_src = reans.ans.image_src
+	}
 	
 
 	return view.ret()
