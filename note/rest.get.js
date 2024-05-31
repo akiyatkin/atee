@@ -30,10 +30,12 @@ rest.addResponse('get-note-props', async (view) => {
 })
 rest.addResponse('get-note-rev', async (view) => {
 	const note = await view.get('note#required')
+
 	const rev = await view.get('rev')	
+
 	const db = await view.get('db')
 	view.ans.note = await NoteDB.getPropsRev(db, note.note_id, rev)
-	Object.assign(view.ans.note, note)  //Из-за специфических данных после подмены в note#required
+	Object.assign(note, view.ans.note)  //Из-за специфических данных после подмены в note#required
 	
  	return view.ret()
 })
