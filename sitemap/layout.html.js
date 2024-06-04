@@ -67,7 +67,7 @@ sitemap.SITEMAP_XML = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
 	</urlset>
 `
 const showHeading = (data, env, heading) => `
-	${Object.entries(heading.childs).map(([crumb, obj]) => showUrl(data, env, heading.href, crumb, obj)).join('')}
+	${Object.entries(heading.childs).map(([crumb, obj]) => showUrl(data, env, obj.href || heading.href, crumb, obj)).join('')}
 `
 const showUrl = (data, env, href, crumb, obj) => `<url>
 	<loc>https://${env.host}${href ? '/' + href : ''}/${crumb}</loc>
