@@ -1,7 +1,4 @@
-import Dabudi from '/-dabudi'
-import Base from '/-showcase/Base.js'
-import nicked from '/-nicked'
-import Access from '/-controller/Access.js'
+
 import Rest from "/-rest"
 const rest = new Rest()
 
@@ -11,9 +8,15 @@ rest.extra(rest_funcs)
 import rest_seo from "/-sitemap/rest.seo.js"
 rest.extra(rest_seo)
 
+import rest_path from '/-controller/rest.path.js'
+rest.extra(rest_path)
+
+import Dabudi from '/-dabudi'
+import Base from '/-showcase/Base.js'
+import nicked from '/-nicked'
+import Access from '/-controller/Access.js'
 import config from '/-config'
 import xlsx from '/-xlsx'
-
 import drive from '/-drive'
 
 
@@ -28,9 +31,9 @@ rest.addVariable('name#required',['name', 'required'])
 rest.addVariable('table', async view => {
 	const name = await view.get('name#required')
 	const conf = await config('params')
-
+	const range = 'A1:Z1000'
 	if (conf.gid) {
-		return await drive.getTable(conf.gid, 'A1:Z1000', name)
+		return await drive.getTable(conf.gid, range, name)
 		
 	} else if (conf.src) {
 		const lists = await xlsx.read(Access, conf.src) || []
@@ -38,8 +41,8 @@ rest.addVariable('table', async view => {
 		if (!table) return view.err('Лист не найден')
 		const rows_source = table.data
 		if (!rows_source) return view.err('Лист не найден')
-		const {descr, rows_table} = dabudi.splitDescr(rows_source)
-		const {head_titles, rows_body} = dabudi.splitHead(rows_table)
+		const {descr, rows_table} = Dabudi.splitDescr(rows_source)
+		const {head_titles, rows_body} = Dabudi.splitHead(rows_table)
 
 		const indexes = {}
 		for (const i in head_titles) {
@@ -53,9 +56,73 @@ rest.addVariable('table', async view => {
 	}
 
 })
+rest.addResponse('get-tables', async view => {
+	const conf = await config('params')
+	const range = 'A1:Z1000'
+	
+	let sources = []
+	if (conf.gid) {
+		let sheets = await drive.getLists(conf.gid) || []
+		sheets = sheets.map(d => d.properties.title)
+		for (const i in sheets) {
+			const name = sheets[i]
+			
+			const rows_source = await drive.getRows(conf.gid, range, name)
+			if (!rows_source) continue
+			sources.push({name, rows_source})
+		}
+	} else if (conf.src) {
+		let sheets = await xlsx.read(Access, conf.src) || []
+		for (const i in sheets) { 
+			const name = sheets[i].name
+			const table = sheets[i]
 
-import rest_path from '/-controller/rest.path.js'
-rest.extra(rest_path)
+			const rows_source = table.data
+			if (!rows_source) continue
+			sources.push({name, rows_source})
+		}	
+	} else {
+		return view.err('Некорректный конфиг', 500)
+	}
+	const list = []
+	for (const i in sources) {
+		const {rows_source, name} = sources[i]
+	
+		const {descr, rows_table} = Dabudi.splitDescr(rows_source)
+		const {head_titles, rows_body} = Dabudi.splitHead(rows_table)
+
+		const indexes = {}
+		for (const i in head_titles) {
+			const nick = nicked(head_titles[i])
+			indexes[nick] = i
+		}
+		list.push({name, descr, head_titles, indexes, rows_body})
+	}
+	view.ans.list = list
+	return view.ret()
+})
+rest.addResponse('get-sheets', async view => {
+	const conf = await config('params')
+	let sheets = []
+	if (conf.gid) {
+		sheets = await drive.getLists(conf.gid) || []
+		sheets = sheets.map(d => d.properties.title)
+	} else if (conf.src) {
+		sheets = await xlsx.read(Access, conf.src) || []
+		sheets = sheets.map(d => d.name)
+	} else {
+		return view.err('Некорректный конфиг', 500)
+	}
+	view.ans.sheets = sheets
+	return view.ret()
+})
+
+
+rest.addResponse('get-table', async view => {
+	const table = await view.get('table')
+	view.ans.table = table
+	return view.ret()
+})
 
 rest.addResponse('get-head', async view => {
 	const path = await view.get('path') //Без слэша
@@ -125,19 +192,13 @@ rest.addResponse('get-sitemap-group', async view => {
 
 
 
-
-rest.addResponse('get-table', async view => {
-	const table = await view.get('table')
-	view.ans.table = table
-	return view.ret()
-})
 rest.addResponse('get-menu', async view => {
 	const name = await view.get('name')
 	const conf = await config('params')
+	const range = 'A1:Z1000'
 	let list
-
 	if (conf.gid) {
-		const range = 'A1:Z1000'
+		
 		list = {
 			title: name,
 			data: await drive.getRows(conf.gid, range, name)
@@ -187,13 +248,5 @@ rest.addResponse('get-menu', async view => {
 	return view.ret()
 })
 
-
-
-
-rest.addResponse('get-sheet', async view => {
-	const { name } = await view.gets(['name'])
-	view.ans.sheet = await getList(name)
-	return view.ret()
-})
 
 export default rest
