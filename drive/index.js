@@ -29,7 +29,7 @@ export const drive = {
 			console.log('drive', gid, sheet, range, e.code)
 			return []
 		})
-		
+		if (!rows) return false
 		await fs.writeFile(cachesrc, JSON.stringify(rows))
 		return cachesrc
 	})),
@@ -53,7 +53,8 @@ export const drive = {
 		
 		const gauth = await easySheets.authorize()
     	const gdata = await gauth.spreadsheets.get({ spreadsheetId: gid })
-    	const sheets = gdata.data.sheets		
+    	
+    	const sheets = gdata.data.sheets.filter(sheet => !~sheet.properties.title.indexOf('.'))
 		
 		await fs.writeFile(cachesrc, JSON.stringify(sheets))
 		return cachesrc
