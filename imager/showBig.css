@@ -15,6 +15,11 @@
 	z-index: 102;	
 	
 	top:0;
+	
+	left: 0;
+	right:0;
+	text-align:center;
+
 	bottom: 0;
 	display: grid;
 	align-items: center;
@@ -24,7 +29,7 @@
 	display: none;
 }
 .showBig .image.big .big {
-	display: block!important;
+	display: inline!important;
 }
 .showBig .image .small {
 	display: block;
