@@ -36,12 +36,13 @@ rest.addArgument('go', ['string']) //Ссылка куда перейти. Ка�
 
 rest.addResponse('set-access', async view => {
 	//await view.get('admin')
-
+	view.nostore = true
 	Access.setAccessTime()
 
 	const go = await view.get('go')
 	if (!go) return view.ret()
 	view.headers.Location = encodeURI(go)
+	
 	return view.ret('', 301)
 })
 
