@@ -9,6 +9,21 @@ table {
     display: block;
     max-width: fit-content;
 }
+table {
+	overflow-x: scroll;
+	-webkit-overflow-scrolling: touch;
+	scroll-behavior: smooth;
+}
+table::-webkit-scrollbar {
+	height: 2px;
+	width: 2px;
+}
+table::-webkit-scrollbar-thumb {
+	background-color: var(--main, rgba(0,0,0,0.3));
+	border-radius: 5px;
+}
+
+
 
 th, td {
 	padding: 0.6em 1em;
@@ -33,3 +48,6 @@ thead {
 tbody tr:nth-child(odd) {
 /*	background-color: #f2f2f2;*/
 }
+
+
+
