@@ -9,6 +9,7 @@ import User from "/-user/User.js"
 rest.addArgument('model_nick', ['nicked'])
 rest.addArgument('brand_nick', ['nicked'])
 rest.addArgument('item_num', ['int'], (view, n) => n || 1)
+rest.addArgument('item_index', ['int'], (view, n) => n || 0)
 rest.addVariable('item', async (view) => {
 	const { brand_nick, model_nick, item_num, db, base } = await view.gets(['db', 'base', 'brand_nick', 'model_nick', 'item_num'])
 	const item = await Catalog.getItemByNick(db, base, brand_nick, model_nick, item_num)

@@ -6,7 +6,6 @@ import config from '/-config'
 import unique from "/-nicked/unique.js"
 import Access from "/-controller/Access.js"
 import Files from "/-showcase/Files.js"
-import common from "/-catalog/common.html.js"
 import Catalog from "/-catalog/Catalog.js"
 import Showcase from "/-showcase/Showcase.js"
 
@@ -28,7 +27,9 @@ rest.extra(rest_catalog)
 import rest_docx from '/-docx/rest.js'
 
 
-
+const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
+const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : ''
+const getModItemPropValue = (item, mod, prop_title) => getv(mod, prop_title) || getv(item, prop_title) || ''
 
 
 rest.addFunction('nicks', ['array'], (view, ns) => ns.map(v => nicked(v)).filter(v => v).sort())
@@ -62,12 +63,14 @@ rest.addArgument('vals', ['nicks'])
 // })
 
 
+
 rest.addResponse('get-model-head', async (view) => {
 	
 	const model = await view.get('model')
 	const db = await view.get('db')
 	const brand_nick = await view.get('brand_nick')
 	const model_nick = await view.get('model_nick')
+	const item_index = await view.get('item_index')
 	const partner = await view.get('partner')
 	const base = await view.get('base')
 
@@ -77,13 +80,17 @@ rest.addResponse('get-model-head', async (view) => {
 		view.ans.title = `${view.ans.brand?.brand_title ?? brand_nick ?? ''} ${model_nick}`
 		return view.ret()
 	}
-	view.ans.mod = model
 
-	view.ans.title = `${model.brand_title} ${model.model_title} ${common.propval(model,'Наименование') || ''}`
+	const item = model.items[item_index]
+
+	const ar = []
+	ar.push(`${model.brand_title} ${model.model_title}`)
+	ar.push(getModItemPropValue(item, model, 'Наименование'))
+	ar.push(getModItemPropValue(item, model, 'Позиция'))
+	view.ans.title =  ar.filter(r => r).join(' ')
 	
-	if (model.Описание) {
-		view.ans.description = model.Описание
-	}
+	view.ans.description = getModItemPropValue(item, model, 'Описание')
+	
 	if (model.images) {
 		view.ans.image_src = /^http/.test(model.images[0]) ? model.images[0] : '/' + model.images[0]
 	}
