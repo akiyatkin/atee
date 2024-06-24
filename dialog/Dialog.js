@@ -136,6 +136,7 @@ export const Dialog = {
 	hide: popup => {
 		//document.getElementsByTagName('html')[0].style.overscrollY = ''
 		popup = popup || Dialog.parents.pop()
+		if (!popup) return
 		popup = popup.tagName ? popup : document.getElementById(popup)
 
 		const dialog = popup.children[0]
