@@ -35,23 +35,27 @@ Catalog.mdvalues = async (view, base, md, res = {}) => {
 	for (const prop_nick in md.more) {
 		const prop = await base.getPropByNick(prop_nick)
 		mdprops[prop_nick] = prop
-		for (const value_nick in md.more[prop_nick]) {
-			if (prop.type == 'value') {
-				mdvalues[value_nick] = await Catalog.getValueByNick(view, value_nick)
-			} else {
-				let unit = ''
-				if (prop.opt.unit) unit = '&nbsp'+prop.opt.unit
-				let value_title
-				if (value_nick == 'upto') {
-					value_title = 'до ' + md.more[prop_nick][value_nick].replace('-','.')
-				} else if (value_nick == 'from') {
-					value_title = 'от ' + md.more[prop_nick][value_nick].replace('-','.')
+		if (md.more[prop_nick] == 'empty') {
+			mdvalues['empty'] = {value_title:'Нет значения', value_nick:'empty'}
+		} else {
+			for (const value_nick in md.more[prop_nick]) {
+				if (prop.type == 'value') {
+					mdvalues[value_nick] = await Catalog.getValueByNick(view, value_nick)
 				} else {
-					value_title = Number(value_nick.replace('-','.'))
+					let unit = ''
+					if (prop.opt.unit) unit = '&nbsp'+prop.opt.unit
+					let value_title
+					if (value_nick == 'upto') {
+						value_title = 'до ' + md.more[prop_nick][value_nick].replace('-','.')
+					} else if (value_nick == 'from') {
+						value_title = 'от ' + md.more[prop_nick][value_nick].replace('-','.')
+					} else {
+						value_title = Number(value_nick.replace('-','.'))
+					}
+					value_title += unit
+					
+					mdvalues[value_nick] = {value_nick, value_title}
 				}
-				value_title += unit
-				
-				mdvalues[value_nick] = {value_nick, value_title}
 			}
 		}
 	}
@@ -824,12 +828,13 @@ Catalog.getFilterConf = async (view, prop, group_id, md, partner) => {
 			WHERE ${where.join(' and ')}
 		`)
 	} else if (prop.type == 'brand') {
-		filter.remains = await db.all(`
+		const sql = `
 			SELECT distinct b.brand_nick as value_nick
 			FROM (${from.join(', ')}) 
 				left join showcase_brands b on (b.brand_id = m.brand_id)
 			WHERE ${where.join(' and ')}
-		`)
+		`
+		filter.remains = await db.all(sql)
 	}
 	filter.values.forEach(row => {
 		row.mute = !filter.remains.some(v => v.value_nick == row.value_nick)
@@ -994,6 +999,8 @@ Catalog.getmdwhere = async (view, md, partner = '') => {
 			for (const prop_nick in md.more) {
 				i++
 				iprops_dive = true
+
+
 				
 				let prop
 				if (partner?.cost && prop_nick == 'cena') {
@@ -1002,54 +1009,60 @@ Catalog.getmdwhere = async (view, md, partner = '') => {
 					prop = await base.getPropByNick(prop_nick)
 				}
 				
-				from.push(`showcase_iprops ip${i}`)
-				where.push(`ip${i}.model_id = i.model_id`)
-				where.push(`ip${i}.item_num = i.item_num`)
-				where.push(`ip${i}.prop_id = ${prop.prop_id}`)
+				
 
 				const values = md.more[prop_nick]
-				
-				const ids = []
-				if (prop.type == 'number') {
-					for (let name in values) {
-						let value = name
-						if (~['upto','from'].indexOf(name)) {
-							value = values[name]
-						}
-						if (typeof(value) == 'string') value = value.replace('-','.')
-						
-						let value_nick = Number(value)
-						
-						if (partner?.discount && prop_nick == 'cena') {
-							value_nick = value_nick * (100 + partner.discount) / 100
-						}
-						if (~['upto','from'].indexOf(name)) {
-							sort = []
-							if (name == 'upto') {
-								where.push(`ip${i}.number <= ${value_nick}`)
-								sort.push(`ip${i}.number DESC`)
-							}
-							if (name == 'from') {
-								where.push(`ip${i}.number >= ${value_nick}`)
-								sort.push(`ip${i}.number ASC`)
-							}
-						} else {
-							if (value_nick == value) ids.push(value_nick)
-							else  ids.push(prop.prop_id + ', false')	
-						}
-						
-					}
-					if (ids.length) where.push(`ip${i}.number in (${ids.join(',')})`)
-				} else if (prop.type == 'value') {
-					for (const value in values) {
-						const value_nick = nicked(value)
-						let value_id = await base.getValueIdByNick(value_nick)
-						if (!value_id) value_id = 0
-						ids.push(value_id)
-					}
-					where.push(`ip${i}.value_id in (${ids.join(',')})`)
+
+				if (values == 'empty') {
+					from[1] = `showcase_items i left join showcase_iprops ip${i} on (ip${i}.model_id = i.model_id and ip${i}.item_num = i.item_num and ip${i}.prop_id = ${prop.prop_id})`
+					where.push(`ip${i}.prop_id is null`)
 				} else {
-					//значения других типов пропускаем
+					from.push(`showcase_iprops ip${i}`)
+					where.push(`ip${i}.model_id = i.model_id`)
+					where.push(`ip${i}.item_num = i.item_num`)
+					where.push(`ip${i}.prop_id = ${prop.prop_id}`)
+					const ids = []
+					if (prop.type == 'number') {
+						for (let name in values) {
+							let value = name
+							if (~['upto','from'].indexOf(name)) {
+								value = values[name]
+							}
+							if (typeof(value) == 'string') value = value.replace('-','.')
+							
+							let value_nick = Number(value)
+							
+							if (partner?.discount && prop_nick == 'cena') {
+								value_nick = value_nick * (100 + partner.discount) / 100
+							}
+							if (~['upto','from'].indexOf(name)) {
+								sort = []
+								if (name == 'upto') {
+									where.push(`ip${i}.number <= ${value_nick}`)
+									sort.push(`ip${i}.number DESC`)
+								}
+								if (name == 'from') {
+									where.push(`ip${i}.number >= ${value_nick}`)
+									sort.push(`ip${i}.number ASC`)
+								}
+							} else {
+								if (value_nick == value) ids.push(value_nick)
+								else  ids.push(prop.prop_id + ', false')	
+							}
+							
+						}
+						if (ids.length) where.push(`ip${i}.number in (${ids.join(',')})`)
+					} else if (prop.type == 'value') {
+						for (const value in values) {
+							const value_nick = nicked(value)
+							let value_id = await base.getValueIdByNick(value_nick)
+							if (!value_id) value_id = 0
+							ids.push(value_id)
+						}
+						where.push(`ip${i}.value_id in (${ids.join(',')})`)
+					} else {
+						//значения других типов пропускаем
+					}
 				}
 			}
 		}

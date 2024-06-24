@@ -232,27 +232,34 @@ tpl.showSelected = (data, env) => {
 	return Object.keys(data.md.more).map(prop_nick => {
 		const values = data.md.more[prop_nick]
 		const prop = data.mdprops[prop_nick]
-		if (prop.type == 'value' || prop.type == 'number') {
-			return Object.keys(values).map(value_nick => {
-				const value = data.mdvalues[value_nick]
-				return tpl.choice.just(data, env, prop, value)
-			}).join(' ')
+
+		if (values == 'empty') {
+			return tpl.choice.just(data, env, prop)
+		} else if (typeof(values) !== 'object') {
+
 		} else {
-			return Object.keys(values).map(value_nick => {
-				if (value_nick == 'from' || value_nick == 'upto') {
-					return tpl.choice.just(data, env, prop, {value_nick, value_title: (value_nick == 'from' ? 'от ' : 'до ') + values[value_nick] + ' ' + (prop.opt.unit)})
-				} else {
-					return tpl.choice.just(data, env, prop, {value_nick, value_title: value_nick})
-				}
-			}).join(' ')
+			if (prop.type == 'value' || prop.type == 'number') {
+				return Object.keys(values).map(value_nick => {
+					const value = data.mdvalues[value_nick]
+					return tpl.choice.just(data, env, prop, value)
+				}).join(' ')
+			} else {
+				return Object.keys(values).map(value_nick => {
+					if (value_nick == 'from' || value_nick == 'upto') {
+						return tpl.choice.just(data, env, prop, {value_nick, value_title: (value_nick == 'from' ? 'от ' : 'до ') + values[value_nick] + ' ' + (prop.opt.unit)})
+					} else {
+						return tpl.choice.just(data, env, prop, {value_nick, value_title: value_nick})
+					}
+				}).join(' ')
+			}
 		}
 	}).join('')
 }
 tpl.choice = {
 	"just": (data, env, prop, value) => `
 		<a title="${prop.prop_title}" data-scroll="none" class="clearlink" 
-			href="${env.crumb}${links.addm(data)}more.${prop.prop_nick}.${value.value_nick}">
-			<span class="value">${value.value_title}</span>
+			href="${env.crumb}${links.addm(data)}more.${prop.prop_nick}${value?.value_nick ? '.' : ''}${value?.value_nick || ''}">
+			<span class="value">${value?.value_title || ({'cena':'Без цен', 'images':'Без картинок'})[prop.prop_nick] || 'Нет значения'}</span>
 			<span class="krest" style="font-size:1rem; line-height: 2rem;">✕</span>
 		</a>
 	`

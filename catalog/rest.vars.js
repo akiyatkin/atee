@@ -198,30 +198,33 @@ rest.addVariable('md', async (view) => {
 				delete md.more[prop_nick]
 				continue
 			}
+			if (md.more[prop_nick] == 'empty') {
 
-			for (const prop_value in md.more[prop_nick]) {
-				if (prop_value === '') delete md.more[prop_nick][prop_value]
-			}
+			} else {
+				for (const prop_value in md.more[prop_nick]) {
+					if (prop_value === '') delete md.more[prop_nick][prop_value]
+				}
 
-			const prop = await base.getPropByNick(prop_nick)
-			if (!prop) {
-				delete md.more[prop_nick]
-			} else if (prop && !~['value','brand','number'].indexOf(prop.type)) {
-				delete md.more[prop_nick]
-			} else if (prop && prop.type == 'value' && md.more[prop_nick]) {
-				for (const value_nick in md.more[prop_nick]) {
-					const check_value_nick = nicked(value_nick)
-					if (check_value_nick != value_nick) {
-						delete md.more[prop_nick][value_nick]
-						continue
-					}
-					const value = await Catalog.getValueByNick(view, value_nick)
-					if (!value || typeof(md.more[prop_nick][value_nick]) == 'object') {
-						delete md.more[prop_nick][value_nick]
+				const prop = await base.getPropByNick(prop_nick)
+				if (!prop) {
+					delete md.more[prop_nick]
+				} else if (prop && !~['value','brand','number'].indexOf(prop.type)) {
+					delete md.more[prop_nick]
+				} else if (prop && prop.type == 'value' && md.more[prop_nick]) {
+					for (const value_nick in md.more[prop_nick]) {
+						const check_value_nick = nicked(value_nick)
+						if (check_value_nick != value_nick) {
+							delete md.more[prop_nick][value_nick]
+							continue
+						}
+						const value = await Catalog.getValueByNick(view, value_nick)
+						if (!value || typeof(md.more[prop_nick][value_nick]) == 'object') {
+							delete md.more[prop_nick][value_nick]
+						}
 					}
 				}
+				if (!Object.keys(md.more[prop_nick] || {}).length) delete md.more[prop_nick]
 			}
-			if (!Object.keys(md.more[prop_nick] || {}).length) delete md.more[prop_nick]
 		}
 		if (!Object.keys(md.more).length) delete md.more
 	}

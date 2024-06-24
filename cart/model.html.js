@@ -151,7 +151,7 @@ tpl.showButtonBuy = (data, env, mod, item = {more:{}}) => `
 		(async btn => {
 
 			const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-			const ans = await senditmsg(btn, '/-cart/get-added', btn.dataset)
+			const ans = await senditmsg(btn.parentElement, '/-cart/get-added', btn.dataset)
 		
 			btn.style.opacity = 1
 			if (ans.count) btn.innerHTML = 'Открыть корзину'

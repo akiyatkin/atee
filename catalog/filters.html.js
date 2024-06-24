@@ -66,12 +66,12 @@ filters.block = (title, body, descr) => `
 
 const sliderval = (data, filter) => {
 	const p = getp(data, filter.prop_nick)
-	return p.upto || p.from || ''
+	return p['upto'] || p['from'] || ''
 }
 const changelink = (data, filter) => {
 	const p = getp(data, filter.prop_nick)
 	let val = sliderval(data, filter) || filter.max
-	let direction = (!p.upto && !p.from) ? 'upto' : (p.upto ? 'from' : 'upto')
+	let direction = (!p['upto'] && !p['from']) ? 'upto' : (p['upto'] ? 'from' : 'upto')
 	if (val) {
 		if (val <= filter.min) {
 			val = filter.max

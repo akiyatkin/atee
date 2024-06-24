@@ -4,6 +4,7 @@ import { words } from "/-words/words.js"
 
 export const ROOT = (data, env) => !data.result ? `<p>${data.msg}</p>` : `
 	<h1>Таблицы</h1>
+	<p>Показать <a href="/catalog?m=more.cena=empty">без цен</a>, <a href="/catalog?m=more.images=empty">без картинок</a>.</p>
 	<table style="border-spacing: 0 0.5rem">
 		${data.files.map(itemrow).join('')}
 	</table>
