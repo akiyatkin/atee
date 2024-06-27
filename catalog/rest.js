@@ -433,7 +433,10 @@ rest.addResponse('get-search-head', async (view) => {
 	if (value) view.ans.thisischild = true
 	if (view.ans.canonical) view.ans.canonical = '/' + view.ans.canonical
 
-	if (md.search) view.ans.title += ' ' + md.search
+	if (md.search) {
+		view.ans.title += ' ' + md.search
+		view.ans.description = 'Поиск в каталоге по запросу ' + md.search
+	}
 
 	const src = await getSearchPageSrc(db, options, md, value)
 	
