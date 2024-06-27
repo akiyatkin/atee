@@ -136,6 +136,7 @@ rest.addResponse('get-head', async view => {
 				"title": row[table.indexes.title] || '',
 				"description": row[table.indexes.description] || '',
 				"keywords": row[table.indexes.keywords] || '',
+				"robots": row[table.indexes.robots] || '',
 				"key": row[table.indexes.key] || '',
 				"image_src": row[table.indexes['image-src']] || ''
 			}
@@ -159,6 +160,7 @@ rest.addResponse('get-sitemap', async view => {
 			"title": row[table.indexes.title] || '',
 			"description": row[table.indexes.description] || '',
 			"keywords": row[table.indexes.keywords] || '',
+			"robots": row[table.indexes.robots] || '',
 			"key": row[table.indexes.key] || '',
 			"image_src": row[table.indexes['image-src']] || ''
 		}

@@ -6,6 +6,7 @@ sitemap.HEAD = (head, env) => `
 	<title>${forattr(head?.title)}</title>
 	<meta name="description" content="${forattr(head?.description)}">
 	<meta name="keywords" content="${forattr(head?.keywords)}">
+	<meta name="robots" content="${forattr(head?.robots) || 'all'}" />
 	<meta property="og:image" content="${head?.image_src ?? ''}">
 	<link rel="image_src" href="${head?.image_src ?? ''}">
 	<link rel="canonical" href="https://${env.host}${head.canonical??''}">
@@ -22,6 +23,9 @@ sitemap.HEAD = (head, env) => `
 			},
 			description: descr => {
 				qs('meta[name=description]').content = descr
+			},
+			robots: keys => {
+				qs('meta[name=robots]').content = keys
 			},
 			keywords: keys => {
 				qs('meta[name=keywords]').content = keys

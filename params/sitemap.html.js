@@ -46,14 +46,17 @@ const showLink = (item, next) => `
 		<div style="grid-area: title">
 			<div>
 				<a href="/${item.href || ''}">${item.name || item.title || next}</a><br>
+				${item.robots ? showRobots(item, next) : ''}
 				<span style="font-size: 12px; color:green">/${item.href || ''}</span>
 				<span style="font-size: 12px; color:brown">${item.key || ''}</span>
+
 				
 			</div>
 		</div>
 		<div style="grid-area: descr">
 			${item.description ? showDescription(item, next) : ''}
 			${item.keywords ? showKeywords(item, next) : ''}
+			
 		</div>
 
 		<div style="grid-area: image;">
@@ -65,6 +68,11 @@ const showLink = (item, next) => `
 `
 const showImage = (item, next) => `
 	<a href="/${item.href || ''}"><img alt="${item.name || item.title || next}" src="${item.image_src}"></a>
+`
+const showRobots = (item, next) => `
+	<span style="color: red; font-size:12px; margin-top:1rem">
+		${item.robots}
+	</span>
 `
 const showKeywords = (item, next) => `
 	<div style="font-style: italic; font-size:12px; margin-top:1rem">
