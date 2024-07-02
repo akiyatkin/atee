@@ -1,8 +1,8 @@
 
 CREATE TABLE IF NOT EXISTS `showcase_prices` (
 	`price_id` SMALLINT unsigned NOT NULL AUTO_INCREMENT COMMENT 'id источника',
-	`price_title` varchar(31) NOT NULL COMMENT 'Идентификационное имя источника - имя файла',
-	`price_nick` varchar(31) COLLATE latin1_bin NOT NULL COMMENT '',
+	`price_title` varchar(63) NOT NULL COMMENT 'Идентификационное имя источника - имя файла',
+	`price_nick` varchar(63) COLLATE latin1_bin NOT NULL COMMENT '',
 	`loadtime` DATETIME NULL DEFAULT NULL COMMENT 'Дата последнего внесения',
 	`quantity` SMALLINT unsigned COMMENT 'Количество записей',
 	`duration` MEDIUMINT unsigned COMMENT 'Записывается время разбора данных',
@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS `showcase_prices` (
 
 CREATE TABLE IF NOT EXISTS `showcase_tables` (
 	`table_id` SMALLINT unsigned NOT NULL AUTO_INCREMENT COMMENT 'id источника',
-	`table_title` varchar(31) NOT NULL COMMENT 'Идентификационное имя источника - имя файла, связь с файлом',
-	`table_nick` varchar(31) NOT NULL COLLATE latin1_bin COMMENT '',
+	`table_title` varchar(63) NOT NULL COMMENT 'Идентификационное имя источника - имя файла, связь с файлом',
+	`table_nick` varchar(63) NOT NULL COLLATE latin1_bin COMMENT '',
 	`loadtime` DATETIME NULL DEFAULT NULL COMMENT 'Дата последнего внесения',
 	`quantity` SMALLINT unsigned COMMENT 'Количество позиций в обработке',
 	`duration` MEDIUMINT unsigned COMMENT 'Записывается время разбора данных',
@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS `showcase_tables` (
 
 CREATE TABLE IF NOT EXISTS `showcase_groups` (
 	`group_id` SMALLINT unsigned NOT NULL AUTO_INCREMENT COMMENT '',
-	`group_title` varchar(31) NOT NULL COMMENT 'Ограничение по длине, иначе дизайн неуправляемый.',
-	`group_nick` varchar(31) NOT NULL COLLATE latin1_bin COMMENT '',
+	`group_title` varchar(63) NOT NULL COMMENT 'Ограничение по длине, иначе дизайн неуправляемый.',
+	`group_nick` varchar(63) NOT NULL COLLATE latin1_bin COMMENT '',
 	`parent_id` SMALLINT unsigned NULL COMMENT '',
 	
 	`icon_id` MEDIUMINT unsigned NULL COMMENT 'file_id',
@@ -41,8 +41,8 @@ CREATE TABLE IF NOT EXISTS `showcase_groups` (
 
 CREATE TABLE IF NOT EXISTS `showcase_props` (
 	`prop_id` SMALLINT unsigned NOT NULL AUTO_INCREMENT COMMENT '',
-	`prop_title` varchar(31) NOT NULL COMMENT 'Ограничение по длине, иначе дизайн неуправляемый.',
-	`prop_nick` varchar(31) NOT NULL COLLATE latin1_bin COMMENT '',
+	`prop_title` varchar(63) NOT NULL COMMENT 'Ограничение по длине, иначе дизайн неуправляемый.',
+	`prop_nick` varchar(63) NOT NULL COLLATE latin1_bin COMMENT '',
 	`ordain` SMALLINT unsigned NOT NULL COMMENT '',
 --	`type` ENUM("bond","model","group","brand","value","number","text","file") NOT NULL COMMENT 'БЕРЁТСЯ ИЗ КОНФИГА В какой колонке и как хранятся значения',
 	PRIMARY KEY (`prop_id`),
@@ -58,8 +58,8 @@ VALUES
 
 CREATE TABLE IF NOT EXISTS `showcase_values` (
 	`value_id` MEDIUMINT unsigned NOT NULL AUTO_INCREMENT COMMENT '',
-	`value_title` varchar(31) NOT NULL COMMENT '',
-	`value_nick` varchar(31) NOT NULL COLLATE latin1_bin COMMENT '',
+	`value_title` varchar(63) NOT NULL COMMENT '',
+	`value_nick` varchar(63) NOT NULL COLLATE latin1_bin COMMENT '',
 	PRIMARY KEY (`value_id`),
 	UNIQUE INDEX (`value_nick`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci AUTO_INCREMENT=1 COMMENT 'Значения хранятся в переменных в оперативной памяти';
@@ -67,8 +67,8 @@ CREATE TABLE IF NOT EXISTS `showcase_values` (
 
 CREATE TABLE IF NOT EXISTS `showcase_bonds` (
 	`bond_id` MEDIUMINT unsigned NOT NULL AUTO_INCREMENT COMMENT '',
-	`bond_title` varchar(31) NOT NULL COMMENT '',
-	`bond_nick` varchar(31) NOT NULL COLLATE latin1_bin COMMENT '',
+	`bond_title` varchar(63) NOT NULL COMMENT '',
+	`bond_nick` varchar(63) NOT NULL COLLATE latin1_bin COMMENT '',
 	PRIMARY KEY (`bond_id`),
 	UNIQUE INDEX (`bond_nick`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci AUTO_INCREMENT=1 COMMENT 'Арт, Код, Фото в памяти не хранятся';
@@ -76,8 +76,8 @@ CREATE TABLE IF NOT EXISTS `showcase_bonds` (
 
 CREATE TABLE IF NOT EXISTS `showcase_brands` (
 	`brand_id` SMALLINT unsigned NOT NULL AUTO_INCREMENT COMMENT '',
-	`brand_title` varchar(31) NOT NULL COMMENT '',
-	`brand_nick` varchar(31) NOT NULL COLLATE latin1_bin COMMENT '',
+	`brand_title` varchar(63) NOT NULL COMMENT '',
+	`brand_nick` varchar(63) NOT NULL COLLATE latin1_bin COMMENT '',
 	`logo_id` MEDIUMINT unsigned NULL COMMENT 'file_id',
 	`ordain` SMALLINT unsigned NOT NULL COMMENT 'Порядок в списке производителей',
 	PRIMARY KEY (`brand_id`),
@@ -87,8 +87,8 @@ CREATE TABLE IF NOT EXISTS `showcase_brands` (
 CREATE TABLE IF NOT EXISTS `showcase_models` (
 	`model_id` MEDIUMINT unsigned NOT NULL AUTO_INCREMENT COMMENT '',
 	`brand_id` SMALLINT unsigned COMMENT '',
-	`model_title` varchar(31) NOT NULL COMMENT '',
-	`model_nick` varchar(31) NOT NULL COLLATE latin1_bin COMMENT '',
+	`model_title` varchar(63) NOT NULL COMMENT '',
+	`model_nick` varchar(63) NOT NULL COLLATE latin1_bin COMMENT '',
 	`group_id` SMALLINT unsigned NOT NULL COMMENT '',
 	`search` TEXT NOT NULL COLLATE latin1_bin COMMENT 'латиница после Path::encode слова разделены пробелом',
 	FULLTEXT INDEX (`search`),
@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS `showcase_iprops` (
 
 CREATE TABLE IF NOT EXISTS `showcase_filekeys` (
 	`file_id` MEDIUMINT unsigned NOT NULL COMMENT '',
-	`key_nick` varchar(31) COLLATE latin1_bin NULL COMMENT 'Ключ без запятых, для связи может быть именем файла, а может быть папкой в иерархии. Связывается со значениями bond или с model_nick',
+	`key_nick` varchar(63) COLLATE latin1_bin NULL COMMENT 'Ключ без запятых, для связи может быть именем файла, а может быть папкой в иерархии. Связывается со значениями bond или с model_nick',
 	INDEX (key_nick),
 	UNIQUE (file_id, key_nick)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci COMMENT '';
@@ -143,12 +143,12 @@ CREATE TABLE IF NOT EXISTS `showcase_files` (
 
 	`source` ENUM('data','disk') NULL DEFAULT NULL COMMENT 'Источник, где найден файл. disk в приоритете',
 
-	`brand_nick` varchar(31) COLLATE latin1_bin NULL COMMENT 'Имя, часто в структуре src или при контексте разбора, которое указывает на бренд',
-	`group_nick` varchar(31) COLLATE latin1_bin NULL COMMENT 'Имя, часто в структуре src или при контексте разбора, которое указывает на группу',
+	`brand_nick` varchar(63) COLLATE latin1_bin NULL COMMENT 'Имя, часто в структуре src или при контексте разбора, которое указывает на бренд',
+	`group_nick` varchar(63) COLLATE latin1_bin NULL COMMENT 'Имя, часто в структуре src или при контексте разбора, которое указывает на группу',
 
 
-	`name` varchar(31) NOT NULL COMMENT 'Потребуется для alt или title у файла',
-	`nick` varchar(31) COLLATE latin1_bin NOT NULL COMMENT 'Для сортировки, сначало по num потом по nick - nicked(name) и для ссылки на файл может понадобиться',
+	`name` varchar(63) NOT NULL COMMENT 'Потребуется для alt или title у файла',
+	`nick` varchar(63) COLLATE latin1_bin NOT NULL COMMENT 'Для сортировки, сначало по num потом по nick - nicked(name) и для ссылки на файл может понадобиться',
 	`place` ENUM('local','remote') NOT NULL COMMENT 'или локальный или из интернета',
 	
 	`size` DECIMAL(3,2) unsigned NULL DEFAULT NULL COMMENT 'В мегобайтах с двумя цифрами после запятой для way - files',

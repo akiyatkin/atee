@@ -6,7 +6,7 @@ import config from "/-config"
 import Showcase from "/-showcase/Showcase.js"
 
 class Base {
-	static LONG = 31
+	static LONG = 63
 	get LONG() {
 		return Base.LONG
 	}
