@@ -43,7 +43,7 @@ Catalog.mdvalues = async (view, base, md, res = {}) => {
 					mdvalues[value_nick] = await Catalog.getValueByNick(view, value_nick)
 				} else {
 					let unit = ''
-					if (prop.opt.unit) unit = '&nbsp'+prop.opt.unit
+					if (prop.opt?.unit) unit = '&nbsp'+prop.opt.unit
 					let value_title
 					if (value_nick == 'upto') {
 						value_title = 'до ' + md.more[prop_nick][value_nick].replace('-','.')

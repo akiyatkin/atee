@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS `cart_orders` (
 	`order_id` MEDIUMINT unsigned NOT NULL AUTO_INCREMENT,
 	`user_id` MEDIUMINT unsigned NULL COMMENT 'Пользователь может быть удалён. Заказ останется. Надо сообщить что пользователь удалился. Автор кто непосредственно создал заказ, владельцы указаны в cart_userorders',    
-	`order_nick` varchar(31) NOT NULL COLLATE latin1_bin COMMENT 'Номер из даты с проверкой уникальности',
+	`order_nick` varchar(63) NOT NULL COLLATE latin1_bin COMMENT 'Номер из даты с проверкой уникальности',
 	`commentuser` TEXT NOT NULL DEFAULT '' COMMENT '',
 	`commentmanager` TEXT NOT NULL DEFAULT '' COMMENT '',
 	`email` TINYTEXT NOT NULL DEFAULT '' COMMENT '1. У текущего user_id нет - будет добавлен. 2. У текущего другой, если свободен, то будет добавлен текущему пользователю 3. Для менеджера. Создаётся новый пользователь или заявка привяжется к существующему пользователю. Если телефон у одного, почта у другова заявка привяжется к обоим.',
@@ -26,19 +26,19 @@ CREATE TABLE IF NOT EXISTS `cart_orders` (
 	`tk` TINYTEXT NULL COMMENT 'Рекомендуемая ТК',
 	`zip` TEXT NULL COMMENT 'Индекс',
 
-	`referrer_host` varchar(31) NOT NULL DEFAULT '' COMMENT '',
-	`source` varchar(31) NOT NULL DEFAULT '' COMMENT '',
-	`content` varchar(31) NOT NULL DEFAULT '' COMMENT '',
-	`campaign` varchar(31) NOT NULL DEFAULT '' COMMENT '',
-	`medium` varchar(31) NOT NULL DEFAULT '' COMMENT '',
-	`term` varchar(31) NOT NULL DEFAULT '' COMMENT '',
+	`referrer_host` varchar(63) NOT NULL DEFAULT '' COMMENT '',
+	`source` varchar(63) NOT NULL DEFAULT '' COMMENT '',
+	`content` varchar(63) NOT NULL DEFAULT '' COMMENT '',
+	`campaign` varchar(63) NOT NULL DEFAULT '' COMMENT '',
+	`medium` varchar(63) NOT NULL DEFAULT '' COMMENT '',
+	`term` varchar(63) NOT NULL DEFAULT '' COMMENT '',
 
-	`referrer_host_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
-	`source_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
-	`content_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
-	`campaign_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
-	`medium_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
-	`term_nick` varchar(31) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
+	`referrer_host_nick` varchar(63) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
+	`source_nick` varchar(63) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
+	`content_nick` varchar(63) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
+	`campaign_nick` varchar(63) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
+	`medium_nick` varchar(63) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
+	`term_nick` varchar(63) NOT NULL DEFAULT '' COLLATE latin1_bin COMMENT '',
 
 	`count` SMALLINT unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш количества позиций(строчек) в корзине. Для сводной таблицы МЕНЕДЖЕРА',
 	`sum` INT unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш суммы заказа без стоимости доставки. Для сводной таблицы МЕНЕДЖЕРА',
@@ -75,8 +75,8 @@ CREATE TABLE IF NOT EXISTS `cart_transports` (
 CREATE TABLE IF NOT EXISTS `cart_basket` (
 	`order_id` MEDIUMINT unsigned NOT NULL,
 
-	`model_nick` varchar(31) COLLATE latin1_bin NOT NULL COMMENT 'model_id не можем сохранять, так как может поменяться',
-	`brand_nick` varchar(31) COLLATE latin1_bin NOT NULL COMMENT '',
+	`model_nick` varchar(63) COLLATE latin1_bin NOT NULL COMMENT 'model_id не можем сохранять, так как может поменяться',
+	`brand_nick` varchar(63) COLLATE latin1_bin NOT NULL COMMENT '',
 	`item_num` SMALLINT unsigned NOT NULL DEFAULT 0 COMMENT '',
 
 	`hash` CHAR(8) COLLATE latin1_bin NULL COMMENT 'хэш данных позиции - было ли изменение в описании замороженной позиции используется до распаковки json и сравнения его с позицией в каталоге',
@@ -105,6 +105,6 @@ CREATE TABLE IF NOT EXISTS `cart_actives` (
 
 -- CREATE TABLE IF NOT EXISTS `cart_partners` (
 --  	`order_id` int(11) unsigned NOT NULL,
--- 	`partner_nick` varchar(31) COLLATE latin1_bin NOT NULL,
+-- 	`partner_nick` varchar(63) COLLATE latin1_bin NOT NULL,
 -- 	PRIMARY KEY (`order_id`)
 -- ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
