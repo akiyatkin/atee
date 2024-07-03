@@ -11,28 +11,35 @@ const dir = 'cache/drive/'
 await fs.mkdir(dir, { recursive: true }).catch(e => null)
 
 export const drive = {
-	cacheRows: (gid, range, sheet = '') => Access.relate(drive).once(sheet + gid, () => cproc(drive, sheet + gid, async () => {
-		const cachename = nicked(gid + '-' + range + '-' + sheet)
-		const cachesrc = dir + cachename + '.json'
-		const conf = await config('drive')
-
-		const cert = await fs.readFile(conf.certificate, "utf8").catch(r => false)
-		if (!cert) {
-			console.log('Неудалось считать сертификат ' + conf.certificate)
-			return false
-		}
-
-		const easySheets = new EasySheets(gid, btoa('{}'))
-		easySheets.serviceAccountCreds = JSON.parse(cert)
+	cacheRows: (gid, range, sheet = '') => {
 		
-		const rows = await easySheets.getRange(range, {sheet}).catch(e => {
-			console.log('drive', gid, sheet, range, e.code)
-			return []
-		})
-		if (!rows) return false
-		await fs.writeFile(cachesrc, JSON.stringify(rows))
-		return cachesrc
-	})),
+		const store = Access.relate(drive)
+		
+		return store.once(sheet + gid, () => cproc(drive, sheet + gid, async () => {
+
+			const cachename = nicked(gid + '-' + range + '-' + sheet)
+			const cachesrc = dir + cachename + '.json'
+			const conf = await config('drive')
+
+			const cert = await fs.readFile(conf.certificate, "utf8").catch(r => false)
+			if (!cert) {
+				console.log('Неудалось считать сертификат ' + conf.certificate)
+				return false
+			}
+
+			const easySheets = new EasySheets(gid, btoa('{}'))
+			easySheets.serviceAccountCreds = JSON.parse(cert)
+			
+			const rows = await easySheets.getRange(range, {sheet}).catch(e => {
+				console.log('drive', gid, sheet, range, e.code)
+				return []
+			})
+			if (!rows) return false
+			console.log('Запись на диск writeFile ' + cachesrc)
+			await fs.writeFile(cachesrc, JSON.stringify(rows))
+			return cachesrc
+		}))
+	},
 	cacheLists: (gid) => Access.relate(drive).once(gid, () => cproc(drive, gid, async () => {
 		const cachename = nicked(gid)
 		const cachesrc = dir + cachename + '.json'
