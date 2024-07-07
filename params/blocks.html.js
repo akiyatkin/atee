@@ -32,13 +32,13 @@ tpl.ROOT = (data, env) => data.blocks.length ? `
 tpl.showBlock = (data, env, block) => `
 	<div class="row">	
 		<div style="grid-area: head">
-			<h3 style="margin:0"><a href="/${block.path}">${block.title}</a></h3>
+			<h3 style="margin:0"><a href="${block.path}">${block.title}</a></h3>
 		</div>
 		<div style="grid-area: body">
-			${block.description} <a href="/${block.path}">Подробнее...</a>
+			${block.description} <a href="${block.path}">Подробнее...</a>
 		</div>
 		<div style="grid-area: img">
-			<a href="/${block.path}"><img alt="" style="max-width: 100%; height: auto;" loading="lazy" width="300" height="200" src="/-imager/webp?w=300&h=200&fit=cover&src=${block.image_src}"></a>
+			<a href="${block.path}"><img alt="" style="max-width: 100%; height: auto;" loading="lazy" width="300" height="200" src="/-imager/webp?w=300&h=200&fit=cover&src=${block.image_src}"></a>
 		</div>
 	</div>
 `
