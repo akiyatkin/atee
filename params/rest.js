@@ -14,6 +14,7 @@ rest.extra(rest_path)
 import Dabudi from '/-dabudi'
 import Base from '/-showcase/Base.js'
 import nicked from '/-nicked'
+import unique from '/-nicked/unique.js'
 import Access from '/-controller/Access.js'
 import config from '/-config'
 import xlsx from '/-xlsx'
@@ -26,21 +27,19 @@ import drive from '/-drive'
 
 rest.addArgument('name')
 rest.addVariable('name#required',['name', 'required'])
+rest.addArgument('group', ['string'])
 
-
-rest.addVariable('table', async view => {
-	const name = await view.get('name#required')
+const getTable = async name => {
 	const conf = await config('params')
 	const range = 'A1:Z1000'
 	if (conf.gid) {
 		return await drive.getTable(conf.gid, range, name)
-		
 	} else if (conf.src) {
 		const lists = await xlsx.read(Access, conf.src) || []
 		const table = lists.find(d => d.name == name)
-		if (!table) return view.err('Лист не найден')
+		if (!table) return false
 		const rows_source = table.data
-		if (!rows_source) return view.err('Лист не найден')
+		if (!rows_source) return false
 		const {descr, rows_table} = Dabudi.splitDescr(rows_source)
 		const {head_titles, rows_body} = Dabudi.splitHead(rows_table)
 
@@ -49,13 +48,78 @@ rest.addVariable('table', async view => {
 			const nick = nicked(head_titles[i])
 			indexes[nick] = i
 		}
-
 		return {name, descr, head_titles, indexes, rows_body}
 	} else {
-		return view.err('Некорректный конфиг', 500)
+		return false
 	}
+}
+
+
+rest.addVariable('table', async view => {
+	const name = await view.get('name#required')
+	
+	const table = await getTable(name)
+	if (!table) return view.err('Ошибка в данных')
+	return table
+
+	
 
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+rest.addResponse('get-blocks', async view => {
+	const path = '/' + await view.get('path') //Без слэша
+
+	const rel = await getTable('REL')	
+
+		
+	const list = []
+	rel.rows_body.forEach(row => {
+		if (row[rel.indexes.gde] != path) return
+		list.push(row[rel.indexes.chto])
+	})	
+	rel.rows_body.forEach(row => {
+		if (!row[rel.indexes.obratno]) return
+		if (row[rel.indexes.chto] != path) return
+		list.push(row[rel.indexes.gde])
+	})
+	unique(list)
+
+	const seo = await getTable('SEO','Адрес')
+
+	const blocks = list.map(path => { //path со слэшом
+		const row = seo.rows_body.find(row => row[seo.indexes.path] == path)
+		if (!row) return false
+		return {
+			description: row[seo.indexes.description],
+			path: row[seo.indexes.path],
+			title: row[seo.indexes.title],
+			image_src: row[seo.indexes['image-src']]
+		}
+	}).filter(row => row)
+	
+	
+	view.ans.descr = rel.descr
+	view.ans.path = path
+	view.ans.blocks = blocks
+	return view.ret()
+})
+
+
+
 rest.addResponse('get-tables', async view => {
 	const conf = await config('params')
 	const range = 'A1:Z1000'
@@ -183,7 +247,7 @@ rest.addResponse('get-sitemap-root', async view => {
 	view.ans.headings = Object.entries(headings).map(([nick, heading]) => ({title: heading.title, nick}))
 	return view.ret()
 })
-rest.addArgument('group', ['string'])
+
 
 rest.addResponse('get-sitemap-group', async view => {
 	const headings = await view.get('headings')
