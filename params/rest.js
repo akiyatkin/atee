@@ -88,13 +88,13 @@ rest.addResponse('get-blocks', async view => {
 		
 	const list = []
 	rel.rows_body.forEach(row => {
-		if (row[rel.indexes.gde] != path) return
-		list.push(row[rel.indexes.chto])
-	})	
-	rel.rows_body.forEach(row => {
 		if (!row[rel.indexes.obratno]) return
 		if (row[rel.indexes.chto] != path) return
 		list.push(row[rel.indexes.gde])
+	})
+	rel.rows_body.forEach(row => {
+		if (row[rel.indexes.gde] != path) return
+		list.push(row[rel.indexes.chto])
 	})
 	unique(list)
 
