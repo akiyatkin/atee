@@ -17,6 +17,7 @@ const Showcase = {
 		const options = await JSON.parse(
 			await fs.readFile((conf.options)).catch(e => ('{}'))
 		)
+		options.pages ??= {} //для предустановленных критерие поиска
 		options.numbers ??= []
 		options.texts ??= []
 		options.bonds ??= []

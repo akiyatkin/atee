@@ -188,6 +188,11 @@ cards.prop = {
 			${val}
 		</div>
 	`,
+	justbold: (data, env, mod, pr, title, val) => `
+		<div style="margin: 0.25rem 0; font-weight: bold;">
+			${val}
+		</div>
+	`,
 	justwithtitle: (data, env, mod, pr, title, val) => `
 		<div style="margin: 0.25rem 0">
 			${title}: ${val}

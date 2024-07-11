@@ -5,6 +5,7 @@ import nicked from '/-nicked'
 const rest = new Rest(rest_funcs, rest_db)
 import Catalog from "/-catalog/Catalog.js"
 import User from "/-user/User.js"
+import config from "/-config"
 
 rest.addArgument('model_nick', ['nicked'])
 rest.addArgument('brand_nick', ['nicked'])
@@ -71,6 +72,7 @@ rest.addArgument('m', (view, m) => {
 	if (m) view.nostore = true //безчисленное количество комбинаций, браузеру не нужно запоминать	
 	return m
 })
+
 const prepareValue = async (db, base, options, value) => {
 	const tree = await Catalog.getTree(db, base.visitor)
 	const nick = nicked(value);
@@ -82,6 +84,8 @@ const prepareValue = async (db, base, options, value) => {
 			if (p) {
 				vals.forEach(v => () => addm += `:more.${p.prop_nick}.${v}=1`)
 			}
+		} else if (options.pages[nick]) {
+			addm += options.pages[nick]
 		} else {
 			let group
 			for (const group_id in tree) {
