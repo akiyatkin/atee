@@ -1,8 +1,10 @@
 import field from "/-dialog/field.html.js"
 
 export const ROOT = (data, env) => 
-`<div style="margin-top:1rem"><a href="/user">Личный кабинет</a></div>
-	<h1 style="margin-top:0">Выход</h1>` 
+`<div style="float:left; margin-top: 1rem; display: block;">
+		<a href="/user">Личный кабинет</a>
+	</div>
+	<h1>Выход</h1>` 
 + 
 (!data.user.user_id ? `
 	<p>Вы не авторизованы.</p>
