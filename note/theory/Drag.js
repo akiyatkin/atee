@@ -24,7 +24,7 @@ Drag.make = (div, actionsave, callback) => {
 		activeElement = false
 		item.classList.remove('selected')
 		if (nextElement === false) return
-		const next_id = nextElement === null ? 0 : nextElement.dataset.id
+		const next_id = nextElement === null ? '' : nextElement.dataset.id
 		nextElement = false
 		if (!actionsave) return
 		let ans

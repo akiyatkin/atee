@@ -41,6 +41,7 @@ if (CONF.config) {
 }
 export class Db {
 	constructor () {
+		this.transdeep = 0
 		this.conf = conf
 	}
 	release () {
@@ -55,10 +56,18 @@ export class Db {
 	}
 	
 	async start() {
-		await this.db.query('START TRANSACTION')
+		this.transdeep++
+		if (this.transdeep === 1) {
+			const is = await this.col('SELECT @@in_transaction')
+			if (!is) await this.db.query('START TRANSACTION')
+			//При перезапуске процесса старая транзакция может быть в работе? 
+			//Или пул соединений вернуло соединение с транзакцией, может ли быть такое?
+			//Исключаем ошибку что скрипт не владеет информацией о транзакциях
+		}
 	}
 	async commit() {
-		await this.db.query('COMMIT')
+		this.transdeep--
+		if (this.transdeep === 0) await this.db.query('COMMIT')
 	}
 	async back() {
 		await this.db.query('ROLLBACK')

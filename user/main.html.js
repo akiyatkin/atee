@@ -12,14 +12,14 @@ tpl.HEADER = (data, env) => `
 	</div>
 `
 
-const link = (data, env, href, title) => `<p><a href="${env.crumb}${href}">${title}</a></p>`
+const showLink = (data, env, href, title) => `<p><a href="${env.crumb}${href}">${title}</a></p>`
 tpl.ROOT = (data, env) => tpl.err(data, env) || `
 	<h1>Личный кабинет</h1>
 	<p>${data.user.email || ''}</p>
-	${data.user.email ? '' : link(data, env, '/signup','Регистрация')}
-	${data.user.email ? '' : link(data, env, '/signin','Вход')}
-	${data.user.email ? link(data, env, '/logout','Выход') : ''}
-	${data.user.email ? link(data, env, '/emails','Мои почтовые ящики') : ''}
+	${data.user.email ? '' : showLink(data, env, '/signup','Регистрация')}
+	${data.user.email ? '' : showLink(data, env, '/signin','Вход')}
+	${data.user.email ? showLink(data, env, '/logout','Выход') : ''}
+	${data.user.email ? showLink(data, env, '/emails','Мои почтовые ящики') : ''}
 `
 
 tpl.FOOTER = (data, env) => `

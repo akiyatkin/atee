@@ -327,16 +327,19 @@ field.switch = ({name, reloaddiv, go, goid, reload, action, value, values, args 
 	</span>`
 }
 field.prompt = ({
-		ok = 'ОК', unit = '', recaptcha = false, label = 'Укажите ваш Email', descr,
+		value = 'Ваш Email', 
+		name = 'email',
+		input = '',
+		ok = 'ОК', unit = '', recaptcha = false, label = 'Укажите Ваш Email', descr = '',
 		cls = '',
 		layer = false,
-		input = null,
 		onlyfuture = false,
-		value = '', name = 'email', type = 'email', action, args = {}, go, reloaddiv, goid, reload
+		type = 'email', action, args = {}, 
+		go = false, reloaddiv = false, goid = false, reload = false
 	}) => {
 	return `
 		<span>
-			<button class="field ${cls}">${value}${unit}</button>
+			<button class="field ${cls}">${value || ''}${unit}</button>
 			<script>
 				(btn => {
 					btn.addEventListener('click', async () => {

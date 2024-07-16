@@ -47,12 +47,7 @@ const User = {
 		const newuser = await User.getUserById(db, new_id)
 		return newuser
 	},
-	sendSub: async (sub, data) => {
-		if (!data.vars?.host) return false
-		if (!data.user_id || !data.user) return false
-		const user_id = data.user_id || data.user.user_id
-		let email = data.email
-		if (!email) return false
+	sendSub: async (sub, email, data) => { //на конкретный адрес пользователя
 		const tpl = await import('/-user/mail.html.js').then(res => res.default)
 		if (!tpl[sub]) return false
 		if (!tpl[sub + '_subject']) false
@@ -62,32 +57,7 @@ const User = {
 		if (!r) return false
 		return true
 	},
-	sendEmail: async (view, sub, data) => {
-		if (!data.user_id && !data.user) return view.err('Не указан пользователь', 500)
-		const user_id = data.user_id || data.user.user_id
-		let email = data.email
-		
-		const db = await view.get('db')
-		data.vars = await view.gets(['host', 'ip'])
-		//data.vars.link = User.link
-		if (!email) {
-			const emails = await db.colAll('select email from user_uemails where user_id = :user_id', {user_id})
-			if (!emails.length) return view.err('Не найден адрес для отправки письма', 500)
-			email = emails.join(',')
-		}
-		if (!data.user && data.user_id) data.user = await User.getUserById(db, data.user_id)
-		
-
-		const tpl = await import('/-user/mail.html.js').then(res => res.default)
-		if (!tpl[sub]) return view.err('Не найден шаблон письма', 500)
-		if (!tpl[sub + '_subject']) return view.err('Не найден шаблон темы', 500)
-
-		const subject = tpl[sub + '_subject'](data)
-		const html = tpl[sub](data)
-		const r = await Mail.toUser(subject, html, email)
-		if (!r) return view.err('Не удалось отправить письмо.', 500)
-		return true
-	},
+	
 	setCookie: (view, user) => {
 		return view.setCookie('-token', user.user_id + '-' + user.token)
 	},
@@ -163,51 +133,50 @@ const User = {
 		}
 		return user
 	},
-	sendin: (view, user) => {
-		return User.sendEmail(view, 'sendin', {user})
+	
+	
+	
+	sendin: async (db, user_id, host) => {
+		const emails = await db.colAll('select email from user_uemails where user_id = :user_id', {user_id})
+		if (!emails.length) return view.err('Не найден адрес для отправки письма', 500)
+		const email = emails.join(',')
+		const user = await User.getUserById(db, user_id)
+		return User.sendSub('sendin', email, { user, host })
+	},
+	sendup: async (db, user_id, host, email) => { //Регистрация нового email адреса
+		await User.addEmail(db, user_id, email)
+		const date_signup = await db.col(`SELECT date_signup FROM user_users WHERE user_id = :user_id`, {user_id})
+		if (!date_signup) {
+			await db.affectedRows(`
+				UPDATE
+					user_users
+				SET
+					date_signup = now()
+				WHERE
+					user_id = :user_id
+			`, {user_id})
+		}
+		return await User.sendVerify(db, user_id, email, host)
+	},
+	sendVerify: async (db, user_id, email, host, go) => {
+		const code_verify = crypto.randomBytes(4).toString('hex').toUpperCase()
+		await db.affectedRows(`
+			UPDATE
+				user_uemails
+			SET
+				code_verify = :code_verify,
+				date_verify = now()
+			WHERE
+				user_id = :user_id 
+				and email = :email
+		`, { email, user_id, code_verify })
+		const user = await User.getUserById(db, user_id)
+		return await User.sendSub('sendup', email, { email, code_verify, user, host, go })
 	},
 	signup: async (view, user_id, email) => { //depricated
-		const host = await view.get('host')
+		const host = view.visitor.client.host
 		const db = await view.get('db')
-		return User.sendup(db, user_id, email, host)
-	},
-	sendup: async (db, user_id, email, host) => {
-		await db.affectedRows(`
-			UPDATE
-				user_uemails
-			SET
-				ordain = ordain + 1
-			WHERE
-				user_id = :user_id
-		`, { user_id })
-		const code_verify = crypto.randomBytes(4).toString('hex').toUpperCase()
-		const search = nicked(email)
-		await db.affectedRows(`
-			INSERT INTO 
-				user_uemails
-			SET
-				user_id = :user_id,
-				email = :email,
-				search = :search,
-				code_verify = :code_verify,
-				date_verify = now(),
-				date_add = now(),
-				ordain = 1
-		`, {email, search, code_verify, user_id})
-
-		await db.affectedRows(`
-			UPDATE
-				user_users
-			SET
-				date_signup = now()
-			WHERE
-				user_id = :user_id
-		`, {user_id})
-
-		const data = {user_id, email, code_verify}
-		data.vars = {host}
-		data.user = await User.getUserById(db, data.user_id)
-		return await User.sendSub('sendup', data)
+		return User.sendup(db, user_id, view.visitor.client.host, email)
 	},
 	addPhone: async (db, user_id, phone) => {
 		await db.affectedRows(`
@@ -249,15 +218,15 @@ const User = {
 		`, {ordain, user_id})
 	},
 	addEmail: async (db, user_id, email) => {
+		await db.start()
 		await db.affectedRows(`
 			UPDATE
 				user_uemails
 			SET
-				ordain = ordain + 1
+				ordain = ordain + 2
 			WHERE
 				user_id = :user_id
 		`, { user_id })
-		const code_verify = crypto.randomBytes(4).toString('hex').toUpperCase()
 		const search = nicked(email)
 		await db.affectedRows(`
 			INSERT INTO 
@@ -266,11 +235,10 @@ const User = {
 				user_id = :user_id,
 				email = :email,
 				search = :search,
-				code_verify = :code_verify,
-				date_verify = now(),
 				date_add = now(),
 				ordain = 1
-		`, {search, email, code_verify, user_id})
+		`, {search, email, user_id})
+		await db.commit()
 	},
 	delAllEmail: async (db, user_id) => {
 		return await db.affectedRows(`
@@ -280,14 +248,35 @@ const User = {
 				user_id = :user_id
 		`, {user_id})
 	},
-	delEmail: async (db, user_id, ordain) => {
+	delEmail: async (db, user_id, email) => {
 		return await db.affectedRows(`
 			DELETE FROM 
 				user_uemails
 			WHERE
 				user_id = :user_id
-				and ordain = :ordain
-		`, {ordain, user_id})
+				and email = :email
+		`, {email, user_id})
+	},
+	reorderEmails: async (db, user_id) => {
+		const list = await db.all(`
+			SELECT email, ordain
+			FROM user_uemails
+			WHERE user_id = :user_id
+			ORDER BY ordain
+		`, {user_id})
+
+		let ordain = 1
+		const promises = []
+		for (const {email} of list) {
+			const r = db.exec(`
+				UPDATE user_uemails
+				SET ordain = :ordain
+				WHERE email = :email and user_id = :user_id
+			`, {ordain, user_id, email})
+			promises.push(r)
+			ordain = ordain + 2
+		}
+		return Promise.all(promises)
 	}
 
 }

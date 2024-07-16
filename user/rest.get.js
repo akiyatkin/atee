@@ -10,6 +10,22 @@ rest.addResponse('get-user', async view => {
 	const user = view.ans.user = await view.get('user')
 	return view.ret()
 })
+rest.addResponse('get-user-emails', async view => {
+	const user = view.ans.user = await view.get('user#signup')
+	const db = await view.get('db')
+	view.ans.list = user ? await db.all(`
+		SELECT 
+			e.email, 
+			e.ordain, 
+			UNIX_TIMESTAMP(date_verify) as date_verify, 
+			UNIX_TIMESTAMP(date_verified) as date_verified, 
+			UNIX_TIMESTAMP(date_add) as date_add
+		FROM user_uemails e 
+		WHERE e.user_id = :user_id
+		ORDER by e.ordain
+	`, user) : []
+	return view.ret()
+})
 rest.addResponse('get-settings', async view => {
 	await view.get('admin')
 	const db = await view.get('db')
@@ -30,7 +46,7 @@ rest.addResponse('get-settings', async view => {
 })
 rest.addResponse('get-list', async view => {
 	await view.get('admin')
-	const { db } = await view.gets(['db'])
+	const db = await view.get('db')
 	view.ans.list = await db.all(`
 		SELECT u.*, e.email, p.phone 
 		from user_users u
