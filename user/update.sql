@@ -25,14 +25,3 @@ CREATE TABLE IF NOT EXISTS `user_uemails` (
   `search` varchar(255) NOT NULL DEFAULT '',
   UNIQUE INDEX (`email`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1;
-
-CREATE TABLE IF NOT EXISTS `user_uphones` (
-  `user_id` MEDIUMINT unsigned NOT NULL,
-  `phone` BIGINT NULL DEFAULT NULL COMMENT 'Возможность отправить смс, 7 ведующая без +',
-  `ordain` tinyint NOT NULL DEFAULT 1,
-  `code_verify` varchar(255) NULL COMMENT 'Код для смены скольк-то действует от date_verify',
-  `date_verify` DATETIME NULL COMMENT 'Дата, когда создан и отправлен код верификации',
-  `date_verified` DATETIME NULL DEFAULT NULL COMMENT 'Дата, когда получено подтверждение',
-  `date_add` DATETIME NOT NULL COMMENT 'Дата добавления при регистрации или при добавлении ещё одного',
-  UNIQUE INDEX (`phone`)
-) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=1;

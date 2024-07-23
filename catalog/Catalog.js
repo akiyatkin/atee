@@ -245,15 +245,16 @@ Catalog.getModelsByItems = async (db, base, moditems_ids, partner) => { //[{item
 					item[p].split(', ').forEach(v => ar.push(v))
 				}
 			}
+			ar = unique(ar)
 			if (!ar.length) return false
 			
-			if (pr.type == 'number' && ar.length) {
+			if (pr.type == 'number' && ar.length > 5) {
 				const min = Math.min(...ar)
 				const max = Math.max(...ar)
 				if (min == max) pr.value = min
 				else pr.value = `<nobr>${min}&mdash;${max}</nobr>`
 			} else {
-				pr.value = ar.join(', ')	
+				pr.value = unique(ar).join(', ')
 			}
 			return true
 		})

@@ -31,8 +31,7 @@ rest.addResponse('get-settings', async view => {
 	const db = await view.get('db')
 	const tables = [
 		'user_users',	
-		'user_uemails', 
-		'user_uphones'
+		'user_uemails'
 	]
 	for (const i in tables) {
 		const table = tables[i]
@@ -48,10 +47,9 @@ rest.addResponse('get-list', async view => {
 	await view.get('admin')
 	const db = await view.get('db')
 	view.ans.list = await db.all(`
-		SELECT u.*, e.email, p.phone 
+		SELECT u.*, e.email
 		from user_users u
 		LEFT JOIN user_uemails e on (e.user_id = u.user_id and e.ordain = 1)
-		LEFT JOIN user_uphones p on (p.user_id = u.user_id and e.ordain = 1)
 	`)
 	return view.ret()
 })

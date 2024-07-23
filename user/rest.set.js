@@ -29,8 +29,7 @@ rest.addResponse('set-reset', async view => {
 
 	const res = await db.exec(`DROP TABLE IF EXISTS 
 		user_users,
-		user_uemails,
-		user_uphones
+		user_uemails
 	`)
 	
 	const src = FILE_MOD_ROOT + '/update.sql'
@@ -89,7 +88,7 @@ rest.addAction('set-email-verified', async (view) => {
 			return view.ret('', 301)
 		}
 	}
-	const newuser = await User.getUserByToken(view, token)
+	const newuser = await User.getUserByToken(db, token)
 	if (!newuser) return redirect('Токен устарел')
 	await User.mergeguest(db, user, newuser)
 	User.setCookie(view, newuser)
@@ -126,7 +125,7 @@ rest.addAction('set-signin-token', async (view) => {
 		view.headers['Location'] += '&result=1&alert=' + encodeURIComponent('Вход выполнен') 
 		return view.ret('', 301)
 	}
-	const newuser = await User.getUserByToken(view, token)
+	const newuser = await User.getUserByToken(db, token)
 	if (!newuser) return redirect('Токен устарел')
 	await User.mergeguest(db, user, newuser) //Если старый пользователь не регистрировался мёрджим его или просто забываем
 	User.setCookie(view, newuser)

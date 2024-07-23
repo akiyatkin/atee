@@ -40,19 +40,19 @@ rest.addVariable('status#required', async (view) => {
 })
 
 rest.addVariable('order_id#required', async (view) => {
-	const { order_id } = await view.gets(['order_id'])
+	const order_id = await view.get('order_id')
 	if (!order_id) return view.err('Заказ не найден', 422)
 	return order_id
 })
 
 
 rest.addVariable('order', async (view) => {
-	const { order_id } = await view.gets(['order_id'])
+	const order_id = await view.get('order_id')
 	if (!order_id) return false
 	return Cart.getOrder(view, order_id)
 })
 rest.addVariable('order#required', async (view) => {
-	const { order } = await view.gets(['order'])
+	const order = await view.get('order')
 	if (!order) return view.err('Заказ не найден', 422)
 	return order
 })

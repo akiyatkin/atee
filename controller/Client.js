@@ -8,7 +8,7 @@ export const Client = {
 	search:'',
 	access_promise: null,
 	follow: (root, search) => {
-		Client.search = fixsearch(search || Client.getSearch())
+		Client.search = Client.fixsearch(search || Client.getSearch())
 		const get = Object.fromEntries(new URLSearchParams(location.search))
 		Client.bread = new Bread(location.pathname, get, Client.search, root)
 		Client.theme = Theme.harvest(get, document.cookie)
@@ -127,7 +127,7 @@ export const Client = {
 	go: (search, scroll) => Client.pushState(search, scroll),
 	pushState: (search, scroll = true) => {
 
-		search = fixsearch(search)
+		search = Client.fixsearch(search)
 
 		if (~location.href.indexOf(search)) {
 			const a = document.createElement('a')
@@ -147,7 +147,7 @@ export const Client = {
 		return promise
 	},
 	replaceState: (search = '', scroll = true) => {
-		search = fixsearch(search)
+		search = Client.fixsearch(search)
 		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 		history.replaceState({cursor:Client.cursor, view:Client.view}, null, search)
 		search = Client.getSearch()
@@ -269,7 +269,7 @@ export const Client = {
 		return true
 	}
 }
-const fixsearch = search => {
+Client.fixsearch = search => {
 	if (search[0] != '/') {
 		if (search == '?' ) search = location.pathname
 		else if (search == '?#' ) search = location.pathname

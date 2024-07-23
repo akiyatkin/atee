@@ -385,7 +385,7 @@ field.prompt = ({
 
 
 
-field.search = ({label = 'Поиск', descr, value, name = 'name', search, find = 'find', action, confirm, args = {}, go, reloaddiv, goid, reload}) => {
+field.search = ({label = 'Поиск', link, descr, value, name = 'name', search, find = 'find', action, confirm, args = {}, go, reloaddiv, goid, reload}) => {
 	return `
 		<span>
 			<button class="field">${value||label}</button>
@@ -394,23 +394,39 @@ field.search = ({label = 'Поиск', descr, value, name = 'name', search, find
 					btn.addEventListener('click', async () => {
 						const Search = await import('/-dialog/search/Search.js').then(r => r.default)
 						let descr = '${descr || ''}'
-						const ask = "${confirm || ''}"
-						if (ask && !window.confirm(ask)) return
-						if (!descr && ask) descr = ask
+						
 						Search.open({
 							action:'${search}',
 							descr: descr,
 							placeholder:'${label}',
 							click: async (row, need) => {
+								const link = "${link || ''}"
+								const goid = "${goid ? goid : ''}"
+								let action = '${action}'
+								
+								const ask = row.confirm || "${confirm || ''}"
+								if (ask && !window.confirm((row.search_value ? need.value : row.left) + "\\n" + ask)) return
+								if (!descr && ask) descr = ask
+
+								if (row.action) {
+									action = row.action
+								} else {
+									if (link) {
+										const Client = await window.getClient()
+										Client.go(link + (row[goid] || ''))
+										return true
+									}
+								}
+
 								const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 								const args = ${JSON.stringify(args)}
-								args['${name}'] = row['${find}']
+								args['${name}'] = row['${find}'] || ''
 								args['search'] = need.value
-								const ans = await senditmsg(btn, '${action}', args)
+								const ans = await senditmsg(btn, action, args)
 								if (ans.result && (ans['${name}'] || ans['${name}'] == 0)) btn.innerHTML = ans['${name}']
 								if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 								const Client = await window.getClient()
-								const goid = "${goid ? goid : ''}"
+								
 								if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
 								if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
 								if (ans.result && ${!!reload}) Client.reload()

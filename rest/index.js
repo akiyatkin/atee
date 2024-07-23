@@ -168,7 +168,7 @@ export class View {
 		const proc = mainview.proc[opt.name]
 		if (proc) return proc
 
-		if (opt.once && mainview.opt != opt) { //Для главного action запроса раз пришёл ещё один запрос значит есть отличие в реквестах и объединения не должно быть
+		if (opt['once'] && mainview.opt != opt) { //Для главного action запроса раз пришёл ещё один запрос значит есть отличие в реквестах и объединения не должно быть
 			//proc может быть общим или у каждого view свой. Для всех rest в extras view один.
 			//proc общий если у него нет в childs обработки отличающегося request в массиве view.req
 			const views = mainview.rest.getViews(mainview)

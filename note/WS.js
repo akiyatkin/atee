@@ -171,7 +171,7 @@ WS.writeSearch = (note) => {
 	search = search.split('-')
 	search = unique(search).sort().join(' ')
 	search = ' ' + search //Поиск выполняется по началу ключа с пробелом '% key%'
-	db.exec(`
+	return db.exec(`
 		UPDATE note_notes
 		SET search = :search
 		WHERE note_id = :note_id
@@ -184,12 +184,12 @@ WS.setTitle = (ws, note) => {
 	if (note.title == title) return
 	note.title = title
 	const nick = nicked(title).slice(0,255).trim()
-	db.exec(`
+	return db.exec(`
 		UPDATE note_notes
 		SET title = :title, nick = :nick
 		WHERE note_id = :note_id
 	`, {note_id, title, nick}).then(r => {
-		WS.sendSignal(ws, note, 'rename', {title, nick})
+		return WS.sendSignal(ws, note, 'rename', {title, nick})
 	})
 }
 WS.sendSignal = (ws, note, type, signal = {}) => {

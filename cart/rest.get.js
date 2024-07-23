@@ -242,10 +242,9 @@ rest.addResponse('get-list', async view => {
 	await view.get('admin')
 	const { db } = await view.gets(['db'])
 	view.ans.list = await db.all(`
-		SELECT distinct u.*, e.email, p.phone 
+		SELECT distinct u.*, e.email 
 		from cart_userorders o, user_users u
 		LEFT JOIN user_uemails e on (e.user_id = u.user_id and e.ordain = 1)
-		LEFT JOIN user_uphones p on (p.user_id = u.user_id and e.ordain = 1)
 		WHERE o.user_id = u.user_id
 	`)
 	return view.ret()

@@ -172,8 +172,7 @@ const getHTML = async (layer, env, visitor) => {
 		if (!json) return
 		const reans = await loadJSON(json, visitor).catch(res => {
 			console.log('getHTML loadJSON', res) //08.03 throw res. Стандартный ответ только 404
-			return res
-			//return {msg:'Ошибка на сервере'}
+			return res.reans
 		})
 		data = reans.ans || {}
 		nostore = nostore || reans.nostore

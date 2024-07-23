@@ -181,7 +181,7 @@ rest.addResponse('get-layers', async view => {
 	if (reloaddivs.length) view.ans.rd = reloaddivs
 	if (reloadtss.length) view.ans.rt = reloadtss
 	if (globals.length) view.ans.rg = globals
-
+	
 	return view.ret()    
 })
 

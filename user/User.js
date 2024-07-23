@@ -26,7 +26,6 @@ const User = {
 	delete: async (db, user_id) => {
 		await db.exec('DELETE from user_users where user_id = :user_id', {user_id})
 		await db.exec('DELETE from user_uemails where user_id = :user_id', {user_id})
-		await db.exec('DELETE from user_uphones where user_id = :user_id', {user_id})
 		//Можно вернуть строку с сообщением
 	},
 	link: '/user/result',
@@ -80,30 +79,16 @@ const User = {
 			WHERE e.email = :email
 		`, { email })
 	},
-	getUserIdByPhone: async (db, phone) => {
-		db = db.gets ? await db.get('db') : db
-		return await db.col(`
-			SELECT e.user_id
-			FROM user_uphones e 
-			WHERE e.phone = :phone
-		`, { phone })
-	},
-	getUserByPhone: async (db, phone) => {
-		db = db.gets ? await db.get('db') : db
-		const user_id = await User.getUserIdByPhone(db, phone)
-		if (!user_id) return false
-		return User.getUserById(db, user_id)
-	},
 	getUserByEmail: async (db, email) => {
 		db = db.gets ? await db.get('db') : db
 		const user_id = await User.getUserIdByEmail(db, email)
 		if (!user_id) return false
 		return User.getUserById(db, user_id)
 	},
-	getUserByToken: async (view, token) => {
+	getUserByToken: async (db, token) => {
 		const tok = User.getTok(token)
 		if (!tok) return false
-		const user = await User.getUserById(view, tok.user_id)
+		const user = await User.getUserById(db, tok.user_id)
 		if (!user) return false
 		if (tok.token == user.token) return user
 		return false
@@ -114,15 +99,13 @@ const User = {
 			SELECT 
 				u.user_id, 
 				e.email,
-				p.phone,
 				u.token,
 				UNIX_TIMESTAMP(u.date_token) as date_token,
-				UNIX_TIMESTAMP(ifnull(e.date_verified, p.date_verified)) as date_verified,
+				UNIX_TIMESTAMP(e.date_verified) as date_verified,
 				UNIX_TIMESTAMP(u.date_active) as date_active,
 				UNIX_TIMESTAMP(u.date_signup) as date_signup 
 			FROM user_users u
 			LEFT JOIN user_uemails e on (e.user_id = u.user_id and e.ordain = 1)
-			LEFT JOIN user_uphones p on (p.user_id = u.user_id and e.ordain = 1)
 			WHERE u.user_id = :user_id
 		`, {user_id})
 		if (!user) return false
@@ -177,45 +160,6 @@ const User = {
 		const host = view.visitor.client.host
 		const db = await view.get('db')
 		return User.sendup(db, user_id, view.visitor.client.host, email)
-	},
-	addPhone: async (db, user_id, phone) => {
-		await db.affectedRows(`
-			UPDATE
-				user_uphones
-			SET
-				ordain = ordain + 1
-			WHERE
-				user_id = :user_id
-		`, { user_id })
-		const code_verify = crypto.randomBytes(4).toString('hex').toUpperCase()
-		await db.affectedRows(`
-			INSERT INTO 
-				user_uphones
-			SET
-				user_id = :user_id,
-				phone = :phone,
-				code_verify = :code_verify,
-				date_verify = now(),
-				date_add = now(),
-				ordain = 1
-		`, {phone, code_verify, user_id})
-	},
-	delAllPhone: async (db, user_id) => {
-		return await db.affectedRows(`
-			DELETE FROM 
-				user_uphones
-			WHERE
-				user_id = :user_id
-		`, {user_id})
-	},
-	delPhone: async (db, user_id, ordain) => {
-		return await db.affectedRows(`
-			DELETE FROM 
-				user_uphones
-			WHERE
-				user_id = :user_id
-				and ordain = :ordain
-		`, {ordain, user_id})
 	},
 	addEmail: async (db, user_id, email) => {
 		await db.start()
