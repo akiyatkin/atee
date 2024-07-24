@@ -4,6 +4,7 @@ const tpl = {}
 tpl.ROOT = (data, env) => data.blocks.length ? `
 	<style>
 		${env.scope} .row {
+    		grid-template-rows: auto 1fr;
 			margin-bottom:2em;
 			display: grid; 
 			gap: 1em; 
