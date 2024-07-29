@@ -11,14 +11,19 @@ const dir = 'cache/drive/'
 await fs.mkdir(dir, { recursive: true }).catch(e => null)
 
 export const drive = {
-	cacheRows: (gid, range, sheet = '') => {
+	cacheRows: (gid, range, sheet = '', eternal) => {
 		
 		const store = Access.relate(drive)
-		
-		return store.once(sheet + gid, () => cproc(drive, sheet + gid, async () => {
+		const name = sheet + gid
+
+		return store.once(name, () => cproc(drive, sheet + gid, async () => {
 
 			const cachename = nicked(gid + '-' + range + '-' + sheet)
 			const cachesrc = dir + cachename + '.json'
+
+			if (eternal && await fs.lstat(cachesrc).catch(r => false)) {
+				return cachesrc
+			}
 			const conf = await config('drive')
 
 			const cert = await fs.readFile(conf.certificate, "utf8").catch(r => false)
@@ -72,14 +77,14 @@ export const drive = {
 		const list = JSON.parse(await fs.readFile(cachesrc, "utf8"))
 		return list
 	}, 
-	getRows: async (gid, range, sheet) => {
-		const cachesrc = await drive.cacheRows(gid, range, sheet)
+	getRows: async (gid, range, sheet, eternal) => {
+		const cachesrc = await drive.cacheRows(gid, range, sheet, eternal)
 		if (!cachesrc) return false
 		const rows = JSON.parse(await fs.readFile(cachesrc, "utf8"))
 		return rows
 	},
-	getTable: async (gid, range, sheet) => {
-		const rows_source = await drive.getRows(gid, range, sheet)
+	getTable: async (gid, range, sheet, eternal = false) => {
+		const rows_source = await drive.getRows(gid, range, sheet, eternal)
 		if (!rows_source) return false
 		const {descr, rows_table} = Dabudi.splitDescr(rows_source)
 		const {head_titles, rows_body} = Dabudi.splitHead(rows_table)

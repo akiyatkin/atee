@@ -29,11 +29,11 @@ rest.addArgument('name')
 rest.addVariable('name#required',['name', 'required'])
 rest.addArgument('group', ['string'])
 
-const getTable = async name => {
+const getTable = async (name, eternal) => {
 	const conf = await config('params')
 	const range = 'A1:Z1000'
 	if (conf.gid) {
-		return await drive.getTable(conf.gid, range, name)
+		return await drive.getTable(conf.gid, range, name, eternal)
 	} else if (conf.src) {
 		const lists = await xlsx.read(Access, conf.src) || []
 		const table = lists.find(d => d.name == name)
@@ -58,7 +58,7 @@ const getTable = async name => {
 rest.addVariable('table', async view => {
 	const name = await view.get('name#required')
 	
-	const table = await getTable(name)
+	const table = await getTable(name, !!~view.visitor.client.host.indexOf('127.0.0.1'))
 	if (!table) return view.err('Ошибка в данных')
 	return table
 
@@ -69,21 +69,10 @@ rest.addVariable('table', async view => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 rest.addResponse('get-blocks', async view => {
 	const path = '/' + await view.get('path') //Без слэша
 
-	const rel = await getTable('REL')	
+	const rel = await getTable('REL', !!~view.visitor.client.host.indexOf('127.0.0.1'))	
 
 		
 	const list = []
@@ -98,7 +87,7 @@ rest.addResponse('get-blocks', async view => {
 	})
 	unique(list)
 
-	const seo = await getTable('SEO','Адрес')
+	const seo = await getTable('SEO', !!~view.visitor.client.host.indexOf('127.0.0.1'))
 
 	const blocks = list.map(path => { //path со слэшом
 		const row = seo.rows_body.find(row => row[seo.indexes.path] == path)
