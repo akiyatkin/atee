@@ -227,7 +227,7 @@ export class View {
 		}
 		
 		for (const n of opt['before'] || []) {
-			const r = await view.get(n, proc, res, forname);
+			const r = await view.get(n, proc, res, opt.name);
 			//if (r != null) 
 			res = r;
 		}
@@ -245,7 +245,7 @@ export class View {
 		}
 
 		for (const n of opt['after'] || []) {
-			const r = await view.get(n, proc, res, pname);
+			const r = await view.get(n, proc, res, opt.name);
 			//if (r != null) 
 			res = r;
 		}

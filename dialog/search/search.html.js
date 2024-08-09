@@ -32,7 +32,7 @@ export const TITLE = data => `
 `
 export const TITLEBODY = data => data.ans.result ? `
 	${data.query ? pquery(data) : ''} ${data.ans.count || 0} ${words(data.ans.count || 0, 'запись','записи','записей')}
-` : 'Ошибка на сервере'
+` : data.ans.msg || 'Ошибка на сервере'
 const countmodels = (count) => ``
 
 const pquery = (data) => `<i>${data.query}</i>, найдено`
@@ -45,6 +45,7 @@ const BODYshow = data => `
 export const suggestion = (pos, data) => `
 	<button class="transparent" style="width:100%; white-space: normal; padding-top: 4px; display: grid; grid-template-columns: 1fr max-content; gap: 5px;">
 		<span style="text-align:left">${pos.left}</span>
-		<span style="text-align:right">${pos.right}</span>
+		<span style="text-align:right; display: flex; align-items: center;">${pos.right}${pos.icon ? showIcon(pos) : ''}</span>
 	</button>
 `
+const showIcon = (pos) => `&nbsp;<img style="opacity:0.3" width="16" height="16" src="${pos.icon}">`

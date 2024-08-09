@@ -66,8 +66,11 @@ export const Client = {
 	getSearch: () => decodeURI(location.pathname + location.search),
 	reloaddivs:[],
 	reloaddiv: (div) => {
-		if (~Client.reloaddivs.indexOf(div)) return
-		Client.reloaddivs.push(div)
+		if (!Array.isArray(div)) div = [div]
+		div.forEach(div => {
+			if (~Client.reloaddivs.indexOf(div)) return
+			Client.reloaddivs.push(div)	
+		})
 		return Client.replaceState('', false)
 	},
 	reload: () => { //depricated?

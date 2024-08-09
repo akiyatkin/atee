@@ -267,7 +267,7 @@ const Note = {
 	getLink: (note) => {
 		const wshost = note.wshost
 		const protocol = location.protocol === "https:" ? "wss" : "ws"
-		return protocol + '://'+ wshost + `/?rev=${note.rev}&date_load=${note.now}&note_id=${note.note_id}&note_token=${note.token}&user_id=${note.user_id}&user_token=${note.user_token}`
+		return protocol + '://'+ wshost + `/?rev=${note.rev}&date_load=${note.now}&note_id=${note.note_id}&user_id=${note.user_id}&user_token=${note.user_token}`
 	},
 	open: (note) => {
 		if (!note.socket) {

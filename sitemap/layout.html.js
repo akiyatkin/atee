@@ -47,9 +47,13 @@ sitemap.HEAD = (head, env) => `
 				qs('link[rel="canonical"]').href = src
 			}
 		}
+		let lasthead
 		window.addEventListener('crossing', async ({detail: env}) => {
 			const { timings, bread, theme } = env
-			const data = await fetch('/-sitemap/get-head?search=' + encodeURI(bread.search) + '&path=' + bread.path + '&root='+bread.root + '&m='+(bread.get.m ?? '')).then(res => res.json())
+			const nexthead = '/-sitemap/get-head?search=' + encodeURI(bread.search) + '&path=' + bread.path + '&root='+bread.root + '&m='+(bread.get.m ?? '')
+			if (nexthead == lasthead) return
+			lasthead = nexthead
+			const data = await fetch(nexthead).then(res => res.json())
 			if (!data.canonical) data.canonical = location.href
 			for (const rule in data) rules[rule]?.(data[rule])
 			const event = new CustomEvent('crossing-sitemap-headready', {detail: env})

@@ -317,7 +317,7 @@ field.switch = ({name, reloaddiv, go, goid, reload, action, value, values, args 
 					btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 					const Client = await window.getClient()
 
-					if (${!!reloaddiv}) Client.reloaddiv("${reloaddiv}")
+					if (${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
 					if (${!!go}) Client.go("${go}" + ("${goid}" ? ans["${goid}"] : ''))
 					if (${!!reload}) Client.reload()
 
@@ -370,7 +370,7 @@ field.prompt = ({
 								if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 								const Client = await window.getClient()
 								const goid = "${goid ? goid : ''}"
-								if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
+								if (ans.result && ${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
 								if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
 								if (ans.result && ${!!reload}) Client.reload()
 								return ans.result
@@ -427,7 +427,7 @@ field.search = ({label = 'Поиск', link, descr, value, name = 'name', search
 								if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 								const Client = await window.getClient()
 								
-								if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
+								if (ans.result && ${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
 								if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
 								if (ans.result && ${!!reload}) Client.reload()
 								return ans.result
@@ -458,7 +458,7 @@ field.button = ({label, name = '', cls = '', action, args = {}, go = '', reloadd
 						btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 						const Client = await window.getClient()
 						if (${!!name} && (ans["${name}"] || ans["${name}"] == 0)) btn.innerHTML = ans["${name}"]
-						if (${!!reloaddiv}) Client.reloaddiv("${reloaddiv}")
+						if (${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
 						if (${!!go}) Client.go("${go}" + ("${goid}" ? ans["${goid}"] : ''))
 						if (${!!reload}) Client.reload()
 					})
@@ -494,7 +494,8 @@ field.area = ({name, label, action, value}) => {
 	`
 }
 //approved
-field.text = ({name, label, action, args = {}, value, type = 'text'}) => {
+field.text = ({edit, name, label, action, args = {}, value, type = 'text'}) => {
+	if (!edit) return field.textdisabled({ label, value })
 	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label success">
@@ -707,7 +708,7 @@ field.textok = ({name, label, action, value, newvalue = '', go, clear = false, r
 							}
 							const Client = await window.getClient()
 							const goid = "${goid ? goid : ''}"
-							if (ans.result && ${!!reloaddiv}) Client.reloaddiv('${reloaddiv}')
+							if (ans.result && ${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
 							if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
 							if (ans.result && ${!!clear}) field.value = ''
 							field.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
@@ -727,10 +728,10 @@ field.textok = ({name, label, action, value, newvalue = '', go, clear = false, r
 field.textdisabled = ({label, value}) => {
 	const id = 'field-' + nicked(label)
 	return `
-		<div class="float-label success">
+		<div class="float-label">
 			<input disabled type="text" id="${id}" value="${value}" placeholder="${label}" class="field">
 			<label for="${id}">${label}</label>
-			${showStatus()}
+			
 		</div>
 	`
 }

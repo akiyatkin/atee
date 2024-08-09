@@ -129,8 +129,10 @@ NoteDB.getNote = async (db, note_id) => {
 	return note
 }
 NoteDB.getNoteArea = async (db, note_id, user) => {
+	if (!note_id) return false
 	const note = await NoteDB.getNote(db, note_id)
 	if (!note) return false
+	
 	const conf = await config('note')
 	note.wshost = conf.wshost
 	note.cursors = await db.all(`

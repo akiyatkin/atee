@@ -108,7 +108,7 @@ export const Search = {
 	 	const state = Search.getState(form)
 		const tplobj = await import('/-dialog/search/search.html.js')
 
-		if (!ans.list.length) {
+		if (!ans.list?.length) {
 			title.innerHTML = tplobj.TITLEBODY({ ...need, ans })
 		} else {
 			title.innerHTML = ''

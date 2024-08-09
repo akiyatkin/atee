@@ -75,10 +75,10 @@ rest.addResponse('set-note-create', async view => {
 	const db = await view.get('db')
 	await view.get('manager#required')
 	let user = await view.get('user')
-	if (!user) {
-		user = await User.create(db)
-		User.setCookie(view, user)
-	}
+	// if (!user) { менеджер же обязательно должен быть
+	// 	user = await User.create(db)
+	// 	User.setCookie(view, user)
+	// }
 	//Ищем существующую пустую заметку
 	let note_id = await db.col(`
 		SELECT n.note_id

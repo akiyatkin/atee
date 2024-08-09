@@ -263,7 +263,7 @@ WS.connection = (ws, request) => {
 		WS.sendSignal(ws, note, 'reset', {text: note.text, rev: note.rev})
 	}
 }
-WS.isAccept = (note, state) => {
+WS.isAccept = (db, note_id, user_id) => {
 	return false
 }
 WS.checkReject = async (note, state) => {
