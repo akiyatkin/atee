@@ -8,7 +8,8 @@ import Files from '/-showcase/Files.js'
 const rest = new Rest(get, set)
 rest.after((view, reans = {}) => {
 	if (~view.action.indexOf('set-')) Access.setAccessTime()
-	reans.nostore = true
+	//reans.nostore = true
+	view.nostore = true
 })
 
 rest.addResponse('get-test', (view) => {

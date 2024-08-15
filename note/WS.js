@@ -206,11 +206,14 @@ WS.sendToEveryone = (fromsocket, note, data) => {
 }
 
 WS.connection = (ws, request) => {
-	const args = request.args
-	const note_id = args.note_id
-	const user_id = args.user_id
-	const state = {access_check_timer: false, user_id, ws, rev: args.rev, hangchanges: [], hue: args.hue, ismy: args.ismy}
-	const note = args.note
+	const state = request.state
+	const note_id = state.note_id
+	const user_id = state.user_id
+	state.access_check_timer = false
+	state.ws = ws
+	state.hangchanges = []
+
+	const note = state.note
 	const states = note.states
 	state.myindex = states.length
 	states.push(state)
@@ -218,7 +221,7 @@ WS.connection = (ws, request) => {
 
 	ws.on('close', () => {
 		//sendSignal(ws, note, 'blur', {user_id})
-		WS.closeState(args.note_id, state).then(note => {
+		WS.closeState(state.note_id, state).then(note => {
 			WS.sendSignal(ws, note, 'leave', {user_id})
 		})
 	})
@@ -234,14 +237,14 @@ WS.connection = (ws, request) => {
 		const base = change?.base || cursor?.base || signal?.base
 		state.hangchanges = state.hangchanges.filter(ch => ch.rev > base) //Оставили только изменения, которые были после base
 		
-		const note = await WS.getNote(args.note_id, user_id)
+		const note = await WS.getNote(state.note_id, user_id)
 		
 		WS.checkReject(note, state).then(is => {
 			if (!is) {
 				return WS.sendSignal(ws, note, 'reject', {user_id})
 			}
 		})
-		if (args.ismy == 'view') {
+		if (state.ismy == 'view') {
 			if (change)	return WS.sendSignal(ws, note, 'onlyview', {user_id})
 		}
 		
@@ -255,7 +258,7 @@ WS.connection = (ws, request) => {
 		UPDATE note_stats
 		SET date_load = FROM_UNIXTIME(:date_load), date_open = now(), count_opens = count_opens + 1, open = 1
 		WHERE note_id = :note_id and user_id = :user_id
-	`, {user_id, note_id, date_load: args.date_load}).then(r => {
+	`, {user_id, note_id, date_load: state.date_load}).then(r => {
 		WS.sendSignal(ws, note, 'joined', {user_id, hue: state.hue})
 	})
 	if (note.rev != state.rev) {
@@ -300,52 +303,51 @@ WS.getNote = (note_id) => {
 WS.verifyClient = async (info) => {
 	const request = info.req
 	const params = new URL(request.headers.origin + request.url).searchParams
-	const args = {
-		params,
+	const state = {
 		rev: params.get('rev'),
 		note_id: params.get('note_id'),
 		user_id: params.get('user_id'),
 		date_load: params.get('date_load'),
 		user_token: params.get('user_token')
 	}
-	args.ismy = true
+	state.ismy = true
 	const err = msg => {
 		console.log(msg)
-		args.ismy = false
+		state.ismy = false
 		return false
 	}
 
-	for (const name in args) if (!args[name]) return err(name + ' required')
-	const note = await WS.getNote(args.note_id)
+	for (const name in state) if (!state[name]) return err(name + ' required')
+	const note = await WS.getNote(state.note_id)
 	if (!note?.note_id) return err('note_id')
-	args.note = note
+	state.note = note
 	const db = note.db
 
-	const user_token = await db.col('SELECT token FROM user_users WHERE user_id = :user_id', args)
-	if (args.user_token != user_token) return err('user_token')
+	const user_token = await db.col('SELECT token FROM user_users WHERE user_id = :user_id', state)
+	if (state.user_token != user_token) return err('user_token')
 
-	let hue = await db.col('SELECT hue FROM note_users WHERE user_id = :user_id', args)
+	let hue = await db.col('SELECT hue FROM note_users WHERE user_id = :user_id', state)
 	if (hue === null) {
-		args.hue = Math.floor(Math.random() * 36) * 10
+		state.hue = Math.floor(Math.random() * 36) * 10
 		db.exec(`
 			INSERT INTO note_users (user_id, hue)
 			VALUES (:user_id, :hue)
-		`, args)
+		`, state)
 	} else {
-		args.hue = hue
+		state.hue = hue
 	}
 
 	await (async () => {
-		const isstat = await db.col(`SELECT note_id FROM note_stats  WHERE note_id = :note_id and user_id = :user_id`, args)
+		const isstat = await db.col(`SELECT note_id FROM note_stats  WHERE note_id = :note_id and user_id = :user_id`, state)
 		if (!isstat) {
 			db.exec(`
 				INSERT INTO note_stats (note_id, user_id)
 				VALUES (:note_id, :user_id)
-			`, args)
+			`, state)
 		}
 	})()
-	request.args = args
-	return args
+	request.state = state
+	return state
 }
 
 

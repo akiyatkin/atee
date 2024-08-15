@@ -12,7 +12,7 @@ if (CONF.config) {
 	// multipleStatements: true,
 	const DEF = {
 		namedPlaceholders: true,
-
+		//waitForConnections: true,
 		host: 'localhost',
 		user: 'xxxxx',
 		password: 'yyyyy',
@@ -22,7 +22,7 @@ if (CONF.config) {
 	const db = await mysql.createConnection({
 		...DEF,
 		...CONF.config
-	}).catch(e => console.log(e))
+	}).catch(e => console.log('db connect - ', e))
 	if (db) {
 
 		const [rows, fields] = await db.query("show variables like 'max_connections'")
@@ -50,7 +50,10 @@ export class Db {
 	async connect () {
 		if (!pool) return false
 		this.db = await pool.getConnection().catch(e => false)
-		//await this.db.query("set session transaction isolation level SERIALIZABLE")
+		if (this.db) {
+			const r = await this.db.ping().catch(r => false)
+			if (!r) this.db = false
+		}
 		if (!this.db) return false
 		return this
 	}
@@ -70,6 +73,7 @@ export class Db {
 		if (this.transdeep === 0) await this.db.query('COMMIT')
 	}
 	async back() {
+		this.transdeep = 0
 		await this.db.query('ROLLBACK')
 	}
 

@@ -54,6 +54,12 @@ class RecView {
 	delCookie (...args) {
 		return this.view.delCookie(...args)
 	}
+	set db(value) {
+		this.view.db = value
+	}
+	get db() {
+		return this.view.db
+	}
 	set req(value) {
 		this.view.req = value
 	}
@@ -116,6 +122,12 @@ export class View {
 	headers = {}
 	proc = {}
 	store = {}
+	set db(value) {
+		this.visitor.db = value
+	}
+	get db() {
+		return this.visitor.db
+	}
 	setCookie (name, value) {
 		const view = this
 		const cookie = `${name}=${encodeURIComponent(value)}; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT`
@@ -162,18 +174,24 @@ export class View {
 			this.reset(pname)
 		}
 	}
-	async getProc (opt) {
+	async getProc (opt, parentvalue) {
 		const mainview = this
+		//function кэш с учётом parentvalue.toString(), variable кэш только по name
+		const key = opt.once !== 'parentvalue' ? opt.name : opt.name + ':' + parentvalue
 
-		const proc = mainview.proc[opt.name]
+		
+		const proc = mainview.proc[key]
 		if (proc) return proc
 
-		if (opt['once'] && mainview.opt != opt) { //Для главного action запроса раз пришёл ещё один запрос значит есть отличие в реквестах и объединения не должно быть
+		
+
+		
+		if (opt['once'] === true && mainview.opt != opt) { //Для главного action запроса раз пришёл ещё один запрос значит есть отличие в реквестах и объединения не должно быть
 			//proc может быть общим или у каждого view свой. Для всех rest в extras view один.
 			//proc общий если у него нет в childs обработки отличающегося request в массиве view.req
 			const views = mainview.rest.getViews(mainview)
 			for (const view of views) {
-				const otherproc = view.proc[opt.name]
+				const otherproc = view.proc[key]
 				if (!otherproc) continue
 				await otherproc.init
 				if (otherproc.process) { //Другой proc сейчас выполняется и всех детей ещё не собрал, надо его дождаться
@@ -186,15 +204,10 @@ export class View {
 				})
 				if (r) continue; //Нельзя объединять так как в зависимостях есть разные request	
 
-				// r = view.rest.runChilds(otherproc, proc => {
-				// 	const popt = proc.opt
-				// 	if (popt.request && mainview.req[popt.name] != view.req[popt.name]) return true
-				// })
-				// if (r) continue; //Нельзя объединять так как в зависимостях есть разные request	
 				return otherproc
 			}
 		}
-		mainview.proc[opt.name] = {
+		mainview.proc[key] = {
 			'counter': ++mainview.rest.counter,
 			'opt': opt,
 			'parents': {},
@@ -205,10 +218,10 @@ export class View {
 			'process': false
 		}
 		let resolve
-		mainview.proc[opt.name].init = new Promise(r => resolve = r)
-		mainview.proc[opt.name].init.resolve = resolve
+		mainview.proc[key].init = new Promise(r => resolve = r)
+		mainview.proc[key].init.resolve = resolve
 		
-		return mainview.proc[opt.name]
+		return mainview.proc[key]
 	}	
 	async #exec (proc, parentvalue = null, parentname = null) {
 		const opt = proc.opt
@@ -236,7 +249,7 @@ export class View {
 		// if (opt['required']) {
 		// 	if (res == null) return view.err(`rest.required ${pname}`);
 		// }
-
+		
 		if (opt.func) {	
 			const rview = new RecView(view, proc)
 			if (opt.nostore && view.nostore == null) view.nostore = true
@@ -265,11 +278,11 @@ export class View {
 		const view = this
 
 		const rest = view.rest
-		const opt = rest.findopt(pname, pproc)
+		const opt = rest.findopt(pname)//, pproc)
 				
 		if (!opt) return view.err(`rest.notfound ${pname}`, 500)
 		
-		const proc = await view.getProc(opt)
+		const proc = await view.getProc(opt, parentvalue)
 
 		if (pproc) {
 			proc.parents[pproc.opt.name] = pproc //Тест рекурсии
@@ -282,8 +295,8 @@ export class View {
 			if (r) return view.err(`rest.recursion ${pname}`, 500)
 		}
 		//if (opt['nostore'] && !view.opt['nostore']) return view.err(`rest.action required ${pname}`, 500)
-
-		if (opt['once'] && proc['promise']) return proc['promise']
+		//
+		if (opt['once'] === true && proc['promise']) return proc['promise']
 		
 		proc['process'] = true
 		proc['promise'] = view.#exec(proc, parentvalue, parentname)
@@ -355,7 +368,7 @@ export class View {
 	}
 
 	afterlisteners = []
-	after(callback) {
+	after (callback) {
 		this.afterlisteners.push(callback)
 	}
 
@@ -365,6 +378,10 @@ export class Rest {
 	afterlisteners = []
 	after(callback) {
 		this.afterlisteners.push(callback)
+	}
+	beforelisteners = []
+	before(callback) {
+		this.beforelisteners.push(callback)
 	}
 
 	list = {}
@@ -385,6 +402,14 @@ export class Rest {
 			if (e === m) return true
 			const r = e.findextra(m)
 			if (r) return true
+		}
+	}
+	async runextras (fn) {
+		const r = await fn(this)
+		if (r != null) return r
+		for (const e of this.extras) {	
+			const r = await e.runextras(fn)
+			if (r != null) return r
 		}
 	}
 
@@ -419,6 +444,14 @@ export class Rest {
 		if (Object.hasOwn(this.list, pname)) return this.list[pname]
 		for (const m of this.extras) {
 			const opt = m.findopt(pname)
+			if (opt) return opt
+		}
+		return false
+	}
+	findrest (pname) {
+		if (Object.hasOwn(this.list, pname)) return this
+		for (const m of this.extras) {
+			const opt = m.findrest(pname)
 			if (opt) return opt
 		}
 		return false
@@ -473,11 +506,14 @@ export class Rest {
 	async get (action, req = {}, visitor) {
 		if (visitor) req = {...req, visitor}
 		const rest = this
-		const opt = rest.findopt(action)
+		const orest = rest.findrest(action) //before и after только для addAction
+		const opt = orest ? orest.list[action] : false
 		const view = new View(rest, action, req, opt, visitor) //Создаётся у родительского реста
+
 		const views = rest.addViews(view)
 		
 		//console.log('rest', view.action, req.m)
+		let reans
 
 		try {
 
@@ -500,44 +536,60 @@ export class Rest {
 			//if (!opt?.response && !opt?.request) return view.err('rest.badrequest', 404)
 			if (!opt?.response) return view.err('rest.badrequest', 404)
 
+			
+			
+			for (const callback of orest.beforelisteners) await callback(view)
 			const res = await view.get(action)
-			const reans = res != null ? res : {
+
+			for (const callback of orest.afterlisteners) await callback(view)
+			
+			
+			reans = res != null ? res : {
 				ans: view.ans, 
 				nostore: view.nostore, 
 				status: view.status,
 				ext: view.ext,
 				headers: view.headers
 			}
-			for (const callback of view.afterlisteners) await callback(view, reans)
-			for (const callback of rest.afterlisteners) await callback(view, reans)
-			return reans
+			
 		} catch (e) {
 			if (e instanceof ViewException) {
+
 				//const oview = view.nostore ? view : e.view //Исключение могло быть из другова view в одном visitor сохранено в promise proc и передано сейчас
 				const oview = e.view //Если обработка once:false или req будет различаться, то исключение будет своё в каждом view, так как промисом не воспользуемся
-				const reans = {
-					ans: oview.ans, 
-					nostore: oview.nostore,
-					status: oview.status,
-					ext: oview.ext,
-					headers: oview.headers
-				}
-				for (const callback of view.afterlisteners) await callback(view, reans) //выход из базы
-				for (const callback of rest.afterlisteners) await callback(view, reans) //постанализ ответа
-				return reans
-			}
-			
-			for (const callback of view.afterlisteners) await callback(view) //выход из базы
-			//for (const callback of rest.afterlisteners) await callback(view) Не делаем, потому что ответ нестандартный и анализировать нельзя
+				
+				try {			
+					if (orest) for (const callback of orest.afterlisteners) await callback(view)
+					for (const callback of view.afterlisteners) await callback(view) //выход из базы
+					reans = {
+						ans: oview.ans, 
+						nostore: oview.nostore,
+						status: oview.status,
+						ext: oview.ext,
+						headers: oview.headers
+					}
+				} catch (e) {
+					if (e instanceof ViewException) {
+						reans = {
+							ans: oview.ans, 
+							nostore: oview.nostore,
+							status: oview.status,
+							ext: oview.ext,
+							headers: oview.headers
+						}
+					} else {	
 
-			//Ошибки могут быть 500, когда сервер себя винит и 422, когда сервер винит пользователя
-			//422 возможная ситуация, типа замечание пользователю, почему ты фигню спрашиваешь
-			
-			//Нет соеденинеия с базой данных.. ну что же мы тут поделаем, пользователь бессилен 500
-			//Запрошенного пользователя нет в базе данных 422 - ответить данными пользователя не можем, но проблема не наша.
-			//ЗАЧЕМ РАЗЛИЧАТЬ?
-			throw e
+						throw e
+					}
+				}		
+			} else {	
+
+				throw e
+			}
 		}
+
+		for (const callback of view.afterlisteners) await callback(view) //выход из базы
+		return reans
 	}
 	add (pname, a1, a2, a3, a4) {
 		let before, func, after, replace
@@ -650,14 +702,22 @@ export class Rest {
 		opt['once'] = true
 		opt['required'] = false
 	}
-
+	// addAppointment (pname, a1, a2, a3) {
+	// 	const opt = this.add(pname, a1, a2, a3)
+	// 	opt['type'] = 'function'
+	// 	opt['nostore'] = false
+	// 	opt['response'] = false
+	// 	opt['request'] = false
+	// 	opt['once'] = false     //Если function вызовется для обработки once:true то повторного function не будет
+	// 	opt['required'] = false
+	// }
 	addFunction (pname, a1, a2, a3) {
 		const opt = this.add(pname, a1, a2, a3)
 		opt['type'] = 'function'
 		opt['nostore'] = false
 		opt['response'] = false
 		opt['request'] = false
-		opt['once'] = false     //Если function вызовется для обработки once:true то повторного function не будет
+		opt['once'] = 'parentvalue'     
 		opt['required'] = false
 	}
 

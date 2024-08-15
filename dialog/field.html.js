@@ -327,6 +327,7 @@ field.switch = ({name, reloaddiv, go, goid, reload, action, value, values, args 
 	</span>`
 }
 field.prompt = ({
+		edit = true,
 		value = 'Ваш Email', 
 		name = 'email',
 		input = '',
@@ -337,9 +338,10 @@ field.prompt = ({
 		type = 'email', action, args = {}, 
 		go = false, reloaddiv = false, goid = false, reload = false
 	}) => {
+	if (!edit) return `<span class="${cls}">${value ?? ''}${unit}</span>`
 	return `
 		<span>
-			<button class="field ${cls}">${value || ''}${unit}</button>
+			<button class="field ${cls}">${value ?? ''}${unit}</button>
 			<script>
 				(btn => {
 					btn.addEventListener('click', async () => {
@@ -350,7 +352,7 @@ field.prompt = ({
 							layer,
 							onlyfuture: ${onlyfuture},
 							descr: '${descr || ''}',
-							value: '${value || ''}',
+							value: '${value ?? ''}',
 							input: '${input || ''}',
 							name:'${name}',
 							placeholder:'${label}',
@@ -385,7 +387,8 @@ field.prompt = ({
 
 
 
-field.search = ({label = 'Поиск', link, descr, value, name = 'name', search, find = 'find', action, confirm, args = {}, go, reloaddiv, goid, reload}) => {
+field.search = ({edit = true, label = 'Поиск', link, descr, value, name = 'name', search, find = 'find', action, confirm, args = {}, go, reloaddiv, goid, reload}) => {
+	if (!edit) return `${value||label}`
 	return `
 		<span>
 			<button class="field">${value||label}</button>

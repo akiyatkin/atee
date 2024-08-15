@@ -20,6 +20,7 @@ import config from "/-config"
 
 
 rest.addResponse('get-note-props', async (view) => {
+	
 	const note = await view.get('note#required')
 	const db = await view.get('db')
 

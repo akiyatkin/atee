@@ -5,13 +5,16 @@ const rest = new Rest()
 rest.addVariable('isdb', async view => {
 	const db = await new Db().connect()
 	if (!db) return false
+
+	//console.log(db)
+
 	view.after(() => db.release())
 	return db
 })
 rest.addVariable('db', async view => {
 	const { isdb } = await view.gets(['isdb'])
 	if (isdb) return isdb
-	return view.err('Нет соединения с базой данных')
+	return view.err('Нет соединения с базой данных!')
 })
 
 rest.addVariable('start', async view => {
@@ -19,7 +22,7 @@ rest.addVariable('start', async view => {
 	await db.start()
 	view.after(async () => {
 		if (view.ans.result) {
-			await db.commit()
+			//await db.commit()
 		} else {
 			await db.back()
 		}

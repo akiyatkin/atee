@@ -253,7 +253,7 @@ rest.addResponse('set-submit', async view => {
 	}
 
 	if (ouser) { //Есть зарегистрированный пользователь по заявке, найденный по email
-		await User.sendin(view, ouser)
+		await User.sendin(db, ouser.user_id, view.visitor.client.host)
 		if (user.email) { //При авторизации заказ не передастся будет просто ошибка
 			return view.err('Вам нужно авторизоваться (' + order.email + ') и повторить заказ или изменить email. Сейчас вы в другом аккаунте (' + user.email + '). На почту отправлена ссылка.', 422)
 		} else { //Заказ передастся при авторизации в томже браузере
