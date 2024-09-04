@@ -51,7 +51,10 @@ export class Db {
 		if (!pool) return false
 		this.db = await pool.getConnection().catch(e => false)
 		if (this.db) {
-			const r = await this.db.ping().catch(r => false)
+			const r = await this.db.ping().catch(r => {
+				console.log('ping с ошибкой', r)
+				return false
+			})
 			// const r = await this.db.ping().then(r => this.db).catch(async e => {
 			// 	console.log('new direct connection')
 			// 	const db = await new Db().connect()
@@ -63,7 +66,7 @@ export class Db {
 			// 	return true
 			// })
 			if (!r) {
-				console.log('ping с ошибкой')
+				
 				this.db = false
 			}
 		} else {
