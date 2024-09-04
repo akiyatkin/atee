@@ -12,6 +12,8 @@ if (CONF.config) {
 	// multipleStatements: true,
 	const DEF = {
 		namedPlaceholders: true,
+		enableKeepAlive: true,
+		keepAliveInitialDelay: 10000,
 		//waitForConnections: true,
 		host: 'localhost',
 		user: 'xxxxx',
