@@ -28,7 +28,7 @@ if (CONF.config) {
 		const [rows, fields] = await db.query("show variables like 'max_connections'")
 		let connectionLimit = rows[0].Value - 1
 		// connectionLimit = Math.round(connectionLimit / 2)
-		const limit = 20
+		const limit = 120
 		connectionLimit = connectionLimit < limit ? connectionLimit : limit
 		console.log('db ready - connectionLimit: ' + connectionLimit)
 		conf = {
@@ -62,7 +62,10 @@ export class Db {
 			// 	this.db = db
 			// 	return true
 			// })
-			if (!r) this.db = false
+			if (!r) {
+				console.log('ping с ошибкой')
+				this.db = false
+			}
 		} else {
 			console.log('pool вернул false')
 		}
