@@ -12,17 +12,17 @@ rest.addVariable('isdb', async view => {
 	return db
 })
 rest.addVariable('db', async view => {
-	const { isdb } = await view.gets(['isdb'])
+	const isdb = await view.get('isdb')
 	if (isdb) return isdb
 	return view.err('Нет соединения с базой данных!')
 })
 
 rest.addVariable('start', async view => {
-	const { db } = await view.gets(['db'])
+	const db = await view.get('db')
 	await db.start()
 	view.after(async () => {
 		if (view.ans.result) {
-			//await db.commit()
+			await db.commit()
 		} else {
 			await db.back()
 		}

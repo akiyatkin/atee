@@ -52,7 +52,19 @@ export class Db {
 		this.db = await pool.getConnection().catch(e => false)
 		if (this.db) {
 			const r = await this.db.ping().catch(r => false)
+			// const r = await this.db.ping().then(r => this.db).catch(async e => {
+			// 	console.log('new direct connection')
+			// 	const db = await new Db().connect()
+			// 	if (!db) {
+			// 		console.log('Нет соединения с базой данных при повторном соединении')
+			// 		return false
+			// 	}
+			// 	this.db = db
+			// 	return true
+			// })
 			if (!r) this.db = false
+		} else {
+			console.log('pool вернул false')
 		}
 		if (!this.db) return false
 		return this
@@ -75,6 +87,7 @@ export class Db {
 	async back() {
 		this.transdeep = 0
 		await this.db.query('ROLLBACK')
+		return true
 	}
 
 	//select

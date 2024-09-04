@@ -64,7 +64,7 @@ const Note = {
 		const html = Note.makeHTML(note.text, note.cursors, note.waitchanges)
 		note.view.innerHTML = html + '<br>'
 	},
-	makeHTML: (text, cursors, waitchanges = []) => {
+	makeHTML: (text, cursors, waitchanges = [], marks = []) => {
 		cursors = Object.values(cursors)
 
 		// [2,3,4,5] - надо подсветить 2 после применения 3,4,5
@@ -72,7 +72,6 @@ const Note = {
 		
 			
 		const changes = [...waitchanges]
-		const marks = []
 
 		const steps = []
 		while (changes.length) {
@@ -96,12 +95,12 @@ const Note = {
 		
 		
 		const splits = {}
-		splits[0] = {pos:0, start:{}, end: {}, blinks: []}
-		for (const {hue, start, size, direction} of cursors) {
+		splits[0] = {pos:0, clsend:[], clsstart:[], start:{}, end: {}, blinks: []}
+		for (const {cls, hue, start, size, direction} of cursors) {
 			const end = start + size
 
-			if (!splits[start]) splits[start] = {pos: start, start:{}, end:{}, blinks:[]}
-			if (!splits[end]) splits[end] = {pos: end, start:{}, end:{}, blinks:[]}
+			if (!splits[start]) splits[start] = {pos: start, clsend:[], clsstart:[], start:{}, end:{}, blinks:[]}
+			if (!splits[end]) splits[end] = {pos: end, clsend:[], clsstart:[], start:{}, end:{}, blinks:[]}
 
 
 			if (direction === 1) {
@@ -113,14 +112,33 @@ const Note = {
 			}
 
 			if (!size) continue
-			splits[start].start[hue] = hue
-			splits[end].end[hue] = hue
+			if (cls) {
+				splits[start].clsstart.push(cls)
+				splits[end].clsend.push(cls)
+			} else if (hue) {
+				splits[start].start[hue] = hue
+				splits[end].end[hue] = hue
+			}
+
+			
 		}
+		// for (const mark of marks) {
+		// 	const {cls, start, size, direction} = mark
+		// 	const end = start + size
+
+		// 	if (!splits[start]) splits[start] = {pos: start, clsend:[], clsstart:[], start:{}, end:{}, blinks:[]}
+		// 	if (!splits[end]) splits[end] = {pos: end, clsend:[], clsstart:[], start:{}, end:{}, blinks:[]}
+
+
+		// 	if (!size) continue
+		// 	splits[start].clsstart.push(cls)
+		// 	splits[end].clsend.push(cls)
+		// }
 
 		
 		const lights = Object.values(splits)
 		lights.sort((a, b) => a.pos - b.pos)
-		lights.map(light => {
+		lights.forEach(light => {
 			light.start = Object.values(light.start)
 			light.end = Object.values(light.end)
 		})
@@ -160,22 +178,33 @@ const Note = {
 		
 		let html = ''
 		for (const light of lights) {
+			for (const cls of light.clsend) html += '</span>'
+			for (const cls of light.clsstart) html += `<span class="${cls}">`
+
 			for (const hue of light.blinks) {
 				html += `<span style="--hue: ${hue}" class="cursor"></span>`
 			}
 			for (const hue of light.colors) {
 				if (hue == 360) { //mute
 					html += `<span class="select mute">`
-				} else {
+				} else if (hue) {
 					html += `<span style="--hue: ${hue}" class="select">`	
+				} else {
+					html += `<span class="select">`	
 				}
 				
 			}
 			//html += light.part.replaceAll('&','&amp;')
+			
+			
+
 			html += light.part
+
+			
 			for (const color of light.colors) {
 				html += '</span>'
 			}
+			
 		}
 		return html
 		

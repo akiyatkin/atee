@@ -353,7 +353,7 @@ field.prompt = ({
 							onlyfuture: ${onlyfuture},
 							descr: '${descr || ''}',
 							value: '${value ?? ''}',
-							input: '${input || ''}',
+							input: '${input ?? ''}',
 							name:'${name}',
 							placeholder:'${label}',
 							ok: '${ok}',
@@ -497,7 +497,7 @@ field.area = ({name, label, action, value}) => {
 	`
 }
 //approved
-field.text = ({edit, name, label, action, args = {}, value, type = 'text'}) => {
+field.text = ({edit = true, name, label, action, args = {}, value, type = 'text'}) => {
 	if (!edit) return field.textdisabled({ label, value })
 	const id = 'field-' + nicked(label)
 	return `
@@ -534,7 +534,44 @@ field.text = ({edit, name, label, action, args = {}, value, type = 'text'}) => {
 		</div>
 	`
 }
+field.rowtext = ({edit = true, name, label, action, args = {}, value, type = 'text', clear = false, go, reloaddiv, goid}) => {
+	if (!edit) return field.textdisabled({ label, value })
+	const id = 'field-' + nicked(label)
+	return `
+		<span class="success">
+			<input 
+				name="${name}" 
+				type="${type}" 
+				id="${id}" 
+				value="${value}" 
+				placeholder="${label}" 
+				class="field">
+			<script>
+				(div => {
+					const field = div.querySelector('.field')
+					
+					field.addEventListener('input', async () => {
+						console.log('asdf')
+						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+						let value = field.value
+						if (~['datetime-local', 'date'].indexOf(field.type)) value = Math.floor(new Date(field.value).getTime() / 1000)
+						const args = ${JSON.stringify(args)}
+						args[field.name] = value
+						const ans = await sendit(div, '${action}', args)
 
+						const Client = await window.getClient()
+						const goid = "${goid ? goid : ''}"
+						if (ans.result && ${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
+						if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
+						if (ans.result && ${!!clear}) field.value = ''
+
+						field.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+					})
+				})(document.currentScript.parentElement)
+			</script>
+		</span>
+	`
+}
 
 //approved
 field.percent = ({name, label, action, value}) => {
@@ -685,7 +722,7 @@ field.date = ({name, action, label = '', value = '', onlyfuture = false}) => {
 }
 
 //approved
-field.textok = ({name, label, action, value, newvalue = '', go, clear = false, reloaddiv, goid, type = 'text'}) => {
+field.textok = ({name, label, action, value, args = {}, newvalue = '', go, clear = false, reloaddiv, goid, type = 'text'}) => {
 	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label ${value ? 'success' : 'submit'}">
@@ -704,7 +741,9 @@ field.textok = ({name, label, action, value, newvalue = '', go, clear = false, r
 					status.addEventListener('click', async () => {
 						if (float.classList.contains('submit')) {
 							const sendit = await import('/-dialog/sendit.js').then(r => r.default)
-							const ans = await sendit(float, '${action}', {${name}: field.value})
+							const args = ${JSON.stringify(args)}
+							args[field.name] = field.value
+							const ans = await sendit(float, '${action}', args)
 							if (ans.msg) {
 								const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 								Dialog.alert(ans.msg)
