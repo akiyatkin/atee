@@ -25,14 +25,14 @@ rest.addFunction('accept', async (view, note_id) => {
 
 rest.addArgument('note', async (view, note) => {
 	view.nostore = true
-	if (!note) return false
+	if (!note) return null
 	const db = await view.get('db')
 	const r = note.split('-')
 	const note_id = parseInt(r.shift())
-	if (!note_id) return false
+	if (!note_id) return null
 	
 	const real = await NoteDB.getNote(db, note_id)
-	if (!real) return false
+	if (!real) return null
 
 	const nick = r.join('-')
 	real.request_nick = nick
