@@ -3,17 +3,19 @@ import config from "@atee/config"
 const require = createRequire(import.meta.url)
 const mysql = require('mysql2/promise')
 
-let pool = false
+
 let conf = false
 
 const CONF = await config('db')
-	
-if (CONF.config) {
+
+const createPool = async () => {
+	let pool = false
+	if (!CONF.config) return false
 	// multipleStatements: true,
 	const DEF = {
 		namedPlaceholders: true,
-		enableKeepAlive: true,
-		keepAliveInitialDelay: 10000,
+		//enableKeepAlive: true,
+		//keepAliveInitialDelay: 10000,
 		//waitForConnections: true,
 		host: 'localhost',
 		user: 'xxxxx',
@@ -26,7 +28,6 @@ if (CONF.config) {
 		...CONF.config
 	}).catch(e => console.log('db connect - ', e))
 	if (db) {
-
 		const [rows, fields] = await db.query("show variables like 'max_connections'")
 		let connectionLimit = rows[0].Value - 1
 		// connectionLimit = Math.round(connectionLimit / 2)
@@ -40,7 +41,9 @@ if (CONF.config) {
 		}
 		pool = mysql.createPool(conf)
 	}
+	return pool
 }
+let pool = await createPool()
 export class Db {
 	constructor () {
 		this.transdeep = 0
@@ -54,9 +57,13 @@ export class Db {
 		this.db = await pool.getConnection().catch(e => false)
 		if (this.db) {
 			const r = await this.db.ping().catch(r => {
-				console.log('ping с ошибкой', r)
+				console.log('ping с ошибкой createPool')
 				return false
 			})
+			if (!r) {
+				pool = await createPool() //reconnect
+				this.db = await pool.getConnection().catch(e => false)
+			}
 			// const r = await this.db.ping().then(r => this.db).catch(async e => {
 			// 	console.log('new direct connection')
 			// 	const db = await new Db().connect()
@@ -67,10 +74,7 @@ export class Db {
 			// 	this.db = db
 			// 	return true
 			// })
-			if (!r) {
-				
-				this.db = false
-			}
+			//if (!r) this.db = false
 		} else {
 			console.log('pool вернул false')
 		}
