@@ -5,7 +5,7 @@ import csv from '/-csv'
 
 const conf = await config('mail')
 const transport = conf.nodemailer ? nodemailer.createTransport(conf.nodemailer) : false
-if (!transport) console.log('nodemailer не настроен в .mail.json')
+//if (!transport) console.log('nodemailer не настроен в .mail.json')
 if (transport) await fs.mkdir('data/auto/mail/', { recursive: true }).catch(e => null)
 
 const Mail = {
