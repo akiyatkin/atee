@@ -57,6 +57,8 @@ rest.addResponse('get-page-sitemap', async (view) => {
 	const ans = {headings:[]}
 	if (!conf.pages) return {ans}
 	const files = await getFiles(conf.pages)
+
+	if (!files.length) return {ans}
 	ans.headings.push({
 		title:'Страницы',
 		childs: files
