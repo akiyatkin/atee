@@ -22,7 +22,7 @@ const Mail = {
 	toSupport: (subject, html, email) => {
 		const message = {
 			from: conf.from, 
-			to: conf.support,
+			to: conf.support || conf.to,
 			replyTo: null,
 			subject,
 			html
