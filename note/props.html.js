@@ -29,8 +29,8 @@ props.ROOT = (data, env) => data.result ? `
 	<div>Гостей ${data.note.userguests}</div>
 	<div>Авторизованных ${data.note.useremails}</div>
 	<div>Версия ${data.note.rev}</div>
-	<div>Дата создания ${date.dmy(data.note.date_create)} ${data.note.editor_email || 'Гость'}</div>
-	<div>Последние изменения ${date.dmy(data.note.date_edit)} ${data.note.creater_email || 'Гость'}</div>
+	<div>Дата создания ${date.dmy(data.note.date_create)} <b>${data.note.create_email || 'Гость'}</b></div>
+	<div>Последние изменения ${date.dmy(data.note.date_edit)} ${data.note.editor_email || 'Гость'}</div>
 
 	${props.showTable(data, env)}
 	${props.showMiddlePart(data, env)}

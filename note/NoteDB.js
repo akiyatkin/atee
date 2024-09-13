@@ -28,6 +28,7 @@ NoteDB.getProps = async (db, note_id) => {
 			n.note_id,
 			n.title,
 			n.nick,
+			n.creater_id,
 			c.email as create_email, 
 			e.email as editor_email
 		FROM note_notes n
@@ -117,7 +118,7 @@ NoteDB.delete = async (db, note_id) => {
 NoteDB.getNote = async (db, note_id) => {
 	const note = await db.fetch(`
 		SELECT 
-			nick, text, title, rev, note_id, 
+			nick, text, title, rev, note_id, creater_id,
 			UNIX_TIMESTAMP(now()) as now, 
 			UNIX_TIMESTAMP(date_create) as date_create, 
 			UNIX_TIMESTAMP(date_edit) as date_edit
