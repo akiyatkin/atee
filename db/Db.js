@@ -97,6 +97,7 @@ export class Db {
 		if (this.transdeep === 0) await this.db.query('COMMIT')
 	}
 	async back() {
+		if (!this.transdeep) return true
 		this.transdeep = 0
 		await this.db.query('ROLLBACK')
 		return true

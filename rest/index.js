@@ -553,11 +553,11 @@ export class Rest {
 			}
 			
 		} catch (e) {
-			if (e instanceof ViewException) {
+			//if (e instanceof ViewException) {
 
 				//const oview = view.nostore ? view : e.view //Исключение могло быть из другова view в одном visitor сохранено в promise proc и передано сейчас
 				const oview = e.view //Если обработка once:false или req будет различаться, то исключение будет своё в каждом view, так как промисом не воспользуемся
-				
+				if (!oview) throw e
 				try {			
 					if (orest) for (const callback of orest.afterlisteners) await callback(view)
 					for (const callback of view.afterlisteners) await callback(view) //выход из базы
@@ -582,10 +582,10 @@ export class Rest {
 						throw e
 					}
 				}		
-			} else {	
+			// } else {	
 
-				throw e
-			}
+			// 	throw e
+			// }
 		}
 
 		for (const callback of view.afterlisteners) await callback(view) //выход из базы
