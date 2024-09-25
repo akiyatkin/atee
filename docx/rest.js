@@ -110,6 +110,8 @@ rest.addResponse('get-sitemap', async view => {
 rest.addResponse('get-html', async view => {
 	const src = await view.get('src')
 
+	
+
 	const index = src.lastIndexOf('/')
 	if (!index) index = 0
 	const name = src.slice(index + 1)
@@ -132,10 +134,12 @@ rest.addResponse('get-html', async view => {
 
 
 	const html = await fs.readFile(finfo.htmlsrc, 'utf8')
-	return {ans:html, ext:'html', status:200}
-	// const data = await docx.read(Access, src)
-	// view.ans.data = data
-	// return view.ret()
+
+	return {
+		ans:html, 
+		ext:'html', 
+		status:200
+	}
 })
 const getList = (src) => {
 	const cachename = nicked(src)

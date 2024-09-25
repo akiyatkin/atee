@@ -341,8 +341,7 @@ field.prompt = ({
 	if (!edit) return `<span class="${cls}">${value ?? ''}${unit}</span>`
 	return `
 		<span>
-			<button class="field ${cls}">${value ?? ''}${unit}</button>
-			<script>
+			<button class="field ${cls}">${value ?? ''}${unit}</button><script>
 				(btn => {
 					btn.addEventListener('click', async () => {
 						const Prompt = await import('/-dialog/prompt/Prompt.js').then(r => r.default)
@@ -380,9 +379,7 @@ field.prompt = ({
 						})
 					})
 				})(document.currentScript.previousElementSibling)
-			</script>
-		</span>
-	`
+			</script></span>`
 }
 
 
@@ -391,8 +388,7 @@ field.search = ({edit = true, label = 'Поиск', link, descr, value, name = '
 	if (!edit) return `${value||label}`
 	return `
 		<span>
-			<button class="field">${value||label}</button>
-			<script>
+			<button class="field">${value||label}</button><script>
 				(btn => {
 					btn.addEventListener('click', async () => {
 						const Search = await import('/-dialog/search/Search.js').then(r => r.default)
@@ -438,9 +434,7 @@ field.search = ({edit = true, label = 'Поиск', link, descr, value, name = '
 						})
 					})
 				})(document.currentScript.previousElementSibling)
-			</script>
-		</span>
-	`
+			</script></span>`
 }
 //approved
 field.button = ({label, name = '', cls = '', action, args = {}, go = '', reloaddiv = '', goid = '', confirm, reload}) => {

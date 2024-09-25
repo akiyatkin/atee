@@ -540,6 +540,7 @@ export class Rest {
 			for (const callback of orest.beforelisteners) await callback(view)
 			const res = await view.get(action)
 
+
 			for (const callback of orest.afterlisteners) await callback(view)
 			
 			
@@ -550,6 +551,7 @@ export class Rest {
 				ext: view.ext,
 				headers: view.headers
 			}
+
 			
 		} catch (e) {
 			
@@ -564,7 +566,7 @@ export class Rest {
 		try {			
 			if (orest) for (const callback of orest.afterlisteners) await callback(view)
 			for (const callback of view.afterlisteners) await callback(view) //выход из базы
-			reans = {
+			reans = reans || {
 				ans: oview.ans, 
 				nostore: oview.nostore,
 				status: oview.status,
@@ -583,8 +585,7 @@ export class Rest {
 			} else {
 				throw e
 			}
-		}	
-
+		}
 		return reans
 	}
 	add (pname, a1, a2, a3, a4) {
