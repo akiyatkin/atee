@@ -574,9 +574,16 @@ Catalog.getTree = async (db, visitor) => {
 	return cache.once('getTree', async () => {
 		const tree = {}
 		const rows = await db.all(`
-			SELECT group_id, parent_id, group_nick, icon_id, group_title 
-			FROM showcase_groups 
-			ORDER by ordain
+			SELECT 
+				g.group_id, 
+				g.parent_id, 
+				g.group_nick, 
+				g.icon_id, 
+				g.group_title,
+				f.src as icon
+			FROM showcase_groups g
+			LEFT JOIN showcase_files f on f.file_id = g.icon_id
+			ORDER by g.ordain
 		`)
 
 		for (const name of ['group_id','parent_id']){
