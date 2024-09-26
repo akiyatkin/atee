@@ -538,10 +538,11 @@ export class Rest {
 			
 			
 			for (const callback of orest.beforelisteners) await callback(view)
+			if (orest != rest) for (const callback of rest.beforelisteners) await callback(view)
 			const res = await view.get(action)
-
-
 			for (const callback of orest.afterlisteners) await callback(view)
+			if (orest != rest) for (const callback of rest.afterlisteners) await callback(view)
+
 			
 			
 			reans = res != null ? res : {
@@ -565,6 +566,7 @@ export class Rest {
 
 		try {			
 			if (orest) for (const callback of orest.afterlisteners) await callback(view)
+			if (orest != rest) for (const callback of rest.afterlisteners) await callback(view)
 			for (const callback of view.afterlisteners) await callback(view) //выход из базы
 			reans = reans || {
 				ans: oview.ans, 

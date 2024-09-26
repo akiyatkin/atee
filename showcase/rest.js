@@ -12,12 +12,4 @@ rest.after((view, reans = {}) => {
 	view.nostore = true
 })
 
-rest.addResponse('get-test', (view) => {
-	const info = Files.srcInfo('https://optimus-cctv.ru/files/VMH-7.1_VMH-7.5.rar#Актуальная прошивка VMH-7.1(w)(b) /')
-	view.ans.info = info
-	console.log(info)
-	return view.ret()
-
-})
-
 export default rest
