@@ -8,6 +8,7 @@ controller.HEAD = (data, env) =>
 		<script>//Делаем SPA переходы
 			const isSuitable = a => {
 				const search = a.getAttribute('href')
+				if (!search) return
 				const it = search.indexOf('.')
 				const is = search.indexOf('/')
 				const iq = search.indexOf('?')

@@ -639,7 +639,7 @@ Catalog.getTree = async (db, visitor) => {
 		return tree
 	})
 }
-Catalog.getGroups = async (view) => {
+Catalog.getGroups = async (view) => { //depricated
 	const { db, base, options } = await view.gets(['db', 'options','base'])
 	const cache = base.dbcache
 
