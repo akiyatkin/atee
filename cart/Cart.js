@@ -107,7 +107,7 @@ const Cart = {
 	},
 	sendToAdmin: async (view, sub, order_id) => {
 		const {subject, html, email} = await Cart.getMailOpt(view, sub, order_id)
-		return Mail.toAdmin(subject, html, email) //В письме заказа не должно быть аналитики
+		return Mail.toAdminSplit(subject, html, email) //В письме заказа не должно быть аналитики
 	},
 	getMailOpt: async (view, sub, order_id) => {
 		const data = await Cart.getMailData(view, sub, order_id)

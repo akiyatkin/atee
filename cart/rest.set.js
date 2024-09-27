@@ -235,10 +235,12 @@ rest.addResponse('set-submit', async view => {
 
 		return view.ret('Спасибо за заказ. Менеджер оповещён, ответит в течение 24 часов, как можно скорее.')
 	}
-	if (user.email == order.email) { //Это я и я зарегистрирован
+	let ouser = order.email ? await User.getUserByEmail(view, order.email) : false
+
+	if (user.user_id == ouser.user_id) { //Это я и я зарегистрирован
 		return ready()
 	}
-	let ouser = order.email ? await User.getUserByEmail(view, order.email) : false
+	
 
 	if (user.manager) {
 
