@@ -88,6 +88,7 @@ tpl.showGallery = (data, env, mod) => `
 			}
 		</style>
 		<div class="imagemax_gallery ${mod.images.length>1?'pointer':''}" style="">
+
 			<img alt="" style="max-width: 100%; max-height: 100%" 
 				srcset="
 					/-imager/webp?cache&h=500&fit=inside&src=${encodeURIComponent(mod.images[0])} 1x,
@@ -154,6 +155,7 @@ tpl.maindata = (data, env, mod) => `
 		<div>
 			${tpl.showprop('Модель', mod.model_title)}
 			${tpl.showprop('Бренд', tpl.brandlink(data, env, mod))}
+			${mod.discount ? tpl.showprop('Скидка', mod.discount + '%') : ''}
 			<p>
 				<i>${mod.Описание || ''}</i>
 			</p>

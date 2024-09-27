@@ -410,10 +410,10 @@ Catalog.prepareCost = async (base, model, partner) => {
 	let is_some_oldcost = is_item_oldcost || is_model_oldcost
 	let is_some_cost = is_item_cost || is_model_cost
 
-	delete model.discount
-	if (model.items) for (const item of model.items) {
-		delete item.discount
-	}
+	// delete model.discount
+	// if (model.items) for (const item of model.items) {
+	// 	delete item.discount
+	// }
 	if (!is_some_cost) {
 		delete model[oldcost.prop_title]
 		if (model.items) for (const item of model.items) {
