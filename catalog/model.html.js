@@ -125,7 +125,8 @@ tpl.showGallery = (data, env, mod) => `
 `
 tpl.showimage = (src, i) => `	
 	<div data-file="${src}" class="imagemin ${i === 0 ? 'selected' : ''}">
-		<img width="150" height="150" loading="lazy" alt="" style="max-width: 100%; height:auto" src="/-imager/webp?cache&w=90&h=90&src=${encodeURIComponent(src)}">
+		<img width="150" height="150" loading="lazy" alt="" style="max-width: 100%; height:auto" 
+		src="/-imager/webp?cache&w=150&h=150&src=${encodeURIComponent(src)}">
 	</div>
 `
 tpl.maindata = (data, env, mod) => `
