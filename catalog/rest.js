@@ -89,7 +89,7 @@ rest.addResponse('get-model-head', async (view) => {
 	ar.push(getModItemPropValue(item, model, 'Позиция'))
 	view.ans.title = ar.filter(r => r).join(' ')
 
-	//view.ans.canonical = `/catalog/${model.brand_nick}/${model.model_nick}`
+	view.ans.canonical = `/catalog/${model.brand_nick}/${model.model_nick}`
 	//view.ans.canonical = '/' + model.model_nick
 
 	view.ans.description = getModItemPropValue(item, model, 'Описание')

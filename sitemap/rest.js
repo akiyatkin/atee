@@ -122,7 +122,7 @@ rest.addResponse('get-head', async view => {
 		if (head.thisischild) {
 			head.canonical = env.crumb.parent + head.canonical
 		} else {
-			head.canonical = env.crumb + head.canonical
+			//head.canonical = head.canonical
 		}
 	}
 	view.ans = head
