@@ -27,7 +27,7 @@ rest.extra(rest_catalog)
 import rest_docx from '/-docx/rest.js'
 
 
-const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
+const getv = (mod, prop_title) => mod ? mod[prop_title] ?? mod.more?.[prop_title] : ''
 const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : ''
 const getModItemPropValue = (item, mod, prop_title) => getv(mod, prop_title) || getv(item, prop_title) || ''
 
@@ -87,8 +87,11 @@ rest.addResponse('get-model-head', async (view) => {
 	ar.push(`${model.brand_title} ${model.model_title}`)
 	ar.push(getModItemPropValue(item, model, 'Наименование'))
 	ar.push(getModItemPropValue(item, model, 'Позиция'))
-	view.ans.title =  ar.filter(r => r).join(' ')
-	
+	view.ans.title = ar.filter(r => r).join(' ')
+
+	//view.ans.canonical = `/catalog/${model.brand_nick}/${model.model_nick}`
+	//view.ans.canonical = '/' + model.model_nick
+
 	view.ans.description = getModItemPropValue(item, model, 'Описание')
 	
 	if (model.images) {
