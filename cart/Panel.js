@@ -7,7 +7,7 @@ const Panel = {
 		panel.classList.remove('hide')
 	},
 	down: panel => {
-		panel.classList.remove('hide')
+		Panel.show(panel)
 		const body = panel.querySelector('.body')
 		body.scrollTo(0, 0)
 		panel.classList.remove('show')
@@ -35,13 +35,6 @@ const Panel = {
 		const body = panel.querySelector('.body')
 		body.scrollTo(0, 0)
 		panel.classList.add('show')
-		Panel.ready(panel)
-	},
-	down: panel => {
-		Panel.show(panel)
-		const body = panel.querySelector('.body')
-		body.scrollTo(0, 0)
-		panel.classList.remove('show')
 		Panel.ready(panel)
 	}
 }
