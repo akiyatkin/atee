@@ -25,6 +25,7 @@ controller.HEAD = (data, env) =>
 			const click = event => { 
 				const a = event.target.closest('a')
 				if (!a || !isSuitable(a)) return
+				if (event.defaultPrevented) return
 				event.preventDefault()
 				getClient().then(Client => Client.click(a))
 			}

@@ -27,6 +27,7 @@ export const Client = {
 		window.addEventListener('click', event => {
 			const a = event.target.closest('a')
 			if (!a || !Client.isSuitable(a)) return
+			if (event.defaultPrevented) return
 			event.preventDefault()
 			Client.click(a)
 		})
