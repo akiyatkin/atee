@@ -1,4 +1,4 @@
-import tpl from "/@atee/catalog/model.html.js"
+import tpl from "/-catalog/model.html.js"
 import cost from "/-words/cost.js"
 import common from "/-catalog/common.html.js"
 import links from "/-catalog/links.html.js"
