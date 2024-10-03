@@ -89,11 +89,19 @@ rest.addResponse('get-model-head', async (view) => {
 	ar.push(getModItemPropValue(item, model, 'Позиция'))
 	view.ans.title = ar.filter(r => r).join(' ')
 
-	view.ans.canonical = `/catalog/${model.brand_nick}/${model.model_nick}`
+	view.ans.canonical = `/catalog/${model.brand_nick}/${model.model_nick}`;
 	//view.ans.canonical = '/' + model.model_nick
 
-	view.ans.description = getModItemPropValue(item, model, 'Описание')
-	
+
+	let text = getModItemPropValue(item, model, 'Описание')
+
+
+	text = text.replace(/<style([\S\s]*?)>([\S\s]*?)<\/style>/ig, '').replace(/<h1[^>]*>.*<\/h1>/iu, "").replace(/<\/?[^>]+(>|$)/g, " ").replace(/\s+/," ").trim()
+	const r = text.match(/.{200}[^\.!]*[\.!]/u)
+	text = (r ? r[0] : text).replaceAll(' ,', ',')
+	view.ans.description = text
+
+
 	if (model.images) {
 		view.ans.image_src = /^http/.test(model.images[0]) ? model.images[0] : '/' + model.images[0]
 	}
