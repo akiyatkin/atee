@@ -183,7 +183,7 @@ const getList = (src) => {
 			text = text.replace(/\s\./,'.').replace(/\s\!/,'!').replace(/\s\?/,'?').replace(/\s\:/,':').replace(/\s\;/,';')
 
 
-			const r = text.match(/.{200}[^\.!]*[\.!]/u)			
+			const r = text.match(/.{200}[^\.!]*[\.!]/u)
 			//const r = text.match(/.{25}[^\.!]*[\.!]/u)
 
 			finfo.preview = r ? r[0] : text
