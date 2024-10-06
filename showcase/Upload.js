@@ -677,7 +677,8 @@ export class Upload {
 									text = :text,
 									price_id = :price_id,
 									number = :number,
-									value_id = :value_id
+									value_id = :value_id,
+									bond_id = :bond_id
 							`, { ...item, prop_id:prop.prop_id, ...fill, price_id:price.price_id })
 						}
 					}
@@ -1731,9 +1732,9 @@ export class Upload {
 		
 		const way = Files.getWayByExt(info.ext)
 		const ext = way != 'files' ? info.ext : (~Files.destinies.files.indexOf(info.ext) ? info.ext : null)
-		if (!ext) {
-			console.log('Strange ext', info)
-		}
+		// if (!ext) {
+		// 	console.log('Strange ext', info)
+		// }
 
 		const place = /^https?:\/\//i.test(src) ? 'remote' : 'local'
 		const keys_nick = keys_title ? unique(keys_title.split(',').map(r => base.onicked(r)).filter(n => n)) : false
