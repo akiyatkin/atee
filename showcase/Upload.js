@@ -635,7 +635,7 @@ export class Upload {
 						 			value_title = :value_title,
 						 			value_nick = :value_nick
 						 	`, { value_nick, value_title })
-							fillings.push({value_id, text, number})
+							fillings.push({bond_id, value_id, text, number})
 						} else if (prop.type == 'bond') {
 							const value_nick = base.onicked(value_title)
 							if (!value_nick) {
