@@ -108,6 +108,10 @@ export const Files = {
 		const info = Files.nameInfo(file)
 		info.dir = dir
 		info.anchor = anchor
+		if (anchor) {
+			const i = anchor.lastIndexOf('.')
+			info.anchorext = nicked((~i ? anchor.slice(i + 1) : '')).slice(0,4)
+		}
 		
 		return info
 	},
