@@ -458,17 +458,31 @@ export class Upload {
 					key_nick = base.onicked(key_title)
 				}
 				
-				let item = false
+				//let item = false
+				let items = []
 				if (catalogprop.type == 'value') {
 					const value_id = await base.getValueIdByNick(key_nick)
 					if (!brand_id) {
-						item = await db.fetch(`
+						// item = await db.fetch(`
+						// 	SELECT ip.model_id, ip.item_num 
+						// 	FROM showcase_iprops ip
+						// 	WHERE ip.prop_id = :keyprop_id and ip.value_id = :value_id
+						// `, {keyprop_id: catalogprop.prop_id, value_id})
+						items = await db.all(`
 							SELECT ip.model_id, ip.item_num 
 							FROM showcase_iprops ip
 							WHERE ip.prop_id = :keyprop_id and ip.value_id = :value_id
 						`, {keyprop_id: catalogprop.prop_id, value_id})
 					} else {
-						item = await db.fetch(`
+						// item = await db.fetch(`
+						// 	SELECT ip.model_id, ip.item_num 
+						// 	FROM showcase_models m
+						// 	LEFT JOIN showcase_iprops ip on m.model_id = ip.model_id
+						// 	WHERE ip.prop_id = :keyprop_id 
+						// 		and ip.value_id = :value_id
+						// 		and m.brand_id = :brand_id
+						// `, {brand_id, keyprop_id: catalogprop.prop_id, value_id})
+						items = await db.all(`
 							SELECT ip.model_id, ip.item_num 
 							FROM showcase_models m
 							LEFT JOIN showcase_iprops ip on m.model_id = ip.model_id
@@ -476,17 +490,31 @@ export class Upload {
 								and ip.value_id = :value_id
 								and m.brand_id = :brand_id
 						`, {brand_id, keyprop_id: catalogprop.prop_id, value_id})
+
 					}
 				} else if (catalogprop.type == 'bond') {
 					const bond_id = await base.getBondIdByNick(key_nick)
 					if (!brand_id) {
-						item = await db.fetch(`
+						// item = await db.fetch(`
+						// 	SELECT ip.model_id, ip.item_num 
+						// 	FROM showcase_iprops ip
+						// 	WHERE ip.prop_id = :keyprop_id and ip.bond_id = :bond_id
+						// `, {keyprop_id: catalogprop.prop_id, bond_id})
+						items = await db.all(`
 							SELECT ip.model_id, ip.item_num 
 							FROM showcase_iprops ip
 							WHERE ip.prop_id = :keyprop_id and ip.bond_id = :bond_id
 						`, {keyprop_id: catalogprop.prop_id, bond_id})
 					} else {
-						item = await db.fetch(`
+						// item = await db.fetch(`
+						// 	SELECT ip.model_id, ip.item_num 
+						// 	FROM showcase_models m
+						// 	LEFT JOIN showcase_iprops ip on m.model_id = ip.model_id
+						// 	WHERE ip.prop_id = :keyprop_id 
+						// 		and ip.bond_id = :bond_id
+						// 		and m.brand_id = :brand_id
+						// `, {brand_id, keyprop_id: catalogprop.prop_id, bond_id})
+						items = await db.all(`
 							SELECT ip.model_id, ip.item_num 
 							FROM showcase_models m
 							LEFT JOIN showcase_iprops ip on m.model_id = ip.model_id
@@ -498,14 +526,29 @@ export class Upload {
 				} else if (catalogprop.type == 'model') {
 
 					if (!brand_id) {
-						item = await db.fetch(`
+						// item = await db.fetch(`
+						// 	SELECT m.model_id, i.item_num 
+						// 	FROM showcase_models m
+						// 	LEFT JOIN showcase_items i on i.model_id = m.model_id
+						// 	WHERE m.model_nick = :model_nick and i.item_num is not null
+						// `, {model_nick: key_nick})
+						items = await db.all(`
 							SELECT m.model_id, i.item_num 
 							FROM showcase_models m
 							LEFT JOIN showcase_items i on i.model_id = m.model_id
 							WHERE m.model_nick = :model_nick and i.item_num is not null
 						`, {model_nick: key_nick})
 					} else {
-						item = await db.fetch(`
+						// item = await db.fetch(`
+						// 	SELECT m.model_id, i.item_num 
+						// 	FROM showcase_models m
+						// 	LEFT JOIN showcase_items i on i.model_id = m.model_id
+						// 	WHERE 
+						// 		m.model_nick = :model_nick 
+						// 		and i.item_num is not null
+						// 		and m.brand_id = :brand_id
+						// `, {model_nick: key_nick, brand_id})
+						items = await db.all(`
 							SELECT m.model_id, i.item_num 
 							FROM showcase_models m
 							LEFT JOIN showcase_items i on i.model_id = m.model_id
@@ -518,14 +561,28 @@ export class Upload {
 					}
 				} else if (catalogprop.type == 'number') {
 					if (!brand_id) {
-						item = await db.fetch(`
+						// item = await db.fetch(`
+						// 	SELECT ip.model_id, ip.item_num 
+						// 	FROM showcase_iprops ip
+						// 	WHERE ip.prop_id = :keyprop_id 
+						// 		and ip.number = :number
+						// `, {keyprop_id: catalogprop.prop_id, number: key_nick})
+						items = await db.all(`
 							SELECT ip.model_id, ip.item_num 
 							FROM showcase_iprops ip
 							WHERE ip.prop_id = :keyprop_id 
 								and ip.number = :number
 						`, {keyprop_id: catalogprop.prop_id, number: key_nick})
 					} else {
-						item = await db.fetch(`
+						// item = await db.fetch(`
+						// 	SELECT ip.model_id, ip.item_num 
+						// 	FROM showcase_models m
+						// 	LEFT JOIN showcase_iprops ip on m.model_id = ip.model_id
+						// 	WHERE ip.prop_id = :keyprop_id 
+						// 		and ip.number = :number
+						// 		and m.brand_id = :brand_id
+						// `, {brand_id, keyprop_id: catalogprop.prop_id, number: key_nick})
+						items = await db.all(`
 							SELECT ip.model_id, ip.item_num 
 							FROM showcase_models m
 							LEFT JOIN showcase_iprops ip on m.model_id = ip.model_id
@@ -537,19 +594,28 @@ export class Upload {
 				} else {
 					console.log('wtf prop type')
 				}
-				if (!item) {
+				// if (!item) {
+				// 	omissions[sheet].notfinded.push(row)
+				// 	continue
+				// }
+				if (!items.length) {
 					omissions[sheet].notfinded.push(row)
 					continue
 				}
-				
-				mitems[item.model_id] ??= {}
-				if (mitems[item.model_id][item.item_num]) {
-					omissions[sheet].keyrepeated.push(row)
-					continue
-				}
-				mitems[item.model_id][item.item_num] = true
+				for (const item of items) {
+					mitems[item.model_id] ??= {}
+					if (mitems[item.model_id][item.item_num]) {
+						omissions[sheet].keyrepeated.push(row)
+						continue
+					}
+					mitems[item.model_id][item.item_num] = true
 
-				mvalues[item.model_id] ??= []
+					mvalues[item.model_id] ??= []
+				}
+				// if (items.length > 1) {
+				// 	console.log(items, row)
+				// }
+
 				let somepropsinsert = false
 
 				
@@ -580,7 +646,7 @@ export class Upload {
 				}
 				
 				
-
+				
 				for (const {prop_title, index, auto} of props) {
 					//Свойства которые нужно записать ищем их по синонимам
 
@@ -608,11 +674,11 @@ export class Upload {
 					} else {
 						value_titles = String(value_title).split(',').map(v => v.trim()).filter(v => v)
 					}
-
+					
+					
 					for (const value_title of value_titles) {
 
-						mvalues[item.model_id].push(value_title)
-						mvalues[item.model_id].push(prop.prop_nick)
+						
 						
 						const fillings = []
 						let value_id = null
@@ -666,23 +732,27 @@ export class Upload {
 							fillings.push({bond_id, value_id, text, number})
 						}
 						somepropsinsert = true
-						for (const fill of fillings) {
-							await db.exec(`
-								INSERT INTO 
-									showcase_iprops
-								SET
-									model_id = :model_id,
-									item_num = :item_num,
-									prop_id = :prop_id,
-									text = :text,
-									price_id = :price_id,
-									number = :number,
-									value_id = :value_id,
-									bond_id = :bond_id
-							`, { ...item, prop_id:prop.prop_id, ...fill, price_id:price.price_id })
+						for (const item of items) {
+							mvalues[item.model_id].push(value_title)
+							mvalues[item.model_id].push(prop.prop_nick)
+
+							for (const fill of fillings) {
+								await db.exec(`
+									INSERT IGNORE INTO 
+										showcase_iprops
+									SET
+										model_id = :model_id,
+										item_num = :item_num,
+										prop_id = :prop_id,
+										text = :text,
+										price_id = :price_id,
+										number = :number,
+										value_id = :value_id,
+										bond_id = :bond_id
+								`, { ...item, prop_id:prop.prop_id, ...fill, price_id:price.price_id })
+							}
 						}
 					}
-					
 				}
 				if (somepropsinsert) {
 					quantity++

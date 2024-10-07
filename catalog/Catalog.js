@@ -1020,7 +1020,6 @@ Catalog.getmdwhere = async (view, md, partner = '') => {
 				
 
 				const values = md.more[prop_nick]
-
 				if (values == 'empty') {
 					from[1] = `showcase_items i left join showcase_iprops ip${i} on (ip${i}.model_id = i.model_id and ip${i}.item_num = i.item_num and ip${i}.prop_id = ${prop.prop_id})`
 					where.push(`ip${i}.prop_id is null`)
