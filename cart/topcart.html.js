@@ -56,7 +56,7 @@ tpl.USER = (data, env) => `
 				}
 			}
 		</style>
-		<a href="/user" data-animate="opacity">
+		<a href="/user" data-animate="opacity" title="Личный кабинет">
 			<div class="header_table_acc">
 				<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
 					<path d="M10.9994 10.9998C13.7767 10.9998 16.0281 8.74839 16.0281 5.9711C16.0281 3.19382 13.7767 0.942383 10.9994 0.942383C8.22214 0.942383 5.9707 3.19382 5.9707 5.9711C5.9707 8.74839 8.22214 10.9998 10.9994 10.9998Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>

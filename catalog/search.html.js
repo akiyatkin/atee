@@ -79,7 +79,7 @@ tpl.pag = (data, env, scroll) => `
 		</style>
 		<div class="begin">${tpl.pagt[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'В начало', 1)}</div>
 		<div class="backward">${tpl.pagt[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'Назад', data.pagination.page - 1)}</div>
-		<div class="page" title="" style="${data.pagination.last == 1 ? 'opacity:0.3' : ''}">${data.pagination.page}</div>
+		<div class="page" title="" style="${data.pagination.last == 1 ? 'opacity:0.5' : ''}">${data.pagination.page}</div>
 		<script>
 			(async page => {
 				//Передаём с кликом количество нужных карточек
@@ -121,7 +121,7 @@ tpl.pagt.link = (data, env, scroll = '', title, page) => `
 	</script>
 `
 tpl.pagt.disabled = (data, env, scroll, title) => `
-	<span style="opacity: 0.3">${title}</span>
+	<span style="opacity: 0.5">${title}</span>
 `
 tpl.listcards = (data, env) => {
 	const list = data.list
@@ -163,7 +163,7 @@ tpl.listcards = (data, env) => {
 tpl.showgroups = (data, env) => `
 	<style>
 		${env.scope} .mute {
-			opacity: 0.3;
+			opacity: 0.5;
 		}
 		${env.scope} a.selected {
 			opacity: 1;

@@ -316,7 +316,8 @@ cards.imgs = (data, mod) => `
 `
 cards.img = (data, mod, src) => `
 	<img 
-		loading="lazy" 
+		loading="lazy"
+		alt="${mod.model_title}" 
 		style="max-width: 100%; margin: 0 auto; height:auto" 
 		${cards.imager(src, 330, 220)}
 	>	
