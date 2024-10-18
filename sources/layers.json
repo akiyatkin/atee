@@ -1,0 +1,68 @@
+{
+	"index":"index:ROOT",
+	"layout":{
+		"index:ROOT": {
+			"HEADER":"index:HEADER",
+			"MAIN":"index:MAIN",
+			"ASIDE":"index:ASIDE",
+			"FOOTER":"index:FOOTER"
+		},
+		"index:HEADER":{
+			
+		}
+	},
+	"animate":{
+
+	},
+	"childs":{
+		"settings":{
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"settings:ROOT"
+				}
+			}
+		},
+		"404":{
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"controller:ER404"
+				}
+			}
+		},
+		"403":{
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"controller:ER403"
+				}
+			}
+		},
+		"500":{
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"controller:ER500"
+				}
+			}
+		}
+	},
+	"frame":{
+		
+	},
+	"head":{
+		"title":"Источники данных"
+	},
+	"parsedtpl":{
+		"controller:ER404":"${bread.path}"
+	},
+	"json":{
+		"index:MAIN":"/-sources/get-state"
+	},
+	"jsontpl":{
+		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
+	},
+	"tpl":{
+		"frame":"/-controller/frame.html.js",
+		"controller":"/-controller/layout.html.js",
+		"index":"/-sources/index.html.js",
+		"settings":"/-sources/settings.html.js"
+	}
+}
