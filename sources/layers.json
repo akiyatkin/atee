@@ -2,13 +2,8 @@
 	"index":"index:ROOT",
 	"layout":{
 		"index:ROOT": {
-			"HEADER":"index:HEADER",
-			"MAIN":"index:MAIN",
-			"ASIDE":"index:ASIDE",
-			"FOOTER":"index:FOOTER"
-		},
-		"index:HEADER":{
-			
+			"MAIN":"main:ROOT",
+			"ASIDE":"aside:ROOT"
 		}
 	},
 	"animate":{
@@ -16,6 +11,7 @@
 	},
 	"childs":{
 		"settings":{
+			"head":{"title":"Настройки"},
 			"layout":{
 				"index:ROOT":{
 					"MAIN":"settings:ROOT"
@@ -54,7 +50,8 @@
 		"controller:ER404":"${bread.path}"
 	},
 	"json":{
-		"index:MAIN":"/-sources/get-state"
+		"main:ROOT":"/-sources/get-main",
+		"settings:ROOT":"/-sources/get-settings"
 	},
 	"jsontpl":{
 		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
@@ -62,7 +59,9 @@
 	"tpl":{
 		"frame":"/-controller/frame.html.js",
 		"controller":"/-controller/layout.html.js",
-		"index":"/-sources/index.html.js",
+		"index":"/-controller/index-board.html.js",
+		"aside":"/-sources/aside.html.js",
+		"main":"/-sources/main.html.js",
 		"settings":"/-sources/settings.html.js"
 	}
 }
