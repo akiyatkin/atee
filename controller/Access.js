@@ -72,7 +72,8 @@ export const Access = {
 
 			store.promise = new Promise(async resolve => {
 				const { mtime } = await fs.stat(src)
-				if (store.executed >= mtime) {
+				//if (store.executed >= mtime) {
+				if (store.executed >= new Date(mtime).getTime()) {
 					store.executed = Access.getAccessTime()
 				} else {
 					store.executed = Date.now()

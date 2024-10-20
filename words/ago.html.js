@@ -10,6 +10,7 @@ const ago = {}
 export default ago
 ago.show = (mtime) => {
 	mtime = mtime ? mtime * 1000 : 0
+	if (!mtime) return ''
 	let dif = Date.now() - mtime
 
 	dif = dif / 1000

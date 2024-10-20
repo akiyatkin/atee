@@ -12,4 +12,6 @@ rest.extra(rest_db)
 import rest_funcs from '/-rest/rest.funcs.js'
 rest.extra(rest_funcs)
 
+rest.addArgument('title', ['escape'])
+
 export default rest
