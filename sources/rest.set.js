@@ -21,7 +21,7 @@ rest.before(view => view.get('admin'))
 rest.addAction('set-main-check-all', async view => {
 	const db = await view.get('db')
 	const list = await Sources.getAll(db)
-	const proms = list.map(source => Sources.check(db, source))
+	const proms = list.map(source => Sources.check(db, source, view.visitor))
 	await Promise.all(proms)
 
 	return view.ret()

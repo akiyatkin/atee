@@ -5,13 +5,30 @@ const Sources = {}
 // INSERT IGNORE INTO `sources_entities` (`entity_id`, `prop_id`, `entity_title`, `entity_nick`) VALUES (1, 1, 'Сущность не выбрана', 'sushnost-ne-vybrana');
 // INSERT IGNORE INTO `sources_props` (`prop_id`, `entity_id`, `prop_title`, `prop_nick`, `type`) VALUES (1, 1, 'Идентификатор строки', 'identifikator-stroki', 'value');
 
-Sources.check = async (db, source) => {
 
-	const stat = await fs.stat(source.file).catch(r => false)
-	source.file_modified = stat ? Math.round(new Date(stat.mtime).getTime() / 1000) : false
-	
+const getRestFunc = async (file, fnname, visitor, res, req = {}) => {
+	const stat = await fs.stat(file).catch(r => false)
+	if (!stat) return 'Нет файла'
+	res.modified = new Date(stat.mtime).getTime()
+	const rest = await import('/' + file).then(r => r.default).catch(r => false)
+	if (!rest || !rest.get) return `Ошибка в коде ` + file
+	const reans = await rest.get(fnname, req, visitor).catch(r => false)
+	if (!reans || !reans.ans) return `Исключение в ${fnname}`
+	const ans = reans.ans
+	if (!ans.result) return `Ошибка в ${fnname}: ${ans.msg || ''}`
+	res.ans = ans
+	return ''
+}
+Sources.check = async (db, source, visitor) => {
+	const res = {}
+	source.error = await getRestFunc(source.file, 'get-mtime', visitor, res)
+	source.date_mtime = Math.round(Math.max(Number(res.ans?.mtime || 0) || 0, res.modified || 0) / 1000)
 
-	
+	await db.exec(`
+		UPDATE sources_sources
+		SET date_mtime = FROM_UNIXTIME(:date_mtime), error = :error, date_check = now()
+		WHERE source_id = :source_id
+	`, source)
 }
 Sources.getAll = async (db) => {
 	const list = await db.all(`

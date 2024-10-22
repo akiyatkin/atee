@@ -100,7 +100,7 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 			grid-template-rows: 1fr max-content;">
 			<div class="maingrid">
 				<div class="column hide">
-					<div style="margin-bottom:1em; display: flex; justify-content: space-between; align-items: center;">
+					<div style="margin-bottom:1em; display: flex; gap:2em; align-items: center;">
 						<a style="font-weight: bold; text-transform: uppercase;" href="${env.crumb}">${env.bread.root.split('/')[1]}</a> 
 						<button class="bars transparent" style="font-size:0">
 							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -129,7 +129,7 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 						})
 					})(document.currentScript.previousElementSibling)
 				</script>
-				<main id="MAIN" style="flex-grow: 1"></main>
+				<main id="MAIN" style="flex-grow: 1; background-color: white; padding:2em; border-radius: 5px"></main>
 			</div>
 			<footer>
 				<div style="
@@ -140,7 +140,7 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 					
 					display: flex; flex-wrap: wrap; gap:0.5rem">
 
-					<div style="flex-grow:1; display: flex; width:100%; justify-content: space-between; align-items: center;">
+					<div style="flex-grow:1; display: flex; width:100%; gap:2em; align-items: center;">
 						
 						<a href="/../../">${env.host}</a>
 						<a href="/@atee/controller">Вход</a>
