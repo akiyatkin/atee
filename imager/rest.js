@@ -102,7 +102,8 @@ rest.addResponse('webp', async view => {
 	const iscache = cache||conf.constraint?.alwayscache
 	
 	if (iscache) {
-		store = `cache/imager/${nicked([src,h,w,fit].join('-'))}.webp`	
+		const name = nicked([src,h,w,fit].join('-')).slice(-127)
+		store = `cache/imager/${name}.webp`
 		const is = await AccessCache.once('isFreshCache' + store, async () => {
 			const cstat = await fs.lstat(store).catch(e => null)
 			if (!cstat) return false

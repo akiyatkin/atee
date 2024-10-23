@@ -18,7 +18,7 @@ const showMain = (data, env) => `
 
 		${field.button({
 			label: 'Проверить все', 
-			action: '/-sources/set-main-check-all',
+			action: '/-sources/set-sources-check',
 			reloaddiv: env.layer.div
 		})}
 
@@ -40,28 +40,41 @@ const showMain = (data, env) => `
 			<td>Проверка</td>
 			<td>Изменения</td>
 			<td>Загружен</td>
+			<td>Актуальность</td>
 			<td>Контроль</td>
+			<td>Данные</td>
+			<td>Ошибка</td>
 		</tr>
-		${data.list.map(row => showSourceTr(data, env, row)).join('')}
+		${data.list.map(source => showSourceTr(data, env, source)).join('')}
 	</table>
 	
 `
-const showSourceTr = (data, env, row) => `
+const showSourceTr = (data, env, source) => `
 	<tr>
 		<td>
-			<a href="source/${row.source_id}">${row.source_title}</a>
+			<a href="source/${source.source_id}">${source.source_title}</a>
 		</td>
 		<td>
-			${ago.show(row.date_check)}
+			${ago.short(source.date_check)}
 		</td>
 		<td>
-			${row.date_content ? date.dmy(row.date_content) : 'Нет файла'}
+			${ago.short(source.date_mtime)}
 		</td>
 		<td>
-			${ago.show(row.date_load)}
+			${ago.short(source.date_load)}
 		</td>
 		<td>
-			${ago.show(row.date_exam)}
+			${date.dmy(source.date_content)}
+		</td>
+		
+		<td>
+			${ago.short(source.date_exam)}
+		</td>
+		<td>
+			${source.entities.join(', ')}
+		</td>
+		<td>
+			${source.error}
 		</td>
 	</tr>
 `

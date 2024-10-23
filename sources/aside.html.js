@@ -5,7 +5,7 @@ export const ROOT = (data, env) => `
 		</div>
 		<div></div>
 		<div>
-			<button title="Загрузить всё, где есть изменения">Обновить всё</button>
+			<button title="Загрузить всё, где есть изменения">Актуализировать всё</button>
 		</div>
 	</div>
 `

@@ -1,3 +1,5 @@
+//depricated так как нет подшаблонов
+
 export const words = (count, one, two, five) => {
 	if (!count) count = 0;
 	if (count > 20) {

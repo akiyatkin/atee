@@ -18,6 +18,17 @@
 				}
 			}
 		},
+		"source":{
+			"layout":{},
+			"child":{
+				"head":{"title":"Источник"},
+				"layout":{
+					"index:ROOT":{
+						"MAIN":"source:ROOT"
+					}
+				}
+			}
+		},
 		"404":{
 			"layout":{
 				"index:ROOT":{
@@ -50,10 +61,11 @@
 		"controller:ER404":"${bread.path}"
 	},
 	"json":{
-		"main:ROOT":"/-sources/get-main",
-		"settings:ROOT":"/-sources/get-settings"
+		"main:ROOT":"/-sources/main",
+		"settings:ROOT":"/-sources/settings"
 	},
 	"jsontpl":{
+		"source:ROOT":"/-sources/source?source_id=${env.crumb.name}",
 		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
 	},
 	"tpl":{
@@ -62,6 +74,7 @@
 		"index":"/-controller/index-board.html.js",
 		"aside":"/-sources/aside.html.js",
 		"main":"/-sources/main.html.js",
+		"source":"/-sources/source.html.js",
 		"settings":"/-sources/settings.html.js"
 	}
 }
