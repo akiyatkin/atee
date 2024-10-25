@@ -9,7 +9,7 @@ rest.addArgument('g-recaptcha-response')
 rest.addVariable('recaptcha', async (view) => {
 	view.nostore = true
 	const gresponse = await view.get('g-recaptcha-response')
-	const visitor = await view.get('visitor')
+	const visitor = view.visitor
 	const ip = visitor.client.ip
 	const conf = await config('recaptcha')
 	const result = await fetch('https://www.google.com/recaptcha/api/siteverify', { 
@@ -76,11 +76,11 @@ rest.addArgument('terms',['checkbox'], (view, terms) => {
 rest.addArgument('utms', (view, utms) => UTM.parse(utms))
 
 rest.addVariable('ip', async view => {
-	const { visitor } = await view.gets(['visitor'])
+	const visitor = view.visitor
 	return visitor.client.ip
 })
 rest.addVariable('host', async view => {
-	const { visitor } = await view.gets(['visitor'])
+	const visitor = view.visitor
 	return visitor.client.host
 })
 

@@ -1,4 +1,5 @@
 import unique from '/-nicked/unique.js'
+import Visitor from '/-controller/Visitor.js'
 class ViewException { 
 	status
 	ext
@@ -504,7 +505,8 @@ export class Rest {
 
 
 	async get (action, req = {}, visitor) {
-		if (visitor) req = {...req, visitor}
+		if (!visitor) visitor = new Visitor()
+		//if (visitor) req = {...req, visitor}
 		const rest = this
 		const orest = rest.findrest(action) //before и after только для addAction
 		const opt = orest ? orest.list[action] : false
@@ -533,7 +535,7 @@ export class Rest {
 
 			
 			//if (!opt?.response && !opt?.request) return view.err('rest.badrequest', 404)
-			if (!opt?.response) return view.err('rest.badrequest', 404)
+			if (!opt?.response && !visitor.client.server) return view.err('rest.badrequest', 404)
 
 			
 			

@@ -11,11 +11,22 @@ export default class Visitor {
 	
 	constructor (request) {
 		//this.request нельзя сохранять, чтобы отдельный view не решил что может что-то отправить и закрыть request
-		this.client = {
-			cookie: request.headers.cookie || '', 
-			referer: request.headers.referer || '',
-			host: request.headers.host, 
-			ip: request.headers['x-forwarded-for'] || request.socket.remoteAddress
+		if (!request) {
+			this.client = {
+				server: true,
+				cookie: '',
+				referer: '',
+				host: '',
+				ip: ''
+			}
+		} else {
+			this.client = {
+				server: false,
+				cookie: request.headers.cookie || '', 
+				referer: request.headers.referer || '',
+				host: request.headers.host, 
+				ip: request.headers['x-forwarded-for'] || request.socket.remoteAddress
+			}
 		}
 	 }
 }

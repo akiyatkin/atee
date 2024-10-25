@@ -11,7 +11,7 @@ import Doc from './Doc.js'
 //import Theme from '/-controller/Theme.js'
 import getPost from './getPost.js'
 import config from '/-config'
-import Visitor from './Visitor.js'
+import Visitor from '/-controller/Visitor.js'
 
 const conf = await config('controller')
 
@@ -106,6 +106,7 @@ const Server = {
 				}
 				const a = await meta.get('get-layers', req, visitor)
 				let json = a.ans
+				
 				let status = a.status
 				if (!json) return error_before(500, 'layers have bad definition')
 				const headers = a.headers

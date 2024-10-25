@@ -39,7 +39,8 @@ rest.addVariable('bread', async view => {
 	return bread
 })
 rest.addVariable('theme', async view => {
-	const { bread, visitor } = await view.gets(['bread', 'visitor'])
+	const { bread } = await view.gets(['bread'])
+	const visitor = view.visitor
 	const theme = Theme.harvest(bread.get, visitor.client.cookie)
 	return theme
 })

@@ -36,7 +36,7 @@ rest.addResponse('get-page', async (view) => {
 
 
 rest.addResponse('get-state', async view => {
-	const { visitor } = await view.gets(['visitor'])
+	const visitor = view.visitor
 	view.ans.admin = await Access.isAdmin(visitor.client.cookie)
 	view.ans.notion = !!await Notion.getConfig()
 	return view.ret()

@@ -8,7 +8,7 @@ import rest_funcs from "/-rest/rest.funcs.js"
 rest.extra(rest_funcs)
 
 
-
+rest.addArgument('search', ['string']) //Строка поиска
 rest.addArgument('hash', (view, hash) => {
 	hash = nicked(hash)
 	hash = unique(hash.split('-')).filter(r => r).sort()

@@ -5,4 +5,5 @@ export const unique = ar => {
     }
     return a
 }
+unique.bykey = (rows, key) => rows.filter((row, idx, arr) => idx === arr.findIndex((r) => r[key] === row[key]))
 export default unique

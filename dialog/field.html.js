@@ -295,11 +295,10 @@ field.radio = ({name, action = '', value = '', values}) => `
 	</div>
 `
 //approved
-field.switch = ({name, reloaddiv, go, goid, reload, action, value, values, args = {}}) => {
+field.switch = ({name = 'value', reloaddiv, go, goid, reload, action, value, values, args = {}}) => {
 	return `
 	<span>
-		<button class="a field" style="display: inline-block; cursor:pointer;">${values[value || ""]}</button>
-		<script>
+		<button class="a field" style="display: inline-block; cursor:pointer;">${values[value || ""]}</button><script>
 			(btn => {
 				btn.addEventListener('click', async (e) => {
 
@@ -323,8 +322,7 @@ field.switch = ({name, reloaddiv, go, goid, reload, action, value, values, args 
 
 				})
 			})(document.currentScript.previousElementSibling)
-		</script>
-	</span>`
+		</script></span>`
 }
 field.prompt = ({
 		edit = true,
@@ -384,11 +382,11 @@ field.prompt = ({
 
 
 
-field.search = ({edit = true, label = 'Поиск', link, descr, value, name = 'name', search, find = 'find', action, confirm, args = {}, go, reloaddiv, goid, reload}) => {
+field.search = ({cls = '', edit = true, label = 'Поиск', link, descr, value, name = 'name', search, find = 'find', action, confirm, args = {}, go, reloaddiv, goid, reload}) => {
 	if (!edit) return `${value||label}`
 	return `
 		<span>
-			<button class="field">${value||label}</button><script>
+			<button class="field ${cls}">${value||label}</button><script>
 				(btn => {
 					btn.addEventListener('click', async () => {
 						const Search = await import('/-dialog/search/Search.js').then(r => r.default)
@@ -465,11 +463,11 @@ field.button = ({label, name = '', cls = '', action, args = {}, go = '', reloadd
 	`
 }
 //approved
-field.area = ({name, label, action, value}) => {
+field.area = ({name, label, action, value, args = {}}) => {
 	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label success">
-			<div name="${name}" contenteditable id="${id}" class="field">${value}</div>
+			<div contenteditable id="${id}" class="field">${value}</div>
 			<label for="${id}">${label}</label>
 			${showStatus()}
 			<script>
@@ -477,7 +475,10 @@ field.area = ({name, label, action, value}) => {
 					const field = float.querySelector('.field')					
 					field.addEventListener('input', async () => {
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
-						const ans = await sendit(float, '${action}', {${name}: field.innerHTML})
+						let value = field.innerHTML
+						const args = ${JSON.stringify(args)}
+						args['${name}'] = value
+						const ans = await sendit(float, '${action}', args)
 						field.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 					})
 					const status = float.querySelector('.status')
@@ -715,11 +716,11 @@ field.date = ({name, action, label = '', value = '', onlyfuture = false}) => {
 	`
 }
 
-//approved
+//approved ${value ? 'success' : 'submit'}
 field.textok = ({name, label, action, value, args = {}, newvalue = '', go, clear = false, reloaddiv, goid, type = 'text'}) => {
 	const id = 'field-' + nicked(label)
 	return `
-		<div class="float-label ${value ? 'success' : 'submit'}">
+		<div class="float-label success">
 			<input name="${name}" type="${type}" id="${id}" value="${value || newvalue}" placeholder="${label}" class="field">
 			<label for="${id}">${label}</label>
 			${showStatus()}

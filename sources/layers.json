@@ -1,13 +1,56 @@
 {
 	"index":"index:ROOT",
+	
+	"animate":{
+		"source:SOURCE":"none",
+		"main:TABLE":"none",
+		"source:BOT":"none",
+		"source:TOP":"none",
+		"entity:ENTITY":"none"
+	},
+	"frame":{
+		
+	},
+	"head":{
+		"title":"Источники данных"
+	},
+	"parsedtpl":{
+		"controller:ER404":"${bread.path}"
+	},
+	"json":{
+		"main:ROOT":"/-sources/main",
+		"main:TABLE":"/-sources/main",
+		"entities:ROOT":"/-sources/entities",
+		"settings:ROOT":"/-sources/settings"
+	},
+	"jsontpl":{
+		"source:ROOT":"/-sources/source?source_id=${env.crumb.name}",
+		"source:SOURCE":"/-sources/source?source_id=${env.crumb.name}",
+		"source:TOP":"/-sources/source?source_id=${env.crumb.name}",
+		"source:BOT":"/-sources/source?source_id=${env.crumb.name}",
+		"entity:ROOT":"/-sources/entity?entity_id=${env.crumb.name}",
+		"entity:ENTITY":"/-sources/entity?entity_id=${env.crumb.name}",
+		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
+	},
+	"tpl":{
+		"frame":"/-controller/frame.html.js",
+		"controller":"/-controller/layout.html.js",
+		"index":"/-controller/index-board.html.js",
+		"aside":"/-sources/aside.html.js",
+		"main":"/-sources/main.html.js",
+		"source":"/-sources/source.html.js",
+		"entities":"/-sources/entities.html.js",
+		"entity":"/-sources/entity.html.js",
+		"settings":"/-sources/settings.html.js"
+	},
 	"layout":{
 		"index:ROOT": {
 			"MAIN":"main:ROOT",
 			"ASIDE":"aside:ROOT"
+		},
+		"main:ROOT": {
+			"TABLE": "main:TABLE"
 		}
-	},
-	"animate":{
-
 	},
 	"childs":{
 		"settings":{
@@ -18,6 +61,28 @@
 				}
 			}
 		},
+		"entities":{
+			"head":{"title":"Типы содержания"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"entities:ROOT"
+				}
+			}
+		},
+		"entity":{
+			"layout":{},
+			"child":{
+				"head":{"title":"Сущность"},
+				"layout":{
+					"index:ROOT":{
+						"MAIN":"entity:ROOT"
+					},
+					"entity:ROOT":{
+						"ENTITY":"entity:ENTITY"
+					}
+				}
+			}
+		},
 		"source":{
 			"layout":{},
 			"child":{
@@ -25,6 +90,13 @@
 				"layout":{
 					"index:ROOT":{
 						"MAIN":"source:ROOT"
+					},
+					"source:ROOT":{
+						"SOURCE":"source:SOURCE"
+					},
+					"source:SOURCE":{
+						"TOP":"source:TOP",
+						"BOT":"source:BOT"
 					}
 				}
 			}
@@ -50,31 +122,5 @@
 				}
 			}
 		}
-	},
-	"frame":{
-		
-	},
-	"head":{
-		"title":"Источники данных"
-	},
-	"parsedtpl":{
-		"controller:ER404":"${bread.path}"
-	},
-	"json":{
-		"main:ROOT":"/-sources/main",
-		"settings:ROOT":"/-sources/settings"
-	},
-	"jsontpl":{
-		"source:ROOT":"/-sources/source?source_id=${env.crumb.name}",
-		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
-	},
-	"tpl":{
-		"frame":"/-controller/frame.html.js",
-		"controller":"/-controller/layout.html.js",
-		"index":"/-controller/index-board.html.js",
-		"aside":"/-sources/aside.html.js",
-		"main":"/-sources/main.html.js",
-		"source":"/-sources/source.html.js",
-		"settings":"/-sources/settings.html.js"
 	}
 }

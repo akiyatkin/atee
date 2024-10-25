@@ -16,7 +16,8 @@ export default rest
 
 rest.addVariable('base', async (view) => {
 	const Base = await import('/-showcase/Base.js').then(r => r.default)
-	let { db, visitor } = await view.gets(['db','visitor'])
+	const visitor = view.visitor
+	let { db } = await view.gets(['db'])
 	return new Base({db, visitor}, true)
 })
 
@@ -30,7 +31,9 @@ rest.addVariable('options', async view => {
 })
 
 rest.addVariable('upload', async view => {	
-	const opt = await view.gets(['db','options', 'visitor', 'base'])
+
+	const opt = await view.gets(['db','options', 'base'])
+	opt.visitor = view.visitor
 	opt.config = await config('showcase')
 	return new Upload(opt)
 })

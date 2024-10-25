@@ -189,7 +189,7 @@
 }
 .float-label.process > .field {
 	border-color: var(--black);
-	border-style: dashed;
+/*	border-style: dashed;*/
 }
 .float-label.error > .field {
 	border-color: var(--danger)

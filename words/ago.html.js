@@ -56,6 +56,7 @@ ago.ago = (mtime, format) => {
 
 
 ago.pass = (dif) => {
+	if (!dif && dif != 0) return ''
 	if (!dif) dif = 0
 	dif = dif / 1000
 	if (dif < 60) return formatPass(dif, 'секунду','секунды','секунд')
@@ -73,7 +74,7 @@ ago.pass = (dif) => {
 	if (dif < 5) return formatPass(dif, 'неделю', 'недели','недель')
 
 	dif = dif / 4.345 //месяцев
-	if (dif < 12) return formatPassed(dif, 'месяц', 'месяца','месяцев')
+	if (dif < 12) return formatPass(dif, 'месяц', 'месяца','месяцев')
 
 	dif = dif / 12 //лет
 	return formatPass(dif, 'год','года','лет')

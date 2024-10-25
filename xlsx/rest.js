@@ -9,9 +9,10 @@ rest.addArgument('src', async (view, src) => {
 	return src
 })
 rest.addFunction('isset', (view, v) => v !== null)
-rest.addArgument('visitor')
+
 rest.addResponse('get-sheets', async view => {
-	const { src, visitor } = await view.gets(['src','visitor'])
+	const { src } = await view.gets(['src'])
+	const visitor = view.visitor
 	const data = await xlsx.read(visitor, src)
 	view.ans.data = data
 	return view.ret()

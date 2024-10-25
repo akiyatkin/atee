@@ -1,3 +1,4 @@
+//depricated перенесено в age.pass
 import words from "/-words/words.js"
 const format = (dif, a, b, c) => {
 	dif = Math.round(dif)

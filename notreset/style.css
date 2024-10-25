@@ -43,7 +43,7 @@ button.transparent,
 	padding:0; 
 	margin:0; 
 	background:transparent; 
-	border:none;
+	border: 0;
 	box-shadow: none;
 }
 button:disabled,
@@ -57,7 +57,7 @@ button.transparent::before,
 .button.transparent:hover,
 button.transparent:hover {
 	background: transparent;
-	border: none;
+	border: 0;
 	color: inherit;
 }
 .button.transparent:active,
@@ -93,7 +93,7 @@ td > p {
 	margin:0;
 	box-shadow: none;
 	cursor: pointer;
-	border:none;
+	border: 0;
 	border-bottom: dashed 1px currentColor;
 	border-radius: 0;
 }
@@ -118,7 +118,7 @@ a {
 }
 a:hover:has(:is(svg, img)),
 a:has(:is(svg, img)) {
-	border: none;
+	border: 0;
 	padding: 0;
 }
 

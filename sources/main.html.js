@@ -1,7 +1,9 @@
 import field from "/-dialog/field.html.js"
 import date from "/-words/date.html.js"
 import ago from "/-words/ago.html.js"
-export const ROOT = (data, env) => `
+import err from "/-controller/err.html.js"
+export const css = ['/-sources/status.css']
+export const ROOT = (data, env) => err(data, env) || `
 	<h1>Источники данных</h1>
 	${data.admin && data.isdb ? showMain(data, env) : showAuth(data, env)}
 	
@@ -13,15 +15,54 @@ const showAuth = (data, env) => `
 		<div>База данных: ${data.isdb?'Да':'Нет'}</div>
 	</div>
 `
+export const TABLE = (data, env) => `
+	
+	<table draggable="false" class="list">
+		<thead>
+			<tr>
+				<td>Источник</td>
+				<td>Статус</td>
+				<td>Проверен</td>
+				<td>Загружен</td>
+				<td>Актуальность</td>
+				<td>Ревизия</td>
+			</tr>
+		</thead>
+		<tbody draggable="false">
+			${data.list.map(source => showSourceTr(data, env, source)).join('')}
+		</tbody>
+	</table>
+	${data.list.some(source => source.date_start) ? showScriptReload(data, env) : showScriptDrag(data, env)}
+	
+`
+const showScriptDrag = (data, env) => `
+	<script>
+		(async table => {
+			const list = table.tBodies[0]
+			const Drag = await import('/-note/theory/Drag.js').then(r => r.default)
+			Drag.make(list, async ({id, next_id}) => {
+				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
+				const ans = await senditmsg(list, '/-sources/set-source-ordain', {id, next_id})
+			})
+		})(document.currentScript.previousElementSibling)
+	</script>
+`
 const showMain = (data, env) => `
-	<div style="margin: 1em 0; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1em">
-
+	
+	<div style="margin: 1em 0; display: flex; flex-wrap: wrap; gap: 1em; justify-content: space-between;">
 		${field.button({
 			label: 'Проверить все', 
 			action: '/-sources/set-sources-check',
-			reloaddiv: env.layer.div
+			reloaddiv: 'TABLE'
 		})}
-
+		${field.button({
+			label: 'Актуализировать все', 
+			action: '/-sources/set-sources-renovate',
+			reloaddiv: 'TABLE'
+		})}
+	</div>
+	<div id="TABLE"></div>
+	<div style="margin:2em 0; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
 		${field.prompt({
 			value: 'Добавить источник', 
 			name: 'title',
@@ -29,52 +70,41 @@ const showMain = (data, env) => `
 			label: 'Имя файла', 
 			descr: 'Укажите, соответсвующее источнику, имя файла в папке с обработками ' + data.dir + '. Расширение файла обязательно .js, можно не указывать.',
 			type: 'text', 
-			action: '/-sources/set-main-add-source', 
-			go: 'source?source_id=', 
+			action: '/-sources/set-source-add', 
+			go: 'source/',
 			goid: 'source_id'
 		})}
 	</div>
-	<table>
-		<tr>
-			<td>Имя</td>
-			<td>Проверка</td>
-			<td>Изменения</td>
-			<td>Загружен</td>
-			<td>Актуальность</td>
-			<td>Контроль</td>
-			<td>Данные</td>
-			<td>Ошибка</td>
-		</tr>
-		${data.list.map(source => showSourceTr(data, env, source)).join('')}
-	</table>
 	
 `
+const showScriptReload = (data, env) => `
+	<script>
+		setTimeout(async () => {
+			const Client = await window.getClient()
+			Client.reloaddiv('${env.layer.div}')
+		}, 1000)
+	</script>
+`
 const showSourceTr = (data, env, source) => `
-	<tr>
+	<tr data-id="${source.source_id}" style="white-space: nowrap;" class="item status_${source.class}">
 		<td>
 			<a href="source/${source.source_id}">${source.source_title}</a>
 		</td>
 		<td>
-			${ago.short(source.date_check)}
+			${source.status} <b>${ago.short(source.date_start)}</b>
 		</td>
 		<td>
-			${ago.short(source.date_mtime)}
+			${date.ai(source.date_check)}
 		</td>
 		<td>
-			${ago.short(source.date_load)}
+			${date.ai(source.date_load)}
 		</td>
 		<td>
-			${date.dmy(source.date_content)}
+			${date.ai(source.date_content)}
 		</td>
 		
 		<td>
-			${ago.short(source.date_exam)}
-		</td>
-		<td>
-			${source.entities.join(', ')}
-		</td>
-		<td>
-			${source.error}
+			${date.ai(source.date_exam)}
 		</td>
 	</tr>
 `

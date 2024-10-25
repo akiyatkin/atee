@@ -1,0 +1,12 @@
+.status_error {
+	background-color: #FF00000f
+}
+.status_ok {
+/*	background-color: #00FF000f*/
+}
+.status_load {
+	background-color: #FFee0033
+}
+.status_need {
+	background-color: #0000FF0f
+}

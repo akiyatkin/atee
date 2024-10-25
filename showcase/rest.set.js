@@ -473,7 +473,8 @@ rest.addResponse('set-prices-loadall', async view => {
 // })
 rest.addResponse('set-files-indexall', async view => {
 	await view.gets(['admin'])
-	const { visitor, db, config, upload } = await view.gets(['visitor', 'db', 'config', 'upload'])
+	const visitor = view.visitor
+	const { db, config, upload } = await view.gets(['db', 'config', 'upload'])
 
 	
 	const {doublepath, count} = await upload.indexAllFiles()		
@@ -484,7 +485,8 @@ rest.addResponse('set-files-indexall', async view => {
 })
 rest.addResponse('set-files-connectall', async view => {
 	await view.gets(['admin'])
-	const { visitor, db, config, upload } = await view.gets(['visitor', 'db', 'config', 'upload'])
+	const visitor = view.visitor
+	const { db, config, upload } = await view.gets(['db', 'config', 'upload'])
 
 	
 	const res = await upload.connectAllFiles()

@@ -22,7 +22,7 @@ rest.addResponse('get-admin', async view => {
 	return view.ret()
 })
 rest.addResponse('get-access', async view => {
-	const { visitor } = await view.gets(['visitor'])
+	const visitor = view.visitor
 	const cookie = visitor.client.cookie
 	view.ans['admin'] = await Access.isAdmin(cookie)
 	view.ans['update_time'] = Access.getUpdateTime()
@@ -75,8 +75,9 @@ rest.addResponse('get-layers', async view => {
 	view.nostore = true
 	view.headers = {}
 	const {
-		visitor, rt:reloadtss, rd:reloaddivs, pv: prev, nt: next, st: access_time, ut: update_time, vt: view_time, rg: globals 
-	} = await view.gets(['visitor', 'rt', 'rd', 'pv', 'nt', 'st', 'ut', 'rg', 'vt'])	
+		rt:reloadtss, rd:reloaddivs, pv: prev, nt: next, st: access_time, ut: update_time, vt: view_time, rg: globals 
+	} = await view.gets(['rt', 'rd', 'pv', 'nt', 'st', 'ut', 'rg', 'vt'])	
+	const visitor = view.visitor
 	const host = visitor.client.host
 	const cookie = visitor.client.cookie
 	const ptimings = { access_time, update_time, view_time }

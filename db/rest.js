@@ -9,7 +9,7 @@ import Access from "/-controller/Access.js"
 const rest = new Rest(rest_db, rest_admin)
 
 rest.addResponse('get-state', async view => {
-	const { visitor } = await view.gets(['visitor'])
+	const visitor = view.visitor
 	view.ans.admin = await Access.isAdmin(visitor.client.cookie)
 	const db = await new Db().connect()
 	view.ans.db = !!db
@@ -30,7 +30,7 @@ rest.addResponse('get-tables', async view => {
 	view.ans.list = rows
 	return view.ret()
 })
-rest.addArgument('visitor')
+//rest.addArgument('visitor')
 
 
 export default rest
