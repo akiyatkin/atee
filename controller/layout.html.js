@@ -4,22 +4,21 @@ export default controller
 controller.HEAD = (data, env) => 
 `<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<!-- <base href="${env.crumb == '/' ? '/' : env.crumb + '/'}"> -->
 		<script>//Делаем SPA переходы
 			const isSuitable = a => {
 				const search = a.getAttribute('href')
-				if (!search) return
+				if (!search && search != '') return
 				const it = search.indexOf('.')
 				const is = search.indexOf('/')
 				const iq = search.indexOf('?')
 				if (a.getAttribute('target')) return
 
-				if (!search) return 
 				if (search[1] == '-') return 
 				
 				if (it > is && !~iq) return
 
-				if (/^\\w+:/.test(search)) return
+				//if (/^\\w+:\/\//.test(search)) return
+				if (/^(\\w+:){0,1}\\/\\//.test(search)) return
 				return true
 			}
 			const click = event => { 
@@ -29,9 +28,22 @@ controller.HEAD = (data, env) =>
 				event.preventDefault()
 				getClient().then(Client => Client.click(a))
 			}
-			const search = decodeURI(location.pathname + location.search)
-			const popstate = event => {
-				getClient().then(Client => Client.popstate(event, search))
+
+			const mousedown = async event => { 
+				const a = event.target.closest('a')
+				if (!a || !isSuitable(a)) return
+				const Client = await getClient()
+				Client.mousedown(a)
+			}
+			const focus = async event => {
+				const a = document.activeElement.closest('a')
+				if (!a || !isSuitable(a)) return
+				const Client = await getClient()
+				Client.focus(a)
+			}
+			const popstate = async event => {
+				const Client = await getClient()
+				Client.popstate(event)
 			}
 			window.waitClient = promise => waitClient.stack.push(promise)
 			window.waitClient.stack = []
@@ -40,6 +52,10 @@ controller.HEAD = (data, env) =>
 				const promise = new Promise((resolve, reject) => {
 					window.removeEventListener('popstate', popstate)
 					window.removeEventListener('click', click)
+					
+					window.removeEventListener('mousedown', mousedown)
+					window.removeEventListener('focus', focus)
+					
 					const time = ${env.timings.access_time}
 					import("/-controller/Client.js").then(({ Client }) => {
 						Client.isSuitable = isSuitable
@@ -48,14 +64,15 @@ controller.HEAD = (data, env) =>
 							update_time: time,
 							access_time: time
 						}
-						Client.follow('${env.bread.root}', search)
+						Client.follow('${env.bread.root}')
 						resolve(Client)
 					}).catch(reject)
 				})
 				window.getClient = () => promise
 				return promise
 			}
-
+			window.addEventListener('focus', focus, true)
+			window.addEventListener('mousedown', mousedown)
 			window.addEventListener('click', click)
 			window.addEventListener('popstate', popstate)
 		</script>

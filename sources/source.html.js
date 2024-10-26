@@ -4,11 +4,11 @@ import ago from "/-words/ago.html.js"
 import err from "/-controller/err.html.js"
 export const css = ['/-sources/status.css']
 
-export const ROOT = (data, env, source = data.source) => err(data, env) || `
+export const ROOT = (data, env, source = data.source) => err(data, env,['SOURCE']) || `
 	<h1>${source.source_title}</h1>
 	<div id="SOURCE"></div>
 `
-export const SOURCE = (data, env, source = data.source) => `
+export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
 	<div id="TOP"></div>
 	${showButtons(data, env, source)}
 	${showComment(data, env, source)}
@@ -249,7 +249,7 @@ const showSettings = (data, env, source = data.source) => `
 			action: '/-sources/set-source-delete',
 			reloaddiv: env.layer.div,
 			args: {source_id: source.source_id},
-			go: 'sources'
+			go: '../sources'
 		})}
 	</div>
 `

@@ -63,7 +63,7 @@ rest.addAction('set-entity-switch-prop', ['admin'], async view => {
 
 rest.addAction('set-sources-check', ['admin'], async view => {
 	const db = await view.get('db')
-	const list = await Sources.getAll(db)
+	const list = await Sources.getSources(db)
 
 	const proms1 = list.filter(source => !source.dependent).map(source => Sources.check(db, source, view.visitor))
 	await Promise.all(proms1)
@@ -74,7 +74,7 @@ rest.addAction('set-sources-check', ['admin'], async view => {
 })
 rest.addAction('set-sources-renovate', ['admin'], async view => {
 	const db = await view.get('db')
-	const list = await Sources.getAll(db)
+	const list = await Sources.getSources(db)
 	const proms1 = list.filter(source => !source.dependent).map(source => Sources.renovate(db, source, view.visitor))
 	await Promise.all(proms1)
 	const proms2 = list.filter(source => source.dependent).map(source => Sources.renovate(db, source, view.visitor))
@@ -373,6 +373,22 @@ rest.addAction('set-entity-plural', ['admin'], async view => {
    		WHERE entity_id = :entity_id
 	`, {entity_id, entity_plural})
 
+	return view.ret()
+})
+rest.addAction('set-entity-add', ['admin'], async view => {
+	const db = await view.get('db')
+	const title = await view.get('title')
+	const entity_title = title.replace(/\.js$/, '')
+	const entity_nick = nicked(entity_title)
+	const entity_plural = entity_title
+
+	const entity_id = view.ans.entity_id = await db.insertId(`
+		INSERT INTO sources_entities (entity_title, entity_nick, entity_plural)
+   		VALUES (:entity_title, :entity_nick, :entity_plural)
+   		ON DUPLICATE KEY UPDATE entity_title = VALUES(entity_title), entity_nick = VALUES(entity_nick)
+	`, {entity_title, entity_nick, entity_plural})
+	
+	await Sources.reorderEntities(db)
 	return view.ret()
 })
 rest.addAction('set-source-add', ['admin'], async view => {

@@ -77,6 +77,7 @@ rest.addResponse('get-layers', async view => {
 	const {
 		rt:reloadtss, rd:reloaddivs, pv: prev, nt: next, st: access_time, ut: update_time, vt: view_time, rg: globals 
 	} = await view.gets(['rt', 'rd', 'pv', 'nt', 'st', 'ut', 'rg', 'vt'])	
+	console.log(next)
 	const visitor = view.visitor
 	const host = visitor.client.host
 	const cookie = visitor.client.cookie
@@ -143,7 +144,7 @@ rest.addResponse('get-layers', async view => {
 		
 		
 	
-	view.ans.checks = nopt.checks
+	//view.ans.checks = nopt.checks //wtf?
 	view.status = status
 	
 

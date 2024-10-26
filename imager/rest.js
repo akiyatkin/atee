@@ -2,6 +2,7 @@ import nicked from "/-nicked"
 import Rest from "/-rest"
 import http from "http"
 import https from "https"
+import dns from "node:dns/promises"
 import config from "/-config"
 import Access from '/-controller/Access.js'
 import fs from 'fs/promises'
@@ -100,8 +101,10 @@ rest.addResponse('webp', async view => {
 	
 	let store
 	const iscache = cache||conf.constraint?.alwayscache
+
 	
 	if (iscache) {
+
 		const name = nicked([src,h,w,fit].join('-')).slice(-127)
 		store = `cache/imager/${name}.webp`
 		const is = await AccessCache.once('isFreshCache' + store, async () => {
@@ -111,16 +114,27 @@ rest.addResponse('webp', async view => {
 			const ostat = await fs.stat(src).catch(e => null)
 			return cstat.mtime > ostat.mtime
 		})
-		if (is) return {ext, ans:createReadStream(store), headers}
+
+		if (is) return {ext, ans: await createReadStream(store), headers}
 	}
 
 	let inStream
 	if (remote) {
 		const provider = /^https:\/\//i.test(src) ? https : http
-		inStream = await new Promise((resolve, reject) => provider.get(src, resolve))
+		
+		// const is = await dns.resolve('ya.ru').catch(r => false)
+		// if (!is) return view.err('Нет соединения с интернетом')
+
+
+		inStream = await new Promise((resolve, reject) => {
+			const request = provider.get(src, resolve)
+			request.on('error', reject)
+		}).catch(r => false)
+
 	} else {
 		inStream = createReadStream(src)
 	}
+	if (!inStream) return view.err('Не удалось загрузить', 500)
 
 	const withoutEnlargement = (w && h && fit == 'contain') ? false : true
 	const transform = sharp().resize({ 

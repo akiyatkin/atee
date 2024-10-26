@@ -5,7 +5,7 @@ import { ReadStream } from 'fs'
 import { pipeline } from 'stream/promises'
 import { Duplex } from 'stream'
 import Access from '/-controller/Access.js'
-import meta from './rest.js'
+import rest from './rest.js'
 import Bread from './Bread.js'
 import Doc from './Doc.js'
 //import Theme from '/-controller/Theme.js'
@@ -39,14 +39,17 @@ const Server = {
 			// 	rest, query, restroot,
 			// 	cont, root
 			// } = route
+
 			const visitor = new Visitor(request)
 			//request.headers['x-forwarded-for']
+			
 			if (route.rest) {
 				const reans = {
 					ext: 'json', 
 					status: 200, 
 					nostore: false
 				}
+				
 				const post = await getPost(request)
 
 				const req = { ...route.get, ...post }
@@ -56,6 +59,7 @@ const Server = {
 				} catch (e) {
 					console.error(e)				
 				}
+
 				
 				if (!reans?.ans) return error_before(404, 'Empty answer')
 				//if (!reans?.ans) return error_before(500, 'Not a suitable answer')
@@ -104,7 +108,9 @@ const Server = {
 					pv: false,
 					nt: route.search
 				}
-				const a = await meta.get('get-layers', req, visitor)
+				
+				const a = await rest.get('get-layers', req, visitor)
+
 				let json = a.ans
 				
 				let status = a.status
@@ -131,10 +137,13 @@ const Server = {
 						status = e.status || 500
 						const root = bread.root ? '/' + bread.root + '/' : '/'
 						req.nt = root + status
-						const a = await meta.get('get-layers', req, visitor)
+						const a = await rest.get('get-layers', req, visitor) //visitor
 						json = a.ans
-						
-						info = await controller(json, visitor, bread)
+						try {
+							info = await controller(json, visitor, bread)
+						} catch(e) {
+							return error_before(e.status, '404 controller')
+						}
 					}
 					if (json.push?.length) response.setHeader('Link', json.push.join(','));
 				}

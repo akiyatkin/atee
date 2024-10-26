@@ -142,7 +142,7 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 
 					<div style="flex-grow:1; display: flex; width:100%; gap:2em; align-items: center;">
 						
-						<a href="/../../">${env.host}</a>
+						<a href="//${env.host}">${env.host}</a>
 						<a href="/@atee/controller">Вход</a>
 					</div>
 				</div>
