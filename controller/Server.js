@@ -137,7 +137,7 @@ const Server = {
 						status = e.status || 500
 						const root = bread.root ? '/' + bread.root + '/' : '/'
 						req.nt = root + status
-						const a = await rest.get('get-layers', req, visitor) //visitor
+						const a = await rest.get('get-layers', req) //visitor
 						json = a.ans
 						try {
 							info = await controller(json, visitor, bread)
