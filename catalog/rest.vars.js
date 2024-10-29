@@ -16,6 +16,7 @@ rest.addVariable('item', async (view) => {
 	const item = await Catalog.getItemByNick(db, base, brand_nick, model_nick, item_num)
 	return item
 })
+
 rest.addVariable('item#required', async (view) => {
 	const { item } = await view.gets(['item'])
 	if (!item) return view.err('Позиция не найдена')

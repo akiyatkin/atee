@@ -3,6 +3,11 @@ import Access from "/-controller/Access.js"
 import rest_funcs from '/-rest/rest.funcs.js'
 const rest = new Rest(rest_funcs)
 
+rest.addVariable('setaccess', async view => {
+	Access.setAccessTime()
+})
+
+
 rest.addVariable('isadmin', view => {
 	const isadmin = Access.isAdmin(view.visitor.client.cookie)
 	view.ans.admin = isadmin //depricated

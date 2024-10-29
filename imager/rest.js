@@ -84,12 +84,12 @@ rest.addResponse('get-size', async view => {
 	return view.ret()
 })
 rest.addResponse('webp', async view => {
-	const ext = 'webp'
+	const ext = view.ext = 'webp'
 	const { src, h, w, fit, cache } = await view.gets(['src','h','w','fit','cache'])
 
 	const file = (i => ~i ? src.slice(i + 1) : src)(src.lastIndexOf('/'))
 	const name = (i => ~i ? file.slice(0, i) : file)(file.lastIndexOf('.'))
-	const headers = {
+	const headers = view.headers = {
 		'Content-Disposition': `filename=${encodeURIComponent(name)}.webp`,
 	}
 	
@@ -114,8 +114,8 @@ rest.addResponse('webp', async view => {
 			const ostat = await fs.stat(src).catch(e => null)
 			return cstat.mtime > ostat.mtime
 		})
-
-		if (is) return {ext, ans: await createReadStream(store), headers}
+		
+		if (is) return createReadStream(store)
 	}
 
 	let inStream
@@ -151,8 +151,7 @@ rest.addResponse('webp', async view => {
 	})
 	const duplex = inStream.pipe(transform)
 	inStream.on('error', e => duplex.destroy(e))
-	if (!iscache) 
-		return {ext, ans:duplex, headers};
+	if (!iscache) return duplex
 
 	(() => {
 		const chunks = []
@@ -169,7 +168,7 @@ rest.addResponse('webp', async view => {
 			AccessCache.set('isFreshCache' + store, true)
 		})
 	})()
-	return {ext, ans:duplex, headers}
+	return duplex
 })
 
 export default rest

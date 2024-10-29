@@ -13,7 +13,7 @@ export const Excel = {
 			const rest = await import('/' + src).then(r => r.default)
 			if (rest.list['get-data']) {
 				const reans = await rest.get('get-data', {}, visitor)
-				return reans.ans || []
+				return reans.data || []
 			}
 		}
 		return []

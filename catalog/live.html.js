@@ -11,7 +11,7 @@ export const MENU = () => `
 export const TITLE = data => `
 	<i>${data.query}...</i>
 `
-export const TITLEBODY = data => data.ans.result ? `
+export const TITLEBODY = data => data.ans?.result ? `
 	${data.query?pquery(data):''}
 	<a href="/catalog${links.addm(data)}search=${data.query}">${countmodels(data.ans.count)}</a> 
 	в ${countgroups(data.ans.gcount)}

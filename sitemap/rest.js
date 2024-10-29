@@ -1,4 +1,4 @@
-import Rest from "/-rest"
+
 import Layers from '/-controller/Layers.js'
 import TPL from '/-sitemap/layout.html.js'
 import Access from '/-controller/Access.js'
@@ -6,13 +6,20 @@ import { loadJSON } from '/-controller/router.js'
 import Theme from '/-controller/Theme.js'
 import Bread from '/-controller/Bread.js'
 
+import Rest from "/-rest"
+const rest = new Rest()
+
 import rest_funcs from '/-rest/rest.funcs.js'
+rest.extra(rest_funcs)
 
 import rest_pages from "/-sitemap/rest.pages.js"
+rest.extra(rest_pages)
 import rest_seo from "/-sitemap/rest.seo.js"
+rest.extra(rest_seo)
 import rest_path from '/-controller/rest.path.js'
+rest.extra(rest_path)
 
-const rest = new Rest(rest_funcs, rest_seo, rest_pages, rest_path)
+
 
 
 
@@ -72,6 +79,7 @@ const interpolate = (val, env) => new Function('env', 'return `'+val+'`')(env)
 
 
 rest.addResponse('get-head', async view => {
+
 	const rule = await view.get('rule')
 	const bread = await view.get('bread')
 	const theme = await view.get('theme')
@@ -107,13 +115,22 @@ rest.addResponse('get-head', async view => {
 		head.json = interpolate(head.jsontpl, env)
 		delete head.jsontpl
 	}
+	
+	
 	if (head.json) {
+		//const reans = await loadJSON(head.json, view.visitor)
 		const reans = await loadJSON(head.json, view.visitor).catch(e => {
 			console.log(e)
-			return {ans:{result:0}}
+			return {data:{result:0}}
 		})
-		if (reans.nostore) view.nostore = true
-		head = {...head, ...reans.ans}
+		// if (!reans.result) {
+		// console.log('erorr load head.json', head.json)
+			
+		// } else {
+
+			if (reans.nostore) view.nostore = true
+			head = {...head, ...reans.data}
+		//}
 	}
 
 	if (!head.canonical) {

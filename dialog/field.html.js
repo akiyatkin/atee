@@ -156,16 +156,16 @@ field.image = ({name = 'file', action, width = 'auto', src, remove}) => {
 						//return new Promise(resolve => setTimeout(() => resolve({src:"/data/files/org_id/graph_id/audit_id/item_nick/02.png", file_id:777}), 1000))
 						const formData = new FormData()
 						formData.append('${name}', file)
-						const ans = await fetch("${action}", {
+						const data = await fetch("${action}", {
 							method: "POST",
 							body: formData
 						}).then(r => r.json())
-						if (ans.msg) {
+						if (data.msg) {
 							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-							Dialog.alert(ans.msg)
+							Dialog.alert(data.msg)
 						}
-						input.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
-						return ans
+						input.dispatchEvent(new CustomEvent("field-saved", { detail: data }))
+						return data
 					}
 					
 					const addEvents = square => {
@@ -174,16 +174,16 @@ field.image = ({name = 'file', action, width = 'auto', src, remove}) => {
 							e.stopPropagation()
 							if (!confirm('Удалить файл?')) return 
 							const send = await import('/-dialog/send.js').then(r => r.default)
-							const ans = await send('${remove}')
-							if (ans.msg) {
+							const data = await send('${remove}')
+							if (data.msg) {
 								const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-								Dialog.alert(ans.msg)
+								Dialog.alert(data.msg)
 							}
-							if (ans.result) {
+							if (data.result) {
 								square.remove()
 								label.classList.add('show')
 							}
-							input.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+							input.dispatchEvent(new CustomEvent("field-saved", { detail: data }))
 						})
 						square.addEventListener('click', e => {
 							if (!square.classList.contains('show')) return
@@ -420,7 +420,7 @@ field.search = ({cls = '', edit = true, label = 'Поиск', link, descr, value
 								args['${name}'] = row['${find}'] || ''
 								args['search'] = need.value
 								const ans = await senditmsg(btn, action, args)
-								if (ans.result && (ans['${name}'] || ans['${name}'] == 0)) btn.innerHTML = ans['${name}']
+								if (ans.result && (ans.value || (ans['${name}'] || ans['${name}'] == 0))) btn.innerHTML = ans.value || ans['${name}']
 								if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 								const Client = await window.getClient()
 								
@@ -451,7 +451,9 @@ field.button = ({label, name = '', cls = '', action, args = {}, go = '', reloadd
 
 						if (!ans.result) return 
 						btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+
 						const Client = await window.getClient()
+
 						if (${!!name} && (ans["${name}"] || ans["${name}"] == 0)) btn.innerHTML = ans["${name}"]
 						if (${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
 						if (${!!go}) Client.go("${go}" + ("${goid}" ? ans["${goid}"] : ''))

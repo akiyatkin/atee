@@ -29,6 +29,7 @@ rest.addResponse('get-livemodels', async (view) => {
 		view.ans.groups = []
 		view.ans.gcount = 0
 		view.ans.count = 0
+		view.status = 404
 		return view.ret()
 	}
 
@@ -106,5 +107,6 @@ rest.addResponse('get-livemodels', async (view) => {
 		list.push(model)
 	}
 	view.ans.list = list
+	if (!list.length) view.status = 404
 	return view.ret()
 })

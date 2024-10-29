@@ -184,7 +184,7 @@ const showSettings = (data, env, source = data.source) => `
 	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
 		<div>Сущности ${field.search({
 			cls: 'a',
-			search:'/-sources/get-entity-search',
+			search:'/-sources/get-source-entity-search',
 			value: source.entity_id ? showEntity(data, env, source) : 'не определено', 
 			label: 'Название сущности', 
 			type: 'text',

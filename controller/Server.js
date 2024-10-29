@@ -5,10 +5,9 @@ import { ReadStream } from 'fs'
 import { pipeline } from 'stream/promises'
 import { Duplex } from 'stream'
 import Access from '/-controller/Access.js'
-import rest from './rest.js'
+import rest from '/-controller/rest.js'
 import Bread from './Bread.js'
 import Doc from './Doc.js'
-//import Theme from '/-controller/Theme.js'
 import getPost from './getPost.js'
 import config from '/-config'
 import Visitor from '/-controller/Visitor.js'
@@ -29,7 +28,7 @@ const Server = {
 				return response.end()
 			}
 			if (!~['GET','POST'].indexOf(request.method)) {
-				return error_before(501, 'Method '+request.method+' not implemented')
+				return error_before(501, 'Method ' + request.method + ' not implemented')
 			}
 			const usersearch = request.url.replace(/\/+/,'/').replace(/\/$/,'')//Дубли и слешей не ломают путь, но это плохо...
 			const route = await router(usersearch || '/')
@@ -40,7 +39,12 @@ const Server = {
 			// 	cont, root
 			// } = route
 
-			const visitor = new Visitor(request)
+			const visitor = new Visitor({
+				cookie: request.headers.cookie || '', 
+				referer: request.headers.referer || '',
+				host: request.headers.host, 
+				ip: request.headers['x-forwarded-for'] || request.socket.remoteAddress
+			})
 			//request.headers['x-forwarded-for']
 			
 			if (route.rest) {
@@ -54,15 +58,15 @@ const Server = {
 
 				const req = { ...route.get, ...post }
 				try {
-					const r = typeof(route.rest) == 'function' ? route.rest(route.query, req, visitor) : route.rest.get(route.query, req, visitor)
+					const r = typeof(route.rest) == 'function' ? route.rest(route.query, req, visitor) : route.rest.req(route.query, req, visitor)
 					Object.assign(reans, await r)
 				} catch (e) {
 					console.error(e)				
 				}
 
 				
-				if (!reans?.ans) return error_before(404, 'Empty answer')
-				//if (!reans?.ans) return error_before(500, 'Not a suitable answer')
+				if (!reans?.data) return error_before(404, 'Empty answer')
+				//if (!reans?.data) return error_before(500, 'Not a suitable answer')
 
 				const headers = {}
 				if (conf.types[reans.ext]) {
@@ -74,23 +78,24 @@ const Server = {
 				headers['Cache-Control'] = reans.nostore ? 'no-store' : 'public, max-age=31536000'
 				Object.assign(headers, reans.headers)
 				
-				const ans = reans.ans
-				if (ans instanceof ReadStream) {
-					ans.on('open', is => {
+				const data = reans.data
+
+				if (data instanceof ReadStream) {
+					data.on('open', is => {
 						response.writeHead(reans.status, headers)
-						ans.pipe(response)
-					});
-					return ans.on('error', () => error_after(404, 'Not found'))
-				} else if (ans instanceof Duplex) {
+						data.pipe(response)
+					})
+					return data.on('error', () => error_after(404, 'Not found'))
+				} else if (data instanceof Duplex) {
 					response.writeHead(reans.status, headers)
-					ans.pipe(response)
-					return ans.on('error', () => error_after(404, 'Not found'))
+					data.pipe(response)
+					return data.on('error', () => error_after(404, 'Not found'))
 				} else {
 					response.writeHead(reans.status, headers)
-					if (reans.ext == 'json' || ( typeof(ans) != 'string' && typeof(ans) != 'number') ) {
-						return response.end(JSON.stringify(ans))
+					if (reans.ext == 'json' || ( typeof(data) != 'string' && typeof(data) != 'number') ) {
+						return response.end(JSON.stringify(data))
 					} else {
-						return response.end(ans)
+						return response.end(data)
 					}
 				}
 			}
@@ -111,7 +116,7 @@ const Server = {
 				
 				const a = await rest.get('get-layers', req, visitor)
 
-				let json = a.ans
+				let json = a.data
 				
 				let status = a.status
 				if (!json) return error_before(500, 'layers have bad definition')
@@ -129,20 +134,24 @@ const Server = {
 					if (!json.layers.length) return error_before(500, 'layers empty')
 					const bread = new Bread(route.path, route.get, route.search, json.root) //root+path+get = search
 					
+					
 					try {
+
 						info = await controller(json, visitor, bread) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
+
 						status = Math.max(info.status, status)
 					} catch (e) {
-						console.error(bread.path, e)
-						status = e.status || 500
-						const root = bread.root ? '/' + bread.root + '/' : '/'
-						req.nt = root + status
-						const a = await rest.get('get-layers', req) //visitor
-						json = a.ans
+						status = e.status
+						//const bread = new Bread('error/' + e.status, {}, '/error/' + e.status, json.root) //root+path+get = search
+						const root = json.root ? '/' + json.root + '/' : '/'
+						req.nt = root + 'error'
+						const a = await rest.get('get-layers', req, visitor) //, visitor
+						json = a.data
+						bread.error = status
 						try {
 							info = await controller(json, visitor, bread)
 						} catch(e) {
-							return error_before(e.status, '404 controller')
+							return error_before(500, 'erorr in error controller')
 						}
 					}
 					if (json.push?.length) response.setHeader('Link', json.push.join(','));
@@ -162,84 +171,84 @@ const Server = {
 	}
 }
 
+const getLastStack = (e) => {
+	if (!e.stack) return ''
+	try {
+		const msg = e.stack.split(' at ')[1].split('/').slice(-1).join('').slice(0,-5)
+		return msg.trim()
+	} catch (e) {
+		return ''
+	}
+}
 const errmsg = (layer, e, msg = '') => `
-	<pre>${msg ? msg + ' ' : ''}<code>${layer.ts}<br>${e.toString()}${console.log(msg, e) || ''}</code></pre>
+	${e.toString()}${console.log(msg, e) || ''}
+	<div>${msg ? msg + ' ' : ''}</div>
+	<div>${getLastStack(e)}</div>
+	<div><code>${layer.ts}</code></div>
 `
 
 const interpolate = (val, data, env) => new Function('data', 'env', 'return `'+val+'`')(data, env)
 
 
 const getHTML = async (layer, env, visitor) => {
-	
-	let nostore = false
-	let status = 200
-	let data = layer.data
-	let html = ''
-	let tplobj	
-	let json = layer.json
-
-	const load = async json => {
-		if (!json) return
-		const reans = await loadJSON(json, visitor).catch(res => {
-			console.log('getHTML loadJSON', res) //08.03 throw res. Стандартный ответ только 404
-			return res.reans
-		})
-		data = reans.ans || {}
-		nostore = nostore || reans.nostore
-		status = Math.max(reans.status, status)
+	const res = {
+		nostore: false, 
+		status: 200, 
+		html: ''
 	}
-	//Статика
+
+	let data = layer.data
+	if (layer.json) {
+		const reans = await loadJSON(layer.json, visitor)
+		data = reans.data
+		res.nostore = res.nostore || reans.nostore
+		res.status = Math.max(reans.status, res.status)
+	}
 	
+	
+	//Статика
 	if (layer.html || layer.htmltpl) {
-		await load(json)
+
 		if (layer.htmltpl) layer.html = interpolate(layer.htmltpl, data, env)
 
-		const reans = await loadTEXT(layer.html, visitor).catch(e => { 
-			status = 500
-			html = errmsg(layer, e) //Ошибка покажется вместо шаблона
-			nostore = true //08.03 throw {status, data: errmsg(layer, e), nostore: true, from: 'Server.getHTML'} 
-		})
-		if (reans) {
-			if (reans.status == 404) throw reans //Выкидываем на стандартную страницу 404, потому что это нельяз обработать в шаблоне
-			status = Math.max(reans.status, status)
-			html = typeof(reans.ans) == 'string' ? reans.ans : ''
-			nostore = nostore || reans.nostore
+
+		const reans = await loadTEXT(layer.html, visitor)
+		res.html = layer.html
+		res.status = Math.max(reans.status, res.status)
+		res.nostore = res.nostore || reans.nostore
+		res.html = reans.data
+		if (reans.status != 200) {
+			//reans.status = 404 //rest статики может ответить bad request 400. С точки зрения статики может быть 404 или 200
+			throw reans
 		}
-		return { status, nostore, html }
+			
+		return res
 	} 
 
 	//Динамика
 	if (layer.replacetpl || layer.tpl) {
 		if (layer.replacetpl) {
-			await load(json)
 			layer.tpl = interpolate(layer.replacetpl, data, env)
 		}
 		if (layer.tpl) {
-			tplobj = await import(layer.tpl).catch(e => {
+			let tplobj = await import(layer.tpl).catch(e => {
 				e.tpl = layer.tpl
-
-				html = errmsg(layer, e) //Ошибка покажется вместо шаблона
-				status = 500
-				nostore = true
-				//08.03 throw e
+				res.html = errmsg(layer, e) //Ошибка покажется вместо шаблона
+				res.status = 500
+				res.nostore = true
 			})
 			if (tplobj) {
 				if (tplobj.default) tplobj = tplobj.default
-				// const escort = tplobj.escort?.[layer.sub]
-				// if (escort) {
-				// 	json = escort.json || json
-				// }
-				await load(json)
 				try {
-					html = tplobj[layer.sub](data, env)
+					res.html = tplobj[layer.sub](data, env)
 				} catch(e) {
-					html = errmsg(layer, e) //Ошибка покажется вместо шаблона
-					status = 500
+					res.html = errmsg(layer, e) //Ошибка покажется вместо шаблона
+					res.status = 500
 				}
 			}
 		}
 	}
-	return { status, nostore, html }
+	return res
 }
 
 const runLayers = async (layers, fn, parent) => {
@@ -281,13 +290,13 @@ const controller = async ({ vt, st, ut, layers, theme }, visitor, bread) => {
 			ans.nostore = Math.max(ans.nostore, nostore)
 			ans.status = Math.max(ans.status, status)
 			doc.insert(html, layer.div, layer.layers?.length)
-		}
-		
+		}	
 	})
+	
 	try {
 		ans.html = doc.get()
 	} catch (e) {
-		ans.html = e.toString()
+		ans.html = 'doc ' + e.toString() + ' ' + doc.counter
 		ans.status = 500
 	}
 	return ans

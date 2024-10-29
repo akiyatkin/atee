@@ -1,4 +1,4 @@
-import controller from './rest.js'
+import controller from '/-controller/rest.js'
 import { file, files, filesw } from './files.js'
 import { whereisit } from './whereisit.js'
 import { ReadStream } from 'fs'
@@ -109,30 +109,40 @@ export const loadTEXT = (src, visitor) => {
 }
 const load = (src, visitor, ext) => { //ext формат требуемых данных
 	const store = visitor.relate(load)
-	const name = src+':'+ext
+	const name = src + ':' + ext
 	return store.once(name, async () => {
-		let reans = { ans: '', status: 200, nostore: false } //, headers: { }, ext: ext
-		
-		// const {
-		// 	search, secure, get,
-		// 	rest, query, restroot
-		// } = await router(src)
-		//404, 422, 200, 500, 501 method not emplimented, 403 
-
-		const route = await router(src, true) //debug
-		
-		if (!route.rest) throw { status: 500, src, ext }
-		const r = typeof(route.rest) == 'function' ? route.rest(route.query, route.get, visitor) : route.rest.get(route.query, route.get, visitor)
-		reans = {...reans, ...(await r)}
-		//if (reans.status != 200 && reans.status != 422 && reans.status != 403) throw { status: reans.status, src, reans, ext, from:'router.load', toString: () => route.query + ' ' + reans.status}
-		if (reans.status >= 500) throw { status: reans.status, src, reans, ext, from:'router.load', toString: () => route.query + ' ' + reans.status}
-
-		let ans = reans.ans
-		if (ans instanceof ReadStream) {
-			ans = await readTextStream(ans)
-			if (ext == 'json') ans = JSON.parse(ans)
+		const route = await router(src)
+		if (!route.rest) {
+			console.log('router no rest')
+			throw { status: 404 } //Исключение потому что это не статус не из обработчика, а само отстуствие обработчика
 		}
-		return {...reans, ans}
+
+		const r = typeof(route.rest) == 'function' ? route.rest(route.query, route.get, visitor) : route.rest.req(route.query, route.get, visitor)
+		const reans = await r
+
+		if (!reans.status) reans.status = 200
+		if (!reans.ext) reans.ext = ext
+		if (reans.data instanceof ReadStream) {
+			const text = await readTextStream(reans.data).catch(e => {
+				console.log('router load', e)
+				throw { status: 404 }
+			})
+			if (ext == 'json') {
+				try {
+					reans.data = JSON.parse(text)
+					return reans
+				} catch (e) {
+					console.log('router json parse', e)
+					throw { status: 500 }
+				}
+			} else {
+				reans.data = text
+				return reans
+			}
+			
+		} else {
+			return reans
+		}
 	})
 }
 
@@ -184,7 +194,7 @@ const userpathparse = (search) => {
 	const secure = !!~path.indexOf('/.') || path[0] == '.'
 	return {secure, path, get}
 }
-export const router = async (search, debug) => {
+export const router = async (search) => {
 	//У search всегда есть ведущий /слэш
 	//if (search.indexOf('/-') === 0) search = search.slice(1)
 	let { secure, path, get} = userpathparse(search)
@@ -207,8 +217,8 @@ export const router = async (search, debug) => {
 
 		if (ext == 'json') { //json файлы возвращаются объектом, //с хранением в оперативной памяти
 			rest = async () => {
-				const ans = await import(search, {assert: { type: "json" }}).then(r => r.default)
-				return { ans, ext }
+				const data = await import(search, {assert: { type: "json" }}).then(r => r.default)
+				return { data, ext }
 			}
 		} else { //файлы передаются стримом
 			if (search == '/-controller/sw.js') rest = filesw(src, ext)

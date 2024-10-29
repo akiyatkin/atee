@@ -30,6 +30,11 @@
 		"source:BOT":"/-sources/source?source_id=${env.crumb.name}",
 		"entity:ROOT":"/-sources/entity?entity_id=${env.crumb.name}",
 		"entity:ENTITY":"/-sources/entity?entity_id=${env.crumb.name}",
+		
+		"prop:ROOT":"/-sources/prop?prop_id=${env.crumb.name}",
+		"prop:PROP":"/-sources/prop?prop_id=${env.crumb.name}",
+		"props:ROOT":"/-sources/props?entity_id=${env.crumb.name}",
+
 		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
 	},
 	"tpl":{
@@ -39,6 +44,8 @@
 		"aside":"/-sources/aside.html.js",
 		"main":"/-sources/main.html.js",
 		"source":"/-sources/source.html.js",
+		"props":"/-sources/props.html.js",
+		"prop":"/-sources/prop.html.js",
 		"entities":"/-sources/entities.html.js",
 		"entity":"/-sources/entity.html.js",
 		"settings":"/-sources/settings.html.js"
@@ -66,6 +73,31 @@
 			"layout":{
 				"index:ROOT":{
 					"MAIN":"entities:ROOT"
+				}
+			}
+		},
+		"props":{
+			"layout":{},
+			"child":{
+				"head":{"title":"Свойства сущности"},
+				"layout":{
+					"index:ROOT":{
+						"MAIN":"props:ROOT"
+					}
+				}
+			}
+		},
+		"prop":{
+			"layout":{},
+			"child":{
+				"head":{"title":"Свойство"},
+				"layout":{
+					"index:ROOT":{
+						"MAIN":"prop:ROOT"
+					},
+					"prop:ROOT":{
+						"PROP":"prop:PROP"
+					}
 				}
 			}
 		},

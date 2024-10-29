@@ -20,7 +20,7 @@ rest.extra(rest_db)
 
 export default rest
 
-const db = await rest.get('db')
+const db = await rest.data('db')
 //База данных могла не перезапуститься и процесс реально ещё остался
 await db.exec(`UPDATE sources_sources SET date_start = null`)
 
@@ -30,19 +30,19 @@ await db.exec(`UPDATE sources_sources SET date_start = null`)
 rest.addResponse('settings', ['admin'], async view => {
 
 	const conf = await config('sources')
-	view.ans.dir = conf.dir
+	view.data.dir = conf.dir
 
 	return view.ret()
 })
 
 rest.addResponse('main', async view => {
 	const isdb = await view.get('isdb')
-	view.ans.admin = await Access.isAdmin(view.visitor.client.cookie)
-	view.ans.isdb = !!isdb
-	if (!view.ans.admin || !view.ans.isdb) return view.err()
+	view.data.admin = await Access.isAdmin(view.visitor.client.cookie)
+	view.data.isdb = !!isdb
+	if (!view.data.admin || !view.data.isdb) return view.err()
 
 	const db = await view.get('db')
-	const list = view.ans.list = await Sources.getSources(db)
+	const list = view.data.list = await Sources.getSources(db)
 	
 	// for (const source of list) {
 	// 	source.entities = await db.colAll(`
@@ -54,26 +54,37 @@ rest.addResponse('main', async view => {
 	// }
 
 	const conf = await config('sources')
-	view.ans.dir = conf.dir
+	view.data.dir = conf.dir
 	return view.ret()
 })
-
+rest.addResponse('props', ['admin'], async view => {
+	const db = await view.get('db')
+	const entity_id = view.data.entity_id = await view.get('entity_id#required')
+	const list = view.data.list = await Sources.getProps(db, entity_id)
+	return view.ret()
+})
+rest.addResponse('prop', ['admin'], async view => {
+	const db = await view.get('db')
+	const prop_id = await view.get('prop_id#required')
+	const prop = view.data.prop = await Sources.getProp(db, prop_id)
+	return view.ret()
+})
 rest.addResponse('entity', ['admin'], async view => {
 	const db = await view.get('db')
-	const entity_id = await view.get('entity_id')
-	const entity = view.ans.entity = await Sources.getEntity(db, entity_id)
+	const entity_id = view.data.entity_id = await view.get('entity_id')
+	const entity = view.data.entity = await Sources.getEntity(db, entity_id)
 	return view.ret()
 })
 rest.addResponse('entities', ['admin'], async view => {
 	const db = await view.get('db')
-	const list = view.ans.list = await Sources.getEntities(db)
+	const list = view.data.list = await Sources.getEntities(db)
 	return view.ret()
 })
 rest.addResponse('source', ['admin'], async view => {
 	
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
-	const source = view.ans.source = await Sources.getSource(db, source_id)
+	const source = view.data.source = await Sources.getSource(db, source_id)
 
 	return view.ret()
 })

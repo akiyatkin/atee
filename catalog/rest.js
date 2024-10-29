@@ -241,10 +241,14 @@ rest.addResponse('get-search-page', async (view) => {
 	const src = await getSearchPageSrc(db, options, md, value)
 	
 	const reans = await rest_docx.get('get-html', { src }, view.visitor)
+
 	if (reans.status == 404) {
-		reans.ans = `<script>console.log('Статья поиска ${src}')</script>`
-	}	
-	return {...reans, status: 200}
+		reans.data = `<script>console.log('Статья поиска ${src}')</script>`
+	}
+	view.data = reans.data
+	view.ext = reans.ext
+	view.nostore = false
+	return reans.data
 })
 rest.addResponse('get-search-groups', async (view) => {
 	
@@ -415,6 +419,7 @@ rest.addResponse('get-search-list', async (view) => {
 	// 		return view.ret('Позиций не найдено', 404)
 	// 	}
 	// }
+	if (!list.length) view.status = 404
 	return view.ret()
 })
 rest.addResponse('get-search-head', async (view) => {
@@ -452,11 +457,11 @@ rest.addResponse('get-search-head', async (view) => {
 	const src = await getSearchPageSrc(db, options, md, value)
 	
 	const reans = await rest_docx.get('get-head', { src }, view.visitor)
-	if (reans.ans.description) {
-		view.ans.description = reans.ans.description
+	if (reans.data.description) {
+		view.data.description = reans.data.description
 	}
-	if (reans.ans.image_src) {
-		view.ans.image_src = reans.ans.image_src
+	if (reans.data.image_src) {
+		view.data.image_src = reans.data.image_src
 	}
 	
 

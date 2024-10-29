@@ -8,20 +8,20 @@ export const files = (pub) => {
     return (query, get) => {
         const ext = getExt(query)
         if (!ext) return false
-        const ans = createReadStream(join(pub, query))
-        return { ans, ext }
+        const data = createReadStream(join(pub, query))
+        return { data, ext }
     }
 }
 export const file = (src, ext) => {
     return (query, get) => {
-        const ans = createReadStream(src)
-        return { ans, ext }
+        const data = createReadStream(src)
+        return { data, ext }
     }
 }
 export const filesw = (src, ext) => {
     return (query, get) => {
-        const ans = createReadStream(src)
+        const data = createReadStream(src)
         const headers = { 'Service-Worker-Allowed': '/' }
-        return { ans, ext, headers }
+        return { data, ext, headers }
     }
 }

@@ -8,25 +8,12 @@ export default class Visitor {
 		this.#map.set(obj, res)
 		return res
 	}
-	
-	constructor (request) {
-		//this.request нельзя сохранять, чтобы отдельный view не решил что может что-то отправить и закрыть request
-		if (!request) {
-			this.client = {
-				server: true,
-				cookie: '',
-				referer: '',
-				host: '',
-				ip: ''
-			}
-		} else {
-			this.client = {
-				server: false,
-				cookie: request.headers.cookie || '', 
-				referer: request.headers.referer || '',
-				host: request.headers.host, 
-				ip: request.headers['x-forwarded-for'] || request.socket.remoteAddress
-			}
-		}
+	constructor (client) {
+		this.client = Object.assign({
+			cookie: '',
+			referer: '',
+			host: '',
+			ip: ''
+		}, client)
 	 }
 }

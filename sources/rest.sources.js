@@ -42,6 +42,14 @@ rest.addArgument('source_id', ['sint'], async (view, source_id) => {
 	if (!source_id) return view.err('Источник не найден', 404)
 	return source_id
 })
+
+rest.addArgument('prop_id', ['sint'], async (view, prop_id) => {
+	if (!prop_id) return null
+	const db = await view.get('db')
+	prop_id = await db.col('select prop_id from sources_props where prop_id=:prop_id', {prop_id})
+	if (!prop_id) return view.err('Свойство не найдено', 404)
+	return prop_id
+})
 rest.addArgument('entity_id', ['sint'], async (view, entity_id) => {
 	if (!entity_id) return null
 	const db = await view.get('db')
@@ -51,5 +59,8 @@ rest.addArgument('entity_id', ['sint'], async (view, entity_id) => {
 })
 rest.addVariable('source_id#required', ['source_id', 'required'])
 rest.addVariable('entity_id#required', ['entity_id', 'required'])
+rest.addVariable('prop_id#required', ['prop_id', 'required'])
+
+
 
 export default rest

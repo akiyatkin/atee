@@ -5,7 +5,7 @@ class ViewException {
 	ext
 	nostore
 	msg
-	ans
+	data
 	constructor (msg, view) {
 		this.msg = msg
 		this.view = view
@@ -109,11 +109,17 @@ class RecView {
 	get ext() {
 		return this.view.ext
 	}
+	set data(value) {
+		this.view.data = value
+	}
+	get data() {
+		return this.view.data
+	}
 	set ans(value) {
-		this.view.ans = value
+		this.view.data = value
 	}
 	get ans() {
-		return this.view.ans
+		return this.view.data
 	}
 }
 export class View {
@@ -123,6 +129,18 @@ export class View {
 	headers = {}
 	proc = {}
 	store = {}
+	static counter = 0
+	constructor (rest, opt, req = {}, visitor) {
+		const view = this
+		view.counter = ++View.counter
+		view.visitor = visitor
+		view.action = opt.name //action
+		view.req = {...req} //structuredClone
+		view.rest = rest
+		view.data = {}
+		view.ans = view.data
+		view.opt = opt
+	}
 	set db(value) {
 		this.visitor.db = value
 	}
@@ -157,15 +175,7 @@ export class View {
 	// 	store.ready = true
 	// 	return store.promise
 	// }
-	constructor (rest, action, req = {}, opt, visitor) {
-		const view = this
-		view.visitor = visitor
-		view.action = action
-		view.req = req
-		view.rest = rest
-		view.ans = {}
-		view.opt = opt
-	}
+	
 	async reset(pname) {
 		const view = this
 		const proc = view.proc[pname]
@@ -175,54 +185,56 @@ export class View {
 			this.reset(pname)
 		}
 	}
-	async getProc (opt, parentvalue) {
-		const mainview = this
+	async getOrCreateProc (opt, parentvalue) {
+		const view = this
+
 		//function кэш с учётом parentvalue.toString(), variable кэш только по name
 		const key = opt.once !== 'parentvalue' ? opt.name : opt.name + ':' + parentvalue
 
-		
-		const proc = mainview.proc[key]
-		if (proc) return proc
+		if (view.proc[key]) return view.proc[key]
 
-		
-
-		
-		if (opt['once'] === true && mainview.opt != opt) { //Для главного action запроса раз пришёл ещё один запрос значит есть отличие в реквестах и объединения не должно быть
+		let proc
+		if (opt['once'] === true) {  // && view.opt != opt если по rest различать кэши
 			//proc может быть общим или у каждого view свой. Для всех rest в extras view один.
 			//proc общий если у него нет в childs обработки отличающегося request в массиве view.req
-			const views = mainview.rest.getViews(mainview)
-			for (const view of views) {
-				const otherproc = view.proc[key]
+			const views = view.rest.getViews(view.visitor)
+			
+			for (const nview of views) {
+				const otherproc = nview.proc[key]
 				if (!otherproc) continue
 				await otherproc.init
 				if (otherproc.process) { //Другой proc сейчас выполняется и всех детей ещё не собрал, надо его дождаться
 					await otherproc.promise.catch(r => false)
 				}
 				let r
-				r = mainview.rest.runChilds(otherproc, proc => {
+				r = view.rest.runProcChilds(otherproc, proc => {
 					const popt = proc.opt
-					if (popt.request && view.req[popt.name] != mainview.req[popt.name]) return true
+					if (popt.request && nview.req[popt.name] != view.req[popt.name]) return true
 				})
 				if (r) continue; //Нельзя объединять так как в зависимостях есть разные request	
 
-				return otherproc
+				proc = otherproc
+				break
 			}
 		}
-		mainview.proc[key] = {
-			'counter': ++mainview.rest.counter,
-			'opt': opt,
-			'parents': {},
-			'childs': {},
-			'promise': false,
-			'ready': false,
-			'result': false,
-			'process': false
+		if (!proc) {
+			view.proc[key] = {
+				'counter': ++view.rest.counter,
+				'opt': opt,
+				'parents': {},
+				'childs': {},
+				'promise': false,
+				'ready': false,
+				'result': false,
+				'process': false
+			}
+			let resolve
+			view.proc[key].init = new Promise(r => resolve = r)
+			view.proc[key].init.resolve = resolve
+			proc = view.proc[key]
 		}
-		let resolve
-		mainview.proc[key].init = new Promise(r => resolve = r)
-		mainview.proc[key].init.resolve = resolve
 		
-		return mainview.proc[key]
+		return proc
 	}	
 	async #exec (proc, parentvalue = null, parentname = null) {
 		const opt = proc.opt
@@ -271,19 +283,23 @@ export class View {
 	// 		const data = await view.get(pname)
 	// 		return data
 	// 	} catch (e) {
-	// 		if (e instanceof ViewException) return e.ans
+	// 		if (e instanceof ViewException) return e.data
 	// 		throw e
 	// 	}
 	// }
 	async get (pname, pproc, parentvalue = null, parentname = null) {
 		const view = this
 
+		const views = view.rest.getViews(view.visitor)
+
+
 		const rest = view.rest
 		const opt = rest.findopt(pname)//, pproc)
-				
+
+
 		if (!opt) return view.err(`rest.notfound ${pname}`, 500)
 		
-		const proc = await view.getProc(opt, parentvalue)
+		const proc = await view.getOrCreateProc(opt, parentvalue)
 
 		if (pproc) {
 			proc.parents[pproc.opt.name] = pproc //Тест рекурсии
@@ -297,6 +313,7 @@ export class View {
 		}
 		//if (opt['nostore'] && !view.opt['nostore']) return view.err(`rest.action required ${pname}`, 500)
 		//
+
 		if (opt['once'] === true && proc['promise']) return proc['promise']
 		
 		proc['process'] = true
@@ -343,8 +360,8 @@ export class View {
 	}
 	#ready (msg, status, result, nostore) {
 		const view = this
-		view.ans.result = result
-		if (msg) view.ans.msg = msg
+		view.data.result = result
+		if (msg) view.data.msg = msg
 		if (status != null) view.status = status
 		if (nostore != null) view.nostore = nostore
 		else if (view.status == 403) view.nostore = true
@@ -394,7 +411,7 @@ export class Rest {
 			this.extras.push(rest)
 		}
 	}
-	extra(rest) {
+	extra (rest) {
 		if (this.findextra(rest)) return
 		this.extras.push(rest)
 	}
@@ -415,12 +432,12 @@ export class Rest {
 	}
 
 	
-	runChilds (proc, fn) { //включая себя
+	runProcChilds (proc, fn) { //включая себя
 		const r = fn(proc)
 		if (r != null) return r
 		for (const pname in proc.childs) {
 			const p = proc.childs[pname]
-			const r = this.runChilds(p, fn)
+			const r = this.runProcChilds(p, fn)
 			if (r != null) return r
 		}
 	}
@@ -484,8 +501,7 @@ export class Rest {
 	// 	}
 	// }
 	
-	getViews(view) {
-		const visitor = view.visitor
+	getViews (visitor) {
 		const views = []
 		this.runRests(rest => {
 			const list = rest.getRestStore(visitor).views
@@ -493,104 +509,81 @@ export class Rest {
 		})
 		return unique(views)
 	}
-	addViews(view) {
+	addView (view) {
 		const visitor = view.visitor
-		const views = []
-		this.runRests(rest => {
-			const list = rest.getRestStore(visitor).views
-			list.push(view)
-		})
+		// this.runRests(rest => {
+		// 	const list = rest.getRestStore(visitor).views
+		// 	list.push(view)
+		// })
+		const list = this.getRestStore(visitor).views
+		list.push(view)
 	}
-
-
-
-	async get (action, req = {}, visitor) {
-		if (!visitor) visitor = new Visitor()
-		//if (visitor) req = {...req, visitor}
-		const rest = this
-		const orest = rest.findrest(action) //before и after только для addAction
-		const opt = orest ? orest.list[action] : false
-		const view = new View(rest, action, req, opt, visitor) //Создаётся у родительского реста
-		let oview = view
-		const views = rest.addViews(view)
-		
-		let reans
-
-		try {
-
-			/*
-				Некоторые create-update обработки могут быть только в самостоятельном set запросе. 
-				Нельзя чтобы считывание было до создание, и гарантировать, что такого запроса в мульти режиме контроллера нельзя
-				даже при правильной последовательности запросов при асинхронном выполнении
-				Таким образом других работ с этим rest в этом visitor не может быть, если выполняется create или любой set
-				Также создание пользователя возможно только в set запросах, тоесть в самостоятельных запросах, хотя set может быть и в контроллере, 
-				но это будет скрытый set в get или когда других работ с этим рестом нет, например - но это трудно представимо
-				ИТОГО Любой set должен блокировать параллельную работу и быть cproc если пользователь жмёт всё подряд
-				Обработка должна сообщить что она только для set режима, просто проверив свой action.
-			*/
-			
-			// visit.counter++
-			// if (/^set\-/.test(action)) visit.sync = true
-			// if (visit.sync && visit.counter > 1) return view.err('rest.badrequest', 500)
-
-			
-			//if (!opt?.response && !opt?.request) return view.err('rest.badrequest', 404)
-			if (!opt?.response && !visitor.client.server) return view.err('rest.badrequest', 404)
-
-			
-			
-			for (const callback of orest.beforelisteners) await callback(view)
-			if (orest != rest) for (const callback of rest.beforelisteners) await callback(view)
-			const res = await view.get(action)
-			for (const callback of orest.afterlisteners) await callback(view)
-			if (orest != rest) for (const callback of rest.afterlisteners) await callback(view)
-
-			
-			
-			reans = res != null ? res : {
-				ans: view.ans, 
-				nostore: view.nostore, 
-				status: view.status,
-				ext: view.ext,
-				headers: view.headers
-			}
-
-			
-		} catch (e) {
-			
+	static makeReans (view) {
+		return {
+			data: view.data ?? 'Internal Server Error', 
+			nostore: view.nostore ?? true, 
+			status: view.status || 500,
+			ext: view.ext ?? 'txt',
+			headers: view.headers ?? []
+		}
+	}
+	static async catchReans (fn) {
+		return fn().catch(e => {
 			if (e instanceof ViewException) {
+				return Rest.makeReans(e.view)
 			} else {
 				console.log(e)
+				return Rest.makeReans({data: {msg: 'Internal Server Error '}, status: 500, ext: 'json'})
 			}
-			//const oview = view.nostore ? view : e.view //Исключение могло быть из другова view в одном visitor сохранено в promise proc и передано сейчас
-			oview = e.view || view //Если обработка once:false или req будет различаться, то исключение будет своё в каждом view, так как промисом не воспользуемся
-		}
+		})
+	}
+	async exec (view) {
 
-		try {			
-			if (orest) for (const callback of orest.afterlisteners) await callback(view)
-			if (orest != rest) for (const callback of rest.afterlisteners) await callback(view)
+		let reans = await Rest.catchReans(async () => {
+			const res = await view.get(view.action)
+			if (res != null) view.data = res
+			return Rest.makeReans(view)
+		})
+		reans = await Rest.catchReans(async () => {
 			for (const callback of view.afterlisteners) await callback(view) //выход из базы
-			reans = reans || {
-				ans: oview.ans, 
-				nostore: oview.nostore,
-				status: oview.status,
-				ext: oview.ext,
-				headers: oview.headers
-			}
-		} catch (e) {
-			if (e instanceof ViewException) {
-				reans = {
-					ans: oview.ans, 
-					nostore: oview.nostore,
-					status: oview.status,
-					ext: oview.ext,
-					headers: oview.headers
-				}
-			} else {
-				throw e
-			}
-		}
+			return reans
+		})
 		return reans
+	}
+	async req (action, req = {}, visitor) { //reans request и action 
+		const rest = this
+		const orest = rest.findrest(action) //before и after только для addAction
+		if (!orest) return Rest.makeReans({data: {msg: 'Not Found'}, status: 404, ext: 'json',})
+		const opt = orest.list[action]
+		if (!opt?.response) return Rest.makeReans({data: {msg: 'Method Not Allowed'}, status: 405, ext: 'json'})
+		const view = new View(orest, opt, req, visitor)
+		orest.addView(view)
+
+		
+		// const views = view.rest.getViews(view.visitor)
+		// console.log('req', rest.name, orest.name, views.length, req)
+		
+		return rest.exec(view)
+	}
+	async data (action, req = {}, visitor) { //ans любой
+		return this.get(action, req, visitor).then(reans => reans.data)
+	}
+	async get (action, req = {}, visitor) { //ans любой
+
+		if (!visitor) visitor = new Visitor()
+		const rest = this
+		
+		const orest = rest.findrest(action) //before и after только для addAction
+		
+		if (!orest) return Rest.makeReans({data: {msg: 'Not Found'}, status: 404, ext: 'json',})
+		const opt = orest.list[action]
+		const view = new View(orest, opt, req, visitor) //Создаётся у родительского реста
+		orest.addView(view)
+		// const views = view.rest.getViews(view.visitor)
+		// console.log('get', rest.name, orest.name, views.length, req)
+		// return
+		
+		return rest.exec(view)
 	}
 	add (pname, a1, a2, a3, a4) {
 		let before, func, after, replace
@@ -619,9 +612,15 @@ export class Rest {
 		
 		const opt = this.findopt(pname)
 		if (opt) { //replace handler
-			if (!replace) throw new Error(`Имя обработки уже занято ${pname}`)
+			if (!replace) {
+				console.log(`Имя обработки уже занято ${pname}`)
+				throw new Error()
+			}
 		} else {
-			if (replace) throw new Error(`Имя обработки не найдено, невозможно заменить ${pname}`)
+			if (replace) {
+				console.log(`Имя обработки не найдено, нечего заменять ${pname}`)
+				throw new Error()
+			}
 		}
 
 		this.list[pname] = {

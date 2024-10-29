@@ -12,10 +12,10 @@ Sources.execRestFunc = async (file, fnname, visitor, res, req = {}) => {
 	const rest = await import('/' + file).then(r => r.default).catch(r => false)
 	if (!rest || !rest.get) return `Исключение в коде ` + file
 	const reans = await rest.get(fnname, req, visitor).catch(r => false)
-	if (!reans || !reans.ans) return `Исключение в ${fnname}`
-	const ans = reans.ans
-	if (!ans.result) return `Нет результата ${fnname} ${ans.msg || ''}`
-	res.ans = ans
+	if (!reans || !reans.data) return `Исключение в ${fnname}`
+	const data = reans.data
+	if (!data.result) return `Нет результата ${fnname} ${data.msg || ''}`
+	res.data = data
 	return ''
 }
 Sources.setStart = async (db, source_id) => {
@@ -111,7 +111,26 @@ Sources.check = async (db, source, visitor) => {
 }
 
 
-
+Sources.reorderProps = async (db, entity_id) => {
+	const list = await db.colAll(`
+		SELECT prop_id
+		FROM sources_props
+		WHERE entity_id = :entity_id
+		ORDER BY ordain
+	`, {entity_id})
+	let ordain = 0
+	const promises = []
+	for (const prop_id of list) {
+		ordain = ordain + 2
+		const r = db.exec(`
+			UPDATE sources_props
+			SET ordain = :ordain
+			WHERE prop_id = :prop_id
+		`, {ordain, prop_id})
+		promises.push(r)
+	}
+	return Promise.all(promises)
+}
 Sources.reorderEntities = async (db) => {
 	const list = await db.colAll(`
 		SELECT entity_id
@@ -154,7 +173,18 @@ Sources.reorderSources = async (db) => {
 
 
 
-
+const SELECT_PROP = `
+	pr.entity_id,
+	pr.prop_id,
+	pr.prop_title,
+	pr.type,
+	pr.unit,
+	pr.prop_nick,
+	pr.known + 0 as known,
+	pr.multi + 0 as multi,
+	pr.comment,
+	pr.represent_prop + 0 as represent_entity
+`
 const SELECT_ENTITY = `
 	en.entity_id, 
 	en.prop_id, 
@@ -164,6 +194,7 @@ const SELECT_ENTITY = `
 	en.comment,
 	en.represent_entity + 0 as represent_entity,
 	pr.prop_title,
+	pr.type,
 	pr.prop_nick
 `
 const SELECT_SOURCE = `
@@ -188,6 +219,29 @@ const SELECT_SOURCE = `
 	so.entity_id,
 	${SELECT_ENTITY}
 `
+Sources.getProp = async (db, prop_id) => {
+	const prop = await db.fetch(`
+		SELECT 
+			en.entity_title,
+			en.entity_plural,
+			${SELECT_PROP}
+		FROM sources_props pr
+			LEFT JOIN sources_entities en on en.entity_id = pr.entity_id
+		WHERE pr.prop_id = :prop_id
+	`, {prop_id})
+	console.log(prop)
+	return prop
+}
+Sources.getProps = async (db, entity_id) => {
+	const list = await db.all(`
+		SELECT 
+		${SELECT_PROP}
+		FROM sources_props pr
+		WHERE pr.entity_id = :entity_id
+		ORDER BY pr.ordain
+	`, {entity_id})
+	return list
+}
 Sources.getSource = async (db, source_id) => {
 	const source = await db.fetch(`
 		SELECT 

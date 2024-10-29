@@ -33,9 +33,7 @@ import User from "/-user/User.js"
 
 rest.addResponse('get-myorders', async view => {
 	const { user, db } = await view.gets(['user', 'db'])
-	if (!user) return {
-		ans: {result:0, msg: 'Нет данных'}
-	}
+	if (!user) return {result:0, msg: 'Нет данных'}
 	
 	const orders = await db.all(`
 		SELECT 
@@ -67,12 +65,10 @@ rest.addResponse('get-myorders', async view => {
 	}
 
 	return {
-		ans:{
-			user,
-			years,
-			orders,
-			result:1
-		}
+		user,
+		years,
+		orders,
+		result:1
 	}
 })
 

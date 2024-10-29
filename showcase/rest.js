@@ -1,15 +1,14 @@
 import Access from "/-controller/Access.js"
 import Rest from "/-rest"
-import set from '/-showcase/rest.set.js'
-import get from '/-showcase/rest.get.js'
+const rest = new Rest()
+import rest_set from '/-showcase/rest.set.js'
+rest.extra(rest_set)
+import rest_get from '/-showcase/rest.get.js'
+rest.extra(rest_get)
 
 import Files from '/-showcase/Files.js'
 
-const rest = new Rest(get, set)
-rest.after((view, reans = {}) => {
-	if (~view.action.indexOf('set-')) Access.setAccessTime()
-	//reans.nostore = true
-	view.nostore = true
-})
+
+
 
 export default rest

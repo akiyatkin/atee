@@ -1,7 +1,7 @@
 const controller = {}
 export default controller
 
-controller.HEAD = (data, env) => 
+controller.HEAD = (data, env) => env.bread.error ? '' :
 `<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<script>//Делаем SPA переходы
@@ -29,18 +29,18 @@ controller.HEAD = (data, env) =>
 				getClient().then(Client => Client.click(a))
 			}
 
-			const mousedown = async event => { 
-				const a = event.target.closest('a')
-				if (!a || !isSuitable(a)) return
-				const Client = await getClient()
-				Client.mousedown(a)
-			}
-			const focus = async event => {
-				const a = document.activeElement.closest('a')
-				if (!a || !isSuitable(a)) return
-				const Client = await getClient()
-				Client.focus(a)
-			}
+			// const mousedown = async event => { 
+			// 	const a = event.target.closest('a')
+			// 	if (!a || !isSuitable(a)) return
+			// 	const Client = await getClient()
+			// 	Client.mousedown(a)
+			// }
+			// const focus = async event => {
+			// 	const a = document.activeElement.closest('a')
+			// 	if (!a || !isSuitable(a)) return
+			// 	const Client = await getClient()
+			// 	Client.focus(a)
+			// }
 			const popstate = async event => {
 				const Client = await getClient()
 				Client.popstate(event)
@@ -53,8 +53,8 @@ controller.HEAD = (data, env) =>
 					window.removeEventListener('popstate', popstate)
 					window.removeEventListener('click', click)
 					
-					window.removeEventListener('mousedown', mousedown)
-					window.removeEventListener('focus', focus)
+					// window.removeEventListener('mousedown', mousedown)
+					// window.removeEventListener('focus', focus)
 					
 					const time = ${env.timings.access_time}
 					import("/-controller/Client.js").then(({ Client }) => {
@@ -71,8 +71,8 @@ controller.HEAD = (data, env) =>
 				window.getClient = () => promise
 				return promise
 			}
-			window.addEventListener('focus', focus, true)
-			window.addEventListener('mousedown', mousedown)
+			// window.addEventListener('focus', focus, true)
+			// window.addEventListener('mousedown', mousedown)
 			window.addEventListener('click', click)
 			window.addEventListener('popstate', popstate)
 		</script>
@@ -139,4 +139,16 @@ controller.ER404 = (data, env) => `
 `
 controller.ER403 = (data, env) => `
 	<p>${env.host}<b>${env.bread.end}</b> &mdash; доступ закрыт, код 403</p>
+`
+
+const ERRORS = {
+	"400":"Некорректный запрос",
+	"404":"Страница не найдена",
+	"403":"Доступ закрыт",
+	"500":"Ошибка на сервере"
+}
+controller.ERROR = (data, env) => `
+	<h1>${env.bread.error}</h1>
+	<p>${ERRORS[env.bread.error] || 'Что-то пошло не так...'}</p>
+	<p>${env.host}<b>${env.bread.end}</b>
 `

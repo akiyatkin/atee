@@ -47,21 +47,21 @@ rest.addArgument('dir', async (view, dir) => {
 rest.addResponse('get-page-head', async (view) => {
 	const { name, dir } = await view.gets(['name', 'dir'])
 	const files = await getFiles(dir)
-	Object.assign(view.ans, files[name] ?? {
+	Object.assign(view.data, files[name] ?? {
 		title:name
 	})
 	return view.ret()
 })
 rest.addResponse('get-page-sitemap', async (view) => {
 	const conf = await config('sitemap')
-	const ans = {headings:[]}
-	if (!conf.pages) return {ans}
+	const data = {headings:[]}
+	if (!conf.pages) return data
 	const files = await getFiles(conf.pages)
 
-	if (!files.length) return {ans}
-	ans.headings.push({
+	if (!files.length) return data
+	data.headings.push({
 		title:'Страницы',
 		childs: files
 	})
-	return {ans}
+	return data
 })

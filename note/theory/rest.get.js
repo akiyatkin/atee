@@ -179,7 +179,7 @@ rest.addResponse('get-page', async view => {
 		nostore: true,
 		status: 200,
 		ext: 'html',
-		ans: page.text
+		data: page.text
 	}
 })
 

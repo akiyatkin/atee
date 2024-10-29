@@ -279,6 +279,21 @@ rest.addAction('set-source-delete', ['admin'], async view => {
 
 	return view.ret('Источник удалён')
 })
+rest.addAction('set-entity-prop-reset', ['admin'], async view => {
+	const entity_id = await view.get('entity_id#required')
+	const db = await view.get('db')
+	await db.exec(`
+		UPDATE sources_entities
+		SET prop_id = null
+		WHERE entity_id = :entity_id
+	`, {entity_id})
+	
+
+	const tpl = await import('/-sources/entity.html.js')
+	view.ans.value = tpl.showProp({})
+
+	return view.ret()
+})
 rest.addAction('set-source-entity-reset', ['admin'], async view => {
 	const source_id = await view.get('source_id#required')
 	const db = await view.get('db')
@@ -300,7 +315,7 @@ rest.addAction('set-source-entity', ['admin'], async view => {
 	`, {entity_id, source_id})
 	return view.ret()
 })
-rest.addAction('set-entity-create', ['admin'], async view => {
+rest.addAction('set-source-entity-create', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id')
 	const entity_title = await view.get('search')
@@ -314,17 +329,77 @@ rest.addAction('set-entity-create', ['admin'], async view => {
 
 	await Sources.reorderEntities(db)
 
-	if (source_id) {
-		await db.exec(`
-			UPDATE sources_sources
-			SET entity_id = :entity_id
-			WHERE source_id = :source_id
-		`, {entity_id, source_id})
-	}
+	
+	await db.exec(`
+		UPDATE sources_sources
+		SET entity_id = :entity_id
+		WHERE source_id = :source_id
+	`, {entity_id, source_id})
+	
 
 
 	return view.ret()
 })
+rest.addAction('set-entity-prop', ['admin'], async view => {
+	const db = await view.get('db')
+	const entity_id = await view.get('entity_id#required')
+	const prop_id = await view.get('prop_id#required')
+	const prop = await Sources.getProp(db, prop_id)
+	if (prop.type != 'value') return view.err('Тип свойства для ключа может быть только value')
+	await db.exec(`
+		UPDATE sources_entities
+		SET prop_id = :prop_id
+		WHERE entity_id = :entity_id
+	`, {entity_id, prop_id})
+
+	
+	const tpl = await import('/-sources/entity.html.js')
+	view.ans.value = tpl.showProp(prop)
+	return view.ret()
+})
+rest.addAction('set-entity-prop-create', ['admin'], async view => {
+	const db = await view.get('db')
+	const entity_id = await view.get('entity_id#required')
+	const prop_title = await view.get('search')
+	const prop_nick = nicked(prop_title)
+
+	const prop_id = view.ans.prop_id = await db.insertId(`
+		INSERT INTO sources_props (entity_id, prop_title, prop_nick, type)
+   		VALUES (:entity_id, :prop_title, :prop_nick, 'value')
+   		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title)
+	`, {entity_id, prop_title, prop_nick})
+
+	await Sources.reorderProps(db, entity_id)
+
+	await db.exec(`
+		UPDATE sources_entities
+		SET prop_id = :prop_id
+		WHERE entity_id = :entity_id
+	`, {prop_id, entity_id})
+
+	const tpl = await import('/-sources/entity.html.js')
+	view.ans.value = tpl.showProp({prop_title, prop_nick, type: 'value', prop_id})
+
+	return view.ret()
+})
+rest.addAction('set-prop-create', ['admin'], async view => {
+	const db = await view.get('db')
+	const entity_id = await view.get('entity_id#required')
+	const prop_title = await view.get('search')
+	const prop_nick = nicked(prop_title)
+
+	const prop_id = view.ans.prop_id = await db.insertId(`
+		INSERT INTO sources_props (entity_id, prop_title, prop_nick, type)
+   		VALUES (:entity_id, :prop_title, :prop_nick, 'value')
+   		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title)
+	`, {entity_id, prop_title, prop_nick})
+
+	await Sources.reorderProps(db, entity_id)
+
+	return view.ret()
+})
+
+
 rest.addAction('set-source-title', ['admin'], async view => {
 
 	const db = await view.get('db')
@@ -357,6 +432,22 @@ rest.addAction('set-entity-title', ['admin'], async view => {
    		SET entity_title = :entity_title, entity_nick = :entity_nick
    		WHERE entity_id = :entity_id
 	`, {entity_id, entity_title, entity_nick})
+
+	return view.ret()
+})
+rest.addAction('set-prop-title', ['admin'], async view => {
+
+	const db = await view.get('db')
+	const prop_id = await view.get('prop_id#required')
+	const prop_title = await view.get('title')
+	const prop_nick = nicked(prop_title)
+	const prop = await Sources.getProp(db, prop_id)
+	if (prop.prop_nick != prop_nick) return view.err('Изменить можно только регистр')
+	await db.exec(`
+		UPDATE sources_props
+   		SET prop_title = :prop_title, prop_nick = :prop_nick
+   		WHERE prop_id = :prop_id
+	`, {prop_id, prop_title, prop_nick})
 
 	return view.ret()
 })

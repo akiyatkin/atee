@@ -17,17 +17,17 @@ rest.addResponse('get-page-sitemap', async (view) => {
 			name: page.Name
 		}
 	}
-	const ans = {headings:[]}
-	ans.headings.push({
+	const data = {headings:[]}
+	data.headings.push({
 		title:'Блог',
 		childs: list
 	})
-	return {ans}
+	return data
 })
 rest.addResponse('get-page-head', async (view) => {
 	const { nick } = await view.gets(['nick'])
 	const page = Notion.pages[nick]
-	return {ans: {title: page.Name }}
+	return {title: page.Name }
 })
 
 rest.addResponse('get-page', async (view) => {

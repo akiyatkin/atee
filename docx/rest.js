@@ -66,18 +66,16 @@ rest.addResponse('get-head', async view => {
 	
 	const list = await getList(dir)
 	const finfo = list.find(finfo => finfo.name == name)
-	if (!finfo) return {
-		status: 404,
-		ans: {
+	if (!finfo) {
+		view.status = 404
+		return {
 			title:name
 		}
 	}
 	return {
-		ans: {
-			image_src: finfo.img,
-			title:finfo.heading, 
-			description:finfo.preview
-		}
+		image_src: finfo.img,
+		title:finfo.heading, 
+		description:finfo.preview
 	}
 })
 
@@ -124,22 +122,17 @@ rest.addResponse('get-html', async view => {
 	const finfo = list.find(finfo => finfo.name == name)
 
 	if (!finfo) {
-		return {
-			ans:'', 
-			ext:'html', 
-			status: '404'
-		}
+		view.status = 404
+		view.ext = 'html'
+		return ''
 	}
 
 
 
 	const html = await fs.readFile(finfo.htmlsrc, 'utf8')
 
-	return {
-		ans:html, 
-		ext:'html', 
-		status:200
-	}
+	view.ext = 'html'
+	return html
 })
 const getList = (src) => {
 	const cachename = nicked(src)

@@ -48,7 +48,7 @@ rest.addVariable('headings', async view => {
 		if (head.hidden) continue
 		const json = head.sitemap || head.json //sitemap возвращает тоже самое что и json но с headings
 		const res = json ? await loadJSON(json, view.visitor).catch(e => console.log('head', href, e)) : false
-		if (res && res.ans) Object.assign(head, res.ans)
+		if (res && res.data) Object.assign(head, res.data)
 
 
 		if (head.headings) {
@@ -98,7 +98,7 @@ rest.addVariable('head', async view => {
 		if (head.hidden) continue
 		const json = head.sitemap || head.json //sitemap возвращает тоже самое что и json но с headings
 		const res = json ? await loadJSON(json, view.visitor).catch(e => console.log('head', href, e)) : false
-		if (res && res.ans) Object.assign(head, res.ans)
+		if (res && res.data) Object.assign(head, res.data)
 
 		
 		if (head.headings) {
@@ -137,12 +137,13 @@ rest.addResponse('sitemap.xml', async view => {
 	let mm = date.getMonth() + 1; // месяц 1-12
 	if (mm < 10) mm = '0' + mm;
 	const modified = date.getFullYear() + '-' + mm + '-' + dd
-
-	return { ans:TPL.SITEMAP_XML( {headings, modified}, { host } ), ext:'xml', nostore:true } //Если обращаются роботы, то у них нет Service Worker и как бы кэш они не обновят. 
+	view.ext = 'xml'
+	return TPL.SITEMAP_XML( {headings, modified}, { host } ) //Если обращаются роботы, то у них нет Service Worker и как бы кэш они не обновят. Но и сохранять они не будут.
 })
 rest.addResponse('robots.txt', async view => {
 	const host = view.visitor.client.host
-	return {ans:TPL.ROBOTS_TXT( true, { host } ), ext:'txt', nostore:true }
+	view.ext = 'txt'
+	return TPL.ROBOTS_TXT( true, { host } )
 })
 
 

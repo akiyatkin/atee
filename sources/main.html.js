@@ -3,7 +3,7 @@ import date from "/-words/date.html.js"
 import ago from "/-words/ago.html.js"
 import err from "/-controller/err.html.js"
 export const css = ['/-sources/status.css']
-export const ROOT = (data, env) => err(data, env) || `
+export const ROOT = (data, env) => `
 	<h1>Источники данных</h1>
 	${data.admin && data.isdb ? showMain(data, env) : showAuth(data, env)}
 	

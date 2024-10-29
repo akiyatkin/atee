@@ -8,8 +8,8 @@ export const Client = {
 	search:'',
 	access_promise: null,
 	follow: (root) => {
-		const search = Client.fixsearch(Client.getSearch())
-		//Client.search = Client.fixsearch(search || Client.getSearch())
+		const search = Client.makeabs(Client.getSearch())
+		//Client.search = Client.makeabs(search || Client.getSearch())
 		Client.search = search
 		const get = Object.fromEntries(new URLSearchParams(location.search))
 		Client.bread = new Bread(Client.getPath(), get, Client.search, root)
@@ -45,10 +45,7 @@ export const Client = {
 			Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 		}
 		Client.lastpop = moment
-		const search = Client.fixsearch(Client.getSearch())
-		//console.log('Куда', search)
-		//console.log('Откуда', Client.search)
-		console.log(search)
+		const search = Client.makeabs(Client.getSearch())
 		const promise = Client.crossing(search)
 		if (event.state?.view == Client.view) { //Вперёд
 			const { cursor } = event.state
@@ -66,20 +63,16 @@ export const Client = {
 		const promise = Client.pushState(search, scroll)
 		return animate('a', a, a.dataset.animate, promise)
 	},
-	mousedown: (a) => {
-		let search = a.dataset.clientsearch ?? a.getAttribute('href')
-		a.dataset.clientsearch = search
-		search = Client.fixsearch(search)
-		a.href = search
-	},
-	focus: (a) => {
-		let search = a.dataset.clientsearch ?? a.getAttribute('href')
-		a.dataset.clientsearch = search
-		search = Client.fixsearch(search)
-		a.href = search
-	},
+	// fixa: (a) => {
+	// 	let search = a.dataset.clientsearch ?? a.getAttribute('href')
+	// 	a.dataset.clientsearch = search
+	// 	search = Client.makeabs(search)
+	// 	a.href = search
+	// },
+	// mousedown: (a) => Client.fixa(a),
+	// focus: (a) => Client.fixa(a),
 	getPath: () => decodeURI(location.pathname.replace(/\/$/,'')) || '/',
-	getSearch: () => Client.getPath() + decodeURI(location.search),
+	getSearch: () => Client.getPath() + decodeURI(location.search) + location.hash,
 	reloaddivs:[],
 	reloaddiv: (div) => {
 		if (!Array.isArray(div)) div = [div]
@@ -87,33 +80,33 @@ export const Client = {
 			if (~Client.reloaddivs.indexOf(div)) return
 			Client.reloaddivs.push(div)	
 		})
-		return Client.replaceState('', false)
+		return Client.refreshState()
 	},
 	reload: () => { //depricated?
 		//'/' переход с главной
 		//'' переход с ничего
 		Client.search = ''
-		return Client.replaceState('', false)
+		return Client.refreshState()
 	},
 	reloadtss:[],
 	reloadts: (ts) => {
 		if (~Client.reloadtss.indexOf(ts)) return
 		Client.reloadtss.push(ts)
-		return Client.replaceState('', false)
+		return Client.refreshState()
 	},
 	reloadgs:[],
 	global: (g) => {
 		if (~Client.reloadgs.indexOf(g)) return
 		Client.reloadgs.push(g)
-		return Client.replaceState('', false)
+		return Client.refreshState()
 	},
 	view:Date.now(), //Метка сеанса в котором актуальна Client.history
 	history:[],
 	start:history.length,
 	cursor:history.length - 1,
 	
-	refreshState: () => { //depricated
-		Client.replaceState('')
+	refreshState: (scroll = false) => {
+		return Client.replaceState(Client.search, scroll)
 	},
 	scroll: promise => {
 		const go = () => {
@@ -145,7 +138,7 @@ export const Client = {
 	},
 	go: (search, scroll) => Client.pushState(String(search), scroll),
 	pushState: (search, scroll = true) => {
-		search = Client.fixsearch(search)
+		search = Client.makeabs(search)
 		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 		if (~location.href.indexOf(search)) {
 			const a = document.createElement('a')
@@ -162,19 +155,19 @@ export const Client = {
 
 		history.pushState({cursor:Client.cursor, view:Client.view}, null, search)
 		search = Client.getSearch() //Так резолвятся точки, но не слеш в конце
-		//history.replaceState({cursor:Client.cursor, view:Client.view}, null, search) //А так и слэш. Ну и фиг с ним, резолвим сами в fixsearch
+		//history.replaceState({cursor:Client.cursor, view:Client.view}, null, search) //А так и слэш. Ну и фиг с ним, резолвим сами в makeabs
 
 		const promise = Client.crossing(search)
 		if (scroll)	Client.scroll(promise)
 		return promise
 	},
 	replaceState: (search = '', scroll = true) => {
-		search = Client.fixsearch(search)
+		search = Client.makeabs(search)
 		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 
 		history.replaceState({cursor:Client.cursor, view:Client.view}, null, search) //Так резолвятся точки, но не слеш в конце
 		search = Client.getSearch()
-		//history.replaceState({cursor:Client.cursor, view:Client.view}, null, search) //А так и слэш. Ну и фиг с ним, резолвим сами в fixsearch
+		//history.replaceState({cursor:Client.cursor, view:Client.view}, null, search) //А так и слэш. Ну и фиг с ним, резолвим сами в makeabs
 
 		const promise = Client.crossing(search)
 		if (scroll)	Client.scroll(promise)
@@ -294,37 +287,61 @@ export const Client = {
 		return true
 	}
 }
-
-Client.fixsearch = search => {	
-	search = search.replaceAll(/\/+/g,'/')
-	if (search[0] != '/') { //относительный путь
-		const base = '/' + document.baseURI.slice(8).split('/').slice(1).join('/') //  /some/path или '/'
-		const pathname = Client.getPath() // 	/some/path или '/'
-		
-		if (search == '?' ) search = pathname
-		else if (search == '#' ) search = pathname + location.search
-		else if (search == '?#' ) search = pathname
-		else if (search == '') search = base
-
-		else if (search[0] == '?') search = pathname + search
-		else if (search[0] == '#') search = pathname + location.search + search
-		
-		else if (search.slice(0,2) == './') search = pathname + '/' + search
-		else if (search.slice(0,3) == '../') search = pathname + '/' + search
-
-		else search = base + search
-	}
-	if (search != '/') search = search.replace(/\/$/,'')
-
-	if (/\/\.(\.){0,1}$/.test(search)) { //Слэш в конце не поддерживается
+Client.makeabs = search => {	
+	//search = search.replaceAll(/\/+/g,'/')
+	if (/\/\.(\.){0,1}$/.test(search) || /\.(\.){0,1}\//.test(search)) { //Слэш в конце не поддерживается
 		const a = document.createElement('a')
 		a.href = search
-		const newahref = a.href.slice(8).split('/').slice(1).join('/')
+		const newahref = a.href.slice(8).split('/').slice(1).filter(r => r).join('/')
 		search = '/' + newahref.replace(/\/+$/,'')
+	} else {
+		if (search[0] != '/') { //относительный путь
+			const base = '/' + document.baseURI.slice(8).split('/').slice(1).filter(r => r).join('/') //  /some/path или '/'
+			if (search == '?' ) search = base
+			else if (search == '?#' ) search = base
+			else if (search == '#' ) search = base + location.search
+			else if (search == '.') search = base
+			else if (search == '') search = base
+			else if (search[0] == '?') search = base + search
+			else if (search[0] == '#') search = base + location.search + search
+			else if (base == '/') search = base + search
+			else search = base + '/' + search
+		}
+		if (search != '/') search = search.replace(/\/$/,'')
 	}
-
  	return search
 }
+// Client.makeabs = search => {	
+// 	search = search.replaceAll(/\/+/g,'/')
+// 	if (search[0] != '/') { //относительный путь
+// 		const pathname = Client.getPath() // 	/some/path или '/'
+// 		if (search == '?' ) search = pathname
+// 		else if (search == '?#' ) search = pathname
+// 		else if (search == '#' ) search = pathname + location.search
+// 		else if (search == '.') search = pathname
+// 		//С помощью ссылки нельзя сослаться на текущий буквальный адрес, только со сбросом якоря '#' или полным дублем
+
+// 		else if (search[0] == '?') search = pathname + search
+// 		else if (search[0] == '#') search = pathname + location.search + search
+		
+// 		else if (search.slice(0,3) == '../') search = pathname + '/' + search
+// 		else if (search.slice(0,2) == './') search = pathname + '/' + search
+// 		else { //else if (search == '') search = base
+// 			const base = '/' + document.baseURI.slice(8).split('/').slice(1).join('/') //  /some/path или '/'
+// 			search = base + search
+// 		}
+// 	}
+// 	if (search != '/') search = search.replace(/\/$/,'')
+
+// 	if (/\/\.(\.){0,1}$/.test(search)) { //Слэш в конце не поддерживается
+// 		const a = document.createElement('a')
+// 		a.href = search
+// 		const newahref = a.href.slice(8).split('/').slice(1).join('/')
+// 		search = '/' + newahref.replace(/\/+$/,'')
+// 	}
+
+//  	return search
+// }
 const explode = (sep, str) => {
 	if (!str) return []
 	const i = str.indexOf(sep)
@@ -352,6 +369,7 @@ const applyCrossing = async () => {
 	Исходим из того, что следующие обязательно не изменения
 	Но со второго раза надо уже передать корректные данные
 	*/
+	
 	const req = {
 		vt: timings.view_time,
 		ut: timings.update_time,
@@ -405,7 +423,6 @@ const applyCrossing = async () => {
 		promise.resolve(search)
 
 		if (req.ut && req.ut < timings.update_time) {
-			console.log(2, req, timings)
 			location.reload()
 		}
 		
@@ -490,7 +507,6 @@ const loadAll = (layers, promises = [], proc = {}) => {
 				let promise = import(layer.tpl).then(res => {
 					layer.sys.tplobj = res.default || res
 				}).catch(e => {
-					console.log(3, e, layer)
 					if (!layer.onlyclient) location.reload()
 					return {}
 				})
@@ -506,11 +522,7 @@ const loadAll = (layers, promises = [], proc = {}) => {
 			}
 		} else if (layer.html) {
 			let promise = fetch(layer.html).then(res => {
-				if (
-						res.status != 200 
-						//&& res.status != 404
-					) {
-					console.log(5, res)
+				if (res.status != 200) {
 					location.reload()
 					return new Promise(() => {})//reload сразу не происходит, надо зависнуть
 				}

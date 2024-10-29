@@ -1,4 +1,3 @@
-import { files, file } from "./files.js"
 import path from 'path'
 import { readFile, utimes } from "fs/promises"
 import Rest from "/-rest"
@@ -11,12 +10,16 @@ import { whereisit } from './whereisit.js'
 import Theme from '/-controller/Theme.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
+const rest = new Rest()
 import rest_admin from '/-controller/rest.admin.js'
+rest.extra(rest_admin)
 import rest_path from '/-controller/rest.path.js'
+rest.extra(rest_path)
 import rest_funcs from '/-rest/rest.funcs.js'
+rest.extra(rest_funcs)
 
 
-const rest = new Rest(rest_admin, rest_funcs, rest_path)
+
 rest.addResponse('get-admin', async view => {
 	await view.get('admin')
 	return view.ret()
@@ -34,15 +37,15 @@ rest.addResponse('get-access', async view => {
 rest.addArgument('go', ['string']) //Ссылка куда перейти. Как есть попадает в заголовок Location 301
 
 
-rest.addResponse('set-access', async view => {
+rest.addAction('set-access', async view => {
 	//await view.get('admin')
 	view.nostore = true
 	Access.setAccessTime()
 
 	const go = await view.get('go')
 	if (!go) return view.ret()
+
 	view.headers.Location = encodeURI(go)
-	
 	return view.ret('', 301)
 })
 
@@ -74,10 +77,19 @@ rest.addArgument('rt', ['array']) //reloadts
 rest.addResponse('get-layers', async view => {
 	view.nostore = true
 	view.headers = {}
+	const req = await view.gets(['rt', 'rd', 'pv', 'nt', 'st', 'ut', 'rg', 'vt'])	
+
 	const {
-		rt:reloadtss, rd:reloaddivs, pv: prev, nt: next, st: access_time, ut: update_time, vt: view_time, rg: globals 
-	} = await view.gets(['rt', 'rd', 'pv', 'nt', 'st', 'ut', 'rg', 'vt'])	
-	
+		rt:reloadtss, 
+		rd:reloaddivs, 
+		pv: prev, 
+		nt: next, 
+		st: access_time, 
+		ut: update_time, 
+		vt: view_time, 
+		rg: globals 
+	} = req
+	//console.log(req)
 	const visitor = view.visitor
 	const host = visitor.client.host
 	const cookie = visitor.client.cookie
@@ -132,10 +144,10 @@ rest.addResponse('get-layers', async view => {
 	if (!nopt?.root) return view.err()
 	
 	if (nopt.check) {
-		const {ans} = await loadJSON(nopt.check, view.visitor)
-		if (ans.redirect) {
-			view.ans.layers = []
-			view.ans.redirect = ans.redirect
+		const {data} = await loadJSON(nopt.check, view.visitor)
+		if (data.redirect) {
+			view.data.layers = []
+			view.data.redirect = data.redirect
 			return view.ret()
 		}
 	}
@@ -200,7 +212,7 @@ rest.addResponse('get-head', async view => {
 
 	const { index: { head }, depth } = Layers.getIndex(source, bread)
 
-	return {ans:head}
+	return head
 })
 const getDiff = (players, nlayers, reloaddivs, reloadtss, globals, layers = []) => {
 	nlayers?.forEach(nlayer => {
@@ -229,7 +241,7 @@ rest.addResponse('set-admin', async (view) => {
 	const { password } = await view.gets(['password'])
 	const result = await Access.isAdmin(password)
 	return { 
-		ans:{result}, 
+		data:{result}, 
 		headers: {
 			'Set-Cookie':'-controller=' + encodeURIComponent(password ?? '') + '; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT'
 		}

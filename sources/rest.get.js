@@ -11,10 +11,13 @@ const rest = new Rest()
 import rest_sources from '/-sources/rest.sources.js'
 rest.extra(rest_sources)
 
+import rest_admin from '/-controller/rest.admin.js'
+rest.extra(rest_admin)
+
 import rest_search from "/-dialog/search/rest.search.js" //аргументы hash, search 
 rest.extra(rest_search)
 
-rest.addResponse('get-entity-search', ['admin'], async view => {
+rest.addResponse('get-source-entity-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hash = await view.get('hash')
 	
@@ -32,7 +35,7 @@ rest.addResponse('get-entity-search', ['admin'], async view => {
 	if (hash.length) {
 		view.ans.list.push({
 			confirm:'Cоздать новую сущность?',
-			action:`/-sources/set-entity-create`,
+			action:`/-sources/set-source-entity-create`,
 			search_value: true, 
 			left: '<span class="a">Новая сущность</span>',
 			right: ''
@@ -40,6 +43,39 @@ rest.addResponse('get-entity-search', ['admin'], async view => {
 	}
 	view.ans.list.push({
 		action:`/-sources/set-source-entity-reset`,
+		left: '<span class="a">Сбросить выбор</span>',
+		right: ''
+	})
+
+	view.ans.count = list.length
+	return view.ret()
+})
+rest.addResponse('get-entity-prop-search', ['admin'], async view => {
+	const db = await view.get('db')
+	const hash = await view.get('hash')
+	
+	const list = await db.all(`
+		SELECT prop_id, prop_title, type
+		FROM sources_props
+		WHERE prop_nick like "%${hash.join('%" and prop_nick like "%')}%"
+	`)
+
+	view.ans.list = list.map(row => {
+		row['left'] = row.prop_title
+		row['right'] = row.type
+		return row
+	})
+	if (hash.length) {
+		view.ans.list.push({
+			confirm:'Cоздать новое свойство?',
+			action:`/-sources/set-entity-prop-create`,
+			search_value: true, 
+			left: '<span class="a">Создать свойство</span>',
+			right: ''
+		})
+	}
+	view.ans.list.push({
+		action:`/-sources/set-entity-prop-reset`,
 		left: '<span class="a">Сбросить выбор</span>',
 		right: ''
 	})

@@ -2,8 +2,8 @@ import Rest from '/-rest'
 import nicked from '/-nicked'
 
 const rest = new Rest()
+export default rest
 
-//rest.addArgument('visitor')
 rest.addFunction('string', (view, n) => n != null ? String(n) : '')
 rest.addFunction('checkbox', (view, n) => !!n)
 rest.addFunction('isset', (view, v) => v !== null)
@@ -68,4 +68,3 @@ rest.addFunction('escape', (view, text) => {
 
 
 
-export default rest

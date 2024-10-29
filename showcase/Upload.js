@@ -32,7 +32,7 @@ export class Upload {
 				}
 				if (rest.list['get-mtime']) {
 					const reans = await rest.get('get-mtime', {}, visitor)
-					const mtime = new Date(reans.ans).getTime()
+					const mtime = new Date(reans.data).getTime()
 					if (mtime > of.mtime) of.mtime = mtime
 				}
 			}

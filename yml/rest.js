@@ -48,6 +48,6 @@ rest.addResponse('get-yandex', async view => {
 	data.poss = poss
 	
 	const xml = tpl.ROOT(data, {host, email: mail.main || '', ...conf})
-	return {ext:'xml', ans:xml}
+	return {ext:'xml', data:xml}
 })
 export default rest
