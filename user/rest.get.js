@@ -4,6 +4,9 @@ import rest_user from '/-user/rest.user.js'
 import rest_db from '/-db/rest.db.js'
 const rest = new Rest(rest_db, rest_user)
 
+import rest_admin from '/-controller/rest.admin.js'
+rest.extra(rest_admin)
+
 export default rest
 
 rest.addResponse('get-user', async view => {
