@@ -9,6 +9,14 @@ export const PROP = (data, env, prop = data.prop) => !data.result ? '' : `
 	<table style="margin: 2em 0">
 		<tr>
 			<td>
+				Сущность
+			</td>
+			<td>
+				<a href="entity/${prop.entity_id}">${prop.entity_title}</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
 				Опубликовано
 			</td>
 			<td>
@@ -22,10 +30,27 @@ export const PROP = (data, env, prop = data.prop) => !data.result ? '' : `
 		</tr>
 		<tr>
 			<td>
-				Сущность
+				Значений
 			</td>
 			<td>
-				<a href="entity/${prop.entity_id}">${prop.entity_title}</a>
+				${field.switch({
+					action: '/-sources/set-prop-switch-prop', 
+					value: prop.multi, 
+					values: {"":"Одно", "1":"Несколько"},
+					args: {prop_id: prop.prop_id, propprop: 'multi'}
+				})}
+			</td>
+		</tr>
+		
+		<tr>
+			<td>Учтено</td>
+			<td>
+				${field.switch({
+					action: '/-sources/set-prop-switch-prop', 
+					value: prop.known, 
+					values: {"":"Нет", "1":"Да"},
+					args: {prop_id: prop.prop_id, propprop: 'known'}
+				})}
 			</td>
 		</tr>
 	</table>

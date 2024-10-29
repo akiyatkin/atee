@@ -4,12 +4,17 @@ import nicked from '/-nicked'
 import filter from '/-nicked/filter.js'
 import fs from "fs/promises"
 import xlsx from "/-xlsx"
+
 import Rest from "/-rest"
+const rest = new Rest()
+export default rest
 
 import vars from '/-showcase/rest.vars.js'
+rest.extra(vars)
 
-const rest = new Rest(vars)
-export default rest
+import rest_admin from '/-controller/rest.admin.js'
+rest.extra(rest_admin)
+
 
 rest.addResponse('get-settings', async view => {
 	await view.get('admin')

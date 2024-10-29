@@ -24,7 +24,7 @@ export const ENTITY = (data, env, entity = data.entity) => !data.result ? '' : `
 			</td>
 		</tr>
 		<tr>
-			<td>Ключ</td>
+			<td>Ключевое свойство</td>
 			<td>
 				${field.search({
 					cls: 'a',
@@ -39,6 +39,7 @@ export const ENTITY = (data, env, entity = data.entity) => !data.result ? '' : `
 				})}
 			</td>
 		</tr>
+		
 	</table>
 	
 	<div style="max-width: 600px;">

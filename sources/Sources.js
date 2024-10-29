@@ -183,7 +183,7 @@ const SELECT_PROP = `
 	pr.known + 0 as known,
 	pr.multi + 0 as multi,
 	pr.comment,
-	pr.represent_prop + 0 as represent_entity
+	pr.represent_prop + 0 as represent_prop
 `
 const SELECT_ENTITY = `
 	en.entity_id, 

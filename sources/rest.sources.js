@@ -18,10 +18,15 @@ rest.addArgument('sourceprop', (view, prop) => {
 	if (~['dependent','represent_source','renovate'].indexOf(prop)) return prop
 	return null
 })
+rest.addArgument('propprop', (view, prop) => {
+	if (~['multi', 'represent_prop','known'].indexOf(prop)) return prop
+	return null
+})
 rest.addArgument('entityprop', (view, prop) => {
 	if (~['represent_entity'].indexOf(prop)) return prop
 	return null
 })
+rest.addVariable('propprop#required', ['propprop', 'required'])
 rest.addVariable('sourceprop#required', ['sourceprop', 'required'])
 rest.addVariable('entityprop#required', ['entityprop', 'required'])
 

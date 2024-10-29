@@ -60,6 +60,24 @@ rest.addAction('set-entity-switch-prop', ['admin'], async view => {
 	
 	return view.ret()
 })
+rest.addAction('set-prop-switch-prop', ['admin'], async view => {
+	
+	const db = await view.get('db')
+	const prop_id = await view.get('prop_id#required') 
+	const prop = await view.get('propprop#required')
+	await db.exec(`
+		UPDATE sources_props
+		SET ${prop} = IF(${prop},0,1)
+		WHERE prop_id = :prop_id
+	`, {prop_id})
+
+	view.ans.value = await db.col(`
+		SELECT ${prop} + 0 FROM sources_props
+		WHERE prop_id = :prop_id
+	`, {prop_id})	
+	
+	return view.ret()
+})
 
 rest.addAction('set-sources-check', ['admin'], async view => {
 	const db = await view.get('db')
@@ -141,6 +159,17 @@ rest.addAction('set-source-load', ['admin'], async view => {
 	//return view.ret()	
 })
 
+rest.addAction('set-prop-comment', ['admin'], async view => {
+	const db = await view.get('db')
+	const prop_id = await view.get('prop_id#required')
+	const comment = await view.get('comment')
+	await db.exec(`
+		UPDATE sources_sources
+		SET comment = :comment
+		WHERE source_id = :source_id
+	`, {comment, source_id})
+	return view.ret()
+})
 rest.addAction('set-source-comment', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
