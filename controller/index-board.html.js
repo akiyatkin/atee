@@ -129,7 +129,7 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 						})
 					})(document.currentScript.previousElementSibling)
 				</script>
-				<main id="MAIN" style="flex-grow: 1; background-color: white; padding:2em; border-radius: 5px"></main>
+				<main id="MAIN" style="flex-grow: 1; background-color: white; padding:var(--padding); border-radius: 5px"></main>
 			</div>
 			<footer>
 				<div style="

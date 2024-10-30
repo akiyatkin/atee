@@ -17,7 +17,7 @@ import rest_funcs from '/-rest/rest.funcs.js'
 const rest = new Rest(rest_admin, rest_funcs)
 
 const forbidden = (view, m) => {
-	console.log(m, view.req.src, 'referer:', view.req.visitor.client.referer)
+	console.log(m, view.req.src, 'referer:', view.visitor.client.referer)
 	return view.err(m, 403)
 }
 rest.addArgument('src', (view, src, prop) => {

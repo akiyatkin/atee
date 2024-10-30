@@ -78,6 +78,24 @@ rest.addAction('set-prop-switch-prop', ['admin'], async view => {
 	
 	return view.ret()
 })
+rest.addAction('set-prop-type', ['admin'], async view => {
+	
+	const db = await view.get('db')
+	const prop_id = await view.get('prop_id#required') 
+	const type = await view.get('type#required') 
+	
+	const prop = await Sources.getProp(db, prop_id)
+	const entity = await Sources.getEntity(db, prop.entity_id)
+	if (entity.prop_id == prop.prop_id && type != 'value') return view.err('Нельзя изменить тип ключевого свойства')
+
+	await db.exec(`
+		UPDATE sources_props
+		SET type = :type
+		WHERE prop_id = :prop_id
+	`, {prop_id, type})
+	
+	return view.ret()
+})
 
 rest.addAction('set-sources-check', ['admin'], async view => {
 	const db = await view.get('db')
@@ -135,6 +153,26 @@ rest.addAction('set-entity-ordain', ['admin'], async view => {
 	await Sources.reorderEntities(db)
 	return view.ret()
 })
+rest.addAction('set-prop-ordain', ['admin'], async view => {
+	const next_id = await view.get('next_id')
+	const id = await view.get('id')
+	const db = await view.get('db')
+
+	let ordain
+	if (!next_id) ordain = await db.col('SELECT max(ordain) FROM sources_props') + 1
+	if (next_id) ordain = await db.col('SELECT ordain FROM sources_props WHERE prop_id = :next_id', {next_id}) - 1
+	if (ordain < 0) ordain = 0
+	await db.exec(`
+		UPDATE sources_props 
+		SET ordain = :ordain 
+		WHERE prop_id = :id
+	`, {ordain, id})
+	
+	const prop = await Sources.getProp(db, id)
+	if (!prop) return view.err()
+	await Sources.reorderProps(db, prop.entity_id)
+	return view.ret()
+})
 rest.addAction('set-source-renovate', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
@@ -164,10 +202,10 @@ rest.addAction('set-prop-comment', ['admin'], async view => {
 	const prop_id = await view.get('prop_id#required')
 	const comment = await view.get('comment')
 	await db.exec(`
-		UPDATE sources_sources
+		UPDATE sources_props
 		SET comment = :comment
-		WHERE source_id = :source_id
-	`, {comment, source_id})
+		WHERE prop_id = :prop_id
+	`, {comment, prop_id})
 	return view.ret()
 })
 rest.addAction('set-source-comment', ['admin'], async view => {
@@ -248,6 +286,49 @@ rest.addAction('set-source-clear', ['admin'], async view => {
 	
 	await Sources.check(db, source, view.visitor)
 	return view.ret('Данные из источника удалены')
+})
+rest.addAction('set-prop-delete', ['admin'], async view => {
+	const db = await view.get('db')
+	const prop_id = await view.get('prop_id#required')
+	const entity_title = await db.col(`
+		SELECT entity_title
+		FROM sources_entities
+		WHERE prop_id = :prop_id
+		LIMIT 1
+	`, {prop_id})
+	if (entity_title) return view.err('Свойство указано ключём у сущности ' + entity_title)
+	const source_title = await db.col(`
+		SELECT so.source_title
+		FROM sources_cols co, sources_sources so
+		WHERE co.prop_id = :prop_id and co.source_id = so.source_id
+		LIMIT 1
+	`, {prop_id})
+	if (source_title) return view.err('Свойство есть в данных источика ' + source_title)
+
+	const intersections = await db.fetch(`
+		SELECT men.entity_title, sen.entity_title
+		FROM sources_intersections i, 
+			sources_props mpr, 
+			sources_entities men, 
+			sources_props spr, 
+			sources_entities sen
+		WHERE (i.prop_master_id = :prop_id or i.prop_slave_id = :prop_id) 
+			and mpr.prop_id = i.prop_master_id
+			and spr.prop_id = i.prop_slave_id
+			and men.entity_id = mpr.entity_id
+			and sen.entity_id = spr.entity_id
+		LIMIT 1
+	`, {prop_id})
+	if (intersections) return view.err('Свойство связывает источики ' + intersections.join(' и '))
+
+	await db.exec(`
+		DELETE cco, pr
+		FROM sources_props pr
+			LEFT JOIN sources_custom_cols cco on cco.prop_id = pr.prop_id
+   		WHERE pr.prop_id = :prop_id
+	`, {prop_id})
+	return view.ret()
+
 })
 rest.addAction('set-entity-delete', ['admin'], async view => {
 	const db = await view.get('db')
@@ -391,6 +472,7 @@ rest.addAction('set-entity-prop-create', ['admin'], async view => {
 	const entity_id = await view.get('entity_id#required')
 	const prop_title = await view.get('search')
 	const prop_nick = nicked(prop_title)
+	if (!prop_nick) return view.err('Требуется название')
 
 	const prop_id = view.ans.prop_id = await db.insertId(`
 		INSERT INTO sources_props (entity_id, prop_title, prop_nick, type)
@@ -416,6 +498,7 @@ rest.addAction('set-prop-create', ['admin'], async view => {
 	const entity_id = await view.get('entity_id#required')
 	const prop_title = await view.get('search')
 	const prop_nick = nicked(prop_title)
+	if (!prop_nick) return view.err('Требуется название')
 
 	const prop_id = view.ans.prop_id = await db.insertId(`
 		INSERT INTO sources_props (entity_id, prop_title, prop_nick, type)

@@ -229,7 +229,6 @@ Sources.getProp = async (db, prop_id) => {
 			LEFT JOIN sources_entities en on en.entity_id = pr.entity_id
 		WHERE pr.prop_id = :prop_id
 	`, {prop_id})
-	console.log(prop)
 	return prop
 }
 Sources.getProps = async (db, entity_id) => {

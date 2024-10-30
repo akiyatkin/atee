@@ -295,10 +295,10 @@ field.radio = ({name, action = '', value = '', values}) => `
 	</div>
 `
 //approved
-field.switch = ({name = 'value', reloaddiv, go, goid, reload, action, value, values, args = {}}) => {
+field.switch = ({name = 'value', reloaddiv, go, goid, reload, action, value, values = {}, args = {}}) => {
 	return `
 	<span>
-		<button class="a field" style="display: inline-block; cursor:pointer;">${values[value || ""]}</button><script>
+		<button class="a field" style="display: inline-block; cursor:pointer;">${values[value || ""] ?? value}</button><script>
 			(btn => {
 				btn.addEventListener('click', async (e) => {
 
@@ -311,7 +311,7 @@ field.switch = ({name = 'value', reloaddiv, go, goid, reload, action, value, val
 					if (!ans.result) return 
 
 					const values = ${JSON.stringify(values)}
-					if (values[status || '']) btn.innerHTML = values[status || '']
+					if (values[status || '']) btn.innerHTML = values[status || ''] ?? status
 					
 					btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 					const Client = await window.getClient()
@@ -778,7 +778,7 @@ field.textdisabled = ({label, value}) => {
 const showOption = (obj, vname, tname, value, def) => `<option ${value == obj[vname] ? 'selected ' : ''}value="${obj[vname]}">${obj[tname] || def}</option>`
 
 //approved
-field.select = ({name, action, options, vname, tname, def = '', go, goid, selected, label, status, before, after}) => {
+field.select = ({name, action, options, vname, tname, def = '', go, goid, selected, label, status, before, after, args = {}}) => {
 	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label ${status || ''}">
@@ -797,7 +797,9 @@ field.select = ({name, action, options, vname, tname, def = '', go, goid, select
 						if (opt.action) {
 							const sendit = await import('/-dialog/sendit.js').then(r => r.default)
 
-							const ans = await sendit(float, opt.action, value ? {[opt.name]: value} : false)
+							const args = ${JSON.stringify(args)}
+							args[opt.name] = value
+							const ans = await sendit(float, opt.action, args)
 
 							select.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 							

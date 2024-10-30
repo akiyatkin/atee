@@ -5,7 +5,7 @@ import err from "/-controller/err.html.js"
 export const css = ['/-sources/status.css']
 
 export const ROOT = (data, env, source = data.source) => err(data, env,['SOURCE']) || `
-	<h1>${source.source_title}</h1>
+	<h1>Источник: ${source.source_title}</h1>
 	<div id="SOURCE"></div>
 `
 export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `

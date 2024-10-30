@@ -26,6 +26,13 @@ rest.addArgument('entityprop', (view, prop) => {
 	if (~['represent_entity'].indexOf(prop)) return prop
 	return null
 })
+
+rest.addArgument('type', (view, type) => {
+	if (~['date','text','value','number'].indexOf(type)) return type
+	return null
+})
+
+rest.addVariable('type#required', ['type', 'required'])
 rest.addVariable('propprop#required', ['propprop', 'required'])
 rest.addVariable('sourceprop#required', ['sourceprop', 'required'])
 rest.addVariable('entityprop#required', ['entityprop', 'required'])

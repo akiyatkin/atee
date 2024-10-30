@@ -258,3 +258,16 @@
 .float-label > input ~ label {
 	color: #CCC;
 }
+
+@media (max-width: 575px) {
+	.float-label > .field,
+	.float-label > .field ~ label,
+	.float-label > select,
+	.float-label > input,
+	.float-label > textarea,
+	.float-label > textarea ~ label,
+	.float-label > input ~ label {
+		padding-left: 0.5em;
+		padding-right: 0.5em;
+	}
+}

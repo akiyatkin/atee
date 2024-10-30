@@ -30,10 +30,10 @@
 		"source:BOT":"/-sources/source?source_id=${env.crumb.name}",
 		"entity:ROOT":"/-sources/entity?entity_id=${env.crumb.name}",
 		"entity:ENTITY":"/-sources/entity?entity_id=${env.crumb.name}",
-		
+		"entity:PROPS":"/-sources/props?entity_id=${env.crumb.name}",
 		"prop:ROOT":"/-sources/prop?prop_id=${env.crumb.name}",
 		"prop:PROP":"/-sources/prop?prop_id=${env.crumb.name}",
-		"props:ROOT":"/-sources/props?entity_id=${env.crumb.name}",
+		
 
 		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
 	},
@@ -76,17 +76,7 @@
 				}
 			}
 		},
-		"props":{
-			"layout":{},
-			"child":{
-				"head":{"title":"Свойства сущности"},
-				"layout":{
-					"index:ROOT":{
-						"MAIN":"props:ROOT"
-					}
-				}
-			}
-		},
+		
 		"prop":{
 			"layout":{},
 			"child":{
@@ -111,6 +101,10 @@
 					},
 					"entity:ROOT":{
 						"ENTITY":"entity:ENTITY"
+						
+					},
+					"entity:ENTITY":{
+						"PROPS":"entity:PROPS"	
 					}
 				}
 			}
@@ -133,24 +127,11 @@
 				}
 			}
 		},
-		"404":{
+		"error":{
+			"head":{"hidden":true, "title":"Ошибка"},
 			"layout":{
 				"index:ROOT":{
-					"MAIN":"controller:ER404"
-				}
-			}
-		},
-		"403":{
-			"layout":{
-				"index:ROOT":{
-					"MAIN":"controller:ER403"
-				}
-			}
-		},
-		"500":{
-			"layout":{
-				"index:ROOT":{
-					"MAIN":"controller:ER500"
+					"MAIN":"controller:ERROR"
 				}
 			}
 		}

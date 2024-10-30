@@ -148,7 +148,7 @@ const ERRORS = {
 	"500":"Ошибка на сервере"
 }
 controller.ERROR = (data, env) => `
-	<h1>${env.bread.error}</h1>
+	<h1>${env.bread.error || 'Здесь будет код ошибки'}</h1>
 	<p>${ERRORS[env.bread.error] || 'Что-то пошло не так...'}</p>
 	<p>${env.host}<b>${env.bread.end}</b>
 `
