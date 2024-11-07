@@ -64,18 +64,96 @@ rest.addAction('set-prop-switch-prop', ['admin'], async view => {
 	
 	const db = await view.get('db')
 	const prop_id = await view.get('prop_id#required') 
-	const prop = await view.get('propprop#required')
+	const propname = await view.get('propprop#required')
+	if (propname == 'multi') {
+		const value = await db.col(`
+			SELECT ${propname} + 0 FROM sources_props
+			WHERE prop_id = :prop_id
+		`, {prop_id})
+
+		const prop = await Sources.getProp(db, prop_id)
+		const entity = await Sources.getEntity(db, prop.entity_id)
+		if (entity.prop_id == prop.prop_id && !value) return view.err('Ключевое свойство может быть только с одним значением')
+	}
 	await db.exec(`
 		UPDATE sources_props
-		SET ${prop} = IF(${prop},0,1)
+		SET ${propname} = IF(${propname},0,1)
 		WHERE prop_id = :prop_id
 	`, {prop_id})
 
 	view.ans.value = await db.col(`
-		SELECT ${prop} + 0 FROM sources_props
+		SELECT ${propname} + 0 FROM sources_props
 		WHERE prop_id = :prop_id
-	`, {prop_id})	
+	`, {prop_id})
 	
+	return view.ret()
+})
+rest.addAction('set-custom-sheet-delete', ['admin'], async view => {
+	const db = await view.get('db')
+	const source_id = await view.get('source_id#required')
+	const sheet_title = await view.get('title#required')
+	
+	
+	await db.exec(`
+		DELETE FROM sources_custom_sheets 
+   		WHERE source_id = :source_id
+   			and sheet_title = :sheet_title
+	`, {source_id, sheet_title})
+
+	return view.ret()
+})
+rest.addAction('set-inter-delete', ['admin'], async view => {
+	const db = await view.get('db')
+	const id = await view.get('id#required')
+	const entity_master_id = await db.col('select entity_id from sources_entities where entity_id=:id', {id})
+	const entity_slave_id = await view.get('entity_id#required')	
+	
+	await db.exec(`
+		DELETE FROM sources_intersections 
+   		WHERE entity_master_id = :entity_master_id
+   			and entity_slave_id = :entity_slave_id
+	`, {entity_master_id, entity_slave_id})
+
+	return view.ret()
+})
+rest.addAction('set-inter-prop', ['admin'], async view => {
+	const db = await view.get('db')
+	const id = await view.get('id#required')
+	const entity_master_id = await db.col('select entity_id from sources_entities where entity_id=:id', {id})
+	const entity_slave_id = await view.get('entity_id#required')
+	const prop_master_id = await view.get('prop_id#required')
+	const prop = await Sources.getProp(db, prop_master_id)
+	if (prop.type != 'value') return view.err('Тип свойства обязательно value')
+	if (prop.entity_id != entity_master_id) return view.err('Подходит только свойства текущей сущности')
+	
+	const tpl = await import('/-sources/entity.html.js')
+	view.data.value = tpl.showInterProp(prop)
+	//view.data.value = prop.prop_title
+	await db.exec(`
+		UPDATE sources_intersections 
+		SET prop_master_id = :prop_master_id
+   		WHERE entity_master_id = :entity_master_id
+   			and entity_slave_id = :entity_slave_id
+	`, {entity_master_id, entity_slave_id, prop_master_id})
+
+	return view.ret()
+})
+rest.addAction('set-entity-intersection', ['admin'], async view => {
+	const db = await view.get('db')
+	const id = await view.get('id#required')
+	const entity_master_id = await db.col('select entity_id from sources_entities where entity_id=:id', {id})
+	if (!entity_master_id) return view.err('Не найдена сущность')
+	const entity_slave_id = await view.get('entity_id#required')
+	const prop_master_id = await db.col(`
+		SELECT prop_id
+		FROM sources_props
+		WHERE type = 'value' and entity_id = :entity_master_id
+	`, {entity_master_id})
+	if (!prop_master_id) return view.err('Требуется хотябы одно свойство value, которое можно было бы использовать для связи')
+	await db.exec(`
+		INSERT IGNORE INTO sources_intersections (entity_master_id, entity_slave_id, prop_master_id)
+   		VALUES (:entity_master_id, :entity_slave_id, :prop_master_id)
+	`, {entity_master_id, entity_slave_id, prop_master_id})
 	return view.ret()
 })
 rest.addAction('set-prop-type', ['admin'], async view => {
@@ -87,6 +165,12 @@ rest.addAction('set-prop-type', ['admin'], async view => {
 	const prop = await Sources.getProp(db, prop_id)
 	const entity = await Sources.getEntity(db, prop.entity_id)
 	if (entity.prop_id == prop.prop_id && type != 'value') return view.err('Нельзя изменить тип ключевого свойства')
+	const is_used_title = await db.col(`
+		SELECT en.entity_title
+		FROM sources_intersections i, sources_entities en
+		where i.prop_master_id = :prop_id and i.entity_master_id = en.entity_id
+	`, prop)
+	if (is_used_title && type != 'value') return view.err(`Свойство определяет дополнение у ${is_used_title}, должно быть обязательно volume.`)
 
 	await db.exec(`
 		UPDATE sources_props
@@ -173,6 +257,11 @@ rest.addAction('set-prop-ordain', ['admin'], async view => {
 	await Sources.reorderProps(db, prop.entity_id)
 	return view.ret()
 })
+rest.addAction('set-reset-start', async (view) => {
+	const db = await rest.data('db') //База данных могла не перезапуститься и процесс загрузки ещё идёт
+	await db.exec(`UPDATE sources_sources SET date_start = null`)
+	return view.ret()
+})
 rest.addAction('set-source-renovate', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
@@ -181,7 +270,7 @@ rest.addAction('set-source-renovate', ['admin'], async view => {
 	if (source.error) return view.ret('Для загрузки необходимо устранить ошибку')
 	if (!source.renovate) return view.ret('Актуализация запрещена')
 	if (!source.need) return view.ret(source.status)
-	await Sources.load(db, source, visitor)
+	await Sources.load(db, source, view.visitor)
 	return view.ret('Загрузка запущена!')
 })
 rest.addAction('set-source-load', ['admin'], async view => {
@@ -310,22 +399,25 @@ rest.addAction('set-prop-delete', ['admin'], async view => {
 		FROM sources_intersections i, 
 			sources_props mpr, 
 			sources_entities men, 
-			sources_props spr, 
 			sources_entities sen
-		WHERE (i.prop_master_id = :prop_id or i.prop_slave_id = :prop_id) 
+		WHERE i.prop_master_id = :prop_id
 			and mpr.prop_id = i.prop_master_id
-			and spr.prop_id = i.prop_slave_id
 			and men.entity_id = mpr.entity_id
-			and sen.entity_id = spr.entity_id
+			and sen.entity_id = i.entity_slave_id
 		LIMIT 1
 	`, {prop_id})
 	if (intersections) return view.err('Свойство связывает источики ' + intersections.join(' и '))
 
 	await db.exec(`
-		DELETE cco, pr
-		FROM sources_props pr
-			LEFT JOIN sources_custom_cols cco on cco.prop_id = pr.prop_id
-   		WHERE pr.prop_id = :prop_id
+		DELETE pr, cva
+		FROM sources_props pr, sources_custom_values cva
+   		WHERE pr.prop_id = :prop_id and pr.prop_id = cva.prop_id
+	`, {prop_id})
+
+	await db.exec(`
+		UPDATE sources_custom_cols
+		SET prop_id = null
+   		WHERE prop_id = :prop_id
 	`, {prop_id})
 	return view.ret()
 
@@ -434,7 +526,7 @@ rest.addAction('set-source-entity-create', ['admin'], async view => {
 	const entity_id = view.ans.entity_id = await db.insertId(`
 		INSERT INTO sources_entities (entity_title, entity_nick)
    		VALUES (:entity_title, :entity_nick)
-   		ON DUPLICATE KEY UPDATE entity_title = VALUES(entity_title)
+   		ON DUPLICATE KEY UPDATE entity_title = VALUES(entity_title), entity_id = VALUES(entity_id)
 	`, {entity_title, entity_nick})
 
 	await Sources.reorderEntities(db)
@@ -456,6 +548,7 @@ rest.addAction('set-entity-prop', ['admin'], async view => {
 	const prop_id = await view.get('prop_id#required')
 	const prop = await Sources.getProp(db, prop_id)
 	if (prop.type != 'value') return view.err('Тип свойства для ключа может быть только value')
+	if (prop.multi) return view.err('Ключевое свойство может быть только с одним значением, выбрано свойство которое может быть с несколькими значениями.')
 	await db.exec(`
 		UPDATE sources_entities
 		SET prop_id = :prop_id
@@ -463,8 +556,9 @@ rest.addAction('set-entity-prop', ['admin'], async view => {
 	`, {entity_id, prop_id})
 
 	
-	const tpl = await import('/-sources/entity.html.js')
-	view.ans.value = tpl.showProp(prop)
+	// const tpl = await import('/-sources/entity.html.js')
+	// view.ans.value = tpl.showProp(prop)
+	view.ans.value = prop.prop_title
 	return view.ret()
 })
 rest.addAction('set-entity-prop-create', ['admin'], async view => {
@@ -477,7 +571,7 @@ rest.addAction('set-entity-prop-create', ['admin'], async view => {
 	const prop_id = view.ans.prop_id = await db.insertId(`
 		INSERT INTO sources_props (entity_id, prop_title, prop_nick, type)
    		VALUES (:entity_id, :prop_title, :prop_nick, 'value')
-   		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title)
+   		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title), prop_id = VALUES(prop_id)
 	`, {entity_id, prop_title, prop_nick})
 
 	await Sources.reorderProps(db, entity_id)
@@ -503,7 +597,7 @@ rest.addAction('set-prop-create', ['admin'], async view => {
 	const prop_id = view.ans.prop_id = await db.insertId(`
 		INSERT INTO sources_props (entity_id, prop_title, prop_nick, type)
    		VALUES (:entity_id, :prop_title, :prop_nick, 'value')
-   		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title)
+   		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title), prop_id = VALUES(prop_id)
 	`, {entity_id, prop_title, prop_nick})
 
 	await Sources.reorderProps(db, entity_id)
@@ -588,7 +682,7 @@ rest.addAction('set-entity-add', ['admin'], async view => {
 	const entity_id = view.ans.entity_id = await db.insertId(`
 		INSERT INTO sources_entities (entity_title, entity_nick, entity_plural)
    		VALUES (:entity_title, :entity_nick, :entity_plural)
-   		ON DUPLICATE KEY UPDATE entity_title = VALUES(entity_title), entity_nick = VALUES(entity_nick)
+   		ON DUPLICATE KEY UPDATE entity_title = VALUES(entity_title), entity_id = VALUES(entity_id)
 	`, {entity_title, entity_nick, entity_plural})
 	
 	await Sources.reorderEntities(db)
@@ -604,7 +698,7 @@ rest.addAction('set-source-add', ['admin'], async view => {
 	const source_id = view.ans.source_id = await db.insertId(`
 		INSERT INTO sources_sources (source_title, source_nick)
    		VALUES (:source_title, :source_nick)
-   		ON DUPLICATE KEY UPDATE source_title = VALUES(source_title)
+   		ON DUPLICATE KEY UPDATE source_title = VALUES(source_title), source_id = VALUES(source_id)
 	`, {source_title, source_nick})
 	
 	const source = await Sources.getSource(db, source_id)

@@ -5,28 +5,17 @@ export const ROOT = (data, env, entity = data.entity) => err(data, env, ["ENTITY
 	<div id="ENTITY"></div>
 `
 export const ENTITY = (data, env, entity = data.entity) => !data.result ? '' : `
-	<h1>Сущность: ${entity.entity_title}</h1>
+	<div style="opacity:0.5; float:right">Сущность</div>
+	<h1>${entity.entity_title}</h1>
 	<table style="margin: 2em 0">
-		<tr>
-			<td>
-				Опубликовано
-			</td>
-			<td>
-				${field.switch({
-					action: '/-sources/set-entity-switch-prop', 
-					value: entity.represent_entity, 
-					values: {"":"Нет", "1":"Да"},
-					args: {entity_id: entity.entity_id, entityprop: 'represent_entity'}
-				})}
-			</td>
-		</tr>
+		
 		<tr>
 			<td>Ключевое свойство</td>
 			<td>
 				${field.search({
 					cls: 'a',
 					search:'/-sources/get-entity-prop-search',
-					value: showProp(entity), 
+					value: entity.prop_title || 'Не указано',
 					label: 'Ключ сущности', 
 					type: 'text',
 					name: 'prop_id',
@@ -36,9 +25,40 @@ export const ENTITY = (data, env, entity = data.entity) => !data.result ? '' : `
 				})}
 			</td>
 		</tr>
-		
+		<tr>
+			<td>Подключена в</td>
+			<td>
+				${data.i_am_being_used.map(entity => showEntityLink(data, env, entity)).join(", ") || "Нет"}
+			</td>
+		</tr>
 	</table>
+
+	
+	<table>
+		<thead>
+			<tr>
+				<td>Подключает</td><td>Свойство</td><td></td>
+			</tr>
+		</thead>
+		<tbody>
+			${data.i_am_using.map(inter => showTrInter(data, env, entity, inter)).join('')}
+		</tbody>
+	</table>
+	<div style="margin:2em 0 4em; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
+		${field.search({
+			search:'/-sources/get-entity-search',
+			value: 'Добавить подкючение', 
+			label: 'Выберите сущность', 
+			type: 'text',
+			name: 'entity_id',
+			find: 'entity_id',
+			action: '/-sources/set-entity-intersection',
+			args: {id: entity.entity_id},
+			reloaddiv: env.layer.div
+		})}
+	</div>
 	${showComment(data, env, entity)}
+
 
 	<div id="PROPS"></div>
 
@@ -79,8 +99,70 @@ export const ENTITY = (data, env, entity = data.entity) => !data.result ? '' : `
 			go: 'entities'
 		})}
 	</div>
+	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
+		<div>
+			Сущности ${field.switch({
+				action: '/-sources/set-entity-switch-prop', 
+				value: entity.represent_entity, 
+				values: {"":"скрыты", "1":"опубликованы"},
+				args: {entity_id: entity.entity_id, entityprop: 'represent_entity'}
+			})}.<br>
+			По умолчанию позиции ${field.switch({
+				action: '/-sources/set-entity-switch-prop', 
+				value: entity.represent_items, 
+				values: {"":"скрыты", "1":"опубликованы"},
+				args: {entity_id: entity.entity_id, entityprop: 'represent_items'}
+			})}.
+			<br>
+			По умолчанию свойства ${field.switch({
+				action: '/-sources/set-entity-switch-prop', 
+				value: entity.represent_props, 
+				values: {"":"скрыты", "1":"опубликованы"},
+				args: {entity_id: entity.entity_id, entityprop: 'represent_props'}
+			})}.
+			<br>
+			По умолчанию значения ${field.switch({
+				action: '/-sources/set-entity-switch-prop', 
+				value: entity.represent_values, 
+				values: {"":"скрыты", "1":"опубликованы"},
+				args: {entity_id: entity.entity_id, entityprop: 'represent_values'}
+			})}.
+			
+
+			
+		</div>
+	</div>
 
 `
+const showTrInter = (data, env, entity, inter) => `
+	<tr>
+		<td><a href="entity/${inter.entity_id}">${inter.entity_title}</a></td>
+		<td>
+			${field.search({
+				cls: 'a',
+				search:'/-sources/get-inter-prop-search',
+				value: showInterProp(inter), 
+				label: 'Свойство с ключём', 
+				type: 'text',
+				name: 'prop_id',
+				find: 'prop_id',
+				action: '/-sources/set-inter-prop',
+				args: {entity_id: inter.entity_id, id: entity.entity_id}
+			})}
+		</td>
+		<td>
+			${field.button({
+				cls:"a",
+				label: 'X', 
+				confirm: 'Удалить связь с дополнением?',
+				action: '/-sources/set-inter-delete',
+				reloaddiv: env.layer.div,
+				args: {entity_id: inter.entity_id, id: entity.entity_id}
+			})}
+		</td>
+	</tr>
+`
+const showEntityLink = (data, env, entity) => `<a href="entity/${entity.entity_id}">${entity.entity_title}</a>`
 export const PROPS = (data, env) => !data.result ? '' : `
 	<table draggable="false" class="list" style="margin: 2em 0">
 		<thead>
@@ -142,8 +224,8 @@ const showTr = (data, env, prop) => `
 		</td>
 	</tr>
 `
-export const showProp = (entity) => !entity.prop_title ? 'Не указан' : `
-	${entity.prop_title}
+export const showInterProp = (entity) => `
+	${entity.prop_title} ${entity.multi ? '(несколько значений)' : '(одно значение)'}
 `
 const showComment = (data, env, entity) => `
 	<div style="margin: 1em 0">

@@ -5,7 +5,8 @@ export const ROOT = (data, env, entity = data.entity) => err(data, env, ["PROP"]
 	<div id="PROP"></div>
 `
 export const PROP = (data, env, prop = data.prop) => !data.result ? '' : `
-	<h1>Свойство: ${prop.prop_title}</h1>
+	<div style="opacity:0.5; float:right">Свойство</div>
+	<h1>${prop.prop_title}</h1>
 	<table style="margin: 2em 0">
 		<tr>
 			<td>

@@ -50,6 +50,25 @@ rest.addResponse('get-source-entity-search', ['admin'], async view => {
 	view.ans.count = list.length
 	return view.ret()
 })
+rest.addResponse('get-entity-search', ['admin'], async view => {
+	const db = await view.get('db')
+	const hash = await view.get('hash')
+	
+	const list = await db.all(`
+		SELECT entity_id, entity_title
+		FROM sources_entities
+		WHERE entity_nick like "%${hash.join('%" and entity_nick like "%')}%"
+	`)
+
+	view.ans.list = list.map(row => {
+		row['left'] = row.entity_title
+		row['right'] = ''
+		return row
+	})
+
+	view.ans.count = list.length
+	return view.ret()
+})
 rest.addResponse('get-entity-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hash = await view.get('hash')
@@ -80,6 +99,34 @@ rest.addResponse('get-entity-prop-search', ['admin'], async view => {
 		right: ''
 	})
 
+	view.ans.count = list.length
+	return view.ret()
+})
+rest.addResponse('get-inter-prop-search', ['admin'], async view => {
+	const db = await view.get('db')
+	const hash = await view.get('hash')
+	
+	const list = await db.all(`
+		SELECT prop_id, prop_title, type
+		FROM sources_props
+		WHERE prop_nick like "%${hash.join('%" and prop_nick like "%')}%"
+	`)
+
+	view.ans.list = list.map(row => {
+		row['left'] = row.prop_title
+		row['right'] = row.type
+		return row
+	})
+	if (hash.length) {
+		view.ans.list.push({
+			confirm:'Cоздать новое свойство?',
+			action:`/-sources/set-entity-prop-create`,
+			search_value: true, 
+			left: '<span class="a">Создать свойство</span>',
+			right: ''
+		})
+	}
+	
 	view.ans.count = list.length
 	return view.ret()
 })

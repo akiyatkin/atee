@@ -141,13 +141,14 @@ const Server = {
 
 						status = Math.max(info.status, status)
 					} catch (e) {
-						status = e.status
+						status = e.status || 500
 						//const bread = new Bread('error/' + e.status, {}, '/error/' + e.status, json.root) //root+path+get = search
 						const root = json.root ? '/' + json.root + '/' : '/'
 						req.nt = root + 'error'
 						const a = await rest.get('get-layers', req, visitor) //, visitor
 						json = a.data
 						bread.error = status
+						if (status != 404) console.log(e)
 						try {
 							info = await controller(json, visitor, bread)
 						} catch(e) {

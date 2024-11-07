@@ -12,10 +12,11 @@ rest.extra(rest_db)
 import rest_funcs from '/-rest/rest.funcs.js'
 rest.extra(rest_funcs)
 
-rest.addArgument('id', ['mint#required'])
+rest.addArgument('id', ['mint'])
+rest.addVariable('id#required', ['id', 'required'])
 rest.addArgument('next_id', ['mint'])
 rest.addArgument('sourceprop', (view, prop) => {
-	if (~['dependent','represent_source','renovate'].indexOf(prop)) return prop
+	if (~['dependent','represent_source','renovate','represent_sheets','represent_rows', 'represent_cells', 'represent_cols'].indexOf(prop)) return prop
 	return null
 })
 rest.addArgument('propprop', (view, prop) => {
@@ -23,7 +24,7 @@ rest.addArgument('propprop', (view, prop) => {
 	return null
 })
 rest.addArgument('entityprop', (view, prop) => {
-	if (~['represent_entity'].indexOf(prop)) return prop
+	if (~['represent_entity','represent_props','represent_values','represent_items'].indexOf(prop)) return prop
 	return null
 })
 
@@ -46,6 +47,7 @@ rest.addArgument('date', (view, date) => {
 	}
 })
 rest.addArgument('title', ['escape'])
+rest.addVariable('title#required', ['title', 'required'])
 rest.addArgument('comment', ['string'])
 rest.addArgument('source_id', ['sint'], async (view, source_id) => {
 	if (!source_id) return null

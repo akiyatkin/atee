@@ -55,9 +55,8 @@ rest.addAction('set-access', async view => {
 rest.addResponse('set-update', async view => {
 	await view.gets(['admin'])
 	const time = new Date();
-	const r = await utimes('../reload', time, time).catch(r => false)
-	if (r) return view.ret()
-	return view.err()
+	await utimes('../reload', time, time).catch(r => false)
+	return view.ret('Выполнена команда touch ../reload. Сервер перезапуститсь если такой механизм поддерживается.')
 })
 
 
