@@ -10,3 +10,33 @@
 .status_need {
 	background-color: #0000FF0f
 }
+
+.represent-custom-1 {
+
+}
+.represent-custom-0 {
+
+}
+.represent-def-0 {
+	opacity:0.5;
+}
+.represent-def-1 {
+	opacity:0.5;
+}
+
+.represent-def-0 .beam {
+	transition: opacity 0.1s;
+	opacity: 1;
+}
+.represent-custom-0 .beam {
+	transition: opacity 0.1s;
+	opacity: 1;
+}
+.represent-def-1 .beam {
+	transition: opacity 0.1s;
+	opacity: 0;
+}
+.represent-custom-1 .beam {
+	transition: opacity 0.1s;
+	opacity: 0;
+}

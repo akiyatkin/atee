@@ -123,11 +123,10 @@ Sources.recalcSheets = async (db, source) => { //Уже есть sheets, cols, c
 		await Sources.recalcRepresentItemByEntity(db, entity)
 		await Sources.recalcRepresentInstanceByEntity(db, entity)
 	}
-	await Sources.recalcRepresentBySource(db, source)
+	await Sources.recalcRepresent(db)
 	await Sources.recalcWinner(db)
-	for (const entity_id of entities) {
-		await Sources.recalcSearchByEntityIdAndSource(db, entity_id, source)
-	}
+	await Sources.recalcSearchBySourceId(db, source.source_id)
+	
 	
 	/*
 		represent_sheet (represent_custom_sheet, represent_sheets)
@@ -437,7 +436,7 @@ Sources.recalcRepresentCellBySource = async (db, source) => {
 	}
 	
 }
-Sources.recalcRepresentBySource = async (db, source) => {
+Sources.recalcRepresent = async (db, source) => {
 	/*
 	represent (
 			
@@ -468,13 +467,13 @@ Sources.recalcRepresentBySource = async (db, source) => {
 			and co.represent_col 
 			and pr.represent_prop 
 			and it.represent_instance
-		WHERE ce.source_id = :source_id
-		and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
+		WHERE 
+		sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
 		and co.source_id = ce.source_id and co.sheet_index = ce.sheet_index and co.col_index = ce.col_index
 		and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
 		and pr.prop_id = co.prop_id
 		and it.key_id = ro.key_id and it.entity_id = sh.entity_id
-	`, source)	
+	`)
 }
 // Sources.recalcRepresentItemBySourceId = async (db, source_id) => {
 // 	const entities = await db.colAll(`
@@ -651,17 +650,27 @@ Sources.recalcRepresentValueByEntity = async (db, entity) => {
 	}
 	
 }
-// Sources.recalcSearchBySourceId = async (db, source_id) => {
-// 	const entities = await db.colAll(`
-// 		SELECT distinct entity_id FROM sources_sheets
-// 		WHERE source_id = :source_id
-// 	`, {source_id})
-// 	for (const entity_id of entities) {
-// 		await Sources.recalcSearchByEntityAndSourceId(db, entity_id, source_id)
-// 	}
-// }
-Sources.recalcSearchByEntityIdAndSource = async (db, entity_id, source) => {
-	const {source_id} = source
+
+Sources.recalcSearchByEntityId = async (db, entity_id) => {
+	const sources = await db.colAll(`
+		SELECT distinct source_id FROM sources_sheets
+		WHERE entity_id = :entity_id
+	`, {entity_id})
+	for (const source_id of sources) {
+		await Sources.recalcSearchByEntityIdAndSourceId(db, entity_id, source_id)
+	}
+}
+Sources.recalcSearchBySourceId = async (db, source_id) => {
+	const entities = await db.colAll(`
+		SELECT distinct entity_id FROM sources_sheets
+		WHERE source_id = :source_id
+	`, {source_id})
+	for (const entity_id of entities) {
+		await Sources.recalcSearchByEntityIdAndSourceId(db, entity_id, source_id)
+	}
+}
+Sources.recalcSearchByEntityIdAndSourceId = async (db, entity_id, source_id) => {
+
 	const losers = await db.colAll(`
 		SELECT distinct d.key_id
 		FROM sources_data d

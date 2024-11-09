@@ -137,16 +137,22 @@ rest.addResponse('source', ['admin'], async view => {
 
 
 	const sheets = {}
-	for (const sheet of loaded_sheets) {
-		const merged = sheets[sheet.sheet_title] ??= {sheet_title: sheet.sheet_title}
-		merged.loaded = sheet
-		delete sheet.sheet_title
+	for (const loaded of loaded_sheets) {
+		const sheet = sheets[loaded.sheet_title] ??= {sheet_title: loaded.sheet_title}
+		sheet.loaded = loaded
+		if (loaded.entity_title) sheet.entity_title = loaded.entity_title
+		delete loaded.sheet_title
 	}
-	for (const sheet of custom_sheets) {
-		const merged = sheets[sheet.sheet_title] ??= {sheet_title: sheet.sheet_title}
-		merged.custom = sheet
-		delete sheet.sheet_title
+	for (const custom of custom_sheets) {
+		const sheet = sheets[custom.sheet_title] ??= {sheet_title: custom.sheet_title}
+		sheet.custom = custom
+		if (custom.entity_title) sheet.entity_title = custom.entity_title
+		delete custom.sheet_title
 	}
 	view.data.sheets = Object.values(sheets)
+	for (const sheet of view.data.sheets) {
+		sheet.represent_sheet_cls = getEyeCls(sheet.custom?.represent_custom_sheet, source.represent_sheets)
+	}
 	return view.ret()
 })
+const getEyeCls = (newvalue, def_value) => newvalue == null ? `represent-def-${def_value}` : `represent-custom-${newvalue}`

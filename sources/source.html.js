@@ -43,20 +43,13 @@ const showDatas = (data, env, source) => `
 `
 
 
+
 const showSheet = (data, env, source, sheet) => `
 	<div style="margin:1em 0">
-		
-
-		${svg.eye('sheet', sheet.custom?.represent_custom_sheet, data.source.represent_sheets)}		
-		${sheet.sheet_title} 
-		${sheet.custom?.represent_custom_sheet ?? sheet.loaded?.represent_sheet ?? '-'}
-		<br>
-		 видим, невидим, (видим, невидим)
-		<br>
-		
-
-		<span style="float:right">
-			${!sheet.custom ? '' : field.button({
+		<button title="Изменить видимость листа" class="transparent ${sheet.represent_sheet_cls}">${svg.eye()}</button>
+		${sheet.sheet_title} (${sheet.entity_title})
+		<span class="remove" style="float:right; ${!sheet.custom ? 'display:none' : 'display: block'}">
+			${field.button({
 				confirm:'Удалить настройки пользователя?',
 				cls:'transparent',
 				label:svgClean(),
@@ -65,7 +58,20 @@ const showSheet = (data, env, source, sheet) => `
 				reloaddiv: env.layer.div
 			})}
 		</span>
-		
+		<script>
+			(div => {
+				const btn = div.getElementsByTagName('button')[0]
+				const remove = div.getElementsByClassName('remove')[0]
+				btn.addEventListener('click', async () => {
+					const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
+					const data = await senditmsg(btn, '/-sources/set-custom-sheet-switch', {source_id: ${source.source_id}, sheet_title: ${JSON.stringify(sheet.sheet_title)}}) 
+					if (!data.result) return
+					btn.classList.remove('represent-custom-1', 'represent-custom-0', 'represent-def-0', 'represent-def-1')
+					btn.classList.add(data.cls)
+					remove.style.display = 'block'
+				})
+			})(document.currentScript.parentElement)
+		</script>
 	</div>
 `
 const svgClean = () => `
