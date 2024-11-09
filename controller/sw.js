@@ -18,7 +18,7 @@ this.addEventListener('message', event => {
 		ZERO_ACCESS_TIME = event.data.access_time
 		ZERO_UPDATE_TIME = event.data.update_time
 	} else {
-		console.log('SW update', event.data)
+		console.log('SW update')
 		ACCESS_TIME = event.data.access_time
 		UPDATE_TIME = event.data.update_time
 	}
