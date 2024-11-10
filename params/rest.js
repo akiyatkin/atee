@@ -181,7 +181,8 @@ rest.addResponse('get-head', async view => {
 	const path = await view.get('path') //Без слэша
 	const table = await view.get('table')
 	for (const row of table.rows_body) {
-		if ('/' + path == row[table.indexes.href]) {
+		const href = row[table.indexes.href] || ''
+		if (path == href) {
 			const item = {
 				"title": row[table.indexes.title],
 				"description": row[table.indexes.description],
