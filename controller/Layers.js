@@ -56,7 +56,7 @@ const spread = (rule, parent) => { //всё что в layout root перенос
 
 const maketree = (layer, layout, rule) => {
 	if (!layout) return
-	//if (layer.name == 'params') 
+	// if (layer.name == 'params')
 	const tsf = layer.tsf
 	if (!layout[tsf]) return
 	layer.layers = Object.values(layout[tsf])

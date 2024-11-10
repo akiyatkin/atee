@@ -6,7 +6,7 @@ sitemap.HEAD = (head, env) => `
 	<title>${forattr(head?.title)}</title>
 	<meta name="description" content="${forattr(head?.description)}">
 	<meta name="keywords" content="${forattr(head?.keywords)}">
-	<meta name="robots" content="${forattr(head?.robots) || 'all'}" />
+	<meta name="robots" content="${head?.robots ? forattr(head?.robots) : (head?.hidden ? 'noindex,nofollow' : 'all')}" />
 	<meta property="og:image" content="${head?.image_src ?? ''}">
 	<link rel="image_src" href="${head?.image_src ?? ''}">
 	<link rel="canonical" href="https://${env.host}${head.canonical??''}">
@@ -56,6 +56,7 @@ sitemap.HEAD = (head, env) => `
 			const data = await fetch(nexthead).then(res => res.json())
 			if (!data.canonical) data.canonical = location.href
 			for (const rule in data) rules[rule]?.(data[rule])
+			if (data.hidden && !data.robots) rules.robots('noindex,nofollow')
 			const event = new CustomEvent('crossing-sitemap-headready', {detail: env})
 			window.dispatchEvent(event)
 		})
@@ -75,10 +76,10 @@ sitemap.SITEMAP_XML = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
 	</urlset>
 `
 const showHeading = (data, env, heading) => `
-	${Object.entries(heading.childs).map(([crumb, obj]) => showUrl(data, env, obj.href || heading.href, crumb, obj)).join('')}
+	${Object.entries(heading.items).map(([href, head]) => showUrl(data, env, href, head)).join('')}
 `
-const showUrl = (data, env, href, crumb, obj) => `<url>
-	<loc>https://${env.host}${href ? '/' + href : ''}/${crumb}</loc>
+const showUrl = (data, env, href, head) => `<url>
+	<loc>https://${env.host}${href ? '/' : ''}${href}</loc>
 	<lastmod>${data.modified}</lastmod>
 	<changefreq>monthly</changefreq>
 	<priority>0.5</priority>

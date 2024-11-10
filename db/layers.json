@@ -9,24 +9,11 @@
 		}
 	},
 	"childs":{
-		"404":{
+		"error":{
+			"head":{"hidden":true, "title":"Ошибка"},
 			"layout":{
 				"index:ROOT":{
-					"MAIN":"controller:ER404"
-				}
-			}
-		},
-		"403":{
-			"layout":{
-				"index:ROOT":{
-					"MAIN":"controller:ER403"
-				}
-			}
-		},
-		"500":{
-			"layout":{
-				"index:ROOT":{
-					"MAIN":"controller:ER500"
+					"CONTENT":"controller:ERROR"
 				}
 			}
 		},
@@ -37,9 +24,6 @@
 				}
 			}
 		}
-	},
-	"parsedtpl":{
-		
 	},
 	"json":{
 		"layout:ROOT":"/-db/get-state",

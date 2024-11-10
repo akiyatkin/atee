@@ -131,16 +131,6 @@ controller.HEAD = (data, env) => env.bread.error ? '' :
 		</script>
 `
 
-controller.ER500 = (data, env) => `	
-	<p>${env.host}<b>${env.bread.end}</b> &mdash; ошибка на сервере, код 500</p>
-`
-controller.ER404 = (data, env) => `
-	<p>${env.host}<b>${env.bread.end}</b> &mdash; страница не найдена, код 404</p>
-`
-controller.ER403 = (data, env) => `
-	<p>${env.host}<b>${env.bread.end}</b> &mdash; доступ закрыт, код 403</p>
-`
-
 const ERRORS = {
 	"400":"Некорректный запрос",
 	"404":"Страница не найдена",

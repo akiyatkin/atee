@@ -58,7 +58,7 @@ const getTable = async (name, eternal) => {
 rest.addVariable('table', async view => {
 	const name = await view.get('name#required')
 	
-	const table = await getTable(name, !!~view.visitor.client.host.indexOf('127.0.0.1'))
+	const table = await getTable(name) //!!~view.visitor.client.host.indexOf('127.0.0.1')
 	if (!table) return view.err('Ошибка в данных')
 	return table
 
@@ -72,7 +72,7 @@ rest.addVariable('table', async view => {
 rest.addResponse('get-blocks', async view => {
 	const path = '/' + await view.get('path') //Без слэша
 
-	const rel = await getTable('REL', !!~view.visitor.client.host.indexOf('127.0.0.1'))	
+	const rel = await getTable('REL') //, !!~view.visitor.client.host.indexOf('127.0.0.1')
 
 		
 	const list = []
@@ -87,7 +87,7 @@ rest.addResponse('get-blocks', async view => {
 	})
 	unique(list)
 
-	const seo = await getTable('SEO', !!~view.visitor.client.host.indexOf('127.0.0.1'))
+	const seo = await getTable('SEO') //, !!~view.visitor.client.host.indexOf('127.0.0.1')
 
 	const blocks = list.map(path => { //path со слэшом
 		const row = seo.rows_body.find(row => row[seo.indexes.path] == path)
@@ -101,9 +101,9 @@ rest.addResponse('get-blocks', async view => {
 	}).filter(row => row)
 	
 	
-	view.ans.descr = rel.descr
-	view.ans.path = path
-	view.ans.blocks = blocks
+	view.data.descr = rel.descr
+	view.data.path = path
+	view.data.blocks = blocks
 	return view.ret()
 })
 
@@ -151,7 +151,7 @@ rest.addResponse('get-tables', async view => {
 		}
 		list.push({name, descr, head_titles, indexes, rows_body})
 	}
-	view.ans.list = list
+	view.data.list = list
 	return view.ret()
 })
 rest.addResponse('get-sheets', async view => {
@@ -166,14 +166,14 @@ rest.addResponse('get-sheets', async view => {
 	} else {
 		return view.err('Некорректный конфиг', 500)
 	}
-	view.ans.sheets = sheets
+	view.data.sheets = sheets
 	return view.ret()
 })
 
 
 rest.addResponse('get-table', async view => {
 	const table = await view.get('table')
-	view.ans.table = table
+	view.data.table = table
 	return view.ret()
 })
 
@@ -181,35 +181,28 @@ rest.addResponse('get-head', async view => {
 	const path = await view.get('path') //Без слэша
 	const table = await view.get('table')
 	for (const row of table.rows_body) {
-		const href = row[table.indexes.href]
-		const child = row[table.indexes.child]
-		if (child[0] == '.') continue
-		if ((href ? href + '/' : '') + child == path) {
-			const childobj = {
-				"title": row[table.indexes.title] || '',
-				"description": row[table.indexes.description] || '',
-				"keywords": row[table.indexes.keywords] || '',
-				"robots": row[table.indexes.robots] || '',
-				"key": row[table.indexes.key] || '',
-				"image_src": row[table.indexes['image-src']] || ''
+		if ('/' + path == row[table.indexes.href]) {
+			const item = {
+				"title": row[table.indexes.title],
+				"description": row[table.indexes.description],
+				"keywords": row[table.indexes.keywords],
+				"robots": row[table.indexes.robots],
+				"key": row[table.indexes.key],
+				"image_src": row[table.indexes['image-src']]
 			}
-			for (const i in childobj) if (!childobj[i]) delete childobj[i]
-			Object.assign(view.ans, childobj)
+			for (const i in item) if (!item[i]) delete item[i]
+			Object.assign(view.data, item)
 			return view.ret()
 		}
 	}
 	return view.err()
 })
 rest.addResponse('get-sitemap', async view => {
-	
 	const table = await view.get('table')
 	const headings = {}
 	for (const row of table.rows_body) {
-		const title = row[table.indexes.group]
-		const child = row[table.indexes.child]
-		if (child[0] == '.') continue
-		const childobj = {
-			"href": row[table.indexes.href] || '',
+		const href = row[table.indexes.href] || ''
+		const item = {
 			"title": row[table.indexes.title] || '',
 			"description": row[table.indexes.description] || '',
 			"keywords": row[table.indexes.keywords] || '',
@@ -217,31 +210,30 @@ rest.addResponse('get-sitemap', async view => {
 			"key": row[table.indexes.key] || '',
 			"image_src": row[table.indexes['image-src']] || ''
 		}
-		for (const i in childobj) if (!childobj[i]) delete childobj[i]
-
+		for (const i in item) if (!item[i]) delete item[i]
+		const title = row[table.indexes.group] || ''
 		const heading = headings[nicked(title)] ??= {
 			title,
-			childs:{}
+			items:{}
 		}
-		heading.childs[child] = childobj
+		heading.items[href] = item
 	}
-	view.ans.headings = headings
+	view.data.headings = headings
 
 	return view.ret()
 })
 rest.addResponse('get-sitemap-root', async view => {
 	const headings = await view.get('headings')
-	Object.assign(view.ans, headings[''] || {})
-	
-	view.ans.headings = Object.entries(headings).map(([nick, heading]) => ({title: heading.title, nick}))
+	view.data.heading = headings['']	
+	view.data.headings = Object.entries(headings).filter(([nick, heading]) => nick).map(([nick, heading]) => ({title: heading.title, nick}))
 	return view.ret()
 })
 
 
 rest.addResponse('get-sitemap-group', async view => {
-	const headings = await view.get('headings')
+	const headings = {...await view.get('headings')}
 	const group = await view.get('group')
-	Object.assign(view.ans, headings[group] || {})
+	Object.assign(view.data, headings[group || ''] || {})
 	return view.ret()
 })
 
@@ -299,7 +291,7 @@ rest.addResponse('get-menu', async view => {
 	})
 	
 	data.forEach(obj => delete obj.parent)
-	view.ans.menu = root
+	view.data.menu = root
 	return view.ret()
 })
 

@@ -9,7 +9,7 @@ const showList = (data, env) => `
 		${data.list.map(link).join(', ')}.
 	</p>
 `
-const showLink = item => `<a href="/${item.href || '/'}">${item.name||item.title}</a>`
+const showLink = item => `<a href="/${item.href}">${item.name||item.title}</a>`
 const showBlock = (data, env, heading) => `
 	${heading.title ? showHeading(data, env, heading) : ''}
 	<p>
@@ -18,7 +18,7 @@ const showBlock = (data, env, heading) => `
 				...heading.childs[next], 
 				href: heading.childs[next].href ? (heading.childs[next].href  + '/' + next) : (heading.href ? heading.href  + '/' + next : next)
 			})
-		).join(', ')}.
+		).join(', ')}${Object.keys(heading.childs).length && '.' || ''}
 	</p>
 `
 const showHeading = (data, env, heading) => `

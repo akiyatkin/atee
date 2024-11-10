@@ -55,11 +55,11 @@
 				}
 			}
 		},
-		"404":{
-			"head":{ "hidden":true, "title":"404 - Страница не найдена" },
+		"error":{
+			"head":{"hidden":true, "title":"Ошибка"},
 			"layout":{
 				"index:ROOT":{
-					"BODY":"controller:ER404"
+					"BODY":"controller:ERROR"
 				}
 			}
 		}

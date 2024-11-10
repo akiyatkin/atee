@@ -51,6 +51,7 @@ rest.addArgument('partner', async (view, partner_nick) => {
 	return data
 })
 rest.addArgument('value', ['string'], (view, v) => v || '')
+rest.addArgument('rel', ['string'], (view, v) => v || '') //чаще всего catalog, но может быть и shop/catalog или что угодно
 
 rest.addVariable('base', async (view) => { //depricated
 	const { db } = await view.gets(['db'])

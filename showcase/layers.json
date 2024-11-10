@@ -96,24 +96,11 @@
 				}
 			}
 		},
-		"404":{
+		"error":{
+			"head":{"hidden":true, "title":"Ошибка"},
 			"layout":{
 				"index:ROOT":{
-					"CONTENT":"controller:ER404"
-				}
-			}
-		},
-		"403":{
-			"layout":{
-				"index:ROOT":{
-					"CONTENT":"controller:ER403"
-				}
-			}
-		},
-		"500":{
-			"layout":{
-				"index:ROOT":{
-					"CONTENT":"controller:ER500"
+					"CONTENT":"controller:ERROR"
 				}
 			}
 		}
@@ -122,8 +109,7 @@
 		"title":"Управление каталогом"
 	},
 	"parsedtpl":{
-		"index:HEADER":"${theme.value}",
-		"controller:ER404":"${bread.path}"
+		"index:HEADER":"${theme.value}"
 	},
 	"json":{
 		"index:MAIN":"/-showcase/get-state",

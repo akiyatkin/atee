@@ -14,9 +14,6 @@
 	"head":{
 		"title":"Источники данных"
 	},
-	"parsedtpl":{
-		"controller:ER404":"${bread.path}"
-	},
 	"json":{
 		"main:ROOT":"/-sources/main",
 		"main:TABLE":"/-sources/main",

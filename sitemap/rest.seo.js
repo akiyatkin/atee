@@ -29,55 +29,25 @@ rest.addVariable('rule', async view => {
 	const rule = await Layers.getRule(root)
 	return rule
 })
+const loadHeadings = async (head) => {
+	
+}
 rest.addVariable('headings', async view => {
 	const source = await view.get('source')
-	
-	const sitemaps = []
-	if (!source.head) return view.err('Требуется секция head')
-	Layers.runByIndex(source, (index, path) => {
-		if (~path.indexOf(false)) return
-		let head = index.head
-		const child = path[path.length - 1] || ''
-		const href = path.slice(0, -1).join('/')
-		
-		sitemaps.push({...head, href, child})		
-	})
 	const headings = {}
-	for (const head of sitemaps) {
-
-		if (head.hidden) continue
-		const json = head.sitemap || head.json //sitemap возвращает тоже самое что и json но с headings
-		const res = json ? await loadJSON(json, view.visitor).catch(e => console.log('head', href, e)) : false
-		if (res && res.data) Object.assign(head, res.data)
-
-
-		if (head.headings) {
-			for (const nick in head.headings) {
-				const fheading = head.headings[nick]
-				
-				const path = []
-				if (head.href) path.push(head.href)
-				if (fheading.href) path.push(fheading.href)
-				if (head.child) path.push(head.child)
-				const href = path.join('/')
-
-				const heading = headings[nick] ??= {title: fheading.title || nick, href, childs:{}}
-				Object.assign(heading.childs, fheading.childs)
+	for (const sitemap of (source.sitemap || [])) {
+		const res = await loadJSON(sitemap, view.visitor).then(res => res.data).catch(e => console.log('head', href, e))
+		if (!res.headings) continue
+		for (const nick in res.headings) {
+			const fheading = res.headings[nick]
+			headings[nick] ??= {
+				title: res.headings[nick].title, 
+				items:{}
 			}
-		}
-		if (head.title) { // Это страница
-			const title = head.group || ''
-			const nick = nicked(title)
-			const heading = headings[nick] ??= {title, href: head.href || '', childs:{}}
-			const fresh = {...head}
-			heading.childs[head.child || ''] = fresh
-			delete fresh.href
-			delete fresh.child
-			delete fresh.headings
-			delete fresh.group
+			//Порядок ключей надо как в новом, но и старые надо не потерять данные
+			headings[nick].items = Object.assign({}, res.headings[nick].items, headings[nick].items, res.headings[nick].items)
 		}
 	}
-
 	return headings
 })
 rest.addVariable('head', async view => {

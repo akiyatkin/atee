@@ -1,4 +1,4 @@
-
+import nicked from '/-nicked'
 import Layers from '/-controller/Layers.js'
 import TPL from '/-sitemap/layout.html.js'
 import Access from '/-controller/Access.js'
@@ -147,7 +147,22 @@ rest.addResponse('get-head', async view => {
 	return view.ret()
 })
 
-
+rest.addResponse('get-layers-sitemap', async view => {
+	const source = await view.get('source')
+	const headings = {}
+	Layers.runByIndex(source, (index, path) => {
+		if (~path.indexOf(false)) return //Секции child и то что в них вложено пропускаем
+		let head = index.head
+		if (head.hidden) return
+		if (!head.title) return
+		if (head.json) return
+		if (head.jsontpl) return
+		const nick = nicked(head.group || '')
+		headings[nick] ??= {title: head.group, items:{}}
+		headings[nick].items[path.join('/')] = head
+	})
+	return headings
+})
 rest.addResponse('get-data', async view => {
 	const headings = await view.get('headings')
 	view.ans.headings = headings

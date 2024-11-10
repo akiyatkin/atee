@@ -59,7 +59,7 @@ rest.addArgument('vals', ['nicks'])
 
 
 // rest.addVariable('SITEKEY', (view) => {
-// 	view.ans.SITEKEY = SITEKEY
+// 	view.data.SITEKEY = SITEKEY
 // })
 
 
@@ -76,8 +76,8 @@ rest.addResponse('get-model-head', async (view) => {
 
 
 	if (!model) {
-		view.ans.brand = await Catalog.getBrandByNick(db, brand_nick)
-		view.ans.title = `${view.ans.brand?.brand_title ?? brand_nick ?? ''} ${model_nick}`
+		view.data.brand = await Catalog.getBrandByNick(db, brand_nick)
+		view.data.title = `${view.data.brand?.brand_title ?? brand_nick ?? ''} ${model_nick}`
 		return view.ret()
 	}
 
@@ -87,10 +87,10 @@ rest.addResponse('get-model-head', async (view) => {
 	ar.push(`${model.brand_title} ${model.model_title}`)
 	ar.push(getModItemPropValue(item, model, 'Наименование'))
 	ar.push(getModItemPropValue(item, model, 'Позиция'))
-	view.ans.title = ar.filter(r => r).join(' ')
+	view.data.title = ar.filter(r => r).join(' ')
 
-	view.ans.canonical = `/catalog/${model.brand_nick}/${model.model_nick}`;
-	//view.ans.canonical = '/' + model.model_nick
+	view.data.canonical = `/catalog/${model.brand_nick}/${model.model_nick}`;
+	//view.data.canonical = '/' + model.model_nick
 
 
 	let text = getModItemPropValue(item, model, 'Описание')
@@ -99,11 +99,11 @@ rest.addResponse('get-model-head', async (view) => {
 	text = text.replace(/<style([\S\s]*?)>([\S\s]*?)<\/style>/ig, '').replace(/<h1[^>]*>.*<\/h1>/iu, "").replace(/<\/?[^>]+(>|$)/g, " ").replace(/\s+/," ").trim()
 	const r = text.match(/.{200}[^\.!]*[\.!]/u)
 	text = (r ? r[0] : text).replaceAll(' ,', ',')
-	view.ans.description = text
+	view.data.description = text
 
 
 	if (model.images) {
-		view.ans.image_src = /^http/.test(model.images[0]) ? model.images[0] : '/' + model.images[0]
+		view.data.image_src = /^http/.test(model.images[0]) ? model.images[0] : '/' + model.images[0]
 	}
 	return view.ret()		
 })
@@ -124,12 +124,12 @@ rest.addResponse('get-model', async (view) => {
 	const { brand_nick, model_nick, partner } = await view.gets(['brand_nick','model_nick','partner'])
 
 
-	view.ans.m = md.m
-	view.ans.md = md
+	view.data.m = md.m
+	view.data.md = md
 
 	
-	view.ans.partner = partner?.key || ''
-	view.ans.brand = await Catalog.getBrandByNick(db, brand_nick)
+	view.data.partner = partner?.key || ''
+	view.data.brand = await Catalog.getBrandByNick(db, brand_nick)
 	if (!model) return view.err('Модель не найдена', 404)
 	if (model.texts) {
 		model.texts = await Promise.all(model.texts.map(src => {
@@ -143,17 +143,17 @@ rest.addResponse('get-model', async (view) => {
 		model.files = model.files.map(src => Files.srcInfo(src))
 	}
 
-	view.ans.mod = model
+	view.data.mod = model
 
 	return view.ret()
 })
 // rest.addResponse('get-item', async (view) => {
 // 	const { model, base, md, db, brand_nick, model_nick, partner } = await view.gets(['model', 'base', 'md', 'db', 'brand_nick','model_nick','partner'])
-// 	view.ans.m = md.m
-// 	view.ans.md = md
+// 	view.data.m = md.m
+// 	view.data.md = md
 	
-// 	view.ans.partner = partner?.key || ''
-// 	view.ans.brand = await Catalog.getBrandByNick(db, brand_nick)
+// 	view.data.partner = partner?.key || ''
+// 	view.data.brand = await Catalog.getBrandByNick(db, brand_nick)
 // 	if (!model) return view.err()
 // 	if (model.texts) {
 // 		model.texts = await Promise.all(model.texts.map(src => {
@@ -167,7 +167,7 @@ rest.addResponse('get-model', async (view) => {
 // 		model.files = model.files.map(src => Files.srcInfo(src))
 // 	}
 
-// 	view.ans.mod = model
+// 	view.data.mod = model
 
 // 	return view.ret()
 // })
@@ -189,8 +189,8 @@ const isSome = (obj, p) => {
 };
 rest.addResponse('get-filters', async (view) => {
 	const { db, md, partner, base, options} = await view.gets(['db','md','partner', 'base', 'options'])
-	view.ans.m = md.m
-	view.ans.md = md
+	view.data.m = md.m
+	view.data.md = md
 	const group = await Catalog.getMainGroup(view, md)
 	if (!group) return view.err('Нет данных')
 	const res = {}
@@ -217,7 +217,7 @@ rest.addResponse('get-filters', async (view) => {
 
 
 	res.filters = filters
-	Object.assign(view.ans, res)
+	Object.assign(view.data, res)
 	return view.ret()
 })
 
@@ -258,8 +258,8 @@ rest.addResponse('get-search-groups', async (view) => {
 	const partner = await view.get('partner')
 	const options = await view.get('options')
 	
-	view.ans.m = md.m
-	view.ans.md = md
+	view.data.m = md.m
+	view.data.md = md
 
 	let type = ''
 	if (md.search && md.group && md.brand) type = 'Поиск по группе бренда'
@@ -272,7 +272,7 @@ rest.addResponse('get-search-groups', async (view) => {
 	if (type && md.more) type += ' с фильтром'
 	if (!type && md.more) type += 'Фильтр'
 
-	view.ans.root_title = options.root_title
+	view.data.root_title = options.root_title
 
 	const brand = await Catalog.getMainBrand(db, md)
 	const groupnicks = await Catalog.getGroups(view)
@@ -343,7 +343,7 @@ rest.addResponse('get-search-groups', async (view) => {
 	// res.mdvalues = mdvalues
 	// res.mdprops = mdprops
 	
-	Object.assign(view.ans, res)
+	Object.assign(view.data, res)
 	return view.ret()
 })
 
@@ -358,8 +358,8 @@ rest.addResponse('get-search-list', async (view) => {
 	const base = await view.get('base')
 	const options = await view.get('options')
 	
-	view.ans.m = md.m
-	view.ans.md = md
+	view.data.m = md.m
+	view.data.md = md
 	const {from, where, sort} = await Catalog.getmdwhere(view, md, partner)
 
 
@@ -373,13 +373,13 @@ rest.addResponse('get-search-list', async (view) => {
 	if (!md.search && md.group && !md.brand) type = 'Группа'
 	if (type && md.more) type += ' с фильтром'
 	if (!type && md.more) type += 'Фильтр'
-	view.ans.type = type
+	view.data.type = type
 
 	
 	const group = await Catalog.getMainGroup(view, md)
 	if (!group) return view.err('Нет данных')
 	const opt = await Catalog.getGroupOpt(db, view.visitor, group.group_id)
-	view.ans.limit = options.limit
+	view.data.limit = options.limit
 	const countonpage = count || options.limit
 	const start = (page - 1) * countonpage
 	// let countonpage = opt.limit
@@ -413,7 +413,7 @@ rest.addResponse('get-search-list', async (view) => {
 		page: last < page ? last + 1 : page
 	}
 	const res = { list, brand, pagination, count:total, countonpage }
-	Object.assign(view.ans, res)
+	Object.assign(view.data, res)
 	// if (md.search) {
 	// 	if (!list.length) {
 	// 		return view.ret('Позиций не найдено', 404)
@@ -429,29 +429,29 @@ rest.addResponse('get-search-head', async (view) => {
 	const md = await view.get('md')
 	const options = await view.get('options')
 
-	view.ans.m = md.m
-	view.ans.md = md
+	view.data.m = md.m
+	view.data.md = md
 	const group = await Catalog.getMainGroup(view, md)
 	if (!group) return view.err('Нет данных')
 	const brand = await Catalog.getMainBrand(db, md)
 
 	if (brand && !group.parent_id) {
-		view.ans.title = brand.brand_title
-		view.ans.canonical = brand.brand_nick
+		view.data.title = brand.brand_title
+		view.data.canonical = brand.brand_nick
 	} else {
-		view.ans.title = group.group_title
+		view.data.title = group.group_title
 		if (group.parent_id) {
-			view.ans.canonical = group.parent_id ? group.group_nick : ''
+			view.data.canonical = group.parent_id ? group.group_nick : ''
 		} else {
-			view.ans.canonical = ''		
+			view.data.canonical = ''		
 		}
 	}
-	if (value) view.ans.thisischild = true
-	if (view.ans.canonical) view.ans.canonical = '/' + view.ans.canonical
+	if (value) view.data.thisischild = true
+	if (view.data.canonical) view.data.canonical = '/' + view.data.canonical
 
 	if (md.search) {
-		view.ans.title += ' ' + md.search
-		view.ans.description = 'Поиск в каталоге по запросу ' + md.search
+		view.data.title += ' ' + md.search
+		view.data.description = 'Поиск в каталоге по запросу ' + md.search
 	}
 
 	const src = await getSearchPageSrc(db, options, md, value)
@@ -468,42 +468,36 @@ rest.addResponse('get-search-head', async (view) => {
 	return view.ret()
 })
 rest.addResponse('get-search-sitemap', async (view) => {
-	
 	const options = await Showcase.getOptions(view.visitor)
-	
 	const db = await view.get('db')
-	const value = await view.get('value')
-
-	view.ans.title = options.root_title
-	view.ans.headings = {}
+	let rel = await view.get('rel')
+	const drel = rel ? rel + '/' : ''
+	
+	const headings = view.data.headings = {}
+	headings[''] = {title: '', items:{}}
+	headings[''].items[rel] = {title: options.root_title}
 
 	const brands = await Catalog.getBrands(db)
-	let childs = {}
+	let items = {}
 	for (const brand_nick in brands) {
 		const brand = brands[brand_nick]
-		childs[brand_nick] = {
-			name: brand.brand_title
+		items[drel + brand_nick] = {
+			title: brand.brand_title
 		}
 	}
-	view.ans.headings[nicked('Бренды')] = {
-		title:'Бренды',
-		childs:childs
-	}
+	headings[nicked('Бренды')] = { title:'Бренды', items }
 
 
 	const groups = await Catalog.getGroups(view)
-	childs = {}
+	items = {}
 	for (const group_nick in groups) {
 		const group = groups[group_nick]
 		if (!group.parent_id) continue
-		childs[group_nick] = {
-			name: group.group_title
+		items[drel + group_nick] = {
+			title: group.group_title
 		}
 	}
-	view.ans.headings[nicked('Группы')] = {
-		title:'Группы',
-		childs:childs
-	}
+	headings[nicked('Группы')] = { title:'Группы', items}
 
 	
 	const models = await db.all(`
@@ -511,22 +505,19 @@ rest.addResponse('get-search-sitemap', async (view) => {
 		FROM showcase_models m, showcase_brands b, showcase_items i
 		WHERE m.brand_id = b.brand_id and i.item_num = 1 and i.model_id = m.model_id
 	`)
-	childs = {}
+	items = {}
 	models.forEach(mod => {
-		const key = mod.brand_nick+'/'+mod.model_nick
-		childs[key] = {
-			"name": mod.brand_title + ' '+mod.model_title
+		const key = mod.brand_nick + '/' + mod.model_nick
+		items[drel + key] = {
+			title: mod.brand_title + ' ' + mod.model_title
 		}
 	})
-	view.ans.headings[nicked('Модели')] = {
-		title:'Модели',
-		childs:childs
-	}
+	view.data.headings[nicked('Модели')] = {title:'Модели', items}
 	return view.ret()
 })
 
 rest.addResponse('get-catalog', async (view) => {
-	const { db } = await view.gets(['db'])
+	const db = await view.get('db')
 	
 	const tree = await Catalog.getTree(db, view.visitor)
 	
@@ -545,12 +536,12 @@ rest.addResponse('get-catalog', async (view) => {
 		})
 	}
 
-	view.ans.childs = childs
+	view.data.childs = childs
 	return view.ret()
 })
 rest.addResponse('get-nalichie', async (view) => {
 	const { db, options, partner, base } = await view.gets(['db', 'partner', 'base','options'])
-	view.ans.list = await Access.relate(rest).once('get-nalichie', async () => {
+	view.data.list = await Access.relate(rest).once('get-nalichie', async () => {
 		const lim = 100
 		const vals = options.actions.map(v => nicked(v)).filter(v => v).sort()
 		const p = await base.getPropByTitle('Наличие')
@@ -590,8 +581,8 @@ rest.addResponse('get-nalichie', async (view) => {
 
 rest.addResponse('get-partner', async (view) => {
 	const { partner } = await view.gets(['partner'])
-	view.ans.partner = partner?.title || partner?.key || ''
-	if (partner) view.ans.descr = partner.descr || ''
+	view.data.partner = partner?.title || partner?.key || ''
+	if (partner) view.data.descr = partner.descr || ''
 	return partner ? view.ret() : view.nope()
 })
 // import theme from '/-controller/Theme.js'
@@ -601,8 +592,8 @@ rest.addResponse('get-partner', async (view) => {
 // 	//them.harvest(view.req, view.visitor.client.cookie)
 // 	//them.torow()
 // 	console.log(view.visitor)
-// 	view.ans.partner = partner.title || partner.key || ''
-// 	view.ans.descr = partner.descr || ''
+// 	view.data.partner = partner.title || partner.key || ''
+// 	view.data.descr = partner.descr || ''
 // 	return view.ret()
 // })
 
@@ -695,7 +686,7 @@ rest.addResponse('get-maingroups', async (view) => {
 		}))
 		return childs
 	})
-	view.ans.childs = childs.filter(g => g.images.length)
+	view.data.childs = childs.filter(g => g.images.length)
 	return view.ret()
 })
 
