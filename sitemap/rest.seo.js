@@ -29,13 +29,12 @@ rest.addVariable('rule', async view => {
 	const rule = await Layers.getRule(root)
 	return rule
 })
-const loadHeadings = async (head) => {
-	
-}
+
 rest.addVariable('headings', async view => {
 	const source = await view.get('source')
 	const headings = {}
 	for (const sitemap of (source.sitemap || [])) {
+
 		const res = await loadJSON(sitemap, view.visitor).then(res => res.data).catch(e => console.log('head', href, e))
 		if (!res.headings) continue
 		for (const nick in res.headings) {

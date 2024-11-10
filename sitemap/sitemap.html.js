@@ -9,16 +9,11 @@ const showList = (data, env) => `
 		${data.list.map(link).join(', ')}.
 	</p>
 `
-const showLink = item => `<a href="/${item.href}">${item.name||item.title}</a>`
+const showLink = (href, head) => `<a href="/${href}">${head.name || head.title}</a>`
 const showBlock = (data, env, heading) => `
 	${heading.title ? showHeading(data, env, heading) : ''}
 	<p>
-		${Object.keys(heading.childs).map(next => 
-			showLink({
-				...heading.childs[next], 
-				href: heading.childs[next].href ? (heading.childs[next].href  + '/' + next) : (heading.href ? heading.href  + '/' + next : next)
-			})
-		).join(', ')}${Object.keys(heading.childs).length && '.' || ''}
+		${Object.entries(heading.items).map(([href, head]) => showLink(href, head)).join(', ')}${Object.keys(heading).length && '.' || ''}
 	</p>
 `
 const showHeading = (data, env, heading) => `

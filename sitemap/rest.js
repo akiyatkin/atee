@@ -161,7 +161,8 @@ rest.addResponse('get-layers-sitemap', async view => {
 		headings[nick] ??= {title: head.group, items:{}}
 		headings[nick].items[path.join('/')] = head
 	})
-	return headings
+	view.data.headings = headings
+	return view.ret()
 })
 rest.addResponse('get-data', async view => {
 	const headings = await view.get('headings')
