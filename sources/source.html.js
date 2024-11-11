@@ -15,7 +15,9 @@ export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
 	<div id="TOP"></div>
 	${showButtons(data, env, source)}
 	${showComment(data, env, source)}
+
 	<div id="BOT"></div>
+	${showControll(data, env, source)}
 `
 export const TOP = (data, env, source = data.source) => !data.result ? '' : `
 	${source.date_start ? showScriptReload(data, env, source) : ''}
@@ -214,6 +216,8 @@ const showSettings = (data, env, source = data.source) => `
 			</td>
 		</tr>	
 	</table>
+`
+const showControll = (data, env, source) => `
 	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
 		<div>Сущности ${field.search({
 			cls: 'a',
@@ -237,13 +241,15 @@ const showSettings = (data, env, source = data.source) => `
 				action: '/-sources/set-source-switch-prop', 
 				value: source.represent_source, 
 				values: {"":"скрыты", "1":"опубликованы"},
-				args: {source_id: source.source_id, sourceprop: 'represent_source'}
+				args: {source_id: source.source_id, sourceprop: 'represent_source'},
+				reloaddiv:'BOT'
 			})}.<br>
 			По умолчанию листы ${field.switch({
 				action: '/-sources/set-source-switch-prop', 
 				value: source.represent_sheets, 
 				values: {"":"скрыты", "1":"опубликованы"},
-				args: {source_id: source.source_id, sourceprop: 'represent_sheets'}
+				args: {source_id: source.source_id, sourceprop: 'represent_sheets'},
+				reloaddiv:'BOT'
 			})}.<br>
 			По умолчанию строки ${field.switch({
 				action: '/-sources/set-source-switch-prop', 

@@ -69,7 +69,12 @@ const getCustomSwitch = (value, def) => {
 	if (value == 0 && !def) return 1
 	if (value == null && !def) return 1
 }
-const getEyeCls = (newvalue, def_value) => newvalue == null ? `represent-def-${def_value}` : `represent-custom-${newvalue}`
+const getEyeCls = (main, newvalue, def_value) => {
+	const cls = []
+	cls.push(`represent_${main}`) 
+	cls.push(newvalue == null ? `represent-def-${def_value}` : `represent-custom-${newvalue}`)
+	return cls.join(' ')
+}
 rest.addAction('set-custom-prop-switch', ['admin'], async view => {
 	const db = await view.get('db')
 	const prop_id = await view.get('prop_id#required')
@@ -94,31 +99,31 @@ rest.addAction('set-custom-prop-switch', ['admin'], async view => {
 	`, {prop_id})	
 
 	/*
-		represent-custom-1
-		represent-custom-0
-		represent-def-1
-		represent-def-0
+		represent-0 (opacity)
+		represent-1 (opacity)
+		represent-def-0 (stroke-1)
+		represent-def-1 (stroke-1 beam)
+		represent-custom-0 (stroke-2)
+		represent-custom-1 (stroke-2 beam)
+		
 	*/
-	view.data.cls = getEyeCls(newvalue, def_value)
+	const entity = await Source.getEntity(db, entity_id)
+	view.data.cls = getEyeCls(entity.represent_entity, newvalue, def_value)
 	return view.ret()
 })
 rest.addAction('set-custom-sheet-switch', ['admin'], async view => {
 	const db = await view.get('db')
 	const sheet_title = await view.get('sheet_title#required')
 	const source_id = await view.get('source_id#required')
-	const def_value = await db.col(`
-		SELECT represent_sheets + 0
-		FROM sources_sources
-		WHERE source_id = :source_id
-	`, {source_id})
-
+	const source = await Sources.getSource(db, source_id)
+	
 	const value = await db.col(`
 		SELECT represent_custom_sheet + 0
 		FROM sources_custom_sheets
 		WHERE source_id = :source_id and sheet_title = :sheet_title
 	`, {source_id, sheet_title})
 
-	const newvalue = getCustomSwitch(value, def_value)
+	const newvalue = getCustomSwitch(value, source.represent_sheets)
 	
 	await db.exec(`
 		INSERT INTO sources_custom_sheets (source_id, sheet_title, represent_custom_sheet)
@@ -127,13 +132,14 @@ rest.addAction('set-custom-sheet-switch', ['admin'], async view => {
 	`, {source_id, sheet_title, newvalue})
 
 
-	const source = await Sources.getSource(db, source_id)
+	
 	await Sources.recalcRepresentSheetBySource(db, source)
 	await Sources.recalcRepresentKeyBySource(db, source)
 	await Sources.recalcRepresent(db)
 	await Sources.recalcWinner(db)
 	await Sources.recalcSearchBySourceId(db, source_id)
-	view.data.cls = getEyeCls(newvalue, def_value)
+	view.data.cls_represent = `represent_${source.represent_source}`
+	view.data.cls_represent_custom = newvalue == null ? `represent-def-${source.represent_sheets}` : `represent-custom-${newvalue}`
 	return view.ret()
 })
 

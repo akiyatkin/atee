@@ -151,8 +151,13 @@ rest.addResponse('source', ['admin'], async view => {
 	}
 	view.data.sheets = Object.values(sheets)
 	for (const sheet of view.data.sheets) {
-		sheet.represent_sheet_cls = getEyeCls(sheet.custom?.represent_custom_sheet, source.represent_sheets)
+		sheet.represent_sheet_cls = getEyeCls(source.represent_source, sheet.custom?.represent_custom_sheet, source.represent_sheets)
 	}
 	return view.ret()
 })
-const getEyeCls = (newvalue, def_value) => newvalue == null ? `represent-def-${def_value}` : `represent-custom-${newvalue}`
+const getEyeCls = (main, newvalue, def_value) => {
+	const cls = []
+	cls.push(`represent_${main}`) 
+	cls.push(newvalue == null ? `represent-def-${def_value}` : `represent-custom-${newvalue}`)
+	return cls.join(' ')
+}

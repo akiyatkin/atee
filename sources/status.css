@@ -11,32 +11,41 @@
 	background-color: #0000FF0f
 }
 
+
+.represent-0 {
+	opacity:0.5;
+	transition: none;
+}
+.represent-1 {
+	opacity:1;
+	transition: none;
+}
 .represent-custom-1 {
-
-}
-.represent-custom-0 {
-
-}
-.represent-def-0 {
-	opacity:0.5;
-}
-.represent-def-1 {
-	opacity:0.5;
-}
-
-.represent-def-0 .beam {
-	transition: opacity 0.1s;
-	opacity: 1;
-}
-.represent-custom-0 .beam {
-	transition: opacity 0.1s;
-	opacity: 1;
-}
-.represent-def-1 .beam {
-	transition: opacity 0.1s;
-	opacity: 0;
+	stroke-width: 1.5;
 }
 .represent-custom-1 .beam {
 	transition: opacity 0.1s;
+	opacity: 0;
+}
+
+.represent-custom-0 {
+	stroke-width: 1.5;
+}
+.represent-custom-0 .beam {
+	opacity: 1;
+}
+
+.represent-def-0 {
+	
+}
+.represent-def-0 .beam {
+	opacity: 1;
+}
+
+
+.represent-def-1 {
+	
+}
+.represent-def-1 .beam {
 	opacity: 0;
 }
