@@ -38,7 +38,7 @@ const showGroup = (data, env, group) => `
 	<div><a href="${env.crumb}/${group.nick}">${group.title}</a></div>
 `
 //${data.headings.map(heading => showBlock(data, env, heading)).join('')}
-export const GROUP = (data, env) => `
+export const GROUP = (data, env) => !data.result ? `<h1>${data.msg}</h1>` : `
 	${css(data, env)}
 	${showBlock(data, env, data)}
 `

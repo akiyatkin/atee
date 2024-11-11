@@ -182,6 +182,7 @@ rest.addResponse('get-head', async view => {
 	const table = await view.get('table')
 	for (const row of table.rows_body) {
 		const href = row[table.indexes.href] || ''
+		if (!href && !Object.keys(row).filter(cell => cell.trim()).length) continue
 		if (path == href) {
 			const item = {
 				"title": row[table.indexes.title],
@@ -200,6 +201,7 @@ rest.addResponse('get-head', async view => {
 })
 rest.addResponse('get-sitemap', async view => {
 	const table = await view.get('table')
+	
 	const headings = {}
 	for (const row of table.rows_body) {
 		const href = row[table.indexes.href] || ''
@@ -212,6 +214,11 @@ rest.addResponse('get-sitemap', async view => {
 			"image_src": row[table.indexes['image-src']] || ''
 		}
 		for (const i in item) if (!item[i]) delete item[i]
+
+		if (!Object.keys(item).length) continue
+		
+		
+
 		const title = row[table.indexes.group] || ''
 		const heading = headings[nicked(title)] ??= {
 			title,
@@ -225,7 +232,8 @@ rest.addResponse('get-sitemap', async view => {
 })
 rest.addResponse('get-sitemap-root', async view => {
 	const headings = await view.get('headings')
-	view.data.heading = headings['']	
+	view.data.all = headings
+	view.data.heading = headings['']
 	view.data.headings = Object.entries(headings).filter(([nick, heading]) => nick).map(([nick, heading]) => ({title: heading.title, nick}))
 	return view.ret()
 })
@@ -234,7 +242,8 @@ rest.addResponse('get-sitemap-root', async view => {
 rest.addResponse('get-sitemap-group', async view => {
 	const headings = {...await view.get('headings')}
 	const group = await view.get('group')
-	Object.assign(view.data, headings[group || ''] || {})
+	if (!headings[group]) return view.err('Группа страниц не найдена', 404)
+	Object.assign(view.data, headings[group])
 	return view.ret()
 })
 
