@@ -195,6 +195,7 @@ const userpathparse = (search) => {
 	return {secure, path, get}
 }
 export const router = async (search) => {
+
 	//У search всегда есть ведущий /слэш
 	//if (search.indexOf('/-') === 0) search = search.slice(1)
 	let { secure, path, get} = userpathparse(search)
@@ -217,7 +218,7 @@ export const router = async (search) => {
 
 		if (ext == 'json') { //json файлы возвращаются объектом, //с хранением в оперативной памяти
 			rest = async () => {
-				const data = await import(search, {assert: { type: "json" }}).then(r => r.default)
+				const data = await import(search, {with: {type: "json" }}).then(r => r.default)
 				return { data, ext }
 			}
 		} else { //файлы передаются стримом
