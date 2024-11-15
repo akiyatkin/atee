@@ -50,6 +50,39 @@ rest.addResponse('get-source-entity-search', ['admin'], async view => {
 	view.ans.count = list.length
 	return view.ret()
 })
+rest.addResponse('get-sheet-entity-search', ['admin'], async view => {
+	const db = await view.get('db')
+	const hash = await view.get('hash')
+	
+	const list = await db.all(`
+		SELECT entity_id, entity_title
+		FROM sources_entities
+		WHERE entity_nick like "%${hash.join('%" and entity_nick like "%')}%"
+	`)
+
+	view.ans.list = list.map(row => {
+		row['left'] = row.entity_title
+		row['right'] = ''
+		return row
+	})
+	if (hash.length) {
+		view.ans.list.push({
+			confirm:'Cоздать новую сущность?',
+			action:`/-sources/set-sheet-entity-create`,
+			search_value: true, 
+			left: '<span class="a">Новая сущность</span>',
+			right: ''
+		})
+	}
+	view.ans.list.push({
+		action:`/-sources/set-sheet-entity-reset`,
+		left: '<span class="a">Сбросить выбор</span>',
+		right: ''
+	})
+
+	view.ans.count = list.length
+	return view.ret()
+})
 rest.addResponse('get-entity-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hash = await view.get('hash')

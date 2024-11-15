@@ -1,5 +1,6 @@
 import err from "/-controller/err.html.js"
 import field from "/-dialog/field.html.js"
+import svg from "/-sources/svg.html.js"
 
 export const ROOT = (data, env, entity = data.entity) => err(data, env, ["ENTITY"]) || `
 	<div id="ENTITY"></div>
@@ -153,7 +154,7 @@ const showTrInter = (data, env, entity, inter) => `
 		<td>
 			${field.button({
 				cls:"a",
-				label: 'X', 
+				label: svg.cross(), 
 				confirm: 'Удалить связь с дополнением?',
 				action: '/-sources/set-inter-delete',
 				reloaddiv: env.layer.div,

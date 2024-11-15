@@ -1,7 +1,14 @@
 const controller = {}
 export default controller
 
-controller.HEAD = (data, env) => env.bread.error ? '' :
+controller.HEAD = (data, env) => 
+env.bread.error ? `
+	<script>
+		window.addEventListener('popstate', () => {
+			location.reload()
+		})
+	</script>
+` :
 `<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<script>//Делаем SPA переходы

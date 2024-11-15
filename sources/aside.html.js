@@ -5,7 +5,8 @@ export const ROOT = (data, env) => `
 			
 		</div>
 		<div></div>
-		<div>
+		<div style="display: grid; gap: 0.25em">
+			<a href="memory">Память</a>
 			<a href="settings">Настройки</a>
 		</div>
 	</div>

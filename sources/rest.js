@@ -1,7 +1,13 @@
+import os from 'node:os'
+import process from 'node:process'
+import path from 'node:path'
+import fs from 'node:fs/promises'
+
 import Access from "/-controller/Access.js"
 import nicked from '/-nicked'
 import config from "/-config"
 import Sources from "/-sources/Sources.js"
+import eye from "/-sources/eye.js"
 
 import Rest from "/-rest"
 const rest = new Rest()
@@ -94,6 +100,81 @@ rest.addResponse('entities', ['admin'], async view => {
 	const list = view.data.list = await Sources.getEntities(db)
 	return view.ret()
 })
+const mb = (b) => Math.round((b || 0) / 2024 / 2024 * 100) / 100
+const dirSize = async dir => {
+	const files = await fs.readdir( dir, { withFileTypes: true } )
+	const paths = files.map( async file => {
+		const src = path.join( dir, file.name )
+		if ( file.isDirectory() ) return await dirSize( src )
+		if ( file.isFile() ) {
+			const { size } = await fs.stat( src )
+			return size
+		}
+		return 0
+	})
+	return ( await Promise.all( paths ) ).flat( Infinity ).reduce( ( i, size ) => i + size, 0 )
+}
+const getAllFiles = async (dirPath, arrayOfFiles) => {
+	const files = await fs.readdir(dirPath)
+
+	arrayOfFiles = arrayOfFiles || []
+	for (const file of files) {
+		if ((await fs.stat(dirPath + "/" + file)).isDirectory()) {
+			arrayOfFiles = await getAllFiles(dirPath + "/" + file, arrayOfFiles)
+		} else {
+			arrayOfFiles.push(path.join('.', dirPath, file))
+		}
+	}
+
+	return arrayOfFiles
+}
+
+const convertBytes = bytes => {
+	const sizes = ["б", "Кб", "Мб", "Гб", "Тб"]
+
+	if (bytes == 0) {
+		return "n/a"
+	}
+
+	const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
+
+	if (i == 0) {
+		return bytes + " " + sizes[i]
+	}
+
+	return (bytes / Math.pow(1024, i)).toFixed(1) + " " + sizes[i]
+}
+
+const getTotalSize = async directoryPath => {
+	const arrayOfFiles = await getAllFiles(directoryPath)
+
+	let totalSize = 0
+
+	for (const filePath of arrayOfFiles) {
+		totalSize += (await fs.stat(filePath)).size
+	}
+
+	return convertBytes(totalSize)
+}
+rest.addResponse('memory', ['admin'], async view => {
+	const db = await view.get('db')
+	view.data.os = {}
+	view.data.os.freemem = convertBytes(os.freemem())
+	view.data.os.totalmem = convertBytes(os.totalmem())
+
+	view.data.process = {}
+	const memoryData = process.memoryUsage()
+	view.data.process.rss = convertBytes(memoryData.rss)
+	view.data.process.heapTotal = convertBytes(memoryData.heapTotal)
+	view.data.process.heapUsed = convertBytes(memoryData.heapUsed)
+	view.data.process.external = convertBytes(memoryData.external)
+
+	view.data.fs = {}
+	view.data.fs.data = await getTotalSize('./data')
+	view.data.fs.cache = await getTotalSize('./cache')
+
+	return view.ret()
+})
 rest.addResponse('source', ['admin'], async view => {
 	
 	const db = await view.get('db')
@@ -104,11 +185,18 @@ rest.addResponse('source', ['admin'], async view => {
 		SELECT 
 			csh.source_id,
 			csh.sheet_title,
+
 			cast(csh.represent_custom_sheet as SIGNED) as represent_custom_sheet,
-			csh.entity_id,
-			en.entity_title
+			
+			nvl(csh.entity_id, so.entity_id) as entity_id,
+			en.entity_plural,
+			en.entity_title,
+			pr.prop_title
+
 		FROM sources_custom_sheets csh
-		LEFT JOIN sources_entities en on en.entity_id = csh.entity_id
+			LEFT JOIN sources_sources so on so.source_id = csh.source_id
+			LEFT JOIN sources_entities en on en.entity_id = nvl(csh.entity_id, so.entity_id)
+			LEFT JOIN sources_props pr on pr.prop_id = en.prop_id
 		WHERE csh.source_id = :source_id
 		ORDER by csh.sheet_title
 	`, source)
@@ -120,44 +208,68 @@ rest.addResponse('source', ['admin'], async view => {
 			sh.sheet_title,
 			sh.entity_id,
 			cast(sh.represent_sheet as SIGNED) as represent_sheet,
-			en.entity_title
+			en.entity_plural,
+			en.entity_title,
+			pr.prop_title
 		FROM sources_sheets sh
 		LEFT JOIN sources_entities en on en.entity_id = sh.entity_id
+		LEFT JOIN sources_props pr on pr.prop_id = en.prop_id
 		WHERE sh.source_id = :source_id
 		ORDER by sh.sheet_index
 	`, source)
 
-	const stat = view.data.stat ??= {}
-	stat.sheets = loaded_sheets.length
-	stat.rows = await db.col(`
-		SELECT count(*)
-		FROM sources_rows ro
-		WHERE ro.source_id = :source_id
-	`, source)
+	// const stat = view.data.stat ??= {}
+	// stat.sheets = loaded_sheets.length
+	// stat.rows = await db.col(`
+	// 	SELECT count(*)
+	// 	FROM sources_rows ro
+	// 	WHERE ro.source_id = :source_id
+	// `, source)
 
 
 	const sheets = {}
-	for (const loaded of loaded_sheets) {
-		const sheet = sheets[loaded.sheet_title] ??= {sheet_title: loaded.sheet_title}
-		sheet.loaded = loaded
-		if (loaded.entity_title) sheet.entity_title = loaded.entity_title
-		delete loaded.sheet_title
+	for (const descr of loaded_sheets) {
+		descr.count_rows = await db.col(`
+			SELECT count(*) 
+			FROM sources_rows 
+			WHERE source_id = :source_id and sheet_index = :sheet_index
+		`, descr)
+		descr.count_keys = await db.col(`
+			SELECT count(*) 
+			FROM sources_rows 
+			WHERE source_id = :source_id and sheet_index = :sheet_index and key_id is not null
+		`, descr)
+		descr.loaded = true
 	}
-	for (const custom of custom_sheets) {
-		const sheet = sheets[custom.sheet_title] ??= {sheet_title: custom.sheet_title}
-		sheet.custom = custom
-		if (custom.entity_title) sheet.entity_title = custom.entity_title
-		delete custom.sheet_title
+	for (const descr of custom_sheets) descr.custom = true
+	for (const descr of [...loaded_sheets, ...custom_sheets]) {
+		const sheet = sheets[descr.sheet_title] ??= {sheet_title: descr.sheet_title}
+		sheet.entity_title = descr.entity_title
+		sheet.entity_plural = descr.entity_plural
+		sheet.prop_title = descr.prop_title
+		delete descr.entity_title
+		delete descr.prop_title
+		delete descr.entity_plural
+		delete descr.sheet_title
+		sheet.remove = sheet.remove || !!descr.custom
+		sheet[descr.loaded ? 'loaded' : 'custom'] = descr
 	}
 	view.data.sheets = Object.values(sheets)
 	for (const sheet of view.data.sheets) {
-		sheet.represent_sheet_cls = getEyeCls(source.represent_source, sheet.custom?.represent_custom_sheet, source.represent_sheets)
+		if (!sheet.remove) {
+			//custom_cols custom_rows custom_cells
+			sheet.remove = await db.col(`
+				SELECT 1
+				FROM sources_custom_cols cco, sources_custom_rows cro, sources_custom_cells cce
+				WHERE 
+						 (cco.source_id = :source_id and cco.sheet_title = :sheet_title)
+					OR (cro.source_id = :source_id and cro.sheet_title = :sheet_title)
+					OR (cce.source_id = :source_id and cce.sheet_title = :sheet_title)
+				LIMIT 1
+			`, {source_id: source.source_id, sheet_title: sheet.sheet_title})
+		}
+		sheet.cls = eye.calcCls(source.represent_source, sheet.custom?.represent_custom_sheet, source.represent_sheets)
 	}
+	
 	return view.ret()
 })
-const getEyeCls = (main, newvalue, def_value) => {
-	const cls = []
-	cls.push(`represent_${main}`) 
-	cls.push(newvalue == null ? `represent-def-${def_value}` : `represent-custom-${newvalue}`)
-	return cls.join(' ')
-}

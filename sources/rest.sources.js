@@ -14,6 +14,8 @@ rest.extra(rest_funcs)
 
 rest.addArgument('id', ['mint'])
 rest.addVariable('id#required', ['id', 'required'])
+rest.addArgument('sheet_index', ['mint'])
+rest.addVariable('sheet_index#required', ['sheet_index', 'required'])
 rest.addArgument('next_id', ['mint'])
 rest.addArgument('sourceprop', (view, prop) => {
 	if (~['dependent','represent_source','renovate','represent_sheets','represent_rows', 'represent_cells', 'represent_cols'].indexOf(prop)) return prop

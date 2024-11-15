@@ -533,7 +533,7 @@ export class Rest {
 				return Rest.makeReans(e.view)
 			} else {
 				console.log(e)
-				return Rest.makeReans({data: {msg: 'Internal Server Error '}, status: 500, ext: 'json'})
+				return Rest.makeReans({data: {msg: 'Internal Server Error', result: 0}, status: 500, ext: 'json'})
 			}
 		})
 	}
@@ -553,9 +553,9 @@ export class Rest {
 	async req (action, req = {}, visitor) { //reans request и action 
 		const rest = this
 		const orest = rest.findrest(action) //before и after только для addAction
-		if (!orest) return Rest.makeReans({data: {msg: 'Not Found'}, status: 404, ext: 'json',})
+		if (!orest) return Rest.makeReans({data: {msg: 'Not Found', result: 0}, status: 404, ext: 'json',})
 		const opt = orest.list[action]
-		if (!opt?.response) return Rest.makeReans({data: {msg: 'Method Not Allowed'}, status: 405, ext: 'json'})
+		if (!opt?.response) return Rest.makeReans({data: {msg: 'Method Not Allowed', result: 0}, status: 405, ext: 'json'})
 		const view = new View(orest, opt, req, visitor)
 		orest.addView(view)
 
@@ -575,7 +575,7 @@ export class Rest {
 		
 		const orest = rest.findrest(action) //before и after только для addAction
 		
-		if (!orest) return Rest.makeReans({data: {msg: 'Not Found'}, status: 404, ext: 'json',})
+		if (!orest) return Rest.makeReans({data: {msg: 'Not Found', result: 0}, status: 404, ext: 'json',})
 		const opt = orest.list[action]
 		const view = new View(orest, opt, req, visitor) //Создаётся у родительского реста
 		orest.addView(view)

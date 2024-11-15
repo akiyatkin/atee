@@ -115,13 +115,12 @@ const Server = {
 					nt: route.search
 				}
 				
-				const a = await rest.get('get-layers', req, visitor)
+				const reans = await rest.get('get-layers', req, visitor)
+				let json = reans.data
+				let status = reans.status
+				const headers = {...reans.headers}
 
-				let json = a.data
-				
-				let status = a.status
-				if (!json) return error_before(500, 'layers have bad definition')
-				const headers = a.headers
+				//if (!json) return error_before(500, 'layers have bad definition')
 				//const headers = []
 				let info
 				
@@ -131,23 +130,20 @@ const Server = {
 					info = { nostore: true, html: '' }
 					//return view.err('', 301)
 				} else {
-					if (!json.layers) return error_before(500, 'layers not defined')
-					if (!json.layers.length) return error_before(500, 'layers empty')
+					// if (!json.layers) return error_before(500, 'layers not defined')
+					// if (!json.layers.length) return error_before(500, 'layers empty')
 					const bread = new Bread(route.path, route.get, route.search, json.root) //root+path+get = search
-					
-					
 					try {
-
+						if (!json.layers?.length) throw { status:404 }
 						info = await controller(json, visitor, bread) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
-
 						status = Math.max(info.status, status)
 					} catch (e) {
 						status = e.status || 500
 						//const bread = new Bread('error/' + e.status, {}, '/error/' + e.status, json.root) //root+path+get = search
 						const root = json.root ? '/' + json.root + '/' : '/'
 						req.nt = root + 'error'
-						const a = await rest.get('get-layers', req, visitor) //, visitor
-						json = a.data
+						const reans = await rest.get('get-layers', req, visitor) //, visitor
+						json = reans.data
 						bread.error = status
 						if (status != 404) console.log(e)
 						try {

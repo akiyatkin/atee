@@ -99,18 +99,19 @@ rest.addResponse('get-layers', async view => {
 		view_time: Date.now(),
 		access_time: Access.getAccessTime()
 	}
-	view.ans.ut = timings.update_time
-	view.ans.st = timings.access_time
-	view.ans.vt = timings.view_time
+	view.data.ut = timings.update_time
+	view.data.st = timings.access_time
+	view.data.vt = timings.view_time
+	
 
 	if (!next) return view.err()
 	// if (globals.length) {
 	// 	return view.err() //Ну или перезагрузиться	
 	// }
-	// view.ans.gs = globals
+	// view.data.gs = globals
 	
 	const nroute = await router(next)
-	view.ans.root = nroute.root
+	view.data.root = nroute.root
 	
 	if (nroute.rest || nroute.secure) return view.err()
 	const rule = await Layers.getRule(nroute.root)
@@ -139,7 +140,6 @@ rest.addResponse('get-layers', async view => {
 	}
 
 	const { index: nopt, status } = Layers.getParsedIndex(rule, timings, bread, interpolate, theme) //{ index: {push, root}, status }
-	
 	if (!nopt?.root) return view.err()
 	
 	if (nopt.check) {
@@ -155,18 +155,18 @@ rest.addResponse('get-layers', async view => {
 		
 		
 	
-	//view.ans.checks = nopt.checks //wtf?
+	//view.data.checks = nopt.checks //wtf?
 	view.status = status
 	
 
-	view.ans.theme = theme
+	view.data.theme = theme
 	if (prev === false) {
-		view.ans.push = Layers.collectPush(rule, timings, bread, nopt.root, interpolate, theme)
-		view.ans.layers = [nopt.root]
+		view.data.push = Layers.collectPush(rule, timings, bread, nopt.root, interpolate, theme)
+		view.data.layers = [nopt.root]
 		return view.ret()
 	}
 	if (prev === '') {
-		view.ans.layers = nopt.root.layers
+		view.data.layers = nopt.root.layers
 		return view.ret()
 	}
 
@@ -183,17 +183,17 @@ rest.addResponse('get-layers', async view => {
 	
 	
 	const { index: popt } = Layers.getParsedIndex(rule, ptimings, pbread, interpolate, ptheme)
-	//view.ans.status = Math.max()
+	//view.data.status = Math.max()
 	if (!popt.root) return view.err()
 
 	
 	
 	
 
-	view.ans.layers = getDiff(popt.root.layers, nlayers, reloaddivs, reloadtss, globals)
-	if (reloaddivs.length) view.ans.rd = reloaddivs
-	if (reloadtss.length) view.ans.rt = reloadtss
-	if (globals.length) view.ans.rg = globals
+	view.data.layers = getDiff(popt.root.layers, nlayers, reloaddivs, reloadtss, globals)
+	if (reloaddivs.length) view.data.rd = reloaddivs
+	if (reloadtss.length) view.data.rt = reloadtss
+	if (globals.length) view.data.rg = globals
 	
 	return view.ret()    
 })

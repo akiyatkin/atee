@@ -18,7 +18,8 @@
 		"main:ROOT":"/-sources/main",
 		"main:TABLE":"/-sources/main",
 		"entities:ROOT":"/-sources/entities",
-		"settings:ROOT":"/-sources/settings"
+		"settings:ROOT":"/-sources/settings",
+		"memory:ROOT":"/-sources/memory"
 	},
 	"jsontpl":{
 		"source:ROOT":"/-sources/source?source_id=${env.crumb.name}",
@@ -45,7 +46,8 @@
 		"prop":"/-sources/prop.html.js",
 		"entities":"/-sources/entities.html.js",
 		"entity":"/-sources/entity.html.js",
-		"settings":"/-sources/settings.html.js"
+		"settings":"/-sources/settings.html.js",
+		"memory":"/-sources/memory.html.js"
 	},
 	"layout":{
 		"index:ROOT": {
@@ -57,6 +59,14 @@
 		}
 	},
 	"childs":{
+		"memory":{
+			"head":{"title":"Оперативная память"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"memory:ROOT"
+				}
+			}
+		},
 		"settings":{
 			"head":{"title":"Настройки"},
 			"layout":{

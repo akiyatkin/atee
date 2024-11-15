@@ -31,6 +31,11 @@ export const BOT = (data, env, source = data.source) => !data.result ? '' : `
 
 
 const showScriptReload = (data, env, source) => `
+	<style>
+		#MAIN {
+			opacity: 0.8;
+		}
+	</style>
 	<script>
 		setTimeout(async () => {
 			const Client = await window.getClient()
@@ -40,51 +45,95 @@ const showScriptReload = (data, env, source) => `
 `
 const showDatas = (data, env, source) => `
 	<h2>Содержание</h2>
-	${source.date_load ? showStatLoad(data, env, source) : showNoLoad(data, env, source)}
-	${data.sheets.map(sheet => showSheet(data, env, source, sheet))}
+	${source.date_load ? '' : showNoLoad(data, env, source)}
+	<table>
+		<tr>
+			<td></td>
+			<td>Лист</td>
+			<td>Сущность</td>
+			<td>Позиций</td>
+			<td>Строк</td>
+			<td></td>
+		</tr>
+		${data.sheets.map(sheet => showSheetTr(data, env, source, sheet)).join('')}
+	</table>
+	
 `
 
 
-
-const showSheet = (data, env, source, sheet) => `
-	<div style="margin:1em 0">
-		<button title="Изменить видимость листа" class="transparent ${sheet.represent_sheet_cls}">${svg.eye()}</button>
-		${sheet.sheet_title} (${sheet.entity_title})
-		<span class="remove" style="float:right; ${!sheet.custom ? 'display:none' : 'display: block'}">
-			${field.button({
-				confirm:'Удалить настройки пользователя?',
-				cls:'transparent',
-				label:svgClean(),
-				action:'/-sources/set-custom-sheet-delete',
-				args:{source_id: source.source_id, title: sheet.sheet_title},
+const showSheetLink = (data, env, source, sheet) => `
+	<a href="sheet?source_id=${source.source_id}&sheet_index=${sheet.loaded.sheet_index}">${sheet.sheet_title}</a>
+`
+const showChangeLink = (data, env, source, sheet) => `
+	${field.prompt({
+		value: sheet.sheet_title, 
+		cls: 'a',
+		name: 'title',
+		input: sheet.sheet_title,
+		ok: 'ОК', 
+		label: 'Имя листа', 
+		descr: 'Лист в загруженных данных не найден. Настройки видимости сохраняются по имени листа. Если в источнике лист был переименован, нужно переименовать и тут. Укажите имя нового листа.',
+		type: 'text', 
+		action: '/-sources/set-sheet-title', 
+		args: {source_id: source.source_id, sheet_title: sheet.sheet_title}, 
+		reloaddiv: env.layer.div
+	})}
+`
+const showSheetTr = (data, env, source, sheet) => `
+	<tr>
+		<td>	
+			<button title="Изменить видимость листа" class="eye transparent ${sheet.cls.main} ${sheet.cls.custom}">${svg.eye()}</button>
+		</td>
+		<td>
+			${sheet.loaded ? showSheetLink(data, env, source, sheet).trim() : showChangeLink(data, env, source, sheet).trim()}
+		</td>
+		<td>
+			${field.search({
+				cls: 'a',
+				search:'/-sources/get-sheet-entity-search',
+				value: source.entity_id ? showEntity(data, env, sheet) : 'не определено', 
+				label: 'Название сущности', 
+				type: 'text',
+				name: 'entity_id',
+				find: 'entity_id',
+				action: '/-sources/set-sheet-entity',
+				args: {source_id: source.source_id, sheet_title: sheet.sheet_title},
 				reloaddiv: env.layer.div
 			})}
-		</span>
+		</td>
+		<td>${sheet.loaded?.count_keys ?? '&mdash;'}</td>
+		<td>${sheet.loaded?.count_rows ?? '&mdash;'}</td>
+		<td>
+			<span class="remove" style="${!sheet.remove ? 'display:none' : 'display: block'}">
+				${field.button({
+					confirm:'Удалить все настройки пользователя у этого листа, его строк, колонок и ячеек?',
+					cls:'transparent',
+					label:svg.cross(),
+					action:'/-sources/set-sheet-delete',
+					args:{source_id: source.source_id, title: sheet.sheet_title},
+					reloaddiv: env.layer.div
+				})}
+			</span>
+		</td>
 		<script>
 			(div => {
-				const btn = div.getElementsByTagName('button')[0]
+				const btn = div.getElementsByClassName('eye')[0]
 				const remove = div.getElementsByClassName('remove')[0]
 				btn.addEventListener('click', async () => {
 					const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-					const data = await senditmsg(btn, '/-sources/set-custom-sheet-switch', {source_id: ${source.source_id}, sheet_title: ${JSON.stringify(sheet.sheet_title)}}) 
+					const data = await senditmsg(btn, '/-sources/set-sheet-switch', {source_id: ${source.source_id}, sheet_title: ${JSON.stringify(sheet.sheet_title)}}) 
 					if (!data.result) return
-					btn.classList.remove('represent-custom-1', 'represent-custom-0', 'represent-def-0', 'represent-def-1')
-					btn.classList.add(data.cls)
+					btn.classList.remove('represent-1', 'represent-0', 'represent-custom-1', 'represent-custom-0', 'represent-def-0', 'represent-def-1')
+					btn.classList.add(data.cls.main, data.cls.custom)
 					remove.style.display = 'block'
 				})
 			})(document.currentScript.parentElement)
 		</script>
-	</div>
-`
-const svgClean = () => `
-	<svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-		<rect width="24" height="24"></rect>
-		<path class="one" stroke-width="2" d="M0 0L24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
-		<path class="two" stroke-width="2" d="M0 24L24 0" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
-	</svg>
+	</tr>
+
 `
 const showStatLoad = (data, env, source) => `
-	<p>Загружено <b>${data.stat.sheets} ${words(data.stat.sheets, 'лист','листа','листов')}</b>, <b>${data.stat.rows} ${words(data.stat.rows, 'стрка','стрки','строк')}</b>.</p>
+	
 `
 const showNoLoad = (data, env, source) => `
 	<p>Загрузки ещё не было. Выполните загрузку источника.</p>

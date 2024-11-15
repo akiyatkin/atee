@@ -4,9 +4,10 @@ import nicked from '/-nicked/nicked.js'
 import unique from '/-nicked/unique.js'
 import words from '/-words/words.js'
 import date from '/-words/date.html.js'
-
+import eye from "/-sources/eye.js"
 
 import Sources from "/-sources/Sources.js"
+import Consequences from "/-sources/Consequences.js"
 
 import Rest from "/-rest"
 const rest = new Rest()
@@ -38,6 +39,7 @@ rest.addAction('set-source-switch-prop', ['admin'], async view => {
 		WHERE source_id = :source_id
 	`, {source_id})	
 	
+	await Consequences.represent(db)
 	return view.ret()
 })
 rest.addAction('set-entity-switch-prop', ['admin'], async view => {
@@ -57,7 +59,7 @@ rest.addAction('set-entity-switch-prop', ['admin'], async view => {
 		SELECT ${prop} + 0 FROM sources_entities
 		WHERE entity_id = :entity_id
 	`, {entity_id})	
-	
+	await Consequences.represent(db)
 	return view.ret()
 })
 const getCustomSwitch = (value, def) => {
@@ -69,49 +71,8 @@ const getCustomSwitch = (value, def) => {
 	if (value == 0 && !def) return 1
 	if (value == null && !def) return 1
 }
-const getEyeCls = (main, newvalue, def_value) => {
-	const cls = []
-	cls.push(`represent_${main}`) 
-	cls.push(newvalue == null ? `represent-def-${def_value}` : `represent-custom-${newvalue}`)
-	return cls.join(' ')
-}
-rest.addAction('set-custom-prop-switch', ['admin'], async view => {
-	const db = await view.get('db')
-	const prop_id = await view.get('prop_id#required')
-	const entity_id = await db.col(`select entity_id from sources_props where prop_id = :prop_id`, {prop_id})
-	const def_value = await db.col(`
-		SELECT represent_props + 0
-		FROM sources_entities
-		WHERE entity_id = :entity_id
-	`, {entity_id})
 
-	const value = await db.col(`
-		SELECT represent_custom_prop + 0
-		FROM sources_props
-		WHERE prop_id = :prop_id
-	`, {prop_id})
-
-	const newvalue = getCustomSwitch(value, def_value)
-	await db.exec(`
-		UPDATE sources_props
-		SET represent_custom_prop = :newvalue
-		WHERE prop_id = :prop_id
-	`, {prop_id})	
-
-	/*
-		represent-0 (opacity)
-		represent-1 (opacity)
-		represent-def-0 (stroke-1)
-		represent-def-1 (stroke-1 beam)
-		represent-custom-0 (stroke-2)
-		represent-custom-1 (stroke-2 beam)
-		
-	*/
-	const entity = await Source.getEntity(db, entity_id)
-	view.data.cls = getEyeCls(entity.represent_entity, newvalue, def_value)
-	return view.ret()
-})
-rest.addAction('set-custom-sheet-switch', ['admin'], async view => {
+rest.addAction('set-sheet-switch', ['admin'], async view => {
 	const db = await view.get('db')
 	const sheet_title = await view.get('sheet_title#required')
 	const source_id = await view.get('source_id#required')
@@ -132,14 +93,8 @@ rest.addAction('set-custom-sheet-switch', ['admin'], async view => {
 	`, {source_id, sheet_title, newvalue})
 
 
-	
-	await Sources.recalcRepresentSheetBySource(db, source)
-	await Sources.recalcRepresentKeyBySource(db, source)
-	await Sources.recalcRepresent(db)
-	await Sources.recalcWinner(db)
-	await Sources.recalcSearchBySourceId(db, source_id)
-	view.data.cls_represent = `represent_${source.represent_source}`
-	view.data.cls_represent_custom = newvalue == null ? `represent-def-${source.represent_sheets}` : `represent-custom-${newvalue}`
+	await Consequences.represent(db)
+	view.data.cls = eye.calcCls(source.represent_source, newvalue, source.represent_sheets)
 	return view.ret()
 })
 
@@ -148,14 +103,15 @@ rest.addAction('set-prop-switch-prop', ['admin'], async view => {
 	const db = await view.get('db')
 	const prop_id = await view.get('prop_id#required') 
 	const propname = await view.get('propprop#required')
+
+	const prop = await Sources.getProp(db, prop_id)
+	const entity = await Sources.getEntity(db, prop.entity_id)
+	const entity_id = prop.entity_id
 	if (propname == 'multi') {
 		const value = await db.col(`
 			SELECT ${propname} + 0 FROM sources_props
 			WHERE prop_id = :prop_id
 		`, {prop_id})
-
-		const prop = await Sources.getProp(db, prop_id)
-		const entity = await Sources.getEntity(db, prop.entity_id)
 		if (entity.prop_id == prop.prop_id && !value) return view.err('Ключевое свойство может быть только с одним значением')
 	}
 	await db.exec(`
@@ -169,9 +125,11 @@ rest.addAction('set-prop-switch-prop', ['admin'], async view => {
 		WHERE prop_id = :prop_id
 	`, {prop_id})
 	
+	await Consequences.changed(db, entity_id)
+
 	return view.ret()
 })
-rest.addAction('set-custom-sheet-delete', ['admin'], async view => {
+rest.addAction('set-sheet-delete', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const sheet_title = await view.get('title#required')
@@ -182,6 +140,8 @@ rest.addAction('set-custom-sheet-delete', ['admin'], async view => {
    		WHERE source_id = :source_id
    			and sheet_title = :sheet_title
 	`, {source_id, sheet_title})
+
+	await Consequences.loaded(db, source_id)
 
 	return view.ret()
 })
@@ -196,6 +156,8 @@ rest.addAction('set-inter-delete', ['admin'], async view => {
    		WHERE entity_master_id = :entity_master_id
    			and entity_slave_id = :entity_slave_id
 	`, {entity_master_id, entity_slave_id})
+
+	await Consequences.represent(db)
 
 	return view.ret()
 })
@@ -219,6 +181,8 @@ rest.addAction('set-inter-prop', ['admin'], async view => {
    			and entity_slave_id = :entity_slave_id
 	`, {entity_master_id, entity_slave_id, prop_master_id})
 
+	await Consequences.represent(db)
+	
 	return view.ret()
 })
 rest.addAction('set-entity-intersection', ['admin'], async view => {
@@ -237,6 +201,9 @@ rest.addAction('set-entity-intersection', ['admin'], async view => {
 		INSERT IGNORE INTO sources_intersections (entity_master_id, entity_slave_id, prop_master_id)
    		VALUES (:entity_master_id, :entity_slave_id, :prop_master_id)
 	`, {entity_master_id, entity_slave_id, prop_master_id})
+	
+	
+	await Consequences.represent(db)
 	return view.ret()
 })
 rest.addAction('set-prop-type', ['admin'], async view => {
@@ -246,7 +213,9 @@ rest.addAction('set-prop-type', ['admin'], async view => {
 	const type = await view.get('type#required') 
 	
 	const prop = await Sources.getProp(db, prop_id)
-	const entity = await Sources.getEntity(db, prop.entity_id)
+	const entity_id = prop.entity_id
+	const entity = await Sources.getEntity(db, entity_id)
+
 	if (entity.prop_id == prop.prop_id && type != 'value') return view.err('Нельзя изменить тип ключевого свойства')
 	const is_used_title = await db.col(`
 		SELECT en.entity_title
@@ -260,7 +229,8 @@ rest.addAction('set-prop-type', ['admin'], async view => {
 		SET type = :type
 		WHERE prop_id = :prop_id
 	`, {prop_id, type})
-	
+	prop.type = type
+	await Consequences.changed(db, entity_id)	
 	return view.ret()
 })
 
@@ -280,8 +250,18 @@ rest.addAction('set-sources-renovate', ['admin'], async view => {
 	const list = await Sources.getSources(db)
 	const proms1 = list.filter(source => !source.dependent).map(source => Sources.renovate(db, source, view.visitor))
 	await Promise.all(proms1)
+	for await (const source of proms1) {
+		if (!source) continue
+		await Consequences.loaded(db, source.source_id)
+	}
+
 	const proms2 = list.filter(source => source.dependent).map(source => Sources.renovate(db, source, view.visitor))
 	await Promise.all(proms2)
+	for await (const source of proms2) {
+		if (!source) continue
+		await Consequences.loaded(db, source.source_id)
+	}
+
 	return view.ret()
 })
 rest.addAction('set-source-ordain', ['admin'], async view => {
@@ -300,6 +280,9 @@ rest.addAction('set-source-ordain', ['admin'], async view => {
 	`, {ordain, id})
 
 	await Sources.reorderSources(db)
+	
+	await Consequences.represent(db)
+
 	return view.ret()
 })
 rest.addAction('set-entity-ordain', ['admin'], async view => {
@@ -317,7 +300,8 @@ rest.addAction('set-entity-ordain', ['admin'], async view => {
 		WHERE entity_id = :id
 	`, {ordain, id})
 
-	await Sources.reorderEntities(db)
+	await Sources.reorderEntities(db)	
+	//await Consequences порядок сущностей никак не влияет на выдачу data или сразу влияет если сортируется
 	return view.ret()
 })
 rest.addAction('set-prop-ordain', ['admin'], async view => {
@@ -338,11 +322,13 @@ rest.addAction('set-prop-ordain', ['admin'], async view => {
 	const prop = await Sources.getProp(db, id)
 	if (!prop) return view.err()
 	await Sources.reorderProps(db, prop.entity_id)
+	//await Consequences порядок свойств ничего не меняет
 	return view.ret()
 })
 rest.addAction('set-reset-start', async (view) => {
 	const db = await rest.data('db') //База данных могла не перезапуститься и процесс загрузки ещё идёт
 	await db.exec(`UPDATE sources_sources SET date_start = null`)
+	//await Consequences если данные источника были победителями, то просто ничего не прокажется, так как старые были удалены при внесении и победителя не будет
 	return view.ret()
 })
 rest.addAction('set-source-renovate', ['admin'], async view => {
@@ -354,6 +340,8 @@ rest.addAction('set-source-renovate', ['admin'], async view => {
 	if (!source.renovate) return view.ret('Актуализация запрещена')
 	if (!source.need) return view.ret(source.status)
 	await Sources.load(db, source, view.visitor)
+	await Consequences.loaded(db, source_id)
+
 	return view.ret('Загрузка запущена!')
 })
 rest.addAction('set-source-load', ['admin'], async view => {
@@ -364,7 +352,9 @@ rest.addAction('set-source-load', ['admin'], async view => {
 
 	if (!source.date_check) await Sources.check(db, source, view.visitor)
 	if (source.error) return view.err('Для загрузки необходимо устранить ошибку')
-	const res = Sources.load(db, source, view.visitor)
+	Sources.load(db, source, view.visitor)
+	await Consequences.loaded(db, source_id)
+	
 	return view.ret('Загрузка запущена!')
 	//return view.ret()	
 })
@@ -457,6 +447,13 @@ rest.addAction('set-source-clear', ['admin'], async view => {
 
 	
 	await Sources.check(db, source, view.visitor)
+
+	await Consequences.represent(db)
+	/*
+		Если удалили данные источника, значит 
+		удалилась часть свойств и изменились победители
+		удалились ключи надо подчистить sources_items
+	*/
 	return view.ret('Данные из источника удалены')
 })
 rest.addAction('set-prop-delete', ['admin'], async view => {
@@ -502,6 +499,8 @@ rest.addAction('set-prop-delete', ['admin'], async view => {
 		SET prop_id = null
    		WHERE prop_id = :prop_id
 	`, {prop_id})
+
+	//await Consequences удаляется свойство, которое нигде не используется
 	return view.ret()
 
 })
@@ -534,12 +533,13 @@ rest.addAction('set-entity-delete', ['admin'], async view => {
 
 	
 	await db.exec(`
-		DELETE en, pr
+		DELETE en, pr, cva
 		FROM sources_entities en
 			LEFT JOIN sources_props pr on pr.entity_id = en.entity_id
+			LEFT JOIN sources_custom_values cva on cva.prop_id = pr.prop_id
    		WHERE en.entity_id = :entity_id
 	`, {entity_id})
-
+	//await Consequences сущность удаляется если её нет, пересчитывать нечего
 	return view.ret('Сущность удалена')
 })
 rest.addAction('set-source-delete', ['admin'], async view => {
@@ -547,6 +547,11 @@ rest.addAction('set-source-delete', ['admin'], async view => {
 	const source_id = await view.get('source_id#required')
 	const source = await Sources.getSource(db, source_id)
 	if (source.date_start) return view.err('Нельзя удалить, когда идёт загрузка')
+
+	const entities = await db.colAll(`
+		SELECT distinct entity_id FROM sources_sheets
+		WHERE source_id = :source_id
+	`, source)
 	await db.exec(`
 		DELETE so, csh, cco, cro, sh, co, ro, ce
 		FROM sources_sources so
@@ -561,7 +566,13 @@ rest.addAction('set-source-delete', ['admin'], async view => {
 			
    		WHERE so.source_id = :source_id
 	`, {source_id})
-
+	
+	await Consequences.represent(db)
+	// for (const entity_id of entities) {
+		
+	// 	await Consequences.changed(db, entity_id)
+	// }
+	
 	return view.ret('Источник удалён')
 })
 rest.addAction('set-entity-prop-reset', ['admin'], async view => {
@@ -576,7 +587,7 @@ rest.addAction('set-entity-prop-reset', ['admin'], async view => {
 
 	const tpl = await import('/-sources/entity.html.js')
 	view.ans.value = tpl.showProp({})
-
+	await Consequences.changed(db, entity_id)
 	return view.ret()
 })
 rest.addAction('set-source-entity-reset', ['admin'], async view => {
@@ -587,6 +598,68 @@ rest.addAction('set-source-entity-reset', ['admin'], async view => {
 		SET entity_id = null
 		WHERE source_id = :source_id
 	`, {source_id})
+
+	await Consequences.loaded(db, source_id)
+	return view.ret()
+})
+rest.addAction('set-sheet-entity-reset', ['admin'], async view => {
+	const source_id = await view.get('source_id#required')
+	const db = await view.get('db')
+	await db.exec(`
+		UPDATE sources_custom_sheets
+		SET entity_id = null
+		WHERE source_id = :source_id
+	`, {source_id})
+	await Consequences.loaded(db, source_id)
+	return view.ret()
+})
+rest.addAction('set-sheet-title', ['admin'], async view => { //Показывается кнопка если есть непривязанные настройки
+	const db = await view.get('db')
+	const source_id = await view.get('source_id#required')
+	const sheet_title = await view.get('sheet_title#required')
+	const title = await view.get('title#required')
+	if (!title) return view.err('Укажите имя')
+	if (title == sheet_title) return view.err('Укажите новое имя')
+	const old = await db.col(`
+		SELECT 1 
+		FROM sources_custom_sheets
+		WHERE source_id = :source_id and sheet_title = :title
+	`, {source_id, title})
+	if (old) return view.err('Для указанного имени уже есть настройки, сначало удалите их')
+	await db.exec(`
+		UPDATE sources_custom_sheets
+		SET sheet_title = :title
+		WHERE source_id = :source_id and sheet_title = :sheet_title
+	`, {source_id, title, sheet_title})
+	await Consequences.loaded(db, source_id)
+	return view.ret()
+})
+rest.addAction('set-sheet-entity', ['admin'], async view => {
+	const source_id = await view.get('source_id#required')
+	const entity_id = await view.get('entity_id#required')
+	const sheet_title = await view.get('sheet_title#required')
+	
+	const db = await view.get('db')
+
+	//А что если есть указанные prop_id у колонок
+	const ready = await db.col(`
+		SELECT prop_id
+		FROM sources_custom_cols co
+		WHERE co.prop_id is not null and co.source_id = :source_id and sheet_title = :sheet_title
+		LIMIT 1
+	`, {source_id, sheet_title})
+	if (ready) return view.err('У колонок есть определённые свойства, нельзя изменить сущность.')
+
+	await db.exec(`
+		UPDATE sources_custom_sheets
+		SET entity_id = :entity_id
+		WHERE source_id = :source_id and sheet_title = :sheet_title
+	`, {entity_id, source_id, sheet_title})
+	
+	const source = await Sources.getSource(db, source_id)
+	//У листа новая сущность значит все col_title будут уже другими и с другими типами
+	await Consequences.loaded(db, source_id) //entity_id, prop_id
+
 	return view.ret()
 })
 rest.addAction('set-source-entity', ['admin'], async view => {
@@ -598,6 +671,7 @@ rest.addAction('set-source-entity', ['admin'], async view => {
 		SET entity_id = :entity_id
 		WHERE source_id = :source_id
 	`, {entity_id, source_id})
+	await Consequences.loaded(db, source_id)
 	return view.ret()
 })
 rest.addAction('set-source-entity-create', ['admin'], async view => {
@@ -622,7 +696,29 @@ rest.addAction('set-source-entity-create', ['admin'], async view => {
 	`, {entity_id, source_id})
 	
 
+	await Consequences.loaded(db, source_id)
+	return view.ret()
+})
+rest.addAction('set-sheet-entity-create', ['admin'], async view => {
+	const db = await view.get('db')
+	const source_id = await view.get('source_id')
+	const entity_title = await view.get('search')
+	const entity_nick = nicked(entity_title)
 
+	const entity_id = view.ans.entity_id = await db.insertId(`
+		INSERT INTO sources_entities (entity_title, entity_nick)
+   		VALUES (:entity_title, :entity_nick)
+   		ON DUPLICATE KEY UPDATE entity_title = VALUES(entity_title), entity_id = VALUES(entity_id)
+	`, {entity_title, entity_nick})
+
+	await Sources.reorderEntities(db)
+
+	await db.exec(`
+		UPDATE sources_custom_sheets
+		SET entity_id = :entity_id
+		WHERE source_id = :source_id
+	`, {entity_id, source_id})
+	await Consequences.loaded(db, source_id)
 	return view.ret()
 })
 rest.addAction('set-entity-prop', ['admin'], async view => {
@@ -642,6 +738,8 @@ rest.addAction('set-entity-prop', ['admin'], async view => {
 	// const tpl = await import('/-sources/entity.html.js')
 	// view.ans.value = tpl.showProp(prop)
 	view.ans.value = prop.prop_title
+	await Consequences.changed(db, entity_id)
+	
 	return view.ret()
 })
 rest.addAction('set-entity-prop-create', ['admin'], async view => {
@@ -667,7 +765,7 @@ rest.addAction('set-entity-prop-create', ['admin'], async view => {
 
 	const tpl = await import('/-sources/entity.html.js')
 	view.ans.value = tpl.showProp({prop_title, prop_nick, type: 'value', prop_id})
-
+	//await Consequences.changed(db, entity_id)// у созданного свойства не будет совпадений, так как у данных всегда свойства уже есть
 	return view.ret()
 })
 rest.addAction('set-prop-create', ['admin'], async view => {
@@ -684,7 +782,7 @@ rest.addAction('set-prop-create', ['admin'], async view => {
 	`, {entity_id, prop_title, prop_nick})
 
 	await Sources.reorderProps(db, entity_id)
-
+	//await Consequences.changed(db, entity_id) у созданного свойства нет источников и данных, так как у данных всегда свойства уже есть
 	return view.ret()
 })
 

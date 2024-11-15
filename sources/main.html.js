@@ -78,6 +78,11 @@ const showMain = (data, env) => `
 	
 `
 const showScriptReload = (data, env) => `
+	<style>
+		#MAIN {
+			opacity: 0.8;
+		}
+	</style>
 	<script>
 		setTimeout(async () => {
 			const Client = await window.getClient()
