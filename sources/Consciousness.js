@@ -1,5 +1,6 @@
 import Sources from "/-sources/Sources.js"
-
+import nicked from "/-nicked"
+import unique from "/-nicked/unique.js"
 const Consciousness = {}
 export default Consciousness
 
@@ -12,10 +13,11 @@ Consciousness.recalcKeyIndex = async (db) => { //Определить key_index,
 	await db.exec(`
 		UPDATE sources_sheets sh, sources_entities en, sources_cols co
 		SET sh.key_index = co.col_index
-		WHERE en.entity_id = sh.entity_id
-		and co.source_id = sh.source_id and co.sheet_index = sh.sheet_index
-		and co.prop_id = en.prop_id
-		ORDER BY co.col_index
+		WHERE 
+			en.entity_id = sh.entity_id
+			and co.source_id = sh.source_id 
+			and co.sheet_index = sh.sheet_index
+			and co.prop_id = en.prop_id
 	`)
 }
 Consciousness.recalcEntitiesPropId = async (db, source) => { //Определить entity_id, prop_id, key_index
@@ -39,14 +41,18 @@ Consciousness.recalcEntitiesPropId = async (db, source) => { //Определи�
 		FROM sources_sheets
 		WHERE source_id = :source_id
 	`, source)
+
 	for (const {sheet_index, sheet_title} of sheets) {
+
 		const entity_id = custom_sheets[sheet_title]?.entity_id || source.entity_id || null
+
 		if (entity_id) {
 			const custom_cols = await db.allto('col_title', `
 				SELECT prop_id
 				FROM sources_custom_cols
 				WHERE source_id = :source_id and sheet_title = :sheet_title and prop_id is not null
 			`, {source_id, sheet_title})
+
 			const head = await db.all(`
 				SELECT col_title, col_nick, col_index
 				FROM sources_cols
@@ -58,6 +64,7 @@ Consciousness.recalcEntitiesPropId = async (db, source) => { //Определи�
 			   		VALUES (:entity_id, :col_title, :col_nick, 'text')
 			   		ON DUPLICATE KEY UPDATE prop_id = LAST_INSERT_ID(prop_id)
 				`, {entity_id, col_title, col_nick})
+
 				await db.exec(`
 					UPDATE sources_cols
 					SET prop_id = :prop_id
@@ -119,6 +126,9 @@ Consciousness.setCellType = async (db, cell, type) => {
 			if (isNaN(date)) {
 				date = null
 				pruning = true
+			} else if (date.getFullYear() > 2037) {
+				date = null
+				pruning = true
 			}
 		} else if (type == 'value') {
 			const value_title = text.slice(-63)
@@ -145,8 +155,147 @@ Consciousness.setCellType = async (db, cell, type) => {
 			and sheet_index = :sheet_index 
 			and row_index = :row_index 
 			and col_index = :col_index
+			and multi_index = :multi_index
 	`, {...cell, value_id, number, date, pruning})
 }
+Consciousness.recalcMulti = async (db, {source_id}) => {
+	//prop_id может не быть, тогда multi считаем false
+	const props = await db.all(`
+		SELECT co.col_index, co.sheet_index, pr.multi + 0 as multi
+		FROM sources_cols co
+			LEFT JOIN sources_props pr on (pr.prop_id = co.prop_id)
+		WHERE co.source_id = :source_id
+	`, {source_id})
+	
+	
+
+	
+	for (const {col_index, sheet_index, multi} of props) {		
+		if (multi) {
+			const cells = await db.all(`
+				SELECT 
+					row_index,
+					text
+				FROM sources_cells
+				WHERE 
+					col_index = :col_index 
+					and sheet_index = :sheet_index 
+					and source_id = :source_id
+					and text like "%, %"
+				ORDER BY row_index, multi_index
+			`, {col_index, sheet_index, source_id})
+			
+			const texts = {}
+			for (const {row_index, text} of cells) {
+				texts[row_index] ??= []
+				texts[row_index].push(...text.split(', '))
+				await db.exec(`
+					DELETE FROM sources_cells
+					WHERE source_id = :source_id and sheet_index = :sheet_index and col_index = :col_index
+				`, {source_id, sheet_index, row_index, col_index})
+			}
+			for (const row_index in texts) {
+				for (const multi_index in texts[row_index]) {
+					const text = texts[row_index][multi_index]
+					await db.exec(`
+						INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, multi_index, text)
+						VALUES (:source_id, :sheet_index, :row_index, :col_index, :multi_index, :text)
+					`, {source_id, sheet_index, row_index, col_index, multi_index, text})
+				}
+			}
+
+		} else { //multi нет, дубли мёрджим
+			const cells = await db.all(`
+				SELECT 
+					row_index,
+					text
+				FROM sources_cells
+				WHERE 
+					col_index = :col_index 
+					and sheet_index = :sheet_index 
+					and source_id = :source_id
+					and row_index in (
+						SELECT row_index 
+						FROM sources_cells 
+						WHERE source_id = :source_id and sheet_index = :sheet_index and col_index = :col_index
+						GROUP BY row_index HAVING COUNT(*) > 1
+					)
+				ORDER BY row_index, multi_index
+			`, {col_index, sheet_index, source_id})
+			
+			const texts = {}
+			for (const {row_index, text} of cells) {
+				texts[row_index] ??= []
+				texts[row_index].push(text)
+				await db.exec(`
+					DELETE FROM sources_cells
+					WHERE source_id = :source_id and sheet_index = :sheet_index and col_index = :col_index
+				`, {source_id, sheet_index, row_index, col_index})
+			}
+			for (const row_index in texts) {
+				const text = texts[row_index].join(', ')
+				await db.exec(`
+					INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, text)
+					VALUES (:source_id, :sheet_index, :row_index, :col_index, :text)
+				`, {source_id, sheet_index, row_index, col_index, text})
+			}
+		}
+	}
+}
+Consciousness.recalcTexts = async (db, source) => {
+	const {source_id} = source
+	const sheets = await db.colAll(`
+		SELECT sheet_index
+		FROM sources_sheets
+		WHERE source_id = :source_id
+	`, {source_id})
+	for (const sheet_index of sheets) {
+		const props = await db.allto('col_index', `
+			SELECT co.col_index, co.prop_id, pr.type, pr.multi + 0 as multi
+			FROM sources_cols co
+				LEFT JOIN sources_props pr on (pr.prop_id = co.prop_id)
+			WHERE co.source_id = :source_id and co.sheet_index = :sheet_index
+		`, {source_id, sheet_index})
+		
+		const cells = await db.all(`
+			SELECT ce.source_id, ce.sheet_index, ce.row_index, ce.col_index, ce.multi_index, ce.text
+			FROM sources_cells ce
+			WHERE ce.source_id = :source_id
+				and ce.sheet_index = :sheet_index
+		`, {source_id, sheet_index})
+		for (const cell of cells) {
+			const prop = props[cell.col_index]
+
+			await Consciousness.setCellType(db, cell, prop?.type)
+		}
+	}
+}
+// Consciousness.recalcPropByProp = async (db, prop) => {
+// 	if (prop.type == 'text') {
+// 		await db.exec(`
+// 			UPDATE sources_cells ce, sources_cols co
+// 			SET ce.value_id = null,
+// 			ce.number = null,
+// 			ce.date = null
+// 			WHERE ce.source_id = co.source_id 
+// 			and ce.sheet_index = co.sheet_index 
+// 			and ce.col_index = co.col_index 
+// 			and co.prop_id = :prop_id
+// 		`, prop)
+// 		return
+// 	}
+// 	const cells = await db.all(`
+// 		SELECT ce.source_id, ce.sheet_index, ce.row_index, ce.col_index, ce.text
+// 		FROM sources_cells ce, sources_cols co
+// 		WHERE ce.source_id = co.source_id 
+// 		and ce.sheet_index = co.sheet_index 
+// 		and ce.col_index = co.col_index 
+// 		and co.prop_id = :prop_id
+// 	`, prop)
+// 	for (const cell of cells) {
+// 		await Consciousness.setCellType(db, cell, prop.type)
+// 	}
+// }
 Consciousness.insertItemsByEntity = async (db, entity) => {
 	await db.exec(`
 		DELETE FROM sources_items 
@@ -172,10 +321,23 @@ Consciousness.insertItemsByEntity = async (db, entity) => {
 		`, {entity_id: entity.entity_id, key_id})
 	}
 }
-Consciousness.recalcRepresentCell = async (db, source) => {
+Consciousness.recalcRepresent = async (db) => {
 	/*
-	represent (
-			
+		represent_sheet (represent_custom_sheet, represent_sheets)
+		represent_col (represent_custom_col, represent_cols)
+		represent_row (represent_custom_row, represent_rows)
+		represent_cell (represent_custom_cell, represent_cels)
+
+		represent_prop (represent_custom_prop, represent_props)
+		represent_key_value pos(represent_custom_value, represent_values)
+		represent_item pos(represent_custom_item, represent_items)
+		
+		represent_key (represent_source, represent_sheet, represent_col, represent_row, represent_cell)
+
+		represent_instance (represent_entity, represent_prop, represent_item, represent_key_value)
+		
+		represent (
+			represent_instance
 			represent_key,
 
 			represent_prop,
@@ -184,24 +346,27 @@ Consciousness.recalcRepresentCell = async (db, source) => {
 			represent_col, 
 			represent_row, 
 			represent_cell,
+			represent_custom_value
 			
-			represent_instance
 		)
+		winner (represent)
 	*/
 	await db.exec(`
 		UPDATE 
-			sources_cells ce, 
 			sources_rows ro,
 			sources_sheets sh, 
 			sources_cols co, 
 			sources_props pr,
-			sources_items it
+			sources_items it,
+			sources_cells ce
+				LEFT JOIN sources_custom_values cva on cva.value_id = ce.value_id
 		SET ce.represent = ce.represent_cell
 			and ro.represent_key 
 			and sh.represent_sheet 
 			and ro.represent_row 
 			and co.represent_col 
 			and pr.represent_prop 
+			and nvl(cva.represent_custom_value, 1)
 			and it.represent_instance
 		WHERE 
 		sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
@@ -215,7 +380,7 @@ Consciousness.recalcRepresentCell = async (db, source) => {
 Consciousness.recalcRepresentValueByEntity = async (db, entity) => {
 	await db.exec(`
 		UPDATE sources_items
-		SET represent_value = :represent_values
+		SET represent_key_value = :represent_values
 		WHERE entity_id = :entity_id
 	`, entity)
 	const {entity_id} = entity
@@ -244,7 +409,7 @@ Consciousness.recalcRepresentValueByEntity = async (db, entity) => {
 		`, {value_id, prop_id})
 		await db.exec(`
 			UPDATE sources_items it
-			SET it.represent_value = :represent_custom_value
+			SET it.represent_key_value = :represent_custom_value
 			WHERE it.entity_id = :entity_id
 			and it.key_id = :key_id
 		`, {entity_id, key_id, represent_custom_value})
@@ -346,7 +511,7 @@ Consciousness.recalcRepresentItemByEntity = async (db, entity) => {
 Consciousness.recalcRepresentInstanceByEntity = async (db, entity) => {
 	await db.exec(`
 		UPDATE sources_items it, sources_entities en, sources_props pr
-		SET it.represent_instance = it.represent_item and it.represent_value and pr.represent_prop and en.represent_entity
+		SET it.represent_instance = it.represent_item and it.represent_key_value and pr.represent_prop and en.represent_entity
 		WHERE it.entity_id = :entity_id
 		and en.entity_id = it.entity_id 
 		and pr.prop_id = en.prop_id
@@ -461,7 +626,8 @@ Consciousness.recalcSearchByEntityIdAndSourceId = async (db, entity_id, source_i
 			FROM sources_rows ro, sources_sheets sh, sources_cells ce
 			WHERE sh.entity_id = :entity_id and sh.source_id = :source_id
 				and ro.source_id = sh.source_id and ro.sheet_index = sh.sheet_index and ro.key_id is not null
-				and ce.source_id = sh.source_id and ce.sheet_index = sh.sheet_index and ce.value_id = ro.key_id and ce.winner = 1 and ce.represent = 1
+				and ce.source_id = sh.source_id and ce.sheet_index = sh.sheet_index and ce.value_id = ro.key_id 
+				and ce.winner = 1 and ce.represent = 1
 		)
 		GROUP BY d.key_id
 	`, {source_id, entity_id})
@@ -492,7 +658,8 @@ Consciousness.recalcWinner = async (db) => {
 
 					SELECT sh.entity_id, ro.key_id, co.prop_id, ce.source_id, so.ordain, ce.sheet_index, ce.row_index, ce.col_index
 					FROM sources_cells ce, sources_cols co, sources_sources so, sources_sheets sh, sources_rows ro
-					WHERE ce.sheet_index = co.sheet_index and ce.col_index = co.col_index and ce.source_id = co.source_id and co.prop_id is not null
+					WHERE ce.sheet_index = co.sheet_index and ce.col_index = co.col_index 
+						and ce.source_id = co.source_id and co.prop_id is not null
 						and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
 						and so.source_id = ce.source_id
 						and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
@@ -502,7 +669,8 @@ Consciousness.recalcWinner = async (db) => {
 
 					SELECT sh.entity_id, ro.key_id, co.prop_id, ce.source_id, so.ordain, ce.sheet_index, ce.row_index, ce.col_index
 					FROM sources_cells ce, sources_cols co, sources_sources so, sources_sheets sh, sources_rows ro
-					WHERE ce.sheet_index = co.sheet_index and ce.col_index = co.col_index and ce.source_id = co.source_id and co.prop_id is not null
+					WHERE ce.sheet_index = co.sheet_index and ce.col_index = co.col_index 
+						and ce.source_id = co.source_id and co.prop_id is not null
 						and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
 						and so.source_id = ce.source_id
 						and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index

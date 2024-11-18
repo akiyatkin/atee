@@ -84,6 +84,7 @@ td > p {
 	padding:0;
 }
 .a {
+	text-align: left;
 	background-color: transparent;
 	color: inherit;
 	display: inline;
@@ -113,7 +114,19 @@ td > p {
 /*	border-bottom: dashed 1px currentColor;*/
 }
 
-
+.mute {
+	opacity: 0.5;
+	transition: opacity 0.2s;
+}
+.a.mute:hover {
+	opacity: 1;
+}
+a.mute:hover {
+	opacity: 1;
+}
+button.mute:hover {
+	opacity: 1;
+}
 
 a {
 	-webkit-tap-highlight-color: transparent;

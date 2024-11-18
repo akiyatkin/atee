@@ -4,6 +4,7 @@
 	"animate":{
 		"source:SOURCE":"none",
 		"main:TABLE":"none",
+		"entity:PROPS":"none",
 		"source:BOT":"none",
 		"source:TOP":"none",
 		"entity:ENTITY":"none"
@@ -22,6 +23,7 @@
 		"memory:ROOT":"/-sources/memory"
 	},
 	"jsontpl":{
+		"sheet:ROOT":"/-sources/sheet?source_id=${env.bread.get.source_id ?? ''}&sheet_index=${env.bread.get.sheet_index ?? ''}",
 		"source:ROOT":"/-sources/source?source_id=${env.crumb.name}",
 		"source:SOURCE":"/-sources/source?source_id=${env.crumb.name}",
 		"source:TOP":"/-sources/source?source_id=${env.crumb.name}",
@@ -41,6 +43,7 @@
 		"index":"/-controller/index-board.html.js",
 		"aside":"/-sources/aside.html.js",
 		"main":"/-sources/main.html.js",
+		"sheet":"/-sources/sheet.html.js",
 		"source":"/-sources/source.html.js",
 		"props":"/-sources/props.html.js",
 		"prop":"/-sources/prop.html.js",
@@ -83,7 +86,14 @@
 				}
 			}
 		},
-		
+		"sheet":{
+			"head":{"title":"Лист"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"sheet:ROOT"
+				}
+			}
+		},
 		"prop":{
 			"layout":{},
 			"child":{

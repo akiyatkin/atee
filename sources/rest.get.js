@@ -105,12 +105,13 @@ rest.addResponse('get-entity-search', ['admin'], async view => {
 rest.addResponse('get-entity-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hash = await view.get('hash')
-	
+	const entity_id = await view.get('entity_id#required')
 	const list = await db.all(`
 		SELECT prop_id, prop_title, type
 		FROM sources_props
 		WHERE prop_nick like "%${hash.join('%" and prop_nick like "%')}%"
-	`)
+		and entity_id = :entity_id
+	`, {entity_id})
 
 	view.ans.list = list.map(row => {
 		row['left'] = row.prop_title
@@ -135,15 +136,42 @@ rest.addResponse('get-entity-prop-search', ['admin'], async view => {
 	view.ans.count = list.length
 	return view.ret()
 })
+rest.addResponse('get-prop-type-search', ['admin'], async view => {
+	view.ans.list = [
+		{
+			'left':'number',
+			'type':'number',
+			'right':''
+		},
+		{
+			'left':'date',
+			'type':'date',
+			'right':''
+		},
+		{
+			'left':'value',
+			'type':'value',
+			'right':''
+		},
+		{
+			'left':'text',
+			'type':'text',
+			'right':''
+		}
+	]
+	view.ans.count = 4
+	return view.ret()
+})
 rest.addResponse('get-inter-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hash = await view.get('hash')
-	
+	const entity_id = await view.get('entity_id#required')
 	const list = await db.all(`
 		SELECT prop_id, prop_title, type
 		FROM sources_props
 		WHERE prop_nick like "%${hash.join('%" and prop_nick like "%')}%"
-	`)
+		and entity_id = :entity_id
+	`, {entity_id})
 
 	view.ans.list = list.map(row => {
 		row['left'] = row.prop_title

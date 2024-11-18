@@ -341,6 +341,7 @@ field.prompt = ({
 		<span>
 			<button class="field ${cls}">${value ?? ''}${unit}</button><script>
 				(btn => {
+					let savedinput = '${input ?? ''}'
 					btn.addEventListener('click', async () => {
 						const Prompt = await import('/-dialog/prompt/Prompt.js').then(r => r.default)
 						const layer = ${JSON.stringify(layer)}
@@ -350,7 +351,7 @@ field.prompt = ({
 							onlyfuture: ${onlyfuture},
 							descr: '${descr || ''}',
 							value: '${value ?? ''}',
-							input: '${input ?? ''}',
+							input: savedinput,
 							name:'${name}',
 							placeholder:'${label}',
 							ok: '${ok}',
@@ -364,7 +365,9 @@ field.prompt = ({
 									args["g-recaptcha-response"] = token
 								}
 								const ans = await senditmsg(btn, '${action}', args)
-								if (ans.result && (ans['${name}'] || ans['${name}'] == 0)) btn.innerHTML = ans['${name}'] + '${unit}'
+								if (ans.result && (ans['${name}'] || ans['${name}'] == 0)) {
+									savedinput = btn.innerHTML = ans['${name}'] + '${unit}'
+								}
 
 								if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
 								const Client = await window.getClient()
@@ -778,7 +781,7 @@ field.textdisabled = ({label, value}) => {
 const showOption = (obj, vname, tname, value, def) => `<option ${value == obj[vname] ? 'selected ' : ''}value="${obj[vname]}">${obj[tname] || def}</option>`
 
 //approved
-field.select = ({name, action, options, vname, tname, def = '', go, goid, selected, label, status, before, after, args = {}}) => {
+field.select = ({name, action, options, vname, tname, def = '', reloaddiv, go, goid, selected, label, status, before, after, args = {}}) => {
 	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label ${status || ''}">
@@ -807,6 +810,12 @@ field.select = ({name, action, options, vname, tname, def = '', go, goid, select
 								const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 								Dialog.alert(ans.msg)
 							}
+							if (ans.result && opt.reloaddiv) {
+								const Client = await window.getClient()
+								Client.reloaddiv(opt.reloaddiv)
+							}
+							
+
 							if (ans.result && opt.go) {
 								const Client = await window.getClient()
 								return Client.go(opt.go + (opt.goid ? ans[opt.goid] : ''))
@@ -827,7 +836,7 @@ field.select = ({name, action, options, vname, tname, def = '', go, goid, select
 							const opt = ${JSON.stringify(after)}
 							await makeaction(opt)
 						} else {
-							const opt = ${JSON.stringify({name, action, go, goid})}
+							const opt = ${JSON.stringify({name, action, go, goid, reloaddiv})}
 							await makeaction(opt, value)
 						}
 						select.disabled = false

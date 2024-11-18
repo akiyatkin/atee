@@ -381,5 +381,7 @@ const showControll = (data, env, source) => `
 	</div>
 `
 const showEntity = (data, env, entity) => `
-	${entity.entity_plural || entity.entity_title} (${entity.prop_title || 'ключ не определён'})
+	<span class="${entity.custom?.entity_id ? '' : 'mute'}">
+		${entity.entity_plural || entity.entity_title} (${entity.prop_title || 'ключ не определён'})
+	</span>
 `

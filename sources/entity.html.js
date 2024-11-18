@@ -7,57 +7,29 @@ export const ROOT = (data, env, entity = data.entity) => err(data, env, ["ENTITY
 `
 export const ENTITY = (data, env, entity = data.entity) => !data.result ? '' : `
 	<div style="opacity:0.5; float:right">Сущность</div>
-	<h1>${entity.entity_title}</h1>
+	<h1>${entity.entity_plural}</h1>
 	<table style="margin: 2em 0">
 		
 		<tr>
-			<td>Ключевое свойство</td>
+			<td>Ключ</td>
 			<td>
 				${field.search({
 					cls: 'a',
-					search:'/-sources/get-entity-prop-search',
+					search:'/-sources/get-entity-prop-search?entity_id=' + entity.entity_id,
 					value: entity.prop_title || 'Не указано',
 					label: 'Ключ сущности', 
 					type: 'text',
 					name: 'prop_id',
 					find: 'prop_id',
 					action: '/-sources/set-entity-prop',
-					args: {entity_id: entity.entity_id}
+					args: {entity_id: entity.entity_id},
+					reloaddiv:'PROPS'
 				})}
 			</td>
 		</tr>
-		<tr>
-			<td>Подключена в</td>
-			<td>
-				${data.i_am_being_used.map(entity => showEntityLink(data, env, entity)).join(", ") || "Нет"}
-			</td>
-		</tr>
 	</table>
-
 	
-	<table>
-		<thead>
-			<tr>
-				<td>Подключает</td><td>Свойство</td><td></td>
-			</tr>
-		</thead>
-		<tbody>
-			${data.i_am_using.map(inter => showTrInter(data, env, entity, inter)).join('')}
-		</tbody>
-	</table>
-	<div style="margin:2em 0 4em; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
-		${field.search({
-			search:'/-sources/get-entity-search',
-			value: 'Добавить подкючение', 
-			label: 'Выберите сущность', 
-			type: 'text',
-			name: 'entity_id',
-			find: 'entity_id',
-			action: '/-sources/set-entity-intersection',
-			args: {id: entity.entity_id},
-			reloaddiv: env.layer.div
-		})}
-	</div>
+	
 	${showComment(data, env, entity)}
 
 
@@ -133,24 +105,60 @@ export const ENTITY = (data, env, entity = data.entity) => !data.result ? '' : `
 			
 		</div>
 	</div>
-
+	${showInters(data, env, entity)}
 `
+const showInters = (data, env, entity) => {
+	const masters = data.i_am_being_used.map(entity => showEntityLink(data, env, entity)).join(", ")
+	return `
+		<h2>Подключения</h2>
+		<p>
+			Какие сущности подключаются по каким-то свойствам, указывается как справочная информация.
+			${masters ? entity.entity_plural + " подключены к <i>" + masters + "</i>" : "Другие сущности " + entity.entity_plural + " не подключают."}
+		</p>
+		<table>
+			<thead>
+				<tr>
+					<td>По свойству</td>
+					<td>Подключается</td>
+					<td></td>
+				</tr>
+			</thead>
+			<tbody>
+				${data.i_am_using.map(inter => showTrInter(data, env, entity, inter)).join('')}
+			</tbody>
+		</table>
+		<div style="margin:2em 0 4em; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
+			${field.search({
+				search:'/-sources/get-entity-search',
+				value: 'Добавить подкючение', 
+				label: 'Выберите сущность', 
+				type: 'text',
+				name: 'entity_id',
+				find: 'entity_id',
+				action: '/-sources/set-entity-intersection',
+				args: {id: entity.entity_id},
+				reloaddiv: env.layer.div
+			})}
+		</div>
+	`
+}
 const showTrInter = (data, env, entity, inter) => `
 	<tr>
-		<td><a href="entity/${inter.entity_id}">${inter.entity_title}</a></td>
+		
 		<td>
 			${field.search({
 				cls: 'a',
-				search:'/-sources/get-inter-prop-search',
+				search:'/-sources/get-inter-prop-search?entity_id=' + entity.entity_id,
 				value: showInterProp(inter), 
 				label: 'Свойство с ключём', 
 				type: 'text',
 				name: 'prop_id',
 				find: 'prop_id',
 				action: '/-sources/set-inter-prop',
-				args: {entity_id: inter.entity_id, id: entity.entity_id}
+				args: {entity_id: inter.entity_id, id: entity.entity_id, old_id: inter.prop_id}
 			})}
 		</td>
+		<td><a href="entity/${inter.entity_id}">${inter.entity_title}</a></td>
 		<td>
 			${field.button({
 				cls:"a",
@@ -165,14 +173,24 @@ const showTrInter = (data, env, entity, inter) => `
 `
 const showEntityLink = (data, env, entity) => `<a href="entity/${entity.entity_id}">${entity.entity_title}</a>`
 export const PROPS = (data, env) => !data.result ? '' : `
+	<style>
+		${env.scope} .ellipsis {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-width: 300px;
+		}
+	</style>
 	<table draggable="false" class="list" style="margin: 2em 0">
 		<thead>
 			<tr>
 				<td>Свойство</td>
 				<td>Тип</td>
 				<td>Значений</td>
-				<td>Учтено</td>
-				<td>Опубликовано</td>
+				<td>Обработка</td>
+				<td>Видимость</td>
+				<td>Комментарий</td>
+				<td></td>
 			</tr>
 		</thead>
 		<tbody draggable="false">
@@ -189,10 +207,11 @@ export const PROPS = (data, env) => !data.result ? '' : `
 			type: 'text', 
 			action: '/-sources/set-prop-create', 
 			args: {entity_id: data.entity_id},
-			go: 'prop/',
+			reloaddiv: 'PROPS',
 			goid: 'prop_id'
 		})}
 	</div>
+</p>
 `
 const showScriptDrag = (data, env) => `
 	<script>
@@ -208,20 +227,70 @@ const showScriptDrag = (data, env) => `
 `
 const showTr = (data, env, prop) => `
 	<tr class="item" data-id="${prop.prop_id}" style="white-space: nowrap;">
-		<td>
+		<td style="${data.entity.prop_id == prop.prop_id ? 'font-weight:bold' : ''}">
 			<a href="prop/${prop.prop_id}">${prop.prop_title}</a>
 		</td>
 		<td>
-			${prop.type}
+			${field.search({
+				cls: 'a',
+				search:'/-sources/get-prop-type-search',
+				value: prop.type, 
+				descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче 63 символов. Самый затратный <b>text</b>.',
+				label: 'Свойство с ключём', 
+				type: 'text',
+				name: 'type',
+				find: 'type',
+				action: '/-sources/set-prop-type',
+				args: {prop_id: prop.prop_id}
+			})}
+			
 		</td>
 		<td>
-			${prop.multi ? 'Несколько' : 'Одно'}
+			${field.switch({
+				action: '/-sources/set-prop-switch-prop', 
+				value: prop.multi, 
+				values: {"":"Одно", "1":"Несколько"},
+				args: {prop_id: prop.prop_id, propprop: 'multi'}
+			})}
 		</td>
 		<td>
-			${prop.known ? 'Да' : 'Нет'}
+			${field.switch({
+				action: '/-sources/set-prop-switch-prop', 
+				value: prop.known, 
+				values: {"":"Авто", "1":"Спец"},
+				args: {prop_id: prop.prop_id, propprop: 'known'}
+			})}
 		</td>
 		<td>
-			${prop.represent_prop ? 'Да' : 'Нет'}
+			${field.switch({
+				action: '/-sources/set-prop-switch-prop', 
+				value: prop.represent_prop, 
+				values: {"":"Скрыто", "1":"Показано"},
+				args: {prop_id: prop.prop_id, propprop: 'represent_custom_prop'}
+			})}
+		</td>
+		<td>
+			${field.prompt({
+				cls: 'a ellipsis',
+				name: 'comment', 
+				type: 'text',
+				label: 'Комментарий', 
+				action: '/-sources/set-prop-comment', 
+				args: {prop_id: prop.prop_id},
+				input: prop.comment,
+				value: prop.comment || '<span class="a mute">Написать</span>'
+			})}
+		</td>
+		<td>
+			${field.button({
+				cls: 'transparent mute',
+				label: svg.cross(), 
+				confirm: 'Удалить свойство если нет данных с ним?',
+				action: '/-sources/set-prop-delete',
+				reloaddiv: env.layer.div,
+				args: {prop_id: prop.prop_id},
+				reloaddiv:'PROPS'
+			})}
 		</td>
 	</tr>
 `

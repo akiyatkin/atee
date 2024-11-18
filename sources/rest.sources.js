@@ -12,11 +12,26 @@ rest.extra(rest_db)
 import rest_funcs from '/-rest/rest.funcs.js'
 rest.extra(rest_funcs)
 
+rest.addArgument('multi', ['sint'], (view, multi) => {
+	if (multi == null) return multi
+	if (multi) return 1
+	else return 0
+})
+rest.addVariable('multi#required', ['multi', 'required'])
+
 rest.addArgument('id', ['mint'])
 rest.addVariable('id#required', ['id', 'required'])
 rest.addArgument('sheet_index', ['mint'])
 rest.addVariable('sheet_index#required', ['sheet_index', 'required'])
+// rest.addArgument('col_index', ['sint'])
+// rest.addVariable('col_index#required', ['col_index', 'required'])
+
+// rest.addArgument('row_index', ['mint'])
+// rest.addVariable('row_index#required', ['row_index', 'required'])
+
 rest.addArgument('next_id', ['mint'])
+rest.addArgument('old_id', ['mint'])
+rest.addVariable('old_id#required', ['old_id', 'required'])
 rest.addArgument('sourceprop', (view, prop) => {
 	if (~['dependent','represent_source','renovate','represent_sheets','represent_rows', 'represent_cells', 'represent_cols'].indexOf(prop)) return prop
 	return null
@@ -25,8 +40,9 @@ rest.addArgument('custom', (view, prop) => {
 	if (~['col','row','cell','prop','item', 'value', 'sheet'].indexOf(prop)) return prop
 	return null
 })
+
 rest.addArgument('propprop', (view, prop) => {
-	if (~['multi', 'represent_prop','known'].indexOf(prop)) return prop
+	if (~['multi', 'represent_custom_prop','known'].indexOf(prop)) return prop
 	return null
 })
 rest.addArgument('entityprop', (view, prop) => {

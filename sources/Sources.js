@@ -384,8 +384,21 @@ Sources.getSource = async (db, source_id) => {
 	return source
 }
 
-Sources.getSources = async (db) => {
-	const list = await db.all(`
+Sources.getSources = async (db, entity_id) => {
+	
+	const list = entity_id ? await db.all(`
+		SELECT 
+		${SELECT_SOURCE}
+		FROM sources_sources so
+			LEFT JOIN sources_entities en on en.entity_id = so.entity_id
+			LEFT JOIN sources_props pr on pr.prop_id = en.prop_id
+		WHERE so.source_id in (
+			SELECT distinct source_id 
+			FROM sources_sheets 
+			WHERE entity_id = :entity_id
+		)
+		ORDER BY so.ordain
+	`, {entity_id}) : await db.all(`
 		SELECT 
 		${SELECT_SOURCE}
 		FROM sources_sources so
@@ -420,7 +433,7 @@ Sources.getEntityStat = async (db, entity) => {
 	const count_represent = await db.col(`
 		SELECT count(*) 
 		FROM sources_items
-		WHERE entity_id = :entity_id and represent_item = 1 and represent_value = 1
+		WHERE entity_id = :entity_id and represent_item = 1 and represent_key_value = 1
 	`, entity)
 	return {sources, count_items, count_represent}
 }

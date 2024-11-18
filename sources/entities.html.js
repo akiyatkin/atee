@@ -6,7 +6,7 @@ export const ROOT = (data, env) => err(data, env) || `
 	<table draggable="false" class="list">
 		<thead>
 			<tr>
-				<td>Сущность</td>
+				<td>Сущности</td>
 				<td>Ключ</td>
 				<td>Источников</td>
 				<td>Записей</td>
@@ -34,7 +34,7 @@ export const ROOT = (data, env) => err(data, env) || `
 const showTr = (data, env, entity) => `
 	<tr class="item" data-id="${entity.entity_id}" style="white-space: nowrap;">
 		<td>
-			<a href="entity/${entity.entity_id}">${entity.entity_title}</a>
+			<a href="entity/${entity.entity_id}">${entity.entity_plural}</a>
 		</td>
 		<td>
 			${entity.prop_title || ''}

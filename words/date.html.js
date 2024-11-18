@@ -24,6 +24,11 @@ const intl_is = new Intl.DateTimeFormat("ru-RU", {
   	minute: '2-digit',
   	second: '2-digit'
 })
+date.sdmyhi = (string) => {
+	if (!string) return ''
+	const date = new Date(string)
+	return intl_dmyhi.format(date)
+}
 date.dmyhi = (time) => {
 	if (!time) return ''
 	return intl_dmyhi.format(time * 1000)

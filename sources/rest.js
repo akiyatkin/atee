@@ -27,6 +27,7 @@ rest.extra(rest_db)
 export default rest
 
 
+
 rest.addResponse('settings', ['admin'], async view => {
 
 	const conf = await config('sources')
@@ -69,13 +70,31 @@ rest.addResponse('main', async view => {
 rest.addResponse('props', ['admin'], async view => {
 	const db = await view.get('db')
 	const entity_id = view.data.entity_id = await view.get('entity_id#required')
-	const list = view.data.list = await Sources.getProps(db, entity_id)
+	const entity = view.data.entity = await Sources.getEntity(db, entity_id)
+	const list = await Sources.getProps(db, entity_id)
+	view.data.list = list.slice(0, 1000)
 	return view.ret()
 })
 rest.addResponse('prop', ['admin'], async view => {
 	const db = await view.get('db')
 	const prop_id = await view.get('prop_id#required')
 	const prop = view.data.prop = await Sources.getProp(db, prop_id)
+	const list = await db.all(`
+		SELECT co.prop_id, ce.text, count(ce.text) as count, ce.pruning + 0 as pruning, ce.represent + 0 as represent, 
+			ce.winner + 0 as winner, 
+			ce.date, 
+			ce.number, ce.value_id, va.value_title, va.value_nick
+		FROM sources_cols co, sources_cells ce
+			LEFT JOIN sources_values va on va.value_id = ce.value_id
+		WHERE co.source_id = ce.source_id 
+			and co.sheet_index = ce.sheet_index 
+			and co.col_index = ce.col_index
+			and co.prop_id = :prop_id
+		GROUP BY ce.text, ce.represent, ce.winner
+		ORDER BY ce.pruning DESC, ce.winner DESC, count(ce.text) DESC
+	`, {prop_id})
+	view.data.count = list.length
+	view.data.list = list.slice(0, 1000)
 	return view.ret()
 })
 rest.addResponse('entity', ['admin'], async view => {
@@ -175,6 +194,36 @@ rest.addResponse('memory', ['admin'], async view => {
 
 	return view.ret()
 })
+rest.addResponse('sheet', ['admin'], async view => {
+	const db = await view.get('db')
+	const source_id = await view.get('source_id#required')
+	const source = view.data.source = await Sources.getSource(db, source_id)
+	const sheet_index = await view.get('sheet_index#required')
+	const sheet = view.data.sheet = await db.fetch(`
+		SELECT sh.sheet_title, 
+			sh.represent_sheet + 0 as represent_sheet
+		FROM sources_sheets sh
+			left join sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
+		WHERE sh.source_id = :source_id and sh.sheet_index = :sheet_index
+	`, {source_id, sheet_index}) 
+	 
+	const cols = view.data.cols = await db.all(`
+		SELECT co.col_index, co.col_title, co.prop_id, 
+			cco.represent_custom_col + 0 as represent_custom_col
+		FROM sources_cols co
+			LEFT JOIN sources_custom_cols cco on cco.source_id = :source_id and cco.col_title = co.col_title
+		WHERE co.source_id = :source_id and co.sheet_index = :sheet_index
+		ORDER BY co.col_index
+	`, {source_id, sheet_index}) 
+	for (const col of cols) {
+		col.cls = eye.calcCls(
+			source.represent_source && sheet.represent_sheet, 
+			col.represent_custom_col, 
+			source.represent_cols
+		)
+	}
+	return view.ret()
+})
 rest.addResponse('source', ['admin'], async view => {
 	
 	const db = await view.get('db')
@@ -188,7 +237,7 @@ rest.addResponse('source', ['admin'], async view => {
 
 			cast(csh.represent_custom_sheet as SIGNED) as represent_custom_sheet,
 			
-			nvl(csh.entity_id, so.entity_id) as entity_id,
+			csh.entity_id,
 			en.entity_plural,
 			en.entity_title,
 			pr.prop_title
@@ -200,7 +249,7 @@ rest.addResponse('source', ['admin'], async view => {
 		WHERE csh.source_id = :source_id
 		ORDER by csh.sheet_title
 	`, source)
-
+	
 	const loaded_sheets = await db.all(`
 		SELECT 
 			sh.source_id,
