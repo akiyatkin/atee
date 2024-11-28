@@ -27,6 +27,7 @@ Consequences.loaded = async (db, source_id) => {
 	`, source)
 	for (const entity_id of entities) {
 		const entity = await Sources.getEntity(db, entity_id)
+		if (!entity) continue
 		await Consciousness.insertItemsByEntity(db, entity) //insert items
 		await Consciousness.recalcRepresentPropByEntity(db, entity)
 		await Consciousness.recalcRepresentValueByEntity(db, entity)
@@ -63,6 +64,12 @@ Consequences.changed = async (db, entity_id) => {
 		await Consciousness.recalcTexts(db, source)
 		await Consciousness.recalcKeyIndex(db)
 		await Consciousness.recalcRowsKeyId(db, source)
+
+		//await Consciousness.recalcRepresentSheetBySource(db, source)
+		//await Consciousness.recalcRepresentColBySource(db, source)
+		//await Consciousness.recalcRepresentRowBySource(db, source)
+		await Consciousness.recalcRepresentCellBySource(db, source)
+		await Consciousness.recalcRepresentKeyBySource(db, source)
 	}
 	await Consciousness.recalcRepresent(db)
 	await Consciousness.recalcWinner(db)

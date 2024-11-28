@@ -19,11 +19,18 @@ Sources.execRestFunc = async (file, fnname, visitor, res, req = {}) => {
 	res.data = data
 	return ''
 }
-Sources.setStart = async (db, source_id) => {
+Sources.setSource = async (db, set, source) => {
 	await db.exec(`
-		UPDATE sources_sources SET date_start = now() WHERE source_id = :source_id
-	`, {source_id})
+		UPDATE sources_sources
+		SET ${set}
+		WHERE source_id = :source_id
+	`, source)
 }
+// Sources.setStart = async (db, source_id) => {
+// 	await db.exec(`
+// 		UPDATE sources_sources SET date_start = now() WHERE source_id = :source_id
+// 	`, {source_id})
+// }
 // Sources.setEnd = async (db, source_id) => {
 // 	await db.exec(`
 // 		UPDATE sources_sources SET date_start = null WHERE source_id = :source_id
@@ -47,53 +54,46 @@ Sources.renovate = async (db, source, visitor) => {
 // }
 Sources.load = async (db, source, visitor) => {
 	if (source.date_start) return
-	const res = {}
-	const timer_rest = Date.now()
-	await Sources.setStart(db, source.source_id)
-
-	source.error = await Sources.execRestFunc(source.file, 'get-load', visitor, res)
 	
-	const timer_insert = Date.now()
+	const timer_rest = Date.now()
+
+	await Sources.setSource(db, `
+		date_start = now()
+	`, source)
+
+	const res = {}
+	source.error = await Sources.execRestFunc(source.file, 'get-load', visitor, res)
 	source.msg_load = res.data?.msg || ''
 	source.duration_rest = Date.now() - timer_rest
-	await db.exec(`
-		UPDATE sources_sources
-		SET 
-			error = :error, 
-			duration_rest = :duration_rest,
-			msg_load = :msg_load
-		WHERE source_id = :source_id
+
+	await Sources.setSource(db, `
+		error = :error, 
+		duration_rest = :duration_rest,
+		msg_load = :msg_load
 	`, source)
+
 	if (source.error) return false
-	
-	
-	source.date_content = Math.round(Number(res.data?.date_content || 0) / 1000)
-	source.date_mtime = Math.max(source.date_content || 0, source.date_mtime || 0)
 
-
+	const timer_insert = Date.now()
+	
 	const sheets = Sources.cleanSheets(res.data.sheets)
-	const err = (msg) => (e) => {
+	await Sources.insertSheets(db, source, sheets).catch(e => {
 		console.log(e)
-		source.error = msg + ': ' + e.toString()
-	}
-	await Sources.insertSheets(db, source, sheets).catch(err('Ошибка при внесении данных'))
+		source.error = 'Ошибка при внесении данных: ' + e.toString()
+	})
 
 	source.duration_insert = Date.now() - timer_insert
+	source.date_content = Math.round(Number(res.data?.date_content || 0) / 1000)
+	source.date_mtime = Math.max(source.date_content || 0, source.date_mtime || 0)
 	
-	await db.exec(`
-		UPDATE sources_sources
-		SET date_load = now(), 
-			duration_insert = :duration_insert,
-			error = :error,
-			date_content = FROM_UNIXTIME(:date_content), 
-			date_mtime = FROM_UNIXTIME(:date_mtime),
-			date_start = null
-		WHERE source_id = :source_id
+	await Sources.setSource(db, `
+		date_load = now(), 
+		duration_insert = :duration_insert,
+		error = :error,
+		date_content = FROM_UNIXTIME(:date_content), 
+		date_mtime = FROM_UNIXTIME(:date_mtime),
+		date_start = null
 	`, source)
-	
-
-	
-	return res.data
 }
 
 

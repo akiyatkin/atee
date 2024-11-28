@@ -44,6 +44,7 @@ tbody td {
 }
 thead {
 	font-weight: bold;
+	background-color: rgba(0,0,0,0.02)
 }
 tbody tr:nth-child(odd) {
 /*	background-color: #f2f2f2;*/

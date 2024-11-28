@@ -4,6 +4,7 @@ import nicked from '/-nicked'
 const rest = new Rest()
 export default rest
 
+
 rest.addFunction('string', (view, n) => n != null ? String(n) : '')
 rest.addFunction('checkbox', (view, n) => !!n)
 rest.addFunction('isset', (view, v) => v !== null)
@@ -24,7 +25,7 @@ rest.addFunction('unsigned', async (view, value, pname) => {
 
 
 rest.addFunction('int', (view, n, pname) => {
-	if (!n) return n //'0' - true, '' = null
+	if (n == null) return n //'0' - true, '' = null
 	n = Number(n)
 	if (isNaN(n)) return null //view.err('Некорректное число ' + pname)
 	else return n

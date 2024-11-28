@@ -71,7 +71,45 @@ const getCustomSwitch = (value, def) => {
 	if (value == 0 && !def) return 1
 	if (value == null && !def) return 1
 }
+rest.addAction('set-row-switch', ['admin'], async view => {
+	const db = await view.get('db')
+	const sheet_title = await view.get('sheet_title#required')
+	const source_id = await view.get('source_id#required')
+	const repeat_index = await view.get('repeat_index#required')
+	const key_id = await view.get('key_id#required')
+	const source = await Sources.getSource(db, source_id)
+	
+	const represent_sheet = await db.col(`
+		SELECT sh.represent_sheet + 0
+		FROM sources_sheets sh
+		WHERE sh.source_id = :source_id and sh.sheet_title = :sheet_title
+	`, {source_id, sheet_title}) 
 
+	const value = await db.col(`
+		SELECT represent_custom_row + 0
+		FROM sources_custom_rows
+		WHERE source_id = :source_id and sheet_title = :sheet_title 
+			and key_id = :key_id
+			and repeat_index = :repeat_index
+	`, {source_id, sheet_title, key_id, repeat_index})
+
+	const newvalue = getCustomSwitch(value, source.represent_rows)
+	
+	await db.exec(`
+		INSERT INTO sources_custom_rows (source_id, sheet_title, key_id, repeat_index, represent_custom_row)
+   		VALUES (:source_id, :sheet_title, :key_id, :repeat_index, :newvalue)
+   		ON DUPLICATE KEY UPDATE represent_custom_row = VALUES(represent_custom_row)
+	`, {source_id, sheet_title, key_id, repeat_index, newvalue})
+
+
+	await Consequences.represent(db)	
+	view.data.cls = eye.calcCls(
+		source.represent_source && represent_sheet, 
+		newvalue, 
+		source.represent_rows
+	)
+	return view.ret()
+})
 rest.addAction('set-col-switch', ['admin'], async view => {
 	const db = await view.get('db')
 	const sheet_title = await view.get('sheet_title#required')
@@ -79,6 +117,12 @@ rest.addAction('set-col-switch', ['admin'], async view => {
 	const col_title = await view.get('col_title#required')
 	const source = await Sources.getSource(db, source_id)
 	
+	const represent_sheet = await db.col(`
+		SELECT sh.represent_sheet + 0
+		FROM sources_sheets sh
+		WHERE sh.source_id = :source_id and sh.sheet_title = :sheet_title
+	`, {source_id, sheet_title}) 
+
 	const value = await db.col(`
 		SELECT represent_custom_col + 0
 		FROM sources_custom_cols
@@ -96,7 +140,7 @@ rest.addAction('set-col-switch', ['admin'], async view => {
 
 	await Consequences.represent(db)
 	view.data.cls = eye.calcCls(
-		source.represent_source && source.represent_sheet, 
+		source.represent_source && represent_sheet, 
 		newvalue, 
 		source.represent_cols
 	)
@@ -152,6 +196,28 @@ rest.addAction('set-sheet-switch', ['admin'], async view => {
 // 	await Consequences.changed(db, entity_id)
 // 	return view.ret()
 // })
+rest.addAction('set-prop-prop', ['admin'], async view => {
+	
+	const db = await view.get('db')
+	const prop_id = await view.get('prop_id#required') 
+	const propname = await view.get('propprop#required')
+	const value = await view.get('bit#required')
+	
+	const prop = await Sources.getProp(db, prop_id)
+	const entity = await Sources.getEntity(db, prop.entity_id)
+	const entity_id = prop.entity_id
+	if (propname == 'multi' && value && entity.prop_id == prop.prop_id) return view.err('Ключевое свойство может быть только с одним значением')
+	
+	await db.exec(`
+		UPDATE sources_props
+		SET ${propname} = :value
+		WHERE prop_id = :prop_id
+	`, {prop_id, value})
+	
+	await Consequences.changed(db, entity_id)
+
+	return view.ret()
+})
 rest.addAction('set-prop-switch-prop', ['admin'], async view => {
 	
 	const db = await view.get('db')
@@ -397,7 +463,8 @@ rest.addAction('set-source-renovate', ['admin'], async view => {
 	if (!source.need) return view.ret(source.status)
 	Sources.load(db, source, view.visitor).then(() => Consequences.loaded(db, source_id))
 
-	return view.ret('Загрузка запущена!')
+	//return view.ret('Загрузка запущена!')
+	return view.ret()
 })
 rest.addAction('set-source-load', ['admin'], async view => {
 	const db = await view.get('db')
@@ -410,8 +477,8 @@ rest.addAction('set-source-load', ['admin'], async view => {
 	Sources.load(db, source, view.visitor).then(() => Consequences.loaded(db, source_id))
 	
 	
-	return view.ret('Загрузка запущена!')
-	//return view.ret()	
+	//return view.ret('Загрузка запущена!')
+	return view.ret()	
 })
 
 rest.addAction('set-prop-comment', ['admin'], async view => {

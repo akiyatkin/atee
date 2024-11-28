@@ -271,7 +271,7 @@ const showControll = (data, env, source) => `
 		<div>Сущности ${field.search({
 			cls: 'a',
 			search:'/-sources/get-source-entity-search',
-			value: source.entity_id ? showEntity(data, env, source) : 'не определено', 
+			value: source.entity_id ? showSourceEntity(data, env, source) : 'не определено', 
 			label: 'Название сущности', 
 			type: 'text',
 			name: 'entity_id',
@@ -281,7 +281,7 @@ const showControll = (data, env, source) => `
 			reloaddiv: env.layer.div
 		})}.</div>
 		<div>
-			Используется по умолчанию, если для листов не указано.
+			Используется по умолчанию, если для листов явно не указано.
 		</div>
 	</div>
 	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
@@ -333,7 +333,7 @@ const showControll = (data, env, source) => `
 		})}.
 		</div>
 		<div>
-			Зависимость влияет на порядок загрузки при действиях проверить всё и актуализировать всё. 
+			Зависимость влияет на порядок загрузки при действии "актуализировать всё". 
 			Зависимые источники загружаются в последнюю очередь 
 			и могут анализировать загруженные перед ними данные из независимых источников.
 		</div>
@@ -384,4 +384,7 @@ const showEntity = (data, env, entity) => `
 	<span class="${entity.custom?.entity_id ? '' : 'mute'}">
 		${entity.entity_plural || entity.entity_title} (${entity.prop_title || 'ключ не определён'})
 	</span>
+`
+const showSourceEntity = (data, env, source) => `
+	${source.entity_plural || source.entity_title} (${source.prop_title || 'ключ не определён'})
 `

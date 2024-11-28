@@ -231,55 +231,19 @@ const showTr = (data, env, prop) => `
 			<a href="prop/${prop.prop_id}">${prop.prop_title}</a>
 		</td>
 		<td>
-			${field.search({
-				cls: 'a',
-				search:'/-sources/get-prop-type-search',
-				value: prop.type, 
-				descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче 63 символов. Самый затратный <b>text</b>.',
-				label: 'Свойство с ключём', 
-				type: 'text',
-				name: 'type',
-				find: 'type',
-				action: '/-sources/set-prop-type',
-				args: {prop_id: prop.prop_id}
-			})}
-			
+			${prop.type}
 		</td>
 		<td>
-			${field.switch({
-				action: '/-sources/set-prop-switch-prop', 
-				value: prop.multi, 
-				values: {"":"Одно", "1":"Несколько"},
-				args: {prop_id: prop.prop_id, propprop: 'multi'}
-			})}
+			${prop.multi ? "Несколько" : "Одно"}
 		</td>
 		<td>
-			${field.switch({
-				action: '/-sources/set-prop-switch-prop', 
-				value: prop.known, 
-				values: {"":"Авто", "1":"Спец"},
-				args: {prop_id: prop.prop_id, propprop: 'known'}
-			})}
+			${prop.known ? "Спец" : "Авто"}
 		</td>
 		<td>
-			${field.switch({
-				action: '/-sources/set-prop-switch-prop', 
-				value: prop.represent_prop, 
-				values: {"":"Скрыто", "1":"Показано"},
-				args: {prop_id: prop.prop_id, propprop: 'represent_custom_prop'}
-			})}
+			${prop.represent_prop ? "Показано" : "Скрыто"}
 		</td>
-		<td>
-			${field.prompt({
-				cls: 'a ellipsis',
-				name: 'comment', 
-				type: 'text',
-				label: 'Комментарий', 
-				action: '/-sources/set-prop-comment', 
-				args: {prop_id: prop.prop_id},
-				input: prop.comment,
-				value: prop.comment || '<span class="a mute">Написать</span>'
-			})}
+		<td class="ellipsis">
+			${prop.comment || ''}
 		</td>
 		<td>
 			${field.button({

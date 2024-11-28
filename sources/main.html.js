@@ -51,13 +51,13 @@ const showMain = (data, env) => `
 	
 	<div style="margin: 1em 0; display: flex; flex-wrap: wrap; gap: 1em; justify-content: space-between;">
 		${field.button({
-			label: 'Проверить все', 
-			action: '/-sources/set-sources-check',
+			label: 'Актуализировать все', 
+			action: '/-sources/set-sources-renovate',
 			reloaddiv: 'TABLE'
 		})}
 		${field.button({
-			label: 'Актуализировать все', 
-			action: '/-sources/set-sources-renovate',
+			label: 'Проверить все', 
+			action: '/-sources/set-sources-check',
 			reloaddiv: 'TABLE'
 		})}
 	</div>

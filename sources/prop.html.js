@@ -6,8 +6,8 @@ import date from "/-words/date.html.js"
 export const ROOT = (data, env, entity = data.entity) => err(data, env, ["PROP"]) || `
 	<div id="PROP"></div>
 `
-export const PROP = (data, env, prop = data.prop) => !data.result ? '' : `
-	<div style="opacity:0.5; float:right">Свойство</div>
+export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data.result ? '' : `
+	<div style="opacity:0.5; float:right">Свойство у <a href="entity/${entity.entity_id}">${entity.entity_title}</a></div>
 	<h1>${prop.prop_title}</h1>
 	<table style="margin: 0em 0">
 		<tr>
@@ -17,7 +17,6 @@ export const PROP = (data, env, prop = data.prop) => !data.result ? '' : `
 			<td>
 				<a href="entity/${prop.entity_id}">${prop.entity_title}</a>
 			</td>
-			<td>Изменить сущность нельзя, создайте новое свойство у нужной сущности.</td>
 		</tr>
 		
 		<tr>
@@ -25,16 +24,16 @@ export const PROP = (data, env, prop = data.prop) => !data.result ? '' : `
 				Видимость
 			</td>
 			<td>
-				${field.switch({
-					action: '/-sources/set-prop-switch-prop', 
+				${field.setpop({
+					placeholder:'Видимость',
 					value: prop.represent_prop, 
+					name: 'bit',
+					descr: 'Попадает или нет это свойство в итоговую выборку.',
+					action: '/-sources/set-prop-prop', 
 					values: {"":"Скрыто", "1":"Показано"},
 					args: {prop_id: prop.prop_id, propprop: 'represent_custom_prop'},
 					reloaddiv: env.layer.div
 				})}
-			</td>
-			<td>
-				Попадает или нет это свойство в итоговую выборку.
 			</td>
 		</tr>
 		<tr>
@@ -42,49 +41,49 @@ export const PROP = (data, env, prop = data.prop) => !data.result ? '' : `
 				Значений
 			</td>
 			<td>
-				${field.switch({
-					action: '/-sources/set-prop-switch-prop', 
-					value: prop.multi, 
+				${field.setpop({
+					placeholder:'Значений',
+					value: prop.multi,
+					name: 'bit',
+					descr: 'Несколько значений могут быть разделены запятой с пробелом. Значений?',
+					action: '/-sources/set-prop-prop', 
 					values: {"":"Одно", "1":"Несколько"},
-					reloaddiv: env.layer.div,
-					args: {prop_id: prop.prop_id, propprop: 'multi'}
+					args: {prop_id: prop.prop_id, propprop: 'multi'},
+					reloaddiv: env.layer.div
 				})}
 			</td>
-			<td>Несколько значений могут быть разделены запятой с пробелом.</td>
 		</tr>
 		<tr>
 			<td>
 				Тип
 			</td>
 			<td>
-				${field.search({
-					cls: 'a',
-					search:'/-sources/get-prop-type-search',
-					value: prop.type, 
-					descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче 63 символов. Самый затратный <b>text</b>.',
-					label: 'Свойство с ключём', 
-					type: 'text',
+				${field.setpop({
+					placeholder:'Тип',
+					value: prop.type,
 					name: 'type',
-					find: 'type',
-					reloaddiv: env.layer.div,
-					action: '/-sources/set-prop-type',
-					args: {prop_id: prop.prop_id}
+					descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче 63 символов. Самый затратный <b>text</b>. Для ключей и связей подходит только value.',
+					action: '/-sources/set-prop-type', 
+					values: {"number":"number", "date":"date", "value":"value", "text":"text"},
+					args: {prop_id: prop.prop_id},
+					reloaddiv: env.layer.div
 				})}
 			</td>
-			<td>Для ключей и связей подходит только value не длинней 63 символов, number и date оптимальны, в других случаях text.</td>
 		</tr>
 		
 		<tr>
 			<td>Обработка</td>
 			<td>
-				${field.switch({
-					action: '/-sources/set-prop-switch-prop', 
+				${field.setpop({
+					placeholder:'Обработка',
 					value: prop.known, 
+					name: 'bit',
+					descr: 'Специальные свойства имеют своё предназначение и в массив more для автоматической обработки не попадают. Старое название column. ',
+					action: '/-sources/set-prop-prop', 
 					values: {"":"Авто", "1":"Спец"},
 					args: {prop_id: prop.prop_id, propprop: 'known'}
 				})}
 			</td>
-			<td>Специальные свойства имеют своё предназначение и в массив more для автоматической обработки не попадают. Старое название column. </td>
 		</tr>
 	</table>
 	<div style="display: flex; flex-wrap: wrap; gap:1em; align-items: center;">
@@ -107,15 +106,15 @@ export const PROP = (data, env, prop = data.prop) => !data.result ? '' : `
 	<table>
 		<thead>
 			<tr>
-				<td>Значение</td>
+				<td>text</td>
 				<td>Видимость</td>
 				<td>Перезаписано</td>
-				<td>Количество</td>
-				<td>date</td>
+				<td>Всего</td>
 				<td>number</td>
+				<td>date</td>
+				<td>value_id</td>
 				<td>value_title</td>
 				<td>value_nick</td>
-				<td>value_id</td>
 			</tr>
 		</thead>
 		<tbody>
@@ -132,11 +131,12 @@ const showValueTr = (data, env, row) => `
 		<td>${row.represent ? '': 'Скрыто'}</td>
 		<td>${row.winner ? '' : 'Перезаписано'}</td>
 		<td>${row.count}</td>
+		<td>${row.number != null ? parseFloat(row.number) : ''}</td>
 		<td><nobr>${date.sdmyhi(row.date)}</nobr></td>
-		<td>${parseFloat(row.number)}</td>
+		<td>${row.value_id ?? ''}</td>
 		<td>${row.value_title ?? ''}</td>
 		<td>${row.value_nick ?? ''}</td>
-		<td>${row.value_id ?? ''}</td>
+		
 	</tr>
 `
 const showComment = (data, env, prop) => `

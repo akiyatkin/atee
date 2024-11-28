@@ -79,6 +79,7 @@ rest.addResponse('prop', ['admin'], async view => {
 	const db = await view.get('db')
 	const prop_id = await view.get('prop_id#required')
 	const prop = view.data.prop = await Sources.getProp(db, prop_id)
+	const entity = view.data.entity = await Sources.getEntity(db, prop.entity_id)
 	const list = await db.all(`
 		SELECT co.prop_id, ce.text, count(ce.text) as count, ce.pruning + 0 as pruning, ce.represent + 0 as represent, 
 			ce.winner + 0 as winner, 
@@ -198,15 +199,16 @@ rest.addResponse('sheet', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const source = view.data.source = await Sources.getSource(db, source_id)
+	const entity = view.data.entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
 	const sheet_index = await view.get('sheet_index#required')
 	const sheet = view.data.sheet = await db.fetch(`
-		SELECT sh.sheet_title, 
+		SELECT sh.sheet_title, sh.key_index, sh.sheet_index,
 			sh.represent_sheet + 0 as represent_sheet
 		FROM sources_sheets sh
 			left join sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
 		WHERE sh.source_id = :source_id and sh.sheet_index = :sheet_index
 	`, {source_id, sheet_index}) 
-	 
+	const sheet_title = sheet.sheet_title
 	const cols = view.data.cols = await db.all(`
 		SELECT co.col_index, co.col_title, co.prop_id, 
 			cco.represent_custom_col + 0 as represent_custom_col
@@ -222,6 +224,78 @@ rest.addResponse('sheet', ['admin'], async view => {
 			source.represent_cols
 		)
 	}
+	const rows = view.ans.rows = await db.all(`
+		SELECT 
+			key_id,
+			ro.represent_key + 0 as represent_key,
+			ro.represent_row + 0 as represent_row
+		FROM sources_rows ro
+		WHERE ro.source_id = :source_id and ro.sheet_index = :sheet_index
+		ORDER BY ro.row_index
+	`, {source_id, sheet_index})
+
+	const custom_rows = await db.all(`
+		SELECT 
+			cro.key_id,
+			cro.repeat_index, 
+			cro.represent_custom_row + 0 as represent_custom_row
+		FROM sources_custom_rows cro
+		WHERE cro.source_id = :source_id and cro.sheet_title = :sheet_title
+	`, {source_id, sheet_title})
+	const crows = {}
+	for (const {key_id, repeat_index, represent_custom_row} of custom_rows) {
+		crows[key_id] ??= {represent:{}, repeats:0}
+		crows[key_id].represent[repeat_index] = represent_custom_row
+	}
+
+	for (const row of rows) {
+		if (crows[row.key_id]) {
+			row.cls = eye.calcCls(
+				source.represent_source && sheet.represent_sheet, 
+				crows[row.key_id].represent[crows[row.key_id].repeats], 
+				source.represent_rows
+			)
+		} else {
+			crows[row.key_id] ??= {represent:{}, repeats:0}
+			row.cls = eye.calcCls(
+				source.represent_source && sheet.represent_sheet, 
+				null, 
+				source.represent_rows
+			)
+		}
+		row.repeat_index = crows[row.key_id].repeats
+		crows[row.key_id].repeats++		
+	}
+
+	const cells = await db.all(`
+		SELECT 
+			ce.row_index, 
+			ce.col_index, 
+			ce.multi_index,
+			ce.text,
+			ce.pruning + 0 as pruning,
+			ce.represent_cell + 0 as represent_cell,
+			ce.represent + 0 as represent,
+			ce.winner + 0 as winner
+		FROM sources_cells ce
+		WHERE ce.source_id = :source_id and ce.sheet_index = :sheet_index
+		ORDER BY ce.row_index, ce.col_index
+	`, {source_id, sheet_index}) 
+
+	const texts = view.data.texts = []
+	const winners = view.data.winners = []
+	for (const {row_index, col_index, multi_index, text, winner} of cells) {
+		texts[row_index] ??= []
+		texts[row_index][col_index] ??= []
+		texts[row_index][col_index][multi_index] = text
+
+		winners[row_index] ??= []
+		winners[row_index][col_index] ??= []
+		winners[row_index][col_index][multi_index] = winner
+	}
+
+
+
 	return view.ret()
 })
 rest.addResponse('source', ['admin'], async view => {

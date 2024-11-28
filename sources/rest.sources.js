@@ -19,10 +19,22 @@ rest.addArgument('multi', ['sint'], (view, multi) => {
 })
 rest.addVariable('multi#required', ['multi', 'required'])
 
+rest.addArgument('value', ['string'])
+rest.addArgument('bit', ['int'], (view, value) => {
+		if (value == null) return null
+		return value ? 1 : 0
+})
+rest.addVariable('bit#required', ['bit','required'])
+
+
 rest.addArgument('id', ['mint'])
 rest.addVariable('id#required', ['id', 'required'])
+rest.addArgument('key_id', ['mint'])
+rest.addVariable('key_id#required', ['key_id', 'required'])
 rest.addArgument('sheet_index', ['mint'])
 rest.addVariable('sheet_index#required', ['sheet_index', 'required'])
+rest.addArgument('repeat_index', ['mint'])
+rest.addVariable('repeat_index#required', ['repeat_index', 'required'])
 // rest.addArgument('col_index', ['sint'])
 // rest.addVariable('col_index#required', ['col_index', 'required'])
 

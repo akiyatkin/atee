@@ -76,7 +76,7 @@ Consciousness.recalcEntitiesPropId = async (db, source) => { //Определи�
 				UPDATE sources_cols
 				SET prop_id = null
 				WHERE source_id = :source_id and sheet_index = :sheet_index
-			`, {source_id, prop_id, sheet_index})
+			`, {source_id, sheet_index})
 		}
 
 		await db.exec(`
@@ -109,10 +109,13 @@ Consciousness.setCellType = async (db, cell, type) => {
 	const text = cell.text
 	if (text) {
 		if (type == 'number') {
-			number = text.replace(/\s/g,'')
-			number = parseFloat(number)
+			const textnumber = text.replace(/\s/g,'')
+			number = parseFloat(textnumber)
 			if (isNaN(number)) {
 				number = null
+				pruning = true
+			}
+			if (number != textnumber) {
 				pruning = true
 			}
 			number = Math.round(number * 100) / 100
@@ -191,7 +194,10 @@ Consciousness.recalcMulti = async (db, {source_id}) => {
 				texts[row_index].push(...text.split(', '))
 				await db.exec(`
 					DELETE FROM sources_cells
-					WHERE source_id = :source_id and sheet_index = :sheet_index and col_index = :col_index
+					WHERE source_id = :source_id 
+						and row_index = :row_index
+						and sheet_index = :sheet_index 
+						and col_index = :col_index
 				`, {source_id, sheet_index, row_index, col_index})
 			}
 			for (const row_index in texts) {
@@ -229,7 +235,10 @@ Consciousness.recalcMulti = async (db, {source_id}) => {
 				texts[row_index].push(text)
 				await db.exec(`
 					DELETE FROM sources_cells
-					WHERE source_id = :source_id and sheet_index = :sheet_index and col_index = :col_index
+					WHERE source_id = :source_id 
+						and row_index = :row_index
+						and sheet_index = :sheet_index 
+						and col_index = :col_index
 				`, {source_id, sheet_index, row_index, col_index})
 			}
 			for (const row_index in texts) {
@@ -569,6 +578,7 @@ Consciousness.recalcRepresentCellBySource = async (db, source) => {
 		and co.col_title = cce.col_title
 	`, {source_id})
 
+
 	for (const {sheet_index, repeat_index, key_id, col_index, represent_custom_cell} of custom_cells) {
 		const row_index = await db.col(`
 			SELECT row_index 
@@ -663,6 +673,7 @@ Consciousness.recalcWinner = async (db) => {
 						and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
 						and so.source_id = ce.source_id
 						and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
+						and ce.represent = 1
 
 				) t
 				LEFT JOIN (
@@ -670,6 +681,7 @@ Consciousness.recalcWinner = async (db) => {
 					SELECT sh.entity_id, ro.key_id, co.prop_id, ce.source_id, so.ordain, ce.sheet_index, ce.row_index, ce.col_index
 					FROM sources_cells ce, sources_cols co, sources_sources so, sources_sheets sh, sources_rows ro
 					WHERE ce.sheet_index = co.sheet_index and ce.col_index = co.col_index 
+						and ce.represent = 1
 						and ce.source_id = co.source_id and co.prop_id is not null
 						and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
 						and so.source_id = ce.source_id
@@ -677,15 +689,20 @@ Consciousness.recalcWinner = async (db) => {
 
 				) t2 on (
 					t2.entity_id = t.entity_id and t2.key_id = t.key_id and t2.prop_id = t.prop_id 
-					and (t2.ordain > t.ordain or t2.sheet_index > t.sheet_index or t2.row_index > t.row_index or t2.col_index > t.col_index)
+					and (
+						t2.ordain > t.ordain 
+						or t2.sheet_index > t.sheet_index 
+						or t2.row_index > t.row_index 
+						or t2.col_index > t.col_index
+					)
 				)
 				WHERE t2.entity_id is null
-			) t
+			) w
 		SET 
 			c.winner = 1
-		WHERE c.source_id = t.source_id 
-			and c.sheet_index = t.sheet_index 
-			and c.row_index = t.row_index 
-			and c.col_index = t.col_index
+		WHERE c.source_id = w.source_id 
+			and c.sheet_index = w.sheet_index 
+			and c.row_index = w.row_index 
+			and c.col_index = w.col_index
 	`)
 }
