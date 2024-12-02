@@ -358,6 +358,93 @@ Sources.getProp = async (db, prop_id) => {
 	`, {prop_id})
 	return prop
 }
+Sources.getSheet = async (db, source_id, sheet_index) => {
+	const sheet = await db.fetch(`
+		SELECT 
+			sh.sheet_title,
+			sh.sheet_index,
+			sh.entity_id,
+			sh.source_id,
+			sh.represent_sheet + 0 as represent_sheet
+		FROM sources_sheets sh
+		WHERE sh.source_id = :source_id and sh.sheet_index = :sheet_index
+	`, {source_id, sheet_index})
+	return sheet
+}
+Sources.getCol = async (db, source_id, sheet_index, col_index) => {
+	const col = await db.fetch(`
+		SELECT 
+			co.col_title,
+			co.prop_id,
+			sh.sheet_title,
+			co.sheet_index,
+			co.col_index,
+			co.source_id,
+			co.represent_col + 0 as represent_col
+		FROM sources_cols co
+			LEFT JOIN sources_sheets sh on (sh.source_id = co.source_id and sh.sheet_index = co.sheet_index)
+		WHERE co.source_id = :source_id and co.sheet_index = :sheet_index and co.col_index = :col_index
+	`, {source_id, sheet_index, col_index})
+	return col
+}
+Sources.getCell = async (db, source_id, sheet_index, row_index, col_index, multi_index) => {
+	const cell = await db.fetch(`
+		SELECT 
+			ce.source_id,
+			ce.sheet_index,
+			ce.row_index,
+			ce.col_index,
+			ce.multi_index,
+			ce.represent_cell + 0 as represent_cell,
+			ce.represent + 0 as represent,
+			ce.pruning + 0 as pruning,
+			ce.winner + 0 as winner,
+			ce.value_id,
+			ce.text,
+			ce.date,
+			ce.number,
+			va.value_title
+		FROM sources_cells ce
+			LEFT JOIN sources_values va on (va.value_id = ce.value_id)
+		WHERE ce.source_id = :source_id 
+			and ce.sheet_index = :sheet_index
+			and ce.row_index = :row_index
+			and ce.col_index = :col_index
+			and ce.multi_index = :multi_index
+	`, {source_id, sheet_index, row_index, col_index, multi_index})
+	return cell
+}
+Sources.getRow = async (db, source_id, sheet_index, row_index) => {
+	const row = await db.fetch(`
+		SELECT 
+			ro.source_id,
+			ro.sheet_index,
+			ro.row_index,
+			ro.repeat_index,
+			ro.represent_row + 0 as represent_row,
+			ro.represent_key + 0 as represent_key,
+			ro.key_id,
+			va.value_title,
+			va.value_nick
+		FROM sources_rows ro
+			LEFT JOIN sources_values va on (va.value_id = ro.key_id)
+		WHERE ro.source_id = :source_id 
+			and ro.sheet_index = :sheet_index
+			and ro.row_index = :row_index
+	`, {source_id, sheet_index, row_index})
+	return row
+}
+Sources.getValue = async (db, value_id) => {
+	const value = await db.fetch(`
+		SELECT 
+			value_id,
+			value_nick,
+			value_title
+		FROM sources_values va
+		WHERE va.value_id = :value_id
+	`, {value_id})
+	return value
+}
 Sources.getProps = async (db, entity_id) => {
 	const list = await db.all(`
 		SELECT 

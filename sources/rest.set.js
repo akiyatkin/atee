@@ -253,14 +253,26 @@ rest.addAction('set-sheet-delete', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const sheet_title = await view.get('title#required')
-	
+	const sheet = {source_id, sheet_title}
 	
 	await db.exec(`
 		DELETE FROM sources_custom_sheets 
-   		WHERE source_id = :source_id
-   			and sheet_title = :sheet_title
+   		WHERE source_id = :source_id and sheet_title = :sheet_title
+	`, sheet)
+	await db.exec(`
+		DELETE FROM sources_custom_rows 
+   		WHERE source_id = :source_id and sheet_title = :sheet_title
+	`, {source_id, sheet_title})
+	await db.exec(`
+		DELETE FROM sources_custom_cells 
+   		WHERE source_id = :source_id and sheet_title = :sheet_title
+	`, {source_id, sheet_title})
+	await db.exec(`
+		DELETE FROM sources_custom_cols
+   		WHERE source_id = :source_id and sheet_title = :sheet_title
 	`, {source_id, sheet_title})
 
+	
 	await Consequences.loaded(db, source_id)
 
 	return view.ret()
@@ -709,8 +721,8 @@ rest.addAction('set-entity-prop-reset', ['admin'], async view => {
 	`, {entity_id})
 	
 
-	const tpl = await import('/-sources/entity.html.js')
-	view.ans.value = tpl.showProp({})
+	//const tpl = await import('/-sources/entity.html.js')
+	view.ans.value = 'не назначено'//tpl.showProp({})
 	await Consequences.changed(db, entity_id)
 	return view.ret()
 })
@@ -892,6 +904,97 @@ rest.addAction('set-entity-prop-create', ['admin'], async view => {
 	const tpl = await import('/-sources/entity.html.js')
 	view.ans.value = tpl.showProp({prop_title, prop_nick, type: 'value', prop_id})
 	//await Consequences.changed(db, entity_id)// у созданного свойства не будет совпадений, так как у данных всегда свойства уже есть
+	return view.ret()
+})
+rest.addAction('set-col-prop-create', ['admin'], async view => {
+	const db = await view.get('db')
+	const source_id = await view.get('source_id#required')
+	const sheet_index = await view.get('sheet_index#required')
+	const col_index = await view.get('col_index#required')
+	const sheet = await Sources.getSheet(db, source_id, sheet_index)
+	const entity_id = sheet.entity_id
+	if (!entity_id) return view.err('Нельзя создать свойство если не назначена сущность')
+	
+	const prop_title = await view.get('search')
+	const prop_nick = nicked(prop_title)
+	if (!prop_nick) return view.err('Требуется название')
+
+	const col = await Sources.getCol(db, source_id, sheet_index, col_index)
+
+	col.prop_id = view.ans.prop_id = await db.insertId(`
+		INSERT INTO sources_props (entity_id, prop_title, prop_nick, type)
+   		VALUES (:entity_id, :prop_title, :prop_nick, 'value')
+   		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title), prop_id = LAST_INSERT_ID(prop_id)
+	`, {entity_id, prop_title, prop_nick})
+
+	
+	await Sources.reorderProps(db, entity_id)
+
+	await db.exec(`
+		INSERT INTO sources_custom_cols (source_id, sheet_title, col_title, prop_id)
+   		VALUES (:source_id, :sheet_title, :col_title, :prop_id)
+   		ON DUPLICATE KEY UPDATE prop_id = VALUES(prop_id)
+	`, col)
+
+
+
+	//const tpl = await import('/-sources/entity.html.js')
+	view.ans.value = prop_title //tpl.showProp({prop_title, prop_nick, type: 'value', prop_id})
+	await Consequences.loaded(db, source_id)
+	return view.ret()
+})
+rest.addAction('set-col-prop', ['admin'], async view => {
+	const db = await view.get('db')
+	const source_id = await view.get('source_id#required')
+	const sheet_index = await view.get('sheet_index#required')
+	const col_index = await view.get('col_index#required')
+	const sheet = await Sources.getSheet(db, source_id, sheet_index)
+	const entity_id = sheet.entity_id
+	if (!entity_id) return view.err('Нельзя создать свойство если не назначена сущность')
+	
+
+	const col = await Sources.getCol(db, source_id, sheet_index, col_index)
+
+	col.prop_id = await view.get('prop_id#required')
+	const prop = await Sources.getProp(db, col.prop_id)
+	if (prop.entity_id != entity_id) return view.err('Очень станно, но у свойства не совпадает сущность')
+	
+	await db.exec(`
+		INSERT INTO sources_custom_cols (source_id, sheet_title, col_title, prop_id)
+   		VALUES (:source_id, :sheet_title, :col_title, :prop_id)
+   		ON DUPLICATE KEY UPDATE prop_id = VALUES(prop_id)
+	`, col)
+
+	
+	// const tpl = await import('/-sources/entity.html.js')
+	// view.ans.value = tpl.showProp(prop)
+	view.ans.value = prop.prop_title
+
+	await Consequences.loaded(db, source_id)
+	
+	return view.ret()
+})
+rest.addAction('set-col-prop-reset', ['admin'], async view => {
+	const db = await view.get('db')
+	const source_id = await view.get('source_id#required')
+	const sheet_index = await view.get('sheet_index#required')
+	const col_index = await view.get('col_index#required')
+	const sheet = await Sources.getSheet(db, source_id, sheet_index)
+	const col = await Sources.getCol(db, source_id, sheet_index, col_index)
+
+	await db.exec(`
+		INSERT INTO sources_custom_cols (source_id, sheet_title, col_title, prop_id)
+   		VALUES (:source_id, :sheet_title, :col_title, null)
+   		ON DUPLICATE KEY UPDATE prop_id = null
+	`, col)
+
+	
+	// const tpl = await import('/-sources/entity.html.js')
+	// view.ans.value = tpl.showProp(prop)
+	view.ans.value = 'сброшено'
+
+	await Consequences.loaded(db, source_id)
+	
 	return view.ret()
 })
 rest.addAction('set-prop-create', ['admin'], async view => {

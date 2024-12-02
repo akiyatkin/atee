@@ -14,8 +14,9 @@ const showAuth = (data, env) => `
 		<div>Администратор сайта: ${data.admin?'Да':'Нет'}</div>
 		<div>База данных: ${data.isdb?'Да':'Нет'}</div>
 	</div>
+	<div id="TABLE"></div>
 `
-export const TABLE = (data, env) => `
+export const TABLE = (data, env) => !data.result ? '' : `
 	
 	<table draggable="false" class="list">
 		<thead>

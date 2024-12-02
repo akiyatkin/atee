@@ -29,17 +29,18 @@ rest.addVariable('bit#required', ['bit','required'])
 
 rest.addArgument('id', ['mint'])
 rest.addVariable('id#required', ['id', 'required'])
-rest.addArgument('key_id', ['mint'])
-rest.addVariable('key_id#required', ['key_id', 'required'])
+
 rest.addArgument('sheet_index', ['mint'])
 rest.addVariable('sheet_index#required', ['sheet_index', 'required'])
 rest.addArgument('repeat_index', ['mint'])
 rest.addVariable('repeat_index#required', ['repeat_index', 'required'])
-// rest.addArgument('col_index', ['sint'])
-// rest.addVariable('col_index#required', ['col_index', 'required'])
+rest.addArgument('col_index', ['sint'])
+rest.addVariable('col_index#required', ['col_index', 'required'])
+rest.addArgument('multi_index', ['sint'])
+rest.addVariable('multi_index#required', ['multi_index', 'required'])
 
-// rest.addArgument('row_index', ['mint'])
-// rest.addVariable('row_index#required', ['row_index', 'required'])
+rest.addArgument('row_index', ['mint'])
+rest.addVariable('row_index#required', ['row_index', 'required'])
 
 rest.addArgument('next_id', ['mint'])
 rest.addArgument('old_id', ['mint'])
@@ -98,7 +99,20 @@ rest.addArgument('source_id', ['sint'], async (view, source_id) => {
 	if (!source_id) return view.err('Источник не найден', 404)
 	return source_id
 })
-
+rest.addArgument('key_id', ['mint'], async (view, key_id) => {
+	if (!key_id) return null
+	const db = await view.get('db')
+	key_id = await db.col('select value_id from sources_values where value_id=:key_id', {key_id})
+	if (!key_id) return view.err('Ключ не найден', 404)
+	return key_id
+})
+rest.addArgument('item_id', ['mint'], async (view, item_id) => {
+	if (!item_id) return null
+	const db = await view.get('db')
+	item_id = await db.col('select value_id from sources_values where value_id=:item_id', {item_id})
+	if (!item_id) return view.err('Позиция не найдена', 404)
+	return item_id
+})
 rest.addArgument('prop_id', ['sint'], async (view, prop_id) => {
 	if (!prop_id) return null
 	const db = await view.get('db')
@@ -113,6 +127,8 @@ rest.addArgument('entity_id', ['sint'], async (view, entity_id) => {
 	if (!entity_id) return view.err('Сущность не найдена', 404)
 	return entity_id
 })
+rest.addVariable('key_id#required', ['key_id', 'required'])
+rest.addVariable('item_id#required', ['item_id', 'required'])
 rest.addVariable('source_id#required', ['source_id', 'required'])
 rest.addVariable('entity_id#required', ['entity_id', 'required'])
 rest.addVariable('prop_id#required', ['prop_id', 'required'])

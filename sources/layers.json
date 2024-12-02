@@ -4,6 +4,7 @@
 	"animate":{
 		"source:SOURCE":"none",
 		"main:TABLE":"none",
+		"sheet:TABLE":"none",
 		"entity:PROPS":"none",
 		"source:BOT":"none",
 		"source:TOP":"none",
@@ -24,6 +25,7 @@
 	},
 	"jsontpl":{
 		"sheet:ROOT":"/-sources/sheet?source_id=${env.bread.get.source_id ?? ''}&sheet_index=${env.bread.get.sheet_index ?? ''}",
+		"sheet:TABLE":"/-sources/sheet?source_id=${env.bread.get.source_id ?? ''}&sheet_index=${env.bread.get.sheet_index ?? ''}",
 		"source:ROOT":"/-sources/source?source_id=${env.crumb.name}",
 		"source:SOURCE":"/-sources/source?source_id=${env.crumb.name}",
 		"source:TOP":"/-sources/source?source_id=${env.crumb.name}",
@@ -91,6 +93,9 @@
 			"layout":{
 				"index:ROOT":{
 					"MAIN":"sheet:ROOT"
+				},
+				"sheet:ROOT":{
+					"TABLE":"sheet:TABLE"
 				}
 			}
 		},

@@ -48,10 +48,11 @@ Consciousness.recalcEntitiesPropId = async (db, source) => { //Определи�
 
 		if (entity_id) {
 			const custom_cols = await db.allto('col_title', `
-				SELECT prop_id
+				SELECT prop_id, col_title
 				FROM sources_custom_cols
 				WHERE source_id = :source_id and sheet_title = :sheet_title and prop_id is not null
 			`, {source_id, sheet_title})
+			console.log(custom_cols)
 
 			const head = await db.all(`
 				SELECT col_title, col_nick, col_index
@@ -90,6 +91,11 @@ Consciousness.recalcEntitiesPropId = async (db, source) => { //Определи�
 }
 Consciousness.recalcRowsKeyId = async (db, source) => {
 	await db.exec(`
+		UPDATE sources_rows ro
+		SET ro.key_id = null, ro.repeat_index = null
+		WHERE ro.source_id = :source_id
+	`, source)
+	await db.exec(`
 		UPDATE sources_rows ro, sources_cells ce, sources_sheets sh
 		SET ro.key_id = ce.value_id
 		WHERE ro.source_id = :source_id 
@@ -99,6 +105,19 @@ Consciousness.recalcRowsKeyId = async (db, source) => {
 		and ce.row_index = ro.row_index
 		and ce.sheet_index = ro.sheet_index
 		and ce.col_index = sh.key_index
+	`, source)
+	await db.exec(`
+		UPDATE sources_rows ro, (
+			SELECT 
+				source_id, sheet_index, row_index,
+				ROW_NUMBER() OVER (PARTITION BY source_id, sheet_index, key_id ORDER BY row_index) - 1 AS repeat_index
+			FROM sources_rows
+		) cte
+		SET ro.repeat_index = cte.repeat_index
+		WHERE ro.source_id = :source_id
+		and cte.source_id = ro.source_id
+		and ro.sheet_index = cte.sheet_index 
+		AND ro.row_index = cte.row_index
 	`, source)
 }
 Consciousness.setCellType = async (db, cell, type) => {
@@ -448,25 +467,60 @@ Consciousness.recalcRepresentColBySource = async (db, source) => {
 	`, source)
 }
 Consciousness.recalcRepresentRowBySource = async (db, source) => {
-	const {source_id} = source
 	await db.exec(`
 		UPDATE sources_rows
 		SET represent_row = :represent_rows
 		WHERE source_id = :source_id 
 	`, source)
-
-	const custom_rows = await db.all(`
-		SELECT 
-			sh.sheet_index,
-			cro.repeat_index,
-			cro.key_id,
-			cro.represent_custom_row + 0 as represent_custom_row
-		FROM sources_sheets sh, sources_custom_rows cro
-		WHERE cro.source_id = :source_id
-		and sh.source_id = cro.source_id and sh.sheet_title = cro.sheet_title and cro.represent_custom_row is not null
+	await db.exec(`
+		UPDATE sources_rows ro, sources_custom_rows cro
+		SET ro.represent_row = cro.represent_custom_row
+		WHERE ro.source_id = :source_id
+			and cro.source_id = ro.source_id 
+			and cro.key_id = ro.key_id
+			and cro.repeat_index = ro.repeat_index
+			and cro.represent_custom_row is not null
+	`, source)
+}
+Consciousness.recalcRepresentCellBySource = async (db, source) => {
+	const { source_id } = source
+	await db.exec(`
+		UPDATE sources_cells
+		SET represent_cell = :represent_cells
+		WHERE source_id = :source_id 
 	`, source)
 
-	for (const {sheet_index, repeat_index, key_id, represent_custom_row} of custom_rows) {
+	await db.exec(`
+		UPDATE sources_cells ce, sources_rows ro, sources_custom_cells cce
+		SET ce.represent_cell = cce.represent_custom_cell
+		WHERE ce.source_id = :source_id
+			and ro.source_id = ce.source_id
+			and ro.row_index = ce.row_index
+			and cce.source_id = ce.source_id 
+			and cce.key_id = ro.key_id
+			and cce.repeat_index = ro.repeat_index
+			and cce.represent_custom_cell is not null
+	`, source)
+
+	const custom_cells = await db.all(`
+		SELECT 
+			sh.sheet_index,
+			cce.repeat_index,
+			cce.key_id,
+			co.col_index,
+			cce.represent_custom_cell + 0 as represent_custom_cell
+		FROM sources_sheets sh, sources_custom_cells cce, sources_cols co
+		WHERE cce.source_id = :source_id
+		and sh.source_id = cce.source_id 
+		and sh.sheet_title = cce.sheet_title 
+		and cce.represent_custom_cell is not null
+		and co.source_id = sh.source_id
+		and co.sheet_index = sh.sheet_index
+		and co.col_title = cce.col_title
+	`, {source_id})
+
+
+	for (const {sheet_index, repeat_index, key_id, col_index, represent_custom_cell} of custom_cells) {
 		const row_index = await db.col(`
 			SELECT row_index 
 			FROM sources_rows
@@ -477,14 +531,15 @@ Consciousness.recalcRepresentRowBySource = async (db, source) => {
 		`,{source_id, sheet_index, key_id, repeat_index})
 		if (!row_index && row_index != 0) continue
 		await db.exec(`
-			UPDATE sources_rows
-			SET represent_row = :represent_custom_row
+			UPDATE sources_cells
+			SET represent_cell = :represent_custom_cell
 			WHERE source_id = :source_id 
 			and sheet_index = :sheet_index
 			and row_index = :row_index
-		`, {source_id, row_index, sheet_index, represent_custom_row})
+			and col_index = :col_index
+		`, {source_id, col_index, row_index, sheet_index, represent_custom_cell})
 	}
-
+	
 }
 Consciousness.recalcRepresentSheetBySource = async (db, source) => {
 	await db.exec(`
@@ -552,54 +607,7 @@ Consciousness.recalcRepresentKeyBySource = async (db, source) => {
 		and ce.sheet_index = ro.sheet_index
 	`, source)
 }
-Consciousness.recalcRepresentCellBySource = async (db, source) => {
-	const { source_id } = source
-	
-	await db.exec(`
-		UPDATE sources_cells
-		SET represent_cell = :represent_cells
-		WHERE source_id = :source_id 
-	`, source)
 
-	const custom_cells = await db.all(`
-		SELECT 
-			sh.sheet_index,
-			cce.repeat_index,
-			cce.key_id,
-			co.col_index,
-			cce.represent_custom_cell + 0 as represent_custom_cell
-		FROM sources_sheets sh, sources_custom_cells cce, sources_cols co
-		WHERE cce.source_id = :source_id
-		and sh.source_id = cce.source_id 
-		and sh.sheet_title = cce.sheet_title 
-		and cce.represent_custom_cell is not null
-		and co.source_id = sh.source_id
-		and co.sheet_index = sh.sheet_index
-		and co.col_title = cce.col_title
-	`, {source_id})
-
-
-	for (const {sheet_index, repeat_index, key_id, col_index, represent_custom_cell} of custom_cells) {
-		const row_index = await db.col(`
-			SELECT row_index 
-			FROM sources_rows
-			WHERE source_id = :source_id
-				and sheet_index = :sheet_index
-				and key_id = :key_id
-				LIMIT :repeat_index, 1
-		`,{source_id, sheet_index, key_id, repeat_index})
-		if (!row_index && row_index != 0) continue
-		await db.exec(`
-			UPDATE sources_cells
-			SET represent_cell = :represent_custom_cell
-			WHERE source_id = :source_id 
-			and sheet_index = :sheet_index
-			and row_index = :row_index
-			and col_index = :col_index
-		`, {source_id, col_index, row_index, sheet_index, represent_custom_cell})
-	}
-	
-}
 
 Consciousness.recalcSearchByEntityIdAndSourceId = async (db, entity_id, source_id) => {
 

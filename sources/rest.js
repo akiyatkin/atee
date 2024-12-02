@@ -202,7 +202,7 @@ rest.addResponse('sheet', ['admin'], async view => {
 	const entity = view.data.entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
 	const sheet_index = await view.get('sheet_index#required')
 	const sheet = view.data.sheet = await db.fetch(`
-		SELECT sh.sheet_title, sh.key_index, sh.sheet_index,
+		SELECT sh.sheet_title, sh.key_index, sh.sheet_index, sh.entity_id,
 			sh.represent_sheet + 0 as represent_sheet
 		FROM sources_sheets sh
 			left join sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
@@ -210,10 +210,11 @@ rest.addResponse('sheet', ['admin'], async view => {
 	`, {source_id, sheet_index}) 
 	const sheet_title = sheet.sheet_title
 	const cols = view.data.cols = await db.all(`
-		SELECT co.col_index, co.col_title, co.prop_id, 
+		SELECT co.col_index, co.col_title, co.prop_id, pr.prop_title,
 			cco.represent_custom_col + 0 as represent_custom_col
 		FROM sources_cols co
 			LEFT JOIN sources_custom_cols cco on cco.source_id = :source_id and cco.col_title = co.col_title
+			LEFT JOIN sources_props pr on pr.prop_id = co.prop_id
 		WHERE co.source_id = :source_id and co.sheet_index = :sheet_index
 		ORDER BY co.col_index
 	`, {source_id, sheet_index}) 
@@ -228,7 +229,8 @@ rest.addResponse('sheet', ['admin'], async view => {
 		SELECT 
 			key_id,
 			ro.represent_key + 0 as represent_key,
-			ro.represent_row + 0 as represent_row
+			ro.represent_row + 0 as represent_row,
+			ro.repeat_index
 		FROM sources_rows ro
 		WHERE ro.source_id = :source_id and ro.sheet_index = :sheet_index
 		ORDER BY ro.row_index
@@ -244,27 +246,16 @@ rest.addResponse('sheet', ['admin'], async view => {
 	`, {source_id, sheet_title})
 	const crows = {}
 	for (const {key_id, repeat_index, represent_custom_row} of custom_rows) {
-		crows[key_id] ??= {represent:{}, repeats:0}
-		crows[key_id].represent[repeat_index] = represent_custom_row
+		crows[key_id] ??= {}
+		crows[key_id][repeat_index] = represent_custom_row
 	}
 
 	for (const row of rows) {
-		if (crows[row.key_id]) {
-			row.cls = eye.calcCls(
-				source.represent_source && sheet.represent_sheet, 
-				crows[row.key_id].represent[crows[row.key_id].repeats], 
-				source.represent_rows
-			)
-		} else {
-			crows[row.key_id] ??= {represent:{}, repeats:0}
-			row.cls = eye.calcCls(
-				source.represent_source && sheet.represent_sheet, 
-				null, 
-				source.represent_rows
-			)
-		}
-		row.repeat_index = crows[row.key_id].repeats
-		crows[row.key_id].repeats++		
+		row.cls = eye.calcCls(
+			source.represent_source && sheet.represent_sheet, 
+			crows[row.key_id]?.[row.repeat_index], 
+			source.represent_rows
+		)
 	}
 
 	const cells = await db.all(`
@@ -284,7 +275,11 @@ rest.addResponse('sheet', ['admin'], async view => {
 
 	const texts = view.data.texts = []
 	const winners = view.data.winners = []
-	for (const {row_index, col_index, multi_index, text, winner} of cells) {
+	const prunings = view.data.prunings = []
+	for (const {row_index, col_index, multi_index, text, winner, pruning} of cells) {
+		prunings[row_index] ??= []
+		prunings[row_index][col_index] = pruning
+
 		texts[row_index] ??= []
 		texts[row_index][col_index] ??= []
 		texts[row_index][col_index][multi_index] = text
@@ -293,9 +288,6 @@ rest.addResponse('sheet', ['admin'], async view => {
 		winners[row_index][col_index] ??= []
 		winners[row_index][col_index][multi_index] = winner
 	}
-
-
-
 	return view.ret()
 })
 rest.addResponse('source', ['admin'], async view => {
@@ -366,7 +358,7 @@ rest.addResponse('source', ['admin'], async view => {
 	}
 	for (const descr of custom_sheets) descr.custom = true
 	for (const descr of [...loaded_sheets, ...custom_sheets]) {
-		const sheet = sheets[descr.sheet_title] ??= {sheet_title: descr.sheet_title}
+		const sheet = sheets[descr.sheet_title] ??= {source_id, sheet_title: descr.sheet_title}
 		sheet.entity_title = descr.entity_title
 		sheet.entity_plural = descr.entity_plural
 		sheet.prop_title = descr.prop_title
@@ -374,23 +366,26 @@ rest.addResponse('source', ['admin'], async view => {
 		delete descr.prop_title
 		delete descr.entity_plural
 		delete descr.sheet_title
-		sheet.remove = sheet.remove || !!descr.custom
+		sheet.remove ||= descr.custom
 		sheet[descr.loaded ? 'loaded' : 'custom'] = descr
 	}
 	view.data.sheets = Object.values(sheets)
 	for (const sheet of view.data.sheets) {
-		if (!sheet.remove) {
-			//custom_cols custom_rows custom_cells
-			sheet.remove = await db.col(`
-				SELECT 1
-				FROM sources_custom_cols cco, sources_custom_rows cro, sources_custom_cells cce
-				WHERE 
-						 (cco.source_id = :source_id and cco.sheet_title = :sheet_title)
-					OR (cro.source_id = :source_id and cro.sheet_title = :sheet_title)
-					OR (cce.source_id = :source_id and cce.sheet_title = :sheet_title)
-				LIMIT 1
-			`, {source_id: source.source_id, sheet_title: sheet.sheet_title})
-		}
+		sheet.remove ||= await db.col(`
+			SELECT 1 FROM sources_custom_cols
+			WHERE source_id = :source_id and sheet_title = :sheet_title
+			LIMIT 1
+		`, sheet)
+		sheet.remove ||= await db.col(`
+			SELECT 1 FROM sources_custom_rows
+			WHERE source_id = :source_id and sheet_title = :sheet_title
+			LIMIT 1
+		`, sheet)
+		sheet.remove ||= await db.col(`
+			SELECT 1 FROM sources_custom_cells
+			WHERE source_id = :source_id and sheet_title = :sheet_title
+			LIMIT 1
+		`, sheet)		
 		sheet.cls = eye.calcCls(source.represent_source, sheet.custom?.represent_custom_sheet, source.represent_sheets)
 	}
 	
