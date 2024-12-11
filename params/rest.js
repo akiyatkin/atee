@@ -74,7 +74,7 @@ rest.addResponse('get-blocks', async view => {
 
 	const rel = await getTable('REL') //, !!~view.visitor.client.host.indexOf('127.0.0.1')
 
-		
+	
 	const list = []
 	rel.rows_body.forEach(row => {
 		if (!row[rel.indexes.obratno]) return
@@ -88,13 +88,12 @@ rest.addResponse('get-blocks', async view => {
 	unique(list)
 
 	const seo = await getTable('SEO') //, !!~view.visitor.client.host.indexOf('127.0.0.1')
-
 	const blocks = list.map(path => { //path со слэшом
-		const row = seo.rows_body.find(row => row[seo.indexes.path] == path)
+		const row = seo.rows_body.find(row => '/' + row[seo.indexes.href] == path)
 		if (!row) return false
 		return {
 			description: row[seo.indexes.description],
-			path: row[seo.indexes.path],
+			path: row[seo.indexes.href],
 			title: row[seo.indexes.title],
 			image_src: row[seo.indexes['image-src']]
 		}
