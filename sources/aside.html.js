@@ -1,8 +1,9 @@
 export const ROOT = (data, env) => `
 	<div style="height:100%; display: grid; grid-template-rows: max-content 1fr max-content; gap: 1em;">
 		<div style="display: grid; gap: 0.25em">
+			<a href="/@atee/sources">Источники</a>
 			<a href="entities">Сущности</a>
-			
+			<a href="disappear">Исчезли</a>
 		</div>
 		<div></div>
 		<div style="display: grid; gap: 0.25em">

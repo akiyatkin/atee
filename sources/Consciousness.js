@@ -4,7 +4,29 @@ import unique from "/-nicked/unique.js"
 const Consciousness = {}
 export default Consciousness
 
+Consciousness.recalcAppear = async (db, source) => {
+	await db.exec(`
+		INSERT INTO sources_appears (source_id, entity_id, key_id)
+		SELECT ro.source_id, sh.entity_id, ro.key_id
+		FROM sources_rows ro, sources_sheets sh
+		WHERE sh.source_id = :source_id
+		and ro.source_id = sh.source_id
+		and ro.sheet_index = sh.sheet_index
+		and sh.entity_id is not null
+		and ro.key_id is not null
+		ON DUPLICATE KEY UPDATE date_disappear = null
+	`, source)
+	await db.exec(`
+		UPDATE sources_appears ap
+			LEFT JOIN sources_sheets sh on (sh.entity_id = ap.entity_id and sh.source_id = ap.source_id)
+				LEFT JOIN sources_rows ro on (ro.sheet_index = sh.sheet_index and ro.source_id = sh.source_id AND ro.key_id = ap.key_id)
+		SET ap.date_disappear = now()
+		WHERE ro.key_id is null
+		and ap.source_id = :source_id
+		and ap.date_disappear is null
+	`, source)
 
+}
 Consciousness.recalcKeyIndex = async (db) => { //Определить key_index, по имеющимся entity_id
 	await db.exec(`
 		UPDATE sources_sheets sh
@@ -52,7 +74,6 @@ Consciousness.recalcEntitiesPropId = async (db, source) => { //Определи�
 				FROM sources_custom_cols
 				WHERE source_id = :source_id and sheet_title = :sheet_title and prop_id is not null
 			`, {source_id, sheet_title})
-			console.log(custom_cols)
 
 			const head = await db.all(`
 				SELECT col_title, col_nick, col_index
@@ -350,100 +371,121 @@ Consciousness.insertItemsByEntity = async (db, entity) => {
 	}
 }
 Consciousness.recalcRepresent = async (db) => {
+	
 	/*
+		represent_source
 		represent_sheet (represent_custom_sheet, represent_sheets)
 		represent_col (represent_custom_col, represent_cols)
 		represent_row (represent_custom_row, represent_rows)
 		represent_cell (represent_custom_cell, represent_cels)
+		represent_row_key (represent_cell, represent_col)
+		represent_cell_summary (represent_row_key, represent_source, represent_sheet, represent_col, represent_row, represent_cell)
+		
 
+		represent_entity
 		represent_prop (represent_custom_prop, represent_props)
-		represent_key_value pos(represent_custom_value, represent_values)
-		represent_item pos(represent_custom_item, represent_items)
+		represent_value (represent_custom_value, represent_values)
+		represent_item (represent_custom_item, represent_items)
+		represent_item_key (represent_value, represent_prop)
+		represent_text_summary (represent_item_key, represent_entity, represent_prop, represent_item, represent_value)
 		
-		represent_key (represent_source, represent_sheet, represent_col, represent_row, represent_cell)
-
-		represent_instance (represent_entity, represent_prop, represent_item, represent_key_value)
 		
-		represent (
-			represent_instance
-			represent_key,
-
-			represent_prop,
-
-			represent_sheet, 
-			represent_col, 
-			represent_row, 
-			represent_cell,
-			represent_custom_value
-			
-		)
+		represent (represent_cell_summary, represent_text_summary)
 		winner (represent)
 	*/
 	await db.exec(`
-		UPDATE 
-			sources_rows ro,
-			sources_sheets sh, 
-			sources_cols co, 
-			sources_props pr,
-			sources_items it,
-			sources_cells ce
-				LEFT JOIN sources_custom_values cva on cva.value_id = ce.value_id
-		SET ce.represent = ce.represent_cell
-			and ro.represent_key 
-			and sh.represent_sheet 
-			and ro.represent_row 
-			and co.represent_col 
-			and pr.represent_prop 
-			and nvl(cva.represent_custom_value, 1)
-			and it.represent_instance
-		WHERE 
-		sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
-		and co.source_id = ce.source_id and co.sheet_index = ce.sheet_index and co.col_index = ce.col_index
-		and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
-		and pr.prop_id = co.prop_id
-		and it.key_id = ro.key_id and it.entity_id = sh.entity_id
+		UPDATE sources_cells ce
+		SET ce.represent = ce.represent_cell_summary and ce.represent_text_summary
 	`)
 }
 
 Consciousness.recalcRepresentValueByEntity = async (db, entity) => {
 	await db.exec(`
+		UPDATE sources_cells ce, sources_sheets sh
+		SET ce.represent_value = if(ce.value_id is not null, :represent_values, 1)
+		WHERE sh.entity_id = :entity_id
+		and sh.sheet_index = ce.sheet_index
+		and sh.source_id = ce.source_id
+	`, entity)
+	await db.exec(`
+		UPDATE 
+			sources_cells ce, 
+			sources_sheets sh, 
+			sources_custom_values ccv, 
+			sources_props pr, 
+			sources_cols co
+		SET ce.represent_value = ccv.represent_custom_value
+		WHERE sh.entity_id = :entity_id
+			and pr.entity_id = sh.entity_id
+			and ccv.prop_id = pr.prop_id
+
+			and co.source_id = ce.source_id
+			and co.sheet_index = sh.sheet_index
+			and co.prop_id = ccv.prop_id
+
+			and ce.source_id = sh.source_id 
+			and ce.sheet_index = sh.sheet_index
+			and ce.col_index = co.col_index
+			
+			and ccv.represent_custom_value is not null
+	`, entity)
+
+	await db.exec(`
 		UPDATE sources_items
-		SET represent_key_value = :represent_values
+		SET represent_item_key = :represent_values
 		WHERE entity_id = :entity_id
 	`, entity)
-	const {entity_id} = entity
-	const custom_values = await db.all(`
-		SELECT 
-			cva.prop_id,
-			cva.value_id,
-			cva.represent_custom_value + 0 as represent_custom_value
-		FROM sources_custom_values cva, sources_props pr
-		WHERE pr.prop_id = cva.prop_id 
-		and pr.entity_id = :entity_id
-		and cva.represent_custom_value is not null
+	await db.exec(`
+		UPDATE sources_items it, sources_cells ce, sources_sheets sh, sources_props pr, sources_entities en
+		SET it.represent_item_key = ce.represent_value and pr.represent_prop
+		WHERE it.entity_id = :entity_id
+			and en.entity_id = it.entity_id
+			and pr.prop_id = en.prop_id
+			and sh.entity_id = it.entity_id
+			and ce.col_index = sh.key_index
+			and ce.source_id = sh.source_id
+			and ce.sheet_index = sh.sheet_index
 	`, entity)
-	for (const {value_id, prop_id, represent_custom_value} of custom_values) {
-		const key_id = await db.col(`
-			SELECT distinct ro.key_id
-			FROM sources_rows ro, sources_cells ce, sources_cols co
-			WHERE co.prop_id = :prop_id 
-			and ce.value_id = :value_id
-			and ro.row_index = ce.row_index
-			and ro.sheet_index = ce.sheet_index
-			and co.col_index = ce.col_index
-			and co.sheet_index = ce.sheet_index
-			and co.source_id = ce.source_id
-			and ce.source_id = ro.source_id
-		`, {value_id, prop_id})
-		await db.exec(`
-			UPDATE sources_items it
-			SET it.represent_key_value = :represent_custom_value
-			WHERE it.entity_id = :entity_id
-			and it.key_id = :key_id
-		`, {entity_id, key_id, represent_custom_value})
-	}
-	
 }
+// Consciousness.recalcRepresentValueByEntity = async (db, entity) => {
+// 	await db.exec(`
+// 		UPDATE sources_items
+// 		SET represent_item_key = :represent_values
+// 		WHERE entity_id = :entity_id
+// 	`, entity)
+// 	const {entity_id} = entity
+// 	const custom_values = await db.all(`
+// 		SELECT 
+// 			cva.prop_id,
+// 			cva.value_id,
+// 			cva.represent_custom_value + 0 as represent_custom_value
+// 		FROM sources_custom_values cva, sources_props pr
+// 		WHERE pr.prop_id = cva.prop_id 
+// 		and pr.entity_id = :entity_id
+// 		and cva.represent_custom_value is not null
+// 	`, entity)
+// 	for (const {value_id, prop_id, represent_custom_value} of custom_values) {
+// 		const key_id = await db.col(`
+// 			SELECT distinct ro.key_id
+// 			FROM sources_rows ro, sources_cells ce, sources_cols co
+// 			WHERE co.prop_id = :prop_id 
+// 			and ce.value_id = :value_id
+// 			and ro.row_index = ce.row_index
+// 			and ro.sheet_index = ce.sheet_index
+// 			and co.col_index = ce.col_index
+// 			and co.sheet_index = ce.sheet_index
+// 			and co.source_id = ce.source_id
+// 			and ce.source_id = ro.source_id
+// 		`, {value_id, prop_id})
+// 		await db.exec(`
+// 			UPDATE sources_items it
+// 			SET it.represent_item_key = :represent_custom_value
+// 			WHERE it.entity_id = :entity_id
+// 			and it.key_id = :key_id
+// 		`, {entity_id, key_id, represent_custom_value})
+// 	}
+	
+// }
 Consciousness.recalcRepresentPropByEntity = async (db, entity) => {
 	await db.exec(`
 		UPDATE sources_props
@@ -572,30 +614,92 @@ Consciousness.recalcRepresentItemByEntity = async (db, entity) => {
 		and cit.represent_custom_item is not null
 	`, entity)
 }
-Consciousness.recalcRepresentInstanceByEntity = async (db, entity) => {
+Consciousness.recalcRepresentItemSummaryByEntity = async (db, entity) => {
+	//represent_item_key, represent_entity, represent_prop, represent_item, represent_value
 	await db.exec(`
-		UPDATE sources_items it, sources_entities en, sources_props pr
-		SET it.represent_instance = it.represent_item and it.represent_key_value and pr.represent_prop and en.represent_entity
-		WHERE it.entity_id = :entity_id
-		and en.entity_id = it.entity_id 
-		and pr.prop_id = en.prop_id
+		UPDATE sources_cells ce, sources_sheets sh
+		SET ce.represent_text_summary = 0
+		WHERE sh.entity_id = :entity_id
+		and ce.source_id = sh.source_id
+		and ce.sheet_index = sh.sheet_index
+	`, entity)
+	await db.exec(`
+		UPDATE 
+			sources_cells ce, 
+			sources_items it, 
+			sources_entities en, 
+			sources_props pr, 
+			sources_sheets sh, 
+			sources_cols co, 
+			sources_rows ro
+		SET ce.represent_text_summary = ce.represent_value
+				and en.represent_entity 
+				and it.represent_item_key 
+				and it.represent_item 
+				and pr.represent_prop 
+				
+		WHERE sh.entity_id = :entity_id
+		and ro.source_id = sh.source_id
+		and ro.sheet_index = sh.sheet_index
+		and en.entity_id = sh.entity_id 
+		and it.entity_id = sh.entity_id
+		and it.key_id = ro.key_id
+
+		and co.source_id = sh.source_id
+		and co.sheet_index = sh.sheet_index
+		and pr.prop_id = co.prop_id
+		
+		and ce.source_id = sh.source_id
+		and ce.sheet_index = sh.sheet_index
+		and ce.row_index = ro.row_index
+		and ce.col_index = co.col_index
+		
 	`, entity)
 }
-Consciousness.recalcRepresentKeyBySource = async (db, source) => {
+Consciousness.recalcRepresentRowSummaryBySource = async (db, source) => {
+	await db.exec(`
+		UPDATE sources_cells
+		SET represent_cell_summary = 0
+		WHERE source_id = :source_id
+	`, source)
+	//represent_cell_summary (represent_row_key, represent_source, represent_sheet, represent_col, represent_row, represent_cell)
+	await db.exec(`
+		UPDATE sources_cells ce, sources_sources so, sources_sheets sh, sources_cols co, sources_rows ro
+		SET represent_cell_summary = ro.represent_row_key
+			and so.represent_source
+			and sh.represent_sheet
+			and co.represent_col
+			and ro.represent_row
+			and ce.represent_cell
+		WHERE so.source_id = :source_id
+		and ro.source_id = so.source_id
+		and sh.source_id = so.source_id
+		and co.source_id = so.source_id
+		and ce.source_id = so.source_id
+
+		and ce.sheet_index = sh.sheet_index
+		and co.sheet_index = sh.sheet_index
+		and ro.sheet_index = sh.sheet_index
+
+		and ce.col_index = co.col_index
+		and ce.row_index = ro.row_index
+
+	`, source)
+}
+Consciousness.recalcRepresentRowKeyBySource = async (db, source) => {
+	await db.exec(`
+		UPDATE sources_rows
+		SET represent_row_key = :represent_cells
+		WHERE source_id = :source_id
+	`, source)
 	await db.exec(`
 		UPDATE 
 			sources_rows ro, 
-			sources_sources so, 
 			sources_sheets sh,
 			sources_cols co, 
 			sources_cells ce
-		SET ro.represent_key = so.represent_source 
-			and sh.represent_sheet 
-			and ro.represent_row 
-			and co.represent_col 
-			and ce.represent_cell
+		SET ro.represent_row_key = ce.represent_cell and co.represent_col
 		WHERE ro.source_id = :source_id
-		and so.source_id = ro.source_id
 		and sh.source_id = ro.source_id
 		and sh.sheet_index = ro.sheet_index
 		and co.source_id = ro.source_id

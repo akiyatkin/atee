@@ -2,7 +2,7 @@ import field from "/-dialog/field.html.js"
 import date from "/-words/date.html.js"
 import ago from "/-words/ago.html.js"
 import err from "/-controller/err.html.js"
-export const css = ['/-sources/status.css']
+export const css = ['/-sources/represent.css']
 export const ROOT = (data, env) => `
 	<h1>Источники</h1>
 	${data.admin && data.isdb ? showMain(data, env) : showAuth(data, env)}
@@ -24,8 +24,8 @@ export const TABLE = (data, env) => !data.result ? '' : `
 				<td>Источник</td>
 				<td>Статус</td>
 				<td>Проверен</td>
-				<td>Загружен</td>
 				<td>Актуальность</td>
+				<td>Загружен</td>
 				<td>Ревизия</td>
 			</tr>
 		</thead>
@@ -103,11 +103,12 @@ const showSourceTr = (data, env, source) => `
 			${date.ai(source.date_check)}
 		</td>
 		<td>
-			${date.ai(source.date_load)}
-		</td>
-		<td>
 			${date.ai(source.date_content)}
 		</td>
+		<td>
+			${date.ai(source.date_load)}
+		</td>
+		
 		
 		<td>
 			${date.ai(source.date_exam)}

@@ -19,8 +19,9 @@ Consequences.loaded = async (db, source_id) => {
 	await Consciousness.recalcRepresentColBySource(db, source)
 	await Consciousness.recalcRepresentRowBySource(db, source)
 	await Consciousness.recalcRepresentCellBySource(db, source)
+	await Consciousness.recalcRepresentRowKeyBySource(db, source)
+	await Consciousness.recalcRepresentRowSummaryBySource(db, source)
 
-	await Consciousness.recalcRepresentKeyBySource(db, source)
 	const entities = await db.colAll(`
 		SELECT distinct entity_id FROM sources_sheets
 		WHERE source_id = :source_id
@@ -32,13 +33,14 @@ Consequences.loaded = async (db, source_id) => {
 		await Consciousness.recalcRepresentPropByEntity(db, entity)
 		await Consciousness.recalcRepresentValueByEntity(db, entity)
 		await Consciousness.recalcRepresentItemByEntity(db, entity)
-		await Consciousness.recalcRepresentInstanceByEntity(db, entity)
+		await Consciousness.recalcRepresentItemSummaryByEntity(db, entity)
 	}
 	await Consciousness.recalcRepresent(db)
 	await Consciousness.recalcWinner(db)
 	for (const entity_id of entities) {
 		await Consciousness.recalcSearchByEntityIdAndSourceId(db, entity_id, source.source_id)
 	}
+	await Consciousness.recalcAppear(db, source)
 }
 Consequences.changed = async (db, entity_id) => {
 	/*
@@ -53,7 +55,7 @@ Consequences.changed = async (db, entity_id) => {
 	await Consciousness.recalcRepresentPropByEntity(db, entity)
 	await Consciousness.recalcRepresentValueByEntity(db, entity)
 	await Consciousness.recalcRepresentItemByEntity(db, entity)
-	await Consciousness.recalcRepresentInstanceByEntity(db, entity)
+	await Consciousness.recalcRepresentItemSummaryByEntity(db, entity)
 
 	
 	const sources = await Sources.getSources(db, entity_id)
@@ -69,7 +71,8 @@ Consequences.changed = async (db, entity_id) => {
 		//await Consciousness.recalcRepresentColBySource(db, source)
 		//await Consciousness.recalcRepresentRowBySource(db, source)
 		await Consciousness.recalcRepresentCellBySource(db, source)
-		await Consciousness.recalcRepresentKeyBySource(db, source)
+		await Consciousness.recalcRepresentRowKeyBySource(db, source)
+		await Consciousness.recalcRepresentRowSummaryBySource(db, source)
 	}
 	await Consciousness.recalcRepresent(db)
 	await Consciousness.recalcWinner(db)
@@ -87,7 +90,8 @@ Consequences.represent = async (db) => {
 		await Consciousness.recalcRepresentColBySource(db, source)
 		await Consciousness.recalcRepresentRowBySource(db, source)
 		await Consciousness.recalcRepresentCellBySource(db, source)
-		await Consciousness.recalcRepresentKeyBySource(db, source)
+		await Consciousness.recalcRepresentRowKeyBySource(db, source)
+		await Consciousness.recalcRepresentRowSummaryBySource(db, source)
 	}
 	const entities = await Sources.getEntities(db)
 	for (const entity of entities) {
@@ -95,7 +99,7 @@ Consequences.represent = async (db) => {
 		await Consciousness.recalcRepresentPropByEntity(db, entity)
 		await Consciousness.recalcRepresentValueByEntity(db, entity)
 		await Consciousness.recalcRepresentItemByEntity(db, entity)
-		await Consciousness.recalcRepresentInstanceByEntity(db, entity)
+		await Consciousness.recalcRepresentItemSummaryByEntity(db, entity)
 	}
 	await Consciousness.recalcRepresent(db)
 	await Consciousness.recalcWinner(db)
@@ -119,7 +123,8 @@ Consequences.represent = async (db) => {
 // 		await Consciousness.recalcRepresentColBySource(db, source)
 // 		await Consciousness.recalcRepresentRowBySource(db, source)
 // 		await Consciousness.recalcRepresentCellBySource(db, source)
-// 		await Consciousness.recalcRepresentKeyBySource(db, source)
+// 		await Consciousness.recalcRepresentRowKeyBySource(db, source)
+//		await Consciousness.recalcRepresentRowSummaryBySource(db, source)
 // 	}
 // 	const entities = await Sources.getEntities(db)
 // 	for (const entity of entities) {
@@ -127,11 +132,11 @@ Consequences.represent = async (db) => {
 // 		await Consciousness.recalcRepresentPropByEntity(db, entity)
 // 		await Consciousness.recalcRepresentValueByEntity(db, entity)
 // 		await Consciousness.recalcRepresentItemByEntity(db, entity)
-// 		await Consciousness.recalcRepresentInstanceByEntity(db, entity)
+// 		await Consciousness.recalcRepresentItemSummaryByEntity(db, entity)
 // 	}
 // 	await Consciousness.recalcRepresent(db)
 // 	await Consciousness.recalcWinner(db)
-	
+//	await Consciousness.recalcAppear(db, source)
 // 	for (const entity of entities) {
 // 		for (const source of sources) {
 // 			await Consciousness.recalcSearchByEntityIdAndSourceId(db, entity.entity_id, source.source_id)
@@ -146,7 +151,8 @@ Consequences.represent = async (db) => {
 // 	await Consciousness.recalcRepresentRowBySource(db, source)
 // 	await Consciousness.recalcRepresentCellBySource(db, source)
 
-// 	await Consciousness.recalcRepresentKeyBySource(db, source)
+// 	await Consciousness.recalcRepresentRowKeyBySource(db, source)
+//	await Consciousness.recalcRepresentRowSummaryBySource(db, source)
 // 	const entities = await db.colAll(`
 // 		SELECT distinct entity_id FROM sources_sheets
 // 		WHERE source_id = :source_id
@@ -157,7 +163,7 @@ Consequences.represent = async (db) => {
 // 		await Consciousness.recalcRepresentPropByEntity(db, entity)
 // 		await Consciousness.recalcRepresentValueByEntity(db, entity)
 // 		await Consciousness.recalcRepresentItemByEntity(db, entity)
-// 		await Consciousness.recalcRepresentInstanceByEntity(db, entity)
+// 		await Consciousness.recalcRepresentItemSummaryByEntity(db, entity)
 // 	}
 // 	await Consciousness.recalcRepresent(db)
 // 	await Consciousness.recalcWinner(db)

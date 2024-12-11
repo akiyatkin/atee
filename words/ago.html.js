@@ -1,3 +1,4 @@
+//deprecated use date.html.js
 import words from "/-words/words.js"
 
 const rtf = new Intl.RelativeTimeFormat("ru", { 

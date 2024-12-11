@@ -21,18 +21,42 @@ const addCSS = href => { //файл этот нельзя использоват
 }
 const hides = new WeakMap()
 export const Dialog = {
-	open: async (layer, div = document.body, onshow, onhide) => {
+	getHtml: async (layer) => {
 		const {tpl, sub, parsed = '', json = '', data} = layer
 		const tplobj = await import(tpl).then(res => res.default || res)
 		layer.data = !json ? data : await fetch(json).then(res => res.json())
+		if (tplobj.css) {
+			for (const link of tplobj.css) addCSS(link)
+		}
+		
+		
+		const theme = await import('/-controller/Theme.js').then(r => r.default.get())
+		//const layer = {tpl, sub, json, div:id}
+		
+		const look = { theme }
+		const env = { layer, ...look }
+		env.sid = 'sid-' + layer.div + '-' + layer.sub + '-'
+		env.scope = '#' + layer.div
+		const Client = await window.getClient()
+		env.bread = Client.bread
+		const html = tplobj[sub](layer.data, env)
+		return html
+	},
+	reload: async (layer) => {
+		const html = await Dialog.getHtml(layer)
+		const popup = document.getElementById(layer.div)
+		await Dialog.html(popup, html)
+		return popup
+	},
+	open: async (layer, div = document.body, onshow, onhide) => {
+		const {tpl, sub, parsed = '', json = '', data} = layer
 		const id = 'dialog-' + nicked([tpl,sub,json,parsed].join('-'))
-		let popup = document.getElementById(id)
+		layer.div = id
+		const html = await Dialog.getHtml(layer)
+		let popup = document.getElementById(layer.div)
 		if (!popup) {
-			if (tplobj.css) {
-				for (const link of tplobj.css) addCSS(link)
-			}
 			popup = document.createElement('div')
-			popup.id = id
+			popup.id = layer.div
 			div.append(popup) //div может оказаться выше запланированных окон отправи формы успех или ошибка
 		}
 		if (onhide) {
@@ -40,16 +64,7 @@ export const Dialog = {
 			list.push(onhide)
 			hides.set(popup, list)
 		}
-		const theme = await import('/-controller/Theme.js').then(r => r.default.get())
-		//const layer = {tpl, sub, json, div:id}
-		layer.div = id
-		const look = { theme }
-		const env = { layer, ...look }
-		env.sid = 'sid-' + layer.div + '-' + layer.sub + '-'
-		env.scope = '#' + layer.div
-		const Client = await window.getClient()
-		env.bread = Client.bread
-		await Dialog.frame(popup, tplobj[sub](layer.data, env))
+		await Dialog.frame(popup, html)
 		
 		Dialog.show(popup, onshow)
 		return popup
@@ -107,10 +122,16 @@ export const Dialog = {
 			if (!path.some(el => el == dialog)) return //Клик где-то вообще вне окна, по чему-то, что сверху например
 			Dialog.hide(popup)
 		}, true)
+		await Dialog.html(popup, html)
+		
+		return popup
+	},
+	html: async (popup, html) => {
+		const { evalScripts } = await import('/-controller/evalScripts.js')
+		const dialog = popup.children[0]
 		const div = cls('dialogcontent', dialog)[0]
 		div.innerHTML = html
 		await evalScripts(div)
-		return popup
 	},
 	parents:[],
 	index:1000,

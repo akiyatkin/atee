@@ -5,6 +5,7 @@
 		"source:SOURCE":"none",
 		"main:TABLE":"none",
 		"sheet:TABLE":"none",
+		"disappear:TABLE":"none",
 		"entity:PROPS":"none",
 		"source:BOT":"none",
 		"source:TOP":"none",
@@ -25,7 +26,9 @@
 	},
 	"jsontpl":{
 		"sheet:ROOT":"/-sources/sheet?source_id=${env.bread.get.source_id ?? ''}&sheet_index=${env.bread.get.sheet_index ?? ''}",
-		"sheet:TABLE":"/-sources/sheet?source_id=${env.bread.get.source_id ?? ''}&sheet_index=${env.bread.get.sheet_index ?? ''}",
+		"sheet:TABLE":"/-sources/sheet-table?source_id=${env.bread.get.source_id ?? ''}&sheet_index=${env.bread.get.sheet_index ?? ''}&date=${env.bread.get.date ?? ''}",
+		"disappear:ROOT":"/-sources/disappear",
+		"disappear:TABLE":"/-sources/disappear-table?source_id=${env.bread.get.source_id ?? ''}&entity_id=${env.bread.get.entity_id ?? ''}",
 		"source:ROOT":"/-sources/source?source_id=${env.crumb.name}",
 		"source:SOURCE":"/-sources/source?source_id=${env.crumb.name}",
 		"source:TOP":"/-sources/source?source_id=${env.crumb.name}",
@@ -46,6 +49,7 @@
 		"aside":"/-sources/aside.html.js",
 		"main":"/-sources/main.html.js",
 		"sheet":"/-sources/sheet.html.js",
+		"disappear":"/-sources/disappear.html.js",
 		"source":"/-sources/source.html.js",
 		"props":"/-sources/props.html.js",
 		"prop":"/-sources/prop.html.js",
@@ -85,6 +89,17 @@
 			"layout":{
 				"index:ROOT":{
 					"MAIN":"entities:ROOT"
+				}
+			}
+		},
+		"disappear":{
+			"head":{"title":"Исчезли"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"disappear:ROOT"
+				},
+				"disappear:ROOT":{
+					"TABLE":"disappear:TABLE"
 				}
 			}
 		},

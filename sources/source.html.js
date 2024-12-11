@@ -4,7 +4,7 @@ import ago from "/-words/ago.html.js"
 import svg from "/-sources/svg.html.js"
 import err from "/-controller/err.html.js"
 import words from "/-words/words.js"
-export const css = ['/-sources/status.css']
+export const css = ['/-sources/represent.css']
 
 export const ROOT = (data, env, source = data.source) => err(data, env,['SOURCE']) || `
 	<div style="opacity:0.5; float:right">Источник</div>
@@ -121,7 +121,7 @@ const showSheetTr = (data, env, source, sheet) => `
 				const remove = div.getElementsByClassName('remove')[0]
 				btn.addEventListener('click', async () => {
 					const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-					const data = await senditmsg(btn, '/-sources/set-sheet-switch', {source_id: ${source.source_id}, sheet_title: ${JSON.stringify(sheet.sheet_title)}}) 
+					const data = await senditmsg(btn, '/-sources/set-sheet-eye', {source_id: ${source.source_id}, sheet_title: ${JSON.stringify(sheet.sheet_title)}}) 
 					if (!data.result) return
 					btn.classList.remove('represent-1', 'represent-0', 'represent-custom-1', 'represent-custom-0', 'represent-def-0', 'represent-def-1')
 					btn.classList.add(data.cls.main, data.cls.custom)

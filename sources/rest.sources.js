@@ -77,7 +77,7 @@ rest.addVariable('entityprop#required', ['entityprop', 'required'])
 rest.addArgument('date', (view, date) => {
 	if (!date) return null
 	try {
-		return Math.round(new Date(date).getTime() / 1000)
+		return Math.round(new Date(parseInt(date)).getTime() / 1000)
 	} catch (e) {
 		return null
 	}
@@ -106,6 +106,13 @@ rest.addArgument('key_id', ['mint'], async (view, key_id) => {
 	if (!key_id) return view.err('Ключ не найден', 404)
 	return key_id
 })
+rest.addArgument('value_id', ['mint'], async (view, value_id) => {
+	if (!value_id) return null
+	const db = await view.get('db')
+	value_id = await db.col('select value_id from sources_values where value_id=:value_id', {value_id})
+	if (!value_id) return view.err('Значение не найдено', 404)
+	return value_id
+})
 rest.addArgument('item_id', ['mint'], async (view, item_id) => {
 	if (!item_id) return null
 	const db = await view.get('db')
@@ -128,6 +135,7 @@ rest.addArgument('entity_id', ['sint'], async (view, entity_id) => {
 	return entity_id
 })
 rest.addVariable('key_id#required', ['key_id', 'required'])
+rest.addVariable('value_id#required', ['value_id', 'required'])
 rest.addVariable('item_id#required', ['item_id', 'required'])
 rest.addVariable('source_id#required', ['source_id', 'required'])
 rest.addVariable('entity_id#required', ['entity_id', 'required'])

@@ -2,13 +2,13 @@ import err from "/-controller/err.html.js"
 import field from "/-dialog/field.html.js"
 import date from "/-words/date.html.js"
 import svg from "/-sources/svg.html.js"
-export const css = ['/-sources/status.css']
+export const css = ['/-sources/represent.css']
 
 export const ROOT = (data, env, sheet = data.sheet, source = data.source) => err(data, env, ['TABLE']) || `
 	<div style="opacity:0.5; float:right">Лист у <a href="source/${source.source_id}">${source.source_title}</a></div>
 	<h1>${sheet.sheet_title}</h1>
 	<style>
-		${env.scope} tbody td {
+		${env.scope} tbody td.rep {
 			cursor: pointer;
 			
 			/*text-decoration: underline dashed 0.5px;
@@ -37,29 +37,84 @@ export const ROOT = (data, env, sheet = data.sheet, source = data.source) => err
 			font-weight: inherit;
 		}
 	</style>
+	<div style="margin-bottom:1em; display: grid; grid-template-columns: 1fr auto; gap: 1em">
+		<div>
+			${field.area({
+				name: 'comment', 
+				label: 'Комментарий источника', 
+				action: '/-sources/set-source-comment', 
+				args: {source_id: source.source_id},
+				value: source.comment
+			})}
+		</div>
+		<div>
+			<div class="float-label" style="margin-bottom:1em; max-width: 20ch;">
+				<input 
+					required
+					max="${new Date(data.date_max * 1000).toISOString().split('T')[0]}"
+					min="${new Date(data.date_min * 1000).toISOString().split('T')[0]}"
+
+					type="date" 
+					id="date${env.sid}"
+					value="${env.bread.get.date && !isNaN(new Date(env.bread.get.date - 0)) ? new Date(env.bread.get.date - 0).toISOString().slice(0,10) : new Date().toISOString().split('T')[0]}" 
+					placeholder="Появились c" 
+				>
+				<label for="date${env.sid}">Появились c</label>
+				<script>
+					(float => {
+						const field = float.querySelector('input')
+						const check = async () => {
+							
+							const Client = await window.getClient()
+							const params = {}
+							const source_id = Client.bread.get.source_id || ''
+							const entity_id = Client.bread.get.entity_id || ''
+							if (source_id) params.source_id = source_id
+							if (entity_id) params.entity_id = entity_id
+							if (field.valueAsDate) params.date = Math.round(field.valueAsDate.getTime())
+							Client.go('sheet?' + new URLSearchParams(params))
+						}
+						// field.addEventListener('focus', check)
+						// field.addEventListener('click', check)
+						// field.addEventListener('keydown', check)
+						field.addEventListener('input', check)
+					})(document.currentScript.parentElement)
+				</script>
+			</div>
+		</div>
+	</div>
+	
 	<div id="TABLE"></div>
 `
+
 export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !data.result ? '' : `
+	
+	
+
 	<table>
 		<thead>
 			<tr>
 				<td class="empty"></td>
-				${data.cols.map(col => showColTd(data, env, sheet, source, col)).join('')}<td></td>
+				${data.cols.map(col => showColTd(data, env, sheet, source, col)).join('')}
+				<td>
+
+				</td>
+				<td></td>
 			</tr>
 		</thead>
 		<tbody>
-			${data.texts.map((row, row_index) => showCellsTr(data, env, sheet, source, row, row_index)).join('')}
+			${data.texts.map((row, text_index) => showCellsTr(data, env, sheet, source, row, text_index)).join('')}
 		</tbody>
 	</table>
 	<script>
-		(div => {			
+		(async div => {			
 			const cols = ${JSON.stringify(data.cols.map(col => [col.col_title, col.prop_id]))}
-			const keys = ${JSON.stringify(data.rows.map(row => [row.key_id, row.repeat_index]))}
+			const keys = ${JSON.stringify(data.rows.map(row => [row.key_id, row.repeat_index, row.row_index]))}
 			const sheet_title = ${JSON.stringify(sheet.sheet_title)}
 			const sheet_index = ${sheet.sheet_index}
 			const source_id = ${source.source_id}
 			const entity_id = ${data.entity?.entity_id || null}
-			
+			const eye = await import('/-sources/represent.js').then(r => r.default)
 			for (const btn of div.getElementsByClassName('col')) { //Видимость колонки
 				btn.addEventListener('click', async () => {
 					const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
@@ -92,8 +147,8 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 					
 					const tr = btn.closest('tr')
 					const tbody = tr.parentElement
-					const row_index = Array.from(tbody.children).indexOf(tr)
-					const [key_id, repeat_index] = keys[row_index]
+					const text_index = Array.from(tbody.children).indexOf(tr)
+					const [key_id, repeat_index, row_index] = keys[text_index]
 
 					if (!key_id) {
 						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
@@ -115,25 +170,14 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 				})
 			}
 
-			const popupRepresent = async (args) => {
-				const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-				console.log(args)
-				Dialog.open({
-					tpl:'/-sources/represent.html.js',
-					sub:'POPUP',
-					conf: {
-						reloaddiv:'${env.layer.div}'
-					},
-					json:'/-sources/get-represent?' + new URLSearchParams(args)
-				})
-			}
+			
 			for (const btn of div.getElementsByClassName('item')) { //Информация о строке
 				btn.addEventListener('click', e => {
 					const tr = btn.closest('tr')
 					const tbody = tr.parentElement
-					const row_index = Array.from(tbody.children).indexOf(tr)
-					const [key_id, repeat_index] = keys[row_index]
-					popupRepresent({source_id, sheet_index, row_index})
+					const text_index = Array.from(tbody.children).indexOf(tr)
+					const [key_id, repeat_index, row_index] = keys[text_index]
+					eye.popup({source_id, sheet_index, row_index}, '${env.layer.div}')
 				})
 			}
 			for (const btn of div.getElementsByClassName('value')) { //Информация о значении
@@ -142,12 +186,11 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 					const multi_index = Array.from(td.children).indexOf(btn)
 					const tr = td.parentElement
 					const tbody = tr.parentElement
-					const row_index = Array.from(tbody.children).indexOf(tr)
-					const [key_id, repeat_index] = keys[row_index]
+					const text_index = Array.from(tbody.children).indexOf(tr)
+					const [key_id, repeat_index, row_index] = keys[text_index]
 					const col_index = Array.from(tr.children).indexOf(td) - 1
 					const [col_title, prop_id] = cols[col_index]
-					console.log(cols)
-					popupRepresent({source_id, sheet_index, row_index, col_index, multi_index})
+					eye.popup({source_id, sheet_index, row_index, col_index, multi_index}, '${env.layer.div}')
 				})
 			}
 			for (const btn of div.getElementsByClassName('prop')) { //Информация о свойстве
@@ -156,40 +199,43 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 					const tr = td.parentElement
 					const col_index = Array.from(tr.children).indexOf(td) - 1
 					const [col_title, prop_id] = cols[col_index]
-					popupRepresent({source_id, sheet_index, col_index})
+					eye.popup({source_id, sheet_index, col_index}, '${env.layer.div}')
 				})
 			}
 			
 		})(document.currentScript.parentElement)
 	</script>
 `
-const showRowRepresent = (data, env, row, row_index) => `
+const showRowRepresent = (data, env, row, text_index) => `
 	<button 
 		
 		title="Изменить видимость строки" 
-		class="eye row transparent ${data.rows[row_index].cls.main} ${data.rows[row_index].cls.custom}">
+		class="eye row transparent ${row.cls.main} ${row.cls.custom}">
 		${svg.eye()}
 	</button>
 `
-const showCellsTr = (data, env, sheet, source, rowtexts, row_index, row = data.rows[row_index]) => `
+const showCellsTr = (data, env, sheet, source, rowtexts, text_index, row = data.rows[text_index]) => `
 	<tr>
-		<td class="mute"><button class="transparent item">${row_index}</button></td>
-		${rowtexts.map((celtexts, col_index) => showCellTd(data, env, sheet, source, row_index, col_index, celtexts)).join('')}
+		<td class="rep ${row.represent_row && row.represent_row_key ? '' : 'mute'}"><button class="transparent item">${row.row_index}</button></td>
+		${rowtexts.map((celtexts, col_index) => showCellTd(data, env, sheet, source, text_index, col_index, celtexts)).join('')}
+		<td><i><nobr>${date.sai(row.date_appear)}</nobr></i></td>
 		<td class="represent">
-			${row.key_id ? showRowRepresent(data, env, row, row_index) : ''}
+			${row.key_id ? showRowRepresent(data, env, row, text_index) : ''}
 		</td>
 	</tr>
 `
-const showCellTd = (data, env, sheet, source, row_index, col_index, celtexts) => `
-	<td style="${data.prunings[row_index]?.[col_index] ? 'color:red' : ''}" class="${sheet.key_index == col_index ? 'key' : ''}">${celtexts.map((text, multi_index) => showMultiSpan(data, env, sheet, source, text, row_index, col_index, multi_index)).join(', ')}</td>
+const showCellTd = (data, env, sheet, source, text_index, col_index, celtexts) => `
+	<td style="${data.prunings[text_index]?.[col_index] ? 'color:red' : ''}" class="rep ${sheet.key_index == col_index ? 'key' : ''}">${celtexts.map((text, multi_index) => showMultiSpan(data, env, sheet, source, text, text_index, col_index, multi_index)).join(', ')}</td>
 `
-const showMultiSpan = (data, env, sheet, source, text, row_index, col_index, multi_index) => `
-	<button class="value transparent ${data.winners[row_index][col_index][multi_index] ? '' : 'mute'}">${text}</button>
+const showMultiSpan = (data, env, sheet, source, text, text_index, col_index, multi_index) => `
+	<button class="value transparent ${data.winners[text_index][col_index][multi_index] ? '' : 'mute'}">${text}</button>
 `.trim()
 const showColTd = (data, env, sheet, source, col) => `
 	<td>
-		<button class="transparent prop">${col.col_title}</button>
-		<button class="eye col transparent ${col.cls.main} ${col.cls.custom}">${svg.eye()}</button>
+		<nobr>
+			<button class="transparent prop">${col.col_title}</button>
+			<button class="eye col transparent ${col.cls.main} ${col.cls.custom}">${svg.eye()}</button>
+		</nobr>
 		${showProp(data, env, sheet, source, col)}
 	</td>
 `

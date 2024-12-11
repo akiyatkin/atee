@@ -115,6 +115,7 @@ Sources.load = async (db, source, visitor) => {
 
 
 
+
 Sources.cleanSheets = (sheets) => {
 	const titles = {}
 	sheets = sheets.filter(sheet => {
@@ -298,7 +299,8 @@ const SELECT_PROP = `
 	pr.known + 0 as known,
 	pr.multi + 0 as multi,
 	pr.comment,
-	pr.represent_prop + 0 as represent_prop
+	pr.represent_prop + 0 as represent_prop,
+	pr.represent_custom_prop + 0 as represent_custom_prop
 `
 const SELECT_ENTITY = `
 	en.entity_id, 
@@ -363,10 +365,13 @@ Sources.getSheet = async (db, source_id, sheet_index) => {
 		SELECT 
 			sh.sheet_title,
 			sh.sheet_index,
+			sh.key_index,
 			sh.entity_id,
 			sh.source_id,
-			sh.represent_sheet + 0 as represent_sheet
+			sh.represent_sheet + 0 as represent_sheet,
+			csh.represent_custom_sheet + 0 as represent_custom_sheet
 		FROM sources_sheets sh
+			left join sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
 		WHERE sh.source_id = :source_id and sh.sheet_index = :sheet_index
 	`, {source_id, sheet_index})
 	return sheet
@@ -380,9 +385,11 @@ Sources.getCol = async (db, source_id, sheet_index, col_index) => {
 			co.sheet_index,
 			co.col_index,
 			co.source_id,
-			co.represent_col + 0 as represent_col
+			co.represent_col + 0 as represent_col,
+			cco.represent_custom_col + 0 as represent_custom_col
 		FROM sources_cols co
 			LEFT JOIN sources_sheets sh on (sh.source_id = co.source_id and sh.sheet_index = co.sheet_index)
+			LEFT JOIN sources_custom_cols cco on (cco.source_id = co.source_id and cco.sheet_title = sh.sheet_title and cco.col_title = co.col_title)
 		WHERE co.source_id = :source_id and co.sheet_index = :sheet_index and co.col_index = :col_index
 	`, {source_id, sheet_index, col_index})
 	return col
@@ -403,15 +410,36 @@ Sources.getCell = async (db, source_id, sheet_index, row_index, col_index, multi
 			ce.text,
 			ce.date,
 			ce.number,
-			va.value_title
+			va.value_title,
+			sh.sheet_title,
+			co.col_title,
+			ro.key_id,
+			ro.repeat_index,
+			cce.represent_custom_cell + 0 as represent_custom_cell,
+			ce.represent_cell_summary + 0 as represent_cell_summary,
+			ce.represent_text_summary + 0 as represent_text_summary
 		FROM sources_cells ce
 			LEFT JOIN sources_values va on (va.value_id = ce.value_id)
+			LEFT JOIN sources_cols co on (co.source_id = ce.source_id and co.sheet_index = ce.sheet_index and co.col_index = ce.col_index)
+			LEFT JOIN sources_rows ro on (ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index)
+			LEFT JOIN sources_sheets sh on (sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index)
+			LEFT JOIN sources_custom_cells cce on (cce.source_id = ce.source_id and cce.sheet_title = sh.sheet_title and cce.col_title = co.col_title)
 		WHERE ce.source_id = :source_id 
 			and ce.sheet_index = :sheet_index
 			and ce.row_index = :row_index
 			and ce.col_index = :col_index
 			and ce.multi_index = :multi_index
 	`, {source_id, sheet_index, row_index, col_index, multi_index})
+	cell.full_text = await db.col(`
+		SELECT
+			GROUP_CONCAT(text ORDER BY multi_index SEPARATOR ', ')
+		FROM sources_cells ce 
+		WHERE ce.source_id = :source_id 
+			and ce.sheet_index = :sheet_index
+			and ce.row_index = :row_index
+			and ce.col_index = :col_index
+		GROUP BY col_index
+	`, {source_id, sheet_index, row_index, col_index})
 	return cell
 }
 Sources.getRow = async (db, source_id, sheet_index, row_index) => {
@@ -419,31 +447,59 @@ Sources.getRow = async (db, source_id, sheet_index, row_index) => {
 		SELECT 
 			ro.source_id,
 			ro.sheet_index,
+			sh.sheet_title,
 			ro.row_index,
 			ro.repeat_index,
 			ro.represent_row + 0 as represent_row,
-			ro.represent_key + 0 as represent_key,
+			ro.represent_row_key + 0 as represent_row_key,
+			cro.represent_custom_row + 0 as represent_custom_row,
 			ro.key_id,
+			sh.key_index,
 			va.value_title,
 			va.value_nick
 		FROM sources_rows ro
 			LEFT JOIN sources_values va on (va.value_id = ro.key_id)
+			LEFT JOIN sources_sheets sh on (sh.source_id = ro.source_id and sh.sheet_index = ro.sheet_index)
+			LEFT JOIN sources_custom_rows cro on (cro.source_id = ro.source_id and cro.sheet_title = sh.sheet_title and cro.key_id = ro.key_id and cro.repeat_index = ro.repeat_index)
 		WHERE ro.source_id = :source_id 
 			and ro.sheet_index = :sheet_index
 			and ro.row_index = :row_index
 	`, {source_id, sheet_index, row_index})
 	return row
 }
-Sources.getValue = async (db, value_id) => {
+Sources.getValue = async (db, prop_id, value_id) => {
 	const value = await db.fetch(`
 		SELECT 
-			value_id,
-			value_nick,
-			value_title
+			va.value_id,
+			va.value_nick,
+			va.value_title,
+			cva.represent_custom_value
 		FROM sources_values va
+			LEFT JOIN sources_custom_values cva on (cva.value_id = va.value_id and cva.prop_id = :prop_id)
 		WHERE va.value_id = :value_id
-	`, {value_id})
+	`, {value_id, prop_id})
 	return value
+}
+Sources.getItem = async (db, entity_id, value_id) => {
+	const entity = await Sources.getEntity(db, entity_id)
+	const prop_id = entity.prop_id
+	const item = await db.fetch(`
+		SELECT 
+			va.value_id,
+			va.value_nick,
+			va.value_title,
+			it.key_id,
+			it.entity_id,
+			it.represent_item + 0 as represent_item,
+			it.represent_item_key + 0 as represent_item_key,
+			cit.represent_custom_item + 0 as represent_custom_item,
+			cva.represent_custom_value + 0 as represent_custom_value
+		FROM sources_values va, sources_items it
+			left join sources_custom_items cit on (cit.entity_id = it.entity_id and cit.key_id = it.key_id)
+			left join sources_custom_values cva on (cva.prop_id = :prop_id and cva.value_id = it.key_id)
+		WHERE va.value_id = :value_id and va.value_id = it.key_id and it.entity_id = :entity_id
+	`, {value_id, entity_id, prop_id})
+	return item
 }
 Sources.getProps = async (db, entity_id) => {
 	const list = await db.all(`
@@ -464,7 +520,7 @@ Sources.getSource = async (db, source_id) => {
 			LEFT JOIN sources_props pr on pr.prop_id = en.prop_id
 		where source_id = :source_id
 	`, {source_id})
-	
+	if (!source) return false
 	Sources.calcSource(source)
 
 
@@ -520,7 +576,7 @@ Sources.getEntityStat = async (db, entity) => {
 	const count_represent = await db.col(`
 		SELECT count(*) 
 		FROM sources_items
-		WHERE entity_id = :entity_id and represent_item = 1 and represent_key_value = 1
+		WHERE entity_id = :entity_id and represent_item = 1 and represent_item_key = 1
 	`, entity)
 	return {sources, count_items, count_represent}
 }

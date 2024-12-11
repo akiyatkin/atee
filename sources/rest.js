@@ -7,7 +7,7 @@ import Access from "/-controller/Access.js"
 import nicked from '/-nicked'
 import config from "/-config"
 import Sources from "/-sources/Sources.js"
-import eye from "/-sources/eye.js"
+import eye from "/-sources/represent.js"
 
 import Rest from "/-rest"
 const rest = new Rest()
@@ -20,6 +20,9 @@ rest.extra(rest_get)
 
 import rest_sources from '/-sources/rest.sources.js'
 rest.extra(rest_sources)
+
+import rest_represent from '/-sources/rest.represent.js'
+rest.extra(rest_represent)
 
 import rest_db from '/-db/rest.db.js'
 rest.extra(rest_db)
@@ -195,10 +198,95 @@ rest.addResponse('memory', ['admin'], async view => {
 
 	return view.ret()
 })
+rest.addResponse('disappear', ['admin'], async view => {
+	const db = await view.get('db')
+
+	const variations = view.data.variations = Object.groupBy(await db.all(`
+		SELECT distinct so.source_id, so.source_title, en.entity_id, en.entity_title, en.entity_plural
+		FROM sources_appears ap, sources_entities en, sources_sources so
+		WHERE ap.source_id = so.source_id and ap.entity_id = en.entity_id
+	`), ({ entity_id }) => entity_id)
+	
+	return view.ret()
+})
+rest.addResponse('disappear-table', ['admin'], async view => {
+	const db = await view.get('db')
+	const source_id = await view.get('source_id')
+	const entity_id = await view.get('entity_id')
+	if (!entity_id) return view.err('Требуется сущность')
+	const entity = view.data.entity = await Sources.getEntity(db, entity_id)
+	if (source_id) {
+		view.ans.list = await db.all(`
+			SELECT ap.key_id, va.value_title, so.source_id, so.source_title, ap.date_disappear, ap.date_appear
+			FROM sources_appears ap, sources_values va, sources_sources so
+			WHERE ap.entity_id = :entity_id 
+				and ap.source_id = :source_id
+				and so.source_id = ap.source_id
+				and va.value_id = ap.key_id
+				and ap.date_disappear is not null
+			ORDER BY ap.date_disappear DESC
+		`, {source_id, entity_id})
+	} else {
+		view.ans.list = await db.all(`
+			SELECT ap.key_id, va.value_title, so.source_id, so.source_title, ap.date_disappear, ap.date_appear
+			FROM sources_appears ap, sources_values va, sources_sources so
+			WHERE ap.entity_id = :entity_id 
+				and so.source_id = ap.source_id
+				and va.value_id = ap.key_id
+				and ap.date_disappear is not null
+		`, {entity_id})
+	}
+	console.log(view.ans.list)
+	return view.ret()
+})
 rest.addResponse('sheet', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const source = view.data.source = await Sources.getSource(db, source_id)
+	const entity = view.data.entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
+	const sheet_index = await view.get('sheet_index#required')
+	const sheet = view.data.sheet = await db.fetch(`
+		SELECT sh.sheet_title, sh.key_index, sh.sheet_index, sh.entity_id,
+			sh.represent_sheet + 0 as represent_sheet
+		FROM sources_sheets sh
+			left join sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
+		WHERE sh.source_id = :source_id and sh.sheet_index = :sheet_index
+	`, {source_id, sheet_index}) 
+	
+	view.ans.date_max = await db.col(`
+		SELECT UNIX_TIMESTAMP(max(ap.date_appear))
+		FROM sources_appears ap
+		WHERE ap.source_id = :source_id
+	`, source)
+	view.ans.date_min = await db.col(`
+		SELECT UNIX_TIMESTAMP(min(ap.date_appear))
+		FROM sources_appears ap
+		WHERE ap.source_id = :source_id
+	`, source)
+	
+
+	return view.ret()
+})
+rest.addResponse('sheet-table', ['admin'], async view => {
+	const db = await view.get('db')
+	const source_id = await view.get('source_id#required')
+	const source = view.data.source = await Sources.getSource(db, source_id)
+	let date = await view.get('date')
+	
+	view.ans.date_max = await db.col(`
+		SELECT UNIX_TIMESTAMP(max(ap.date_appear))
+		FROM sources_appears ap
+		WHERE ap.source_id = :source_id
+	`, source)
+	// view.ans.date_min = await db.col(`
+	// 	SELECT UNIX_TIMESTAMP(min(ap.date_appear))
+	// 	FROM sources_appears ap
+	// 	WHERE ap.source_id = :source_id
+	// `, source)
+	if (!date) date = view.ans.date_max
+	view.ans.date = date
+	
+	
 	const entity = view.data.entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
 	const sheet_index = await view.get('sheet_index#required')
 	const sheet = view.data.sheet = await db.fetch(`
@@ -227,14 +315,20 @@ rest.addResponse('sheet', ['admin'], async view => {
 	}
 	const rows = view.ans.rows = await db.all(`
 		SELECT 
-			key_id,
-			ro.represent_key + 0 as represent_key,
+			ro.row_index,
+			ro.key_id,
+			ro.represent_row_key + 0 as represent_row_key,
 			ro.represent_row + 0 as represent_row,
-			ro.repeat_index
+			ro.repeat_index,
+			ap.date_appear
 		FROM sources_rows ro
+			LEFT JOIN sources_sheets sh on (sh.source_id = ro.source_id and sh.sheet_index = ro.sheet_index)
+			LEFT JOIN sources_appears ap on (ap.source_id = ro.source_id and ap.key_id = ro.key_id and ap.entity_id = sh.entity_id)
 		WHERE ro.source_id = :source_id and ro.sheet_index = :sheet_index
+		and (ap.date_appear is null or ap.date_appear >= FROM_UNIXTIME(:date))
 		ORDER BY ro.row_index
-	`, {source_id, sheet_index})
+	`, {source_id, sheet_index, date})
+
 
 	const custom_rows = await db.all(`
 		SELECT 
@@ -269,24 +363,33 @@ rest.addResponse('sheet', ['admin'], async view => {
 			ce.represent + 0 as represent,
 			ce.winner + 0 as winner
 		FROM sources_cells ce
+			LEFT JOIN sources_rows ro on (ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index)
+			LEFT JOIN sources_sheets sh on (sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index)
+			LEFT JOIN sources_appears ap on (ap.key_id = ro.key_id and ap.source_id = ce.source_id and ap.entity_id = sh.entity_id)
 		WHERE ce.source_id = :source_id and ce.sheet_index = :sheet_index
+		and (ap.date_appear is null or ap.date_appear >= FROM_UNIXTIME(:date))
 		ORDER BY ce.row_index, ce.col_index
-	`, {source_id, sheet_index}) 
+	`, {source_id, sheet_index, date}) 
 
 	const texts = view.data.texts = []
 	const winners = view.data.winners = []
 	const prunings = view.data.prunings = []
+	let text_index = -1
+	let last_row_index = -1
 	for (const {row_index, col_index, multi_index, text, winner, pruning} of cells) {
-		prunings[row_index] ??= []
-		prunings[row_index][col_index] = pruning
+		if (last_row_index != row_index) text_index++
+		last_row_index = row_index
 
-		texts[row_index] ??= []
-		texts[row_index][col_index] ??= []
-		texts[row_index][col_index][multi_index] = text
+		prunings[text_index] ??= []
+		prunings[text_index][col_index] = pruning
 
-		winners[row_index] ??= []
-		winners[row_index][col_index] ??= []
-		winners[row_index][col_index][multi_index] = winner
+		texts[text_index] ??= []
+		texts[text_index][col_index] ??= []
+		texts[text_index][col_index][multi_index] = text
+
+		winners[text_index] ??= []
+		winners[text_index][col_index] ??= []
+		winners[text_index][col_index][multi_index] = winner
 	}
 	return view.ret()
 })
