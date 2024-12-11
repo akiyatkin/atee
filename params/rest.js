@@ -93,7 +93,7 @@ rest.addResponse('get-blocks', async view => {
 		if (!row) return false
 		return {
 			description: row[seo.indexes.description],
-			path: row[seo.indexes.href],
+			path,
 			title: row[seo.indexes.title],
 			image_src: row[seo.indexes['image-src']]
 		}
