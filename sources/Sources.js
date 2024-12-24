@@ -4,7 +4,7 @@ import unique from "/-nicked/unique.js"
 import fs from "fs/promises"
 const Sources = {}
 import Consequences from "/-sources/Consequences.js"
-
+import represent from "/-sources/represent.js"
 
 Sources.execRestFunc = async (file, fnname, visitor, res, req = {}) => {
 	const stat = await fs.stat(file).catch(r => false)
@@ -142,6 +142,7 @@ Sources.cleanSheets = (sheets) => {
 			if (!Array.isArray(rows[row_index])) rows[row_index] = []
 			rows[row_index] = rows[row_index].filter((row, col_index) => sheet.head[col_index])
 			for (const col_index in rows[row_index]) {
+				if (rows[row_index][col_index] === null) continue
 				rows[row_index][col_index] = String(rows[row_index][col_index]).trim()
 			}
 			
@@ -150,7 +151,7 @@ Sources.cleanSheets = (sheets) => {
 		sheet.head = sheet.head.filter(val => val)
 		for (const row_index in rows) {
 			for (const col_index in sheet.head) {
-				rows[row_index][col_index] ??= ''
+				//rows[row_index][col_index] ??= ''
 			}
 		}
 	}
@@ -193,6 +194,7 @@ Sources.insertSheets = async (db, source, sheets) => {
 			`, {source_id, sheet_index, row_index})
 			for (const col_index in rows[row_index]) {
 				const text = rows[row_index][col_index]
+				//if (text === null) continue
 				await db.exec(`
 					INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, text)
 					VALUES (:source_id, :sheet_index, :row_index, :col_index, :text)
@@ -360,7 +362,7 @@ Sources.getProp = async (db, prop_id) => {
 	`, {prop_id})
 	return prop
 }
-Sources.getSheet = async (db, source_id, sheet_index) => {
+Sources.getSheet = async (db, source_id, sheet_title) => {
 	const sheet = await db.fetch(`
 		SELECT 
 			sh.sheet_title,
@@ -372,11 +374,23 @@ Sources.getSheet = async (db, source_id, sheet_index) => {
 			csh.represent_custom_sheet + 0 as represent_custom_sheet
 		FROM sources_sheets sh
 			left join sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
-		WHERE sh.source_id = :source_id and sh.sheet_index = :sheet_index
-	`, {source_id, sheet_index})
+		WHERE sh.source_id = :source_id and sh.sheet_title = :sheet_title
+	`, {source_id, sheet_title})
 	return sheet
 }
-Sources.getCol = async (db, source_id, sheet_index, col_index) => {
+Sources.getColByIndex = async (db, source_id, sheet_title, col_index) => {
+	const col_title = await db.col(`
+		SELECT co.col_title
+		FROM sources_cols co, sources_sheets sh
+		WHERE co.source_id = :source_id
+			and co.sheet_index = sh.sheet_index
+			and co.col_index = :col_index
+			and sh.source_id = co.source_id
+			and sh.sheet_title = :sheet_title
+	`, {source_id, sheet_title, col_index})
+	return Sources.getCol(db, source_id, sheet_title, col_title)
+}
+Sources.getCol = async (db, source_id, sheet_title, col_title) => {
 	const col = await db.fetch(`
 		SELECT 
 			co.col_title,
@@ -390,11 +404,14 @@ Sources.getCol = async (db, source_id, sheet_index, col_index) => {
 		FROM sources_cols co
 			LEFT JOIN sources_sheets sh on (sh.source_id = co.source_id and sh.sheet_index = co.sheet_index)
 			LEFT JOIN sources_custom_cols cco on (cco.source_id = co.source_id and cco.sheet_title = sh.sheet_title and cco.col_title = co.col_title)
-		WHERE co.source_id = :source_id and co.sheet_index = :sheet_index and co.col_index = :col_index
-	`, {source_id, sheet_index, col_index})
+		WHERE co.source_id = :source_id 
+			and sh.sheet_title = :sheet_title
+			and co.sheet_index = sh.sheet_index
+			and co.col_title = :col_title
+	`, {source_id, sheet_title, col_title})
 	return col
 }
-Sources.getCell = async (db, source_id, sheet_index, row_index, col_index, multi_index) => {
+Sources.getCellByIndex = async (db, source_id, sheet_index, row_index, col_index, multi_index = 0) => {
 	const cell = await db.fetch(`
 		SELECT 
 			ce.source_id,
@@ -429,7 +446,8 @@ Sources.getCell = async (db, source_id, sheet_index, row_index, col_index, multi
 			and ce.row_index = :row_index
 			and ce.col_index = :col_index
 			and ce.multi_index = :multi_index
-	`, {source_id, sheet_index, row_index, col_index, multi_index})
+	`, {source_id, sheet_index, col_index, row_index, multi_index})
+	if (!cell) return
 	cell.full_text = await db.col(`
 		SELECT
 			GROUP_CONCAT(text ORDER BY multi_index SEPARATOR ', ')
@@ -439,10 +457,71 @@ Sources.getCell = async (db, source_id, sheet_index, row_index, col_index, multi
 			and ce.row_index = :row_index
 			and ce.col_index = :col_index
 		GROUP BY col_index
-	`, {source_id, sheet_index, row_index, col_index})
+	`, cell)
 	return cell
 }
-Sources.getRow = async (db, source_id, sheet_index, row_index) => {
+Sources.cell = async (db, {source_id, sheet_title, key_id, repeat_index, col_title, multi_index = 0, sheet_index, row_index, col_index}) => {
+	if (row_index != null) return Sources.getCellByIndex(db, source_id, sheet_index, row_index, col_index, multi_index)
+	return Sources.getCell(db, source_id, sheet_title, key_id, repeat_index, col_title, multi_index)
+}
+Sources.getCell = async (db, source_id, sheet_title, key_id, repeat_index, col_title, multi_index = 0) => {
+	const cell = await db.fetch(`
+		SELECT 
+			ce.source_id,
+			ce.sheet_index,
+			ce.row_index,
+			ce.col_index,
+			ce.multi_index,
+			ce.represent_cell + 0 as represent_cell,
+			ce.represent + 0 as represent,
+			ce.pruning + 0 as pruning,
+			ce.winner + 0 as winner,
+			ce.value_id,
+			ce.text,
+			ce.date,
+			ce.number,
+			va.value_title,
+			sh.sheet_title,
+			co.col_title,
+			ro.key_id,
+			ro.repeat_index,
+			cce.represent_custom_cell + 0 as represent_custom_cell,
+			ce.represent_cell_summary + 0 as represent_cell_summary,
+			ce.represent_text_summary + 0 as represent_text_summary
+		FROM sources_cells ce
+			LEFT JOIN sources_values va on (va.value_id = ce.value_id)
+			LEFT JOIN sources_cols co on (co.source_id = ce.source_id and co.sheet_index = ce.sheet_index and co.col_index = ce.col_index)
+			LEFT JOIN sources_rows ro on (ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index)
+			LEFT JOIN sources_sheets sh on (sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index)
+			LEFT JOIN sources_custom_cells cce on (cce.source_id = ce.source_id and cce.sheet_title = sh.sheet_title and cce.col_title = co.col_title)
+		WHERE ce.source_id = :source_id 
+			and sh.sheet_title = :sheet_title
+			and ce.sheet_index = sh.sheet_index
+			and ro.key_id = :key_id
+			and ro.repeat_index = :repeat_index
+			and ce.row_index = ro.row_index
+			and co.col_title = :col_title
+			and ce.col_index = co.col_index
+			and ce.multi_index = :multi_index
+	`, {source_id, sheet_title, key_id, repeat_index, col_title, multi_index})
+	if (!cell) return
+	cell.full_text = await db.col(`
+		SELECT
+			GROUP_CONCAT(text ORDER BY multi_index SEPARATOR ', ')
+		FROM sources_cells ce 
+		WHERE ce.source_id = :source_id 
+			and ce.sheet_index = :sheet_index
+			and ce.row_index = :row_index
+			and ce.col_index = :col_index
+		GROUP BY col_index
+	`, cell)
+	return cell
+}
+Sources.row = async (db, {source_id, sheet_title, key_id, repeat_index, sheet_index, row_index}) => {
+	if (row_index != null) return Sources.getRowByIndex(db, source_id, sheet_index, row_index)
+	return Sources.getRow(db, source_id, sheet_title, key_id, repeat_index)
+}
+Sources.getRowByIndex = async (db, source_id, sheet_index, row_index) => {
 	const row = await db.fetch(`
 		SELECT 
 			ro.source_id,
@@ -467,6 +546,33 @@ Sources.getRow = async (db, source_id, sheet_index, row_index) => {
 	`, {source_id, sheet_index, row_index})
 	return row
 }
+Sources.getRow = async (db, source_id, sheet_title, key_id, repeat_index) => {
+	const row = await db.fetch(`
+		SELECT 
+			ro.source_id,
+			ro.sheet_index,
+			sh.sheet_title,
+			ro.row_index,
+			ro.repeat_index,
+			ro.represent_row + 0 as represent_row,
+			ro.represent_row_key + 0 as represent_row_key,
+			cro.represent_custom_row + 0 as represent_custom_row,
+			ro.key_id,
+			sh.key_index,
+			va.value_title,
+			va.value_nick
+		FROM sources_rows ro
+			LEFT JOIN sources_values va on (va.value_id = ro.key_id)
+			LEFT JOIN sources_sheets sh on (sh.source_id = ro.source_id and sh.sheet_index = ro.sheet_index)
+			LEFT JOIN sources_custom_rows cro on (cro.source_id = ro.source_id and cro.sheet_title = sh.sheet_title and cro.key_id = ro.key_id and cro.repeat_index = ro.repeat_index)
+		WHERE ro.source_id = :source_id 
+			and sh.sheet_title = :sheet_title
+			and ro.sheet_index = sh.sheet_index
+			and ro.key_id = :key_id
+			and ro.repeat_index = :repeat_index
+	`, {source_id, sheet_title, key_id, repeat_index})
+	return row
+}
 Sources.getValue = async (db, prop_id, value_id) => {
 	const value = await db.fetch(`
 		SELECT 
@@ -480,7 +586,7 @@ Sources.getValue = async (db, prop_id, value_id) => {
 	`, {value_id, prop_id})
 	return value
 }
-Sources.getItem = async (db, entity_id, value_id) => {
+Sources.getItem = async (db, entity_id, key_id) => {
 	const entity = await Sources.getEntity(db, entity_id)
 	const prop_id = entity.prop_id
 	const item = await db.fetch(`
@@ -497,11 +603,12 @@ Sources.getItem = async (db, entity_id, value_id) => {
 		FROM sources_values va, sources_items it
 			left join sources_custom_items cit on (cit.entity_id = it.entity_id and cit.key_id = it.key_id)
 			left join sources_custom_values cva on (cva.prop_id = :prop_id and cva.value_id = it.key_id)
-		WHERE va.value_id = :value_id and va.value_id = it.key_id and it.entity_id = :entity_id
-	`, {value_id, entity_id, prop_id})
+		WHERE va.value_id = :key_id and va.value_id = it.key_id and it.entity_id = :entity_id
+	`, {key_id, entity_id, prop_id})
 	return item
 }
 Sources.getProps = async (db, entity_id) => {
+	const entity = await Sources.getEntity(db, entity_id)
 	const list = await db.all(`
 		SELECT 
 		${SELECT_PROP}
@@ -509,6 +616,13 @@ Sources.getProps = async (db, entity_id) => {
 		WHERE pr.entity_id = :entity_id
 		ORDER BY pr.ordain
 	`, {entity_id})
+	for (const prop of list) {
+		prop.cls = represent.calcCls(
+			entity.represent_entity, 
+			prop.represent_custom_prop, 
+			entity.represent_props
+		)
+	}
 	return list
 }
 Sources.getSource = async (db, source_id) => {

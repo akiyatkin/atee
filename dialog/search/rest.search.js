@@ -14,6 +14,10 @@ rest.addArgument('hash', (view, hash) => {
 	hash = unique(hash.split('-')).filter(r => r).sort()
 	return hash
 })
+rest.addArgument('hashs', (view, hashs) => {
+	hashs = hashs.split(',').map(hash => unique(nicked(hash).split('-')).filter(r => r).sort())
+	return hashs
+})
 
 
 export default rest

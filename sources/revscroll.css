@@ -1,0 +1,30 @@
+.revscroll {
+	overflow-x: auto; 
+	transform: rotateX(180deg);
+	border: 1px solid #dcdcdc;
+	max-width:fit-content;
+}
+.revscroll table {
+	display: table;
+}
+.revscroll table tr td:first-child {
+	border-left:none;
+}
+.revscroll table tr td:last {
+	border-right:none;
+}
+.revscroll > * {
+	border: none;
+	transform: rotateX(180deg);
+	overflow-x: auto;
+	white-space: nowrap;
+	overflow-x: scroll;
+	-webkit-overflow-scrolling: touch;
+	scroll-behavior: smooth;
+}
+.revscroll::-webkit-scrollbar {
+	background: gainsboro;
+}
+.revscroll::-webkit-scrollbar-thumb {
+	background: #00aaff55;
+}

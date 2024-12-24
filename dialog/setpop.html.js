@@ -1,12 +1,11 @@
 const conf = (env, name, def) => env.layer.conf?.[name] ?? def
-const placeholder = env => conf(env, 'placeholder', '')
 const type = env => conf(env, 'type', 'text')
 const onlyfuture = env => conf(env, 'onlyfuture', false)
 const name = env => conf(env, 'name', 'text')
 const min = env => conf(env, 'min', '20vw')
-const max = env => conf(env, 'max', '370px')
+const max = env => conf(env, 'max', '450px')
 const ok = env => conf(env, 'ok', 'ОК')
-const heading = env => placeholder(env) ? ('<h1>' + placeholder(env) + '</h1>') : ''
+const heading = env => conf(env,'heading') ? ('<h1>' + conf(env,'heading') + '</h1>') : ''
 const value = env => conf(env, 'value', '')
 const values = env => conf(env, 'values', {"":"Варианты не указаны"})
 const input = env => {

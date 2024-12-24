@@ -330,8 +330,7 @@ field.setpop = (conf) => {
 	field.setpop.counter ??= 0
 	field.setpop.counter++
 	return `<span>
-		<button class="a field" style="display: inline-block; cursor:pointer;">${values[value || ""] ?? value}</button>
-		<script>
+		<button class="a field" style="display: inline-block; cursor:pointer;">${values[value || ""] ?? value}</button><script>
 			(btn => {
 				const conf = Object.assign({
 					placeholder: '',
@@ -394,8 +393,7 @@ field.setpop = (conf) => {
 					}
 				})
 			})(document.currentScript.previousElementSibling)
-		</script>
-	</span>`
+		</script></span>`
 }
 field.prompt = ({
 		edit = true,
@@ -505,7 +503,7 @@ field.prompt = ({
 // if (${!!reload}) Client.reload()
 
 
-field.search = ({cls = '', edit = true, label = 'Поиск', link, descr, value, name = 'name', search, find = 'find', action, confirm, args = {}, go, reloaddiv, goid, reload}) => {
+field.search = ({heading = '', cls = '', edit = true, label = 'Поиск', link, descr, value, name = 'name', search, find = 'find', action, confirm, args = {}, go, reloaddiv, goid, reload}) => {
 	if (!edit) return `${value||label}`
 	return `
 		<span>
@@ -514,8 +512,8 @@ field.search = ({cls = '', edit = true, label = 'Поиск', link, descr, value
 					btn.addEventListener('click', async () => {
 						const Search = await import('/-dialog/search/Search.js').then(r => r.default)
 						let descr = '${descr || ''}'
-						
 						Search.open({
+							heading: ${JSON.stringify(heading)}, 
 							action:'${search}',
 							descr: descr,
 							placeholder:'${label}',
@@ -592,7 +590,7 @@ field.area = ({name, label, action, value, args = {}}) => {
 	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label success">
-			<div contenteditable id="${id}" class="field">${value}</div>
+			<div style="overflow:auto;" contenteditable id="${id}" class="field">${value}</div>
 			<label for="${id}">${label}</label>
 			${showStatus()}
 			<script>
@@ -614,6 +612,26 @@ field.area = ({name, label, action, value, args = {}}) => {
 				})(document.currentScript.parentElement)
 			</script>
 		</div>
+	`
+}
+field.areamin = ({name, label, action, value, args = {}}) => {
+	const id = 'field-' + nicked(label)
+	return `
+		
+		<div style="overflow:auto; padding:2px 5px" contenteditable id="${id}" class="field">${value}</div>
+		<script>
+			(float => {
+				const field = float.querySelector('.field')					
+				field.addEventListener('input', async () => {
+					const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+					let value = field.innerHTML
+					const args = ${JSON.stringify(args)}
+					args['${name}'] = value
+					const ans = await sendit(float, '${action}', args)
+					field.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+				})
+			})(document.currentScript.parentElement)
+		</script>
 	`
 }
 //approved

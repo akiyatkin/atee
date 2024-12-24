@@ -5,6 +5,8 @@
 		"source:SOURCE":"none",
 		"main:TABLE":"none",
 		"sheet:TABLE":"none",
+		"positions:TABLE":"none",
+		"position:TABLE":"none",
 		"disappear:TABLE":"none",
 		"entity:PROPS":"none",
 		"source:BOT":"none",
@@ -27,6 +29,10 @@
 	"jsontpl":{
 		"sheet:ROOT":"/-sources/sheet?source_id=${env.bread.get.source_id ?? ''}&sheet_index=${env.bread.get.sheet_index ?? ''}",
 		"sheet:TABLE":"/-sources/sheet-table?source_id=${env.bread.get.source_id ?? ''}&sheet_index=${env.bread.get.sheet_index ?? ''}&date=${env.bread.get.date ?? ''}",
+		"positions:ROOT":"/-sources/positions?entity_id=${env.crumb.name}",
+		"positions:TABLE":"/-sources/positions-table?entity_id=${env.crumb.name}&hashs=${env.crumb.child?.name ?? ''}",
+		"position:ROOT":"/-sources/position?entity_id=${env.crumb.parent.name}&key_id=${env.crumb.name}",
+		"position:TABLE":"/-sources/position-table?entity_id=${env.crumb.parent.name}&key_id=${env.crumb.name}",
 		"disappear:ROOT":"/-sources/disappear",
 		"disappear:TABLE":"/-sources/disappear-table?source_id=${env.bread.get.source_id ?? ''}&entity_id=${env.bread.get.entity_id ?? ''}",
 		"source:ROOT":"/-sources/source?source_id=${env.crumb.name}",
@@ -56,6 +62,8 @@
 		"entities":"/-sources/entities.html.js",
 		"entity":"/-sources/entity.html.js",
 		"settings":"/-sources/settings.html.js",
+		"positions":"/-sources/positions.html.js",
+		"position":"/-sources/position.html.js",
 		"memory":"/-sources/memory.html.js"
 	},
 	"layout":{
@@ -81,6 +89,43 @@
 			"layout":{
 				"index:ROOT":{
 					"MAIN":"settings:ROOT"
+				}
+			}
+		},
+		"position":{
+			"child":{
+				"child":{
+					"head":{"title":"Позиция"},
+					"layout":{
+						"index:ROOT":{
+							"MAIN":"position:ROOT"
+						},
+						"position:ROOT":{
+							"TABLE":"position:TABLE"
+						}
+					},
+					"child":{
+						"head":{"title":"Поиск позиций"},
+						"layout":{}
+					}
+				}
+			}
+		},
+		"positions":{
+			"layout":{},
+			"child":{
+				"head":{"title":"Позиции"},
+				"layout":{
+					"index:ROOT":{
+						"MAIN":"positions:ROOT"
+					},
+					"positions:ROOT":{
+						"TABLE":"positions:TABLE"
+					}
+				},
+				"child":{
+					"head":{"title":"Поиск позиций"},
+					"layout":{}
 				}
 			}
 		},

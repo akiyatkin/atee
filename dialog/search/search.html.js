@@ -1,15 +1,17 @@
 import words from '/-words/words.js'
 
 const conf = (env, name, def) => env.layer.conf?.[name] ?? def
-const descr = env => conf(env, 'descr') ? '<p>' + conf(env, 'descr', '') + '</p>' : ''
+const descr = env => conf(env, 'descr') ? '<p>' + conf(env, 'descr') + '</p>' : ''
+const heading = env => conf(env, 'heading') ? '<h1>' + conf(env, 'heading') + '</h1>' : ''
 const placeholder = env => conf(env, 'placeholder', 'Укажите что-нибудь')
 const action = env => conf(env, 'action')
 const value = env => conf(env, 'value', '')
 const min = env => conf(env, 'min', '20vw')
-const max = env => conf(env, 'max', '370px')
+const max = env => conf(env, 'max', '450px')
 
 export const POPUP = (data, env) => `
 	<div style="min-width:${min(env)}; max-width:${max(env)}">
+		${heading(env)}
 		${descr(env)}
 		<form action="${action(env)}">
 			<div class="float-label">

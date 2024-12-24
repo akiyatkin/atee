@@ -43,6 +43,7 @@ export const Dialog = {
 		return html
 	},
 	reload: async (layer) => {
+		if (!Dialog.parents.length) return
 		const html = await Dialog.getHtml(layer)
 		const popup = document.getElementById(layer.div)
 		await Dialog.html(popup, html)

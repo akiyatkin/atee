@@ -785,7 +785,7 @@ Consciousness.recalcWinner = async (db) => {
 						and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
 						and so.source_id = ce.source_id
 						and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
-						and ce.represent = 1
+						and ce.represent = 1 and ce.text is not null
 
 				) t
 				LEFT JOIN (
@@ -793,7 +793,7 @@ Consciousness.recalcWinner = async (db) => {
 					SELECT sh.entity_id, ro.key_id, co.prop_id, ce.source_id, so.ordain, ce.sheet_index, ce.row_index, ce.col_index
 					FROM sources_cells ce, sources_cols co, sources_sources so, sources_sheets sh, sources_rows ro
 					WHERE ce.sheet_index = co.sheet_index and ce.col_index = co.col_index 
-						and ce.represent = 1
+						and ce.represent = 1 and ce.text is not null
 						and ce.source_id = co.source_id and co.prop_id is not null
 						and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
 						and so.source_id = ce.source_id

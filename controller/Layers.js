@@ -10,8 +10,9 @@ const split = (sep, str) => {
 }
 const wakeup = (root, rule, depth = 0) => {
 	if (!rule) return 
-	if (!rule.layout) return
-	for (const pts in rule.layout) {
+	//if (!rule.layout) return
+	if (!rule.layout) rule.empty = true
+	for (const pts in rule.layout ?? {}) {
 		for (const div in rule.layout[pts]) {
 			const tsf = rule.layout[pts][div]
 			const [name = '', subframe = ''] = tsf ? split(':', tsf) : []
@@ -107,6 +108,9 @@ export default class Layers {
 		const {index, status, depth} = Layers.getIndex(rule, bread)
 
 		if (!index) return []
+		if (!index.root.layers) return []
+		if (index.empty) return []
+		
 		if (index.checktpl) {
 			const crumb = bread.getCrumb(depth)
 			index.check = interpolate(index.checktpl, timings, {}, bread, crumb, theme)

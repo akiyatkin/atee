@@ -46,7 +46,7 @@ rest.addArgument('next_id', ['mint'])
 rest.addArgument('old_id', ['mint'])
 rest.addVariable('old_id#required', ['old_id', 'required'])
 rest.addArgument('sourceprop', (view, prop) => {
-	if (~['dependent','represent_source','renovate','represent_sheets','represent_rows', 'represent_cells', 'represent_cols'].indexOf(prop)) return prop
+	if (~['dependent','renovate'].indexOf(prop)) return prop
 	return null
 })
 rest.addArgument('custom', (view, prop) => {
@@ -55,13 +55,10 @@ rest.addArgument('custom', (view, prop) => {
 })
 
 rest.addArgument('propprop', (view, prop) => {
-	if (~['multi', 'represent_custom_prop','known'].indexOf(prop)) return prop
+	if (~['multi','known'].indexOf(prop)) return prop
 	return null
 })
-rest.addArgument('entityprop', (view, prop) => {
-	if (~['represent_entity','represent_props','represent_values','represent_items'].indexOf(prop)) return prop
-	return null
-})
+
 
 rest.addArgument('type', (view, type) => {
 	if (~['date','text','value','number'].indexOf(type)) return type
@@ -72,7 +69,6 @@ rest.addVariable('custom#required', ['custom', 'required'])
 rest.addVariable('type#required', ['type', 'required'])
 rest.addVariable('propprop#required', ['propprop', 'required'])
 rest.addVariable('sourceprop#required', ['sourceprop', 'required'])
-rest.addVariable('entityprop#required', ['entityprop', 'required'])
 
 rest.addArgument('date', (view, date) => {
 	if (!date) return null
@@ -85,10 +81,10 @@ rest.addArgument('date', (view, date) => {
 rest.addArgument('title', ['escape'])
 rest.addVariable('title#required', ['title', 'required'])
 
-rest.addArgument('sheet_title', ['escape'])
+rest.addArgument('sheet_title',['null'])
 rest.addVariable('sheet_title#required', ['sheet_title', 'required'])
 
-rest.addArgument('col_title', ['escape'])
+rest.addArgument('col_title',['null'])
 rest.addVariable('col_title#required', ['col_title', 'required'])
 
 rest.addArgument('comment', ['string'])

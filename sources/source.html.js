@@ -8,7 +8,7 @@ export const css = ['/-sources/represent.css']
 
 export const ROOT = (data, env, source = data.source) => err(data, env,['SOURCE']) || `
 	<div style="opacity:0.5; float:right">Источник</div>
-	<h1>${source.source_title}</h1>
+	
 	<div id="SOURCE"></div>
 `
 export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
@@ -20,6 +20,7 @@ export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
 	${showControll(data, env, source)}
 `
 export const TOP = (data, env, source = data.source) => !data.result ? '' : `
+	<h1>${source.source_title}</h1>
 	${source.date_start ? showScriptReload(data, env, source) : ''}
 	${showStatus(data, env, source)}
 	${showStat(data, env, source)}
@@ -43,21 +44,66 @@ const showScriptReload = (data, env, source) => `
 		}, 1000)
 	</script>
 `
+const defcustom = (value) => {
+	if (value) return 'represent-def-1'
+	else return 'represent-custom-0'
+}
 const showDatas = (data, env, source) => `
 	<h2>Содержание</h2>
 	${source.date_load ? '' : showNoLoad(data, env, source)}
 	<table>
 		<tr>
-			<td></td>
+			<td>
+				<button title="Изменить видимость источника" class="represent_sheets eye transparent represent-${data.source.represent_source} ${defcustom(data.source.represent_sheets)}">${svg.eye()}</button>
+			</td>
 			<td>Лист</td>
 			<td>Сущность</td>
 			<td>Позиций</td>
 			<td>Строк</td>
 			<td></td>
 		</tr>
-		${data.sheets.map(sheet => showSheetTr(data, env, source, sheet)).join('')}
+		<tbody>
+			${data.sheets.map(sheet => showSheetTr(data, env, source, sheet)).join('')}
+		</tbody>
 	</table>
-	
+	<script>
+		(div => {
+			const name = 'represent_sheet'
+			const remove = div.getElementsByClassName('remove')[0]
+			const source_id = ${data.source.source_id}
+			const titles = ${JSON.stringify(data.sheets.map(sheet => sheet.sheet_title))}
+			for (const btn of div.getElementsByClassName(name)) {
+				btn.addEventListener('click', async () => {
+					const td = btn.closest('td')
+					const tr = td.parentElement
+					const tbody = tr.parentElement
+
+					const represent = await import('/-sources/represent.js').then(r => r.default)
+					const sheet_index = Array.from(tbody.children).indexOf(tr)
+					const sheet_title = titles[sheet_index]
+					const data = await represent.set(btn, name, {sheet_title, source_id})
+					if (!data.result) return
+					const Client = await window.getClient()
+					remove.style.display = 'block'
+					Client.reloaddiv('${env.layer.div}')
+				})
+			}
+		})(document.currentScript.parentElement)
+	</script>
+	<script>
+		(div => {
+			const name = 'represent_sheets'
+			const source_id = ${data.source.source_id}
+			const btn = div.getElementsByClassName(name)[0]
+			btn.addEventListener('click', async () => {
+				const represent = await import('/-sources/represent.js').then(r => r.default)
+				const data = await represent.set(btn, name, {source_id})
+				if (!data.result) return
+				const Client = await window.getClient()
+				Client.reloaddiv('${env.layer.div}')
+			})
+		})(document.currentScript.parentElement)
+	</script>
 `
 
 
@@ -82,7 +128,7 @@ const showChangeLink = (data, env, source, sheet) => `
 const showSheetTr = (data, env, source, sheet) => `
 	<tr>
 		<td>	
-			<button title="Изменить видимость листа" class="eye transparent ${sheet.cls.main} ${sheet.cls.custom}">${svg.eye()}</button>
+			<button title="Изменить видимость листа" class="represent_sheet eye transparent ${sheet.cls.main} ${sheet.cls.custom}">${svg.eye()}</button>
 		</td>
 		<td>
 			${sheet.loaded ? showSheetLink(data, env, source, sheet).trim() : showChangeLink(data, env, source, sheet).trim()}
@@ -115,20 +161,7 @@ const showSheetTr = (data, env, source, sheet) => `
 				})}
 			</span>
 		</td>
-		<script>
-			(div => {
-				const btn = div.getElementsByClassName('eye')[0]
-				const remove = div.getElementsByClassName('remove')[0]
-				btn.addEventListener('click', async () => {
-					const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-					const data = await senditmsg(btn, '/-sources/set-sheet-eye', {source_id: ${source.source_id}, sheet_title: ${JSON.stringify(sheet.sheet_title)}}) 
-					if (!data.result) return
-					btn.classList.remove('represent-1', 'represent-0', 'represent-custom-1', 'represent-custom-0', 'represent-def-0', 'represent-def-1')
-					btn.classList.add(data.cls.main, data.cls.custom)
-					remove.style.display = 'block'
-				})
-			})(document.currentScript.parentElement)
-		</script>
+
 	</tr>
 
 `
@@ -160,37 +193,46 @@ const showButtons = (data, env, source) => `
 	</div>
 `
 const showStatus = (data, env, source) => `
-	<p class="status_${source.class}">
-		${source.status}${source.date_start ? '...':'.'} <b>${ago.short(source.date_start)}</b>
-	</p>
+	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
+		<div class="status_${source.class}">
+			${source.status}${source.date_start ? '... ':''}<b>${ago.short(source.date_start)}</b>. Актуализация ${field.setpop({
+				heading:'Актуализация',
+				value: source.renovate,
+				name: 'bit',
+				descr: 'При актуализации проверяется дата обновления данных источника и если дата более свежая, то загрузится новая версия. Актуализация может выполняться автоматически по расписанию для всех источников с разрешённой актуализацией.',
+				action: '/-sources/set-source-prop', 
+				values: {"":"запрещена", "1":"разрешена"},
+				args: {source_id: source.source_id, sourceprop: 'renovate'}
+			})}.
+		</div>
+		<div>
+			Актуальность <b>${date.ai(source.date_content) || 'не указана'}</b>. Ревизия администратора
+			${field.prompt({
+				value: date.ai(source.date_exam), 
+				cls: 'a',
+				name: 'date',
+				input: source.date_exam,
+				ok: 'ОК', 
+				label: 'Дата контроля', 
+				descr: 'Отметка администратор, когда была выполнена проверка источника. Проверен код обработчика, описаны типы колонок, синонимы, дата актуальности данных определяется корректно.',
+				type: 'date', 
+				action: '/-sources/set-source-exam', 
+				args: {source_id: source.source_id}, 
+				reloaddiv: env.layer.div
+			})}.
+		</div>
+	</div>
+	${source.error ? showError(data, env, source) : ''}
+`
+const showError = (data, env, source) => `
+	<p style="background-color:${source.error ? '#f5e6e6' : '#eaf7d1'}">${source.error || 'Ошибок не было'}</p>
 `
 const showStat = (data, env, source) => `
 	
 	<table>
 		<tr>
 			<td>
-				Актуализация
-			</td>
-			<td>
-				${field.switch({
-					action: '/-sources/set-source-switch-prop', 
-					value: source.renovate, 
-					values: {"":"Запрещена", "1":"Разрешена"},
-					args: {source_id: source.source_id, sourceprop: 'renovate'}
-				})}, ${source.need ? 'требуется': 'не требуется'}
-			</td>
-		</tr>
-		<tr>
-			<td>
-				Ошибка
-			</td>
-			<td>
-				${source.error || 'Нет'}
-			</td>
-		</tr>
-		<tr>
-			<td>
-				Проверка
+				Сообщение get-load 
 			</td>
 			<td>
 				${source.msg_check || 'Нет сообщений'}
@@ -198,7 +240,7 @@ const showStat = (data, env, source) => `
 		</tr>
 		<tr>
 			<td>
-				Загрузка
+				Сообщение get-check
 			</td>
 			<td>
 				${source.msg_load || 'Нет сообщений'}
@@ -210,26 +252,7 @@ const showStat = (data, env, source) => `
 const showSettings = (data, env, source = data.source) => `
 	<h2>Управление</h2>
 	<table>
-		<tr>
-			<td>
-				Ревизия
-			</td>
-			<td>
-				${field.prompt({
-					value: date.dmy(source.date_exam), 
-					cls: 'a',
-					name: 'date',
-					input: source.date_exam,
-					ok: 'ОК', 
-					label: 'Дата контроля', 
-					descr: 'Проверен код источника, описаны типы колонок, синонимы, дата актуальности данных корректна.',
-					type: 'date', 
-					action: '/-sources/set-source-exam', 
-					args: {source_id: source.source_id}, 
-					reloaddiv: env.layer.div
-				})}
-			</td>
-		</tr>
+		
 		
 		<tr>
 			<td>
@@ -268,78 +291,47 @@ const showSettings = (data, env, source = data.source) => `
 `
 const showControll = (data, env, source) => `
 	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
-		<div>Сущности ${field.search({
-			cls: 'a',
-			search:'/-sources/get-source-entity-search',
-			value: source.entity_id ? showSourceEntity(data, env, source) : 'не определено', 
-			label: 'Название сущности', 
-			type: 'text',
-			name: 'entity_id',
-			find: 'entity_id',
-			action: '/-sources/set-source-entity',
-			args: {source_id: source.source_id},
-			reloaddiv: env.layer.div
-		})}.</div>
 		<div>
-			Используется по умолчанию, если для листов явно не указано.
+			<span class="a">Настроить видимость</span>.
+			<script>
+				(btn => {
+					btn.addEventListener('click', async () => {
+						const represent = await import('/-sources/represent.js').then(r => r.default)
+						represent.popup(${JSON.stringify({source_id: source.source_id})}, '${env.layer.div}')
+					})
+				})(document.currentScript.previousElementSibling)
+			</script>
 		</div>
-	</div>
-	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
 		<div>
-			Данные источника ${field.switch({
-				action: '/-sources/set-source-switch-prop', 
-				value: source.represent_source, 
-				values: {"":"скрыты", "1":"опубликованы"},
-				args: {source_id: source.source_id, sourceprop: 'represent_source'},
-				reloaddiv:'BOT'
-			})}.<br>
-			По умолчанию листы ${field.switch({
-				action: '/-sources/set-source-switch-prop', 
-				value: source.represent_sheets, 
-				values: {"":"скрыты", "1":"опубликованы"},
-				args: {source_id: source.source_id, sourceprop: 'represent_sheets'},
-				reloaddiv:'BOT'
-			})}.<br>
-			По умолчанию строки ${field.switch({
-				action: '/-sources/set-source-switch-prop', 
-				value: source.represent_rows, 
-				values: {"":"скрыты", "1":"опубликованы"},
-				args: {source_id: source.source_id, sourceprop: 'represent_rows'}
-			})}.<br>
-			По умолчанию колонки ${field.switch({
-				action: '/-sources/set-source-switch-prop', 
-				value: source.represent_cols, 
-				values: {"":"скрыты", "1":"опубликованы"},
-				args: {source_id: source.source_id, sourceprop: 'represent_cols'}
-			})}.<br>
-			По умолчанию ячейки ${field.switch({
-				action: '/-sources/set-source-switch-prop', 
-				value: source.represent_cells, 
-				values: {"":"скрыты", "1":"опубликованы"},
-				args: {source_id: source.source_id, sourceprop: 'represent_cells'}
+			Сущность ${field.search({
+				cls: 'a',
+				heading: 'Сущность по умолчанию',
+				search:'/-sources/get-source-entity-search',
+				value: source.entity_id ? showSourceEntity(data, env, source) : 'не определено', 
+				label: 'Название сущности', 
+				descr: 'Сущность применяется к данным на новых листах.',
+				type: 'text',
+				name: 'entity_id',
+				find: 'entity_id',
+				action: '/-sources/set-source-entity',
+				args: {source_id: source.source_id},
+				reloaddiv: env.layer.div
 			})}.
 		</div>
+		
 		<div>
-			Если всё новое скрыто, то этот источник сомнительный прайс, от него нужно только что-то конкретное. 
-			Если всё видимо, значит этот источник c надёжными данными.
+			Источник 
+			${field.setpop({
+				heading:'Зависимость источника',
+				value: source.dependent,
+				name: 'bit',
+				descr: 'Зависимость влияет на порядок загрузки при действии "актуализировать всё". Зависимые источники загружаются в последнюю очередь и могут анализировать загруженные перед ними данные из независимых источников.',
+				action: '/-sources/set-source-prop', 
+				values: {"":"независимый", "1":"зависимый"},
+				args: {source_id: source.source_id, sourceprop: 'dependent'}
+			})}.
 		</div>
 	</div>
-	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
-		<div>Источник ${field.switch({
-			action: '/-sources/set-source-switch-prop', 
-			value: source.dependent, 
-			values: {"":"независимый", "1":"зависимый"},
-			args: {source_id: source.source_id, sourceprop: 'dependent'}
-		})}.
-		</div>
-		<div>
-			Зависимость влияет на порядок загрузки при действии "актуализировать всё". 
-			Зависимые источники загружаются в последнюю очередь 
-			и могут анализировать загруженные перед ними данные из независимых источников.
-		</div>
-	</div>
-
-	
 	<div style="margin:2em 0; display: flex; flex-wrap:wrap; gap: 1em;">
 		${field.button({
 			label: 'Проверить', 

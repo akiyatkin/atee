@@ -1,7 +1,8 @@
 import err from "/-controller/err.html.js"
 import field from "/-dialog/field.html.js"
 import date from "/-words/date.html.js"
-
+import svg from "/-sources/svg.html.js"
+export const css = ['/-sources/represent.css']
 
 export const ROOT = (data, env, entity = data.entity) => err(data, env, ["PROP"]) || `
 	<div id="PROP"></div>
@@ -9,40 +10,29 @@ export const ROOT = (data, env, entity = data.entity) => err(data, env, ["PROP"]
 export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data.result ? '' : `
 	<div style="opacity:0.5; float:right">Свойство у <a href="entity/${entity.entity_id}">${entity.entity_title}</a></div>
 	<h1>${prop.prop_title}</h1>
-	<table style="margin: 0em 0">
-		<tr>
-			<td>
-				Сущность
-			</td>
-			<td>
-				<a href="entity/${prop.entity_id}">${prop.entity_title}</a>
-			</td>
-		</tr>
+	<p>
 		
-		<tr>
-			<td>
-				Видимость
-			</td>
-			<td>
-				${field.setpop({
-					placeholder:'Видимость',
-					value: prop.represent_prop, 
-					name: 'bit',
-					descr: 'Попадает или нет это свойство в итоговую выборку.',
-					action: '/-sources/set-prop-prop', 
-					values: {"":"Скрыто", "1":"Показано"},
-					args: {prop_id: prop.prop_id, propprop: 'represent_custom_prop'},
-					reloaddiv: env.layer.div
-				})}
-			</td>
-		</tr>
+		<button class="a">Настроить видимость</button>
+		<script>
+			(btn => {
+				btn.addEventListener('click', async () => {
+					const represent = await import('/-sources/represent.js').then(r => r.default)
+					represent.popup(${JSON.stringify({prop_id: prop.prop_id})}, '${env.layer.div}')
+				})
+			})(document.currentScript.previousElementSibling)
+		</script>
+	</p>
+	<table style="margin: 0em 0">
+		
+		
+		
 		<tr>
 			<td>
 				Значений
 			</td>
 			<td>
 				${field.setpop({
-					placeholder:'Значений',
+					heading:'Значений',
 					value: prop.multi,
 					name: 'bit',
 					descr: 'Несколько значений могут быть разделены запятой с пробелом. Значений?',
@@ -59,7 +49,7 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 			</td>
 			<td>
 				${field.setpop({
-					placeholder:'Тип',
+					heading:'Тип',
 					value: prop.type,
 					name: 'type',
 					descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче 63 символов. Самый затратный <b>text</b>. Для ключей и связей подходит только value.',
@@ -75,7 +65,7 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 			<td>Обработка</td>
 			<td>
 				${field.setpop({
-					placeholder:'Обработка',
+					heading:'Обработка',
 					value: prop.known, 
 					name: 'bit',
 					descr: 'Специальные свойства имеют своё предназначение и в массив more для автоматической обработки не попадают. Старое название column. ',
@@ -86,29 +76,17 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 			</td>
 		</tr>
 	</table>
-	<div style="display: flex; flex-wrap: wrap; gap:1em; align-items: center;">
-		<div style="flex-grow:1">
-			${showComment(data, env, prop)}
-		</div>
-		<div>
-			${field.textok({
-				value: prop.prop_title,
-				type: 'text',
-				name: 'title',
-				label: 'Изменить регистр', 
-				action: '/-sources/set-prop-title',
-				reloaddiv: env.layer.div,
-				args: {prop_id: prop.prop_id}
-			})}
-		</div>
-	</div>
+	
+	${showComment(data, env, prop)}
+		
+	
 
-	<table>
+	<table style="table-layout: fixed">
 		<thead>
 			<tr>
+				<td></td>
 				<td>text</td>
-				<td>Видимость</td>
-				<td>Перезаписано</td>
+				<td>Преимущество</td>
 				<td>Всего</td>
 				<td>number</td>
 				<td>date</td>
@@ -121,15 +99,44 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 			${data.list.map(row => showValueTr(data, env, row)).join('')}
 		</tbody>
 	</table>
+	<script>
+		(div => {
+			const name = 'represent_value'
+			const prop_id = ${data.prop.prop_id}
+			for (const btn of div.getElementsByClassName(name)) {
+				btn.addEventListener('click', async () => {
+					const value_id = btn.dataset.value_id
+					const represent = await import('/-sources/represent.js').then(r => r.default)
+					const data = await represent.set(btn, name, {prop_id, value_id})
+					if (!data.result) return
+					// const Client = await window.getClient()
+					// Client.reloaddiv('${env.layer.div}')
+				})
+			}
+		})(document.currentScript.parentElement)
+	</script>
 	<p>
 		Всего: <b>${data.count}</b>, показано <b>${data.count > 1000 ? 1000 : data.count}</b>.
 	</p>
+	<div>
+		${field.textok({
+			value: prop.prop_title,
+			type: 'text',
+			name: 'title',
+			label: 'Изменить регистр', 
+			action: '/-sources/set-prop-title',
+			reloaddiv: env.layer.div,
+			args: {prop_id: prop.prop_id}
+		})}
+	</div>
 `
 const showValueTr = (data, env, row) => `
 	<tr style="${row.pruning ? 'background: hsl(0, 100%, 97%)' : ''}">
+		<td>
+			<button data-value_id="${row.value_id}" class="represent_value eye transparent ${row.cls?.main} ${row.cls?.custom}">${svg.eye()}</button>
+		</td>
 		<td>${row.text}</td>
-		<td>${row.represent ? '': 'Скрыто'}</td>
-		<td>${row.winner ? '' : 'Перезаписано'}</td>
+		<td>${row.winner ? 'Показано' : 'Скрыто'}</td>
 		<td>${row.count}</td>
 		<td>${row.number != null ? parseFloat(row.number) : ''}</td>
 		<td><nobr>${date.sdmyhi(row.date)}</nobr></td>
@@ -141,7 +148,7 @@ const showValueTr = (data, env, row) => `
 `
 const showComment = (data, env, prop) => `
 	<div style="margin: 1em 0">
-		${field.text({
+		${field.area({
 			name: 'comment', 
 			label: 'Комментарий', 
 			action: '/-sources/set-prop-comment', 

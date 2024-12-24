@@ -1,23 +1,26 @@
 import err from "/-controller/err.html.js"
 import field from "/-dialog/field.html.js"
-
+export const css = ['/-sources/revscroll.css']
 export const ROOT = (data, env) => err(data, env) || `
 	<h1>Сущности</h1>
-	<table draggable="false" class="list">
-		<thead>
-			<tr>
-				<td>Сущности</td>
-				<td>Ключ</td>
-				<td>Источников</td>
-				<td>Записей</td>
-				<td>Опубликовано</td>
-			</tr>
-		</thead>
-		<tbody draggable="false">
-			${data.list.map(source => showTr(data, env, source)).join('')}
-		</tbody>
-	</table>
-	${showScriptDrag(data, env)}
+	<div class="revscroll">
+		<table draggable="false" class="list">
+			<thead>
+				<tr>
+					<td>Сущности</td>
+					<td>Ключ</td>
+					<td>Источников</td>
+					<td>Записей</td>
+					<td>Опубликовано</td>
+				</tr>
+			</thead>
+			<tbody draggable="false">
+				${data.list.map(source => showTr(data, env, source)).join('')}
+			</tbody>
+		</table>
+		${showScriptDrag(data, env)}
+	</div>
+	
 	<div style="margin:2em 0; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
 		${field.prompt({
 			value: 'Создать сущность', 
@@ -43,7 +46,7 @@ const showTr = (data, env, entity) => `
 			${entity.stat.sources.length && showSources(data, env, entity)}
 		</td>
 		<td>
-			${entity.stat.count_items}
+			<a href="positions/${entity.entity_id}">${entity.stat.count_items}</a>
 		</td>
 		<td>
 			${entity.stat.count_represent}

@@ -4,7 +4,7 @@ import nicked from '/-nicked/nicked.js'
 import unique from '/-nicked/unique.js'
 import words from '/-words/words.js'
 import date from '/-words/date.html.js'
-import eye from "/-sources/represent.js"
+import represent from "/-sources/represent.js"
 
 import Sources from "/-sources/Sources.js"
 import Consequences from "/-sources/Consequences.js"
@@ -25,27 +25,54 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	let source_id = await view.get('source_id')
 	let entity_id = await view.get('entity_id')
 	let prop_id = await view.get('prop_id')
-	const col_index = await view.get('col_index')
-	const row_index = await view.get('row_index')
-	const sheet_index = await view.get('sheet_index')
-	const multi_index = await view.get('multi_index')
-	const repeat_index = await view.get('repeat_index')
+
+	let col_title = await view.get('col_title')
+	let sheet_title = await view.get('sheet_title')
+	let multi_index = await view.get('multi_index')
+	let repeat_index = await view.get('repeat_index')
 	let key_id = await view.get('key_id')
 	
+	const col_index = await view.get('col_index')
+	const sheet_index = await view.get('sheet_index')
+	const row_index = await view.get('row_index')
+	if (sheet_index != null) {
+		if([source_id].some(v => v == null)) return view.err('Требуется source_id и sheet_index')
+		sheet_title = await db.col(`
+			SELECT sheet_title FROM sources_sheets
+			WHERE source_id = :source_id and sheet_index = :sheet_index
+		`, {source_id, sheet_index})
+	}
+	if (col_index != null) {
+		if([source_id, sheet_index].some(v => v == null)) return view.err('Требуется source_id и sheet_index')
+		col_title = await db.col(`
+			SELECT col_title FROM sources_cols 
+			WHERE source_id = :source_id and sheet_index = :sheet_index and col_index = :col_index 
+		`, {source_id, sheet_index, col_index})
+	}
+	if (row_index != null) {
+		if([source_id, sheet_index].some(v => v == null)) return view.err('Требуется source_id и sheet_index')
+		const r = await db.fetch(`
+			SELECT repeat_index, key_id FROM sources_rows
+			WHERE source_id = :source_id and sheet_index = :sheet_index and row_index = :row_index 
+		`, {source_id, sheet_index, row_index})
+		repeat_index = r.repeat_index
+		key_id = r.key_id
+	}
 
-	if ([sheet_index, row_index, col_index, multi_index, key_id, repeat_index].some(v => v != null) && !source_id) return view.err('Требуется source_id')
-	if ([row_index, col_index, multi_index, key_id, repeat_index].some(v => v != null) && sheet_index == null) return view.err('Требуется sheet_index')
-	if ([multi_index, key_id, repeat_index].some(v => v != null) && row_index == null) return view.err('Требуется row_index')
-	if ([multi_index].some(v => v != null) && col_index == null) return view.err('Требуется col_index')
+
+	
+	if ([sheet_title, col_title, multi_index, repeat_index].some(v => v != null) && !source_id) return view.err('Требуется source_id')
+	if ([col_title, multi_index, repeat_index].some(v => v != null) && sheet_title == null) return view.err('Требуется sheet_title')
+	if ([multi_index].some(v => v != null) && col_title == null) return view.err('Требуется col_title')
 	if (!entity_id && !source_id && !prop_id) return view.err('Должно быть указано хоть что-то entity_id, source_id, prop_id')
 
 	const source = view.data.source = source_id ? await Sources.getSource(db, source_id) : false
-	if (source) source.cls = eye.calcCls(
+	if (source) source.cls = represent.calcCls(
 		1, 
 		source.represent_source,
 		null
 	)
-	const sheet = view.data.sheet = sheet_index != null ? await Sources.getSheet(db, source_id, sheet_index) : false
+	const sheet = view.data.sheet = sheet_title != null ? await Sources.getSheet(db, source_id, sheet_title) : false
 	if (sheet) {
 		entity_id = sheet.entity_id
 		sheet.sheet_index_max = await db.col(`
@@ -53,14 +80,14 @@ rest.addResponse('get-represent', ['admin'], async view => {
 			FROM sources_sheets sh
 			WHERE sh.source_id = :source_id
 		`, sheet)
-		sheet.cls = eye.calcCls(
+		sheet.cls = represent.calcCls(
 			source.represent_source, 
 			sheet.represent_custom_sheet, 
 			source.represent_sheets
 		)
 	}
 
-	const col = view.data.col = (col_index != null) ? await Sources.getCol(db, source_id, sheet_index, col_index) : false	
+	const col = view.data.col = (col_title != null) ? await Sources.getCol(db, source_id, sheet_title, col_title) : false	
 	if (col) col.col_index_max = await db.col(`
 		SELECT max(col_index) 
 		FROM sources_cols ro
@@ -68,7 +95,7 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	`, col)
 	if (col) prop_id = col.prop_id
 	if (col) {
-		col.cls = eye.calcCls(
+		col.cls = represent.calcCls(
 			source.represent_source && sheet.represent_sheet, 
 			col.represent_custom_col, 
 			source.represent_cols
@@ -77,8 +104,8 @@ rest.addResponse('get-represent', ['admin'], async view => {
 
 
 	
-
-	const row = view.data.row = row_index != null ? await Sources.getRow(db, source_id, sheet_index, row_index) : false
+	const row = view.data.row = repeat_index != null || row_index != null ? await Sources.row(db, {source_id, sheet_title, key_id, repeat_index, sheet_index, row_index}) : false
+	//const row = view.data.row = repeat_index != null ? await Sources.getRow(db, source_id, sheet_title, key_id, repeat_index) : false
 	if (row) {
 		row.row_index_max = await db.col(`
 			SELECT max(row_index) 
@@ -101,14 +128,14 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	}
 	if (row) key_id = row.key_id
 	if (row) {
-		row.cls = eye.calcCls(
+		row.cls = represent.calcCls(
 			source.represent_source && sheet.represent_sheet && row.represent_row_key, 
 			row.represent_custom_row, 
-			source.represent_rows
+			source.represent_rows && key_id
 		)
-		row.key = key_id ? await Sources.getCell(db, source_id, sheet_index, row_index, row.key_index, 0) : false	
+		row.key = key_id ? await Sources.getCellByIndex(db, source_id, row.sheet_index, row.row_index, row.key_index, 0) : false	
 		if (row.key) {
-			row.key.cls = eye.calcCls(
+			row.key.cls = represent.calcCls(
 				source.represent_source && sheet.represent_sheet && row.represent_row && col.represent_col, 
 				row.key.represent_custom_cell, 
 				source.represent_cells
@@ -119,8 +146,8 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	
 	
 
-	
-	const cell = view.data.cell = (multi_index != null) ? await Sources.getCell(db, source_id, sheet_index, row_index, col_index, multi_index) : false	
+	const cell = view.data.cell = (multi_index != null) ? await Sources.cell(db, {source_id, sheet_title, key_id, repeat_index, col_title, multi_index, sheet_index, row_index, col_index}) : false	
+	//const cell = view.data.cell = (multi_index != null) ? await Sources.getCell(db, source_id, sheet_title, key_id, repeat_index, col_title, multi_index) : false	
 	if (cell) cell.multi_index_max = await db.col(`
 		SELECT max(multi_index) 
 		FROM sources_cells ce
@@ -128,18 +155,18 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	`, cell)
 
 	if (cell) {
-		cell.cls = eye.calcCls(
+		cell.cls = represent.calcCls(
 			source.represent_source && sheet.represent_sheet && (sheet.key_index == cell.col_index || row.represent_row_key) && row.represent_row && col.represent_col, 
 			cell.represent_custom_cell, 
-			source.represent_cells
+			source.represent_cells && key_id
 		)
 	}
-	
-	const entity = view.data.entity = entity_id ? await Sources.getEntity(db, entity_id) : false
 	const prop = view.data.prop = prop_id ? await Sources.getProp(db, prop_id) : false
 	if (prop) entity_id = prop.entity_id
+	const entity = view.data.entity = entity_id ? await Sources.getEntity(db, entity_id) : false
+	
 	if (prop) {
-		prop.cls = eye.calcCls(
+		prop.cls = represent.calcCls(
 			entity.represent_entity, 
 			prop.represent_custom_prop, 
 			entity.represent_props
@@ -148,14 +175,14 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	
 	const item = view.data.item = key_id ? await Sources.getItem(db, entity_id, key_id) : false
 	if (item) {
-		item.cls = eye.calcCls(
+		item.cls = represent.calcCls(
 			entity.represent_entity && item.represent_item_key, 
 			item.represent_custom_item, 
 			entity.represent_items
 		)
 		// item.value = key_id ? await Sources.getValue(db, entity_id, entity.prop_id, 0) : false	
 		// if (item.key) {
-		item.keycls = eye.calcCls(
+		item.keycls = represent.calcCls(
 			entity.represent_entity && item.represent_item, 
 			item.represent_custom_value, 
 			source.represent_cells
@@ -164,7 +191,7 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	}
 	const value = view.data.value = cell?.value_id ? await Sources.getValue(db, prop_id, cell.value_id) : false
 	if (value) {
-		value.cls = eye.calcCls(
+		value.cls = represent.calcCls(
 			entity.represent_entity && prop.represent_prop && item.represent_item_key && item.represent_item, 
 			value.represent_custom_value, 
 			entity.represent_values
@@ -177,9 +204,13 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	else if (col) main = 'col'
 	else if (row) main = 'row'
 	else if (prop) main = 'prop'
+	else if (sheet) main = 'sheet'
+	else if (source) main = 'source'
+	else if (item) main = 'item'
+	else if (entity) main = 'entity'
 	else main = 'wtf'
-	view.data.main = main
 
+	view.data.main = main
 	return view.ret()
 })
 
@@ -193,6 +224,10 @@ const getCustomSwitch = (value, def) => {
 	if (value == 0 && !def) return 1
 	if (value == null && !def) return 1
 }
+const defcustom = (value) => {
+	if (value) return 'represent-def-1'
+	else return 'represent-custom-0'
+}
 rest.addAction('set-represent_sheets', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
@@ -204,7 +239,8 @@ rest.addAction('set-represent_sheets', ['admin'], async view => {
    		WHERE source_id = :source_id
 	`, {source_id, newvalue})
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(source.represent_source, newvalue)
+	view.data.cls = `represent-${source.represent_source} ${defcustom(source.represent_sheets)}`
+	
 	return view.ret()
 })
 rest.addAction('set-represent_rows', ['admin'], async view => {
@@ -218,7 +254,7 @@ rest.addAction('set-represent_rows', ['admin'], async view => {
    		WHERE source_id = :source_id
 	`, {source_id, newvalue})
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(source.represent_source, newvalue)
+	view.data.cls = represent.calcCls(source.represent_source, newvalue)
 	return view.ret()
 })
 rest.addAction('set-represent_cols', ['admin'], async view => {
@@ -232,7 +268,7 @@ rest.addAction('set-represent_cols', ['admin'], async view => {
    		WHERE source_id = :source_id
 	`, {source_id, newvalue})
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(source.represent_source, newvalue)
+	view.data.cls = represent.calcCls(source.represent_source, newvalue)
 	return view.ret()
 })
 rest.addAction('set-represent_cells', ['admin'], async view => {
@@ -246,7 +282,7 @@ rest.addAction('set-represent_cells', ['admin'], async view => {
    		WHERE source_id = :source_id
 	`, {source_id, newvalue})
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(source.represent_source, newvalue)
+	view.data.cls = represent.calcCls(source.represent_source, newvalue)
 	return view.ret()
 })
 rest.addAction('set-represent_props', ['admin'], async view => {
@@ -260,7 +296,7 @@ rest.addAction('set-represent_props', ['admin'], async view => {
    		WHERE entity_id = :entity_id
 	`, {entity_id, newvalue})
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(entity.represent_entity, newvalue)
+	view.data.cls = represent.calcCls(entity.represent_entity, newvalue)
 	return view.ret()
 })
 
@@ -275,7 +311,7 @@ rest.addAction('set-represent_items', ['admin'], async view => {
    		WHERE entity_id = :entity_id
 	`, {entity_id, newvalue})
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(entity.represent_entity, newvalue)
+	view.data.cls = represent.calcCls(entity.represent_entity, newvalue)
 	return view.ret()
 })
 rest.addAction('set-represent_values', ['admin'], async view => {
@@ -289,16 +325,16 @@ rest.addAction('set-represent_values', ['admin'], async view => {
    		WHERE entity_id = :entity_id
 	`, {entity_id, newvalue})
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(entity.represent_entity, newvalue)
+	view.data.cls = represent.calcCls(entity.represent_entity, newvalue)
 	return view.ret()
 })
 
 rest.addAction('set-represent_sheet', ['admin'], async view => {
 	const db = await view.get('db')
-	const sheet_index = await view.get('sheet_index#required')
+	const sheet_title = await view.get('sheet_title#required')
 	const source_id = await view.get('source_id#required')
 	const source = await Sources.getSource(db, source_id)
-	const sheet = await Sources.getSheet(db, source_id, sheet_index)
+	const sheet = await Sources.getSheet(db, source_id, sheet_title)
 	
 	const newvalue = getCustomSwitch(sheet.represent_custom_sheet, source.represent_sheets)
 	
@@ -310,7 +346,7 @@ rest.addAction('set-represent_sheet', ['admin'], async view => {
 
 
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(source.represent_source, newvalue, source.represent_sheets)
+	view.data.cls = represent.calcCls(source.represent_source, newvalue, source.represent_sheets)
 	return view.ret()
 })
 rest.addAction('set-represent_source', ['admin'], async view => {
@@ -329,7 +365,7 @@ rest.addAction('set-represent_source', ['admin'], async view => {
 	`, {source_id, newvalue})
 
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(
+	view.data.cls = represent.calcCls(
 		1, 
 		newvalue, 
 		source.represent_source
@@ -352,7 +388,7 @@ rest.addAction('set-represent_entity', ['admin'], async view => {
 	`, {entity_id, newvalue})
 
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(
+	view.data.cls = represent.calcCls(
 		1, 
 		newvalue, 
 		entity.represent_entity
@@ -383,7 +419,7 @@ rest.addAction('set-represent_prop', ['admin'], async view => {
 
 
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(
+	view.data.cls = represent.calcCls(
 		entity.represent_entity, 
 		newvalue, 
 		entity.represent_props
@@ -414,7 +450,7 @@ rest.addAction('set-represent_value', ['admin'], async view => {
 
 
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(
+	view.data.cls = represent.calcCls(
 		entity.represent_entity, 
 		newvalue, 
 		entity.represent_values
@@ -443,7 +479,7 @@ rest.addAction('set-represent_item', ['admin'], async view => {
 
 
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(
+	view.data.cls = represent.calcCls(
 		entity.represent_entity && item.represent_item_key, 
 		newvalue, 
 		entity.represent_items
@@ -470,7 +506,7 @@ rest.addAction('set-represent_item_key', ['admin'], async view => {
 	`, {prop_id, key_id, newvalue})
 	
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(
+	view.data.cls = represent.calcCls(
 		entity.represent_entity && item.represent_item, 
 		newvalue, 
 		entity.represent_items
@@ -480,11 +516,11 @@ rest.addAction('set-represent_item_key', ['admin'], async view => {
 rest.addAction('set-represent_col', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
-	const col_index = await view.get('col_index#required')
-	const sheet_index = await view.get('sheet_index#required')
+	const col_title = await view.get('col_title#required')
+	const sheet_title = await view.get('sheet_title#required')
 	const source = await Sources.getSource(db, source_id)
-	const col = await Sources.getCol(db, source_id, sheet_index, col_index)
-	const sheet = await Sources.getSheet(db, source_id, sheet_index)
+	const col = await Sources.getCol(db, source_id, sheet_title, col_title)
+	const sheet = await Sources.getSheet(db, source_id, sheet_title)
 	const value = col.represent_custom_col
 
 	const newvalue = getCustomSwitch(value, source.represent_cols)
@@ -497,8 +533,8 @@ rest.addAction('set-represent_col', ['admin'], async view => {
 	`, {...col, newvalue})
 
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(col.represent_col, newvalue, source.represent_source)
-	col.cls = eye.calcCls(
+	view.data.cls = represent.calcCls(col.represent_col, newvalue, source.represent_source)
+	col.cls = represent.calcCls(
 		source.represent_source && sheet.represent_sheet, 
 		newvalue, 
 		source.represent_cols
@@ -508,14 +544,17 @@ rest.addAction('set-represent_col', ['admin'], async view => {
 rest.addAction('set-represent_row_key', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
-	const row_index = await view.get('row_index#required')
-	const sheet_index = await view.get('sheet_index#required')
+	const key_id = await view.get('key_id#required')
+	const repeat_index = await view.get('repeat_index#required')
+	const sheet_title = await view.get('sheet_title#required')
 	const source = await Sources.getSource(db, source_id)
-	const row = await Sources.getRow(db, source_id, sheet_index, row_index)
-	const sheet = await Sources.getSheet(db, source_id, sheet_index)
-	if (!row.key_id) return view.err('У строки нет ключа')
-	row.key = await Sources.getCell(db, source_id, sheet_index, row_index, row.key_index, 0)
-	const col = await Sources.getCol(db, source_id, sheet_index, row.key_index)
+	const row = await Sources.getRow(db, source_id, sheet_title, key_id, repeat_index)
+	const sheet = await Sources.getSheet(db, source_id, sheet_title)
+	if (!row) return view.err('Строка не найдена')
+	//row.key = await Sources.getCellByIndex(db, source_id, sheet_title, row_index, row.key_index, 0)
+	const col = await Sources.getColByIndex(db, source_id, sheet_title, row.key_index)
+	row.key = await Sources.getCell(db, source_id, sheet_title, key_id, repeat_index, col.col_title, 0)
+	
 	const value = row.key.represent_cell
 
 	const newvalue = getCustomSwitch(value, source.represent_cells)
@@ -529,7 +568,7 @@ rest.addAction('set-represent_row_key', ['admin'], async view => {
 
 	await Consequences.represent(db)
 	
-	view.data.cls = eye.calcCls(
+	view.data.cls = represent.calcCls(
 		source.represent_source && sheet.represent_sheet && row.represent_row && col.represent_col, 
 		newvalue, 
 		source.represent_cells
@@ -540,11 +579,13 @@ rest.addAction('set-represent_row_key', ['admin'], async view => {
 rest.addAction('set-represent_row', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
-	const row_index = await view.get('row_index#required')
-	const sheet_index = await view.get('sheet_index#required')
+	//const row_index = await view.get('row_index#required')
+	const key_id = await view.get('key_id#required')
+	const repeat_index = await view.get('repeat_index#required')
+	const sheet_title = await view.get('sheet_title#required')
 	const source = await Sources.getSource(db, source_id)
-	const row = await Sources.getRow(db, source_id, sheet_index, row_index)
-	const sheet = await Sources.getSheet(db, source_id, sheet_index)
+	const row = await Sources.getRow(db, source_id, sheet_title, key_id, repeat_index)
+	const sheet = await Sources.getSheet(db, source_id, sheet_title)
 	const value = row.represent_custom_row
 
 	const newvalue = getCustomSwitch(value, source.represent_rows)
@@ -557,7 +598,7 @@ rest.addAction('set-represent_row', ['admin'], async view => {
 	`, {...row, newvalue})
 
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(
+	view.data.cls = represent.calcCls(
 		source.represent_source && sheet.represent_sheet && row.represent_row_key, 
 		newvalue, 
 		source.represent_rows
@@ -568,15 +609,18 @@ rest.addAction('set-represent_row', ['admin'], async view => {
 rest.addAction('set-represent_cell', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
-	const row_index = await view.get('row_index#required')
-	const col_index = await view.get('col_index#required')
-	const sheet_index = await view.get('sheet_index#required')
+	//const row_index = await view.get('row_index#required')
+	//const col_index = await view.get('col_index#required')
+	const key_id = await view.get('key_id#required')
+	const repeat_index = await view.get('repeat_index#required')
+	const col_title = await view.get('col_title#required')
+	const sheet_title = await view.get('sheet_title#required')
 	const multi_index = await view.get('multi_index#required')
 	const source = await Sources.getSource(db, source_id)
-	const cell = await Sources.getCell(db, source_id, sheet_index, row_index, col_index, multi_index)
-	const col = await Sources.getCol(db, source_id, sheet_index, col_index)
-	const row = await Sources.getRow(db, source_id, sheet_index, row_index)
-	const sheet = await Sources.getSheet(db, source_id, sheet_index)
+	const cell = await Sources.getCell(db, source_id, sheet_title, key_id, repeat_index, col_title, multi_index)
+	const col = await Sources.getCol(db, source_id, sheet_title, col_title)
+	const row = await Sources.getRow(db, source_id, sheet_title, key_id, repeat_index)
+	const sheet = await Sources.getSheet(db, source_id, sheet_title)
 	const value = cell.represent_custom_cell
 
 	const newvalue = getCustomSwitch(value, source.represent_cells)
@@ -589,7 +633,7 @@ rest.addAction('set-represent_cell', ['admin'], async view => {
 	`, {...cell, newvalue})
 
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(
+	view.data.cls = represent.calcCls(
 		source.represent_source && sheet.represent_sheet && row.represent_row && col.represent_col && (sheet.key_index == cell.col_index || row.represent_row_key), 
 		newvalue, 
 		source.represent_rows
@@ -652,7 +696,7 @@ rest.addAction('set-row-switch', ['admin'], async view => {
 
 
 	await Consequences.represent(db)	
-	view.data.cls = eye.calcCls(
+	view.data.cls = represent.calcCls(
 		source.represent_source && represent_sheet, 
 		newvalue, 
 		source.represent_rows
@@ -688,7 +732,7 @@ rest.addAction('set-col-switch', ['admin'], async view => {
 
 
 	await Consequences.represent(db)
-	view.data.cls = eye.calcCls(
+	view.data.cls = represent.calcCls(
 		source.represent_source && represent_sheet, 
 		newvalue, 
 		source.represent_cols

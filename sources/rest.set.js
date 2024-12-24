@@ -21,47 +21,28 @@ rest.extra(rest_sources)
 import rest_search from "/-dialog/search/rest.search.js" //аргументы hash, search 
 rest.extra(rest_search)
 
-rest.addAction('set-source-switch-prop', ['admin'], async view => {
+rest.addAction('set-source-prop', ['admin'], async view => {
 	
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required') 
-	const prop = await view.get('sourceprop#required')
-
+	const propname = await view.get('sourceprop#required')
+	const value = await view.get('bit#required')
 	
 	await db.exec(`
 		UPDATE sources_sources
-		SET ${prop} = IF(${prop},0,1)
+		SET ${propname} = IF(${propname},0,1)
 		WHERE source_id = :source_id
 	`, {source_id})
 
 	view.ans.value = await db.col(`
-		SELECT ${prop} + 0 FROM sources_sources
+		SELECT ${propname} + 0 FROM sources_sources
 		WHERE source_id = :source_id
 	`, {source_id})	
 	
 	await Consequences.represent(db)
 	return view.ret()
 })
-rest.addAction('set-entity-switch-prop', ['admin'], async view => {
-	
-	const db = await view.get('db')
-	const entity_id = await view.get('entity_id#required') 
-	const prop = await view.get('entityprop#required')
 
-	
-	await db.exec(`
-		UPDATE sources_entities
-		SET ${prop} = IF(${prop},0,1)
-		WHERE entity_id = :entity_id
-	`, {entity_id})
-
-	view.ans.value = await db.col(`
-		SELECT ${prop} + 0 FROM sources_entities
-		WHERE entity_id = :entity_id
-	`, {entity_id})	
-	await Consequences.represent(db)
-	return view.ret()
-})
 
 rest.addAction('set-prop-prop', ['admin'], async view => {
 	
@@ -536,10 +517,11 @@ rest.addAction('set-entity-delete', ['admin'], async view => {
 
 	
 	await db.exec(`
-		DELETE en, pr, cva
+		DELETE en, pr, cva, ap
 		FROM sources_entities en
 			LEFT JOIN sources_props pr on pr.entity_id = en.entity_id
 			LEFT JOIN sources_custom_values cva on cva.prop_id = pr.prop_id
+			LEFT JOIN sources_appears ap on ap.entity_id = en.entity_id
    		WHERE en.entity_id = :entity_id
 	`, {entity_id})
 	//await Consequences сущность удаляется если её нет, пересчитывать нечего
@@ -556,7 +538,7 @@ rest.addAction('set-source-delete', ['admin'], async view => {
 		WHERE source_id = :source_id
 	`, source)
 	await db.exec(`
-		DELETE so, csh, cco, cro, sh, co, ro, ce
+		DELETE so, csh, cco, cro, sh, co, ro, ce, ap
 		FROM sources_sources so
 			LEFT JOIN sources_custom_sheets csh on csh.source_id = so.source_id
 			LEFT JOIN sources_custom_cols cco on cco.source_id = so.source_id
@@ -566,6 +548,7 @@ rest.addAction('set-source-delete', ['admin'], async view => {
 			LEFT JOIN sources_cols co on co.source_id = so.source_id
 			LEFT JOIN sources_rows ro on ro.source_id = so.source_id
 			LEFT JOIN sources_cells ce on ce.source_id = so.source_id
+			LEFT JOIN sources_appears ap on ap.source_id = so.source_id
 			
    		WHERE so.source_id = :source_id
 	`, {source_id})
@@ -639,10 +622,12 @@ rest.addAction('set-sheet-title', ['admin'], async view => { //Показыва�
 })
 rest.addAction('set-sheet-entity', ['admin'], async view => {
 	const source_id = await view.get('source_id#required')
+	const db = await view.get('db')
+	const source = await Sources.getSource(db, source_id)
 	const entity_id = await view.get('entity_id#required')
 	const sheet_title = await view.get('sheet_title#required')
 	
-	const db = await view.get('db')
+	
 
 	//А что если есть указанные prop_id у колонок
 	const ready = await db.col(`
@@ -651,7 +636,7 @@ rest.addAction('set-sheet-entity', ['admin'], async view => {
 		WHERE co.prop_id is not null and co.source_id = :source_id and sheet_title = :sheet_title
 		LIMIT 1
 	`, {source_id, sheet_title})
-	if (ready) return view.err('У колонок есть определённые свойства, нельзя изменить сущность.')
+	if (ready && entity_id != source.entity_id) return view.err('У колонок есть определённые свойства, нельзя изменить сущность.')
 
 	await db.exec(`
 		INSERT INTO sources_custom_sheets (source_id, sheet_title, entity_id)
@@ -659,7 +644,7 @@ rest.addAction('set-sheet-entity', ['admin'], async view => {
    		ON DUPLICATE KEY UPDATE entity_id = VALUES(entity_id)
 	`, {entity_id, source_id, sheet_title})
 	
-	const source = await Sources.getSource(db, source_id)
+	//const source = await Sources.getSource(db, source_id)
 	//У листа новая сущность значит все col_title будут уже другими и с другими типами
 
 	await Consequences.loaded(db, source_id) //entity_id, prop_id

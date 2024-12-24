@@ -2,7 +2,7 @@ import field from "/-dialog/field.html.js"
 import date from "/-words/date.html.js"
 import ago from "/-words/ago.html.js"
 import err from "/-controller/err.html.js"
-export const css = ['/-sources/represent.css']
+export const css = ['/-sources/represent.css','/-sources/revscroll.css']
 export const ROOT = (data, env) => `
 	<h1>Источники</h1>
 	${data.admin && data.isdb ? showMain(data, env) : showAuth(data, env)}
@@ -17,23 +17,25 @@ const showAuth = (data, env) => `
 	<div id="TABLE"></div>
 `
 export const TABLE = (data, env) => !data.result ? '' : `
+	<div class="revscroll">
+		<table draggable="false" class="list">
+			<thead>
+				<tr>
+					<td>Источник</td>
+					<td>Статус</td>
+					<td>Проверен</td>
+					<td>Актуальность</td>
+					<td>Загружен</td>
+					<td>Ревизия</td>
+				</tr>
+			</thead>
+			<tbody draggable="false">
+				${data.list.map(source => showSourceTr(data, env, source)).join('')}
+			</tbody>
+		</table>
+		${data.list.some(source => source.date_start) ? showScriptReload(data, env) : showScriptDrag(data, env)}
+	</div>
 	
-	<table draggable="false" class="list">
-		<thead>
-			<tr>
-				<td>Источник</td>
-				<td>Статус</td>
-				<td>Проверен</td>
-				<td>Актуальность</td>
-				<td>Загружен</td>
-				<td>Ревизия</td>
-			</tr>
-		</thead>
-		<tbody draggable="false">
-			${data.list.map(source => showSourceTr(data, env, source)).join('')}
-		</tbody>
-	</table>
-	${data.list.some(source => source.date_start) ? showScriptReload(data, env) : showScriptDrag(data, env)}
 	
 `
 const showScriptDrag = (data, env) => `

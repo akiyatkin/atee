@@ -21,6 +21,12 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 					--padding: 1rem;
 				}
 			}
+			@media (max-width: 475px) {
+				:root {
+					--page-padding: 0rem;
+				}
+				
+			}
 			html {
 				background: linear-gradient(-30deg, #00aaff55, #4466ff22);
 				background-size: 100% 100%;
@@ -42,7 +48,7 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 				user-drag: none;
 			}
 			.column {
-				border-radius: 5px;
+/*				border-radius: 5px;*/
 				min-width: 20ch;
 				background: #00aaff11;
 				background-size: 100% 100%;
@@ -52,6 +58,10 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 			}
 			.column .bars {
 				display: none;
+			}
+			.maincontainer {
+				grid-template-columns: 100%; padding-top: var(--padding); min-height:100vh; display:grid; 
+				grid-template-rows: 1fr max-content;
 			}
 			@media (max-width: 768px) {
 				
@@ -94,10 +104,22 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 					d: path("M0 16L24 16")
 				}
 			}
+			@media (max-width: 475px) {
+				.maincontainer {
+					padding-top:0;
+				}
+				.maingrid .column {
+					border:none;
+					margin-bottom:0;
+				}
+				footer {
+					padding-left:1rem;
+					padding-right:1rem;
+				}
+			}
 			
 		</style>
-		<div class="container" style="padding-top: var(--padding); min-height:100vh; display:grid; 
-			grid-template-rows: 1fr max-content;">
+		<div class="maincontainer">
 			<div class="maingrid">
 				<div class="column hide">
 					<div style="margin-bottom:1em; display: flex; gap:2em; align-items: center;">
@@ -129,22 +151,26 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 						})
 					})(document.currentScript.previousElementSibling)
 				</script>
-				<main id="MAIN" style="flex-grow: 1; background-color: white; padding:var(--padding); border-radius: 5px"></main>
-			</div>
-			<footer>
-				<div style="
-					padding-bottom:2em;
-					margin-top: 2em;
-					padding-top: 1em;
-					border-top: solid 1px #00000044;
-					
-					display: flex; flex-wrap: wrap; gap:0.5rem">
+				<main id="MAIN" style="
+					overflow: auto;
+					background-color: white; 
+					padding:var(--padding); 
+				
+				"></main>
 
-					<div style="flex-grow:1; display: flex; width:100%; gap:2em; align-items: center;">
-						
-						<a href="//${env.host}">${env.host}</a>
-						<a href="/@atee/controller">Вход</a>
-					</div>
+			</div>
+			<footer style="
+				padding-top:1em;
+				padding-bottom:1em;
+				margin-top: 2em;
+				border-top: solid 1px #00000044;
+				
+				display: flex; flex-wrap: wrap; gap:0.5rem">
+
+				<div style="flex-grow:1; display: flex; width:100%; gap:2em; align-items: center;">
+					
+					<a href="//${env.host}">${env.host}</a>
+					<a href="/@atee/controller">Вход</a>
 				</div>
 			</footer>
 		</div>

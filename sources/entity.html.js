@@ -1,13 +1,13 @@
 import err from "/-controller/err.html.js"
 import field from "/-dialog/field.html.js"
 import svg from "/-sources/svg.html.js"
-
+export const css = ['/-sources/represent.css']
 export const ROOT = (data, env, entity = data.entity) => err(data, env, ["ENTITY"]) || `
 	<div id="ENTITY"></div>
 `
 export const ENTITY = (data, env, entity = data.entity) => !data.result ? '' : `
 	<div style="opacity:0.5; float:right">Сущность</div>
-	<h1>${entity.entity_plural}</h1>
+	<h1>${entity.entity_title}</h1>
 	<table style="margin: 2em 0">
 		
 		<tr>
@@ -74,35 +74,15 @@ export const ENTITY = (data, env, entity = data.entity) => !data.result ? '' : `
 	</div>
 	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
 		<div>
-			Сущности ${field.switch({
-				action: '/-sources/set-entity-switch-prop', 
-				value: entity.represent_entity, 
-				values: {"":"скрыты", "1":"опубликованы"},
-				args: {entity_id: entity.entity_id, entityprop: 'represent_entity'}
-			})}.<br>
-			По умолчанию позиции ${field.switch({
-				action: '/-sources/set-entity-switch-prop', 
-				value: entity.represent_items, 
-				values: {"":"скрыты", "1":"опубликованы"},
-				args: {entity_id: entity.entity_id, entityprop: 'represent_items'}
-			})}.
-			<br>
-			По умолчанию свойства ${field.switch({
-				action: '/-sources/set-entity-switch-prop', 
-				value: entity.represent_props, 
-				values: {"":"скрыты", "1":"опубликованы"},
-				args: {entity_id: entity.entity_id, entityprop: 'represent_props'}
-			})}.
-			<br>
-			По умолчанию значения ${field.switch({
-				action: '/-sources/set-entity-switch-prop', 
-				value: entity.represent_values, 
-				values: {"":"скрыты", "1":"опубликованы"},
-				args: {entity_id: entity.entity_id, entityprop: 'represent_values'}
-			})}.
-			
-
-			
+			<button class="a">Настроить видимость</button>
+			<script>
+				(btn => {
+					btn.addEventListener('click', async () => {
+						const represent = await import('/-sources/represent.js').then(r => r.default)
+						represent.popup(${JSON.stringify({entity_id: entity.entity_id})}, '${env.layer.div}')
+					})
+				})(document.currentScript.previousElementSibling)
+			</script>
 		</div>
 	</div>
 	${showInters(data, env, entity)}
@@ -118,8 +98,8 @@ const showInters = (data, env, entity) => {
 		<table>
 			<thead>
 				<tr>
-					<td>По свойству</td>
-					<td>Подключается</td>
+					<td>Свойство</td>
+					<td>Сущность</td>
 					<td></td>
 				</tr>
 			</thead>
@@ -144,7 +124,6 @@ const showInters = (data, env, entity) => {
 }
 const showTrInter = (data, env, entity, inter) => `
 	<tr>
-		
 		<td>
 			${field.search({
 				cls: 'a',
@@ -181,14 +160,17 @@ export const PROPS = (data, env) => !data.result ? '' : `
 			max-width: 300px;
 		}
 	</style>
+
 	<table draggable="false" class="list" style="margin: 2em 0">
 		<thead>
 			<tr>
+				<td>
+					<button title="Изменить видимость сущности" class="represent_props eye transparent represent-${data.entity.represent_entity} ${defcustom(data.entity.represent_props)}">${svg.eye()}</button>
+				</td>
 				<td>Свойство</td>
 				<td>Тип</td>
 				<td>Значений</td>
-				<td>Обработка</td>
-				<td>Видимость</td>
+				<!-- <td>Обработка</td> -->
 				<td>Комментарий</td>
 				<td></td>
 			</tr>
@@ -198,9 +180,41 @@ export const PROPS = (data, env) => !data.result ? '' : `
 		</tbody>
 	</table>
 	${showScriptDrag(data, env)}
+	<script>
+		(div => {
+			const name = 'represent_prop'
+			const entity_id = ${data.entity.entity_id}
+			for (const btn of div.getElementsByClassName(name)) {
+				btn.addEventListener('click', async () => {
+					const td = btn.closest('td')
+					const tr = td.parentElement
+					const prop_id = tr.dataset.id
+					const represent = await import('/-sources/represent.js').then(r => r.default)
+					const data = await represent.set(btn, name, {prop_id})
+					if (!data.result) return
+					const Client = await window.getClient()
+					Client.reloaddiv('${env.layer.div}')
+				})
+			}
+		})(document.currentScript.parentElement)
+	</script>
+	<script>
+		(div => {
+			const name = 'represent_props'
+			const entity_id = ${data.entity.entity_id}
+			const btn = div.getElementsByClassName(name)[0]
+			btn.addEventListener('click', async () => {
+				const represent = await import('/-sources/represent.js').then(r => r.default)
+				const data = await represent.set(btn, name, {entity_id})
+				if (!data.result) return
+				const Client = await window.getClient()
+				Client.reloaddiv('${env.layer.div}')
+			})
+		})(document.currentScript.parentElement)
+	</script>
 	<div style="margin:2em 0 4em; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
 		${field.prompt({
-			value: 'Создать свойство', 
+			value: 'Добавить свойство', 
 			name: 'title',
 			input: '',
 			label: 'Название свойства', 
@@ -225,25 +239,66 @@ const showScriptDrag = (data, env) => `
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
+const defcustom = (value) => {
+	if (value) return 'represent-def-1'
+	else return 'represent-custom-0'
+}
 const showTr = (data, env, prop) => `
 	<tr class="item" data-id="${prop.prop_id}" style="white-space: nowrap;">
+		<td>
+			<button title="Изменить видимость свойства" class="represent_prop eye transparent ${prop.cls?.main} ${prop.cls?.custom}">${svg.eye()}</button>
+		</td>
 		<td style="${data.entity.prop_id == prop.prop_id ? 'font-weight:bold' : ''}">
 			<a href="prop/${prop.prop_id}">${prop.prop_title}</a>
 		</td>
 		<td>
-			${prop.type}
+			<!-- ${prop.type} -->
+			${field.setpop({
+				heading:'Тип',
+				value: prop.type,
+				name: 'type',
+				descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче 63 символов. Самый затратный <b>text</b>. Для ключей и связей подходит только value.',
+				action: '/-sources/set-prop-type', 
+				values: {"number":"number", "date":"date", "value":"value", "text":"text"},
+				args: {prop_id: prop.prop_id},
+				reloaddiv: env.layer.div
+			})}
 		</td>
 		<td>
-			${prop.multi ? "Несколько" : "Одно"}
+			<!-- ${prop.multi ? "Несколько" : "Одно"} -->
+			${field.setpop({
+				heading:'Значений',
+				value: prop.multi,
+				name: 'bit',
+				descr: 'Несколько значений могут быть разделены запятой с пробелом. Значений?',
+				action: '/-sources/set-prop-prop', 
+				values: {"":"Одно", "1":"Несколько"},
+				args: {prop_id: prop.prop_id, propprop: 'multi'},
+				reloaddiv: env.layer.div
+			})}
 		</td>
-		<td>
-			${prop.known ? "Спец" : "Авто"}
+		<td style="display:none">
+			<!-- ${prop.known ? "Спец" : "Авто"} -->
+			${field.setpop({
+					heading:'Обработка',
+					value: prop.known, 
+					name: 'bit',
+					descr: 'Специальные свойства имеют своё предназначение и в массив more для автоматической обработки не попадают. Старое название column. ',
+					action: '/-sources/set-prop-prop', 
+					values: {"":"Авто", "1":"Спец"},
+					args: {prop_id: prop.prop_id, propprop: 'known'}
+				})}
 		</td>
-		<td>
-			${prop.represent_prop ? "Показано" : "Скрыто"}
-		</td>
+		
 		<td class="ellipsis">
-			${prop.comment || ''}
+			<!-- ${prop.comment || ''} -->
+			${field.areamin({
+				name: 'comment', 
+				label: 'Комментарий', 
+				action: '/-sources/set-prop-comment', 
+				args: {prop_id: prop.prop_id},
+				value: prop.comment
+			})}
 		</td>
 		<td>
 			${field.button({
