@@ -760,13 +760,14 @@ export class Upload {
 				}
 				
 			}
-			if (heads.head_nicks.length > 10) { //Вносятся данные по прайсу и анализ сложный
-				const omit = omissions[sheet]
-				omit.emptyprops = {}
-				if (omit.keyrepeated.length > 100) omit.keyrepeated = []
-				if (omit.notconnected.length > 100) omit.notconnected = []
-				if (omit.notfinded.length > 100) omit.notfinded = []
-			}
+			//ОГРАНИЧЕНИЯ ЛИМИТЫ
+			// if (heads.head_nicks.length > 10) { //Вносятся данные по прайсу и анализ сложный
+			// 	const omit = omissions[sheet]
+			// 	omit.emptyprops = {}
+			// 	if (omit.keyrepeated.length > 100) omit.keyrepeated = []
+			// 	if (omit.notconnected.length > 100) omit.notconnected = []
+			// 	if (omit.notfinded.length > 100) omit.notfinded = []
+			// }
 		}
 		const searches = await db.all(`
 			SELECT distinct m.model_id, m.search

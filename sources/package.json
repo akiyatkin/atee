@@ -17,6 +17,6 @@
 	},
 	"homepage": "https://github.com/akiyatkin/atee#readme",
 	"dependencies": {
-    	
+    	"fast-xml-parser":"^4"
 	}
 }

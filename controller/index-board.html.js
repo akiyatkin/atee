@@ -152,6 +152,8 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 					})(document.currentScript.previousElementSibling)
 				</script>
 				<main id="MAIN" style="
+					container-type: inline-size;
+  					container-name: main;
 					overflow: auto;
 					background-color: white; 
 					padding:var(--padding); 
@@ -174,7 +176,7 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 				</div>
 			</footer>
 		</div>
-	</body>
+	</body>	
 </html>
 `
 

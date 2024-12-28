@@ -411,7 +411,19 @@ rest.addResponse('sheet', ['admin'], async view => {
 	const source_id = await view.get('source_id#required')
 	const source = view.data.source = await Sources.getSource(db, source_id)
 	const entity = view.data.entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
+	
+	
+	
+	return view.ret()
+})
+rest.addResponse('sheet-sheet', ['admin'], async view => {
+	const db = await view.get('db')
+	const source_id = await view.get('source_id#required')
+	const source = view.data.source = await Sources.getSource(db, source_id)
+	const entity = view.data.entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
+	const sheets = view.data.sheets = await Sources.getSheets(db, source_id)
 	const sheet_index = await view.get('sheet_index#required')
+	
 	const sheet = view.data.sheet = await db.fetch(`
 		SELECT sh.sheet_title, sh.sheet_index, sh.key_index, sh.sheet_index, sh.entity_id,
 			sh.represent_sheet + 0 as represent_sheet
@@ -419,26 +431,47 @@ rest.addResponse('sheet', ['admin'], async view => {
 			left join sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
 		WHERE sh.source_id = :source_id and sh.sheet_index = :sheet_index
 	`, {source_id, sheet_index}) 
-	view.ans.date_max = await db.col(`
-		SELECT UNIX_TIMESTAMP(max(ap.date_appear))
-		FROM sources_appears ap
-		WHERE ap.source_id = :source_id
+	
+	view.data.count = await db.col(`
+		select count(*) from sources_cells
+		WHERE source_id = :source_id
 	`, source)
 	view.ans.date_min = await db.col(`
 		SELECT UNIX_TIMESTAMP(min(ap.date_appear))
 		FROM sources_appears ap
 		WHERE ap.source_id = :source_id
 	`, source)
-	
-
+	view.ans.date_max = await db.col(`
+		SELECT UNIX_TIMESTAMP(max(ap.date_appear))
+		FROM sources_appears ap
+		WHERE ap.source_id = :source_id
+	`, source)
 	return view.ret()
 })
+
+
 rest.addResponse('sheet-table', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const source = view.data.source = await Sources.getSource(db, source_id)
+	
+	const hashs = await view.get('hashs')
+
+	
+	const where_search = []
+	if (!hashs.length) where_search = ['1=1']
+	for (const hash of hashs) {
+		const sql = 'ro.search like "% ' + hash.join('%" and ro.search like "') + '%"'
+		where_search.push(sql)
+	}
+
 	let date = await view.get('date')
 	
+	view.ans.date_min = await db.col(`
+		SELECT UNIX_TIMESTAMP(min(ap.date_appear))
+		FROM sources_appears ap
+		WHERE ap.source_id = :source_id
+	`, source)
 	view.ans.date_max = await db.col(`
 		SELECT UNIX_TIMESTAMP(max(ap.date_appear))
 		FROM sources_appears ap
@@ -547,15 +580,35 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 		last_row_index = row_index
 
 		prunings[text_index] ??= []
-		prunings[text_index][col_index] = pruning
+		prunings[text_index][col_index] &&= pruning
 
 		texts[text_index] ??= []
 		texts[text_index][col_index] ??= []
-		texts[text_index][col_index][multi_index] = text
+
+		let adjust = text.replace(/<(.|\n)*?>/g, '').trim()
+		//adjust = 'Тумбовая сетевая проходная «STL-03NM»'
+
+		if (adjust.length > 31) {
+			//adjust = safeSubstring(adjust, 0, 31) + '... <small class="mute">' + adjust.length + '</small>'
+			adjust = adjust.slice(0, 31) + '...' //+ ' <small class="mute">' + adjust.length + '</small>'
+			//adjust = adjust.substr(0, 31) + '... <small class="mute">' + adjust.length + '</small>'
+			//console.log(new TextEncoder().encode(adjust))
+			//adjust = adjust.match(LIMREG)[0]
+
+		}
+		texts[text_index][col_index][multi_index] = adjust
 
 		winners[text_index] ??= []
 		winners[text_index][col_index] ??= []
 		winners[text_index][col_index][multi_index] = winner
+	}
+	for (const text_index in texts) {
+		for (const {col_index} of cols) {
+			texts[text_index][col_index] ??= [null]
+			prunings[text_index][col_index] ??= 0
+			winners[text_index][col_index] ??= [0]
+		}
+
 	}
 	return view.ret()
 })
@@ -565,98 +618,8 @@ rest.addResponse('source', ['admin'], async view => {
 	const source_id = await view.get('source_id#required')
 	const source = view.data.source = await Sources.getSource(db, source_id)
 	
-	const custom_sheets =await db.all(`
-		SELECT 
-			csh.source_id,
-			csh.sheet_title,
-
-			cast(csh.represent_custom_sheet as SIGNED) as represent_custom_sheet,
-			
-			csh.entity_id,
-			en.entity_plural,
-			en.entity_title,
-			pr.prop_title
-
-		FROM sources_custom_sheets csh
-			LEFT JOIN sources_sources so on so.source_id = csh.source_id
-			LEFT JOIN sources_entities en on en.entity_id = nvl(csh.entity_id, so.entity_id)
-			LEFT JOIN sources_props pr on pr.prop_id = en.prop_id
-		WHERE csh.source_id = :source_id
-		ORDER by csh.sheet_title
-	`, source)
+	const sheets = view.data.sheets = await Sources.getSheets(db, source_id)
 	
-	const loaded_sheets = await db.all(`
-		SELECT 
-			sh.source_id,
-			sh.sheet_index,
-			sh.sheet_title,
-			sh.entity_id,
-			cast(sh.represent_sheet as SIGNED) as represent_sheet,
-			en.entity_plural,
-			en.entity_title,
-			pr.prop_title
-		FROM sources_sheets sh
-		LEFT JOIN sources_entities en on en.entity_id = sh.entity_id
-		LEFT JOIN sources_props pr on pr.prop_id = en.prop_id
-		WHERE sh.source_id = :source_id
-		ORDER by sh.sheet_index
-	`, source)
-
-	// const stat = view.data.stat ??= {}
-	// stat.sheets = loaded_sheets.length
-	// stat.rows = await db.col(`
-	// 	SELECT count(*)
-	// 	FROM sources_rows ro
-	// 	WHERE ro.source_id = :source_id
-	// `, source)
-
-
-	const sheets = {}
-	for (const descr of loaded_sheets) {
-		descr.count_rows = await db.col(`
-			SELECT count(*) 
-			FROM sources_rows 
-			WHERE source_id = :source_id and sheet_index = :sheet_index
-		`, descr)
-		descr.count_keys = await db.col(`
-			SELECT count(*) 
-			FROM sources_rows 
-			WHERE source_id = :source_id and sheet_index = :sheet_index and key_id is not null
-		`, descr)
-		descr.loaded = true
-	}
-	for (const descr of custom_sheets) descr.custom = true
-	for (const descr of [...loaded_sheets, ...custom_sheets]) {
-		const sheet = sheets[descr.sheet_title] ??= {source_id, sheet_title: descr.sheet_title}
-		sheet.entity_title = descr.entity_title
-		sheet.entity_plural = descr.entity_plural
-		sheet.prop_title = descr.prop_title
-		delete descr.entity_title
-		delete descr.prop_title
-		delete descr.entity_plural
-		delete descr.sheet_title
-		sheet.remove ||= descr.custom
-		sheet[descr.loaded ? 'loaded' : 'custom'] = descr
-	}
-	view.data.sheets = Object.values(sheets)
-	for (const sheet of view.data.sheets) {
-		sheet.remove ||= await db.col(`
-			SELECT 1 FROM sources_custom_cols
-			WHERE source_id = :source_id and sheet_title = :sheet_title
-			LIMIT 1
-		`, sheet)
-		sheet.remove ||= await db.col(`
-			SELECT 1 FROM sources_custom_rows
-			WHERE source_id = :source_id and sheet_title = :sheet_title
-			LIMIT 1
-		`, sheet)
-		sheet.remove ||= await db.col(`
-			SELECT 1 FROM sources_custom_cells
-			WHERE source_id = :source_id and sheet_title = :sheet_title
-			LIMIT 1
-		`, sheet)		
-		sheet.cls = represent.calcCls(source.represent_source, sheet.custom?.represent_custom_sheet, source.represent_sheets)
-	}
 	
 	return view.ret()
 })

@@ -4,10 +4,11 @@ import send from '/-dialog/send.js'
 const sendit = async (div, action, post) => {
 	if (!div.counter) div.counter = 0
 	div.counter++
+	const origtitle = div.title
 	div.title = "В процессе ..."
 	sendit.setClass(div, 'process')
 	const ans = await send(action, post)
-	div.title = (ans.msg || "Сохранено").replaceAll('\t', '')
+	div.title = ans.msg ? ans.msg.replaceAll('\t', '') : origtitle
 	setTimeout(() => {
 		div.counter--
 		if (div.counter) return

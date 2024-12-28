@@ -1,7 +1,7 @@
 import err from "/-controller/err.html.js"
 import field from "/-dialog/field.html.js"
 import svg from "/-sources/svg.html.js"
-export const css = ['/-sources/represent.css']
+export const css = ['/-sources/represent.css','/-sources/revscroll.css']
 export const ROOT = (data, env, entity = data.entity) => err(data, env, ["ENTITY"]) || `
 	<div id="ENTITY"></div>
 `
@@ -23,9 +23,13 @@ export const ENTITY = (data, env, entity = data.entity) => !data.result ? '' : `
 					find: 'prop_id',
 					action: '/-sources/set-entity-prop',
 					args: {entity_id: entity.entity_id},
-					reloaddiv:'PROPS'
+					reloaddiv:env.layer.div
 				})}
 			</td>
+		</tr>
+		<tr>
+			<td>Ник</td>
+			<td>${entity.entity_nick}</td>
 		</tr>
 	</table>
 	
@@ -38,7 +42,7 @@ export const ENTITY = (data, env, entity = data.entity) => !data.result ? '' : `
 	
 	<div style="display: flex; flex-wrap: wrap; gap: 0.5em 1em; margin:2em 0">
 		<div style="flex-grow:1;">
-			${field.textok({
+			${field.text({
 				value: entity.entity_title,
 				type: 'text',
 				name: 'title',
@@ -49,7 +53,7 @@ export const ENTITY = (data, env, entity = data.entity) => !data.result ? '' : `
 			})}
 		</div>
 		<div style="flex-grow:1;">
-			${field.textok({
+			${field.text({
 				value: entity.entity_plural,
 				type: 'text',
 				name: 'title',
@@ -160,58 +164,59 @@ export const PROPS = (data, env) => !data.result ? '' : `
 			max-width: 300px;
 		}
 	</style>
-
-	<table draggable="false" class="list" style="margin: 2em 0">
-		<thead>
-			<tr>
-				<td>
-					<button title="Изменить видимость сущности" class="represent_props eye transparent represent-${data.entity.represent_entity} ${defcustom(data.entity.represent_props)}">${svg.eye()}</button>
-				</td>
-				<td>Свойство</td>
-				<td>Тип</td>
-				<td>Значений</td>
-				<!-- <td>Обработка</td> -->
-				<td>Комментарий</td>
-				<td></td>
-			</tr>
-		</thead>
-		<tbody draggable="false">
-			${data.list.map(prop => showTr(data, env, prop)).join('')}
-		</tbody>
-	</table>
-	${showScriptDrag(data, env)}
-	<script>
-		(div => {
-			const name = 'represent_prop'
-			const entity_id = ${data.entity.entity_id}
-			for (const btn of div.getElementsByClassName(name)) {
+	<div class="revscroll" style="margin: 2em 0">
+		<table draggable="false" class="list">
+			<thead>
+				<tr>
+					<td>
+						<button title="Изменить видимость сущности" class="represent_props eye transparent represent-${data.entity.represent_entity} ${defcustom(data.entity.represent_props)}">${svg.eye()}</button>
+					</td>
+					<td>Свойство</td>
+					<td>Тип</td>
+					<td>Значений</td>
+					<td>Обработка</td>
+					<td>Комментарий</td>
+					<td></td>
+				</tr>
+			</thead>
+			<tbody draggable="false">
+				${data.list.map(prop => showTr(data, env, prop)).join('')}
+			</tbody>
+		</table>
+		${showScriptDrag(data, env)}
+		<script>
+			(div => {
+				const name = 'represent_prop'
+				const entity_id = ${data.entity.entity_id}
+				for (const btn of div.getElementsByClassName(name)) {
+					btn.addEventListener('click', async () => {
+						const td = btn.closest('td')
+						const tr = td.parentElement
+						const prop_id = tr.dataset.id
+						const represent = await import('/-sources/represent.js').then(r => r.default)
+						const data = await represent.set(btn, name, {prop_id})
+						if (!data.result) return
+						const Client = await window.getClient()
+						Client.reloaddiv('${env.layer.div}')
+					})
+				}
+			})(document.currentScript.parentElement)
+		</script>
+		<script>
+			(div => {
+				const name = 'represent_props'
+				const entity_id = ${data.entity.entity_id}
+				const btn = div.getElementsByClassName(name)[0]
 				btn.addEventListener('click', async () => {
-					const td = btn.closest('td')
-					const tr = td.parentElement
-					const prop_id = tr.dataset.id
 					const represent = await import('/-sources/represent.js').then(r => r.default)
-					const data = await represent.set(btn, name, {prop_id})
+					const data = await represent.set(btn, name, {entity_id})
 					if (!data.result) return
 					const Client = await window.getClient()
 					Client.reloaddiv('${env.layer.div}')
 				})
-			}
-		})(document.currentScript.parentElement)
-	</script>
-	<script>
-		(div => {
-			const name = 'represent_props'
-			const entity_id = ${data.entity.entity_id}
-			const btn = div.getElementsByClassName(name)[0]
-			btn.addEventListener('click', async () => {
-				const represent = await import('/-sources/represent.js').then(r => r.default)
-				const data = await represent.set(btn, name, {entity_id})
-				if (!data.result) return
-				const Client = await window.getClient()
-				Client.reloaddiv('${env.layer.div}')
-			})
-		})(document.currentScript.parentElement)
-	</script>
+			})(document.currentScript.parentElement)
+		</script>
+	</div>
 	<div style="margin:2em 0 4em; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
 		${field.prompt({
 			value: 'Добавить свойство', 
@@ -277,7 +282,7 @@ const showTr = (data, env, prop) => `
 				reloaddiv: env.layer.div
 			})}
 		</td>
-		<td style="display:none">
+		<td>
 			<!-- ${prop.known ? "Спец" : "Авто"} -->
 			${field.setpop({
 					heading:'Обработка',
@@ -326,4 +331,20 @@ const showComment = (data, env, entity) => `
 			value: entity.comment
 		})}
 	</div>
+	<script>
+		(div => {
+			const field = div.querySelector('.field')
+			if (!field) return
+			const check = async () => {
+				if (!div.closest('body')) return
+				const data = await fetch('${env.layer.json}').then(r => r.json())
+				if (!div.closest('body')) return
+				if (data.entity.comment != field.innerHTML) {
+					alert('Комментарий был изменён на другой вкладке или другим пользователем, обновите страницу!')
+				}
+				setTimeout(check, 30000)
+			}
+			setTimeout(check, 30000)	
+		})(document.currentScript.previousElementSibling)
+	</script>
 `

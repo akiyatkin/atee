@@ -687,7 +687,7 @@ field.rowtext = ({edit = true, name, label, action, args = {}, value, type = 'te
 			<script>
 				(div => {
 					const field = div.querySelector('.field')
-					
+					if (!field) return
 					field.addEventListener('input', async () => {
 						console.log('asdf')
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)

@@ -7,12 +7,12 @@ import Consequences from "/-sources/Consequences.js"
 import represent from "/-sources/represent.js"
 
 Sources.execRestFunc = async (file, fnname, visitor, res, req = {}) => {
-	const stat = await fs.stat(file).catch(r => false)
+	const stat = await fs.stat(file).catch(r => console.log(r))
 	if (!stat) return 'Не найден файл'
 	res.modified = new Date(stat.mtime).getTime()
-	const rest = await import('/' + file).then(r => r.default).catch(r => false)
+	const rest = await import('/' + file).then(r => r.default).catch(r => console.log(r))
 	if (!rest || !rest.get) return `Исключение в коде ` + file
-	const reans = await rest.get(fnname, req, visitor).catch(r => false)
+	const reans = await rest.get(fnname, req, visitor).catch(r => console.log(r))
 	if (!reans || !reans.data) return `Исключение в ${fnname}`
 	const data = reans.data
 	if (!data.result) return `Нет результата ${fnname} ${data.msg || ''}`
@@ -56,7 +56,6 @@ Sources.load = async (db, source, visitor) => {
 	if (source.date_start) return
 	
 	const timer_rest = Date.now()
-
 	await Sources.setSource(db, `
 		date_start = now()
 	`, source)
@@ -72,15 +71,28 @@ Sources.load = async (db, source, visitor) => {
 		msg_load = :msg_load
 	`, source)
 
-	if (source.error) return false
+	if (source.error) {
+		await Sources.setSource(db, `
+			date_start = null
+		`, source)
+		return false
+	}
 
 	const timer_insert = Date.now()
 	
-	const sheets = Sources.cleanSheets(res.data.sheets)
+	let sheets = []
+	try {
+		sheets = Sources.cleanSheets(res.data.sheets)
+	} catch (e) {
+		console.log(e)
+		source.error = 'Ошибка при подготовке данных: ' + e.toString()
+	}
+	console.log(1)
 	await Sources.insertSheets(db, source, sheets).catch(e => {
 		console.log(e)
 		source.error = 'Ошибка при внесении данных: ' + e.toString()
 	})
+	console.log(3)
 
 	source.duration_insert = Date.now() - timer_insert
 	source.date_content = Math.round(Number(res.data?.date_content || 0) / 1000)
@@ -159,28 +171,28 @@ Sources.cleanSheets = (sheets) => {
 }
 Sources.insertSheets = async (db, source, sheets) => {
 	const {source_id} = source
-	await db.exec(`
-		DELETE sh, co, ro, ce
-		FROM sources_sources so
-			LEFT JOIN sources_sheets sh on sh.source_id = so.source_id
-			LEFT JOIN sources_cols co on co.source_id = so.source_id
-			LEFT JOIN sources_rows ro on ro.source_id = so.source_id
-			LEFT JOIN sources_cells ce on ce.source_id = so.source_id
-   		WHERE so.source_id = :source_id
-	`, source)
-
+	
+	await db.exec(`DELETE FROM sources_sheets WHERE source_id = :source_id`, source)
+	await db.exec(`DELETE FROM sources_cols WHERE source_id = :source_id`, source)
+	await db.exec(`DELETE FROM sources_rows WHERE source_id = :source_id`, source)
+	await db.exec(`DELETE FROM sources_cells WHERE source_id = :source_id`, source)
 	
 	
 	for (const sheet_index in sheets) {
 		const {title: sheet_title, rows, head} = sheets[sheet_index]
+		
+
 		await db.exec(`
 			INSERT INTO sources_sheets (source_id, sheet_index, sheet_title)
 			VALUES (:source_id, :sheet_index, :sheet_title)
 		`, {source_id, sheet_index, sheet_title})
 		
 		for (const col_index in head) {
-			const col_title = head[col_index]
-			const col_nick = nicked(col_title)
+
+			const col_title = head[col_index].slice(-63).trim()
+			let col_nick = nicked(col_title)
+			if (col_nick.length > 63) col_nick = nicked(col_nick.slice(-63))
+
 			await db.exec(`
 				INSERT INTO sources_cols (source_id, sheet_index, col_index, col_nick, col_title)
 				VALUES (:source_id, :sheet_index, :col_index, :col_nick, :col_title)
@@ -188,13 +200,14 @@ Sources.insertSheets = async (db, source, sheets) => {
 		}
 
 		for (const row_index in rows) {
+
 			await db.exec(`
 				INSERT INTO sources_rows (source_id, sheet_index, row_index)
 				VALUES (:source_id, :sheet_index, :row_index)
 			`, {source_id, sheet_index, row_index})
 			for (const col_index in rows[row_index]) {
 				const text = rows[row_index][col_index]
-				//if (text === null) continue
+				if (text === null) continue
 				await db.exec(`
 					INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, text)
 					VALUES (:source_id, :sheet_index, :row_index, :col_index, :text)
@@ -362,6 +375,102 @@ Sources.getProp = async (db, prop_id) => {
 	`, {prop_id})
 	return prop
 }
+Sources.getSheets = async (db, source_id) => {
+	const source = await Sources.getSource(db, source_id)
+	const custom_sheets =await db.all(`
+		SELECT 
+			csh.source_id,
+			csh.sheet_title,
+
+			cast(csh.represent_custom_sheet as SIGNED) as represent_custom_sheet,
+			
+			csh.entity_id,
+			en.entity_plural,
+			en.entity_title,
+			pr.prop_title
+
+		FROM sources_custom_sheets csh
+			LEFT JOIN sources_sources so on so.source_id = csh.source_id
+			LEFT JOIN sources_entities en on en.entity_id = nvl(csh.entity_id, so.entity_id)
+			LEFT JOIN sources_props pr on pr.prop_id = en.prop_id
+		WHERE csh.source_id = :source_id
+		ORDER by csh.sheet_title
+	`, {source_id})
+	
+	const loaded_sheets = await db.all(`
+		SELECT 
+			sh.source_id,
+			sh.sheet_index,
+			sh.sheet_title,
+			sh.entity_id,
+			cast(sh.represent_sheet as SIGNED) as represent_sheet,
+			en.entity_plural,
+			en.entity_title,
+			pr.prop_title
+		FROM sources_sheets sh
+		LEFT JOIN sources_entities en on en.entity_id = sh.entity_id
+		LEFT JOIN sources_props pr on pr.prop_id = en.prop_id
+		WHERE sh.source_id = :source_id
+		ORDER by sh.sheet_index
+	`, {source_id})
+
+	// const stat = view.data.stat ??= {}
+	// stat.sheets = loaded_sheets.length
+	// stat.rows = await db.col(`
+	// 	SELECT count(*)
+	// 	FROM sources_rows ro
+	// 	WHERE ro.source_id = :source_id
+	// `, {source_id})
+
+
+	const sheets = {}
+	for (const descr of loaded_sheets) {
+		descr.count_rows = await db.col(`
+			SELECT count(*) 
+			FROM sources_rows 
+			WHERE source_id = :source_id and sheet_index = :sheet_index
+		`, descr)
+		descr.count_keys = await db.col(`
+			SELECT count(*) 
+			FROM sources_rows 
+			WHERE source_id = :source_id and sheet_index = :sheet_index and key_id is not null
+		`, descr)
+		descr.loaded = true
+	}
+	for (const descr of custom_sheets) descr.custom = true
+	for (const descr of [...loaded_sheets, ...custom_sheets]) {
+		const sheet = sheets[descr.sheet_title] ??= {source_id, sheet_title: descr.sheet_title}
+		sheet.entity_title = descr.entity_title
+		sheet.entity_plural = descr.entity_plural
+		sheet.prop_title = descr.prop_title
+		delete descr.entity_title
+		delete descr.prop_title
+		delete descr.entity_plural
+		delete descr.sheet_title
+		sheet.remove ||= descr.custom
+		sheet[descr.loaded ? 'loaded' : 'custom'] = descr
+	}
+	const list = Object.values(sheets)
+	for (const sheet of list) {
+		sheet.remove ||= await db.col(`
+			SELECT 1 FROM sources_custom_cols
+			WHERE source_id = :source_id and sheet_title = :sheet_title
+			LIMIT 1
+		`, sheet)
+		sheet.remove ||= await db.col(`
+			SELECT 1 FROM sources_custom_rows
+			WHERE source_id = :source_id and sheet_title = :sheet_title
+			LIMIT 1
+		`, sheet)
+		sheet.remove ||= await db.col(`
+			SELECT 1 FROM sources_custom_cells
+			WHERE source_id = :source_id and sheet_title = :sheet_title
+			LIMIT 1
+		`, sheet)
+		sheet.cls = represent.calcCls(source.represent_source, sheet.custom?.represent_custom_sheet, source.represent_sheets)
+	}
+	return list
+}
 Sources.getSheet = async (db, source_id, sheet_title) => {
 	const sheet = await db.fetch(`
 		SELECT 
@@ -440,7 +549,12 @@ Sources.getCellByIndex = async (db, source_id, sheet_index, row_index, col_index
 			LEFT JOIN sources_cols co on (co.source_id = ce.source_id and co.sheet_index = ce.sheet_index and co.col_index = ce.col_index)
 			LEFT JOIN sources_rows ro on (ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index)
 			LEFT JOIN sources_sheets sh on (sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index)
-			LEFT JOIN sources_custom_cells cce on (cce.source_id = ce.source_id and cce.sheet_title = sh.sheet_title and cce.col_title = co.col_title)
+			LEFT JOIN sources_custom_cells cce on (
+				cce.source_id = ce.source_id and cce.sheet_title = sh.sheet_title 
+				and cce.col_title = co.col_title
+				and cce.repeat_index = ro.repeat_index
+				and cce.key_id = ro.key_id
+			)
 		WHERE ce.source_id = :source_id 
 			and ce.sheet_index = :sheet_index
 			and ce.row_index = :row_index
@@ -493,7 +607,14 @@ Sources.getCell = async (db, source_id, sheet_title, key_id, repeat_index, col_t
 			LEFT JOIN sources_cols co on (co.source_id = ce.source_id and co.sheet_index = ce.sheet_index and co.col_index = ce.col_index)
 			LEFT JOIN sources_rows ro on (ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index)
 			LEFT JOIN sources_sheets sh on (sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index)
-			LEFT JOIN sources_custom_cells cce on (cce.source_id = ce.source_id and cce.sheet_title = sh.sheet_title and cce.col_title = co.col_title)
+			LEFT JOIN sources_custom_cells cce on (
+					cce.source_id = ce.source_id 
+					and cce.sheet_title = sh.sheet_title 
+					and cce.col_title = co.col_title
+					and cce.repeat_index = ro.repeat_index
+					and cce.key_id = ro.key_id
+
+					)
 		WHERE ce.source_id = :source_id 
 			and sh.sheet_title = :sheet_title
 			and ce.sheet_index = sh.sheet_index
@@ -505,6 +626,7 @@ Sources.getCell = async (db, source_id, sheet_title, key_id, repeat_index, col_t
 			and ce.multi_index = :multi_index
 	`, {source_id, sheet_title, key_id, repeat_index, col_title, multi_index})
 	if (!cell) return
+	
 	cell.full_text = await db.col(`
 		SELECT
 			GROUP_CONCAT(text ORDER BY multi_index SEPARATOR ', ')

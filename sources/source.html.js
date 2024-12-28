@@ -181,6 +181,22 @@ const showComment = (data, env, source) => `
 			value: source.comment
 		})}
 	</p>
+	<script>
+		(div => {
+			const field = div.querySelector('.field')
+			if (!field) return
+			const check = async () => {
+				if (!div.closest('body')) return
+				const data = await fetch('${env.layer.json}').then(r => r.json())
+				if (!div.closest('body')) return
+				if (data.source.comment != field.innerHTML) {
+					alert('Комментарий был изменён на другой вкладке или другим пользователем, обновите страницу!')
+				}
+				setTimeout(check, 30000)
+			}
+			setTimeout(check, 30000)
+		})(document.currentScript.previousElementSibling)
+	</script>
 `
 const showButtons = (data, env, source) => `
 	<div style="margin:2em 0; display: flex; flex-wrap:wrap; gap: 1em; align-items: center;">
@@ -232,19 +248,23 @@ const showStat = (data, env, source) => `
 	<table>
 		<tr>
 			<td>
-				Сообщение get-load 
+				Сообщение get-check 
 			</td>
+			<td>${date.ai(source.date_check)}</td>
 			<td>
 				${source.msg_check || 'Нет сообщений'}
 			</td>
+			<td>${date.ai(source.date_mtime)}</td>
 		</tr>
 		<tr>
 			<td>
-				Сообщение get-check
+				Сообщение get-load
 			</td>
+			<td>${date.ai(source.date_load)}</td>
 			<td>
-				${source.msg_load || 'Нет сообщений'}
+				 ${source.msg_load || 'Нет сообщений'}
 			</td>
+			<td>${date.ai(source.date_content)}</td>
 		</tr>
 	</table>
 	

@@ -32,7 +32,7 @@ main.col = (data, env, col = data.col, entity = data.entity, prop = data.prop, s
 
 `
 main.row = (data, env, row = data.row) => `Строка ${row.row_index}`
-main.cell = (data, env, cell = data.cell, prop = data.prop) => `
+main.cell = (data, env, cell = data.cell || {text: null}, prop = data.prop) => `
 	<div style="color:red">${cell.pruning ? 'Значение в ячейке обрезано из-за выбранного типа' : ''}</div>
 	<div>${!cell.represent ? 'Ячейка скрыта' : ''}</div>
 	<div>${!cell.winner && cell.represent ? 'Значение заменено другим подходящим значением' : ''}</div>
@@ -40,9 +40,9 @@ main.cell = (data, env, cell = data.cell, prop = data.prop) => `
 	<div>${cell.text === '' ? 'Указана пустая строка, затирает другие значения' : ''}</div>
 	<div style="color:darkgreen">${cell.winner ? 'Значение попадает в итоговые данные' : ''}</div>
 	
-	<div>${prop ? showTypeStat(data, env, prop, cell) : 'Тип не определён'}</div>
+	<div>${prop ? showTypeStat(data, env, prop, cell) : 'Не выбрана сущность данных'}</div>
 	<div style="background: ${cell.winner ? '#eaf7d1': '#f5e6e6'}; padding:1em; margin: 1em 0">
-		${prop?.type == 'text' ? cell.text : (cell.number ?? '') + (cell.date ?? '') + (cell.value_title ?? '')}
+		${!prop || prop.type == 'text' ? (cell.text ?? '') : (cell.number ?? '') + (cell.date ?? '') + (cell.value_title ?? '')}
 	</div>
 	${data.cell ? showSummary(data, env) : ''}
 	

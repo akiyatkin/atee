@@ -174,7 +174,7 @@ Consciousness.setCellType = async (db, cell, type) => {
 				pruning = true
 			}
 		} else if (type == 'value') {
-			const value_title = text.slice(-63)
+			const value_title = text.slice(-63).trim()
 			if (value_title != text) pruning = true
 			const value_nick = nicked(nicked(text).slice(-63))
 			if (!value_nick) pruning = true

@@ -2,7 +2,7 @@ import err from "/-controller/err.html.js"
 import field from "/-dialog/field.html.js"
 import date from "/-words/date.html.js"
 import svg from "/-sources/svg.html.js"
-export const css = ['/-sources/represent.css']
+export const css = ['/-sources/represent.css','/-sources/revscroll.css']
 
 export const ROOT = (data, env, entity = data.entity) => err(data, env, ["PROP"]) || `
 	<div id="PROP"></div>
@@ -80,46 +80,47 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 	${showComment(data, env, prop)}
 		
 	
-
-	<table style="table-layout: fixed">
-		<thead>
-			<tr>
-				<td></td>
-				<td>text</td>
-				<td>Преимущество</td>
-				<td>Всего</td>
-				<td>number</td>
-				<td>date</td>
-				<td>value_id</td>
-				<td>value_title</td>
-				<td>value_nick</td>
-			</tr>
-		</thead>
-		<tbody>
-			${data.list.map(row => showValueTr(data, env, row)).join('')}
-		</tbody>
-	</table>
-	<script>
-		(div => {
-			const name = 'represent_value'
-			const prop_id = ${data.prop.prop_id}
-			for (const btn of div.getElementsByClassName(name)) {
-				btn.addEventListener('click', async () => {
-					const value_id = btn.dataset.value_id
-					const represent = await import('/-sources/represent.js').then(r => r.default)
-					const data = await represent.set(btn, name, {prop_id, value_id})
-					if (!data.result) return
-					// const Client = await window.getClient()
-					// Client.reloaddiv('${env.layer.div}')
-				})
-			}
-		})(document.currentScript.parentElement)
-	</script>
+	<div class="revscroll">
+		<table style="table-layout: fixed">
+			<thead>
+				<tr>
+					<td></td>
+					<td>text</td>
+					<td>Преимущество</td>
+					<td>Всего</td>
+					<td>number</td>
+					<td>date</td>
+					<td>value_id</td>
+					<td>value_title</td>
+					<td>value_nick</td>
+				</tr>
+			</thead>
+			<tbody>
+				${data.list.map(row => showValueTr(data, env, row)).join('')}
+			</tbody>
+		</table>
+		<script>
+			(div => {
+				const name = 'represent_value'
+				const prop_id = ${data.prop.prop_id}
+				for (const btn of div.getElementsByClassName(name)) {
+					btn.addEventListener('click', async () => {
+						const value_id = btn.dataset.value_id
+						const represent = await import('/-sources/represent.js').then(r => r.default)
+						const data = await represent.set(btn, name, {prop_id, value_id})
+						if (!data.result) return
+						// const Client = await window.getClient()
+						// Client.reloaddiv('${env.layer.div}')
+					})
+				}
+			})(document.currentScript.parentElement)
+		</script>
+	</div>
 	<p>
 		Всего: <b>${data.count}</b>, показано <b>${data.count > 1000 ? 1000 : data.count}</b>.
 	</p>
 	<div>
-		${field.textok({
+		${field.text({
 			value: prop.prop_title,
 			type: 'text',
 			name: 'title',
@@ -156,4 +157,20 @@ const showComment = (data, env, prop) => `
 			value: prop.comment
 		})}
 	</div>
+	<script>
+		(div => {
+			const field = div.querySelector('.field')
+			if (!field) return
+			const check = async () => {
+				if (!div.closest('body')) return
+				const data = await fetch('${env.layer.json}').then(r => r.json())
+				if (!div.closest('body')) return
+				if (data.prop.comment != field.innerHTML) {
+					alert('Комментарий был изменён на другой вкладке или другим пользователем, обновите страницу!')
+				}
+				setTimeout(check, 30000)
+			}
+			setTimeout(check, 30000)	
+		})(document.currentScript.previousElementSibling)
+	</script>
 `

@@ -67,7 +67,7 @@ button.transparent:active {
 }
 button.process,
 .button.process {
-	border-style: dashed;
+/*	border-style: dashed;*/
 	opacity:0.5;
 	cursor: default;
 }

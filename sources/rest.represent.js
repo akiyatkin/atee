@@ -131,8 +131,9 @@ rest.addResponse('get-represent', ['admin'], async view => {
 		row.cls = represent.calcCls(
 			source.represent_source && sheet.represent_sheet && row.represent_row_key, 
 			row.represent_custom_row, 
-			source.represent_rows && key_id
+			source.represent_rows * !!row.key_id
 		)
+
 		row.key = key_id ? await Sources.getCellByIndex(db, source_id, row.sheet_index, row.row_index, row.key_index, 0) : false	
 		if (row.key) {
 			row.key.cls = represent.calcCls(
@@ -158,7 +159,7 @@ rest.addResponse('get-represent', ['admin'], async view => {
 		cell.cls = represent.calcCls(
 			source.represent_source && sheet.represent_sheet && (sheet.key_index == cell.col_index || row.represent_row_key) && row.represent_row && col.represent_col, 
 			cell.represent_custom_cell, 
-			source.represent_cells && key_id
+			source.represent_cells * !!key_id
 		)
 	}
 	const prop = view.data.prop = prop_id ? await Sources.getProp(db, prop_id) : false
@@ -200,7 +201,7 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	
 
 	let main = ''
-	if (cell) main = 'cell'
+	if (multi_index != null) main = 'cell'
 	else if (col) main = 'col'
 	else if (row) main = 'row'
 	else if (prop) main = 'prop'
@@ -622,7 +623,7 @@ rest.addAction('set-represent_cell', ['admin'], async view => {
 	const row = await Sources.getRow(db, source_id, sheet_title, key_id, repeat_index)
 	const sheet = await Sources.getSheet(db, source_id, sheet_title)
 	const value = cell.represent_custom_cell
-
+	
 	const newvalue = getCustomSwitch(value, source.represent_cells)
 
 	

@@ -334,6 +334,7 @@ rest.addAction('set-source-load', ['admin'], async view => {
 
 	if (!source.date_check) await Sources.check(db, source, view.visitor)
 	if (source.error) return view.err('Для загрузки необходимо устранить ошибку')
+	
 	Sources.load(db, source, view.visitor).then(() => Consequences.loaded(db, source_id))
 	
 	
