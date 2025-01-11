@@ -17,8 +17,46 @@ YML.getDateLastWeekDay = (weekDay) => { //0 вс
 	date.setDate(date.getDate() - diff)
 	return date.getTime()
 }
-
-YML.load = async (SRC, headers = {}) => {
+YML.getfile = file => {
+	return String(file['#text']).replaceAll(',','&comma;') + '#' + file['@_name']
+}
+YML.getdoc = doc => {
+	if (Array.isArray(doc)) {
+		doc = doc.map(p => YML.getfile(p))
+	} else if (doc) {
+		doc = [YML.getfile(doc)]
+	} else {
+		doc = []
+	}
+	return doc
+}
+YML.getsrc = src => {
+	return String(src).replaceAll(',','&comma;')
+}
+YML.getpicture = picture => {
+	if (Array.isArray(picture)) {
+		picture = picture.map(p => YML.getsrc(p))
+	} else if (picture) {
+		picture = [YML.getsrc(picture)]
+	} else {
+		picture = []
+	}
+	return picture
+}
+YML.getSheet = (sheets, title) => {
+	let sheet = sheets.find(sheet => sheet.title == title)
+	if (sheet) return sheet
+	sheet = {
+		title,
+		head:['Позиция', 'Цена', 'Наименование', 'Описание', 'Ссылки на картинки', 'Ссылки на файлы'],
+		rows:[]
+	}
+	sheets.push(sheet)
+	
+	//sheet.head.push(...params)
+	return sheet
+}
+YML.parse = async (SRC, headers) => {
 	const parser = new XMLParser({ignoreAttributes: false})
 	const xmldata = await fetch(SRC, {headers}).then(r => r.text()).catch(e => console.log('Прайс Carddex error parse', src, e))
 	if (!xmldata) return {msg: 'Не удалось скачать прайс ' + src, result: 0}
@@ -28,161 +66,68 @@ YML.load = async (SRC, headers = {}) => {
 	
 	const offers = ymldata.yml_catalog?.shop?.offers?.offer
 	if (!offers) return {msg: 'В прайсе нет данных offers', result: 0}
-
 	if (!ymldata.yml_catalog?.shop?.categories?.category?.length) return {msg: 'В прайсе нет групп', result: 0}
+
 	const categories = {}
 	for (const category of ymldata.yml_catalog?.shop?.categories?.category) {
 		categories[category['@_id']] = category.name
 	}
 	const date_content = new Date(ymldata.yml_catalog['@_date'])
+
+	return {offers, date_content, categories}
+}
+YML.load = async (SRC, headers = {}) => {
+	const {offers, date_content, categories} = await YML.parse(SRC, headers)
 	
-	const allparams = {}
-	for (const offer of offers) {
-		if (!offer.param) continue
-		if (!Array.isArray(offer.param)) offer.param = [offer.param]
-		offer.param.forEach(val => {
-			allparams[val['@_name']] = true
-		})
-	}
-	const getphoto = src => {
-		return src.replaceAll(',','&comma;')
-	}
-	const getdoc = src => {
-		return src['#text'].replaceAll(',','&comma;')+'#' + src['@_name']
-	}
-	const params = [
-		"Однократный проход","Свободный проход", "Средний потребляемый ток", "Напряжение питания",
-		"Диапазон температур", "Количество ячеек","Размеры ячейки (ВхШхГ), мм",
-		"Средняя наработка на отказ", "Средний срок службы", "Габаритные размеры без планок",
-		"Габаритные размеры с планками", "Рекомендуемая ширина прохода",
-		"Тип механизма","Масса турникета (нетто)", "Габариты (ВхШхГ), мм",
-		"Цвет корпуса","Цвет фасадов (на выбор)","Материал корпуса и фасадов",
-		"Стандарт поддерживаемых бесконтактных идентификаторов","Рабочая частота считывателя",
-		"Количество идентификаторов","Журнал событий","Формат считывателей","Средний ток потребления",
-		"Масса (нетто)","Длина стрелы","Интенсивность использования",
-		"Средняя скорость подъема/опускания стрелы","Материал изготовления стрелы",
-		"Максимальная потребляемая мощность без модуля обогрева",
-		"Максимальная потребляемая мощность с модулем обогрева","Питающее напряжение шлагбаума",
-		"Габаритные размеры шлагбаума без стрелы (ДхШхВ)","Масса изделия (нетто)",
-		"Средняя наработка на отказ, циклов","Диапазон температур, °С при эксплуатации без модуля обогрева",
-		"Диапазон температур, °С при эксплуатации с модулем обогрева","Степень защиты корпуса",
-		"Степень защиты блока управления","Диаметр стрелы",
-		"Габаритные размеры шлагбаума без стрелы (Д х Ш х В)",
-		"Диапазон температур, °С при транспортировке и хранении","Максимальная потребляемая мощность",
-		"Напряжение питания редуктора","Скорость открытия/закрытия стрелы","Масса изделия",
-		"Средний срок службы тумбы","Диапазон рабочих температур привода","Материал стрелы",
-		"Сечение стрелы","Формат считывателя","Рабочее напряжение","Ток потребления (только контроллер)",
-		"Наличие интерфейса связи RS-485",
-		"Возможность подключения считывателя производства компании CARDDEX для работы с бесконтактными идентификаторами стандартов Mifare 1K, Mifare 4K, Mifare Ultralight","Возможность подключения считывателя производства компании CARDDEX для работы с бесконтактными идентификаторами стандарта EM-Marin EM4102",
-		"Поддержка управления исполнительным устройством","Принцип работы выходов управления исполнительным устройством",
-		"Режим работы выходов управления исполнительным устройством",
-		"Возможность устанавливать время ожидания прохода для исполнительного устройства",
-		"Диапазон значений времени ожидания исполнительного устройства, с",
-		"Наличие входов для подключения линии сигнала «проход совершен»",
-		"Максимальный ток потребления","Потребляемый ток в режиме ожидания",
-		"Стандарт подключаемых считывателей","Поддерживаемый интерфейс считывателей сторонних производителей",
-		"Наличие выхода интерфейса Wiegand","Интерфейс связи","Емкость накопителя карт",
-		"Габаритные размеры картоприемника","Масса картоприемника (нетто)","Потребляемый ток",
-		"Габаритные размеры в сборе","Ширина зоны прохода","Масса (нетто) не более","Усилие удержания замка",
-		"Диаметр стоек","Диаметр штанги","Длина","Мощность","Габариты (ДхШхГ), мм","Количество USB-разъемов",
-		"Максимальная сила тока","Максимальный потребляемый ток","Дальность чтения","Световая/звуковая индикация",
-		"Интерфейс передачи данных","Габариты, ДхШхГ мм","Масса","Диапазон рабочих температур",
-		"Количество карт максимум","Управление внешним светодиодом","Ток коммуникации",
-		"Диапазон длительности открывания замка","Интерфейс для подключения внешнего считывателя",
-		"Интерфейс связи с сервером","Количество событий, хранимых в памяти контроллера",
-		"Количество настраиваемых недельных расписаний","Разъем «RJ-45» интерфейса Ethernet",
-		"Поддерживаемый стандарты соединения для интерфейса Ethernet","Количество разъемов интерфейса RS-485",
-		"Количество разъемов интерфейса EP-2000","Диапазон температур эксплуатации",
-		"Напряжение питания от порта USB","Формат поддерживаемых бесконтактных идентификаторов",
-		"Совместимость с ОС","Звуковая/световая индикация","Скорость передачи данных",
-		"Габариты (ДхШхВ)","Диапазон температуры эксплуатации","Ток коммутации",
-		"Установка длительности открывания замка","Габариты","Реле замка","Режимы работы",
-		"Выходное напряжение","Максимальное кол-во контроллеров","Кол-во разъемов RS-485, ед.",
-		"Кол-во разъемов USB, ед.","Материал корпуса","Габариты (ШхГхВ)","Вес","Тип монтажа",
-		"Напряжение коммутации","Тип","Тип замка","Диаметр","Комплект","Стандарт","Частота","Материал",
-		"Степень защиты оболочки","Параметры стоек","Напряжение питания (постоянного тока)","Световая индикация",
-		"Тип управляющих выходов","Количество управляющих выходов для подключения исполнительных устройств",
-		"Режим работы кнопок","Тип кнопок","Максимальный ток подключаемой нагрузки",
-		"-каналы управления турникетом","-каналы управления «Антипаникой»","Светодиодная индикация",
-		"Световая индикация кнопок","Количество управляющих выходов","Активный уровень управляющего сигнала",
-		"Габариты (Д*Ш*В)","Габаритные размеры стойки (ШхГхВ)","Габаритные размеры нижнего основания",
-		"Размер площадки для считывателя","Напряжение питания, В","Встроенный контроллер","Идентификация по ключам",
-		"Объем памяти контроллера «мастер», шт","Объем памяти контроллера «пользовательский», шт",
-		"Диапазон рабочих температур, °С","Габаритные размеры тумбы (ДхВхГ)","Длина, см",
-		"Габаритные размеры (ДxВxГ)","Тип используемых батарей","Рабочая сила тока Приемника",
-		"Рабочая сила тока Передатчика","Диапазон приемника"
-	]
 	const sheets = []
-	const getSheet = (title) => {
-		let sheet = sheets.find(sheet => sheet.title == title)
-		if (sheet) return sheet
-		sheet = {
-			title,
-			//head:['Код', 'Цена', 'Наименование', 'Ссылки на картинки','Описание', 'Ссылки на файлы'],
-			head: {},
-			rows:[]
-		}
-		sheets.push(sheet)
-		
-		//sheet.head.push(...params)
-		return sheet
-	}
+	
+	
+	// for (const offer of offers) {
+	// 	if (!offer.param) offer.param = []
+	// 	if (!Array.isArray(offer.param)) offer.param = [offer.param]
+	// 	offer.param.forEach(val => {
+	// 		allparams[val['@_name']] = true
+	// 	})
+	// }
 	
 
 	for (const offer of offers) {
-		const sheet_name = offer.categoryId + ' ' + (categories[offer.categoryId] || 'Неизвестная группа')
-		const sheet = getSheet(sheet_name)
-		for (const prop in offer) {
-			if (!Array.isArray(offer[prop])) offer[prop] = [offer[prop]]
-			for (const some of offer[prop]) {
-				name = some['@_name']
-			}
-			
-			if (Array.isArray(offer[prop]))
-			sheet.head[name] = true
+		const sheet_name = categories[offer.categoryId] || 'Неизвестная группа'
+		const sheet = YML.getSheet(sheets, sheet_name)
+		if (!offer.param) offer.param = []
+		if (!Array.isArray(offer.param)) offer.param = [offer.param]
+		for (const param of offer.param) {
+			param['#text'] = String(param['#text']).trim()
+			if (~sheet.head.indexOf(param['@_name'])) continue
+			sheet.head.push(param['@_name'])
 		}
 	}
-	for (const offer of offers) {
-			
-		if (Array.isArray(offer.picture)) {
-			offer.picture = offer.picture.map(p => getphoto(p))
-		} else if (offer.picture) {
-			offer.picture = [getphoto(offer.picture)]
-		} else {
-			offer.picture = []
-		}
 
-		if (Array.isArray(offer.doc)) {
-			offer.doc = offer.doc.map(p => getdoc(p))
-		} else if (offer.doc) {
-			offer.doc = [getdoc(offer.doc)]
-		} else {
-			offer.doc = []
-		}
+	for (const offer of offers) {
+		
+		const sheet_name = categories[offer.categoryId] || 'Неизвестная группа'
+		const sheet = YML.getSheet(sheets, sheet_name)
+
+		const doc = YML.getdoc(offer.doc)
+		const picture = YML.getpicture(offer.picture)
 
 		const row = [
 			offer.sku, 
 			offer.price, 
 			offer.name, 
-			offer.picture.join(','),
 			offer.description,
-			offer.doc.join(',')
+			picture.join(','),
+			doc.join(',')
 		]
-		
 
-		if (offer.param && !Array.isArray(offer.param)) offer.param = [offer.param]
-		params.forEach(v => {
-			let value = null
-			if (offer.param) {
-				const myval = offer.param.find(val => val['@_name'] == v)
-				if (myval) {
-					value = myval['#text']
-				}
-			}
-			row.push(value)
-		})
-		const sheet_name = offer.categoryId + ' ' + (categories[offer.categoryId] || 'Неизвестная группа')
-		const sheet = getSheet(sheet_name)
+		for (let i = 5, l = sheet.head.length; i < l; i++ ) {
+			const paramname = sheet.head[i]
+			const values = offer.param
+		 		.filter(val => val['@_name'] == paramname && val['#text'])
+		 		.map(val => val['#text'].replaceAll(',', '&comma;'))
+		 		.join(', ')
+		 	row.push(values || null)
+		}
 		sheet.rows.push(row)
 	}
 	return {sheets, date_content, result: 1}

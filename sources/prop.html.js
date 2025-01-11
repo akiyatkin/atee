@@ -9,7 +9,7 @@ export const ROOT = (data, env, entity = data.entity) => err(data, env, ["PROP"]
 `
 export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data.result ? '' : `
 	<div style="opacity:0.5; float:right">Свойство у <a href="entity/${entity.entity_id}">${entity.entity_title}</a></div>
-	<h1>${prop.prop_title}</h1>
+	<h1>${prop.name}&nbsp;<sup style="color:var(--primary)">${prop.unit}</sup></h1>
 	<p>
 		
 		<button class="a">Настроить видимость</button>

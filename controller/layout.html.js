@@ -12,6 +12,7 @@ env.bread.error ? `
 `<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<script>//Делаем SPA переходы
+			const reg = new RegExp("^(\\w+:){0,1}\\/\\/")
 			const isSuitable = a => {
 				const search = a.getAttribute('href')
 				if (!search && search != '') return
@@ -19,13 +20,10 @@ env.bread.error ? `
 				const is = search.indexOf('/')
 				const iq = search.indexOf('?')
 				if (a.getAttribute('target')) return
-
 				if (search[1] == '-') return 
-				
 				if (it > is && !~iq) return
-
-				//if (/^\\w+:\/\//.test(search)) return
-				if (/^(\\w+:){0,1}\\/\\//.test(search)) return
+				if (reg.test(search)) return
+				//if (/^(\\w+:){0,1}\\/\\//.test(search)) return
 				return true
 			}
 			const click = event => { 
@@ -36,25 +34,13 @@ env.bread.error ? `
 				getClient().then(Client => Client.click(a))
 			}
 
-			// const mousedown = async event => { 
-			// 	const a = event.target.closest('a')
-			// 	if (!a || !isSuitable(a)) return
-			// 	const Client = await getClient()
-			// 	Client.mousedown(a)
-			// }
-			// const focus = async event => {
-			// 	const a = document.activeElement.closest('a')
-			// 	if (!a || !isSuitable(a)) return
-			// 	const Client = await getClient()
-			// 	Client.focus(a)
-			// }
+			
 			const popstate = async event => {
 				const Client = await getClient()
 				Client.popstate(event)
 			}
 			window.waitClient = promise => waitClient.stack.push(promise)
 			window.waitClient.stack = []
-			
 			window.getClient = () => {
 				const promise = new Promise((resolve, reject) => {
 					window.removeEventListener('popstate', popstate)
@@ -71,7 +57,7 @@ env.bread.error ? `
 							update_time: time,
 							access_time: time
 						}
-						Client.follow('${env.bread.root}')
+						Client.follow('${env.bread.root}', '${env.bread.href}')
 						resolve(Client)
 					}).catch(reject)
 				})

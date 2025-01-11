@@ -439,7 +439,7 @@ export class Upload {
 			const interpolate = (val, row, indexes, sheet, conf, hand, key) => new Function('row', 'indexes', 'sheet', 'conf', 'hand', 'key', 'return `'+val+'`')(row, indexes, sheet, conf, hand, key)
 			
 
-			for (const row of rows) {
+			rows: for (const row of rows) {
 				const key_title = row[priceprop_index]
 				if (!key_title) {
 					omissions[sheet].notconnected.push(row)
@@ -557,7 +557,6 @@ export class Upload {
 								and i.item_num is not null
 								and m.brand_id = :brand_id
 						`, {model_nick: key_nick, brand_id})
-
 					}
 				} else if (catalogprop.type == 'number') {
 					if (!brand_id) {
@@ -602,11 +601,13 @@ export class Upload {
 					omissions[sheet].notfinded.push(row)
 					continue
 				}
+				
+				
 				for (const item of items) {
 					mitems[item.model_id] ??= {}
 					if (mitems[item.model_id][item.item_num]) {
 						omissions[sheet].keyrepeated.push(row)
-						continue
+						continue rows
 					}
 					mitems[item.model_id][item.item_num] = true
 
@@ -617,10 +618,6 @@ export class Upload {
 				// }
 
 				let somepropsinsert = false
-
-				
-				
-				
 				
 				for (const new_prop_title in handlers) {
 					const tpl = handlers[new_prop_title]
@@ -723,6 +720,7 @@ export class Upload {
 							fillings.push({bond_id, value_id, text, number})
 						} else if (prop.type == 'number') {
 							const number = base.toNumber(value_title)
+							
 							if (number === false || number === ''){
 								omissions[sheet].emptyprops[prop_title] ??= []
 
@@ -735,7 +733,6 @@ export class Upload {
 						for (const item of items) {
 							mvalues[item.model_id].push(value_title)
 							mvalues[item.model_id].push(prop.prop_nick)
-
 							for (const fill of fillings) {
 								await db.exec(`
 									INSERT IGNORE INTO 
@@ -761,13 +758,13 @@ export class Upload {
 				
 			}
 			//ОГРАНИЧЕНИЯ ЛИМИТЫ
-			// if (heads.head_nicks.length > 10) { //Вносятся данные по прайсу и анализ сложный
-			// 	const omit = omissions[sheet]
-			// 	omit.emptyprops = {}
-			// 	if (omit.keyrepeated.length > 100) omit.keyrepeated = []
-			// 	if (omit.notconnected.length > 100) omit.notconnected = []
-			// 	if (omit.notfinded.length > 100) omit.notfinded = []
-			// }
+			if (heads.head_nicks.length > 10) { //Вносятся данные по прайсу и анализ сложный
+				const omit = omissions[sheet]
+				omit.emptyprops = {}
+				if (omit.keyrepeated.length > 100) omit.keyrepeated = []
+				//if (omit.notconnected.length > 100) omit.notconnected = []
+				//if (omit.notfinded.length > 100) omit.notfinded = []
+			}
 		}
 		const searches = await db.all(`
 			SELECT distinct m.model_id, m.search
@@ -1466,6 +1463,7 @@ export class Upload {
 			for (const part of Object.keys(Files.destinies)) { //['slides','files','images','texts','videos']
 				destinies[part] = await upload.receiveProp(part)
 			}
+			
 			const listsrc = await db.all(`
 				SELECT ip.text as src, ip.model_id, ip.item_num
 				FROM showcase_iprops ip

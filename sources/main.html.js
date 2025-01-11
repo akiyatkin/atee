@@ -17,24 +17,24 @@ const showAuth = (data, env) => `
 	<div id="TABLE"></div>
 `
 export const TABLE = (data, env) => !data.result ? '' : `
-	<div class="revscroll">
-		<table draggable="false" class="list">
-			<thead>
-				<tr>
-					<td>Источник</td>
-					<td>Статус</td>
-					<td>Проверен</td>
-					<td>Актуальность</td>
-					<td>Загружен</td>
-					<td>Ревизия</td>
-				</tr>
-			</thead>
-			<tbody draggable="false">
-				${data.list.map(source => showSourceTr(data, env, source)).join('')}
-			</tbody>
-		</table>
-		${data.list.some(source => source.date_start) ? showScriptReload(data, env) : showScriptDrag(data, env)}
-	</div>
+	
+	<table draggable="false" class="list">
+		<thead>
+			<tr>
+				<td>Источник</td>
+				<td>Статус</td>
+				<td>Проверен</td>
+				<td>Актуальность</td>
+				<td>Загружен</td>
+				<td>Ревизия</td>
+			</tr>
+		</thead>
+		<tbody draggable="false">
+			${data.list.map(source => showSourceTr(data, env, source)).join('')}
+		</tbody>
+	</table>
+	${data.list.some(source => source.date_start) ? showScriptReload(data, env) : showScriptDrag(data, env)}
+	
 	
 	
 `

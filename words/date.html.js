@@ -144,8 +144,11 @@ date.sai = (string) => {
 }
 date.ai = (time) => {
 	if (!time) return ''
-	if (Date.now() / 1000 - 60 * 60 * 6 > time) return date.dm(time)
-	if (Date.now() / 1000 - 60 * 10 > time) return date.hi(time)
+	const dtime = new Date(time * 1000)
+	const today = new Date()
+	if (today.getFullYear() != dtime.getFullYear()) return date.dmy(time)
+	if (today.getDate() != dtime.getDate()) return date.dm(time)
+	if (today.getHours() != dtime.getHours()) return date.hi(time)
 	return date.is(time)
 }
 date.input = (time) => {

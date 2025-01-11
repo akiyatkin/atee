@@ -88,6 +88,7 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	}
 
 	const col = view.data.col = (col_title != null) ? await Sources.getCol(db, source_id, sheet_title, col_title) : false	
+	
 	if (col) col.col_index_max = await db.col(`
 		SELECT max(col_index) 
 		FROM sources_cols ro
@@ -344,7 +345,7 @@ rest.addAction('set-represent_sheet', ['admin'], async view => {
    		VALUES (:source_id, :sheet_title, :newvalue)
    		ON DUPLICATE KEY UPDATE represent_custom_sheet = VALUES(represent_custom_sheet)
 	`, {...sheet, newvalue})
-
+	
 
 	await Consequences.represent(db)
 	view.data.cls = represent.calcCls(source.represent_source, newvalue, source.represent_sheets)

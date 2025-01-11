@@ -7,27 +7,29 @@ import words from "/-words/words.js"
 export const css = ['/-sources/represent.css']
 
 export const ROOT = (data, env, source = data.source) => err(data, env,['SOURCE']) || `
-	<div style="opacity:0.5; float:right">Источник</div>
-	
+	<a href="../sources" style="float:right">Источник</a>
 	<div id="SOURCE"></div>
 `
 export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
+	<div id="TABLE"></div>
 	<div id="TOP"></div>
 	${showButtons(data, env, source)}
-	${showComment(data, env, source)}
-
-	<div id="BOT"></div>
-	${showControll(data, env, source)}
 `
 export const TOP = (data, env, source = data.source) => !data.result ? '' : `
-	<h1>${source.source_title}</h1>
+	
 	${source.date_start ? showScriptReload(data, env, source) : ''}
 	${showStatus(data, env, source)}
 	${showStat(data, env, source)}
-`
-export const BOT = (data, env, source = data.source) => !data.result ? '' : `
-	${showDatas(data, env, source)}
+	${showControll(data, env, source)}
 	${showSettings(data, env, source)}
+
+`
+export const TABLE = (data, env, source = data.source) => !data.result ? '' : `
+	<h1>${source.source_title}</h1>
+	${showComment(data, env, source)}
+	${showDatas(data, env, source)}
+	
+
 `
 
 
@@ -40,7 +42,7 @@ const showScriptReload = (data, env, source) => `
 	<script>
 		setTimeout(async () => {
 			const Client = await window.getClient()
-			Client.reloaddiv(['TOP','BOT'])
+			Client.reloaddiv(['TOP','TABLE'])
 		}, 1000)
 	</script>
 `
@@ -49,22 +51,34 @@ const defcustom = (value) => {
 	else return 'represent-custom-0'
 }
 const showDatas = (data, env, source) => `
-	<h2>Содержание</h2>
 	${source.date_load ? '' : showNoLoad(data, env, source)}
 	<table>
-		<tr>
-			<td>
-				<button title="Изменить видимость источника" class="represent_sheets eye transparent represent-${data.source.represent_source} ${defcustom(data.source.represent_sheets)}">${svg.eye()}</button>
-			</td>
-			<td>Лист</td>
-			<td>Сущность</td>
-			<td>Позиций</td>
-			<td>Строк</td>
-			<td></td>
-		</tr>
+		<thead>
+			<tr>
+				<td>
+					<button title="Видимость листов по умолчанию" class="represent_sheets eye transparent represent-${data.source.represent_source} ${defcustom(data.source.represent_sheets)}">${svg.eye()}</button>
+				</td>
+				<td>Лист</td>
+				<td>Сущность</td>
+				<td>Ключ</td>
+				<td>Без</td>
+				<td></td>
+			</tr>
+		</thead>
 		<tbody>
 			${data.sheets.map(sheet => showSheetTr(data, env, source, sheet)).join('')}
+
 		</tbody>
+		<tfoot style="${data.sheets.length < 2 ? 'display:none': ''}">
+			<tr>
+				<td></td>
+				<td></td>
+				<th></th>
+				<th>${data.sheets.reduce((ak, sheet) => ak + (sheet.loaded?.count_keys || 0), 0)}</th>
+				<th>${data.sheets.reduce((ak, sheet) => ak + (sheet.loaded?.count_rows || 0), 0) - data.sheets.reduce((ak, sheet) => ak + (sheet.loaded?.count_keys || 0), 0)}</th>
+				<td></td>
+			</tr>
+		</tfoot>
 	</table>
 	<script>
 		(div => {
@@ -137,8 +151,10 @@ const showSheetTr = (data, env, source, sheet) => `
 			${field.search({
 				cls: 'a',
 				search:'/-sources/get-sheet-entity-search',
-				value: source.entity_id ? showEntity(data, env, sheet) : 'не определено', 
+				value: sheet.entity_id ? showEntity(data, env, sheet) : 'не определено', 
 				label: 'Название сущности', 
+				heading: 'Сущность данных листа',
+				descr: 'У сущности будут созданы свойства по названию колонок листа.',
 				type: 'text',
 				name: 'entity_id',
 				find: 'entity_id',
@@ -148,7 +164,7 @@ const showSheetTr = (data, env, source, sheet) => `
 			})}
 		</td>
 		<td>${sheet.loaded?.count_keys ?? '&mdash;'}</td>
-		<td>${sheet.loaded?.count_rows ?? '&mdash;'}</td>
+		<td>${((sheet.loaded?.count_rows || 0) - (sheet.loaded?.count_keys || 0))}</td>
 		<td>
 			<span class="remove" style="${!sheet.remove ? 'display:none' : 'display: block'}">
 				${field.button({
@@ -198,16 +214,7 @@ const showComment = (data, env, source) => `
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
-const showButtons = (data, env, source) => `
-	<div style="margin:2em 0; display: flex; flex-wrap:wrap; gap: 1em; align-items: center;">
-		${field.button({
-			label: 'Актуализировать', 
-			action: '/-sources/set-source-renovate',
-			reloaddiv: env.layer.div,
-			args: {source_id: source.source_id}
-		})}
-	</div>
-`
+
 const showStatus = (data, env, source) => `
 	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
 		<div class="status_${source.class}">
@@ -248,66 +255,111 @@ const showStat = (data, env, source) => `
 	<table>
 		<tr>
 			<td>
-				Сообщение get-check 
+				Проверка <nobr>get-check</nobr>
 			</td>
-			<td>${date.ai(source.date_check)}</td>
+			<!-- <td>
+				Сообщение get-check 
+			</td> -->
+			<td title="Вызов get-check ${date.dmyhi(source.date_check)} (Проверка)"><nobr>${date.ai(source.date_check)}</nobr></td>
+			<td>date_mtime</td>
+			<td title="Когда стоит загрузить: ${date.dmyhi(source.date_mtime)} (Изменения)"><nobr>${date.ai(source.date_mtime)}</nobr></td>
 			<td>
 				${source.msg_check || 'Нет сообщений'}
 			</td>
-			<td>${date.ai(source.date_mtime)}</td>
+			
 		</tr>
 		<tr>
 			<td>
-				Сообщение get-load
+				Загрузка <nobr>get-load</nobr>
 			</td>
-			<td>${date.ai(source.date_load)}</td>
+			<!-- <td>
+				Сообщение get-load
+			</td> -->
+			<td title="Вызов get-load ${date.dmyhi(source.date_load)} (Загрузка)"><nobr>${date.ai(source.date_load)}</nobr></td>
+			<td>date_content</td>
+			<td title="Дата полученных данных: ${date.dmyhi(source.date_content)} (Актуальность) "><nobr>${date.ai(source.date_content)}</nobr></td>
 			<td>
 				 ${source.msg_load || 'Нет сообщений'}
 			</td>
-			<td>${date.ai(source.date_content)}</td>
+			
 		</tr>
 	</table>
 	
 `
 const showSettings = (data, env, source = data.source) => `
-	<h2>Управление</h2>
 	<table>
-		
-		
 		<tr>
 			<td>
-				Проверка
+				Время проверки
 			</td>
 			<td>
-				${date.dmyhi(source.date_check)} / ${ago.pass(source.duration_check)}
+				${ago.pass(source.duration_check)}
 			</td>
 		</tr>
 		<tr>
 			<td>
-				Изменения
+				Время обработчика
 			</td>
 			<td>
-				${date.dmyhi(source.date_mtime)}
+				${ago.pass(source.duration_rest)}
 			</td>
 		</tr>
 		<tr>
 			<td>
-				Загрузка
+				Время внесения
 			</td>
 			<td>
-				${date.dmyhi(source.date_load)} / ${ago.pass(source.duration_rest)} + ${ago.pass(source.duration_insert)}
+				${ago.pass(source.duration_insert)}
 			</td>
 		</tr>
-		
-		<tr>
-			<td>
-				Актуальность
-			</td>
-			<td>
-				${date.dmy(source.date_content)}
-			</td>
-		</tr>	
 	</table>
+`
+const showButtons = (data, env, source) => `
+	<div style="margin:2em 0; display: flex; flex-wrap:wrap; gap: 1em;">
+		${field.button({
+			label: 'Актуализировать', 
+			action: '/-sources/set-source-renovate',
+			reloaddiv: env.layer.div,
+			args: {source_id: source.source_id}
+		})}
+		${field.button({
+			label: 'Проверить', 
+			action: '/-sources/set-source-check',
+			reloaddiv: ['TOP','TABLE'],
+			args: {source_id: source.source_id}
+		})}
+		${field.button({
+			label: 'Загрузить', 
+			action: '/-sources/set-source-load',
+			reloaddiv: ['TOP','TABLE'],
+			args: {source_id: source.source_id}
+		})}
+		${field.button({
+			label: 'Очистить', 
+			confirm: 'Удалить данные, как будто источник не загружался. При следующей актуализации он снова загрузится?',
+			action: '/-sources/set-source-clear',
+			reloaddiv: ['TOP','TABLE'],
+			args: {source_id: source.source_id}
+		})}
+		${field.prompt({
+			value: 'Переименовать',
+			input: source.source_title,
+			type: 'text',
+			name: 'title',
+			label: 'Укажите имя файла', 
+			action: '/-sources/set-source-title',
+			reloaddiv: ['TOP','TABLE'],
+			args: {source_id: source.source_id}
+		})}
+		${field.button({
+			label: 'Удалить', 
+			confirm: 'Удалить данные и все упоминания об источнике, комментарии, настройки?',
+			action: '/-sources/set-source-delete',
+			reloaddiv: ['TOP','TABLE'],
+			args: {source_id: source.source_id},
+			go: '../sources'
+		})}
+	</div>
 `
 const showControll = (data, env, source) => `
 	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
@@ -335,7 +387,7 @@ const showControll = (data, env, source) => `
 				find: 'entity_id',
 				action: '/-sources/set-source-entity',
 				args: {source_id: source.source_id},
-				reloaddiv: env.layer.div
+				reloaddiv: ["TABLE","TOP"]
 			})}.
 		</div>
 		
@@ -352,51 +404,13 @@ const showControll = (data, env, source) => `
 			})}.
 		</div>
 	</div>
-	<div style="margin:2em 0; display: flex; flex-wrap:wrap; gap: 1em;">
-		${field.button({
-			label: 'Проверить', 
-			action: '/-sources/set-source-check',
-			reloaddiv: ['TOP','BOT'],
-			args: {source_id: source.source_id}
-		})}
-		${field.button({
-			label: 'Загрузить', 
-			action: '/-sources/set-source-load',
-			reloaddiv: ['TOP','BOT'],
-			args: {source_id: source.source_id}
-		})}
-		${field.button({
-			label: 'Очистить', 
-			confirm: 'Удалить данные, как будто источник не загружался. При следующей актуализации он снова загрузится?',
-			action: '/-sources/set-source-clear',
-			reloaddiv: ['TOP','BOT'],
-			args: {source_id: source.source_id}
-		})}
-		${field.prompt({
-			value: 'Переименовать',
-			input: source.source_title,
-			type: 'text',
-			name: 'title',
-			label: 'Укажите имя файла', 
-			action: '/-sources/set-source-title',
-			reloaddiv: ['TOP','BOT'],
-			args: {source_id: source.source_id}
-		})}
-		${field.button({
-			label: 'Удалить', 
-			confirm: 'Удалить данные и все упоминания об источнике, комментарии, настройки?',
-			action: '/-sources/set-source-delete',
-			reloaddiv: ['TOP','BOT'],
-			args: {source_id: source.source_id},
-			go: '../sources'
-		})}
-	</div>
+	
 `
 const showEntity = (data, env, entity) => `
 	<span class="${entity.custom?.entity_id ? '' : 'mute'}">
-		${entity.entity_plural || entity.entity_title} (${entity.prop_title || 'ключ не определён'})
+		${entity.entity_title || entity.entity_title} ${entity.prop_title ? (entity.prop_title == entity.entity_title ? '' : '(' + entity.prop_title + ')'): '(ключ не определён)'}
 	</span>
 `
-const showSourceEntity = (data, env, source) => `
-	${source.entity_plural || source.entity_title} (${source.prop_title || 'ключ не определён'})
+const showSourceEntity = (data, env, source, entity = source) => `
+	${entity.entity_title || entity.entity_title} ${entity.prop_title ? (entity.prop_title == entity.entity_title ? '' : '(' + entity.prop_title + ')'): '(ключ не определён)'}
 `

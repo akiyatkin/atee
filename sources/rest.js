@@ -340,9 +340,9 @@ rest.addResponse('positions-table', ['admin'], async view => {
 
 	
 	const where_search = []
-	if (!hashs.length) where_search = ['1=1']
+	if (!hashs.length) where_search.push('1=1')
 	for (const hash of hashs) {
-		const sql = 'it.search like "% ' + hash.join('%" and it.search like "') + '%"'
+		const sql = 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"'
 		where_search.push(sql)
 	}
 
@@ -416,39 +416,320 @@ rest.addResponse('sheet', ['admin'], async view => {
 	
 	return view.ret()
 })
-rest.addResponse('sheet-sheet', ['admin'], async view => {
+rest.addResponse('sheet-sheets', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const source = view.data.source = await Sources.getSource(db, source_id)
 	const entity = view.data.entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
-	const sheets = view.data.sheets = await Sources.getSheets(db, source_id)
+
+	//const sheets = view.data.sheets = await Sources.getSheets(db, source_id)
+
+
+
+
+
 	const sheet_index = await view.get('sheet_index#required')
 	
-	const sheet = view.data.sheet = await db.fetch(`
-		SELECT sh.sheet_title, sh.sheet_index, sh.key_index, sh.sheet_index, sh.entity_id,
-			sh.represent_sheet + 0 as represent_sheet
-		FROM sources_sheets sh
-			left join sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
-		WHERE sh.source_id = :source_id and sh.sheet_index = :sheet_index
-	`, {source_id, sheet_index}) 
+	const hashs = await view.get('hashs')
+
+	const where_search = []
+	if (!hashs.length) where_search.push('1=1')
+	for (const hash of hashs) {
+		const sql = 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"'
+		where_search.push(sql)
+	}
 	
-	view.data.count = await db.col(`
-		select count(*) from sources_cells
-		WHERE source_id = :source_id
-	`, source)
-	view.ans.date_min = await db.col(`
-		SELECT UNIX_TIMESTAMP(min(ap.date_appear))
+	const sheet = view.data.sheet = await Sources.getSheetByIndex(db, source_id, sheet_index)
+	
+
+	const appear = await view.get('appear') //null - последняя дата, 0 - выбрать всё, date - конкретная дата
+
+
+	const alldate = {date: 0, count: await db.col(`
+		SELECT count(*)
+		FROM sources_appears ap, sources_rows ro, sources_sheets sh
+		WHERE ap.source_id = :source_id and date_disappear is not null
+		and sh.source_id = ap.source_id and sh.entity_id = ap.entity_id
+		and ro.sheet_index = sh.sheet_index 
+		and ro.source_id = sh.source_id
+		and ro.key_id = ap.key_id
+		and (${where_search.join(' or ')})
+	`, {source_id})}
+	if (appear === 0) alldate.active = true
+
+	
+	const date = appear || await db.col(`
+		SELECT UNIX_TIMESTAMP(max(ap.date_appear)) as date
 		FROM sources_appears ap
-		WHERE ap.source_id = :source_id
-	`, source)
-	view.ans.date_max = await db.col(`
-		SELECT UNIX_TIMESTAMP(max(ap.date_appear))
-		FROM sources_appears ap
-		WHERE ap.source_id = :source_id
-	`, source)
+		WHERE ap.source_id = :source_id and date_disappear is not null
+	`, {source_id}) || Math.round(Date.now() / 1000)
+	const count = await db.col(`
+		SELECT count(*)
+		FROM sources_appears ap, sources_rows ro, sources_sheets sh
+		WHERE ap.source_id = :source_id 
+		and ap.date_appear = FROM_UNIXTIME(:date) 
+		
+		and date_disappear is not null
+		and sh.source_id = ap.source_id and sh.entity_id = ap.entity_id
+		and ro.sheet_index = sh.sheet_index 
+		and ro.source_id = sh.source_id
+		and ro.key_id = ap.key_id
+		and (${where_search.join(' or ')})
+	`, {date, source_id})
+	
+	const dateup = {date, count}
+	if (appear !== 0) dateup.active = true
+
+	const updates = await db.all(`
+		SELECT UNIX_TIMESTAMP(ap.date_appear) as date, count(*) as count
+		FROM sources_appears ap, sources_rows ro, sources_sheets sh
+		WHERE ap.source_id = :source_id and ap.date_appear > FROM_UNIXTIME(:date) and date_disappear is not null
+
+		
+		and sh.source_id = ap.source_id and sh.entity_id = ap.entity_id
+		and ro.sheet_index = sh.sheet_index 
+		and ro.source_id = sh.source_id
+		and ro.key_id = ap.key_id
+		and (${where_search.join(' or ')})
+
+		GROUP BY ap.date_appear
+		ORDER BY ap.date_appear
+		LIMIT 7
+	`, {date, source_id})
+	const downdates = await db.all(`
+		SELECT UNIX_TIMESTAMP(ap.date_appear) as date, count(*) as count
+		FROM sources_appears ap, sources_rows ro, sources_sheets sh
+		WHERE ap.source_id = :source_id and ap.date_appear < FROM_UNIXTIME(:date) and date_disappear is not null
+		and sh.source_id = ap.source_id and sh.entity_id = ap.entity_id
+		and ro.sheet_index = sh.sheet_index 
+		and ro.source_id = sh.source_id
+		and ro.key_id = ap.key_id
+		and (${where_search.join(' or ')})
+
+		GROUP BY ap.date_appear
+		ORDER BY ap.date_appear DESC
+		LIMIT 7
+	`, {date, source_id})
+
+	
+
+	const dates = [alldate]
+	if (updates.length >= 3 && downdates.length >= 3) {
+		dates.push(...downdates.slice(3), dateup, ...updates.slice(3))
+	} else if (updates.length >= 3) {
+		dates.push(...downdates, dateup, ...updates.slice(3 + (3 - downdates.length)))
+	} else if (downdates.length >= 3) {
+		dates.push(...downdates.slice(3 + (3 - updates.length)), dateup, ...updates)
+	} else {
+		dates.push(...downdates, dateup, ...updates)
+	}
+	view.data.dates = dates
+
+
+
+	//===================
+	
+	const sheets = view.data.sheets = await db.all(`
+		SELECT 
+			sh.sheet_index,
+			sh.sheet_title,
+			count(ro.row_index) as count
+		FROM sources_sheets sh, sources_rows ro
+		WHERE sh.source_id = :source_id
+			and ro.source_id = sh.source_id 
+			and ro.sheet_index = sh.sheet_index
+		GROUP BY sh.sheet_index
+		ORDER by sh.sheet_index
+	`, {source_id})
+
 	return view.ret()
 })
+rest.addResponse('sheet-dates', ['admin'], async view => {
+	const db = await view.get('db')
+	const source_id = await view.get('source_id#required')
+	const source = view.data.source = await Sources.getSource(db, source_id)
+	const entity = view.data.entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
+	const appear = await view.get('appear') //null - последняя дата, 0 - выбрать всё, date - конкретная дата	
 
+	const hashs = await view.get('hashs')
+
+	const where_search = []
+	if (!hashs.length) where_search.push('1=1')
+	for (const hash of hashs) {
+		const sql = 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"'
+		where_search.push(sql)
+	}
+	
+	view.data.quantity_of_keys = await db.col(`
+		SELECT count(*)
+		FROM sources_rows ro, sources_sheets sh
+		WHERE sh.source_id = :source_id
+		and ro.sheet_index = sh.sheet_index 
+		and ro.source_id = sh.source_id
+		and ro.key_id is not null
+		and (${where_search.join(' or ')})
+	`, {source_id})
+	view.data.quantity_without_keys = await db.col(`
+		SELECT count(*)
+		FROM sources_rows ro, sources_sheets sh
+		WHERE sh.source_id = :source_id
+		and ro.sheet_index = sh.sheet_index 
+		and ro.source_id = sh.source_id
+		and ro.key_id is null
+		and (${where_search.join(' or ')})
+	`, {source_id})
+	
+	//make dates
+	const choice_date = appear || await db.col(`
+		SELECT UNIX_TIMESTAMP(max(ap.date_appear)) as date
+		FROM sources_appears ap
+		WHERE ap.source_id = :source_id and date_disappear is not null
+	`, {source_id}) || Math.round(Date.now() / 1000)
+	const dateup = {
+		date: choice_date, 
+		count: await db.col(`
+			SELECT count(*)
+			FROM sources_appears ap, sources_rows ro, sources_sheets sh
+			WHERE ap.source_id = :source_id 
+			and ap.date_appear = FROM_UNIXTIME(:date) 
+			
+			and date_disappear is not null
+			and sh.source_id = ap.source_id and sh.entity_id = ap.entity_id
+			and ro.sheet_index = sh.sheet_index 
+			and ro.source_id = sh.source_id
+			and ro.key_id = ap.key_id
+			and (${where_search.join(' or ')})
+		`, {date: choice_date, source_id}), 
+		active: true
+	}
+
+	const alldates = await db.all(`
+		SELECT UNIX_TIMESTAMP(ap.date_appear) as date, count(*) as count
+		FROM sources_appears ap, sources_rows ro, sources_sheets sh
+		WHERE ap.source_id = :source_id
+		and date_disappear is not null
+
+		
+		and sh.source_id = ap.source_id and sh.entity_id = ap.entity_id
+		and ro.sheet_index = sh.sheet_index 
+		and ro.source_id = sh.source_id
+		and ro.key_id = ap.key_id
+		and (${where_search.join(' or ')})
+
+		GROUP BY ap.date_appear
+		ORDER BY ap.date_appear		
+	`, {source_id})
+	
+	const bytime = Object.groupBy(alldates, dateis => {
+		if (dateis.date > dateup.date) return 'after'
+		if (dateis.date < dateup.date) return 'before'
+		return 'dateup'
+	})
+	bytime.after ??= []
+	bytime.before ??= []
+
+	let after_list = []
+	let before_list = []
+	const MAX = 7
+	const SIDE = (MAX - 1) / 2
+	if (bytime.before.length < SIDE && bytime.after.length < SIDE) { //Слева и справа не хватает длины
+		before_list = bytime.before.splice(0, bytime.before.length - SIDE)
+		after_list = bytime.after.splice(SIDE)
+	} else if (bytime.before.length < SIDE) {
+		const SIZE = SIDE - bytime.before.length + SIDE
+		before_list = bytime.before.splice(0, bytime.before.length - SIDE)
+		after_list = bytime.after.splice(SIZE)
+	} else if (bytime.after.length < SIDE) {
+		const SIZE = SIDE - bytime.after.length + SIDE
+		before_list = bytime.before.splice(0, bytime.before.length - SIZE)
+		after_list = bytime.after.splice(SIDE)
+
+	} else {
+		before_list = bytime.before.splice(0, bytime.before.length - SIDE)
+		after_list = bytime.after.splice(SIDE)
+	}
+	view.data.dates = [...bytime.before, dateup, ...bytime.after]
+
+	if (before_list.length) view.data.dates.unshift({
+		count: before_list.reduce((ak, item) => ak + item.count, 0), 
+		date: before_list.at(-1)?.date, title: 'Раньше'
+	})
+	if (after_list.length) view.data.dates.push({
+		count: after_list.reduce((ak, item) => ak + item.count, 0), 
+		date: after_list.at(0)?.date, title: 'Позже'
+	})
+
+	
+	
+	
+
+
+	// const updates = await db.all(`
+	// 	SELECT UNIX_TIMESTAMP(ap.date_appear) as date, count(*) as count
+	// 	FROM sources_appears ap, sources_rows ro, sources_sheets sh
+	// 	WHERE ap.source_id = :source_id and ap.date_appear > FROM_UNIXTIME(:date) and date_disappear is not null
+
+		
+	// 	and sh.source_id = ap.source_id and sh.entity_id = ap.entity_id
+	// 	and ro.sheet_index = sh.sheet_index 
+	// 	and ro.source_id = sh.source_id
+	// 	and ro.key_id = ap.key_id
+	// 	and (${where_search.join(' or ')})
+
+	// 	GROUP BY ap.date_appear
+	// 	ORDER BY ap.date_appear
+	// 	LIMIT ${MAX}
+	// `, {date, source_id})
+	// const downdates = await db.all(`
+	// 	SELECT UNIX_TIMESTAMP(ap.date_appear) as date, count(*) as count
+	// 	FROM sources_appears ap, sources_rows ro, sources_sheets sh
+	// 	WHERE ap.source_id = :source_id and ap.date_appear < FROM_UNIXTIME(:date) and date_disappear is not null
+	// 	and sh.source_id = ap.source_id and sh.entity_id = ap.entity_id
+	// 	and ro.sheet_index = sh.sheet_index 
+	// 	and ro.source_id = sh.source_id
+	// 	and ro.key_id = ap.key_id
+	// 	and (${where_search.join(' or ')})
+
+	// 	GROUP BY ap.date_appear
+	// 	ORDER BY ap.date_appear DESC
+	// 	LIMIT ${MAX}
+	// `, {date, source_id})
+	
+
+	
+	
+	// const dates = []
+	// if (updates.length >= SIDE && downdates.length >= SIDE) {
+	// 	dates.push(...downdates.slice(SIDE), dateup, ...updates.slice(SIDE))
+	// } else if (updates.length >= SIDE) {
+	// 	dates.push(...downdates, dateup, ...updates.slice(SIDE + (SIDE - downdates.length)))
+	// } else if (downdates.length >= SIDE) {
+	// 	dates.push(...downdates.slice(SIDE + (SIDE - updates.length)), dateup, ...updates)
+	// } else {
+	// 	dates.push(...downdates, dateup, ...updates)
+	// }
+	// view.data.dates = dates
+
+	// const after = await db.all(`
+	// 	SELECT UNIX_TIMESTAMP(ap.date_appear) as date, count(*) as count
+	// 	FROM sources_appears ap, sources_rows ro, sources_sheets sh
+	// 	WHERE ap.source_id = :source_id and ap.date_appear < FROM_UNIXTIME(:date) and date_disappear is not null
+	// 	and sh.source_id = ap.source_id and sh.entity_id = ap.entity_id
+	// 	and ro.sheet_index = sh.sheet_index 
+	// 	and ro.source_id = sh.source_id
+	// 	and ro.key_id = ap.key_id
+	// 	and (${where_search.join(' or ')})
+
+	// 	GROUP BY ap.date_appear
+	// 	ORDER BY ap.date_appear DESC
+	// 	LIMIT ${MAX}
+	// `, {date: dates.at(-1), source_id})
+	// dates.at(0)
+	
+
+	
+	return view.ret()
+})
 
 rest.addResponse('sheet-table', ['admin'], async view => {
 	const db = await view.get('db')
@@ -459,13 +740,13 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 
 	
 	const where_search = []
-	if (!hashs.length) where_search = ['1=1']
+	if (!hashs.length) where_search.push('1=1')
 	for (const hash of hashs) {
-		const sql = 'ro.search like "% ' + hash.join('%" and ro.search like "') + '%"'
+		const sql = 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"'
 		where_search.push(sql)
 	}
 
-	let date = await view.get('date')
+	const date = view.ans.date = await view.get('appear')
 	
 	view.ans.date_min = await db.col(`
 		SELECT UNIX_TIMESTAMP(min(ap.date_appear))
@@ -477,17 +758,12 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 		FROM sources_appears ap
 		WHERE ap.source_id = :source_id
 	`, source)
-	// view.ans.date_min = await db.col(`
-	// 	SELECT UNIX_TIMESTAMP(min(ap.date_appear))
-	// 	FROM sources_appears ap
-	// 	WHERE ap.source_id = :source_id
-	// `, source)
-	if (!date) date = view.ans.date_max
-	view.ans.date = date
+
+
 	
 	
 	const entity = view.data.entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
-	const sheet_index = await view.get('sheet_index#required')
+	const sheet_index = await view.get('sheet_index#required')	
 	const sheet = view.data.sheet = await db.fetch(`
 		SELECT sh.sheet_title, sh.key_index, sh.sheet_index, sh.entity_id,
 			sh.represent_sheet + 0 as represent_sheet
@@ -496,16 +772,27 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 		WHERE sh.source_id = :source_id and sh.sheet_index = :sheet_index
 	`, {source_id, sheet_index}) 
 	const sheet_title = sheet.sheet_title
+
 	const cols = view.data.cols = await db.all(`
-		SELECT co.col_index, co.col_title, co.prop_id, pr.prop_title,
+		SELECT co.col_index, co.col_title, pr.prop_id, pr.prop_title, pr.entity_id,
 			cco.represent_custom_col + 0 as represent_custom_col
 		FROM sources_cols co
-			LEFT JOIN sources_custom_cols cco on cco.source_id = :source_id and cco.col_title = co.col_title
+			LEFT JOIN sources_custom_cols cco on (cco.source_id = co.source_id and cco.col_title = co.col_title and sheet_title = :sheet_title)
 			LEFT JOIN sources_props pr on pr.prop_id = co.prop_id
-		WHERE co.source_id = :source_id and co.sheet_index = :sheet_index
+		WHERE
+			co.source_id = :source_id
+			and co.sheet_index = :sheet_index	
 		ORDER BY co.col_index
-	`, {source_id, sheet_index}) 
+	`, {source_id, sheet_index, sheet_title}) 
+
+
+
 	for (const col of cols) {
+		if (!sheet.entity_id || sheet.entity_id != col.entity_id) { //При смене сущностей prop_id может остаться и нельзя удалять, чтобы можно было переключиться обратно, по этому проверяем
+			delete col.prop_title
+			delete col.prop_id
+			delete col.entity_id
+		}
 		col.cls = represent.calcCls(
 			source.represent_source && sheet.represent_sheet, 
 			col.represent_custom_col, 
@@ -526,7 +813,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 		WHERE ro.source_id = :source_id and ro.sheet_index = :sheet_index
 		and (ap.date_appear is null or ap.date_appear >= FROM_UNIXTIME(:date))
 		ORDER BY ro.row_index
-	`, {source_id, sheet_index, date})
+	`, {source_id, sheet_index, date: date || 0})
 
 
 	const custom_rows = await db.all(`
@@ -568,7 +855,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 		WHERE ce.source_id = :source_id and ce.sheet_index = :sheet_index
 		and (ap.date_appear is null or ap.date_appear >= FROM_UNIXTIME(:date))
 		ORDER BY ce.row_index, ce.col_index
-	`, {source_id, sheet_index, date}) 
+	`, {source_id, sheet_index, date: date || 0}) 
 
 	const texts = view.data.texts = []
 	const winners = view.data.winners = []
@@ -617,7 +904,6 @@ rest.addResponse('source', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const source = view.data.source = await Sources.getSource(db, source_id)
-	
 	const sheets = view.data.sheets = await Sources.getSheets(db, source_id)
 	
 	

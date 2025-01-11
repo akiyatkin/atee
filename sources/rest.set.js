@@ -414,20 +414,18 @@ rest.addAction('set-source-clear', ['admin'], async view => {
 	const source_id = await view.get('source_id#required')
 	const source = await Sources.getSource(db, source_id)
 	if (source.date_start) return view.err('Нельзя очистить, когда идёт загрузка')
-	await db.exec(`
-		DELETE sh, co, ro, ce
-		FROM sources_sources so
-			LEFT JOIN sources_sheets sh on sh.source_id = so.source_id
-			LEFT JOIN sources_cols co on co.source_id = so.source_id
-			LEFT JOIN sources_rows ro on ro.source_id = so.source_id
-			LEFT JOIN sources_cells ce on ce.source_id = so.source_id
-   		WHERE so.source_id = :source_id
-	`, {source_id})
+
+	await db.exec(`DELETE FROM sources_sheets WHERE source_id = :source_id`, source)
+	await db.exec(`DELETE FROM sources_cols WHERE source_id = :source_id`, source)
+	await db.exec(`DELETE FROM sources_rows WHERE source_id = :source_id`, source)
+	await db.exec(`DELETE FROM sources_cells WHERE source_id = :source_id`, source)
+	
+
 	await db.exec(`
 		UPDATE sources_sources
 		SET date_check = null, date_content = null, date_load = null, date_mtime = null
 		WHERE source_id = :source_id
-	`, {date, source_id})
+	`, {source_id})
 
 	
 	await Sources.check(db, source, view.visitor)
@@ -739,11 +737,13 @@ rest.addAction('set-entity-prop-create', ['admin'], async view => {
 	const prop_nick = nicked(prop_title)
 	if (!prop_nick) return view.err('Требуется название')
 
+	const {name, unit} = getNameUnit(prop_title)
+
 	const prop_id = view.ans.prop_id = await db.insertId(`
-		INSERT INTO sources_props (entity_id, prop_title, prop_nick, type)
-   		VALUES (:entity_id, :prop_title, :prop_nick, 'value')
-   		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title), prop_id = VALUES(prop_id)
-	`, {entity_id, prop_title, prop_nick})
+		INSERT INTO sources_props (entity_id, prop_title, prop_nick, type, name, unit)
+   		VALUES (:entity_id, :prop_title, :prop_nick, 'value', :name, :unit)
+   		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title), prop_id = LAST_INSERT_ID(prop_id), unit = VALUES(unit), name = VALUES(name)
+	`, {entity_id, prop_title, prop_nick, name, unit})
 
 
 	await Sources.reorderProps(db, entity_id)
@@ -764,21 +764,25 @@ rest.addAction('set-col-prop-create', ['admin'], async view => {
 	const source_id = await view.get('source_id#required')
 	const sheet_index = await view.get('sheet_index#required')
 	const col_index = await view.get('col_index#required')
-	const sheet = await Sources.getSheet(db, source_id, sheet_index)
+	const sheet = await Sources.getSheetByIndex(db, source_id, sheet_index)
+	if (!sheet) return view.err('Лист не найден')
+	
 	const entity_id = sheet.entity_id
 	if (!entity_id) return view.err('Нельзя создать свойство если не назначена сущность')
 	
 	const prop_title = await view.get('search')
 	const prop_nick = nicked(prop_title)
 	if (!prop_nick) return view.err('Требуется название')
-
-	const col = await Sources.getCol(db, source_id, sheet_index, col_index)
-
+	
+	const col = await Sources.getColByIndex(db, source_id, sheet.sheet_title, col_index)
+	if (!col) return view.err('Колонка не найдена')
+	
+	const {name, unit} = getNameUnit(prop_title)
 	col.prop_id = view.ans.prop_id = await db.insertId(`
-		INSERT INTO sources_props (entity_id, prop_title, prop_nick, type)
-   		VALUES (:entity_id, :prop_title, :prop_nick, 'value')
-   		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title), prop_id = LAST_INSERT_ID(prop_id)
-	`, {entity_id, prop_title, prop_nick})
+		INSERT INTO sources_props (entity_id, prop_title, prop_nick, type, name, unit)
+   		VALUES (:entity_id, :prop_title, :prop_nick, 'value', :name, :unit)
+   		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title), prop_id = LAST_INSERT_ID(prop_id), name = VALUES(name), unit = VALUES(unit)
+	`, {entity_id, prop_title, prop_nick, name, unit})
 
 	
 	await Sources.reorderProps(db, entity_id)
@@ -786,7 +790,7 @@ rest.addAction('set-col-prop-create', ['admin'], async view => {
 	await db.exec(`
 		INSERT INTO sources_custom_cols (source_id, sheet_title, col_title, prop_id)
    		VALUES (:source_id, :sheet_title, :col_title, :prop_id)
-   		ON DUPLICATE KEY UPDATE prop_id = VALUES(prop_id)
+   		ON DUPLICATE KEY UPDATE prop_id = VALUES(prop_id), noprop = null
 	`, col)
 
 
@@ -801,13 +805,14 @@ rest.addAction('set-col-prop', ['admin'], async view => {
 	const source_id = await view.get('source_id#required')
 	const sheet_index = await view.get('sheet_index#required')
 	const col_index = await view.get('col_index#required')
-	const sheet = await Sources.getSheet(db, source_id, sheet_index)
+	const sheet = await Sources.getSheetByIndex(db, source_id, sheet_index)
+	if (!sheet) return view.err('Лист не найден')
 	const entity_id = sheet.entity_id
 	if (!entity_id) return view.err('Нельзя создать свойство если не назначена сущность')
 	
 
-	const col = await Sources.getCol(db, source_id, sheet_index, col_index)
-
+	const col = await Sources.getColByIndex(db, source_id, sheet.sheet_title, col_index)
+	if (!col) return view.err('Колонка не найдена')
 	col.prop_id = await view.get('prop_id#required')
 	const prop = await Sources.getProp(db, col.prop_id)
 	if (prop.entity_id != entity_id) return view.err('Очень станно, но у свойства не совпадает сущность')
@@ -815,7 +820,7 @@ rest.addAction('set-col-prop', ['admin'], async view => {
 	await db.exec(`
 		INSERT INTO sources_custom_cols (source_id, sheet_title, col_title, prop_id)
    		VALUES (:source_id, :sheet_title, :col_title, :prop_id)
-   		ON DUPLICATE KEY UPDATE prop_id = VALUES(prop_id)
+   		ON DUPLICATE KEY UPDATE prop_id = VALUES(prop_id), noprop = null
 	`, col)
 
 	
@@ -832,13 +837,15 @@ rest.addAction('set-col-prop-reset', ['admin'], async view => {
 	const source_id = await view.get('source_id#required')
 	const sheet_index = await view.get('sheet_index#required')
 	const col_index = await view.get('col_index#required')
-	const sheet = await Sources.getSheet(db, source_id, sheet_index)
-	const col = await Sources.getCol(db, source_id, sheet_index, col_index)
+	const sheet = await Sources.getSheetByIndex(db, source_id, sheet_index)
+	if (!sheet) return view.err('Лист не найден')
+	const col = await Sources.getColByIndex(db, source_id, sheet.sheet_title, col_index)
+	if (!col) return view.err('Колонка не найдена')
 
 	await db.exec(`
-		INSERT INTO sources_custom_cols (source_id, sheet_title, col_title, prop_id)
-   		VALUES (:source_id, :sheet_title, :col_title, null)
-   		ON DUPLICATE KEY UPDATE prop_id = null
+		INSERT INTO sources_custom_cols (source_id, sheet_title, col_title, prop_id, noprop)
+   		VALUES (:source_id, :sheet_title, :col_title, null, b'1')
+   		ON DUPLICATE KEY UPDATE prop_id = null, noprop = b'1'
 	`, col)
 
 	
@@ -856,13 +863,15 @@ rest.addAction('set-prop-create', ['admin'], async view => {
 	const prop_title = await view.get('search') || await view.get('title')
 	const prop_nick = nicked(prop_title)
 	if (!prop_nick) return view.err('Требуется название')
+	
 	const ordain = await db.col('SELECT max(ordain) FROM sources_props where entity_id = :entity_id', {entity_id}) + 1
 
+	const {name, unit} = getNameUnit(prop_title)
 	const prop_id = view.ans.prop_id = await db.insertId(`
-		INSERT INTO sources_props (entity_id, prop_title, prop_nick, type, ordain)
-   		VALUES (:entity_id, :prop_title, :prop_nick, 'value', :ordain)
-   		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title), prop_id = VALUES(prop_id)
-	`, {entity_id, prop_title, prop_nick, ordain})
+		INSERT INTO sources_props (entity_id, prop_title, prop_nick, type, ordain, name, unit)
+   		VALUES (:entity_id, :prop_title, :prop_nick, 'value', :ordain, :name, :unit)
+   		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title), prop_id = LAST_INSERT_ID(prop_id), name = VALUES(name), unit = VALUES(unit)
+	`, {entity_id, prop_title, prop_nick, ordain, name, unit})
 
 	await Sources.reorderProps(db, entity_id)
 	//await Consequences.changed(db, entity_id) у созданного свойства нет источников и данных, так как у данных всегда свойства уже есть
@@ -905,6 +914,16 @@ rest.addAction('set-entity-title', ['admin'], async view => {
 
 	return view.ret()
 })
+const getNameUnit = (title) => {
+	let name = title
+	let unit = ''
+	const r = title.split(', ')
+	if (r.length > 1) {
+		unit = r.pop() || ''
+		name = r.join(', ')
+	}
+	return {name, unit}
+}
 rest.addAction('set-prop-title', ['admin'], async view => {
 
 	const db = await view.get('db')
@@ -913,11 +932,18 @@ rest.addAction('set-prop-title', ['admin'], async view => {
 	const prop_nick = nicked(prop_title)
 	const prop = await Sources.getProp(db, prop_id)
 	if (prop.prop_nick != prop_nick) return view.err('Изменить можно только регистр')
+
+	const {name, unit} = getNameUnit(prop_title)
+	
 	await db.exec(`
 		UPDATE sources_props
-   		SET prop_title = :prop_title, prop_nick = :prop_nick
+   		SET 
+   			prop_title = :prop_title, 
+   			name = :name, 
+   			unit = :unit, 
+   			prop_nick = :prop_nick
    		WHERE prop_id = :prop_id
-	`, {prop_id, prop_title, prop_nick})
+	`, {prop_id, prop_title, prop_nick, name, unit})
 
 	return view.ret()
 })

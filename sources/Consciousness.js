@@ -43,72 +43,155 @@ Consciousness.recalcKeyIndex = async (db) => { //Определить key_index,
 	`)
 }
 Consciousness.recalcEntitiesPropId = async (db, source) => { //Определить entity_id, prop_id, key_index
-	const {source_id} = source
+	const {source_id, entity_id, prop_id} = source
 	//source.entity_id дефолтная сущность
 	//source.prop_id ключ дефолтной сущности
 	
-	const custom_sheets = await db.allto('sheet_title', `
-		SELECT 
-			csh.source_id, 
-			csh.sheet_title, 
-			csh.entity_id,
-			se.prop_id
-		FROM sources_custom_sheets csh, sources_entities se
-		WHERE 
-			csh.source_id = :source_id 
-			and se.entity_id = csh.entity_id
-	`, source)
-	const sheets = await db.all(`
-		SELECT sheet_index, sheet_title
-		FROM sources_sheets
-		WHERE source_id = :source_id
-	`, source)
+	
+	//У каждого листа должен быть entity_id по source.entity_id или custom_sheets или null, 
+	//custom_cols сохраняется, но не вносится если entity_id не подходит и будет работать как null пока настройки не сбросятся или не переопределятся
+	//appears сохраняется со своим entity_id, очистить историю можно отдельно
 
-	for (const {sheet_index, sheet_title} of sheets) {
+	await db.exec(`
+		UPDATE sources_sheets sh
+			LEFT JOIN sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
+		SET sh.entity_id = nvl(csh.entity_id, :def_entity_id)
+		WHERE sh.source_id = :source_id
+	`, {source_id, def_entity_id: entity_id})
 
-		const entity_id = custom_sheets[sheet_title]?.entity_id || source.entity_id || null
+	
 
-		if (entity_id) {
-			const custom_cols = await db.allto('col_title', `
-				SELECT prop_id, col_title
-				FROM sources_custom_cols
-				WHERE source_id = :source_id and sheet_title = :sheet_title and prop_id is not null
-			`, {source_id, sheet_title})
+	// const custom_sheets = await db.allto('sheet_title', `
+	// 	SELECT 
+	// 		csh.source_id, 
+	// 		csh.sheet_title, 
+	// 		csh.entity_id,
+	// 		en.prop_id
+	// 	FROM sources_custom_sheets csh, sources_entities en
+	// 	WHERE 
+	// 		csh.source_id = :source_id 
+	// 		and en.entity_id = csh.entity_id
+	// `, source)
+	// const sheets = await db.all(`
+	// 	SELECT sheet_index, sheet_title
+	// 	FROM sources_sheets
+	// 	WHERE source_id = :source_id
+	// `, source)
+	
+	// const custom_cols = await db.all(`
+	// 	SELECT prop_id, col_title
+	// 	FROM sources_custom_cols
+	// 	WHERE source_id = :source_id and prop_id is not null
+	// `, {source_id})
 
-			const head = await db.all(`
-				SELECT col_title, col_nick, col_index
-				FROM sources_cols
-				WHERE source_id = :source_id and sheet_index = :sheet_index
-			`, {source_id, sheet_index})
-			for (const {col_index, col_title, col_nick} of head) {
-				const prop_id = custom_cols[col_title]?.prop_id || await db.insertId(`
-					INSERT INTO sources_props (entity_id, prop_title, prop_nick, type)
-			   		VALUES (:entity_id, :col_title, :col_nick, 'text')
-			   		ON DUPLICATE KEY UPDATE prop_id = LAST_INSERT_ID(prop_id)
-				`, {entity_id, col_title, col_nick})
 
-				await db.exec(`
-					UPDATE sources_cols
-					SET prop_id = :prop_id
-					WHERE source_id = :source_id and sheet_index = :sheet_index and col_index = :col_index
-				`, {source_id, prop_id, sheet_index, col_index})
-			}
-		} else {
-			await db.exec(`
-				UPDATE sources_cols
-				SET prop_id = null
-				WHERE source_id = :source_id and sheet_index = :sheet_index
-			`, {source_id, sheet_index})
-		}
+	await db.exec(`
+ 		UPDATE sources_cols
+ 		SET prop_id = null
+ 		WHERE source_id = :source_id
+ 	`, {source_id})
+	//У каждой колонки должен стоять свой prop_id 
+	//+1) по entity_id, col_title в custom_cols, где совпадёт
+	await db.exec(`
+		UPDATE 
+			sources_sheets sh, 
+			sources_cols co, 
+			sources_custom_cols sco, 
+			sources_props pr
+		SET co.prop_id = sco.prop_id
+		WHERE sh.source_id = :source_id
+		and co.source_id = sh.source_id
+		and co.sheet_index = sh.sheet_index
+		and sco.source_id = sh.source_id
+		and sco.sheet_title = sh.sheet_title
+		and sco.col_title = co.col_title
+		and pr.prop_id = sco.prop_id
+		and pr.entity_id = sh.entity_id 
+	`, {source_id})
+	//У каждой колонки должен стоять свой prop_id 
+	//2) по entity_id, col_nick из props вставить, где null
+	await db.exec(`
+		UPDATE 
+			sources_sheets sh, 
+			sources_cols co, 
+			sources_props pr
+		SET co.prop_id = pr.prop_id
+		WHERE sh.source_id = :source_id
+		and co.source_id = sh.source_id
+		and co.sheet_index = sh.sheet_index
+		and co.prop_id is null
+		and pr.entity_id = sh.entity_id 
+		and pr.prop_nick = co.col_nick
+	`, {source_id})
 
-		await db.exec(`
-			UPDATE sources_sheets
-			SET entity_id = :entity_id
-			WHERE source_id = :source_id and sheet_index = :sheet_index
-		`, {source_id, entity_id, sheet_index})
+	//noprop надо сбросить
+	await db.exec(`
+		UPDATE 
+			sources_sheets sh, 
+			sources_cols co, 
+			sources_custom_cols sco
+		SET co.prop_id = null
+		WHERE sh.source_id = :source_id
+		and co.source_id = sh.source_id
+		and co.sheet_index = sh.sheet_index
+		and sco.noprop = b'1'
+		and sco.source_id = sh.source_id
+		and sco.sheet_title = sh.sheet_title
+		and sco.col_title = co.col_title
+	`, {source_id})
 
-		await Sources.reorderProps(db, entity_id)
-	}
+
+	// const cols = await db.all(`
+	// 	SELECT col_title, col_nick, col_index
+	// 	FROM sources_sheets sh, sources_cols co
+	// 		LEFT JOIN sources_props pr on (pr.entity_id = sh.entity_id and pr.prop_nick = co.col_nick)
+	// 	WHERE sh.source_id = :source_id
+	// 	and co.source_id = sh.source_id
+	// 	and co.sheet_index = sh.sheet_index
+	// `, {source_id})
+
+	
+	// for (const {sheet_index, sheet_title} of sheets) {
+
+	// 	const entity_id = custom_sheets[sheet_title]?.entity_id || source.entity_id || null
+
+	// 	if (entity_id) {
+			
+	// 		const head = await db.all(`
+	// 			SELECT col_title, col_nick, col_index
+	// 			FROM sources_cols
+	// 			WHERE source_id = :source_id and sheet_index = :sheet_index
+	// 		`, {source_id, sheet_index})
+	// 		for (const {col_index, col_title, col_nick} of head) {
+	// 			const custom_col = custom_cols.find(row => row.sheet_title == sheet_title && row.col_title == col_title)
+	// 			const prop_id = custom_col?.prop_id || await db.insertId(`
+	// 				INSERT INTO sources_props (entity_id, prop_title, prop_nick, type)
+	// 		   		VALUES (:entity_id, :col_title, :col_nick, 'text')
+	// 		   		ON DUPLICATE KEY UPDATE prop_id = LAST_INSERT_ID(prop_id)
+	// 			`, {entity_id, col_title, col_nick})
+
+	// 			await db.exec(`
+	// 				UPDATE sources_cols
+	// 				SET prop_id = :prop_id
+	// 				WHERE source_id = :source_id and sheet_index = :sheet_index and col_index = :col_index
+	// 			`, {source_id, prop_id, sheet_index, col_index})
+	// 		}
+	// 	} else {
+	// 		await db.exec(`
+	// 			UPDATE sources_cols
+	// 			SET prop_id = null
+	// 			WHERE source_id = :source_id and sheet_index = :sheet_index
+	// 		`, {source_id, sheet_index})
+	// 	}
+
+	// 	await db.exec(`
+	// 		UPDATE sources_sheets
+	// 		SET entity_id = :entity_id
+	// 		WHERE source_id = :source_id and sheet_index = :sheet_index
+	// 	`, {source_id, entity_id, sheet_index})
+
+	// 	await Sources.reorderProps(db, entity_id)
+	// }
 }
 Consciousness.recalcRowsKeyId = async (db, source) => {
 	await db.exec(`
@@ -182,7 +265,7 @@ Consciousness.setCellType = async (db, cell, type) => {
 				value_id = await db.insertId(`
 					INSERT INTO sources_values (value_title, value_nick)
 			   		VALUES (:value_title, :value_nick)
-			   		ON DUPLICATE KEY UPDATE value_id = LAST_INSERT_ID(value_id)
+			   		ON DUPLICATE KEY UPDATE value_id = LAST_INSERT_ID(value_id), value_title = VALUES(value_title)
 				`, {value_title, value_nick})
 			}
 		}
@@ -201,8 +284,7 @@ Consciousness.setCellType = async (db, cell, type) => {
 			and multi_index = :multi_index
 	`, {...cell, value_id, number, date, pruning})
 }
-Consciousness.recalcMulti = async (db, {source_id}) => {
-	//prop_id может не быть, тогда multi считаем false
+Consciousness.recalcMulti = async (db, {source_id}) => { //prop_id может не быть, тогда multi считаем false
 	const props = await db.all(`
 		SELECT co.col_index, co.sheet_index, pr.multi + 0 as multi
 		FROM sources_cols co
@@ -210,8 +292,92 @@ Consciousness.recalcMulti = async (db, {source_id}) => {
 		WHERE co.source_id = :source_id
 	`, {source_id})
 	
-	
+	for (const {col_index, sheet_index, multi} of props) {		
+		if (multi) {
+			const cells = await db.all(`
+				SELECT 
+					row_index,
+					text
+				FROM sources_cells
+				WHERE 
+					col_index = :col_index 
+					and sheet_index = :sheet_index 
+					and source_id = :source_id
+					and text like "%, %"
+				ORDER BY row_index, multi_index
+			`, {col_index, sheet_index, source_id})
+			
+			const texts = {}
+			for (const {row_index, text} of cells) {
+				texts[row_index] ??= []
+				texts[row_index].push(...text.split(', '))
+				await db.exec(`
+					DELETE FROM sources_cells
+					WHERE source_id = :source_id 
+						and row_index = :row_index
+						and sheet_index = :sheet_index 
+						and col_index = :col_index
+				`, {source_id, sheet_index, row_index, col_index})
+			}
+			for (const row_index in texts) {
+				for (const multi_index in texts[row_index]) {
+					const text = texts[row_index][multi_index]
+					await db.exec(`
+						INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, multi_index, text)
+						VALUES (:source_id, :sheet_index, :row_index, :col_index, :multi_index, :text)
+					`, {source_id, sheet_index, row_index, col_index, multi_index, text})
+				}
+			}
 
+		} else { //multi нет, дубли мёрджим
+			const cells = await db.all(`
+				SELECT 
+					row_index,
+					text
+				FROM sources_cells
+				WHERE 
+					col_index = :col_index 
+					and sheet_index = :sheet_index 
+					and source_id = :source_id
+					and row_index in (
+						SELECT row_index 
+						FROM sources_cells 
+						WHERE source_id = :source_id and sheet_index = :sheet_index and col_index = :col_index
+						GROUP BY row_index HAVING COUNT(*) > 1
+					)
+				ORDER BY row_index, multi_index
+			`, {col_index, sheet_index, source_id})
+			
+			const texts = {}
+			for (const {row_index, text} of cells) {
+				texts[row_index] ??= []
+				texts[row_index].push(text)
+				await db.exec(`
+					DELETE FROM sources_cells
+					WHERE source_id = :source_id 
+						and row_index = :row_index
+						and sheet_index = :sheet_index 
+						and col_index = :col_index
+				`, {source_id, sheet_index, row_index, col_index})
+			}
+			for (const row_index in texts) {
+				const text = texts[row_index].join(', ')
+				await db.exec(`
+					INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, text)
+					VALUES (:source_id, :sheet_index, :row_index, :col_index, :text)
+				`, {source_id, sheet_index, row_index, col_index, text})
+			}
+		}
+	}
+}
+Consciousness.recalcMultiByRow = async (db, {source_id}) => { //depricated, проверка каждой строки
+	//prop_id может не быть, тогда multi считаем false
+	const props = await db.all(`
+		SELECT co.col_index, co.sheet_index, pr.multi + 0 as multi
+		FROM sources_cols co
+			LEFT JOIN sources_props pr on (pr.prop_id = co.prop_id)
+		WHERE co.source_id = :source_id
+	`, {source_id})
 	
 	for (const {col_index, sheet_index, multi} of props) {		
 		if (multi) {
@@ -353,22 +519,17 @@ Consciousness.insertItemsByEntity = async (db, entity) => {
 
 	const prop_id = entity.prop_id
 	if (!prop_id) return
-		
-	const keyids = await db.colAll(`
-		SELECT distinct ro.key_id
+
+	await db.exec(`
+		INSERT INTO sources_items (entity_id, key_id)
+		SELECT distinct :entity_id, ro.key_id
 		FROM sources_rows ro, sources_sheets sh
 		WHERE ro.key_id is not null
 		and ro.source_id = sh.source_id
 		and ro.sheet_index = sh.sheet_index
 		and sh.entity_id = :entity_id
 	`, entity)
-	
-	for (const key_id of keyids) {
-		await db.exec(`
-			INSERT INTO sources_items (entity_id, key_id)
-			VALUES (:entity_id, :key_id)
-		`, {entity_id: entity.entity_id, key_id})
-	}
+
 }
 Consciousness.recalcRepresent = async (db) => {
 	
@@ -712,7 +873,33 @@ Consciousness.recalcRepresentRowKeyBySource = async (db, source) => {
 	`, source)
 }
 
+Consciousness.recalcRowSearchBySourceId = async (db, source_id) => {
 
+	
+	const texts = await db.all(`
+		SELECT ce.sheet_index, 
+			ce.row_index, 
+			GROUP_CONCAT(ce.text SEPARATOR ' ') as text
+		FROM sources_cells ce
+		WHERE ce.source_id = :source_id
+		GROUP BY ce.sheet_index, ce.row_index
+	`, {source_id})
+
+	for (const {text, sheet_index, row_index} of texts) {
+		let search = nicked(text)
+		search = search.split('-')
+		search = unique(search)
+		search.sort()
+		search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+		await db.exec(`
+			UPDATE sources_rows
+			SET search = :search
+			WHERE source_id = :source_id
+			and sheet_index = :sheet_index
+			and row_index = :row_index
+		`, {source_id, sheet_index, row_index, search})
+	}
+}
 Consciousness.recalcSearchByEntityIdAndSourceId = async (db, entity_id, source_id) => {
 
 	const losers = await db.colAll(`

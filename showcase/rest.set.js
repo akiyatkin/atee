@@ -403,7 +403,6 @@ rest.addAction('set-tables-load', async view => {
 	const msgs = []
 	const row = await upload.loadTable(name, msgs)
 	if (!row) return view.err('Неизвестная ошибка с таблицей, проверьте конфиг')
-		console.log(row)
 	row.ready = true
 	view.ans.msgs = msgs
 	view.ans.row = row

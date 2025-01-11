@@ -30,7 +30,7 @@
 	overflow-y: auto;
 	pointer-events: auto;
 	/*visibility: visible;*/
-	max-height: 100vh;
+	max-height: 50vh;
 	opacity: 1;
 }
 

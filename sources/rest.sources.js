@@ -58,7 +58,19 @@ rest.addArgument('propprop', (view, prop) => {
 	if (~['multi','known'].indexOf(prop)) return prop
 	return null
 })
-
+rest.addArgument('keyfilter', (view, prop) => {
+	if (~['appear','all','yes','not'].indexOf(prop)) return prop
+	return 'appear'
+})
+rest.addArgument('appear', (view, date) => {
+	if (!date) return null
+	if (date > 2147483647) date = 2147483647
+	try {
+		return Math.round(new Date(parseInt(date)).getTime())
+	} catch (e) {
+		return null
+	}
+})
 
 rest.addArgument('type', (view, type) => {
 	if (~['date','text','value','number'].indexOf(type)) return type
@@ -70,14 +82,15 @@ rest.addVariable('type#required', ['type', 'required'])
 rest.addVariable('propprop#required', ['propprop', 'required'])
 rest.addVariable('sourceprop#required', ['sourceprop', 'required'])
 
-rest.addArgument('date', (view, date) => {
-	if (!date) return null
-	try {
-		return Math.round(new Date(parseInt(date)).getTime() / 1000)
-	} catch (e) {
-		return null
-	}
-})
+// rest.addArgument('date', (view, date) => {
+// 	if (!date) return null
+// 	if (date > 2147483647) date = 2147483647
+// 	try {
+// 		return Math.round(new Date(parseInt(date)).getTime())
+// 	} catch (e) {
+// 		return null
+// 	}
+// })
 rest.addArgument('title', ['escape'])
 rest.addVariable('title#required', ['title', 'required'])
 

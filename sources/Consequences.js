@@ -8,9 +8,15 @@ const Consequences = {} //кОнс(иеэ)кв(аеэ)нсиз (Последст
 
 Consequences.loaded = async (db, source_id) => {
 	const source = await Sources.getSource(db, source_id)
+	await Consciousness.recalcRowSearchBySourceId(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
+
 	await Consciousness.recalcEntitiesPropId(db, source)
+	
+
 	await Consciousness.recalcMulti(db, source)
+	return
 	await Consciousness.recalcTexts(db, source)
+
 	await Consciousness.recalcKeyIndex(db)
 	await Consciousness.recalcRowsKeyId(db, source)
 	
@@ -93,14 +99,19 @@ Consequences.represent = async (db) => {
 		await Consciousness.recalcRepresentRowKeyBySource(db, source)
 		await Consciousness.recalcRepresentRowSummaryBySource(db, source)
 	}
+
 	const entities = await Sources.getEntities(db)
+
 	for (const entity of entities) {
 		await Consciousness.insertItemsByEntity(db, entity) //insert items
-		await Consciousness.recalcRepresentPropByEntity(db, entity)
-		await Consciousness.recalcRepresentValueByEntity(db, entity)
-		await Consciousness.recalcRepresentItemByEntity(db, entity)
-		await Consciousness.recalcRepresentItemSummaryByEntity(db, entity)
+		return
+		// await Consciousness.recalcRepresentPropByEntity(db, entity)
+		// await Consciousness.recalcRepresentValueByEntity(db, entity)
+		// await Consciousness.recalcRepresentItemByEntity(db, entity)
+		// await Consciousness.recalcRepresentItemSummaryByEntity(db, entity)
 	}
+
+
 	await Consciousness.recalcRepresent(db)
 	await Consciousness.recalcWinner(db)
 	

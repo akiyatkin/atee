@@ -87,12 +87,10 @@ Sources.load = async (db, source, visitor) => {
 		console.log(e)
 		source.error = 'Ошибка при подготовке данных: ' + e.toString()
 	}
-	console.log(1)
 	await Sources.insertSheets(db, source, sheets).catch(e => {
 		console.log(e)
 		source.error = 'Ошибка при внесении данных: ' + e.toString()
 	})
-	console.log(3)
 
 	source.duration_insert = Date.now() - timer_insert
 	source.date_content = Math.round(Number(res.data?.date_content || 0) / 1000)
@@ -307,6 +305,7 @@ Sources.reorderSources = async (db) => {
 const SELECT_PROP = `
 	pr.entity_id,
 	pr.prop_id,
+	pr.name,
 	pr.prop_title,
 	pr.type,
 	pr.unit,
@@ -375,6 +374,8 @@ Sources.getProp = async (db, prop_id) => {
 	`, {prop_id})
 	return prop
 }
+
+
 Sources.getSheets = async (db, source_id) => {
 	const source = await Sources.getSource(db, source_id)
 	const custom_sheets =await db.all(`
@@ -440,16 +441,19 @@ Sources.getSheets = async (db, source_id) => {
 	for (const descr of custom_sheets) descr.custom = true
 	for (const descr of [...loaded_sheets, ...custom_sheets]) {
 		const sheet = sheets[descr.sheet_title] ??= {source_id, sheet_title: descr.sheet_title}
-		sheet.entity_title = descr.entity_title
-		sheet.entity_plural = descr.entity_plural
-		sheet.prop_title = descr.prop_title
-		delete descr.entity_title
-		delete descr.prop_title
-		delete descr.entity_plural
-		delete descr.sheet_title
+		
 		sheet.remove ||= descr.custom
 		sheet[descr.loaded ? 'loaded' : 'custom'] = descr
 	}
+	for (const sheet_title in sheets) {
+		const sheet = sheets[sheet_title]
+		sheet.entity_title = sheet.custom?.entity_title || sheet.loaded?.entity_title
+		sheet.entity_id = sheet.custom?.entity_id || sheet.loaded?.entity_id
+		sheet.entity_plural = sheet.custom?.entity_plural || sheet.loaded?.entity_plural
+		sheet.prop_title = sheet.custom?.prop_title || sheet.loaded?.prop_title
+		
+	}
+
 	const list = Object.values(sheets)
 	for (const sheet of list) {
 		sheet.remove ||= await db.col(`
@@ -469,7 +473,23 @@ Sources.getSheets = async (db, source_id) => {
 		`, sheet)
 		sheet.cls = represent.calcCls(source.represent_source, sheet.custom?.represent_custom_sheet, source.represent_sheets)
 	}
-	return list
+	return list.filter(sheet => sheet.loaded)
+}
+Sources.getSheetByIndex = async (db, source_id, sheet_index) => {
+	const sheet = await db.fetch(`
+		SELECT 
+			sh.sheet_title,
+			sh.sheet_index,
+			sh.key_index,
+			sh.entity_id,
+			sh.source_id,
+			sh.represent_sheet + 0 as represent_sheet,
+			csh.represent_custom_sheet + 0 as represent_custom_sheet
+		FROM sources_sheets sh
+			left join sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
+		WHERE sh.source_id = :source_id and sh.sheet_index = :sheet_index
+	`, {source_id, sheet_index})
+	return sheet
 }
 Sources.getSheet = async (db, source_id, sheet_title) => {
 	const sheet = await db.fetch(`

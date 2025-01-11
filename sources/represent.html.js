@@ -11,6 +11,8 @@ main.col = (data, env, col = data.col, entity = data.entity, prop = data.prop, s
 		cls: 'a',
 		search:'/-sources/get-col-prop-search?entity_id=' + entity.entity_id,
 		value: prop.prop_title || 'Не указано',
+		heading:"Свойство колонки",
+		descr: "Одноимённое свойство привязывается по умолчанию.",
 		label: 'Выберите свойство', 
 		type: 'text',
 		name: 'prop_id',
