@@ -285,92 +285,50 @@ Consciousness.setCellType = async (db, cell, type) => {
 	`, {...cell, value_id, number, date, pruning})
 }
 Consciousness.recalcMulti = async (db, {source_id}) => { //prop_id может не быть, тогда multi считаем false
-	const props = await db.all(`
-		SELECT co.col_index, co.sheet_index, pr.multi + 0 as multi
-		FROM sources_cols co
+	const list = await db.all(`
+		SELECT 
+			co.sheet_index, 
+			co.col_index, 
+			ce.row_index,
+			GROUP_CONCAT(ce.text SEPARATOR ", ") AS text, 
+			COUNT(*) AS cnt,
+			pr.multi + 0 as multi
+		FROM sources_cells ce, sources_cols co
 			LEFT JOIN sources_props pr on (pr.prop_id = co.prop_id)
-		WHERE co.source_id = :source_id
+		WHERE co.source_id = 5
+			AND ce.source_id = co.source_id
+			AND ce.col_index = co.col_index
+			AND ce.sheet_index = co.sheet_index
+		GROUP BY ce.sheet_index, ce.row_index, ce.col_index
+		HAVING (multi AND cnt = 1 AND INSTR(text, ', ')) OR (!multi AND cnt > 1);
 	`, {source_id})
-	
-	for (const {col_index, sheet_index, multi} of props) {		
-		if (multi) {
-			const cells = await db.all(`
-				SELECT 
-					row_index,
-					text
-				FROM sources_cells
-				WHERE 
-					col_index = :col_index 
-					and sheet_index = :sheet_index 
-					and source_id = :source_id
-					and text like "%, %"
-				ORDER BY row_index, multi_index
-			`, {col_index, sheet_index, source_id})
-			
-			const texts = {}
-			for (const {row_index, text} of cells) {
-				texts[row_index] ??= []
-				texts[row_index].push(...text.split(', '))
-				await db.exec(`
-					DELETE FROM sources_cells
-					WHERE source_id = :source_id 
-						and row_index = :row_index
-						and sheet_index = :sheet_index 
-						and col_index = :col_index
-				`, {source_id, sheet_index, row_index, col_index})
-			}
-			for (const row_index in texts) {
-				for (const multi_index in texts[row_index]) {
-					const text = texts[row_index][multi_index]
-					await db.exec(`
-						INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, multi_index, text)
-						VALUES (:source_id, :sheet_index, :row_index, :col_index, :multi_index, :text)
-					`, {source_id, sheet_index, row_index, col_index, multi_index, text})
-				}
-			}
 
+	for (const {sheet_index, row_index, col_index, text, cnt, multi} of list) {		
+		await db.exec(`
+			DELETE FROM sources_cells
+			WHERE source_id = :source_id 
+				and row_index = :row_index
+				and sheet_index = :sheet_index 
+				and col_index = :col_index
+		`, {source_id, sheet_index, row_index, col_index})
+		if (multi) {
+			const texts = text.split(', ')
+			for (const multi_index in texts) {
+				const text = texts[multi_index]
+				await db.exec(`
+					INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, multi_index, text)
+					VALUES (:source_id, :sheet_index, :row_index, :col_index, :multi_index, :text)
+				`, {source_id, sheet_index, row_index, col_index, multi_index, text})
+			}
 		} else { //multi нет, дубли мёрджим
-			const cells = await db.all(`
-				SELECT 
-					row_index,
-					text
-				FROM sources_cells
-				WHERE 
-					col_index = :col_index 
-					and sheet_index = :sheet_index 
-					and source_id = :source_id
-					and row_index in (
-						SELECT row_index 
-						FROM sources_cells 
-						WHERE source_id = :source_id and sheet_index = :sheet_index and col_index = :col_index
-						GROUP BY row_index HAVING COUNT(*) > 1
-					)
-				ORDER BY row_index, multi_index
-			`, {col_index, sheet_index, source_id})
-			
-			const texts = {}
-			for (const {row_index, text} of cells) {
-				texts[row_index] ??= []
-				texts[row_index].push(text)
-				await db.exec(`
-					DELETE FROM sources_cells
-					WHERE source_id = :source_id 
-						and row_index = :row_index
-						and sheet_index = :sheet_index 
-						and col_index = :col_index
-				`, {source_id, sheet_index, row_index, col_index})
-			}
-			for (const row_index in texts) {
-				const text = texts[row_index].join(', ')
-				await db.exec(`
-					INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, text)
-					VALUES (:source_id, :sheet_index, :row_index, :col_index, :text)
-				`, {source_id, sheet_index, row_index, col_index, text})
-			}
+			await db.exec(`
+				INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, text)
+				VALUES (:source_id, :sheet_index, :row_index, :col_index, :text)
+			`, {source_id, sheet_index, row_index, col_index, text})
 		}
 	}
 }
-Consciousness.recalcMultiByRow = async (db, {source_id}) => { //depricated, проверка каждой строки
+Consciousness.recalcMultiByRow = async (db, {source_id}) => { //depricated, проверка каждой строки, use recalcMulti
 	//prop_id может не быть, тогда multi считаем false
 	const props = await db.all(`
 		SELECT co.col_index, co.sheet_index, pr.multi + 0 as multi
@@ -457,7 +415,75 @@ Consciousness.recalcMultiByRow = async (db, {source_id}) => { //depricated, пр
 		}
 	}
 }
-Consciousness.recalcTexts = async (db, source) => {
+Consciousness.recalcTexts = async (db, {source_id}) => {
+	await db.exec(`
+		UPDATE sources_cells ce, sources_cols co
+			LEFT JOIN sources_props pr on (pr.prop_id = co.prop_id)
+		SET 
+			ce.value_id = null, 
+			ce.number = null, 
+			ce.date = null, 
+			ce.pruning = 0
+		WHERE co.source_id = :source_id
+			AND ce.source_id = co.source_id
+			AND ce.col_index = co.col_index
+			AND ce.sheet_index = co.sheet_index
+			AND 
+				(
+					((pr.type = 'text' OR !pr.type)
+						AND (
+							ce.value_id IS NOT NULL 
+							OR ce.number IS NOT NULL 
+							OR ce.date IS NOT NULL 
+						)
+					)
+				)
+	`, {source_id})
+	const list = await db.all(`
+		SELECT 
+			co.sheet_index, 
+			co.col_index, 
+			ce.row_index,
+			ce.multi_index,
+			ce.text, 
+			pr.type,
+			pr.prop_title
+		FROM sources_cells ce, sources_cols co
+			LEFT JOIN sources_props pr on (pr.prop_id = co.prop_id)
+		WHERE co.source_id = :source_id
+			AND ce.source_id = co.source_id
+			AND ce.col_index = co.col_index
+			AND ce.sheet_index = co.sheet_index
+			AND 
+				(
+					(pr.type = 'value' 
+						AND (
+							ce.value_id IS NULL 
+						)
+					)
+				
+				OR
+					(pr.type = 'number' 
+						AND (
+							ce.number IS NULL 
+						)
+					)
+				OR
+					(pr.type = 'date' 
+						AND (
+							ce.date IS NULL 
+						)
+					)
+					
+				)
+	`, {source_id})	
+	for (const cell of list) {
+		cell.source_id = source_id
+		await Consciousness.setCellType(db, cell, cell?.type)
+	}
+	
+}
+Consciousness.recalcTextsDirect = async (db, source) => { //depricated use recalcTexts
 	const {source_id} = source
 	const sheets = await db.colAll(`
 		SELECT sheet_index
@@ -480,7 +506,6 @@ Consciousness.recalcTexts = async (db, source) => {
 		`, {source_id, sheet_index})
 		for (const cell of cells) {
 			const prop = props[cell.col_index]
-
 			await Consciousness.setCellType(db, cell, prop?.type)
 		}
 	}
@@ -694,14 +719,25 @@ Consciousness.recalcRepresentCellBySource = async (db, source) => {
 	`, source)
 
 	await db.exec(`
-		UPDATE sources_cells ce, sources_rows ro, sources_custom_cells cce
+		UPDATE sources_cells ce, sources_rows ro, sources_cols co, sources_sheets sh, sources_custom_cells cce
 		SET ce.represent_cell = cce.represent_custom_cell
 		WHERE ce.source_id = :source_id
 			and ro.source_id = ce.source_id
+			and ro.sheet_index = ce.sheet_index
 			and ro.row_index = ce.row_index
+			
+			and sh.source_id = ce.source_id
+			and sh.sheet_index = ce.sheet_index
+
+			and co.source_id = ce.source_id
+			and co.sheet_index = ce.sheet_index
+			and co.col_index = ce.col_index
+			
 			and cce.source_id = ce.source_id 
+			and cce.sheet_title = sh.sheet_title
 			and cce.key_id = ro.key_id
 			and cce.repeat_index = ro.repeat_index
+			and cce.col_title = co.col_title
 			and cce.represent_custom_cell is not null
 	`, source)
 

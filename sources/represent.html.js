@@ -12,7 +12,7 @@ main.col = (data, env, col = data.col, entity = data.entity, prop = data.prop, s
 		search:'/-sources/get-col-prop-search?entity_id=' + entity.entity_id,
 		value: prop.prop_title || 'Не указано',
 		heading:"Свойство колонки",
-		descr: "Одноимённое свойство привязывается по умолчанию.",
+		descr: "Имя колонки <b>" + col.col_title + "</b>",
 		label: 'Выберите свойство', 
 		type: 'text',
 		name: 'prop_id',
@@ -21,7 +21,7 @@ main.col = (data, env, col = data.col, entity = data.entity, prop = data.prop, s
 		args: {source_id: source.source_id, sheet_index: col.sheet_index, col_index: col.col_index},
 		reloaddiv:env.layer.conf.reloaddiv
 	}) : 'Свойство не назначено, требуется сущность'}
-	<script>
+	<!-- <script>
 		(div => {
 			const field = div.getElementsByClassName('field')[0]
 			if (!field) return
@@ -30,8 +30,33 @@ main.col = (data, env, col = data.col, entity = data.entity, prop = data.prop, s
 				Dialog.hide()
 			})
 		})(document.currentScript.previousElementSibling)
-	</script>
-
+	</script> -->
+	
+	<div>
+		${showType(data, env, prop)}
+		
+	</div>
+`
+const showType = (data, env, prop) => !prop ? '' : `
+	Тип ${field.setpop({
+		heading:'Тип',
+		value: prop.type,
+		name: 'type',
+		descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче 63 символов. Самый затратный <b>text</b>. Для ключей и связей подходит только value.',
+		action: '/-sources/set-prop-type', 
+		values: {"number":"number", "date":"date", "value":"value", "text":"text"},
+		args: {prop_id: prop.prop_id},
+		reloaddiv: env.layer.div
+	})}, значений ${field.setpop({
+		heading:'Значений',
+		value: prop.multi,
+		name: 'bit',
+		descr: 'Несколько значений могут быть разделены запятой с пробелом.',
+		action: '/-sources/set-prop-prop', 
+		values: {"":"одно", "1":"несколько"},
+		args: {prop_id: prop.prop_id, propprop: 'multi'},
+		reloaddiv: env.layer.div
+	})}
 `
 main.row = (data, env, row = data.row) => `Строка ${row.row_index}`
 main.cell = (data, env, cell = data.cell || {text: null}, prop = data.prop) => `

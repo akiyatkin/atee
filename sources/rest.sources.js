@@ -62,6 +62,9 @@ rest.addArgument('keyfilter', (view, prop) => {
 	if (~['appear','all','yes','not'].indexOf(prop)) return prop
 	return 'appear'
 })
+rest.addVariable('keyfilter#required', ['keyfilter', 'required'])
+rest.addVariable('keyfilter#appear', ['keyfilter'])
+
 rest.addArgument('appear', (view, date) => {
 	if (!date) return null
 	if (date > 2147483647) date = 2147483647

@@ -14,16 +14,21 @@ Consequences.loaded = async (db, source_id) => {
 	
 
 	await Consciousness.recalcMulti(db, source)
-	return
+	
 	await Consciousness.recalcTexts(db, source)
 
+
 	await Consciousness.recalcKeyIndex(db)
+
 	await Consciousness.recalcRowsKeyId(db, source)
 	
 	//key_id, represent, winner
 	await Consciousness.recalcRepresentSheetBySource(db, source)
+
 	await Consciousness.recalcRepresentColBySource(db, source)
+
 	await Consciousness.recalcRepresentRowBySource(db, source)
+
 	await Consciousness.recalcRepresentCellBySource(db, source)
 	await Consciousness.recalcRepresentRowKeyBySource(db, source)
 	await Consciousness.recalcRepresentRowSummaryBySource(db, source)
@@ -35,14 +40,17 @@ Consequences.loaded = async (db, source_id) => {
 	for (const entity_id of entities) {
 		const entity = await Sources.getEntity(db, entity_id)
 		if (!entity) continue
+
 		await Consciousness.insertItemsByEntity(db, entity) //insert items
 		await Consciousness.recalcRepresentPropByEntity(db, entity)
 		await Consciousness.recalcRepresentValueByEntity(db, entity)
 		await Consciousness.recalcRepresentItemByEntity(db, entity)
 		await Consciousness.recalcRepresentItemSummaryByEntity(db, entity)
 	}
+	
 	await Consciousness.recalcRepresent(db)
 	await Consciousness.recalcWinner(db)
+	
 	for (const entity_id of entities) {
 		await Consciousness.recalcSearchByEntityIdAndSourceId(db, entity_id, source.source_id)
 	}
@@ -104,11 +112,11 @@ Consequences.represent = async (db) => {
 
 	for (const entity of entities) {
 		await Consciousness.insertItemsByEntity(db, entity) //insert items
-		return
-		// await Consciousness.recalcRepresentPropByEntity(db, entity)
-		// await Consciousness.recalcRepresentValueByEntity(db, entity)
-		// await Consciousness.recalcRepresentItemByEntity(db, entity)
-		// await Consciousness.recalcRepresentItemSummaryByEntity(db, entity)
+		
+		await Consciousness.recalcRepresentPropByEntity(db, entity)
+		await Consciousness.recalcRepresentValueByEntity(db, entity)
+		await Consciousness.recalcRepresentItemByEntity(db, entity)
+		await Consciousness.recalcRepresentItemSummaryByEntity(db, entity)
 	}
 
 

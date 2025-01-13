@@ -25,7 +25,7 @@ export const TOP = (data, env, source = data.source) => !data.result ? '' : `
 
 `
 export const TABLE = (data, env, source = data.source) => !data.result ? '' : `
-	<h1>${source.source_title}</h1>
+	<h1>Ревизия ${source.source_title}</h1>
 	${showComment(data, env, source)}
 	${showDatas(data, env, source)}
 	
@@ -381,7 +381,7 @@ const showControll = (data, env, source) => `
 				search:'/-sources/get-source-entity-search',
 				value: source.entity_id ? showSourceEntity(data, env, source) : 'не определено', 
 				label: 'Название сущности', 
-				descr: 'Сущность применяется к данным на новых листах.',
+				descr: 'Применяется к листам, для которых сущность не указана.',
 				type: 'text',
 				name: 'entity_id',
 				find: 'entity_id',

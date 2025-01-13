@@ -63,6 +63,10 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 				grid-template-columns: 100%; padding-top: var(--padding); min-height:100vh; display:grid; 
 				grid-template-rows: 1fr max-content;
 			}
+			footer {
+				padding-left:1em;
+				padding-right:1em;
+			}
 			@media (max-width: 768px) {
 				
 				.maingrid {
@@ -103,6 +107,10 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 				.column.hide .bars svg path.two {
 					d: path("M0 16L24 16")
 				}
+				footer {
+					padding-left:var(--padding);
+					padding-right:var(--padding);
+				}
 			}
 			@media (max-width: 475px) {
 				.maincontainer {
@@ -112,10 +120,7 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 					border:none;
 					margin-bottom:0;
 				}
-				footer {
-					padding-left:1rem;
-					padding-right:1rem;
-				}
+				
 			}
 			
 		</style>

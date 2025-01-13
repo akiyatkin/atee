@@ -96,7 +96,7 @@ const showScriptReload = (data, env) => `
 const showSourceTr = (data, env, source) => `
 	<tr data-id="${source.source_id}" style="white-space: nowrap;" class="item status_${source.class}">
 		<td>
-			<a href="source/${source.source_id}">${source.source_title}</a>
+			<a href="sheet?source_id=${source.source_id}">${source.source_title}</a>
 		</td>
 		<td>
 			${source.status} <b>${ago.short(source.date_start)}</b>

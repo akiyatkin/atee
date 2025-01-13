@@ -2,11 +2,14 @@ import err from "/-controller/err.html.js"
 import field from "/-dialog/field.html.js"
 import date from "/-words/date.html.js"
 import svg from "/-sources/svg.html.js"
+import addget from '/-sources/addget.js'
 export const css = ['/-sources/represent.css','/-sources/revscroll.css']
-
+const showSourceEntity = (data, env, source, entity = source) => `
+	${entity.entity_plural || entity.entity_title} ${entity.prop_title ? (entity.prop_title == entity.entity_title ? '' : '(' + entity.prop_title + ')'): '(ключ не определён)'}
+`
 export const ROOT = (data, env, sheet = data.sheet, source = data.source) => err(data, env, ['DATES','SHEETS', 'TABLE']) || `
-	<div style="float:right"><a href="source/${source.source_id}">${source.source_title}</a></div>
-	<h1>Содержание</h1>
+	<div style="float:right"><a href="../sources">Источник</a></div>
+	<h1>${source.source_title}</h1>
 
 	<style>
 		${env.scope} tbody td.rep {
@@ -39,37 +42,65 @@ export const ROOT = (data, env, sheet = data.sheet, source = data.source) => err
 			font-weight: inherit;
 		}
 	</style>
-	${showComment(data, env, source)}
-	${showSearch(data, env)}
+	<div style="display: flex; flex-wrap: wrap; gap: 1em">
+		<div style="margin-bottom:1ch">
+			<div style="margin:0 0 1ch 0">
+				${field.button({
+					label: 'Загрузить', 
+					action: '/-sources/set-source-load',
+					reloaddiv: env.layer.div,
+					args: {source_id: source.source_id}
+				})}
+			</div>
+			<div>
+				${data.source.entity_id ? showSourceEntity(data, env, source) : 'Cущность не выбрана'}
+			</div>
+			<div title="${date.dmyhi(data.source.date_load)}">Загружено ${date.ai(data.source.date_load)}</div>
+			<div title="${date.dmyhi(data.source.date_content)}">Актуальность ${date.ai(data.source.date_content) || 'нет данных'}</div>
+			<div title="${date.dmyhi(data.source.date_exam)}">Ревизия <a href="source/${data.source.source_id}">${date.ai(data.source.date_exam)}</a></div>
+			
+			
+		</div>
+		<div style="flex-grow: 1">
+			${showComment(data, env, source)}
+			${showSearch(data, env)}
+		</div>
+
+	</div>
 	<div id="DATES"></div>
 	<div id="SHEETS"></div>
 	<div id="TABLE"></div>
-	<div style="margin-top:2em; text-align: right;">
-		${field.button({
-			label: 'Загрузить', 
-			action: '/-sources/set-source-load',
-			reloaddiv: env.layer.div,
-			args: {source_id: source.source_id}
-		})}
-	</div>
+	
 `
 export const DATES = (data, env) => !data.result ? `` : `
 	<div style="align-items: center; flex-grow: 1; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
-		<div><a class="${env.bread.get.keyfilter == 'all' ? 'active' : ''}" href="sheet${addget(env, {keyfilter: 'all'})}">Всё&nbsp;<sup>${data.quantity_without_keys + data.quantity_of_keys}</sup></a></div>
-		<div><a class="${env.bread.get.keyfilter == 'not' ? 'active' : ''}" href="sheet${addget(env, {keyfilter: 'not'})}">Без&nbsp;ключа&nbsp;<sup>${data.quantity_without_keys}</sup></a></div>
-		<div><a class="${env.bread.get.keyfilter == 'yes' ? 'active' : ''}" href="sheet${addget(env, {keyfilter: 'yes'})}">С&nbsp;ключом<sup>${data.quantity_of_keys}</sup></a></div>
+		
 		<div style="background: linear-gradient(-30deg, #00aaff55, #4466ff22); padding: 0.5em; flex-grow: 1; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
 			
 			${data.dates.map(dateup => showDate(data, env, dateup)).join('')}
 			
 		</div>
+		<div style="background: linear-gradient(-30deg, #00aaff55, #4466ff22); padding: 0.5em; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
+			<div><a class="${env.bread.get.keyfilter == 'yes' ? 'active' : ''}" data-keyfilter="yes" href="sheet${addget({keyfilter: 'yes'}, env.bread.get)}">С&nbsp;ключом<sup>${data.quantity_of_keys}</sup></a></div>
+			<div><a class="${env.bread.get.keyfilter == 'not' ? 'active' : ''}" data-keyfilter="not" href="sheet${addget({keyfilter: 'not'}, env.bread.get)}">Без&nbsp;ключа&nbsp;<sup>${data.quantity_without_keys}</sup></a></div>
+			<div><a class="${env.bread.get.keyfilter == 'all' ? 'active' : ''}" data-keyfilter="all" href="sheet${addget({keyfilter: 'all'}, env.bread.get)}">Всё&nbsp;<sup>${data.quantity_without_keys + data.quantity_of_keys}</sup></a></div>
+		</div>
 	</div>
 	<script>
 		(async div => {
+			const addget = await import('/-sources/addget.js').then(r => r.default)
 			window.addEventListener('crossing', (e) => {
 				const {theme, bread} = e.detail
 				const origin = location.origin + bread.href
 				const aa = div.getElementsByTagName('a')
+				for (const a of aa) {
+					const keyfilter = a.dataset.keyfilter
+					if (!keyfilter) continue
+					const params = {keyfilter}
+					const appear = a.dataset.appear
+					if (appear) params.appear = appear
+					a.href = 'sheet' + addget(params)
+				}
 				let r = false
 				for (const a of aa) {
 					if (a.href != origin) continue
@@ -90,67 +121,45 @@ export const SHEETS = (data, env) => !data.result ? `` : `
 `
 const showDate = (data, env, dateup, active = dateup.active && (!env.bread.get.keyfilter || env.bread.get.keyfilter == 'appear')) => `
 	<div title="Дата обновления ${date.dmyhi(dateup.date)}">
-		<a class="${active ? 'active' : ''}" href="sheet${addget(env, {keyfilter:'appear', appear:dateup.date})}">
+		<a class="${active ? 'active' : ''}" 
+		 	data-keyfilter="appear"
+		 	data-appear="${dateup.date}"
+			href="sheet${addget({keyfilter:'appear', appear:dateup.date}, env.bread.get)}">
 			${dateup.title || date.ai(dateup.date)}&nbsp;<sup>${dateup.count}</sup>
 		</a>
 	</div>
 `
 const showSheet = (data, env, sheet, active = sheet.sheet_index == data.sheet.sheet_index) => {
-	if (!active) return `<div><a href="sheet${addget(env, {sheet_index:sheet.sheet_index})}">${sheet.sheet_title}&nbsp;<sup>${sheet.count}</sup></a></div>`
+	if (!active) return `<div><a href="sheet${addget({sheet_index:sheet.sheet_index}, env.bread.get)}">${sheet.sheet_title}&nbsp;<sup>${sheet.count}</sup></a></div>`
 	if (active) return `<div>${sheet.sheet_title}&nbsp;<sup>${sheet.count}</sup></div>`
 }
 
 
 
-const addget = (env, params = {}) => {
-	for (const name in env.bread.get) if (!(name in params)) params[name] = env.bread.get[name]
-	delete params.t
-	const search = Object.entries(params)
-		.filter(([key, val]) => val !== '' && val !== null)
-		.map(([key, val]) => key)
-		.sort()
-		.map(key => `${key}=${params[key]}`)
-		.join('&')
-	return search ? '?' + search : ''
-}
+
 const showSearch = (data, env) => `
 	<form style="margin: 1em 0; display: flex; gap: 1em">
 		
 		<input name="search" type="search" style="flex-grow:1" value="${env.bread.get.search ?? ''}"><button type="submit">Найти</button>
 		<script>
 			(form => {
-				const source_id = ${data.source.source_id}
-				const sheet_index = ${env.bread.get.sheet_index || 0}
-				const date = ${env.bread.get.date}
-				
-				const check = async (go) => {
-					
-					const search = form.search.value.trim()
-
-					const gindex = sheet_index ? '&sheet_index=' + sheet_index : ''
-					const gsearch = search ? '&search=' + search : ''
-					const gdate = date !== '' ? '&date=' + date : ''
-
-					if (go) {
-						const Client = await window.getClient()
-						Client.go('sheet?source_id=' + source_id + gindex + gdate + gsearch)
-					}
+				const go = async () => {
+					const addget = await import('/-sources/addget.js').then(r => r.default)
+					const query = addget({search: form.search.value.trim()}, new URLSearchParams(window.location.search))
+					const Client = await window.getClient()
+					Client.go('sheet' + query)
 				}
 				form.addEventListener('submit', e => {
 					e.preventDefault()
-					check(true)
+					go()
 				})
-				form.search.addEventListener('input', () => {
-					check()
-				})
-
 			})(document.currentScript.parentElement)
 		</script>
 	</form>
 `
 
 const showComment = (data, env, source) => `
-	<div>
+	<div style="min-height: 6em;">
 		${field.area({
 			name: 'comment', 
 			label: 'Комментарий источника', 
@@ -305,9 +314,10 @@ const showColTd = (data, env, sheet, source, col) => `
 		<button class="transparent prop">${col.col_title}</button>
 		
 		${showProp(data, env, sheet, source, col)}
+		
 	</td>
 `
-const showProp = (data, env, sheet, source, col) => col.col_title == col.prop_title ? '' : `
+const showProp = (data, env, sheet, source, col) => col.col_nick == col.prop_nick ? '' : `
 	<div>
 		${field.search({
 			cls: 'a',
@@ -323,5 +333,10 @@ const showProp = (data, env, sheet, source, col) => col.col_title == col.prop_ti
 			args: {source_id: source.source_id, sheet_index: sheet.sheet_index, col_index: col.col_index},
 			reloaddiv:env.layer.div
 		})}
+	</div>
+`
+const showType = (data, env, sheet, source, col) => !col.prop_nick ? '' : `
+	<div style="font-weight: normal; padding-right:1em">
+		
 	</div>
 `

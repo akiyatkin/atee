@@ -126,7 +126,7 @@ rest.addResponse('get-entity-prop-search', ['admin'], async view => {
 			action:`/-sources/set-entity-prop-create`,
 			search_value: true, 
 			left: '<span class="a">Создать свойство</span>',
-			right: ''
+			right: 'text'
 		})
 	}
 	view.ans.list.push({
@@ -160,7 +160,7 @@ rest.addResponse('get-col-prop-search', ['admin'], async view => {
 			action:`/-sources/set-col-prop-create`,
 			search_value: true, 
 			left: '<span class="a">Создать свойство</span>',
-			right: ''
+			right: 'text'
 		})
 	}
 	view.ans.list.push({
