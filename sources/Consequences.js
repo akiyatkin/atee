@@ -114,7 +114,9 @@ Consequences.represent = async (db) => {
 		await Consciousness.insertItemsByEntity(db, entity) //insert items
 		
 		await Consciousness.recalcRepresentPropByEntity(db, entity)
+
 		await Consciousness.recalcRepresentValueByEntity(db, entity)
+
 		await Consciousness.recalcRepresentItemByEntity(db, entity)
 		await Consciousness.recalcRepresentItemSummaryByEntity(db, entity)
 	}
@@ -125,7 +127,7 @@ Consequences.represent = async (db) => {
 	
 	for (const entity of entities) {
 		for (const source of sources) {
-			await Consciousness.recalcSearchByEntityIdAndSourceId(db, entity.entity_id, source.source_id)
+			Consciousness.recalcSearchByEntityIdAndSourceId(db, entity.entity_id, source.source_id)
 		}
 	}
 }

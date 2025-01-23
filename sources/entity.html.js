@@ -281,22 +281,8 @@ const showTr = (data, env, prop) => `
 				args: {prop_id: prop.prop_id, propprop: 'multi'},
 				reloaddiv: env.layer.div
 			})}
-		</td>
-		<td>
-			<!-- ${prop.known ? "Спец" : "Авто"} -->
-			${field.setpop({
-					heading:'Обработка',
-					value: prop.known, 
-					name: 'bit',
-					descr: 'Специальные свойства имеют своё предназначение и в массив more для автоматической обработки не попадают. Старое название column. ',
-					action: '/-sources/set-prop-prop', 
-					values: {"":"Авто", "1":"Спец"},
-					args: {prop_id: prop.prop_id, propprop: 'known'}
-				})}
-		</td>
-		
+		</td>		
 		<td class="ellipsis">
-			<!-- ${prop.comment || ''} -->
 			${field.areamin({
 				name: 'comment', 
 				label: 'Комментарий', 

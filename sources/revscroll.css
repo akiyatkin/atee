@@ -17,7 +17,7 @@
 	border-right:none;
 }
 .revscroll table td {
-	padding: 1px 2px;
+	padding: 1px 0.6ch;
 }
 .revscroll > * {
 	border: none;

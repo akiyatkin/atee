@@ -60,21 +60,6 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 				})}
 			</td>
 		</tr>
-		
-		<tr>
-			<td>Обработка</td>
-			<td>
-				${field.setpop({
-					heading:'Обработка',
-					value: prop.known, 
-					name: 'bit',
-					descr: 'Специальные свойства имеют своё предназначение и в массив more для автоматической обработки не попадают. Старое название column. ',
-					action: '/-sources/set-prop-prop', 
-					values: {"":"Авто", "1":"Спец"},
-					args: {prop_id: prop.prop_id, propprop: 'known'}
-				})}
-			</td>
-		</tr>
 	</table>
 	
 	${showComment(data, env, prop)}

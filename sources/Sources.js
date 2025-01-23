@@ -39,8 +39,8 @@ Sources.setSource = async (db, set, source) => {
 Sources.renovate = async (db, source, visitor) => {
 	await Sources.check(db, source, visitor)
 	if (source.need) {
-		await Sources.load(db, source, visitor)
-		return source
+		const end = await Sources.load(db, source, visitor)
+		return end
 	} else {
 		return false
 	}
@@ -92,18 +92,24 @@ Sources.load = async (db, source, visitor) => {
 		source.error = 'Ошибка при внесении данных: ' + e.toString()
 	})
 
-	source.duration_insert = Date.now() - timer_insert
+	
 	source.date_content = Math.round(Number(res.data?.date_content || 0) / 1000)
 	source.date_mtime = Math.max(source.date_content || 0, source.date_mtime || 0)
-	
 	await Sources.setSource(db, `
 		date_load = now(), 
-		duration_insert = :duration_insert,
 		error = :error,
 		date_content = FROM_UNIXTIME(:date_content), 
-		date_mtime = FROM_UNIXTIME(:date_mtime),
-		date_start = null
+		date_mtime = FROM_UNIXTIME(:date_mtime)
 	`, source)
+	const end = async () => {
+		source.duration_insert = Date.now() - timer_insert
+		await Sources.setSource(db, `
+			duration_insert = :duration_insert,
+			date_start = null
+		`, source)
+	}
+	end.source = source
+	return end
 }
 
 
@@ -310,7 +316,6 @@ const SELECT_PROP = `
 	pr.type,
 	pr.unit,
 	pr.prop_nick,
-	pr.known + 0 as known,
 	pr.multi + 0 as multi,
 	pr.comment,
 	pr.represent_prop + 0 as represent_prop,
@@ -492,20 +497,13 @@ Sources.getSheetByIndex = async (db, source_id, sheet_index) => {
 	return sheet
 }
 Sources.getSheet = async (db, source_id, sheet_title) => {
-	const sheet = await db.fetch(`
+	const sheet_index = await db.col(`
 		SELECT 
-			sh.sheet_title,
-			sh.sheet_index,
-			sh.key_index,
-			sh.entity_id,
-			sh.source_id,
-			sh.represent_sheet + 0 as represent_sheet,
-			csh.represent_custom_sheet + 0 as represent_custom_sheet
+			sh.sheet_index
 		FROM sources_sheets sh
-			left join sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
 		WHERE sh.source_id = :source_id and sh.sheet_title = :sheet_title
 	`, {source_id, sheet_title})
-	return sheet
+	return Sources.getSheetByIndex(db, source_id, sheet_index)
 }
 Sources.getColByIndex = async (db, source_id, sheet_title, col_index) => {
 	const col_title = await db.col(`

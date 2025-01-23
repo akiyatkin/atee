@@ -7,7 +7,23 @@ export const css = ['/-sources/represent.css','/-sources/revscroll.css']
 const showSourceEntity = (data, env, source, entity = source) => `
 	${entity.entity_plural || entity.entity_title} ${entity.prop_title ? (entity.prop_title == entity.entity_title ? '' : '(' + entity.prop_title + ')'): '(ключ не определён)'}
 `
-export const ROOT = (data, env, sheet = data.sheet, source = data.source) => err(data, env, ['DATES','SHEETS', 'TABLE']) || `
+const showError = (data, env, source) => `
+	<p style="background-color:${source.error ? '#f5e6e6' : '#eaf7d1'}">${source.error || 'Ошибок не было'}</p>
+`
+const showScriptReload = (data, env, source) => `
+	<style>
+		#MAIN {
+			opacity: 0.8;
+		}
+	</style>
+	<script>
+		setTimeout(async () => {
+			const Client = await window.getClient()
+			Client.reloaddiv(['SOURCE','SHEETS', 'DATES', 'TABLE'])
+		}, 1000)
+	</script>
+`
+export const ROOT = (data, env, source = data.source) => err(data, env, ['DATES','SHEETS','TABLE','SOURCE']) || `
 	<div style="float:right"><a href="../sources">Источник</a></div>
 	<h1>${source.source_title}</h1>
 
@@ -44,22 +60,7 @@ export const ROOT = (data, env, sheet = data.sheet, source = data.source) => err
 	</style>
 	<div style="display: flex; flex-wrap: wrap; gap: 1em">
 		<div style="margin-bottom:1ch">
-			<div style="margin:0 0 1ch 0">
-				${field.button({
-					label: 'Загрузить', 
-					action: '/-sources/set-source-load',
-					reloaddiv: env.layer.div,
-					args: {source_id: source.source_id}
-				})}
-			</div>
-			<div>
-				${data.source.entity_id ? showSourceEntity(data, env, source) : 'Cущность не выбрана'}
-			</div>
-			<div title="${date.dmyhi(data.source.date_load)}">Загружено ${date.ai(data.source.date_load)}</div>
-			<div title="${date.dmyhi(data.source.date_content)}">Актуальность ${date.ai(data.source.date_content) || 'нет данных'}</div>
-			<div title="${date.dmyhi(data.source.date_exam)}">Ревизия <a href="source/${data.source.source_id}">${date.ai(data.source.date_exam)}</a></div>
-			
-			
+			<div id="SOURCE"></div>
 		</div>
 		<div style="flex-grow: 1">
 			${showComment(data, env, source)}
@@ -70,15 +71,32 @@ export const ROOT = (data, env, sheet = data.sheet, source = data.source) => err
 	<div id="DATES"></div>
 	<div id="SHEETS"></div>
 	<div id="TABLE"></div>
+`
+export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
+	<div style="margin:0 0 1ch 0;">
+		${field.button({
+			label: 'Загрузить', 
+			action: '/-sources/set-source-load',
+			reloaddiv: env.layer.div,
+			args: {source_id: source.source_id}
+		})}
+	</div>
 	
+	<div class="status_${source.class}">
+		${source.date_start ? source.status + '... ' + date.short(source.date_start): (data.source.entity_id ? showSourceEntity(data, env, source) : '<span class="mute">Cущность не выбрана</span>')}
+		${source.error ? showError(data, env, source) : ''}
+		${source.date_start ? showScriptReload(data, env, source) : ''}
+	</div>
+	
+	<div title="${date.dmyhi(data.source.date_load)}">Загружено <b>${date.ai(data.source.date_load)}</b></div>
+	<div title="${date.dmyhi(data.source.date_content)}">Актуальность <b>${date.ai(data.source.date_content) || 'неизвестно'}</b></div>
+	<div title="${date.dmyhi(data.source.date_exam)}">Ревизия <a href="source/${data.source.source_id}">${date.ai(data.source.date_exam)}</a></div>
 `
 export const DATES = (data, env) => !data.result ? `` : `
 	<div style="align-items: center; flex-grow: 1; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
 		
 		<div style="background: linear-gradient(-30deg, #00aaff55, #4466ff22); padding: 0.5em; flex-grow: 1; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
-			
 			${data.dates.map(dateup => showDate(data, env, dateup)).join('')}
-			
 		</div>
 		<div style="background: linear-gradient(-30deg, #00aaff55, #4466ff22); padding: 0.5em; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
 			<div><a class="${env.bread.get.keyfilter == 'yes' ? 'active' : ''}" data-keyfilter="yes" href="sheet${addget({keyfilter: 'yes'}, env.bread.get)}">С&nbsp;ключом<sup>${data.quantity_of_keys}</sup></a></div>
@@ -89,9 +107,9 @@ export const DATES = (data, env) => !data.result ? `` : `
 	<script>
 		(async div => {
 			const addget = await import('/-sources/addget.js').then(r => r.default)
-			window.addEventListener('crossing', (e) => {
+			const listen = (e) => {
+				if (!div.closest('body')) return window.removeEventListener('crossing', listen)
 				const {theme, bread} = e.detail
-				const origin = location.origin + bread.href
 				const aa = div.getElementsByTagName('a')
 				for (const a of aa) {
 					const keyfilter = a.dataset.keyfilter
@@ -101,16 +119,20 @@ export const DATES = (data, env) => !data.result ? `` : `
 					if (appear) params.appear = appear
 					a.href = 'sheet' + addget(params)
 				}
+				const origin = location.href
+				//const origin = location.origin + bread.href
 				let r = false
 				for (const a of aa) {
 					if (a.href != origin) continue
 					r = a
 				}
+
 				if (r) for (const a of aa) {
 					if (a === r) a.classList.add('active')
 					else a.classList.remove('active')
 				}
-			})
+			}
+			window.addEventListener('crossing', listen)
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
@@ -130,11 +152,27 @@ const showDate = (data, env, dateup, active = dateup.active && (!env.bread.get.k
 	</div>
 `
 const showSheet = (data, env, sheet, active = sheet.sheet_index == data.sheet.sheet_index) => {
-	if (!active) return `<div><a href="sheet${addget({sheet_index:sheet.sheet_index}, env.bread.get)}">${sheet.sheet_title}&nbsp;<sup>${sheet.count}</sup></a></div>`
-	if (active) return `<div>${sheet.sheet_title}&nbsp;<sup>${sheet.count}</sup></div>`
+	if (!active) return `
+		<div>
+			<a href="sheet${addget({sheet_index:sheet.sheet_index}, env.bread.get)}">${sheet.sheet_title}&nbsp;<sup>${sheet.count}</sup></a>
+			${!sheet.entity || sheet.entity.entity_id != data.source.entity_id ? showEntity(data, env, sheet.entity) : ''}
+		</div>
+	`
+	if (active) return `
+		<div>
+			${sheet.sheet_title}&nbsp;<sup>${sheet.count}</sup>
+			${!sheet.entity || sheet.entity.entity_id != data.source.entity_id ? showEntity(data, env, sheet.entity) : ''}
+		</div>
+	`
 }
-
-
+const showEntity = (data, env, entity) => {
+	if (entity) return `
+		<div>${entity.entity_title}</div>
+	`
+	else return `
+		<div class="mute">Не выбрана сущность</div>
+	`
+}
 
 
 const showSearch = (data, env) => `
@@ -264,7 +302,13 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 		<table class="compact" style="table-layout: fixed;">
 			<thead>
 				<tr>
-					<td class="empty"></td>
+					<td>
+						<button 
+							title="Изменить видимость строки" 
+							class="eye represent_rows transparent represent-${data.source.represent_source} ${defcustom(data.source.represent_rows)}">
+							${svg.eye()}
+						</button>
+					</td>
 					${data.cols.map(col => showColTd(data, env, sheet, source, col)).join('')}
 					<td class="empty" title="Дата первого появление ключа в этом источнике">Появление</td>
 				</tr>
@@ -273,6 +317,20 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 				${data.texts.map((row, text_index) => showCellsTr(data, env, sheet, source, row, text_index)).join('')}
 			</tbody>
 		</table>
+		<script>
+				(div => {
+					const name = 'represent_rows'
+					const source_id = ${data.source.source_id}
+					const btn = div.getElementsByClassName(name)[0]
+					btn.addEventListener('click', async () => {
+						const represent = await import('/-sources/represent.js').then(r => r.default)
+						const data = await represent.set(btn, name, {source_id})
+						if (!data.result) return
+						const Client = await window.getClient()
+						Client.reloaddiv('${env.layer.div}')
+					})
+				})(document.currentScript.parentElement)
+			</script>
 		<script>
 			(async div => {
 				const name = 'revscroll_sheet_${source.source_id}_${source.sheet_index}'
@@ -285,6 +343,10 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 		</script>
 	</div>
 `
+const defcustom = (value) => {
+	if (value) return 'represent-def-1'
+	else return 'represent-custom-0'
+}
 const showRowRepresent = (data, env, row, text_index) => `
 	<button 
 		title="Изменить видимость строки" 
@@ -309,34 +371,16 @@ const showMultiSpan = (data, env, sheet, source, text, text_index, col_index, mu
 `.trim()
 
 const showColTd = (data, env, sheet, source, col) => `
-	<td>
-		
-		<button class="transparent prop">${col.col_title}</button>
-		
+	<td class="prop">
+		${col.col_title}
 		${showProp(data, env, sheet, source, col)}
-		
 	</td>
 `
-const showProp = (data, env, sheet, source, col) => col.col_nick == col.prop_nick ? '' : `
-	<div>
-		${field.search({
-			cls: 'a',
-			search:'/-sources/get-col-prop-search?entity_id=' + sheet.entity_id,
-			value: col.prop_title || 'Свойство не назначено',
-			heading: 'Свойство колонки',
-			descr: 'Выберите свойство, которое будте соответствовать колонке <b>' + col.col_title + '</b>',
-			label: 'Выберите свойство', 
-			type: 'text',
-			name: 'prop_id',
-			find: 'prop_id',
-			action: '/-sources/set-col-prop',
-			args: {source_id: source.source_id, sheet_index: sheet.sheet_index, col_index: col.col_index},
-			reloaddiv:env.layer.div
-		})}
-	</div>
-`
-const showType = (data, env, sheet, source, col) => !col.prop_nick ? '' : `
-	<div style="font-weight: normal; padding-right:1em">
-		
-	</div>
-`
+const showProp = (data, env, sheet, source, col) => {
+	let html = ''
+	if (col.type == 'text') html += `<i style="font-weight:normal">text</i>`
+	if (col.col_nick != col.prop_nick) {
+		html += `<div style="font-weight:normal">${col.prop_title || 'Свойство не назначено'}</div>`
+	}
+	return html
+}

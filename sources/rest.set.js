@@ -232,16 +232,18 @@ rest.addAction('set-sources-renovate', ['admin'], async view => {
 	const list = await Sources.getSources(db)
 	const proms1 = list.filter(source => !source.dependent).map(source => Sources.renovate(db, source, view.visitor))
 	await Promise.all(proms1)
-	for await (const source of proms1) {
-		if (!source) continue
-		await Consequences.loaded(db, source.source_id)
+	for await (const end of proms1) {
+		if (!end) continue
+		await Consequences.loaded(db, end.source.source_id)
+		await end()
 	}
 
 	const proms2 = list.filter(source => source.dependent).map(source => Sources.renovate(db, source, view.visitor))
 	await Promise.all(proms2)
-	for await (const source of proms2) {
-		if (!source) continue
-		await Consequences.loaded(db, source.source_id)
+	for await (const end of proms2) {
+		if (!end) continue
+		await Consequences.loaded(db, end.source.source_id)
+		await end()
 	}
 
 	return view.ret()
@@ -321,8 +323,11 @@ rest.addAction('set-source-renovate', ['admin'], async view => {
 	if (source.error) return view.ret('Для загрузки необходимо устранить ошибку')
 	if (!source.renovate) return view.ret('Актуализация запрещена')
 	if (!source.need) return view.ret(source.status)
-	Sources.load(db, source, view.visitor).then(() => Consequences.loaded(db, source_id))
-
+	
+	Sources.load(db, source, view.visitor).then(async end => {
+		await Consequences.loaded(db, source_id)
+		end()
+	})
 	//return view.ret('Загрузка запущена!')
 	return view.ret()
 })
@@ -335,7 +340,11 @@ rest.addAction('set-source-load', ['admin'], async view => {
 	if (!source.date_check) await Sources.check(db, source, view.visitor)
 	if (source.error) return view.err('Для загрузки необходимо устранить ошибку')
 	
-	Sources.load(db, source, view.visitor).then(() => Consequences.loaded(db, source_id))
+	Sources.load(db, source, view.visitor).then(async end => {
+		await Consequences.loaded(db, source_id)
+		end()
+	})
+	
 	
 	
 	//return view.ret('Загрузка запущена!')

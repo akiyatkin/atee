@@ -55,7 +55,7 @@ rest.addArgument('custom', (view, prop) => {
 })
 
 rest.addArgument('propprop', (view, prop) => {
-	if (~['multi','known'].indexOf(prop)) return prop
+	if (~['multi'].indexOf(prop)) return prop
 	return null
 })
 rest.addArgument('keyfilter', (view, prop) => {

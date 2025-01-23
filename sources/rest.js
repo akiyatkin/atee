@@ -410,18 +410,21 @@ rest.addResponse('sheet', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const source = view.data.source = await Sources.getSource(db, source_id)
-	const entity = view.data.entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
-	
-	
-	
+	return view.ret()
+})
+rest.addResponse('sheet-source', ['admin'], async view => {
+	const db = await view.get('db')
+	const source_id = await view.get('source_id#required')
+	const source = view.data.source = await Sources.getSource(db, source_id)	
 	return view.ret()
 })
 rest.addResponse('sheet-sheets', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const source = view.data.source = await Sources.getSource(db, source_id)
-	const entity = view.data.entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
+	//const entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
 	const keyfilter = await view.get('keyfilter#required')
+
 	/*
 		appear - конкретная дата появления
 		all - всё как есть
@@ -441,14 +444,17 @@ rest.addResponse('sheet-sheets', ['admin'], async view => {
 	}
 	
 	const sheet = view.data.sheet = await Sources.getSheetByIndex(db, source_id, sheet_index)
-	
+	if (!sheet) return view.err('Лист не найден')
+	//view.data.entity = sheet.entity_id && await Sources.getEntity(db, sheet.entity_id) || entity
 
 	const appear = await view.get('appear') //null - последняя дата, 0 - выбрать всё, date - конкретная дата
+
 	const choice_date = appear || await db.col(`
-		SELECT UNIX_TIMESTAMP(max(ap.date_appear)) as date
+		SELECT UNIX_TIMESTAMP(max(ap.date_appear))
 		FROM sources_appears ap
-		WHERE ap.source_id = :source_id and date_disappear is not null
+		WHERE ap.source_id = :source_id and date_disappear is null
 	`, {source_id}) || Math.round(Date.now() / 1000)
+	
 	//===================
 	let sheets = []
 
@@ -457,6 +463,7 @@ rest.addResponse('sheet-sheets', ['admin'], async view => {
 			SELECT 
 				sh.sheet_index,
 				sh.sheet_title,
+				sh.entity_id,
 				count(ro.row_index) as count
 			FROM sources_sheets sh, sources_rows ro, sources_appears ap
 			WHERE sh.source_id = :source_id
@@ -474,6 +481,7 @@ rest.addResponse('sheet-sheets', ['admin'], async view => {
 			SELECT 
 				sh.sheet_index,
 				sh.sheet_title,
+				sh.entity_id,
 				count(ro.row_index) as count
 			FROM sources_sheets sh, sources_rows ro
 			WHERE sh.source_id = :source_id
@@ -488,6 +496,7 @@ rest.addResponse('sheet-sheets', ['admin'], async view => {
 			SELECT 
 				sh.sheet_index,
 				sh.sheet_title,
+				sh.entity_id,
 				count(ro.row_index) as count
 			FROM sources_sheets sh, sources_rows ro
 			WHERE sh.source_id = :source_id
@@ -503,6 +512,7 @@ rest.addResponse('sheet-sheets', ['admin'], async view => {
 			SELECT 
 				sh.sheet_index,
 				sh.sheet_title,
+				sh.entity_id,
 				count(ro.row_index) as count
 			FROM sources_sheets sh, sources_rows ro
 			WHERE sh.source_id = :source_id
@@ -515,11 +525,16 @@ rest.addResponse('sheet-sheets', ['admin'], async view => {
 	}
 	let last_index = null
 	for (const s of sheets) {
+		
+		s.entity = s.entity_id && await Sources.getEntity(db, s.entity_id)
+	}	
+	for (const s of sheets) {
 		if (s.sheet_index > sheet.sheet_index) break
 		last_index = s.sheet_index
 	}
 	if (sheet.sheet_index != last_index) {
 		sheet.count = 0
+		sheet.entity = sheet.entity_id && await Sources.getEntity(db, sheet.entity_id)
 		sheets.splice(last_index || 0, 0, sheet)
 	}
 	
@@ -565,7 +580,7 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 	const choice_date = appear || await db.col(`
 		SELECT UNIX_TIMESTAMP(max(ap.date_appear)) as date
 		FROM sources_appears ap
-		WHERE ap.source_id = :source_id and date_disappear is not null
+		WHERE ap.source_id = :source_id and date_disappear is null
 	`, {source_id}) || Math.round(Date.now() / 1000)
 	const dateup = {
 		date: choice_date, 
@@ -575,7 +590,7 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 			WHERE ap.source_id = :source_id 
 			and ap.date_appear = FROM_UNIXTIME(:date) 
 			
-			and date_disappear is not null
+			and date_disappear is null
 			and sh.source_id = ap.source_id and sh.entity_id = ap.entity_id
 			and ro.sheet_index = sh.sheet_index 
 			and ro.source_id = sh.source_id
@@ -589,7 +604,7 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 		SELECT UNIX_TIMESTAMP(ap.date_appear) as date, count(*) as count
 		FROM sources_appears ap, sources_rows ro, sources_sheets sh
 		WHERE ap.source_id = :source_id
-		and date_disappear is not null
+		and date_disappear is null
 
 		
 		and sh.source_id = ap.source_id and sh.entity_id = ap.entity_id
@@ -661,7 +676,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	const date_appear = appear || await db.col(`
 		SELECT UNIX_TIMESTAMP(max(ap.date_appear)) as date
 		FROM sources_appears ap
-		WHERE ap.source_id = :source_id and date_disappear is not null
+		WHERE ap.source_id = :source_id and date_disappear is null
 	`, {source_id}) || Math.round(Date.now() / 1000)
 
 	const where_and = []
@@ -670,7 +685,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	} else if (keyfilter == 'yes') {
 		where_and.push('ro.key_id is not null')
 	} else if (keyfilter == 'appear') {
-		where_and.push('(ap.date_appear is null or ap.date_appear = FROM_UNIXTIME(:date_appear))')
+		where_and.push('(ap.date_appear = FROM_UNIXTIME(:date_appear))')
 	} else {
 		where_and.push('1=1')
 	}
@@ -692,7 +707,8 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 		FROM sources_sheets sh
 			left join sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
 		WHERE sh.source_id = :source_id and sh.sheet_index = :sheet_index
-	`, {source_id, sheet_index}) 
+	`, {source_id, sheet_index})
+	if (!sheet) return view.err('Лист не найден')
 	const sheet_title = sheet.sheet_title
 
 	const cols = view.data.cols = await db.all(`
@@ -764,7 +780,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 			source.represent_rows
 		)
 	}
-
+	
 	const cells = await db.all(`
 		SELECT 
 			ce.row_index, 
