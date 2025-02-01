@@ -175,8 +175,12 @@ rest.addAction('set-prop-type', ['admin'], async view => {
 	return view.ret()
 })
 const loadSources = async (db, visitor, list, callback) => {
-	const proms1 = list.filter(callback).map(source => Sources.load(db, source, visitor))
-	await Promise.all(proms1)
+	const mylist = list.filter(callback)
+	const res = []
+	for (const source of mylist) {
+		const end = await Sources.load(db, source, visitor)
+		if (end) await end()
+	}
 }
 const loadSourcesAll = async (db, visitor) => {
 	const list = await Sources.getSources(db)
@@ -190,6 +194,7 @@ const loadSourcesAll = async (db, visitor) => {
 	await loadSources(db, visitor, list, source => !source.dependent && !source.master)
 	await loadSources(db, visitor, list, source => source.dependent && source.master)
 	await loadSources(db, visitor, list, source => source.dependent && !source.master)
+	await Consequences.all(db)
 }
 const checkSourcesAll = async (db, visitor) => {
 	const list = await Sources.getSources(db)
@@ -214,13 +219,13 @@ const renovateSourcesAll = async (db, visitor) => {
 	await renovateSources(db, visitor, list, source => !source.dependent && !source.master)
 	await renovateSources(db, visitor, list, source => source.dependent && source.master)
 	await renovateSources(db, visitor, list, source => source.dependent && !source.master)
+	await Consequences.all(db)
 }
 const renovateSources = async (db, visitor, list, callback) => {
 	const proms1 = list.filter(callback).map(source => Sources.renovate(db, source, visitor))
 	await Promise.all(proms1)
 	for await (const end of proms1) {
 		if (!end) continue
-		await Consequences.loaded(db, end.source.source_id)
 		await end()
 	}
 }
@@ -351,7 +356,7 @@ rest.addAction('set-source-renovate', ['admin'], async view => {
 	
 	Sources.load(db, source, view.visitor).then(async end => {
 		await Consequences.loaded(db, source_id)
-		end()
+		if (end) end()
 	})
 	//return view.ret('Загрузка запущена!')
 	return view.ret()
@@ -367,7 +372,7 @@ rest.addAction('set-source-load', ['admin','checkstart'], async view => {
 	
 	Sources.load(db, source, view.visitor).then(async end => {
 		await Consequences.loaded(db, source_id)
-		end()
+		if (end) end()
 	})
 	
 	

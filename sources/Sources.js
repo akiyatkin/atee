@@ -53,7 +53,7 @@ Sources.renovate = async (db, source, visitor) => {
 // 	`, {source_id, duration: Date.now() - timer})
 // }
 Sources.load = async (db, source, visitor) => {
-	if (source.date_start) return
+	if (source.date_start) return false
 	
 	const timer_rest = Date.now()
 	await Sources.setSource(db, `
