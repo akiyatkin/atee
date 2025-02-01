@@ -14,6 +14,7 @@ const showAuth = (data, env) => `
 		<div>Администратор сайта: ${data.admin?'Да':'Нет'}</div>
 		<div>База данных: ${data.isdb?'Да':'Нет'}</div>
 	</div>
+
 	<div id="TABLE"></div>
 `
 export const TABLE = (data, env) => !data.result ? '' : `
@@ -51,7 +52,6 @@ const showScriptDrag = (data, env) => `
 	</script>
 `
 const showMain = (data, env) => `
-	
 	<div style="margin: 1em 0; display: flex; flex-wrap: wrap; gap: 1em; justify-content: space-between;">
 		${field.button({
 			label: 'Актуализировать все', 

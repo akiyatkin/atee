@@ -117,7 +117,7 @@ const Server = {
 				
 				const reans = await rest.get('get-layers', req, visitor)
 				let json = reans.data
-				let status = reans.status
+				let status = json.status
 				const headers = {...reans.headers}
 
 				//if (!json) return error_before(500, 'layers have bad definition')
@@ -133,18 +133,22 @@ const Server = {
 					// if (!json.layers) return error_before(500, 'layers not defined')
 					// if (!json.layers.length) return error_before(500, 'layers empty')
 					const bread = new Bread(route.path, route.get, route.search, json.root) //root+path+get = search
+					bread.status = status
 					try {
 						if (!json.layers?.length) throw { status:404 }
 						info = await controller(json, visitor, bread) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
 						status = Math.max(info.status, status)
+						bread.status = status
 					} catch (e) {
 						status = e.status || 500
 						//const bread = new Bread('error/' + e.status, {}, '/error/' + e.status, json.root) //root+path+get = search
 						const root = json.root ? '/' + json.root + '/' : '/'
+
 						req.nt = root + 'error'
 						const reans = await rest.get('get-layers', req, visitor) //, visitor
 						json = reans.data
-						bread.error = status
+
+						bread.status = status
 						if (status != 404) console.log(e)
 						try {
 							info = await controller(json, visitor, bread)
@@ -224,9 +228,12 @@ const getHTML = async (layer, env, visitor) => {
 	} 
 
 	//Динамика
-	if (layer.replacetpl || layer.tpl) {
+	if (layer.tpltpl || layer.replacetpl || layer.tpl) {
 		if (layer.replacetpl) {
 			layer.tpl = interpolate(layer.replacetpl, data, env)
+		}
+		if (layer.tpltpl) {
+			layer.tpl = interpolate(layer.tpltpl, data, env)
 		}
 		if (layer.tpl) {
 			let tplobj = await import(layer.tpl).catch(e => {

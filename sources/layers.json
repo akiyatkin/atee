@@ -5,7 +5,7 @@
 		"source:SOURCE":"none",
 		"main:TABLE":"none",
 		"sheet:SHEETS":"none",
-		"sheet:TABLE":"none",
+		"*sheet:TABLE":"none",
 		"sheet:SOURCE":"none",
 		"sheet:DATES":"none",
 		"positions:TABLE":"none",
@@ -13,6 +13,7 @@
 		"disappear:TABLE":"none",
 		"entity:PROPS":"none",
 		"source:TABLE":"none",
+		"props:TABLE":"none",
 		"source:TOP":"none",
 		"entity:ENTITY":"none"
 	},
@@ -26,6 +27,7 @@
 		"main:ROOT":"/-sources/main",
 		"main:TABLE":"/-sources/main",
 		"entities:ROOT":"/-sources/entities",
+		"props:TABLE":"/-sources/props",
 		"settings:ROOT":"/-sources/settings",
 		"memory:ROOT":"/-sources/memory"
 	},
@@ -47,7 +49,7 @@
 		"source:TABLE":"/-sources/source?source_id=${env.crumb.name}",
 		"entity:ROOT":"/-sources/entity?entity_id=${env.crumb.name}",
 		"entity:ENTITY":"/-sources/entity?entity_id=${env.crumb.name}",
-		"entity:PROPS":"/-sources/props?entity_id=${env.crumb.name}",
+		
 		"prop:ROOT":"/-sources/prop?prop_id=${env.crumb.name}",
 		"prop:PROP":"/-sources/prop?prop_id=${env.crumb.name}",
 		
@@ -65,8 +67,10 @@
 		"source":"/-sources/source.html.js",
 		"props":"/-sources/props.html.js",
 		"prop":"/-sources/prop.html.js",
+		
 		"entities":"/-sources/entities.html.js",
 		"entity":"/-sources/entity.html.js",
+
 		"settings":"/-sources/settings.html.js",
 		"positions":"/-sources/positions.html.js",
 		"position":"/-sources/position.html.js",
@@ -135,14 +139,7 @@
 				}
 			}
 		},
-		"entities":{
-			"head":{"title":"Типы содержания"},
-			"layout":{
-				"index:ROOT":{
-					"MAIN":"entities:ROOT"
-				}
-			}
-		},
+		
 		"disappear":{
 			"head":{"title":"Исчезли"},
 			"layout":{
@@ -168,6 +165,7 @@
 				}
 			}
 		},
+
 		"prop":{
 			"layout":{},
 			"child":{
@@ -179,6 +177,25 @@
 					"prop:ROOT":{
 						"PROP":"prop:PROP"
 					}
+				}
+			}
+		},
+		"entities":{
+			"head":{"title":"Типы содержания"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"entities:ROOT"
+				}
+			}
+		},
+		"props":{
+			"head":{"title":"Свойства"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"props:ROOT"
+				},
+				"props:ROOT":{
+					"TABLE":"props:TABLE"
 				}
 			}
 		},

@@ -88,8 +88,26 @@ export const ENTITY = (data, env, entity = data.entity) => !data.result ? '' : `
 				})(document.currentScript.previousElementSibling)
 			</script>
 		</div>
+		<div>
+			<button class="a">Экспорт пользовательских настроек</button>
+			<script>
+				(btn => {
+					btn.addEventListener('click', async () => {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.open({
+							tpl:'${env.layer.tpl}',
+							sub:'EXPORT',
+							json: '/-sources/get-entity-export?entity_id=${entity.entity_id}'
+						})
+					})
+				})(document.currentScript.previousElementSibling)
+			</script>
+		</div>
 	</div>
 	${showInters(data, env, entity)}
+`
+export const EXPORT = (data, env) => `
+	<textarea style="width: 60vw;height: 50vh;">${JSON.stringify(data.entity, null, 2)}</textarea>
 `
 const showInters = (data, env, entity) => {
 	const masters = data.i_am_being_used.map(entity => showEntityLink(data, env, entity)).join(", ")
@@ -169,12 +187,13 @@ export const PROPS = (data, env) => !data.result ? '' : `
 			<thead>
 				<tr>
 					<td>
-						<button title="Изменить видимость сущности" class="represent_props eye transparent represent-${data.entity.represent_entity} ${defcustom(data.entity.represent_props)}">${svg.eye()}</button>
+						<button title="Изменить видимость сущности" 
+						class="represent_entity eye transparent represent-1 ${defcustom(data.entity.represent_entity)}">
+							${svg.eye()}</button>
 					</td>
 					<td>Свойство</td>
 					<td>Тип</td>
 					<td>Значений</td>
-					<td>Обработка</td>
 					<td>Комментарий</td>
 					<td></td>
 				</tr>
@@ -204,7 +223,7 @@ export const PROPS = (data, env) => !data.result ? '' : `
 		</script>
 		<script>
 			(div => {
-				const name = 'represent_props'
+				const name = 'represent_entity'
 				const entity_id = ${data.entity.entity_id}
 				const btn = div.getElementsByClassName(name)[0]
 				btn.addEventListener('click', async () => {

@@ -49,7 +49,7 @@ sitemap.HEAD = (head, env) => `
 		}
 		let lasthead
 		window.addEventListener('crossing', async ({detail: env}) => {
-			const { timings, bread, theme } = env
+			const { timings, bread, theme } = env			
 			const nexthead = '/-sitemap/get-head?search=' + encodeURI(bread.search) + '&path=' + bread.path + '&root='+bread.root + '&m='+(bread.get.m ?? '')
 			if (nexthead == lasthead) return
 			lasthead = nexthead

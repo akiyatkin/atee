@@ -1,0 +1,12 @@
+{
+	"name": "@atee/bed",
+	"version": "1.0.0",
+	"type": "module",
+	"description": "",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/akiyatkin/atee.git"
+	},
+	"dependencies": {
+	}
+}

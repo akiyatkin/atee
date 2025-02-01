@@ -1,7 +1,7 @@
 import err from "/-controller/err.html.js"
 import field from "/-dialog/field.html.js"
 import date from "/-words/date.html.js"
-
+export const css = ['/-sources/revscroll.css']
 
 
 export const ROOT = (data, env) => err(data, env, ['TABLE']) || `
@@ -16,20 +16,22 @@ const showVariation = (data, env, variation) => `
 `
 const showSource = (data, env, row) => `
 	<a href="disappear?entity_id=${row.entity_id}&source_id=${row.source_id}">${row.source_title}</a>
-`
-export const TABLE = (data, env) => !data.result ? '<p><i>Выберите сущность.</i></p>' : `
-	<table style="margin-top:2em">
-		<thead>
-			<tr>
-				<td>Источник</td>
-				<td>Сущность</td>
-				<td>Ключ</td>
-				<td>Появилось</td>
-				<td>Исчезло</td>
-			</tr>
-		</thead>
-		${data.list.map(row => showTr(data, env, row)).join('')}
-	</table>
+`.trim()
+export const TABLE = (data, env) => !data.result ? '<p><i>Выберите ключевое свойство.</i></p>' : `
+	<div class="revscroll"  style="margin-top:2em">
+		<table>
+			<thead>
+				<tr>
+					<td>Источник</td>
+					<td>Сущность</td>
+					<td>Ключ</td>
+					<td>Появился</td>
+					<td>Исчез</td>
+				</tr>
+			</thead>
+			${data.list.map(row => showTr(data, env, row)).join('')}
+		</table>
+	</div>
 `
 const showTr = (data, env, row) => `
 	<tr>

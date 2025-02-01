@@ -43,22 +43,10 @@ YML.getpicture = picture => {
 	}
 	return picture
 }
-YML.getSheet = (sheets, title) => {
-	let sheet = sheets.find(sheet => sheet.title == title)
-	if (sheet) return sheet
-	sheet = {
-		title,
-		head:['Позиция', 'Цена', 'Наименование', 'Описание', 'Ссылки на картинки', 'Ссылки на файлы'],
-		rows:[]
-	}
-	sheets.push(sheet)
-	
-	//sheet.head.push(...params)
-	return sheet
-}
+
 YML.parse = async (SRC, headers) => {
 	const parser = new XMLParser({ignoreAttributes: false})
-	const xmldata = await fetch(SRC, {headers}).then(r => r.text()).catch(e => console.log('Прайс Carddex error parse', src, e))
+	const xmldata = await fetch(SRC, {headers}).then(r => r.text()).catch(e => console.log('Error parse yml', src, e))
 	if (!xmldata) return {msg: 'Не удалось скачать прайс ' + src, result: 0}
 
 	const ymldata = parser.parse(xmldata)
@@ -70,61 +58,50 @@ YML.parse = async (SRC, headers) => {
 
 	const categories = {}
 	for (const category of ymldata.yml_catalog?.shop?.categories?.category) {
-		categories[category['@_id']] = category.name
+		categories[category['@_id']] = category.name || category['#text']
 	}
 	const date_content = new Date(ymldata.yml_catalog['@_date'])
 
 	return {offers, date_content, categories}
 }
-YML.load = async (SRC, headers = {}) => {
+YML.getSheet = (sheets, title) => {
+	title ||= 'Неизвестная группа'
+	let sheet = sheets.find(sheet => sheet.title == title)
+	if (sheet) return sheet
+	sheet = {
+		title,
+		head:[],
+		rows:[]
+	}
+	sheets.push(sheet)
+	return sheet
+}
+YML.getName = (param) => param['@_name'] + (param['@_unit'] ?  ', ' + param['@_unit'] : '')
+YML.load = async (SRC, {headers = {}, getHead, getRow}) => {
 	const {offers, date_content, categories} = await YML.parse(SRC, headers)
-	
 	const sheets = []
-	
-	
-	// for (const offer of offers) {
-	// 	if (!offer.param) offer.param = []
-	// 	if (!Array.isArray(offer.param)) offer.param = [offer.param]
-	// 	offer.param.forEach(val => {
-	// 		allparams[val['@_name']] = true
-	// 	})
-	// }
-	
-
 	for (const offer of offers) {
-		const sheet_name = categories[offer.categoryId] || 'Неизвестная группа'
-		const sheet = YML.getSheet(sheets, sheet_name)
 		if (!offer.param) offer.param = []
 		if (!Array.isArray(offer.param)) offer.param = [offer.param]
+	}
+	for (const offer of offers) {
+		const sheet = YML.getSheet(sheets, categories[offer.categoryId])
+		sheet.head = getHead(offers)
 		for (const param of offer.param) {
 			param['#text'] = String(param['#text']).trim()
-			if (~sheet.head.indexOf(param['@_name'])) continue
-			sheet.head.push(param['@_name'])
+			if (!param['#text']) continue
+			const name = YML.getName(param)
+			if (!~sheet.head.indexOf(name)) sheet.head.push(name)
 		}
 	}
-
 	for (const offer of offers) {
-		
-		const sheet_name = categories[offer.categoryId] || 'Неизвестная группа'
-		const sheet = YML.getSheet(sheets, sheet_name)
-
-		const doc = YML.getdoc(offer.doc)
-		const picture = YML.getpicture(offer.picture)
-
-		const row = [
-			offer.sku, 
-			offer.price, 
-			offer.name, 
-			offer.description,
-			picture.join(','),
-			doc.join(',')
-		]
-
-		for (let i = 5, l = sheet.head.length; i < l; i++ ) {
+		const sheet = YML.getSheet(sheets, categories[offer.categoryId])
+		const row = getRow(offer)
+		for (let i = row.length - 1, l = sheet.head.length; i < l; i++ ) {
 			const paramname = sheet.head[i]
 			const values = offer.param
-		 		.filter(val => val['@_name'] == paramname && val['#text'])
-		 		.map(val => val['#text'].replaceAll(',', '&comma;'))
+		 		.filter(param => YML.getName(param) == paramname && param['#text'])
+		 		.map(param => param['#text'].replaceAll(',', '&comma;'))
 		 		.join(', ')
 		 	row.push(values || null)
 		}

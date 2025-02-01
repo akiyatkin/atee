@@ -64,10 +64,10 @@ date.pass = (dif) => {
 	if (!dif && dif != 0) return ''
 	if (!dif) dif = 0
 	dif = dif / 1000
-	if (dif < 60) return formatPass(dif, 'секунду','секунды','секунд')
+	if (dif < 160) return formatPass(dif, 'секунду','секунды','секунд')
 	
 	dif = dif / 60 //минут
-	if (dif < 60) return formatPass(dif, 'минуту', 'минуты', 'минут')
+	if (dif < 160) return formatPass(dif, 'минуту', 'минуты', 'минут')
 
 	dif = dif / 60 //часов
 	if (dif < 24) return formatPass(dif, 'час','часа','часов')

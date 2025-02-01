@@ -26,7 +26,6 @@ rest.extra(rest_path)
 
 //rest.addArgument('href', ['checksearch'])
 
-
 rest.addVariable('bread', async view => {
 	const { path, root, search } = await view.gets(['search', 'path','root'])
 	
@@ -84,10 +83,21 @@ rest.addResponse('get-head', async view => {
 	const bread = await view.get('bread')
 	const theme = await view.get('theme')
 	const timings = await view.get('timings')
+	const root = await view.get('root')
 
 
 	//view.ans = rule //Тотже объект что и source но теперь со свойством root в каждом child и childs и в корне
-	const { index, depth } = Layers.getIndex(rule, bread)	
+	
+	let { index, depth, status } = Layers.getIndex(rule, bread)	
+	// if (status != 200 && bread.top.child?.name != 'error') {
+	// 	const path = 'error'
+	// 	const req = {}
+	// 	const bread = new Bread(path, req, path, root)
+	// 	const res = Layers.getIndex(rule, bread)
+	// 	//console.log(res)
+	// 	index = res.index
+	// 	depth = res.depth
+	// }
 	const tpls = {}
 	Layers.runByRootLayer(index.root, ({name}) => {
 		if (!rule.tpl[name]) return
@@ -107,7 +117,7 @@ rest.addResponse('get-head', async view => {
 	const look = { head, theme, timings, bread }
 	const env = { crumb, ...look}
 
-	head = {...head}
+	head = {...head, status}
 
 
 	head.css = css

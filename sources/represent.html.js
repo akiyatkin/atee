@@ -2,14 +2,15 @@ import err from "/-controller/err.html.js"
 import field from "/-dialog/field.html.js"
 import words from "/-words/words.js"
 import svg from "/-sources/svg.html.js"
+import date from "/-words/date.html.js"
 export const css = ['/-sources/represent.css']
 const main = {}
 main.prop = (data, env) => ``
 main.col = (data, env, col = data.col, entity = data.entity, prop = data.prop, source = data.source) => `
-	Колонке <b>${col.col_title}</b> соответствует свойство 
-	${entity ? field.search({
+	Колонке <b>${col.col_title}</b> соответствует 
+	<b>${field.search({
 		cls: 'a',
-		search:'/-sources/get-col-prop-search?entity_id=' + entity.entity_id,
+		search:'/-sources/get-col-prop-search',
 		value: prop.prop_title || 'Не указано',
 		heading:"Свойство колонки",
 		descr: "Имя колонки <b>" + col.col_title + "</b>",
@@ -20,7 +21,7 @@ main.col = (data, env, col = data.col, entity = data.entity, prop = data.prop, s
 		action: '/-sources/set-col-prop',
 		args: {source_id: source.source_id, sheet_index: col.sheet_index, col_index: col.col_index},
 		reloaddiv:env.layer.conf.reloaddiv
-	}) : 'Свойство не назначено, требуется сущность'}
+	})}</b>
 	<!-- <script>
 		(div => {
 			const field = div.getElementsByClassName('field')[0]
@@ -31,10 +32,8 @@ main.col = (data, env, col = data.col, entity = data.entity, prop = data.prop, s
 			})
 		})(document.currentScript.previousElementSibling)
 	</script> -->
-	
 	<div>
 		${showType(data, env, prop)}
-		
 	</div>
 `
 const showType = (data, env, prop) => !prop ? '' : `
@@ -67,7 +66,7 @@ main.cell = (data, env, cell = data.cell || {text: null}, prop = data.prop) => `
 	<div>${cell.text === '' ? 'Указана пустая строка, затирает другие значения' : ''}</div>
 	<div style="color:darkgreen">${cell.winner ? 'Значение попадает в итоговые данные' : ''}</div>
 	
-	<div>${prop ? showTypeStat(data, env, prop, cell) : 'Не выбрана сущность данных'}</div>
+	<div>${prop ? showTypeStat(data, env, prop, cell) : 'Не выбрано ключевое свойство'}</div>
 	<div style="background: ${cell.winner ? '#eaf7d1': '#f5e6e6'}; padding:1em; margin: 1em 0">
 		${!prop || prop.type == 'text' ? (cell.text ?? '') : (cell.number ?? '') + (cell.date ?? '') + (cell.value_title ?? '')}
 	</div>
@@ -154,7 +153,7 @@ export const POPUP = (data, env) => err(data, env, []) || `
 			${data.prop ? showPropRepresentTr(data, env) : ''}
 			${data.item ? showItemRepresentTr(data, env) : ''}
 			${data.value ? showValueRepresentTr(data, env) : ''}
-			${data.item ? showItemKeyRepresentTr(data, env) : ''}
+			${data.key ? showKeyRepresentTr(data, env) : ''}
 			
 			
 		</tbody>
@@ -217,15 +216,18 @@ const showSummary = (data, env) => `
 	<table>
 		<!-- <tr><td>Как значение свойства</td><td>${representStatus(data.cell.represent_text_summary)}</td><td>represent_text_summary</td></tr>
 		<tr><td>Как значение ячейки</td><td>${representStatus(data.cell.represent_cell_summary)}</td><td>represent_cell_summary</td></tr> -->
+		<tr><td>Мастер</td><td>${representStatus(data.cell.master)}</td><td>master</td></tr>
 		<tr><td>Видимость</td><td>${representStatus(data.cell.represent)}</td><td>represent</td></tr>
 		<tr><td>Преимущество</td><td>${representStatus(data.cell.winner)}</td><td>winner</td></tr>
 	</table>
 `
-const showItemKeyRepresentTr = (data, env) => `
+const showKeyRepresentTr = (data, env) => `
 	<tr><td>
 			<button title="Изменить видимость значения ключа у позиции" 
-			data-name="represent_item_key" class="eye transparent ${data.item.keycls?.main} ${data.item.keycls?.custom}">${svg.eye()}</button>
-		</td><td>Ключ позиции</td><td>${data.item.value_title}</td>
+			data-name="represent_item_key" class="eye transparent ${data.key.keycls?.main} ${data.key.keycls?.custom}">${svg.eye()}</button>
+		</td><td>Ключ позиции</td><td>${data.key.value_title} 
+			<small title="появился &mdash; исчез">(${date.sai(data.key.date_appear)}&mdash;${date.sai(data.key.date_disappear)})</small>
+		</td>
 		
 		<td>represent_item_key</td>
 	</tr>
@@ -236,7 +238,7 @@ const showRowRepresentTr = (data, env) => `
 			<button title="Изменить видимость строки" 
 			data-name="represent_row" class="eye transparent ${data.row.cls?.main} ${data.row.cls?.custom}">${svg.eye()}</button>
 		</td>
-		<td>Строка <small>(${data.row.row_index}/${data.row.row_index_max})</small></td><td>${data.row.value_title || '<span style="color:red">Нет ключа</span>'}${data.row.repeat_index ? ' <small>(' + data.row.repeat_index + ')</small>' : ''}</td>
+		<td>Строка <small title="Индекс строки / Макс индекс">(${data.row.row_index}/${data.row.row_index_max})</small></td><td>${data.row.value_title || '<span style="color:red">Нет ключа</span>'}${data.row.repeat_index ? ' <small>(' + data.row.repeat_index + ')</small>' : ''}</td>
 		
 		<td>represent_row</td>
 	</tr>
@@ -280,7 +282,7 @@ const showRowKeyRepresentTr = (data, env) => `
 			<button title="Изменить видимость ячейки с ключом строки" 
 			data-name="represent_row_key" class="eye transparent ${data.row.key.cls?.main} ${data.row.key.cls?.custom}">${svg.eye()}</button>
 		</td>
-		<td>Ключ строки <small>(${data.sheet.key_index ?? '-'}/${data.col.col_index_max})</td><td>${data.row.key.value_title}${data.row.repeat_index ? ' <small>(' + data.row.repeat_index + ')</small>' : ''}</td>
+		<td>Ключ строки <small title="Индекс колонки / Макс индекс">(${data.sheet.key_index ?? '-'}/${data.col.col_index_max})</td><td>${data.row.key.value_title}${data.row.repeat_index ? ' <small>(' + data.row.repeat_index + ')</small>' : ''}</td>
 		
 		<td>represent_row_key</td>		
 	</tr>
@@ -291,7 +293,7 @@ const showCellRepresentTr = (data, env) => `
 			<button title="Изменить видимость колонки" 
 			data-name="represent_cell" class="eye transparent ${data.cell.cls?.main} ${data.cell.cls?.custom}">${svg.eye()}</button>
 		</td>
-		<td>Ячейка <small>(${data.col.col_index}/${data.col.col_index_max})</small></td><td>${data.cell.full_text}</td>
+		<td>Ячейка <small title="Индекс колонки / Макс индекс">(${data.col.col_index}/${data.col.col_index_max})</small></td><td>${data.cell.full_text}</td>
 		
 		<td>represent_cell</td>
 	</tr>

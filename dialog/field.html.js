@@ -555,6 +555,7 @@ field.search = ({heading = '', cls = '', edit = true, label = 'Поиск', link
 				})(document.currentScript.previousElementSibling)
 			</script></span>`
 }
+
 //approved
 field.button = ({label, name = '', cls = '', action, args = {}, go = '', reloaddiv = '', goid = '', confirm, reload}) => {
 	return `

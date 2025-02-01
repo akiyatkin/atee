@@ -763,7 +763,7 @@ export class Upload {
 				omit.emptyprops = {}
 				omit.keyrepeated = []
 				omit.notconnected = []
-				//omit.notfinded = []
+				omit.notfinded = []
 			}
 		}
 		const searches = await db.all(`

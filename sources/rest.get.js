@@ -18,18 +18,186 @@ rest.extra(rest_admin)
 import rest_search from "/-dialog/search/rest.search.js" //аргументы hash, search 
 rest.extra(rest_search)
 
+rest.addResponse('get-entity-export', ['admin'], async view => {
+	const db = await view.get('db')
+	const entity_id = await view.get('entity_id#required')
+
+	const entity = view.data.entity = await db.fetch(`
+		SELECT
+			en.entity_title,
+			pr.prop_title,
+			en.comment,
+			en.ordain,
+			en.represent_entity + 0 as represent_entity,
+			en.represent_props + 0 as represent_props,
+			en.represent_items + 0 as represent_items,
+			en.represent_values + 0 as represent_values
+
+		FROM sources_entities en
+			LEFT JOIN sources_props pr on pr.prop_id = en.prop_id
+		WHERE en.entity_id = :entity_id
+	`, {entity_id})
+
+	if (!entity.comment) delete entity.comment
+	if (entity.represent_entity == 1) delete entity.represent_entity
+	if (entity.represent_props == 1) delete entity.represent_props
+	if (entity.represent_items == 1) delete entity.represent_items
+	if (entity.represent_values == 1) delete entity.represent_values
+
+	entity.props = await db.all(`
+		SELECT 
+			pr.prop_title,
+			pr.type,
+			pr.multi + 0 as multi,
+			pr.comment,
+			pr.represent_custom_prop + 0 as represent_custom_prop
+		FROM sources_props pr
+		WHERE pr.entity_id = :entity_id
+		order by pr.ordain
+	`, {entity_id})
+	for (const prop of entity.props) {
+		if (prop.represent_custom_prop == null) delete prop.represent_custom_prop
+		if (prop.multi == 0) delete prop.multi
+		if (!prop.comment) delete prop.comment
+	}
+
+	entity.items = await db.all(`
+		SELECT 
+			cit.key_nick,
+			cit.represent_custom_item + 0 as represent_custom_item
+		FROM sources_custom_items cit
+		WHERE cit.entity_id = :entity_id
+	`, {entity_id})
+	for (const item of entity.items) {
+		if (item.represent_custom_item == null) delete item.represent_custom_item
+	}
+	entity.values = await db.all(`
+		SELECT 
+			pr.prop_title,
+			cva.value_nick,
+			cva.represent_custom_value + 0 as represent_custom_value
+		FROM sources_custom_values cva, sources_props pr
+		WHERE pr.prop_id = cva.prop_id
+		and pr.entity_id = :entity_id
+	`, {entity_id})
+	for (const value of entity.values) {
+		if (value.represent_custom_value == null) delete value.represent_custom_value
+	}
+
+	entity.intersections = await db.all(`
+		SELECT 
+			pr.prop_title,
+			en.entity_title
+		FROM sources_intersections i, sources_props pr, sources_entities en
+		WHERE i.entity_master_id = :entity_id
+		and en.entity_id = i.entity_slave_id
+		and pr.prop_id = i.prop_master_id
+	`, {entity_id})
+
+	return view.ret()
+})
+rest.addResponse('get-source-export', ['admin'], async view => {
+	const db = await view.get('db')
+	const source_id = await view.get('source_id#required')
+	const source = view.data.source = await db.fetch(`
+		SELECT 
+			so.source_title, 
+			pr.prop_title,
+			so.ordain,
+			so.dependent + 0 as dependent,
+			so.master + 0 as master,
+			so.renovate + 0 as renovate,
+			so.comment,
+			so.represent_source + 0 as represent_source,
+			so.represent_sheets + 0 as represent_sheets,
+			so.represent_rows + 0 as represent_rows,
+			so.represent_cols + 0 as represent_cols,
+			so.represent_cells + 0 as represent_cells
+		FROM sources_sources so
+			LEFT JOIN sources_props pr on (pr.prop_id = so.entity_id)
+		WHERE source_id = :source_id
+	`, {source_id})
+	
+	if (source.represent_source == 1) delete source.represent_source
+	if (source.prop_title == null) delete source.prop_title
+	if (source.dependent == 0) delete source.dependent
+	if (source.master == 1) delete source.master
+	if (source.renovate == 1) delete source.renovate
+	if (source.represent_sheets == 1) delete source.represent_sheets
+	if (source.represent_rows == 1) delete source.represent_rows
+	if (source.represent_cols == 1) delete source.represent_cols
+	if (source.represent_cells == 1) delete source.represent_cells
+	if (source.comment == null) delete source.comment
+
+	const sheets = source.sheets = await db.all(`
+		SELECT 
+			csh.sheet_title, 
+			csh.represent_custom_sheet + 0 as represent_custom_sheet, 
+			pr.prop_title
+		FROM sources_custom_sheets csh
+		LEFT JOIN sources_props pr on pr.prop_id = csh.entity_id
+		WHERE csh.source_id = :source_id
+	`, {source_id})
+	for (const i in sheets) {
+		const sheet = sheets[i]
+		if (sheet.prop_title == null) delete sheet.prop_title
+		if (sheet.represent_custom_sheet == null) delete sheet.represent_custom_sheet
+		
+
+
+		sheet.cols = await db.all(`
+			SELECT 
+				cco.col_title,
+				pr.prop_title,
+				cco.noprop + 0 as noprop,
+				cco.represent_custom_col + 0 as represent_custom_col
+			FROM sources_custom_cols cco
+				LEFT JOIN sources_props pr on (pr.prop_id = cco.prop_id)
+			WHERE cco.source_id = :source_id and cco.sheet_title = :sheet_title
+		`, {...sheet, source_id})
+		for (const col of sheet.cols) {
+			if (col.represent_custom_col == null) delete col.represent_custom_col
+			if (col.prop_title == null) delete col.prop_title
+			if (col.noprop == null) delete col.noprop
+		}
+		sheet.rows = await db.all(`
+			SELECT 
+				cro.key_nick,
+				cro.repeat_index,
+				cro.represent_custom_row + 0 as represent_custom_row
+			FROM sources_custom_rows cro
+			WHERE cro.source_id = :source_id and cro.sheet_title = :sheet_title
+		`, {...sheet, source_id})
+		for (const row of sheet.rows) {
+			if (row.represent_custom_row == null) delete row.represent_custom_row
+		}
+		sheet.cells = await db.all(`
+			SELECT 
+				cce.key_nick,
+				cce.repeat_index,
+				cce.col_title,
+				cce.represent_custom_cell + 0 as represent_custom_cell
+			FROM sources_custom_cells cce
+			WHERE cce.source_id = :source_id and cce.sheet_title = :sheet_title
+		`, {...sheet, source_id})
+		for (const cell of sheet.cells) {
+			if (cell.represent_custom_cell == null) delete cell.represent_custom_cell
+		}
+	}
+	return view.ret()
+})
 rest.addResponse('get-source-entity-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hash = await view.get('hash')
 	
 	const list = await db.all(`
-		SELECT entity_id, entity_title
-		FROM sources_entities
-		WHERE entity_nick like "%${hash.join('%" and entity_nick like "%')}%"
+		SELECT prop_id as entity_id, prop_title
+		FROM sources_props
+		WHERE prop_nick like "%${hash.join('%" and prop_nick like "%')}%"
 	`)
 
 	view.ans.list = list.map(row => {
-		row['left'] = row.entity_title
+		row['left'] = row.prop_title
 		row['right'] = ''
 		return row
 	})
@@ -56,13 +224,13 @@ rest.addResponse('get-sheet-entity-search', ['admin'], async view => {
 	const hash = await view.get('hash')
 	
 	const list = await db.all(`
-		SELECT entity_id, entity_title
-		FROM sources_entities
-		WHERE entity_nick like "%${hash.join('%" and entity_nick like "%')}%"
+		SELECT prop_id as entity_id, prop_title
+		FROM sources_props
+		WHERE prop_nick like "%${hash.join('%" and prop_nick like "%')}%"
 	`)
 
 	view.ans.list = list.map(row => {
-		row['left'] = row.entity_title
+		row['left'] = row.prop_title
 		row['right'] = ''
 		return row
 	})
@@ -141,13 +309,11 @@ rest.addResponse('get-entity-prop-search', ['admin'], async view => {
 rest.addResponse('get-col-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hash = await view.get('hash')
-	const entity_id = await view.get('entity_id#required')
 	const list = await db.all(`
 		SELECT prop_id, prop_title, type
 		FROM sources_props
 		WHERE prop_nick like "%${hash.join('%" and prop_nick like "%')}%"
-		and entity_id = :entity_id
-	`, {entity_id})
+	`)
 
 	view.ans.list = list.map(row => {
 		row['left'] = row.prop_title

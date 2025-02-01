@@ -2,8 +2,9 @@ const controller = {}
 export default controller
 
 controller.HEAD = (data, env) => 
-env.bread.error ? `
+env.bread.status != 200 ? `
 	<script>
+		window.getClient = () => new Promise(() => {})
 		window.addEventListener('popstate', () => {
 			location.reload()
 		})
@@ -41,6 +42,7 @@ env.bread.error ? `
 			}
 			window.waitClient = promise => waitClient.stack.push(promise)
 			window.waitClient.stack = []
+			const search = location.pathname + location.search
 			window.getClient = () => {
 				const promise = new Promise((resolve, reject) => {
 					window.removeEventListener('popstate', popstate)
@@ -57,7 +59,8 @@ env.bread.error ? `
 							update_time: time,
 							access_time: time
 						}
-						Client.follow('${env.bread.root}', '${env.bread.href}')
+						//Client.follow('${env.bread.root}', '${env.bread.href}')
+						Client.follow('${env.bread.root}', search)
 						resolve(Client)
 					}).catch(reject)
 				})
@@ -131,7 +134,7 @@ const ERRORS = {
 	"500":"Ошибка на сервере"
 }
 controller.ERROR = (data, env) => `
-	<h1>${env.bread.error || 'Здесь будет код ошибки'}</h1>
-	<p>${ERRORS[env.bread.error] || 'Что-то пошло не так...'}</p>
+	<h1>${env.bread.status || 'Здесь будет код ошибки'}</h1>
+	<p>${ERRORS[env.bread.status] || 'Что-то пошло не так...'}</p>
 	<p>${env.host}<b>${env.bread.end}</b>
 `

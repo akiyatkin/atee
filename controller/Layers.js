@@ -119,6 +119,7 @@ export default class Layers {
 			const crumb = bread.getCrumb(layer.depth)
 			const {ts, tsf} = layer
 			if (rule.replacetpl) layer.replacetpl = rule.replacetpl[layer.ts]
+			if (rule.tpltpl) layer.tpltpl = rule.tpltpl[layer.ts]
 			if (layer.name) {
 				if (rule.htmltpl && Object.hasOwn(rule.htmltpl, layer.name)) {
 					layer.html = interpolate(rule.htmltpl[layer.name], timings, layer, bread, crumb, theme)
@@ -200,6 +201,7 @@ export default class Layers {
 		return Layers.store[root]
 	}
 	static getIndex(source, bread) { //У path нет ведущего слэша
+
 		let top = bread.top
 		let status = 200
 		let depth = bread.depth
@@ -210,10 +212,17 @@ export default class Layers {
 			if (index) continue
 			status = 404
 			depth = 1
-			index = source.childs?.[status]
+
+			// index = source.childs?.[status]
+			// if (index) break
+			// status = 500
+			// index = source.childs?.[status]
+			
+			index = source.childs?.error
 			if (index) break
 			status = 500
-			index = source.childs?.[status]
+			index = source.childs?.error
+
 			if (!index) depth = null
 			break
 		}

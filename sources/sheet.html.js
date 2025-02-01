@@ -20,7 +20,7 @@ const showScriptReload = (data, env, source) => `
 		setTimeout(async () => {
 			const Client = await window.getClient()
 			Client.reloaddiv(['SOURCE','SHEETS', 'DATES', 'TABLE'])
-		}, 1000)
+		}, 3000)
 	</script>
 `
 export const ROOT = (data, env, source = data.source) => err(data, env, ['DATES','SHEETS','TABLE','SOURCE']) || `
@@ -83,14 +83,23 @@ export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
 	</div>
 	
 	<div class="status_${source.class}">
-		${source.date_start ? source.status + '... ' + date.short(source.date_start): (data.source.entity_id ? showSourceEntity(data, env, source) : '<span class="mute">Cущность не выбрана</span>')}
+		${
+			source.date_start 
+			? source.status + '... ' + date.short(source.date_start) 
+			: (
+				data.source.entity_id 
+				? showSourceEntity(data, env, source) 
+				: '<span class="mute">Ключевое свойство не выбрано</span>'
+			) + ' <b>' + (data.source.master ? 'Мастер' : 'Прайс') + '</b>'
+			 
+		}
 		${source.error ? showError(data, env, source) : ''}
 		${source.date_start ? showScriptReload(data, env, source) : ''}
 	</div>
 	
-	<div title="${date.dmyhi(data.source.date_load)}">Загружено <b>${date.ai(data.source.date_load)}</b></div>
+	<div title="${date.dmyhi(data.source.date_load)}">Загрузка <b>${date.ai(data.source.date_load)}</b> за ${date.pass(data.source.duration_rest + data.source.duration_insert + data.source.duration_check)}</div>
 	<div title="${date.dmyhi(data.source.date_content)}">Актуальность <b>${date.ai(data.source.date_content) || 'неизвестно'}</b></div>
-	<div title="${date.dmyhi(data.source.date_exam)}">Ревизия <a href="source/${data.source.source_id}">${date.ai(data.source.date_exam)}</a></div>
+	<div title="${date.dmyhi(data.source.date_exam)}">Ревизия <a href="source/${data.source.source_id}">${date.dmy(data.source.date_exam)}</a></div>
 `
 export const DATES = (data, env) => !data.result ? `` : `
 	<div style="align-items: center; flex-grow: 1; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
@@ -170,7 +179,7 @@ const showEntity = (data, env, entity) => {
 		<div>${entity.entity_title}</div>
 	`
 	else return `
-		<div class="mute">Не выбрана сущность</div>
+		<div class="mute">Ключевое свойство не выбрано</div>
 	`
 }
 
@@ -304,13 +313,12 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 				<tr>
 					<td>
 						<button 
-							title="Изменить видимость строки" 
-							class="eye represent_rows transparent represent-${data.source.represent_source} ${defcustom(data.source.represent_rows)}">
+							title="Изменить видимость листа" 
+							class="eye represent_sheet transparent ${data.sheet.cls.main} ${data.sheet.cls.custom}"
 							${svg.eye()}
 						</button>
 					</td>
 					${data.cols.map(col => showColTd(data, env, sheet, source, col)).join('')}
-					<td class="empty" title="Дата первого появление ключа в этом источнике">Появление</td>
 				</tr>
 			</thead>
 			<tbody>
@@ -319,12 +327,13 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 		</table>
 		<script>
 				(div => {
-					const name = 'represent_rows'
+					const name = 'represent_sheet'
+					const sheet_title = ${JSON.stringify(sheet.sheet_title)}
 					const source_id = ${data.source.source_id}
 					const btn = div.getElementsByClassName(name)[0]
 					btn.addEventListener('click', async () => {
 						const represent = await import('/-sources/represent.js').then(r => r.default)
-						const data = await represent.set(btn, name, {source_id})
+						const data = await represent.set(btn, name, {source_id, sheet_title})
 						if (!data.result) return
 						const Client = await window.getClient()
 						Client.reloaddiv('${env.layer.div}')
@@ -333,7 +342,7 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 			</script>
 		<script>
 			(async div => {
-				const name = 'revscroll_sheet_${source.source_id}_${source.sheet_index}'
+				const name = 'revscroll_sheet_${source.source_id}_${sheet.sheet_index}'
 				div.scrollLeft = window.sessionStorage.getItem(name) || 0
 				div.addEventListener('scroll', e => {
 					window.sessionStorage.setItem(name, div.scrollLeft)
@@ -360,14 +369,13 @@ const showCellsTr = (data, env, sheet, source, rowtexts, text_index, row = data.
 			${row.key_id ? showRowRepresent(data, env, row, text_index) : ''}
 		</td>		
 		${rowtexts.map((celtexts, col_index) => showCellTd(data, env, sheet, source, text_index, col_index, celtexts)).join('')}
-		<td><i><nobr>${date.sai(row.date_appear)}</nobr></i></td>
 	</tr>
 `
 const showCellTd = (data, env, sheet, source, text_index, col_index, celtexts) => `
 	<td${data.prunings[text_index]?.[col_index] ? ' style="color:red"' : ''} class="rep">${celtexts.map((text, multi_index) => showMultiSpan(data, env, sheet, source, text, text_index, col_index, multi_index)).join(', ')}</td>
 `
 const showMultiSpan = (data, env, sheet, source, text, text_index, col_index, multi_index) => `
-	<button style="${text ? '' : 'display:block; width:100%'}" class="value transparent ${data.winners[text_index][col_index][multi_index] ? '' : 'mute'}">${text || '&nbsp;'}</span>
+	<button style="${text ? '' : 'display:block; width:100%'}" class="value transparent ${data.winners[text_index][col_index][multi_index] && data.masters[text_index] ? '' : 'mute'}">${text || '&nbsp;'}</span>
 `.trim()
 
 const showColTd = (data, env, sheet, source, col) => `
@@ -378,7 +386,8 @@ const showColTd = (data, env, sheet, source, col) => `
 `
 const showProp = (data, env, sheet, source, col) => {
 	let html = ''
-	if (col.type == 'text') html += `<i style="font-weight:normal">text</i>`
+	//if (col.type == 'text') 
+	if (col.type) html += `<i style="font-weight:normal">${col.type}</i>`
 	if (col.col_nick != col.prop_nick) {
 		html += `<div style="font-weight:normal">${col.prop_title || 'Свойство не назначено'}</div>`
 	}

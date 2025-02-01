@@ -140,6 +140,8 @@ rest.addResponse('get-layers', async view => {
 	}
 
 	const { index: nopt, status } = Layers.getParsedIndex(rule, timings, bread, interpolate, theme) //{ index: {push, root}, status }
+	bread.status = status
+
 	if (!nopt?.root) return view.err()
 	
 	if (nopt.check) {
@@ -156,8 +158,7 @@ rest.addResponse('get-layers', async view => {
 		
 	
 	//view.data.checks = nopt.checks //wtf?
-	view.status = status
-	
+	view.data.status = status
 
 	view.data.theme = theme
 	if (prev === false) {
@@ -209,9 +210,16 @@ rest.addResponse('get-head', async view => {
 	const layers = Layers.getInstance(root)
 	const source = await layers.getSource()
 
-	const { index: { head }, depth } = Layers.getIndex(source, bread)
-
-	return head
+	let { index, depth, status } = Layers.getIndex(source, bread)
+	// if (status != 200 && bread.top.child?.name != 'error') {
+	// 	const path = 'error'
+	// 	const bread = new Bread(path, {}, path, root)
+	// 	const res = Layers.getIndex(source, bread)
+	// 	index = res.index
+	// 	depth = res.depth
+	// 	return index?.head
+	// }
+	return {...index?.head, status}
 })
 const getDiff = (players, nlayers, reloaddivs, reloadtss, globals, layers = []) => {
 	nlayers?.forEach(nlayer => {

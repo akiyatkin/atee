@@ -43,7 +43,7 @@ const showScriptReload = (data, env, source) => `
 		setTimeout(async () => {
 			const Client = await window.getClient()
 			Client.reloaddiv(['TOP','TABLE'])
-		}, 1000)
+		}, 3000)
 	</script>
 `
 const defcustom = (value) => {
@@ -229,9 +229,9 @@ const showStatus = (data, env, source) => `
 			})}.
 		</div>
 		<div>
-			Актуальность <b>${date.ai(source.date_content) || 'не указана'}</b>. Ревизия администратора
+			Актуальность <b>${date.ai(source.date_content) || 'нет даты'}</b>. Ревизия администратора
 			${field.prompt({
-				value: date.ai(source.date_exam), 
+				value: date.dmy(source.date_exam), 
 				cls: 'a',
 				name: 'date',
 				input: source.date_exam,
@@ -364,7 +364,7 @@ const showButtons = (data, env, source) => `
 const showControll = (data, env, source) => `
 	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
 		<div>
-			<span class="a">Настроить видимость</span>.
+			<span class="a">Настроить видимость</span>
 			<script>
 				(btn => {
 					btn.addEventListener('click', async () => {
@@ -375,24 +375,34 @@ const showControll = (data, env, source) => `
 			</script>
 		</div>
 		<div>
-			Сущность ${field.search({
+			Ключевое свойство по умолчанию: ${field.search({
 				cls: 'a',
-				heading: 'Сущность по умолчанию',
+				heading: 'Ключ по умолчанию',
 				search:'/-sources/get-source-entity-search',
 				value: source.entity_id ? showSourceEntity(data, env, source) : 'не определено', 
 				label: 'Название сущности', 
-				descr: 'Применяется к листам, для которых сущность не указана.',
+				descr: 'Применяется к листам, для которых ключевое свойство явно не указано.',
 				type: 'text',
 				name: 'entity_id',
 				find: 'entity_id',
 				action: '/-sources/set-source-entity',
 				args: {source_id: source.source_id},
 				reloaddiv: ["TABLE","TOP"]
-			})}.
+			})}
 		</div>
-		
 		<div>
-			Источник 
+			Создание новых сущностей:
+			${field.setpop({
+				heading:'Новые сущности создаются?',
+				value: source.master,
+				name: 'bit',
+				action: '/-sources/set-source-prop', 
+				values: {"":"только обновляются (прайс)", "1":"создаются и обновляются (мастер)"},
+				args: {source_id: source.source_id, sourceprop: 'master'}
+			})}
+		</div>
+		<div>
+			Зависимость от данных из других источников: 
 			${field.setpop({
 				heading:'Зависимость источника',
 				value: source.dependent,
@@ -401,10 +411,27 @@ const showControll = (data, env, source) => `
 				action: '/-sources/set-source-prop', 
 				values: {"":"независимый", "1":"зависимый"},
 				args: {source_id: source.source_id, sourceprop: 'dependent'}
-			})}.
+			})}
+		</div>
+		<div>
+			<button class="a">Экспорт пользовательских настроек</button>
+			<script>
+				(btn => {
+					btn.addEventListener('click', async () => {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.open({
+							tpl:'${env.layer.tpl}',
+							sub:'EXPORT',
+							json: '/-sources/get-source-export?source_id=${source.source_id}'
+						})
+					})
+				})(document.currentScript.previousElementSibling)
+			</script>
 		</div>
 	</div>
-	
+`
+export const EXPORT = (data, env) => `
+	<textarea style="width: 60vw;height: 50vh;">${JSON.stringify(data.source, null, 2)}</textarea>
 `
 const showEntity = (data, env, entity) => `
 	<span class="${entity.custom?.entity_id ? '' : 'mute'}">

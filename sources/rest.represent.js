@@ -164,7 +164,7 @@ rest.addResponse('get-represent', ['admin'], async view => {
 		)
 	}
 	const prop = view.data.prop = prop_id ? await Sources.getProp(db, prop_id) : false
-	if (prop) entity_id = prop.entity_id
+	//if (prop) entity_id = prop_id
 	const entity = view.data.entity = entity_id ? await Sources.getEntity(db, entity_id) : false
 	
 	if (prop) {
@@ -174,11 +174,11 @@ rest.addResponse('get-represent', ['admin'], async view => {
 			entity.represent_props
 		)
 	}
-	
+
 	const item = view.data.item = key_id ? await Sources.getItem(db, entity_id, key_id) : false
 	if (item) {
 		item.cls = represent.calcCls(
-			entity.represent_entity && item.represent_item_key, 
+			entity.represent_prop && item.represent_value, 
 			item.represent_custom_item, 
 			entity.represent_items
 		)
@@ -190,6 +190,24 @@ rest.addResponse('get-represent', ['admin'], async view => {
 			source.represent_cells
 		)
 		// }
+	}
+	if (key_id) {
+		const key = view.data.key = await db.fetch(`
+			SELECT 
+				va.value_id,
+				va.value_title,
+				date_appear as date_appear, 
+				date_disappear as date_disappear
+			FROM sources_appears ap
+				LEFT JOIN sources_values va on va.value_nick = ap.key_nick
+			WHERE va.value_id = :key_id and ap.entity_id = :entity_id
+		`, {key_id, entity_id})
+
+		key.keycls = represent.calcCls(
+			entity.represent_prop && (item ? item.represent_value : 0), 
+			(item ? item.represent_custom_value : null), 
+			source.represent_cells
+		)
 	}
 	const value = view.data.value = cell?.value_id ? await Sources.getValue(db, prop_id, cell.value_id) : false
 	if (value) {
@@ -397,58 +415,54 @@ rest.addAction('set-represent_entity', ['admin'], async view => {
 	)
 	return view.ret()
 })
+
 rest.addAction('set-represent_prop', ['admin'], async view => {
 	const db = await view.get('db')
 	
 	const prop_id = await view.get('prop_id#required')
 	const prop = await Sources.getProp(db, prop_id)
-	const entity_id = prop.entity_id
-	const entity = await Sources.getEntity(db, entity_id)
 	
 	const value = await db.col(`
-		SELECT represent_custom_prop + 0
+		SELECT represent_prop + 0
 		FROM sources_props
 		WHERE prop_id = :prop_id
 	`, {prop_id})
 
-	const newvalue = getCustomSwitch(value, entity.represent_props)
+	const newvalue = Number(!value)
 	
 	await db.exec(`
 		UPDATE sources_props 
-		SET represent_custom_prop = :newvalue
+		SET represent_prop = :newvalue
    		WHERE prop_id = :prop_id
 	`, {prop_id, newvalue})
 
 
 	await Consequences.represent(db)
-	view.data.cls = represent.calcCls(
-		entity.represent_entity, 
-		newvalue, 
-		entity.represent_props
-	)
+	view.data.cls = `${defcustom(newvalue)}`
 	return view.ret()
 })
 rest.addAction('set-represent_value', ['admin'], async view => {
 	const db = await view.get('db')
 	const prop_id = await view.get('prop_id#required')
 	const prop = await Sources.getProp(db, prop_id)
-	const entity_id = prop.entity_id
+	const entity_id = prop_id
 	const value_id = await view.get('value_id#required')
+	const value_nick = await db.col('select value_nick from sources_values where value_id = :value_id', {value_id})
 	const entity = await Sources.getEntity(db, entity_id)
 	
 	const value = await db.col(`
 		SELECT represent_custom_value + 0
 		FROM sources_custom_values
-		WHERE prop_id = :prop_id and value_id = :value_id
-	`, {prop_id, value_id})
+		WHERE prop_id = :prop_id and value_nick = :value_nick
+	`, {prop_id, value_nick})
 
 	const newvalue = getCustomSwitch(value, entity.represent_values)
 	
 	await db.exec(`
-		INSERT INTO sources_custom_values (prop_id, value_id, represent_custom_value)
-   		VALUES (:prop_id, :value_id, :newvalue)
+		INSERT INTO sources_custom_values (prop_id, value_nick, represent_custom_value)
+   		VALUES (:prop_id, :value_nick, :newvalue)
    		ON DUPLICATE KEY UPDATE represent_custom_value = VALUES(represent_custom_value)
-	`, {prop_id, value_id, newvalue})
+	`, {prop_id, value_nick, newvalue})
 
 
 	await Consequences.represent(db)
@@ -473,8 +487,8 @@ rest.addAction('set-represent_item', ['admin'], async view => {
 	const newvalue = getCustomSwitch(value, entity.represent_items)
 	
 	await db.exec(`
-		INSERT INTO sources_custom_items (entity_id, key_id, represent_custom_item)
-   		VALUES (:entity_id, :key_id, :newvalue)
+		INSERT INTO sources_custom_items (entity_id, key_nick, represent_custom_item)
+   		VALUES (:entity_id, :key_nick, :newvalue)
    		ON DUPLICATE KEY UPDATE represent_custom_item = VALUES(represent_custom_item)
 	`, {...item, newvalue})
 	
@@ -493,7 +507,7 @@ rest.addAction('set-represent_item_key', ['admin'], async view => {
 	
 	const entity_id = await view.get('entity_id#required')
 	const key_id = await view.get('key_id#required')
-	
+	const key_nick = await db.col(`select value_nick from sources_values where value_id = :key_id`, {key_id})
 	const entity = await Sources.getEntity(db, entity_id)
 	const prop_id = entity.prop_id
 	const item = await Sources.getItem(db, entity_id, key_id)
@@ -502,10 +516,10 @@ rest.addAction('set-represent_item_key', ['admin'], async view => {
 	const newvalue = getCustomSwitch(item.represent_custom_value, entity.represent_values)
 	
 	await db.exec(`
-		INSERT INTO sources_custom_values (prop_id, value_id, represent_custom_value)
-   		VALUES (:prop_id, :key_id, :newvalue)
+		INSERT INTO sources_custom_values (prop_id, value_nick, represent_custom_value)
+   		VALUES (:prop_id, :key_nick, :newvalue)
    		ON DUPLICATE KEY UPDATE represent_custom_value = VALUES(represent_custom_value)
-	`, {prop_id, key_id, newvalue})
+	`, {prop_id, key_nick, newvalue})
 	
 	await Consequences.represent(db)
 	view.data.cls = represent.calcCls(
@@ -563,8 +577,8 @@ rest.addAction('set-represent_row_key', ['admin'], async view => {
 
 	
 	await db.exec(`
-		INSERT INTO sources_custom_cells (source_id, sheet_title, col_title, key_id, repeat_index, represent_custom_cell)
-   		VALUES (:source_id, :sheet_title, :col_title, :key_id, :repeat_index, :newvalue)
+		INSERT INTO sources_custom_cells (source_id, sheet_title, col_title, key_nick, repeat_index, represent_custom_cell)
+   		VALUES (:source_id, :sheet_title, :col_title, :key_nick, :repeat_index, :newvalue)
    		ON DUPLICATE KEY UPDATE represent_custom_cell = VALUES(represent_custom_cell)
 	`, {...row.key, newvalue})
 
@@ -594,8 +608,8 @@ rest.addAction('set-represent_row', ['admin'], async view => {
 
 	
 	await db.exec(`
-		INSERT INTO sources_custom_rows (source_id, sheet_title, key_id, repeat_index, represent_custom_row)
-   		VALUES (:source_id, :sheet_title, :key_id, :repeat_index, :newvalue)
+		INSERT INTO sources_custom_rows (source_id, sheet_title, key_nick, repeat_index, represent_custom_row)
+   		VALUES (:source_id, :sheet_title, :key_nick, :repeat_index, :newvalue)
    		ON DUPLICATE KEY UPDATE represent_custom_row = VALUES(represent_custom_row)
 	`, {...row, newvalue})
 
@@ -629,8 +643,8 @@ rest.addAction('set-represent_cell', ['admin'], async view => {
 
 	
 	await db.exec(`
-		INSERT INTO sources_custom_cells (source_id, sheet_title, col_title, key_id, repeat_index, represent_custom_cell)
-   		VALUES (:source_id, :sheet_title, :col_title, :key_id, :repeat_index, :newvalue)
+		INSERT INTO sources_custom_cells (source_id, sheet_title, col_title, key_nick, repeat_index, represent_custom_cell)
+   		VALUES (:source_id, :sheet_title, :col_title, :key_nick, :repeat_index, :newvalue)
    		ON DUPLICATE KEY UPDATE represent_custom_cell = VALUES(represent_custom_cell)
 	`, {...cell, newvalue})
 
@@ -672,6 +686,7 @@ rest.addAction('set-row-switch', ['admin'], async view => {
 	const source_id = await view.get('source_id#required')
 	const repeat_index = await view.get('repeat_index#required')
 	const key_id = await view.get('key_id#required')
+	const key_nick = await db.col(`select value_nick from sources_values where value_id = :key_id`, {key_id})
 	const source = await Sources.getSource(db, source_id)
 	
 	const represent_sheet = await db.col(`
@@ -684,17 +699,17 @@ rest.addAction('set-row-switch', ['admin'], async view => {
 		SELECT represent_custom_row + 0
 		FROM sources_custom_rows
 		WHERE source_id = :source_id and sheet_title = :sheet_title 
-			and key_id = :key_id
+			and key_nick = :key_nick
 			and repeat_index = :repeat_index
-	`, {source_id, sheet_title, key_id, repeat_index})
+	`, {source_id, sheet_title, key_nick, repeat_index})
 
 	const newvalue = getCustomSwitch(value, source.represent_rows)
 	
 	await db.exec(`
-		INSERT INTO sources_custom_rows (source_id, sheet_title, key_id, repeat_index, represent_custom_row)
-   		VALUES (:source_id, :sheet_title, :key_id, :repeat_index, :newvalue)
+		INSERT INTO sources_custom_rows (source_id, sheet_title, key_nick, repeat_index, represent_custom_row)
+   		VALUES (:source_id, :sheet_title, :key_nick, :repeat_index, :newvalue)
    		ON DUPLICATE KEY UPDATE represent_custom_row = VALUES(represent_custom_row)
-	`, {source_id, sheet_title, key_id, repeat_index, newvalue})
+	`, {source_id, sheet_title, key_nick, repeat_index, newvalue})
 
 
 	await Consequences.represent(db)	

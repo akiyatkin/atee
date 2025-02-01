@@ -47,7 +47,7 @@ export const Client = {
 		}
 		Client.lastpop = moment
 		const search = Client.makeabs(Client.getSearch())
-
+		
 		const promise = Client.crossing(search)
 		if (event.state?.view == Client.view) { //Вперёд
 			const { cursor } = event.state
@@ -78,6 +78,7 @@ export const Client = {
 	reloaddivs:[],
 	reloaddiv: (div) => {
 		if (!Array.isArray(div)) div = [div]
+		if (!div.length) return
 		div.forEach(div => {
 			if (~Client.reloaddivs.indexOf(div)) return
 			Client.reloaddivs.push(div)	
@@ -351,9 +352,14 @@ const explode = (sep, str) => {
 }
 const userpathparse = (search) => {
 	//У request всегда есть ведущий /слэш
+
 	search = search.slice(1)
+	
+
+
 	try { search = decodeURI(search) } catch { }
 	let [path = '', params = ''] = explode('?', search)
+
 	const get = Theme.parse(params, '&')
 	const secure = !!~path.indexOf('/.') || path[0] == '.'
 	return {secure, path, get}
@@ -395,7 +401,7 @@ const applyCrossing = async () => {
 		if (json && json.redirect) {
 			return Client.replaceState(json.redirect)
 		}
-		if (!json || !json.st || !json.ut || !json.result || !json.layers || json.root != Client.bread.root) {
+		if (!json || !json.st || !json.ut || !json.result || !json.layers || json.root != Client.bread.root || json.status != 200) {
 			//return setTimeout(() => location.reload(), 200) //Чуть чуть подождать чтобы прокрутка закончилась?
 			return location.reload()
 		}
@@ -407,10 +413,11 @@ const applyCrossing = async () => {
 		}
 		
 
-		const usersearch = json.root ? search.slice(json.root.length + 1) : search
+		let usersearch = json.root ? search.slice(json.root.length + 1) : search
+		if (usersearch.at(0) == '?') usersearch = '/' + usersearch
 		const {path, get} = userpathparse(usersearch) //Останется ведущий слэш
 		const bread = new Bread(path, get, search, json.root) //root+path+get = search
-		
+		bread.status = json.status
 		const r = await Client.commonshow(json, bread, promise, timings)
 		if (!r) return
 
@@ -453,6 +460,13 @@ const addHtml = async (template, layer, bread, timings, theme) => {
 		const tpl = interpolate(layer.replacetpl, layer.sys.data, env)
 		layer.sys.tplobj = await import(tpl).then(res => res.default || res).catch(e => {
 			console.log('replacetpl', e, layer)
+			if (!layer.onlyclient) location.reload()
+		})
+	}
+	if (layer.tpltpl) {
+		const tpl = interpolate(layer.tpltpl, layer.sys.data, env)
+		layer.sys.tplobj = await import(tpl).then(res => res.default || res).catch(e => {
+			console.log('tpltpl', e, layer)
 			if (!layer.onlyclient) location.reload()
 		})
 	}

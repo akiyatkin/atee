@@ -11,7 +11,7 @@ rest.extra(rest_db)
 
 import rest_funcs from '/-rest/rest.funcs.js'
 rest.extra(rest_funcs)
-
+rest.addArgument('go', (view, e) => e || false) //Ссылка куда перейти. Как есть попадает в заголовок Location 301
 rest.addArgument('multi', ['sint'], (view, multi) => {
 	if (multi == null) return multi
 	if (multi) return 1
@@ -46,7 +46,7 @@ rest.addArgument('next_id', ['mint'])
 rest.addArgument('old_id', ['mint'])
 rest.addVariable('old_id#required', ['old_id', 'required'])
 rest.addArgument('sourceprop', (view, prop) => {
-	if (~['dependent','renovate'].indexOf(prop)) return prop
+	if (~['dependent','renovate','master'].indexOf(prop)) return prop
 	return null
 })
 rest.addArgument('custom', (view, prop) => {
@@ -85,15 +85,17 @@ rest.addVariable('type#required', ['type', 'required'])
 rest.addVariable('propprop#required', ['propprop', 'required'])
 rest.addVariable('sourceprop#required', ['sourceprop', 'required'])
 
-// rest.addArgument('date', (view, date) => {
-// 	if (!date) return null
-// 	if (date > 2147483647) date = 2147483647
-// 	try {
-// 		return Math.round(new Date(parseInt(date)).getTime())
-// 	} catch (e) {
-// 		return null
-// 	}
-// })
+rest.addArgument('date', (view, date) => {
+	if (!date) return null
+	try {
+		const d = new Date(date)
+		//d.setHours(0)
+		return Math.round(d.getTime() / 1000)
+	} catch (e) {
+		return null
+	}
+
+})
 rest.addArgument('title', ['escape'])
 rest.addVariable('title#required', ['title', 'required'])
 
@@ -125,6 +127,11 @@ rest.addArgument('value_id', ['mint'], async (view, value_id) => {
 	if (!value_id) return view.err('Значение не найдено', 404)
 	return value_id
 })
+rest.addFunction('checkstart', async (view) => {
+	const db = await view.get('db')
+	const source_title = await db.col(`select source_title FROM sources_sources where date_start is not null`)
+	if (source_title) return view.err('Дождитесь загрузки '+ source_title)
+})
 rest.addArgument('item_id', ['mint'], async (view, item_id) => {
 	if (!item_id) return null
 	const db = await view.get('db')
@@ -142,7 +149,7 @@ rest.addArgument('prop_id', ['sint'], async (view, prop_id) => {
 rest.addArgument('entity_id', ['sint'], async (view, entity_id) => {
 	if (!entity_id) return null
 	const db = await view.get('db')
-	entity_id = await db.col('select entity_id from sources_entities where entity_id=:entity_id', {entity_id})
+	entity_id = await db.col('select prop_id from sources_props where prop_id=:entity_id', {entity_id})
 	if (!entity_id) return view.err('Сущность не найдена', 404)
 	return entity_id
 })

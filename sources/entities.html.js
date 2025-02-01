@@ -2,28 +2,27 @@ import err from "/-controller/err.html.js"
 import field from "/-dialog/field.html.js"
 export const css = ['/-sources/revscroll.css']
 export const ROOT = (data, env) => err(data, env) || `
-	<h1>Сущности</h1>
-	<div class="revscroll">
-		<table draggable="false" class="list">
-			<thead>
-				<tr>
-					<td>Сущности</td>
-					<td>Ключ</td>
-					<td>Источников</td>
-					<td>Записей</td>
-					<td>Опубликовано</td>
-				</tr>
-			</thead>
-			<tbody draggable="false">
-				${data.list.map(source => showTr(data, env, source)).join('')}
-			</tbody>
-		</table>
-		${showScriptDrag(data, env)}
-	</div>
+	<h1>Ключевые свойства</h1>
+	
+	<table draggable="false" class="list">
+		<thead>
+			<tr>
+				<td>Cвойство</td>
+				<td>Источников</td>
+				<td>Записей</td>
+				<td>Опубликовано</td>
+			</tr>
+		</thead>
+		<tbody draggable="false">
+			${data.list.map(source => showTr(data, env, source)).join('')}
+		</tbody>
+	</table>
+	${showScriptDrag(data, env)}
+	
 	
 	<div style="margin:2em 0; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
 		${field.prompt({
-			value: 'Создать сущность', 
+			value: 'Создать', 
 			name: 'title',
 			input: '',
 			label: 'Название в ед.числе', 
@@ -37,10 +36,7 @@ export const ROOT = (data, env) => err(data, env) || `
 const showTr = (data, env, entity) => `
 	<tr class="item" data-id="${entity.entity_id}" style="white-space: nowrap;">
 		<td>
-			<a href="entity/${entity.entity_id}">${entity.entity_plural}</a>
-		</td>
-		<td>
-			${entity.prop_title || ''}
+			<a href="entity/${entity.entity_id}">${entity.prop_title}</a>
 		</td>
 		<td>
 			${entity.stat.sources.length && showSources(data, env, entity)}
@@ -60,14 +56,11 @@ const showSources = (data, env, entity) => `
 			const sources = ${JSON.stringify(entity.stat.sources)}
 			btn.addEventListener('click', async () => {
 				const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-				
-
 				Dialog.open({
 					tpl:'${env.layer.tpl}',
 					sub:'SOURCES',
 					data: {sources}
 				})
-
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>
