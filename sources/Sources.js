@@ -135,7 +135,7 @@ Sources.load = async (db, source, visitor) => {
 Sources.cleanSheets = (sheets) => {
 	const titles = {}
 	sheets = sheets.filter(sheet => {
-		sheet.title = sheet.title.trim()
+		sheet.title = (sheet.title || '').trim()
 		if (!sheet.title) return false //Пустой
 		if (sheet.title[0] == '.') return false //Скрытый
 		if (titles[sheet.title]) return false //Дубль

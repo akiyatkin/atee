@@ -4,77 +4,44 @@ import unique from "/-nicked/unique.js"
 const Consciousness = {}
 export default Consciousness
 
-// Consciousness.recalcAppear = async (db, {source_id}) => {
-// 	await db.exec(`
-// 		INSERT INTO sources_appears (source_id, entity_id, key_nick)
-// 		SELECT ro.source_id, sh.entity_id, va.value_nick
-// 		FROM sources_rows ro, sources_sheets sh, sources_values va
-// 		WHERE sh.source_id = :source_id
-// 		and ro.source_id = sh.source_id
-// 		and va.value_id = ro.key_id
-// 		and ro.sheet_index = sh.sheet_index
-// 		and sh.entity_id is not null
-// 		and ro.key_id is not null
-// 		ON DUPLICATE KEY UPDATE date_disappear = null
-// 	`, {source_id})
-	
-// 	const entities = await db.colAll(`
-// 		SELECT distinct entity_id
-// 		FROM sources_sheets
-// 		WHERE source_id = :source_id
-// 	`, {source_id})
-	
-// 	for (const entity_id of entities) {
-
-// 		await db.exec(`
-// 			UPDATE sources_appears ap
-// 				LEFT JOIN sources_values va on (va.value_nick = ap.key_nick)
-// 				LEFT JOIN sources_rows ro on (
-// 					ro.sheet_index in (
-// 						SELECT sheet_index
-// 						FROM sources_sheets
-// 						WHERE source_id = ap.source_id and entity_id = ap.entity_id
-// 					) 
-// 					and ro.source_id = ap.source_id AND ro.key_id = va.value_id
-// 				)
-// 			SET ap.date_disappear = now()
-// 			WHERE ap.entity_id = :entity_id
-// 			and ap.source_id = :source_id
-// 			and ro.key_id IS null
-// 			and ap.date_disappear is null
-// 		`, {source_id, entity_id})
-// 	}
-// }
 Consciousness.recalcAppear = async (db) => {
 	await db.exec(`
-		INSERT INTO sources_appears (source_id, entity_id, key_nick)
-		SELECT co.source_id, co.prop_id, va.value_nick
+		INSERT INTO sources_appears (source_id, entity_id, key_nick, date_appear)
+		SELECT sh.source_id, sh.entity_id, va.value_nick, so.date_content
 		FROM 
-			sources_cols co, 
+			sources_sheets sh, 
 			sources_cells ce, 
-			sources_values va
-		WHERE ce.source_id = co.source_id
-		and ce.sheet_index = co.sheet_index
-		and ce.col_index = co.col_index
+			sources_values va,
+			sources_sources so
+		WHERE ce.source_id = sh.source_id
+		and so.source_id = sh.source_id
+		and ce.sheet_index = sh.sheet_index
+		and ce.col_index = sh.key_index
 		and va.value_id = ce.value_id
+		and sh.entity_id is not null
 		ON DUPLICATE KEY UPDATE date_disappear = null
 	`)
 	
 	await db.exec(`
 		UPDATE sources_appears ap
-			LEFT JOIN sources_values va on (
-				va.value_nick = ap.key_nick
-			)
-			LEFT JOIN sources_cols co on (
-				co.source_id = ap.source_id
-			)
-			LEFT JOIN sources_cells ce on (
-				ce.source_id = ap.source_id 
-				and ce.sheet_index = co.sheet_index 
-				and ce.value_id = va.value_id
-			)
+		LEFT JOIN (
+			SELECT sh.source_id, sh.entity_id, va.value_nick 
+			FROM
+			sources_sheets sh, 
+			sources_cells ce,
+			sources_values va
+			WHERE
+			ce.source_id = sh.source_id
+			AND va.value_id = ce.value_id
+			and ce.sheet_index = sh.sheet_index
+			and ce.col_index = sh.key_index
+		) t on (
+			t.source_id = ap.source_id
+			and t.entity_id = ap.entity_id
+			AND t.value_nick = ap.key_nick
+		)
 		SET ap.date_disappear = now()
-		WHERE ce.value_id is null
+		WHERE t.value_nick IS null
 		and ap.date_disappear is null
 	`)
 }

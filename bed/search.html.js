@@ -1,9 +1,10 @@
 import cards from "/-catalog/cards.html.js"
 import words from "/-words/words.js"
 import links from "/-catalog/links.html.js"
+import err from "/-controller/err.html.js"
 const tpl = {}
 export default tpl
-
+console.log('asdf')
 
 tpl.ROOT = () => `
 	<div id="BED_GROUPS"></div>

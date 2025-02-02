@@ -520,8 +520,7 @@ field.search = ({heading = '', cls = '', edit = true, label = 'Поиск', link
 							click: async (row, need) => {
 								const link = "${link || ''}"
 								const goid = "${goid ? goid : ''}"
-								let action = '${action}'
-								
+								let action = '${action}'								
 								const ask = row.confirm || "${confirm || ''}"
 								if (ask && !window.confirm((row.search_value ? need.value : row.left) + "\\n" + ask)) return
 								if (!descr && ask) descr = ask

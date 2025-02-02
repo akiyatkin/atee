@@ -478,7 +478,7 @@ rest.addAction('set-prop-delete', ['admin'], async view => {
 	const db = await view.get('db')
 	const prop_id = await view.get('prop_id#required')
 
-	const source_title = await Sources.getSourceTitleByPropId(db, prop_id)
+	const source_title = await Sources.getSourceTitleByKeyId(db, prop_id)
 	if (source_title) return view.err('Свойство указано ключевым свойством у источика ' + source_title)
 	
 
@@ -566,12 +566,14 @@ rest.addAction('set-source-entity-reset', ['admin'], async view => {
 })
 rest.addAction('set-sheet-entity-reset', ['admin'], async view => {
 	const source_id = await view.get('source_id#required')
+	const sheet_title = await view.get('sheet_title#required')
+
 	const db = await view.get('db')
 	await db.exec(`
 		UPDATE sources_custom_sheets
 		SET entity_id = null
-		WHERE source_id = :source_id
-	`, {source_id})
+		WHERE source_id = :source_id and sheet_title = :sheet_title
+	`, {source_id, sheet_title})
 	await Consequences.loaded(db, source_id)
 	return view.ret()
 })

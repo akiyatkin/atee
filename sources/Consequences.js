@@ -171,6 +171,7 @@ Consequences.all = async (db) => {
 	await Consciousness.recalcRepresent(db)
 	await Consciousness.recalcWinner(db)
 	await Consciousness.recalcMaster(db)
+	
 	await Consciousness.recalcAppear(db)
 	
 	for (const entity of entities) {

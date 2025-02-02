@@ -86,11 +86,11 @@ export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
 		${
 			source.date_start 
 			? source.status + '... ' + date.short(source.date_start) 
-			: (
+			: '<b>' + (data.source.master ? 'Мастер' : 'Прайс') + '</b>' + (
 				data.source.entity_id 
 				? showSourceEntity(data, env, source) 
-				: '<span class="mute">Ключевое свойство не выбрано</span>'
-			) + ' <b>' + (data.source.master ? 'Мастер' : 'Прайс') + '</b>'
+				: ' <span class="mute">&mdash;</span>'
+			)
 			 
 		}
 		${source.error ? showError(data, env, source) : ''}
@@ -240,7 +240,7 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 				const keys = ${JSON.stringify(data.rows.map(row => [row.key_id, row.repeat_index, row.row_index]))}
 				const sheet_title = ${JSON.stringify(sheet.sheet_title)}
 				const source_id = ${source.source_id}
-				const entity_id = ${data.entity?.entity_id || null}
+				const entity_id = ${data.sheet?.entity_id || null}
 				const sheet_index = ${data.sheet?.sheet_index ?? null}
 				const represent = await import('/-sources/represent.js').then(r => r.default)
 

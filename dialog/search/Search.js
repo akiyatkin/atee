@@ -52,7 +52,7 @@ export const Search = {
 	fetch_promise: null, //Действующий запро
 	fetch: (form, need) => {
 		if (Search.fetch_need?.hash === need.hash) {
-			Search.fetch_need.query = need.query
+			Search.fetch_need = need	
 			return
 		}
 		Search.fetch_need = need
@@ -77,7 +77,9 @@ export const Search = {
 	timer: null,
 	wait: (form, need) => {
 		//Search.timer = setTimeout(() => { нужен тут драблинг или обламывать предыдущий запрос не очевидно
-			if (Search.fetch_need && Search.fetch_need.hash !== need.hash) return Search.wait(form, Search.fetch_need)
+			if (Search.fetch_need && Search.fetch_need.hash !== need.hash) {
+				return Search.wait(form, Search.fetch_need)
+			}
 			delete Search.fetch_promise
 			Search.fetchNow(form)
 		//}, 100)
@@ -127,6 +129,7 @@ export const Search = {
 					
 				}
 				e.preventDefault()
+
 				const r = await state.click(ans.list[index], need)
 				if (r === null || r) Dialog.hide()
 			})
@@ -152,10 +155,10 @@ export const Search = {
 			const menu = await Search.getMenu(form)
 			menu.classList.add('show')
 			const need = await Search.getNeed(input)
-			if (state.hash != need.hash || state?.partner != need.partner) {
+			if (state.query != need.query || state?.partner != need.partner) {
 				const title = cls(menu, 'searchtitle')[0]
 				const body = cls(menu, 'searchbody')[0]
-				state.hash = need.hash
+				state.query = need.query
 				state.partner = need.partner
 				body.classList.add('mute')
 				Search.fetch(form, need)

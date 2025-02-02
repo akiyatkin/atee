@@ -700,6 +700,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 		FROM sources_appears ap
 		WHERE ap.source_id = :source_id and date_disappear is null
 	`, {source_id}) || Math.round(Date.now() / 1000)
+	
 
 	const where_and = []
 	if (keyfilter == 'not') {
