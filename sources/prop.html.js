@@ -60,6 +60,14 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 				})}
 			</td>
 		</tr>
+		<tr>
+			<td>
+				prop_nick
+			</td>
+			<td>
+				${prop.prop_nick}
+			</td>
+		</tr>
 	</table>
 	
 	${showComment(data, env, prop)}
