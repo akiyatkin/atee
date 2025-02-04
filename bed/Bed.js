@@ -16,8 +16,7 @@ Bed.getPageByNick = async (db, page_nick) => {
 			pa.page_nick,
 			pa.page_title,
 			pa.group_id,
-			pa.parent_id,
-			pa.ordain
+			pa.parent_id
 		FROM bed_pages pa
 		WHERE pa.page_nick = :page_nick
 	`, {page_nick})
@@ -30,8 +29,7 @@ Bed.getPageById = async (db, page_id) => {
 			pa.page_nick,
 			pa.page_title,
 			pa.group_id,
-			pa.parent_id,
-			pa.ordain
+			pa.parent_id
 		FROM bed_pages pa
 		WHERE pa.page_id = :page_id
 	`, {page_id})
@@ -42,7 +40,10 @@ Bed.getChilds = async (db, group_id) => {
 	const childs = await db.all(`
 		SELECT
 			pa.page_nick,
-			pa.page_title
+			pa.page_title,
+			pa.page_id,
+			pa.group_id,
+			pa.parent_id
 		FROM
 			bed_childs ch, bed_pages pa
 		WHERE
@@ -108,89 +109,141 @@ Bed.makemark = (md, ar = [], path = []) => {
 	}
 	return ar
 }
-Bed.getmdwhere = async (db, mpage, mget, search, partner = '') => {
-	const where = []
-	
-	if (search) {
-		const hashs = unique(nicked(md.search).split('-').filter(val => !!val)).sort()
-		if (hashs.length) {
-			where.push(`m.search like "% ${hashs.join('%" and m.search like "% ')}%"`)
+Bed.mdfilter = (mpage, props, values) => {
+	const newmpage = {}
+	for (const prop_nick in mpage) {
+		const prop = props[prop_nick]
+		if (!prop) continue
+		newmpage[prop_nick] = {}
+		if (typeof mpage[prop_nick] == 'object' && prop.type == 'value') {
+			for (const value_nick in mpage[prop_nick]) {
+				if (!values[value_nick]) continue
+				newmpage[prop_nick][value_nick] = mpage[prop_nick][value_nick]
+			}
+			if (!Object.keys(newmpage[prop_nick]).length) delete newmpage[prop_nick]
+		} else {
+			newmpage[prop_nick] = mpage[prop_nick]
 		}
 	}
-	const from = ['showcase_models m','showcase_items i']
-	let sort = ['min(i.ordain)']
-	where.push('i.model_id = m.model_id')
-	let iprops_dive = false
-	if (md.more) {
-		let i = 0
-		for (const prop_nick in md.more) {
-			i++
-			iprops_dive = true
-
-
-			
-			let prop
-			if (partner?.cost && prop_nick == 'cena') {
-				prop = await base.getPropByTitle(partner.cost)
-			} else {
-				prop = await base.getPropByNick(prop_nick)
-			}
-			
-			
-
-			const values = md.more[prop_nick]
-			if (values == 'empty') {
-				from[1] = `showcase_items i left join showcase_iprops ip${i} on (ip${i}.model_id = i.model_id and ip${i}.item_num = i.item_num and ip${i}.prop_id = ${prop.prop_id})`
-				where.push(`ip${i}.prop_id is null`)
-			} else {
-				from.push(`showcase_iprops ip${i}`)
-				where.push(`ip${i}.model_id = i.model_id`)
-				where.push(`ip${i}.item_num = i.item_num`)
-				where.push(`ip${i}.prop_id = ${prop.prop_id}`)
-				const ids = []
-				if (prop.type == 'number') {
-					for (let name in values) {
-						let value = name
-						if (~['upto','from'].indexOf(name)) {
-							value = values[name]
-						}
-						if (typeof(value) == 'string') value = value.replace('-','.')
-						
-						let value_nick = Number(value)
-						
-						if (partner?.discount && prop_nick == 'cena') {
-							value_nick = value_nick * (100 + partner.discount) / 100
-						}
-						if (~['upto','from'].indexOf(name)) {
-							sort = []
-							if (name == 'upto') {
-								where.push(`ip${i}.number <= ${value_nick}`)
-								sort.push(`ip${i}.number DESC`)
-							}
-							if (name == 'from') {
-								where.push(`ip${i}.number >= ${value_nick}`)
-								sort.push(`ip${i}.number ASC`)
-							}
-						} else {
-							if (value_nick == value) ids.push(value_nick)
-							else  ids.push(prop.prop_id + ', false')	
-						}
-						
-					}
-					if (ids.length) where.push(`ip${i}.number in (${ids.join(',')})`)
-				} else if (prop.type == 'value') {
-					for (const value in values) {
-						const value_nick = nicked(value)
-						let value_id = await base.getValueIdByNick(value_nick)
-						if (!value_id) value_id = 0
-						ids.push(value_id)
-					}
-					where.push(`ip${i}.value_id in (${ids.join(',')})`)
-				} else {
-					//значения других типов пропускаем
+	return newmpage
+}
+Bed.getmdids = async (db, marks) => {
+	const prop_nicks = []
+	const value_nicks = []
+	for (const mall of marks) {
+		for (const prop_nick in mall) {
+			prop_nicks.push(prop_nick)
+			const val = mall[prop_nick]
+			if (typeof val == 'object') {
+				for (const value_nick in val) {
+					value_nicks.push(value_nick)
 				}
-			}
+			}	
 		}
 	}
-	return {where, from, sort}
+	const props = await db.allto('prop_nick', `
+		SELECT prop_id, prop_nick, prop_title, type, name, unit
+		FROM sources_props
+		WHERE prop_nick in ("${unique(prop_nicks).join('","')}")
+	`)
+	const values = await db.allto('value_nick', `
+		SELECT value_id, value_nick, value_title
+		FROM sources_values
+		WHERE value_nick in ("${unique(prop_nicks).join('","')}")
+	`)
+	return {values, props}
+}
+
+Bed.getmdwhere = async (db, md, mpage, hashs, partner = '') => {
+	const mall = {...md.mget, ...mpage}
+
+	const bind = {
+		pos_entity_id: md.pos_entity_id,
+		mod_entity_id: md.mod_entity_id
+	}
+	const where = [
+		'pos.entity_id=:pos_entity_id', 
+		'pos.prop_id=:mod_entity_id'
+	]
+	if (hashs.length) {
+		const where_search = []
+		for (const hash of hashs) {
+			const sql = 'pos.search like "% ' + hash.join('%" and pos.search like "% ') + '%"'
+			where_search.push(sql)
+		}
+		where.push(`(${where_search.join(' or ')})`)
+	}	
+	
+
+	const from = ['sources_data pos']
+	const sort = ['pos.source_ordain', 'pos.sheet_index', 'pos.row_index'] //, 'pos.prop_ordain', 'pos.multi_index'
+
+	let i = 0
+
+	for (const prop_nick in mall) {
+		const values = mall[prop_nick]
+		const prop = md.props[prop_nick]
+		if (values == 'empty') {
+			i++
+ 			from[0] += `
+				LEFT JOIN sources_data da${i} on (
+					da${i}.entity_id = pos.entity_id 
+					and da${i}.key_id = pos.key_id
+					and da${i}.multi_index = 0
+					and da${i}.prop_id = ${prop.prop_id}
+				)
+ 			`
+ 			where.push(`da${i}.prop_id is null`)
+ 		} else {
+ 			i++
+ 			from.push(`sources_data da${i}`)
+			where.push(`da${i}.entity_id = pos.entity_id `)
+			where.push(`da${i}.key_id = pos.key_id`)
+			where.push(`da${i}.prop_id = ${prop.prop_id}`)
+			const ids = []
+			if (prop.type == 'number') {
+				for (let name in values) {
+					let value = name
+					if (~['upto','from'].indexOf(name)) {
+						value = values[name]
+					}
+					if (typeof(value) == 'string') value = value.replace('-','.')
+					
+					let value_nick = Number(value)
+					
+					if (partner?.discount && prop_nick == 'cena') {
+						value_nick = value_nick * (100 + partner.discount) / 100
+					}
+					if (~['upto','from'].indexOf(name)) {
+						sort = []
+						if (name == 'upto') {
+							where.push(`da${i}.number <= ${value_nick}`)
+							sort.push(`da${i}.number DESC`)
+						}
+						if (name == 'from') {
+							where.push(`da${i}.number >= ${value_nick}`)
+							sort.push(`da${i}.number ASC`)
+						}
+					} else {
+						if (value_nick == value) ids.push(value_nick)
+						//else  ids.push(prop.prop_id + ', false')	
+					}
+				}
+				if (ids.length) where.push(`da${i}.number in (${ids.join(',')})`)
+			} else if (prop.type == 'value') {
+
+				for (const value_nick in values) {
+
+					const value = md.values[value_nick]
+					ids.push(value.value_id)
+				}
+				where.push(`da${i}.value_id in (${ids.join(',')})`)
+			} else {
+				//значения других типов пропускаем
+			}
+ 		}
+	}
+	
+	
+	return {where, from, sort, bind}
 }

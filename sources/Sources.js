@@ -15,7 +15,10 @@ Sources.execRestFunc = async (file, fnname, visitor, res, req = {}) => {
 	const reans = await rest.get(fnname, req, visitor).catch(r => console.log(r))
 	if (!reans || !reans.data) return `Исключение в ${fnname}`
 	const data = reans.data
-	if (!data.result) return `Нет результата ${fnname} ${data.msg || ''}`
+	if (!data.result) {		
+		if (data.msg) return `${fnname} ${data.msg}`
+		else return `Нет результата ${fnname}`
+	}
 	res.data = data
 	return ''
 }

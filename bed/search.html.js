@@ -172,15 +172,15 @@ tpl.showgroups = (data, env) => `
 	</style>
 	${data.childs.map(g => tpl.group(data, env, g)).join('')}
 `
-const groupclass = (data, env, group) => {
-	const selected = data.md.group?.[group.group_nick]
-	return `class="${selected ? 'selected' :''} ${group.mute ? 'mute' :''}"`
+const groupclass = (data, env, page) => {
+	const selected = data.md.page.page_nick == page.page_nick
+	return `class="${selected ? 'selected' :''} ${page.mute ? 'mute' :''}"`
 }
-tpl.group = (data, env, group) => `
+tpl.group = (data, env, page) => `
 	<div>
-		<a ${groupclass(data, env, group)}
+		<a ${groupclass(data, env, page)}
 			data-scroll="none"
-			href="${env.crumb}/${group.group_nick}${links.setm(data)}">${group.group_title}</a>
+			href="${env.crumb.parent}/${page.page_nick}${links.setm(data)}">${page.page_title}</a>
 	</div>
 `
 
@@ -210,23 +210,21 @@ tpl.title = (data, env) => `
 			/*color: red;*/
 		}
 	</style>
-	<div style="float:right; margin-top:1rem">${data.type}</div>
 	<div style="float:left; margin-top:1rem">
-		${(!data.path.length && !data.md.m) ? '<a href="/"><br></a>' : tpl.parenttitle(data, env)}
+		${(!data.page.parent_id && !data.md.m) ? '<a href="/"><br></a>' : tpl.parenttitle(data, env)}
 	</div>
 	
 	<h1 style="clear:both;">
-		${data.title.group_title}
-		${data.brand ? tpl.titlepart(data, env, 'brand', data.brand.brand_title) : ''}
-		${data.md.search ? tpl.titlepart(data, env, 'search', data.md.search) : ''}
-		${data.md.more ? tpl.showSelected(data, env) : ''}
+		${data.page.page_title}
+		${data.search ? tpl.titlepart(data, env, 'search', data.search) : ''}
+		${data.md.mget ? tpl.showSelected(data, env) : ''}
 		
 	</h1>
 `
 tpl.showSelected = (data, env) => {
-	return Object.keys(data.md.more).map(prop_nick => {
-		const values = data.md.more[prop_nick]
-		const prop = data.mdprops[prop_nick]
+	return Object.keys(data.md.mget).map(prop_nick => {
+		const values = data.md.mget[prop_nick]
+		const prop = data.md.props[prop_nick]
 
 		if (values == 'empty') {
 			return tpl.choice.just(data, env, prop)
@@ -235,13 +233,13 @@ tpl.showSelected = (data, env) => {
 		} else {
 			if (prop.type == 'value' || prop.type == 'number') {
 				return Object.keys(values).map(value_nick => {
-					const value = data.mdvalues[value_nick]
+					const value = data.md.values[value_nick]
 					return tpl.choice.just(data, env, prop, value)
 				}).join(' ')
 			} else {
 				return Object.keys(values).map(value_nick => {
 					if (value_nick == 'from' || value_nick == 'upto') {
-						return tpl.choice.just(data, env, prop, {value_nick, value_title: (value_nick == 'from' ? 'от ' : 'до ') + values[value_nick] + ' ' + (prop.opt.unit)})
+						return tpl.choice.just(data, env, prop, {value_nick, value_title: (value_nick == 'from' ? 'от ' : 'до ') + values[value_nick] + ' ' + (prop.unit)})
 					} else {
 						return tpl.choice.just(data, env, prop, {value_nick, value_title: value_nick})
 					}
@@ -267,12 +265,12 @@ tpl.titlepart = (data, env, part, value) => `
 	</a>
 `
 tpl.parenttitle = (data, env) => `
-	<a data-scroll="none" href="${env.crumb}${tpl.toplink(data, env)}">${data.parent.group_title}</a>
+	<a data-scroll="none" href="${env.crumb.parent}${tpl.toplink(data, env)}">${data.page.parent.page_title}</a>
 `
 tpl.toplink = (data, env) => {
-	if (data.parent.parent_id) {
-		return '/' + data.parent.group_nick+links.setm(data)
+	if (data.page.parent.parent_id) {
+		return '/' + data.page.parent.page_nick + links.setm(data)
 	} else {
-		return data.title.parent_id ? links.addm(data)+'group' : ''
+		return ''
 	}
 }

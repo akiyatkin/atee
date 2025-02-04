@@ -84,16 +84,6 @@ rest.addResponse('get-entity-export', ['admin'], async view => {
 		if (value.represent_custom_value == null) delete value.represent_custom_value
 	}
 
-	entity.intersections = await db.all(`
-		SELECT 
-			pr.prop_title,
-			en.entity_title
-		FROM sources_intersections i, sources_props pr, sources_entities en
-		WHERE i.entity_master_id = :entity_id
-		and en.entity_id = i.entity_slave_id
-		and pr.prop_id = i.prop_master_id
-	`, {entity_id})
-
 	return view.ret()
 })
 rest.addResponse('get-source-export', ['admin'], async view => {

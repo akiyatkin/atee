@@ -25,7 +25,15 @@ rest.addArgument('page', ['page_nick'], async (view, page_nick) => {
 })
 rest.addVariable('page#required', ['page', 'required'])
 
-
+// rest.addVariable('bed_entity_id', async view => {
+// 	const conf = await config('bed')
+// 	const entity_title = conf.entity_title
+// 	const entity_nick = nicked(entity_title)
+// 	const db = await view.get('db')
+// 	const entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick})
+// 	if (!entity_id) return view.err('В источниках не найдено свойство ' + entity_title)
+// 	return entity_id
+// })
 rest.addArgument('partner', async (view, partner_nick) => {
 	const conf = await config('bed')
 	const data = conf.partners[partner_nick]
@@ -41,12 +49,33 @@ rest.addArgument('m', (view, m) => {
 rest.addVariable('md', async (view) => {
 	const conf = await config('bed')
 	const db = await view.get('db')
-	const m = await view.get('m')
+	const origm = await view.get('m')
 	const page = await view.get('page#required')
+
+	const mgetorig = Bed.makemd(origm)
+	page.mpage = await Bed.getMpage(db, page.page_id)
 	
-	const mget = Bed.makemd(m)
 
-	const mpage = await Bed.getMpage(db, page.page_id)
+	const childs = await Bed.getChilds(db, page.group_id)
+	const mdchilds = []
+	for (const child of childs) {
 
-	return {m: Bed.makemark(mget).join(':'), mget, mpage}
+		child.mpage = await Bed.getMpage(db, child.page_id)
+		mdchilds.push(child.mpage)
+	}
+	const {props, values} = await Bed.getmdids(db, [mgetorig, page.mpage, ...mdchilds])
+
+	page.mpage = Bed.mdfilter(page.mpage, props, values)
+	for (const child of childs) {
+		child.mpage = Bed.mdfilter(child.mpage, props, values)
+	}
+	const mget = Bed.mdfilter(mgetorig, props, values)
+
+	const pos_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.pos_entity_title)})
+	const mod_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.mod_entity_title)})
+	
+	const m = Bed.makemark(mget).join(':')
+	return {m, page, mget, childs, props, values, pos_entity_id, mod_entity_id}
+
+	
 })

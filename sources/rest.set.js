@@ -368,7 +368,7 @@ rest.addAction('set-source-load', ['admin','checkstart'], async view => {
 	if (source.date_start) return view.err('Загрузка уже запущена!')
 
 	if (!source.date_check) await Sources.check(db, source, view.visitor)
-	if (source.error) return view.err('Для загрузки необходимо устранить ошибку')
+	//if (source.error) return view.err('Для загрузки необходимо устранить ошибку')
 	
 	Sources.load(db, source, view.visitor).then(async end => {
 		await Consequences.loaded(db, source_id)

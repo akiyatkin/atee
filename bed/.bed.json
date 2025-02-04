@@ -1,6 +1,7 @@
 {
 	"root_title":"Каталог",
-	"position_entity_title":"Позиция",
+	"pos_entity_title":"Позиция",
+	"mod_entity_title":"Модель",
 	"partners":{
 		"1998":{
 			"title":"1998",

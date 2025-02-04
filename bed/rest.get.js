@@ -31,44 +31,37 @@ rest.addResponse('get-search-groups', async (view) => {
 	
 	const db = await view.get('db')
 	const page = view.data.page = await view.get('page')
-	const search = await view.get('search')
+	const search = view.data.search = await view.get('search')
+	const hashs = await view.get('hashs')
+	
 	const md = view.data.md = await view.get('md')
-
+	
 	const partner = await view.get('partner')
 
-	const childs = await Bed.getChilds(db, page.group_id)
 	
-	return view.ret()
-	for (const page of childs) {
-		const mpage = await Bed.getMpage(db, page.page_id)
-		const {where, from} = await Bed.getmdwhere(db, mpage, md.mget, search, partner)
+
+
+	const {where, from, sort, bind} = await Bed.getmdwhere(db, md, md.page.mpage, hashs, partner)
+	
+	page.mute = !await db.col(`
+		SELECT pos.value_id
+		FROM ${from.join(', ')}
+		WHERE ${where.join(' and ')}
+		LIMIT 1
+	`, bind)
+
+	for (const child of md.childs) {
+		const {where, from, sort, bind} = await Bed.getmdwhere(db, md, child.mpage, hashs, partner)
+		child.mute = !await db.col(`
+			SELECT pos.value_id
+			FROM ${from.join(', ')}
+			WHERE ${where.join(' and ')}
+			LIMIT 1
+		`, bind)
 	}
 
 	
+	view.data.childs = md.childs
 	
-
-
-	const work = group.childs.length ? group : parent
-	const level_group_ids = unique(group_ids.filter(group_id => {
-		return tree[group_id].parent_id && tree[group_id].path?.length >= work.path?.length
-	}).map(group_id => {
-		return tree[group_id].path[work.path.length + 1] || group_id
-	}))	
-	const groups = work.childs.map((id) => {
-		const group = {...tree[id]}
-		group.mute = !~level_group_ids.indexOf(id)
-		return group
-	})
-
-	const res = {
-		title:group, brand,
-		parent: group.path.length ? tree[group.path.at(-1)] : groupnicks[conf.root_nick],
-		childs: groups,
-		path: group.path.map(id => tree[id])
-	}
-	const base = await view.get('base')
-	await Bed.mdvalues(view, base, md, res)
-	
-	Object.assign(view.data, res)
 	return view.ret()
 })

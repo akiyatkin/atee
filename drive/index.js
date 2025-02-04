@@ -15,15 +15,19 @@ export const drive = {
 		
 		const store = Access.relate(drive)
 		const name = sheet + gid
-
+		if (eternal == 'nocache') store.clear(name)
 		return store.once(name, () => cproc(drive, sheet + gid, async () => {
 
 			const cachename = nicked(gid + '-' + range + '-' + sheet)
 			const cachesrc = dir + cachename + '.json'
 
-			if (eternal && await fs.lstat(cachesrc).catch(r => false)) {
-				return cachesrc
+			if (eternal != 'nocache') {
+				if (eternal && await fs.lstat(cachesrc).catch(r => false)) {
+					return cachesrc
+				}
 			}
+			
+
 			const conf = await config('drive')
 
 			const cert = await fs.readFile(conf.certificate, "utf8").catch(r => false)
@@ -87,7 +91,7 @@ export const drive = {
 		const rows_source = await drive.getRows(gid, range, sheet, eternal)
 		if (!rows_source) return false
 		const {descr, rows_table} = Dabudi.splitDescr(rows_source)
-		const {head_titles, rows_body} = Dabudi.splitHead(rows_table)
+		const {head_titles = [], rows_body} = Dabudi.splitHead(rows_table)
 
 		const indexes = {}
 		for (const i in head_titles) {
