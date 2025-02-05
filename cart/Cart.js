@@ -124,7 +124,10 @@ const Cart = {
 		const order = await Cart.getOrder(db, order_id)
 		let list = await Cart.getBasket(db, base, order_id, order.freeze, order.partner)
 		list = list.filter(pos => pos.count > 0)
-		const vars = await view.gets(['host', 'ip'])
+		const vars = {
+			host: view.visitor.client.host,
+			ip: view.visitor.client.ip
+		}
 		const data = {order, vars, list}
 		return data
 	},

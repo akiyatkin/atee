@@ -1,7 +1,8 @@
-import cards from "/-catalog/cards.html.js"
+import cards from "/-bed/cards.html.js"
 import words from "/-words/words.js"
 import links from "/-catalog/links.html.js"
 import err from "/-controller/err.html.js"
+import addget from '/-sources/addget.js'
 const tpl = {}
 export default tpl
 
@@ -36,7 +37,9 @@ tpl.GROUPS = (data, env) => data.result ? `
 		</div>
 		<div id="BED_FILTERS"></div>
 	</div>
-` : `<h1>${data.root_title}</h1><div id="BED_FILTERS"></div>`
+` : `
+	<h1>${data.root_title}</h1><div id="BED_FILTERS"></div>
+`	
 tpl.PAGINATION = (data, env) => data.result && `
 	${tpl.pag(data, env, 'none')}
 `
@@ -118,18 +121,19 @@ tpl.pagt.link = (data, env, scroll = '', title, page) => `
 tpl.pagt.disabled = (data, env, scroll, title) => `
 	<span style="opacity: 0.5">${title}</span>
 `
-tpl.listcards = (data, env) => {
-	const list = data.list
 
-	const impressions = list.map((mod) => {
+
+tpl.listcards = (data, env) => {
+
+	const impressions = data.list.map((mod) => {
 		const impression = {
 			"id": mod.model_nick,
-			"name" : mod['Наименование'] || mod.model_title,
-			"price": mod['Цена'] || mod.min || '',
-			"brand": mod.brand_title,
-			"category": mod.group_title,
-			"list": data.type,
-			"position": 1
+			"name" : mod.cols['Наименование'] || mod.model_title,
+			"price": mod.cols['Цена'] || mod.min || '',
+			"brand": mod.cols['Бренд'] || '',
+			"category": data.page.page_title,
+			"position": 1,
+			"list": "Каталог"
 		}
 		return impression
 	})
@@ -218,8 +222,35 @@ tpl.title = (data, env) => `
 		${data.page.page_title}
 		${data.search ? tpl.titlepart(data, env, 'search', data.search) : ''}
 		${data.md.mget ? tpl.showSelected(data, env) : ''}
-		
 	</h1>
+	<script>
+		(async div => {
+			const addget = await import('/-sources/addget.js').then(r => r.default)
+			const listen = (e) => {
+				if (!div.closest('body')) return window.removeEventListener('crossing', listen)
+				const {theme, bread} = e.detail
+				const aa = div.getElementsByTagName('a')
+				for (const a of aa) {
+					const search = a.dataset.search
+					if (!search) continue
+					const params = {search, m:"${data.m}"}
+					a.href = 'sheet' + addget(params, new URLSearchParams(window.location.search))
+				}
+				const origin = location.href
+				let r = false
+				for (const a of aa) {
+					if (a.href != origin) continue
+					r = a
+				}
+
+				if (r) for (const a of aa) {
+					if (a === r) a.classList.add('active')
+					else a.classList.remove('active')
+				}
+			}
+			window.addEventListener('crossing', listen)
+		})(document.currentScript.previousElementSibling)
+	</script>
 `
 tpl.showSelected = (data, env) => {
 	return Object.keys(data.md.mget).map(prop_nick => {
@@ -259,7 +290,8 @@ tpl.choice = {
 }
 tpl.titlepart = (data, env, part, value) => `
 	<a data-scroll="none" class="clearlink" 
-		href="${env.crumb}${links.addm(data)}${part}">
+		href="${env.crumb}${addget({search: null}, env.bread.get)}"
+		href2="${env.crumb}${links.addm(data)}${part}">
 		<span class="value">${value}</span>
 		<span class="krest" style="font-size:1rem; line-height: 2rem;">✕</span>
 	</a>

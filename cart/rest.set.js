@@ -223,11 +223,11 @@ rest.addResponse('set-submit', async view => {
 		
 
 		const r1 = await Cart.sendToAdmin(view, 'tocheck', order_id)
-		if (!r1) return view.ret('Не удалось отправить письмо менеджеру, позвоните по нашим контактам.')
+		if (!r1) return view.err('Не удалось отправить письмо менеджеру, позвоните, пожалуйста, по нашим <a href="/contacts">контактам</a>.')
 
 
 		const r2 = await Cart.sendToUser(view, 'tocheck', order_id)
-		if (!r2) return view.ret('Не удалось отправить письмо клиенту, позвоните по нашим контактам.')
+		if (!r2) return view.err('Не удалось отправить письмо клиенту, позвоните, пожалуйста, по нашим <a href="/contacts">контактам</a>.')
 
 
 

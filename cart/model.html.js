@@ -87,6 +87,7 @@ const showIprops = (data, env, mod, prop_titles) => {
 }
 const showItemIfCost = (mod, item) => mod.Цена ? '' : (item.Цена ? `
 	<p>
+		<s>${cost(item['Старая цена'] || mod['Старая цена'])}${common.unit()}</s>
 		<big><b>${cost(item.Цена || mod.Цена)}${common.unit()}</b></big>
 	</p>
 `: `

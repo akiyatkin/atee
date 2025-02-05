@@ -527,10 +527,10 @@ export class Rest {
 			headers: view.headers ?? []
 		}
 	}
-	static async catchReans (fn) {
+	static async catchReans (view, fn) {
 		return fn().catch(e => {
 			if (e instanceof ViewException) {
-				return Rest.makeReans(e.view)
+				return Rest.makeReans(view)
 			} else {
 				console.log(e)
 				return Rest.makeReans({data: {msg: 'Internal Server Error', result: 0}, status: 500, ext: 'json'})
@@ -538,13 +538,12 @@ export class Rest {
 		})
 	}
 	async exec (view) {
-
-		let reans = await Rest.catchReans(async () => {
+		let reans = await Rest.catchReans(view, async () => {
 			const res = await view.get(view.action)
 			if (res != null) view.data = res
 			return Rest.makeReans(view)
 		})
-		reans = await Rest.catchReans(async () => {
+		reans = await Rest.catchReans(view, async () => {
 			for (const callback of view.afterlisteners) await callback(view) //выход из базы
 			return reans
 		})

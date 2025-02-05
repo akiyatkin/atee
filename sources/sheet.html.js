@@ -126,7 +126,7 @@ export const DATES = (data, env) => !data.result ? `` : `
 					const params = {keyfilter}
 					const appear = a.dataset.appear
 					if (appear) params.appear = appear
-					a.href = 'sheet' + addget(params)
+					a.href = 'sheet' + addget(params, new URLSearchParams(window.location.search))
 				}
 				const origin = location.href
 				//const origin = location.origin + bread.href

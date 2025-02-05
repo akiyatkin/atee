@@ -90,6 +90,7 @@ Sources.load = async (db, source, visitor) => {
 		console.log(e)
 		source.error = 'Ошибка при подготовке данных: ' + e.toString()
 	}
+	
 	await Sources.insertSheets(db, source, sheets).catch(e => {
 		console.log(e)
 		source.error = 'Ошибка при внесении данных: ' + e.toString()
@@ -159,7 +160,7 @@ Sources.cleanSheets = (sheets) => {
 
 		for (const row_index in rows) {
 			if (!Array.isArray(rows[row_index])) rows[row_index] = []
-			rows[row_index] = rows[row_index].filter((row, col_index) => sheet.head[col_index])
+			rows[row_index] = rows[row_index].map((row, col_index) => sheet.head[col_index] ? row : null)
 			for (const col_index in rows[row_index]) {
 				if (rows[row_index][col_index] === null) continue
 				rows[row_index][col_index] = String(rows[row_index][col_index]).trim()

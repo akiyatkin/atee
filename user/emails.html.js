@@ -24,7 +24,7 @@ const showEmails = (data, env) => `
 		}
 		${env.scope} table tbody tr:first-child .del {
 			opacity:0.5;
-			color:gray;
+			
 			pointer-events: none;
 		}
 		${env.scope} .item {

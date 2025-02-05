@@ -1,5 +1,6 @@
 {
 	"root_title":"Каталог",
+	"limit":10,
 	"pos_entity_title":"Позиция",
 	"mod_entity_title":"Модель",
 	"partners":{

@@ -155,7 +155,7 @@ tpl.maindata = (data, env, mod) => `
 		<div>
 			${tpl.showprop('Модель', mod.model_title)}
 			${tpl.showprop('Бренд', tpl.brandlink(data, env, mod))}
-			${mod.discount ? tpl.showprop('Скидка', mod.discount + '%') : ''}
+			${mod.discount ? tpl.showprop('Скидка', (mod.items.some(item => item.discount != mod.discount) ? "До " : "") + mod.discount + '%') : ''}
 			<p>
 				<i>${mod.Описание || ''}</i>
 			</p>
