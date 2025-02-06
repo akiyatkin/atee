@@ -55,7 +55,7 @@ const Cart = {
 	},
 	getBasketCatalog:  async (db, base, order_id, partner) => {
 		let list = await db.all(`
-			SELECT model_nick, brand_nick, count, item_num 
+			SELECT model_nick, brand_nick, count, item_num, modification
 			FROM cart_basket 
 			WHERE order_id = :order_id
 			ORDER by dateedit DESC
@@ -63,7 +63,7 @@ const Cart = {
 		list = (await Promise.all(list.map(async pos => {
 			const item = await Cart.getItem(db, base, order_id, pos.brand_nick, pos.model_nick, pos.item_num, partner)
 			if (!item) return false
-			item.count = pos.count
+			Object.assign(item, pos)
 			return item
 		}))).filter(item => item && item['Цена'])
 

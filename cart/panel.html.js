@@ -6,7 +6,6 @@ import ago from "/-words/ago.js"
 import date from "/-words/date.html.js"
 
 
-
 const tpl = {}
 export default tpl
 
@@ -93,7 +92,7 @@ tpl.ROOT = (data, env) => `
 			
 			${env.scope} .panel .body {
 
-				max-height: 105px;
+				max-height: 110px;
 				transition: max-height 0.3s;
 /*				overflow: auto;*/
 				overflow-y: scroll;
@@ -108,7 +107,8 @@ tpl.ROOT = (data, env) => `
 			}
 			@media (max-width:480px) {
 				${env.scope} .panel .body {
-					max-height: 141px;
+/*					max-height: 145px;*/
+					max-height: 95px;
 				}
 			}
 			${env.scope} .panel .body::-webkit-scrollbar { 
@@ -134,7 +134,10 @@ tpl.ROOT = (data, env) => `
 				margin-top: calc(-1em - 25px - 2px);
 			}
 			${env.scope} .panel .body .padding {
-				padding: 25px 0 20px 0;
+				padding: 18px 0 20px 0;
+			}
+			${env.scope} .panel.show .body .padding {
+				padding: 30px 0 20px 0;
 			}
 			
 			${env.scope} .panel .body .content {
@@ -808,11 +811,40 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 	</script>
 `
 
+tpl.showModification = (mod, env) => `
+	<div style="margin-bottom:0.25em">
+		<button class="a">${mod.modification || getv(mod,'Модификация')}</button>
+		<script>
+			(btn => {
+				btn.addEventListener('click', async () => {
+					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+					const popup = await Dialog.open({
+						tpl:"/-cart/modification.html.js",
+						sub:"ROOT",
+						json:"/-cart/get-modification?brand_nick=${mod.brand_nick}&model_nick=${mod.model_nick}&item_num=${mod.item_num}"
+					})
+					const form = popup.getElementsByTagName('form')[0]
+					form.addEventListener('submit', async e => {
+						e.preventDefault()
+						const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
+						const ans = await senditmsg(btn, '/-cart/set-modification?brand_nick=${mod.brand_nick}&model_nick=${mod.model_nick}&item_num=${mod.item_num}', new FormData(form))
+						if (ans.result) Dialog.hide()
+						const Client = await window.getClient()
+						Client.global('cart')
+					})
+				})
+			})(document.currentScript.previousElementSibling)
+		</script>
+	</div>
 
+`
 tpl.showPos = (mod, env) => `
 	<a href="/catalog/${mod.brand_nick}/${mod.model_nick}" class="image">${mod.images?.[0] ? tpl.showImage(mod) : ''}</a>
 	<div class="info">
-		<div>${mod.brand_title} ${mod.model_title}${prefixif(' (', getv(mod,'Позиция') || getv(mod,'Арт'),')')}</div>
+		<div>
+			${mod.brand_title} ${mod.model_title}${prefixif(' (', getv(mod,'Позиция') || getv(mod,'Арт'),')')}
+		</div>
+		${getv(mod,'Модификация') ? tpl.showModification(mod, env) : ''}
 		<div><b>${cost(mod.Цена)}${common.unit()}</b></div>
 	</div>
 	<div class="cost blocksum" 
@@ -823,7 +855,7 @@ tpl.showPos = (mod, env) => `
 	data-group_title="${mod.group_title}" 
 	data-model_nick="${mod.model_nick}"
 	data-item_num="${mod.item_num || 1}"
-	data-variant=${JSON.stringify(getv(mod, 'Позиция') || mod.item_num)}
+	data-variant=${JSON.stringify(getv(mod, 'Позиция') || getv(mod, 'Арт') || mod.item_num)}
 	data-sum="${mod.sum}"
 	data-cost="${mod.Цена || 0}" 
 	data-count="${mod.count || 0}">

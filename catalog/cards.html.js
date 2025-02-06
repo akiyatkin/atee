@@ -290,7 +290,7 @@ cards.badgenalichie = (data, env, mod) => mod.Наличие ? `
 	</a>
 ` : `
 	<span class="badge badge_${nicked(mod['Наличие'] || 'discount')}">
-		${(mod.items.some(item => item.discount != mod.discount) ? "До " : "")}${mod.discount ? ('-' + mod.discount + '%') : mod.Наличие}
+		${(mod.discount && mod.items.some(item => item.discount && item.discount != mod.discount) ? "До " : "")}${mod.discount ? ('-' + mod.discount + '%') : mod.Наличие}
 	</span>
 `
 cards.imgs = (data, mod) => `

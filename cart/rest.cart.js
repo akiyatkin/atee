@@ -13,7 +13,7 @@ rest.addArgument('medium', ['escape'])
 rest.addArgument('term', ['escape'])
 rest.addArgument('referrer_host', ['escape'])
 rest.addArgument('nocopy', ['int'])
-
+rest.addArgument('modification', ['escape'])
 
 rest.addVariable('utms', view => view.gets(['referrer_host', 'source', 'content', 'campaign', 'medium', 'term']))
 

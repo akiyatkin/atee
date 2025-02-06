@@ -191,6 +191,25 @@ rest.addResponse('get-added', async view => {
 
 	return view.ret()
 })
+rest.addResponse('get-modification', async view => {
+	const active_id = await view.get('active_id#required')
+	const item = await view.get('item#required')
+	const db = await view.get('db')
+
+	item.modification = await db.col(`
+		SELECT modification
+		FROM cart_basket
+		WHERE order_id = :active_id 
+			and item_num = :item_num 
+			and model_nick = :model_nick
+			and brand_nick = :brand_nick
+	`, {active_id, ...item })
+
+	view.data.item = item
+	
+	return view.ret()
+})
+
 rest.addResponse('get-panel', async view => {
 	const { db, partner, base, active_id: order_id, user_id, user } = await view.gets(['db', 'partner', 'base', 'active_id#required','user_id', 'user'])
 	view.ans.user = user
@@ -203,7 +222,6 @@ rest.addResponse('get-panel', async view => {
 		await Cart.recalcOrder(db, base, order_id, order.partner)
 	}
 	const list = await Cart.getBasket(db, base, order_id, order.freeze, order.partner)
-
 	const ouser = await User.getUserByEmail(db, order.email) || await User.getUserById(db, order.user_id) || user
 	view.ans.ouser = ouser
 	view.ans.list = list

@@ -279,6 +279,25 @@ rest.addResponse('set-submit', async view => {
 
 
 
+rest.addAction('set-modification', async view => {
+	const active_id = await view.get('active_id#required')
+	const modification = await view.get('modification')
+	const item = await view.get('item#required')
+	const db = await view.get('db')
+
+	await db.exec(`
+		UPDATE 
+			cart_basket
+		SET
+			modification = :modification
+		WHERE order_id = :active_id 
+			and item_num = :item_num 
+			and model_nick = :model_nick
+			and brand_nick = :brand_nick
+	`, { modification, active_id, ...item })
+	
+	return view.ret()
+})
 rest.addResponse('set-add', async view => {
 	let { base, active_id, partner } = await view.gets(['base', 'active_id', 'partner'])
 	const { db, item, count, nocopy } = await view.gets(['db', 'item#required', 'count', 'nocopy'])

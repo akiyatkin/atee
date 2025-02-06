@@ -46,13 +46,37 @@ tpl.ITEM = (data, env) => {
 		return mod.Цена ? tpl.showModelBuy(data, env, mod) : origButton(data, env, mod)
 	}
 
+	
+
 	//if (!mod.Цена) return origButton(data, env, mod)	//Добавить в корзину точно ничего нельзя
 	let item_index = env.crumb.child?.name || 0
 	if (!mod.items[item_index]) item_index = 0
 	const item = mod.items[item_index]
 	
 	const prop_titles = ["Позиция","Арт"]
-	const html = filters.block("", showIprops(data, env, mod, prop_titles)) + showItemIfCost(mod, item)
+	let html = filters.block("", showIprops(data, env, mod, prop_titles)) 
+	
+	html += `
+	<style>
+		${env.scope} .tableitem th,
+		${env.scope} .tableitem td {
+			font-size:13px;
+			padding:2px 1ch;
+		}
+	</style>
+	<table class="tableitem">
+		${mod.item_props.map(pr => {
+			if (pr.prop_title == 'Скидка') return ''
+			if (pr.prop_title == 'Цена') return ''
+			const val = common.prtitle(item, pr)
+			if (val == null) return ''
+			return tpl.showTrProp(data, env, pr, val)
+		}).join('')}
+	</table>`
+
+	html += showItemIfCost(mod, item)
+	
+	
 
 	if (!item.Цена && !mod.Цена) return html + origButton(data, env, mod, item)
 	return html + tpl.showItemsBuy(data, env, mod, item)
@@ -85,10 +109,23 @@ const showIprops = (data, env, mod, prop_titles) => {
 		${values.map((v, index) => getitem(data, env, v, index)).join('<span style="display: inline-block; width:1ch"></span>')}
 	</span>`
 }
-const showItemIfCost = (mod, item) => mod.Цена ? '' : (item.Цена ? `
+const showDiscount = (item) => `
+	<span style="
+	border-radius: 8px;
+	border: solid 1px currentColor;
+	background-color: rgba(255,255,255,.9);
+	padding: 2px 8px;
+	font-size: 0.9rem;
+	color:var(--color-partner, green)">${item.discount ? ('-' + item.discount + '%') : ''}</span>
+`
+const showCost = (value) => value ? `${cost(value)}${common.unit()}` : ''
+const showItemIfCost = (mod, item, oldcost = item['Старая цена'] || mod['Старая цена']) => mod.Цена ? '' : (item.Цена ? `
 	<p>
-		<s>${cost(item['Старая цена'] || mod['Старая цена'])}${common.unit()}</s>
-		<big><b>${cost(item.Цена || mod.Цена)}${common.unit()}</b></big>
+		<s>${showCost(oldcost)}</s>
+
+		<big>&nbsp;<b>${showCost(item.Цена || mod.Цена)}</b>&nbsp;</big>
+		${item.discount ? showDiscount(item) : ''}
+
 	</p>
 `: `
 	<p>
