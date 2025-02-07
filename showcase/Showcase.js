@@ -165,7 +165,6 @@ const Showcase = {
 			conf.start ??= 1
 			conf.starts ??= {}
 		}
-
 		return options
 	},
 	getOptions: (visitor, adminmode) => {

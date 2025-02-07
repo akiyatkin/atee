@@ -56,6 +56,7 @@ export const Files = {
 		}
 		root['files'].sort(Files.sort)
 		root['dirs'].sort(Files.sort)
+		
 		return root
 	},
 	runDeep: (root, callback, level = 0) => {

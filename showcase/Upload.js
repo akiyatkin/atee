@@ -666,7 +666,8 @@ export class Upload {
 					}
 
 					let value_titles = []
-					if (prop.type == 'text' || ~options.justonevalue_nicks.indexOf(prop.prop_nick)) {
+					if (//prop.type == 'text' || 
+						~options.justonevalue_nicks.indexOf(prop.prop_nick)) {
 						value_titles = [value_title]
 					} else {
 						value_titles = String(value_title).split(',').map(v => v.trim()).filter(v => v)
@@ -1206,7 +1207,9 @@ export class Upload {
 					const prop_title = heads.head_titles[i]
 					const type = await base.getPropTypeByNick(prop_nick)
 					const justone = ~options.justonevalue_nicks.indexOf(prop_nick)
-					if (type != 'text' && !justone) {
+					if (
+						//type != 'text' && 
+						!justone) {
 						item[i] = String(value_title).split(',').map(v => v.trim()).filter(v => v)
 					} else {
 						item[i] = [value_title]
@@ -1403,7 +1406,7 @@ export class Upload {
 			SELECT distinct f.destiny, f.file_id, i.item_num, m.model_id, f.ordain 
 			FROM 
 				showcase_filekeys fk
-				LEFT JOIN showcase_files f on fk.file_id = f.file_id
+				LEFT JOIN showcase_files f on (fk.file_id = f.file_id and f.status = '200')
 				LEFT JOIN showcase_brands b on b.brand_nick = f.brand_nick
 				LEFT JOIN showcase_models m ON (m.model_nick = fk.key_nick AND m.brand_id = b.brand_id)
 				LEFT JOIN showcase_items i on i.model_id = m.model_id
@@ -1535,12 +1538,12 @@ export class Upload {
 			FROM showcase_iprops ip
 			WHERE ip.prop_id = :files_id
 		`, { files_id })
-
+		
 		for (const {model_id, item_num, src} of listsrc) {
 			const src_nick = nicked(src).slice(-255)
 			const files = await db.all(`
 				SELECT f.file_id, f.destiny, f.ext, f.ordain, f.src from showcase_files f
-				where f.src_nick like '${src_nick}%'
+				where f.src_nick like '${src_nick}%' and f.status = '200'
 			`)
 
 			for (let {file_id, destiny, ordain, ext} of files) {

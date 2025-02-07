@@ -28,9 +28,12 @@ tpl.ROOT = (data, env) => `
 				pointer-events: none;
 /*				transition: max-height 0.5s;*/
 			}
-			
+			${env.scope}:has(.panel.show) {
+				z-index:3;
+			}
 			${env.scope} .panel.up {
 				position: relative;
+
 			}
 			${env.scope} .panel .hand {
 				pointer-events: visiblePainted;
