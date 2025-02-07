@@ -12,8 +12,8 @@ env.bread.status != 200 ? `
 ` :
 `<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<script>//Делаем SPA переходы
-			const reg = new RegExp("^(\\w+:){0,1}\\/\\/")
+		<script>//Делаем SPA переходы http:
+			const reg = new RegExp("^\\\\w{0,6}:")
 			const isSuitable = a => {
 				const search = a.getAttribute('href')
 				if (!search && search != '') return
@@ -24,6 +24,7 @@ env.bread.status != 200 ? `
 				if (search[1] == '-') return 
 				if (it > is && !~iq) return
 				if (reg.test(search)) return
+				
 				//if (/^(\\w+:){0,1}\\/\\//.test(search)) return
 				return true
 			}
