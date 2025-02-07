@@ -42,7 +42,7 @@ tpl.tocheck = (data) => `
 tpl.showPos = (pos, data) => `
 	<div style="margin-bottom:1rem">
 		<div>${pos.brand_title} ${pos.model_title}${prefixif(' (', getv(pos,'Позиция') || getv(pos,'Арт'), ')')}</div>
-		<div>${pos.modification}</div>
+		<div>${pos.modification || ''}</div>
 		<div><b>${pos.count}</b> по <b>${cost(pos.Цена)}${common.unit()}</b> = <b>${cost(pos.count * pos.Цена)}${common.unit()}</b></div>
 	</div>
 `
