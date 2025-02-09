@@ -332,6 +332,7 @@ const SELECT_ENTITY = `
 	pr.prop_5,
 	pr.comment,
 	pr.represent_prop + 0 as represent_entity,
+	pr.represent_prop + 0 as represent_prop,
 	pr.represent_values + 0 as represent_values,
 	pr.prop_title,
 	pr.type,
@@ -543,7 +544,7 @@ Sources.getCol = async (db, source_id, sheet_title, col_title) => {
 Sources.cell = async (db, {source_id, sheet_title, key_id, repeat_index, col_title, multi_index = 0, sheet_index, row_index, col_index}) => {
 	if (row_index == null) {
 		const ind = await db.fetch(`
-			SELECT ce.sheet_index, ce.row_index, ce.col_index
+			SELECT ro.sheet_index, ro.row_index, co.col_index
 			FROM sources_sheets sh, sources_rows ro, sources_cols co
 			WHERE
 				sh.source_id = :source_id

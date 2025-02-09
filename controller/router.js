@@ -119,7 +119,6 @@ const load = (src, visitor, ext) => { //ext формат требуемых да
 
 		const r = typeof(route.rest) == 'function' ? route.rest(route.query, route.get, visitor) : route.rest.req(route.query, route.get, visitor)
 		const reans = await r
-
 		if (!reans.status) reans.status = 200
 		if (!reans.ext) reans.ext = ext
 		if (reans.data instanceof ReadStream) {

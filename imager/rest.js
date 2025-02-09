@@ -74,6 +74,7 @@ rest.addResponse('get-stat', async view => {
 })
 rest.addResponse('get-size', async view => {
 	const { src } = await view.gets(['src'])
+
 	const {width, height} = await AccessCache.konce('get-size', src, async () => {
 		const {width, height} = await sharp(src).metadata().catch(e => false)
 		return {width, height}

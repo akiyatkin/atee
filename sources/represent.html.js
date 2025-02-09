@@ -153,9 +153,6 @@ export const POPUP = (data, env) => err(data, env, []) || `
 			${data.prop ? showPropRepresentTr(data, env) : ''}
 			${data.item ? showItemRepresentTr(data, env) : ''}
 			${data.value ? showValueRepresentTr(data, env) : ''}
-			${data.key ? showKeyRepresentTr(data, env) : ''}
-			
-			
 		</tbody>
 	</table>
 	
@@ -190,13 +187,12 @@ export const POPUP = (data, env) => err(data, env, []) || `
 					else if (name == 'represent_cell') args = {source_id, sheet_title, col_title, key_id, repeat_index, multi_index}
 					else if (name == 'represent_row_key') args = {source_id, sheet_title, key_id, repeat_index}
 					else if (name == 'represent_entity') args = {entity_id}
-					else if (name == 'represent_props') args = {entity_id}
-					else if (name == 'represent_items') args = {entity_id}
+
 					else if (name == 'represent_values') args = {entity_id}
 					else if (name == 'represent_prop') args = {prop_id}
 					else if (name == 'represent_item') args = {key_id, entity_id}
 					else if (name == 'represent_value') args = {prop_id, value_id}
-					else if (name == 'represent_item_key') args = {entity_id, key_id}
+					
 					else return alert('Нет обработчика')
 					
 					const data = await represent.set(btn, name, args)
@@ -221,17 +217,7 @@ const showSummary = (data, env) => `
 		<tr><td>Преимущество</td><td>${representStatus(data.cell.winner)}</td><td>winner</td></tr>
 	</table>
 `
-const showKeyRepresentTr = (data, env) => `
-	<tr><td>
-			<button title="Изменить видимость значения ключа у позиции" 
-			data-name="represent_item_key" class="eye transparent ${data.key.keycls?.main} ${data.key.keycls?.custom}">${svg.eye()}</button>
-		</td><td>Ключ позиции</td><td>${data.key.value_title} 
-			<small title="появился &mdash; исчез">(${date.sai(data.key.date_appear)}&mdash;${date.sai(data.key.date_disappear)})</small>
-		</td>
-		
-		<td>represent_item_key</td>
-	</tr>
-`
+
 const showRowRepresentTr = (data, env) => `
 	<tr>
 		<td>
@@ -329,19 +315,7 @@ const showEntityRepresentTr = (data, env) => `
 		<td>Сущность</td><td><a href="source/${data.entity.entity_id}">${data.entity.entity_title}</a></td>
 		<td>represent_entity</td>
 	</tr>
-	<tr>
-		<td><button title="Видимость свойств по умолчанию" data-name="represent_props" 
-			class="eye transparent ${represent(data.entity, ['entity'])} ${defcustom(data.entity.represent_props)}">${svg.eye()}</button></td>
-		<td>Свойства</td><td>По умолчанию</td>
-		
-		<td>represent_props</td>
-	</tr>
-	<tr>
-		<td><button title="Видимость позиций по умолчанию" data-name="represent_items" 
-			class="eye transparent ${represent(data.entity, ['entity'])} ${defcustom(data.entity.represent_items)}">${svg.eye()}</button></td>
-		<td>Позиции</td><td>По умолчанию</td>
-		<td>represent_items</td>
-	</tr>
+	
 	<tr>
 		<td><button title="Видимость значений по умолчанию" data-name="represent_values" 
 			class="eye transparent ${represent(data.entity, ['entity'])} ${defcustom(data.entity.represent_values)}">${svg.eye()}</button></td>

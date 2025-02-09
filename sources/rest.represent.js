@@ -170,8 +170,8 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	if (prop) {
 		prop.cls = represent.calcCls(
 			entity.represent_entity, 
-			prop.represent_custom_prop, 
-			entity.represent_props
+			prop.represent_prop && null, 
+			1
 		)
 	}
 
@@ -179,14 +179,14 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	if (item) {
 		item.cls = represent.calcCls(
 			entity.represent_prop && item.represent_value, 
-			item.represent_custom_item, 
-			entity.represent_items
+			item.represent_value, 
+			entity.represent_values
 		)
 		// item.value = key_id ? await Sources.getValue(db, entity_id, entity.prop_id, 0) : false	
 		// if (item.key) {
 		item.keycls = represent.calcCls(
-			entity.represent_entity && item.represent_item, 
-			item.represent_custom_value, 
+			entity.represent_prop && item.represent_value, 
+			item.represent_custom_value && null, 
 			source.represent_cells
 		)
 		// }
@@ -212,7 +212,7 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	const value = view.data.value = cell?.value_id ? await Sources.getValue(db, prop_id, cell.value_id) : false
 	if (value) {
 		value.cls = represent.calcCls(
-			entity.represent_entity && prop.represent_prop && item.represent_item_key && item.represent_item, 
+			entity.represent_entity && prop.represent_prop && item.represent_value, 
 			value.represent_custom_value, 
 			entity.represent_values
 		)
@@ -305,44 +305,16 @@ rest.addAction('set-represent_cells', ['admin'], async view => {
 	view.data.cls = represent.calcCls(source.represent_source, newvalue)
 	return view.ret()
 })
-rest.addAction('set-represent_props', ['admin'], async view => {
-	const db = await view.get('db')
-	const entity_id = await view.get('entity_id#required')
-	const entity = await Sources.getEntity(db, entity_id)
-	const newvalue = !entity.represent_props + 0
-	await db.exec(`
-		UPDATE sources_entities 
-		SET represent_props = :newvalue
-   		WHERE entity_id = :entity_id
-	`, {entity_id, newvalue})
-	await Consequences.represent(db)
-	view.data.cls = represent.calcCls(entity.represent_entity, newvalue)
-	return view.ret()
-})
 
-rest.addAction('set-represent_items', ['admin'], async view => {
-	const db = await view.get('db')
-	const entity_id = await view.get('entity_id#required')
-	const entity = await Sources.getEntity(db, entity_id)
-	const newvalue = !entity.represent_items + 0
-	await db.exec(`
-		UPDATE sources_entities 
-		SET represent_items = :newvalue
-   		WHERE entity_id = :entity_id
-	`, {entity_id, newvalue})
-	await Consequences.represent(db)
-	view.data.cls = represent.calcCls(entity.represent_entity, newvalue)
-	return view.ret()
-})
 rest.addAction('set-represent_values', ['admin'], async view => {
 	const db = await view.get('db')
 	const entity_id = await view.get('entity_id#required')
 	const entity = await Sources.getEntity(db, entity_id)
 	const newvalue = !entity.represent_values + 0
 	await db.exec(`
-		UPDATE sources_entities 
+		UPDATE sources_props 
 		SET represent_values = :newvalue
-   		WHERE entity_id = :entity_id
+   		WHERE prop_id = :entity_id
 	`, {entity_id, newvalue})
 	await Consequences.represent(db)
 	view.data.cls = represent.calcCls(entity.represent_entity, newvalue)
@@ -402,9 +374,9 @@ rest.addAction('set-represent_entity', ['admin'], async view => {
 	const newvalue = getCustomSwitch(value, value)
 	
 	await db.exec(`
-		UPDATE sources_entities 
-		SET represent_entity = :newvalue
-   		WHERE entity_id = :entity_id
+		UPDATE sources_props 
+		SET represent_prop = :newvalue
+   		WHERE prop_id = :entity_id
 	`, {entity_id, newvalue})
 
 	await Consequences.represent(db)
@@ -482,53 +454,27 @@ rest.addAction('set-represent_item', ['admin'], async view => {
 	const entity = await Sources.getEntity(db, entity_id)
 	const item = await Sources.getItem(db, entity_id, key_id)
 	
-	const value = item.represent_custom_item
+	const value = item.represent_custom_value
 
-	const newvalue = getCustomSwitch(value, entity.represent_items)
+	const newvalue = getCustomSwitch(value, entity.represent_values)
 	
 	await db.exec(`
-		INSERT INTO sources_custom_items (entity_id, key_nick, represent_custom_item)
+		INSERT INTO sources_custom_values (prop_id, value_nick, represent_custom_value)
    		VALUES (:entity_id, :key_nick, :newvalue)
-   		ON DUPLICATE KEY UPDATE represent_custom_item = VALUES(represent_custom_item)
+   		ON DUPLICATE KEY UPDATE represent_custom_value = VALUES(represent_custom_value)
 	`, {...item, newvalue})
 	
 
 
 	await Consequences.represent(db)
 	view.data.cls = represent.calcCls(
-		entity.represent_entity && item.represent_item_key, 
+		entity.represent_entity, 
 		newvalue, 
-		entity.represent_items
+		entity.represent_values
 	)
 	return view.ret()
 })
-rest.addAction('set-represent_item_key', ['admin'], async view => {
-	const db = await view.get('db')
-	
-	const entity_id = await view.get('entity_id#required')
-	const key_id = await view.get('key_id#required')
-	const key_nick = await db.col(`select value_nick from sources_values where value_id = :key_id`, {key_id})
-	const entity = await Sources.getEntity(db, entity_id)
-	const prop_id = entity.prop_id
-	const item = await Sources.getItem(db, entity_id, key_id)
-	
 
-	const newvalue = getCustomSwitch(item.represent_custom_value, entity.represent_values)
-	
-	await db.exec(`
-		INSERT INTO sources_custom_values (prop_id, value_nick, represent_custom_value)
-   		VALUES (:prop_id, :key_nick, :newvalue)
-   		ON DUPLICATE KEY UPDATE represent_custom_value = VALUES(represent_custom_value)
-	`, {prop_id, key_nick, newvalue})
-	
-	await Consequences.represent(db)
-	view.data.cls = represent.calcCls(
-		entity.represent_entity && item.represent_item, 
-		newvalue, 
-		entity.represent_items
-	)
-	return view.ret()
-})
 rest.addAction('set-represent_col', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')

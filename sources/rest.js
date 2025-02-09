@@ -452,7 +452,7 @@ rest.addResponse('sheet-sheets', ['admin'], async view => {
 		not - всё без ключей
 	*/
 
-	const sheet_index = await view.get('sheet_index#required')
+	const sheet_index = await view.get('sheet_index#or0')
 	
 	const hashs = await view.get('hashs')
 
@@ -692,7 +692,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	
 	const hashs = await view.get('hashs')
 	const keyfilter = await view.get('keyfilter#appear')
-
+	const sheet_index = await view.get('sheet_index#or0')	
 	
 	const appear = await view.get('appear') //null - последняя дата, 0 - выбрать всё, date - конкретная дата
 	const date_appear = appear || await db.col(`
@@ -723,7 +723,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	
 	
 	const entity = view.data.entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
-	const sheet_index = await view.get('sheet_index#required')	
+	
 	const sheet = view.data.sheet = await db.fetch(`
 		SELECT sh.sheet_title, sh.key_index, sh.sheet_index, sh.entity_id,
 			sh.represent_sheet + 0 as represent_sheet,

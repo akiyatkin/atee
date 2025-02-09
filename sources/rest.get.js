@@ -24,24 +24,18 @@ rest.addResponse('get-entity-export', ['admin'], async view => {
 
 	const entity = view.data.entity = await db.fetch(`
 		SELECT
-			en.entity_title,
 			pr.prop_title,
-			en.comment,
-			en.ordain,
-			en.represent_entity + 0 as represent_entity,
-			en.represent_props + 0 as represent_props,
-			en.represent_items + 0 as represent_items,
-			en.represent_values + 0 as represent_values
+			pr.comment,
+			pr.ordain,
+			pr.represent_prop + 0 as represent_prop,
+			pr.represent_values + 0 as represent_values
 
-		FROM sources_entities en
-			LEFT JOIN sources_props pr on pr.prop_id = en.prop_id
+		FROM sources_props pr on pr.prop_id = en.prop_id
 		WHERE en.entity_id = :entity_id
 	`, {entity_id})
 
 	if (!entity.comment) delete entity.comment
-	if (entity.represent_entity == 1) delete entity.represent_entity
-	if (entity.represent_props == 1) delete entity.represent_props
-	if (entity.represent_items == 1) delete entity.represent_items
+	if (entity.represent_prop == 1) delete entity.represent_prop
 	if (entity.represent_values == 1) delete entity.represent_values
 
 	entity.props = await db.all(`
