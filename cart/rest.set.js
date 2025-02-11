@@ -285,6 +285,9 @@ rest.addAction('set-modification', async view => {
 	const item = await view.get('item#required')
 	const db = await view.get('db')
 
+	const order = await Cart.getOrder(db, active_id)
+	if (order.status != 'wait') return view.err('Заказ уже отправлен, обсудите, пожалуйста, изменения с менеджером!', 422)
+
 	await db.exec(`
 		UPDATE 
 			cart_basket
