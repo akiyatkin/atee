@@ -23,8 +23,22 @@ cont.CALLBACK = (data, env) => `
 			</p>
 		</form>
 		<script>
-			(form => {
+			(async form => {
 				import("/-form/Autosave.js").then(r => r.default.init(form))
+				
+				const Dialog = await import("/-dialog/Dialog.js").then(r => r.default)
+				if (Dialog.parents.length) {
+					const goalButton = () => {
+						const goal = 'button'
+						const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
+						if (metrikaid) {
+							console.log('Goal.reach ' + goal)
+							ym(metrikaid, 'reachGoal', goal);
+						}
+					}
+					goalButton()
+				}
+
 				form.addEventListener('submit', e => {
 					e.preventDefault()
 					import('/-dialog/submit.js').then(r => r.default(form, {tpl:'/-dialog/contacts.html.js', sub:'MSG'}))
@@ -82,8 +96,20 @@ cont.FORM = (data, env) => `
 		</p>
 	</form>
 	<script>
-		(form => {
+		(async form => {
 			import("/-form/Autosave.js").then(r => r.default.init(form))
+			const Dialog = await import("/-dialog/Dialog.js").then(r => r.default)
+			if (Dialog.parents.length) {
+				const goalButton = () => {
+					const goal = 'button'
+					const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
+					if (metrikaid) {
+						console.log('Goal.reach ' + goal)
+						ym(metrikaid, 'reachGoal', goal);
+					}
+				}
+				goalButton()
+			}
 			form.addEventListener('submit', e => {
 				e.preventDefault()
 				import('/-dialog/submit.js').then(r => r.default(form, {tpl:'${env.layer.tpl}', sub:'MSG'}))
