@@ -105,9 +105,28 @@ const showIprops = (data, env, mod, prop_titles) => {
 		ak.push(prop_title ? getv(item, prop_title) : '')
 		return ak
 	}, [])
-	return `<span style="margin-right:0.3ch; font-size:90%">
-		${values.map((v, index) => getitem(data, env, v, index)).join('<span style="display: inline-block; width:1ch"></span>')}
-	</span>`
+	return `
+		<div style="margin-right:0.3ch; font-size:90%">
+			${values.map((v, index) => getitem(data, env, v, index)).join('<span style="display: inline-block; width:1ch"></span>')}
+			<script>
+				(div => {
+					for (const a of div.getElementsByTagName('a')) {
+						const goalButton = () => {
+							if (!div.closest('body')) return
+							const goal = 'button'
+							const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
+							if (metrikaid) {
+								console.log('Goal.reach ' + goal)
+								ym(metrikaid, 'reachGoal', goal);
+							}
+						}
+						a.addEventListener('click', goalButton)
+						a.addEventListener('contextmenu', goalButton)
+					}
+				})(document.currentScript.parentElement)
+			</script>
+		</div>
+	`
 }
 const showDiscount = (item) => `
 	<span style="
