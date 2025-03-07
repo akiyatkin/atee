@@ -1,4 +1,5 @@
-export const ROOT = (data, env) => `
+import err from "/-controller/err.html.js"
+export const ROOT = (data, env) => err(data, env, []) || `
 	<h1>Оперативная память</h1>
 	<table>
 		<tr>

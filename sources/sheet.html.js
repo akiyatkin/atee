@@ -30,7 +30,10 @@ export const ROOT = (data, env, source = data.source) => err(data, env, ['DATES'
 	<style>
 		${env.scope} tbody td.rep {
 			cursor: pointer;
-			
+			max-width: 420px;
+		    overflow: hidden;
+		    text-overflow: ellipsis;
+    
 			/*text-decoration: underline dashed 0.5px;
 			text-underline-offset: 0.3em;*/
 
@@ -89,7 +92,7 @@ export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
 			: '<b>' + (data.source.master ? 'Мастер' : 'Прайс') + '</b>' + (
 				data.source.entity_id 
 				? showSourceEntity(data, env, source) 
-				: ' <span class="mute">&mdash;</span>'
+				: ''
 			)
 			 
 		}
@@ -108,9 +111,9 @@ export const DATES = (data, env) => !data.result ? `` : `
 			${data.dates.map(dateup => showDate(data, env, dateup)).join('')}
 		</div>
 		<div style="background: linear-gradient(-30deg, #00aaff55, #4466ff22); padding: 0.5em; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
-			<div><a class="${env.bread.get.keyfilter == 'yes' ? 'active' : ''}" data-keyfilter="yes" href="sheet${addget({keyfilter: 'yes'}, env.bread.get)}">С&nbsp;ключом<sup>${data.quantity_of_keys}</sup></a></div>
-			<div><a class="${env.bread.get.keyfilter == 'not' ? 'active' : ''}" data-keyfilter="not" href="sheet${addget({keyfilter: 'not'}, env.bread.get)}">Без&nbsp;ключа&nbsp;<sup>${data.quantity_without_keys}</sup></a></div>
-			<div><a class="${env.bread.get.keyfilter == 'all' ? 'active' : ''}" data-keyfilter="all" href="sheet${addget({keyfilter: 'all'}, env.bread.get)}">Всё&nbsp;<sup>${data.quantity_without_keys + data.quantity_of_keys}</sup></a></div>
+			<div><a class="${env.bread.get.keyfilter == 'yes' ? 'active' : ''}" data-keyfilter="yes" href="sheet${addget({keyfilter: 'yes'}, env.bread.get)}#SHEETS">С&nbsp;ключом<sup>${data.quantity_of_keys}</sup></a></div>
+			<div><a class="${env.bread.get.keyfilter == 'not' ? 'active' : ''}" data-keyfilter="not" href="sheet${addget({keyfilter: 'not'}, env.bread.get)}#SHEETS">Без&nbsp;ключа&nbsp;<sup>${data.quantity_without_keys}</sup></a></div>
+			<div><a class="${env.bread.get.keyfilter == 'all' ? 'active' : ''}" data-keyfilter="all" href="sheet${addget({keyfilter: 'all'}, env.bread.get)}#SHEETS">Всё&nbsp;<sup>${data.quantity_without_keys + data.quantity_of_keys}</sup></a></div>
 		</div>
 	</div>
 	<script>
@@ -126,7 +129,7 @@ export const DATES = (data, env) => !data.result ? `` : `
 					const params = {keyfilter}
 					const appear = a.dataset.appear
 					if (appear) params.appear = appear
-					a.href = 'sheet' + addget(params, new URLSearchParams(window.location.search))
+					a.href = 'sheet' + addget(params, new URLSearchParams(window.location.search))+'#SHEETS'
 				}
 				const origin = location.href
 				//const origin = location.origin + bread.href
@@ -155,7 +158,7 @@ const showDate = (data, env, dateup, active = dateup.active && (!env.bread.get.k
 		<a class="${active ? 'active' : ''}" 
 		 	data-keyfilter="appear"
 		 	data-appear="${dateup.date}"
-			href="sheet${addget({keyfilter:'appear', appear:dateup.date}, env.bread.get)}">
+			href="sheet${addget({keyfilter:'appear', appear:dateup.date}, env.bread.get)}#SHEETS">
 			${dateup.title || date.ai(dateup.date)}&nbsp;<sup>${dateup.count}</sup>
 		</a>
 	</div>
@@ -163,7 +166,7 @@ const showDate = (data, env, dateup, active = dateup.active && (!env.bread.get.k
 const showSheet = (data, env, sheet, active = sheet.sheet_index == data.sheet.sheet_index) => {
 	if (!active) return `
 		<div>
-			<a href="sheet${addget({sheet_index:sheet.sheet_index}, env.bread.get)}">${sheet.sheet_title}&nbsp;<sup>${sheet.count}</sup></a>
+			<a href="sheet${addget({sheet_index:sheet.sheet_index}, env.bread.get)}#TABLE">${sheet.sheet_title}&nbsp;<sup>${sheet.count}</sup></a>
 			${!sheet.entity || sheet.entity.entity_id != data.source.entity_id ? showEntity(data, env, sheet.entity) : ''}
 		</div>
 	`
@@ -372,7 +375,7 @@ const showCellsTr = (data, env, sheet, source, rowtexts, text_index, row = data.
 	</tr>
 `
 const showCellTd = (data, env, sheet, source, text_index, col_index, celtexts) => `
-	<td${data.prunings[text_index]?.[col_index] ? ' style="color:red"' : ''} class="rep">${celtexts.map((text, multi_index) => showMultiSpan(data, env, sheet, source, text, text_index, col_index, multi_index)).join(', ')}</td>
+	<td${data.prunings[text_index]?.[col_index] ? ' style="color:red"' : ''} class="rep">${celtexts.map((text, multi_index) => showMultiSpan(data, env, sheet, source, text, text_index, col_index, multi_index)).join(',&nbsp;')}</td>
 `
 const showMultiSpan = (data, env, sheet, source, text, text_index, col_index, multi_index) => `
 	<button style="${text ? '' : 'display:block; width:100%'}" class="value transparent ${data.winners[text_index][col_index][multi_index] && data.masters[text_index] ? '' : 'mute'}">${text || '&nbsp;'}</span>

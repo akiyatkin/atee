@@ -9,63 +9,117 @@ import config from '/-config'
 const Bed = {}
 export default Bed
 
-Bed.getPageByNick = async (db, page_nick) => {
-	const page = await db.fetch(`
+Bed.getValueByNick = async (db, value_nick) => {
+	const value = await db.fetch(`
 		SELECT 
-			pa.page_id,
-			pa.page_nick,
-			pa.page_title,
-			pa.group_id,
-			pa.parent_id
-		FROM bed_pages pa
-		WHERE pa.page_nick = :page_nick
-	`, {page_nick})
-	return page
+			va.value_nick,
+			va.value_title,
+			va.value_id
+		FROM sources_values va
+		WHERE va.value_nick = :value_nick
+	`, {value_nick})
+	return value
 }
-Bed.getPageById = async (db, page_id) => {
-	const page = await db.fetch(`
+Bed.getPropByNick = async (db, prop_nick) => {
+	const prop = await db.fetch(`
 		SELECT 
-			pa.page_id,
-			pa.page_nick,
-			pa.page_title,
-			pa.group_id,
-			pa.parent_id
-		FROM bed_pages pa
-		WHERE pa.page_id = :page_id
-	`, {page_id})
-	return page
+			spr.prop_nick,
+			spr.prop_title,
+			spr.prop_id,
+			spr.type
+		FROM sources_props spr
+		LEFT JOIN bed_props bpr on (spr.prop_nick = bpr.prop_nick)
+		WHERE spr.prop_nick = :prop_nick
+	`, {prop_nick})
+	return prop
+}
+
+Bed.getGroupByNick = async (db, group_nick) => {
+	const group = await db.fetch(`
+		SELECT 
+			gr.group_id,
+			gr.group_nick,
+			gr.group_title,
+			gr.ordain,
+			gr.group_id,
+			gr.parent_id,
+			pr.group_title as parent_title,
+			pr.group_nick as parent_nick,
+			pr.group_name as parent_name
+		FROM bed_groups gr
+		LEFT JOIN bed_groups pr on (pr.group_id = gr.parent_id)
+		WHERE gr.group_nick = :group_nick
+	`, {group_nick})
+	return group
+}
+
+
+Bed.getGroupById = async (db, group_id) => {
+	const group = await db.fetch(`
+		SELECT 
+			gr.group_id,
+			gr.group_nick,
+			gr.group_title,
+			gr.group_id,
+			gr.ordain,
+			gr.parent_id,
+			pr.group_title as parent_title,
+			pr.group_nick as parent_nick,
+			pr.group_name as parent_name
+		FROM bed_groups gr
+			LEFT JOIN bed_groups pr on (pr.group_id = gr.parent_id)
+		WHERE gr.group_id = :group_id
+	`, {group_id})
+	return group
 }
 Bed.getChilds = async (db, group_id) => {
-	if (!group_id) return []
 	const childs = await db.all(`
 		SELECT
-			pa.page_nick,
-			pa.page_title,
-			pa.page_id,
-			pa.group_id,
-			pa.parent_id
+			gr.group_nick,
+			gr.group_title,
+			gr.group_name,
+			gr.group_id,
+			gr.parent_id
 		FROM
-			bed_childs ch, bed_pages pa
+			bed_groups gr
 		WHERE
-			pa.page_id = ch.page_id
-			and ch.group_id = :group_id
-		ORDER BY pa.ordain
+			gr.parent_id <=> :group_id
+		ORDER BY gr.ordain
 	`, {group_id})
 	return childs
 }
-Bed.getMpage = async (db, page_id) => {
+Bed.getMgroupDirect = async (db, group_id) => {
 	const marks = await db.all(`
 		SELECT 
 			ma.prop_nick, ma.value_nick
 		FROM bed_marks ma
-		WHERE page_id = :page_id
-	`, {page_id})
-	const mpage = {}
+		WHERE ma.group_id = :group_id 
+			and ma.value_nick is not null
+	`, {group_id})
+	const mgroup = {}
 	for (const mark of marks) {
-		mpage[mark.prop_nick] ??= {}
-		mpage[mark.prop_nick][mark.value_nick] ??= 1
-	}	
-	return mpage
+		mgroup[mark.prop_nick] ??= {}
+		mgroup[mark.prop_nick][mark.value_nick] ??= 1
+	}
+	return mgroup
+}
+Bed.getMgroup = async (db, group_id) => {
+	const mgroup = await Bed.getMgroupDirect(db, group_id)
+
+	const conf = await config('bed')
+	if (conf.subgroup_dependence) {
+		let parent_id = await db.col(`select parent_id from bed_groups where group_id = :group_id`, {group_id})
+		while (parent_id) {
+			const mg = await Bed.getMgroupDirect(db, parent_id)
+			for (const prop_nick in mg) {
+				mgroup[prop_nick] ??= {}
+				Object.assign(mgroup[prop_nick], mg[prop_nick])
+			}
+			parent_id = await db.col(`select parent_id from bed_groups where group_id = :parent_id`, {parent_id})
+		}
+	}
+
+	return mgroup
 }
 Bed.makemd = (m) => {
 	m = m.replaceAll(/([^:]+)::\./ug, ":$1:$1.")
@@ -109,23 +163,24 @@ Bed.makemark = (md, ar = [], path = []) => {
 	}
 	return ar
 }
-Bed.mdfilter = (mpage, props, values) => {
-	const newmpage = {}
-	for (const prop_nick in mpage) {
+Bed.mdfilter = (mgroup, props, values) => {
+	//Удалить фильтры свойства и значения которых не существуют
+	const newmgroup = {}
+	for (const prop_nick in mgroup) {
 		const prop = props[prop_nick]
 		if (!prop) continue
-		newmpage[prop_nick] = {}
-		if (typeof mpage[prop_nick] == 'object' && prop.type == 'value') {
-			for (const value_nick in mpage[prop_nick]) {
+		newmgroup[prop_nick] = {}
+		if (typeof mgroup[prop_nick] == 'object' && prop.type == 'value') {
+			for (const value_nick in mgroup[prop_nick]) {
 				if (!values[value_nick]) continue
-				newmpage[prop_nick][value_nick] = mpage[prop_nick][value_nick]
+				newmgroup[prop_nick][value_nick] = mgroup[prop_nick][value_nick]
 			}
-			if (!Object.keys(newmpage[prop_nick]).length) delete newmpage[prop_nick]
+			if (!Object.keys(newmgroup[prop_nick]).length) delete newmgroup[prop_nick]
 		} else {
-			newmpage[prop_nick] = mpage[prop_nick]
+			newmgroup[prop_nick] = mgroup[prop_nick]
 		}
 	}
-	return newmpage
+	return newmgroup
 }
 Bed.getmdids = async (db, marks) => {
 	const prop_nicks = []
@@ -153,30 +208,57 @@ Bed.getmdids = async (db, marks) => {
 	`)
 	return {values, props}
 }
+Bed.getmd = async (db, origm, group) => {
+	const conf = await config('bed')
+	const mgetorig = Bed.makemd(origm)
+	if (group) group.mgroup = await Bed.getMgroup(db, group.group_id)
+	
+	const childs = await Bed.getChilds(db, group?.group_id || null)
+	const mdchilds = []
+	for (const child of childs) {
+		child.mgroup = await Bed.getMgroup(db, child.group_id)
+		mdchilds.push(child.mgroup)
+	}
+	const {props, values} = await Bed.getmdids(db, [mgetorig, group?.mgroup || {}, ...mdchilds])
 
-Bed.getmdwhere = async (db, md, mpage, hashs, partner = '') => {
-	const mall = {...md.mget, ...mpage}
+	// group.mgroup = Bed.mdfilter(group.mgroup, props, values)
+
+	// for (const child of childs) {
+	// 	child.mgroup = Bed.mdfilter(child.mgroup, props, values)
+	// }
+	const mget = Bed.mdfilter(mgetorig, props, values)
+	
+	const pos_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.pos_entity_title)})
+	if (!pos_entity_id) console.log('Не найден conf.pos_entity_title')
+	const mod_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.mod_entity_title)})
+	if (!mod_entity_id) console.log('Не найден conf.mod_entity_title')
+	
+	const m = Bed.makemark(mget).join(':')
+	return {m, group, mget, childs, props, values, pos_entity_id, mod_entity_id}
+}
+Bed.getmdwhere = (md, mgroup = {}, hashs = [], partner = '') => {
+	const mall = {...md.mget, ...mgroup}
 
 	const bind = {
 		pos_entity_id: md.pos_entity_id,
 		mod_entity_id: md.mod_entity_id
 	}
+	//win.key_id - позиция, win.value_id - модель
+	const from = ['sources_winners win, sources_items wit, sources_cells wce']
 	const where = [
-		'pos.entity_id=:pos_entity_id', 
-		'pos.prop_id=:mod_entity_id'
+		'wit.entity_id = win.entity_id and wit.key_id = win.key_id',
+		'wce.source_id = win.source_id and wce.sheet_index = win.sheet_index and wce.row_index = win.row_index and wce.col_index = win.col_index',
+		'win.entity_id=:pos_entity_id and win.prop_id=:mod_entity_id'  //У позиций считывает значение модели, модель может быть без Бренда потому что бренд у позиции уже будет
 	]
 	if (hashs.length) {
 		const where_search = []
 		for (const hash of hashs) {
-			const sql = 'pos.search like "% ' + hash.join('%" and pos.search like "% ') + '%"'
+			const sql = 'wit.search like "% ' + hash.join('%" and wit.search like "% ') + '%"'
 			where_search.push(sql)
 		}
 		where.push(`(${where_search.join(' or ')})`)
-	}	
-	
-
-	const from = ['sources_data pos']
-	const sort = ['pos.source_ordain', 'pos.sheet_index', 'pos.row_index'] //, 'pos.prop_ordain', 'pos.multi_index'
+	}
+	const sort = ['win.win_id','wce.multi_index'] //, 'pos.prop_ordain', 'pos.multi_index'
 
 	let i = 0
 
@@ -186,19 +268,23 @@ Bed.getmdwhere = async (db, md, mpage, hashs, partner = '') => {
 		if (values == 'empty') {
 			i++
  			from[0] += `
-				LEFT JOIN sources_data da${i} on (
-					da${i}.entity_id = pos.entity_id 
-					and da${i}.key_id = pos.key_id
-					and da${i}.multi_index = 0
+				LEFT JOIN sources_winners da${i} on (
+					da${i}.entity_id = win.entity_id 
+					and da${i}.key_id = win.key_id
 					and da${i}.prop_id = ${prop.prop_id}
 				)
  			`
  			where.push(`da${i}.prop_id is null`)
  		} else {
  			i++
- 			from.push(`sources_data da${i}`)
-			where.push(`da${i}.entity_id = pos.entity_id `)
-			where.push(`da${i}.key_id = pos.key_id`)
+ 			from.push(`sources_winners da${i}, sources_cells ce${i}`)
+ 			where.push(`
+ 				ce${i}.sheet_index = da${i}.sheet_index
+ 				and ce${i}.row_index = da${i}.row_index
+ 				and ce${i}.col_index = da${i}.col_index
+ 			`)
+			where.push(`da${i}.entity_id = win.entity_id`)
+			where.push(`da${i}.key_id = win.key_id`)
 			where.push(`da${i}.prop_id = ${prop.prop_id}`)
 			const ids = []
 			if (prop.type == 'number') {
@@ -217,27 +303,26 @@ Bed.getmdwhere = async (db, md, mpage, hashs, partner = '') => {
 					if (~['upto','from'].indexOf(name)) {
 						sort = []
 						if (name == 'upto') {
-							where.push(`da${i}.number <= ${value_nick}`)
-							sort.push(`da${i}.number DESC`)
+							where.push(`ce${i}.number <= ${value_nick}`)
+							sort.push(`ce${i}.number DESC`)
 						}
 						if (name == 'from') {
-							where.push(`da${i}.number >= ${value_nick}`)
-							sort.push(`da${i}.number ASC`)
+							where.push(`ce${i}.number >= ${value_nick}`)
+							sort.push(`ce${i}.number ASC`)
 						}
 					} else {
 						if (value_nick == value) ids.push(value_nick)
 						//else  ids.push(prop.prop_id + ', false')	
 					}
 				}
-				if (ids.length) where.push(`da${i}.number in (${ids.join(',')})`)
+				if (ids.length) where.push(`ce${i}.number in (${ids.join(',')})`)
 			} else if (prop.type == 'value') {
 
 				for (const value_nick in values) {
-
 					const value = md.values[value_nick]
-					ids.push(value.value_id)
+					ids.push(value?.value_id || 0)
 				}
-				where.push(`da${i}.value_id in (${ids.join(',')})`)
+				if (ids.length) where.push(`ce${i}.value_id in (${ids.join(',')})`)
 			} else {
 				//значения других типов пропускаем
 			}
@@ -262,7 +347,7 @@ Bed.getModelsByItems = async (db, moditems_ids, partner, bind) => { //[{value_id
 
 	const itemprops = await db.all(`
 		SELECT 
-			pos.key_id,
+			win.key_id,
 			pr.name,
 			pr.unit,
 			pr.prop_nick,

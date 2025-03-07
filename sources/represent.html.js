@@ -22,6 +22,7 @@ main.col = (data, env, col = data.col, entity = data.entity, prop = data.prop, s
 		args: {source_id: source.source_id, sheet_index: col.sheet_index, col_index: col.col_index},
 		reloaddiv:env.layer.conf.reloaddiv
 	})}</b>
+	${prop ? '' : showFastProp(data, env)}
 	<!-- <script>
 		(div => {
 			const field = div.getElementsByClassName('field')[0]
@@ -35,6 +36,34 @@ main.col = (data, env, col = data.col, entity = data.entity, prop = data.prop, s
 	<div>
 		${showType(data, env, prop)}
 	</div>
+`
+const showFastProp = (data, env) => `
+	<div style="margin-top:0.5em">
+		<button>text</button>
+		<button>value</button>
+		<button>date</button>
+		<button>number</button>
+	</div>
+	<script>
+		(div => {
+			for (const btn of div.getElementsByTagName('button')) {
+				btn.addEventListener('click', async () => {
+					const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
+					const ans = await senditmsg(btn, '/-sources/set-col-prop-create', {
+						source_id: ${data.source.source_id},
+						sheet_index: ${data.sheet.sheet_index},
+						col_index: ${data.col.col_index},
+						type: btn.innerText,
+						search: "${data.col.col_title}"
+					})
+					if (ans.result) {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.hide()
+					}
+				})
+			}
+		})(document.currentScript.previousElementSibling)
+	</script>
 `
 const showType = (data, env, prop) => !prop ? '' : `
 	Тип ${field.setpop({

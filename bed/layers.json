@@ -1,0 +1,74 @@
+{
+	"index":"index:ROOT",
+	"animate":{
+		
+	},
+	"frame":{
+		
+	},
+	"head":{
+		"title":"Источники данных"
+	},
+	"json":{
+		"props:ROOT":"/-bed/props",
+		"main:ROOT":"/-bed/main",
+		"settings:ROOT":"/-bed/settings"
+	},
+	"jsontpl":{
+		"groups:ROOT":"/-bed/groups?group_nick=${env.crumb.child?.name ?? ''}",
+		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
+	},
+	"tpl":{
+		"frame":"/-controller/frame.html.js",
+		"controller":"/-controller/layout.html.js",
+		"settings":"/-bed/settings.html.js",
+		"index":"/-controller/index-board.html.js",
+		"aside":"/-bed/aside.html.js",
+		"main":"/-bed/main.html.js",
+		"props":"/-bed/props.html.js",
+		"groups":"/-bed/groups.html.js"
+	},
+	"layout":{
+		"index:ROOT": {
+			"MAIN":"main:ROOT",
+			"ASIDE":"aside:ROOT"
+		}
+	},
+	"childs":{
+		"settings":{
+			"head":{"title":"Настройки"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"settings:ROOT"
+				}
+			}
+		},
+		"groups":{
+			"head":{"title":"Группы"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"groups:ROOT"
+				}
+			},
+			"child":{
+				"layout":{}
+			}
+		},
+		"props":{
+			"head":{"title":"Свойства"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"props:ROOT"
+				}
+			}
+		},
+		"error":{
+			"head":{"hidden":true, "title":"Ошибка"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"controller:ERROR"
+				}
+			}
+		}
+	}
+}

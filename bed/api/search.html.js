@@ -1,4 +1,4 @@
-import cards from "/-bed/cards.html.js"
+import cards from "/-bed/api/cards.html.js"
 import words from "/-words/words.js"
 import links from "/-catalog/links.html.js"
 import err from "/-controller/err.html.js"
@@ -131,7 +131,7 @@ tpl.listcards = (data, env) => {
 			"name" : mod.cols['Наименование'] || mod.model_title,
 			"price": mod.cols['Цена'] || mod.min || '',
 			"brand": mod.cols['Бренд'] || '',
-			"category": data.page.page_title,
+			"category": data.group.group_title,
 			"position": 1,
 			"list": "Каталог"
 		}
@@ -176,15 +176,15 @@ tpl.showgroups = (data, env) => `
 	</style>
 	${data.childs.map(g => tpl.group(data, env, g)).join('')}
 `
-const groupclass = (data, env, page) => {
-	const selected = data.md.page.page_nick == page.page_nick
-	return `class="${selected ? 'selected' :''} ${page.mute ? 'mute' :''}"`
+const groupclass = (data, env, group) => {
+	const selected = data.md.group.group_nick == group.group_nick
+	return `class="${selected ? 'selected' :''} ${group.mute ? 'mute' :''}"`
 }
-tpl.group = (data, env, page) => `
+tpl.group = (data, env, group) => `
 	<div>
-		<a ${groupclass(data, env, page)}
+		<a ${groupclass(data, env, group)}
 			data-scroll="none"
-			href="${env.crumb.parent}/${page.page_nick}${links.setm(data)}">${page.page_title}</a>
+			href="${env.crumb.parent}/${group.group_nick}${links.setm(data)}">${group.group_title}</a>
 	</div>
 `
 
@@ -215,11 +215,11 @@ tpl.title = (data, env) => `
 		}
 	</style>
 	<div style="float:left; margin-top:1rem">
-		${(!data.page.parent_id && !data.md.m) ? '<a href="/"><br></a>' : tpl.parenttitle(data, env)}
+		${(!data.group.parent && !data.md.m) ? '<a href="/"><br></a>' : tpl.parenttitle(data, env)}
 	</div>
 	
 	<h1 style="clear:both;">
-		${data.page.page_title}
+		${data.group.group_title}
 		${data.search ? tpl.titlepart(data, env, 'search', data.search) : ''}
 		${data.md.mget ? tpl.showSelected(data, env) : ''}
 	</h1>
@@ -297,11 +297,11 @@ tpl.titlepart = (data, env, part, value) => `
 	</a>
 `
 tpl.parenttitle = (data, env) => `
-	<a data-scroll="none" href="${env.crumb.parent}${tpl.toplink(data, env)}">${data.page.parent.page_title}</a>
+	<a data-scroll="none" href="${env.crumb.parent}${tpl.toplink(data, env)}">${data.group.parent_title}</a>
 `
 tpl.toplink = (data, env) => {
-	if (data.page.parent.parent_id) {
-		return '/' + data.page.parent.page_nick + links.setm(data)
+	if (data.group.parent_id) {
+		return '/' + data.group.parent_nick + links.setm(data)
 	} else {
 		return ''
 	}

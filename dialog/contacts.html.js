@@ -19,15 +19,14 @@ cont.CALLBACK = (data, env) => `
 				<label for="contacts_phone">Телефон</label>
 			</div>
 			<p align="right">
-				<button type="submit">Жду звонка</button>
+				<button type="submit">Жду звонка!</button>
 			</p>
 		</form>
 		<script>
 			(async form => {
 				import("/-form/Autosave.js").then(r => r.default.init(form))
-				
-				const Dialog = await import("/-dialog/Dialog.js").then(r => r.default)
-				if (Dialog.parents.length) {
+			
+				if (form.closest('dialog')) {
 					const goalButton = () => {
 						const goal = 'button'
 						const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false

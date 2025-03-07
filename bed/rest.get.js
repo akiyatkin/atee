@@ -1,109 +1,98 @@
-import Bed from "/-bed/Bed.js"
-import config from "/-config"
+import Bed from "/-bed/api/Bed.js"
 
 import Rest from '/-rest'
 const rest = new Rest()
 export default rest
 
 
-import rest_db from '/-db/rest.db.js'
-rest.extra(rest_db)
 
+import rest_search from "/-dialog/search/rest.search.js" //аргументы hash, search 
+rest.extra(rest_search)
 import rest_bed from '/-bed/rest.bed.js'
 rest.extra(rest_bed)
 
 
-rest.addResponse('get-search-groups', async (view) => {
-	
+rest.addResponse('get-prop-value-search', ['admin'], async view => {
 	const db = await view.get('db')
-
-	const conf = await config('bed')
-
-	view.data.root_title = conf.root_title
-	const page = view.data.page = await view.get('page#required')
+	const hash = await view.get('hash')
+	const prop = await view.get('prop#required')
+	const prop_id = prop.prop_id
 	
-
-	const search = view.data.search = await view.get('search')
-	const hashs = await view.get('hashs')
-	const md = view.data.md = await view.get('md')
-	const partner = await view.get('partner')
-
-	
-	
-
-
-	const {where, from, sort, bind} = await Bed.getmdwhere(db, md, md.page.mpage, hashs, partner)
-	
-	page.count = await db.col(`
-		SELECT count(distinct pos.value_id)
-		FROM ${from.join(', ')}
-		WHERE ${where.join(' and ')}
-		ORDER BY ${sort.join(', ')}
-	`, bind)
-
-	for (const child of md.childs) {
-		const {where, from, sort, bind} = await Bed.getmdwhere(db, md, child.mpage, hashs, partner)
-		child.mute = !await db.col(`
-			SELECT pos.value_id
-			FROM ${from.join(', ')}
-			WHERE ${where.join(' and ')}
-			LIMIT 1
-		`, bind)
+	const group = await view.get('group#required')
+	let md
+	if (group.parent_id) {
+		const parent = await Bed.getGroupById(db, group.parent_id)
+		md = await Bed.getmd(db, '', parent)
+	} else {
+		md = await Bed.getmd(db, '')
 	}
-
+	const {where, from, sort, bind} = Bed.getmdwhere(md, md.group?.mgroup || {})
 	
-	view.data.childs = md.childs
+	const list = await db.all(`
+		SELECT distinct va.value_title, va.value_nick, da.value_id
+		FROM ${from.join(', ')}, sources_data da
+			LEFT JOIN sources_values as va on (da.value_id = va.value_id)
+		WHERE ${where.join(' and ')}
+		and da.key_id = pos.key_id and da.prop_id = :prop_id
+		and va.value_nick like "%${hash.join('%" and va.value_nick like "%')}%"
+		ORDER BY RAND()
+		LIMIT 12
+	`, {...bind, prop_id})
+
+	view.ans.count = await db.col(`
+		SELECT count(distinct da.value_id)
+		FROM ${from.join(', ')}, sources_data da
+			LEFT JOIN sources_values as va on (da.value_id = va.value_id)
+		WHERE ${where.join(' and ')}
+		and da.key_id = pos.key_id and da.prop_id = :prop_id
+		and va.value_nick like "%${hash.join('%" and va.value_nick like "%')}%"
+	`, {...bind, prop_id})
+
+	view.ans.list = list.map(row => {
+		row['left'] = row.value_title
+		row['right'] = ''
+		return row
+	})	
 	
 	return view.ret()
 })
-rest.addResponse('get-search-list', async (view) => {	
+rest.addResponse('get-mark-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
+	const hash = await view.get('hash')
 	
-	const page = view.data.page = await view.get('page')
-	const search = view.data.search = await view.get('search')
-	const hashs = await view.get('hashs')
-	const md = view.data.md = await view.get('md')
-	const partner = await view.get('partner')
-	const p = await view.get('p')
-	const count = await view.get('count')
-	const conf = await config('bed')
-	view.data.m = md.m
-	view.data.limit = conf.limit
-	
-	const {from, where, sort, bind} = await Bed.getmdwhere(view, md, md.page.mpage, hashs, partner)
-
-	
-	
-	const countonpage = count || conf.limit
-	const start = (p - 1) * countonpage
-	
-	const moditem_ids = await db.all(`
-		SELECT pos.value_id, GROUP_CONCAT(pos.key_id separator ',') as key_ids 
-		FROM ${from.join(', ')}
-		WHERE ${where.join(' and ')}
-		GROUP BY pos.value_id 
-		ORDER BY ${sort.join(', ')}
-		LIMIT ${start}, ${countonpage}
-	`, bind)
-	
-	const total = await db.col(`
-		SELECT count(distinct pos.value_id)
-		FROM ${from.join(', ')}
-		WHERE ${where.join(' and ')}
-	`, bind)
-	
-	
-	const list = await Bed.getModelsByItems(db, moditem_ids, partner, bind)
-
 	
 
-	let last = total <= countonpage ? 1 : Math.ceil(total / countonpage)
-	const pagination = {
-		last: last,
-		page: last < p ? last + 1 : p
-	}
-	const res = { list, pagination, count:total, countonpage }
-	Object.assign(view.data, res)
-	if (!list.length) view.status = 404
+	const list = await db.all(`
+		SELECT prop_id, prop_title, prop_nick, type
+		FROM sources_props
+		WHERE type = "value" and prop_nick like "%${hash.join('%" and prop_nick like "%')}%"
+	`)
+
+	view.ans.list = list.map(row => {
+		row['left'] = row.prop_title
+		row['right'] = ''
+		return row
+	})	
+
+	view.ans.count = list.length
+	return view.ret()
+})
+rest.addResponse('get-filter-prop-search', ['admin'], async view => {
+	const db = await view.get('db')
+	const hash = await view.get('hash')
+	
+	const list = await db.all(`
+		SELECT prop_id, prop_title, prop_nick, type
+		FROM sources_props
+		WHERE type in ("value","number") and prop_nick like "%${hash.join('%" and prop_nick like "%')}%"
+	`)
+
+	view.ans.list = list.map(row => {
+		row['left'] = row.prop_title
+		row['right'] = ''
+		return row
+	})	
+
+	view.ans.count = list.length
 	return view.ret()
 })

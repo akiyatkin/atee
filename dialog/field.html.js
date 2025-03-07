@@ -405,7 +405,7 @@ field.prompt = ({
 		layer = false,
 		onlyfuture = false,
 		type = 'email', action, args = {}, 
-		go = false, reloaddiv = false, goid = false, reload = false
+		goreplace = false, go = false, reloaddiv = false, goid = false, reload = false
 	}) => {
 	if (!edit) return `<span class="${cls}">${value ?? ''}${unit}</span>`
 	return `
@@ -444,7 +444,8 @@ field.prompt = ({
 								const Client = await window.getClient()
 								const goid = "${goid ? goid : ''}"
 								if (ans.result && ${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
-								if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
+								if (ans.result && ${!!go} && ${!goreplace}) Client.pushState('${go}' + (goid ? ans[goid] : ''))
+								if (ans.result && ${!!go} && ${!!goreplace}) Client.replaceState('${go}' + (goid ? ans[goid] : ''))
 								if (ans.result && ${!!reload}) Client.reload()
 								return ans.result
 							}

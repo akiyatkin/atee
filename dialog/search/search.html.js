@@ -32,12 +32,15 @@ export const MENU = () => `
 export const TITLE = data => `
 	<i>${data.query}...</i>
 `
-export const TITLEBODY = data => data.ans.result ? `
-	${data.query ? pquery(data) : ''} ${data.ans.count || 0} ${words(data.ans.count || 0, 'запись','записи','записей')}
-` : data.ans.msg || 'Ошибка на сервере'
+export const TITLEBODY = data => {
+	if (data.ans.result && data.ans.list.length && data.ans.list.length == data.ans.count) return ''
+	return data.ans.result ? `
+		${data.query ? pquery(data) : 'найдено: '} ${data.ans.count || 0}
+	` : data.ans.msg || 'Ошибка на сервере'
+}
 const countmodels = (count) => ``
 
-const pquery = (data) => `<i>${data.query}</i>, найдено`
+const pquery = (data) => `<i>${data.query}</i>, найдено:`
 export const BODY = data => `
 	${data.ans.result ? BODYshow(data) : ''}
 `

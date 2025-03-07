@@ -12,17 +12,17 @@ Consequences.loaded = async (db, source_id) => { //Загружены данны
 
 	// await Consciousness.recalcRowSearchBySourceId(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
 
-	// await Consciousness.recalcEntitiesPropId(db, source)
+	// await Consciousness.recalcEntitiesPropIdBySource(db, source)
 	
 
-	// await Consciousness.recalcMulti(db, source)
+	// await Consciousness.recalcMultiBySource(db, source)
 	
-	// await Consciousness.recalcTexts(db, source)
+	// await Consciousness.recalcTextsBySource(db, source)
 
 
 	// await Consciousness.recalcKeyIndex(db)
 
-	// await Consciousness.recalcRowsKeyId(db, source)
+	// await Consciousness.recalcRowsKeyIdBySource(db, source)
 	
 	// //key_id, represent, winner
 	// await Consciousness.recalcRepresentSheetBySource(db, source)
@@ -79,11 +79,11 @@ Consequences.changed = async (db, entity_id) => { //Изменились дан�
 	// const sources = await Sources.getSources(db, entity_id)
 	
 	// for (const source of sources) {
-	// 	await Consciousness.recalcEntitiesPropId(db, source)
-	// 	await Consciousness.recalcMulti(db, source)
-	// 	await Consciousness.recalcTexts(db, source)
+	// 	await Consciousness.recalcEntitiesPropIdBySource(db, source)
+	// 	await Consciousness.recalcMultiBySource(db, source)
+	// 	await Consciousness.recalcTextsBySource(db, source)
 	// 	await Consciousness.recalcKeyIndex(db)
-	// 	await Consciousness.recalcRowsKeyId(db, source)
+	// 	await Consciousness.recalcRowsKeyIdBySource(db, source)
 
 	// 	//await Consciousness.recalcRepresentSheetBySource(db, source)
 	// 	//await Consciousness.recalcRepresentColBySource(db, source)
@@ -141,44 +141,83 @@ Consequences.represent = async (db) => { //Изменились данные м�
 }
 
 Consequences.all = async (db) => {
-	const sources = await Sources.getSources(db)
-	Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-	for (const source of sources) {
-		await Consciousness.recalcEntitiesPropId(db, source)
-		await Consciousness.recalcMulti(db, source)
-		await Consciousness.recalcTexts(db, source)
-		await Consciousness.recalcKeyIndex(db)
-		await Consciousness.recalcRowsKeyId(db, source)
-		
-		await Consciousness.recalcRepresentSheetBySource(db, source)
-		await Consciousness.recalcRepresentColBySource(db, source)
-		await Consciousness.recalcRepresentRowBySource(db, source)
-		await Consciousness.recalcRepresentCellBySource(db, source)
-		await Consciousness.recalcRepresentRowKeyBySource(db, source)
-		await Consciousness.recalcRepresentRowSummaryBySource(db, source)
-	}
+	//const sources = await Sources.getSources(db)
 	
-	const entities = await Sources.getEntities(db)
 	
-	for (const entity of entities) {
-		await Consciousness.insertItemsByEntity(db, entity) //insert items
-	}
+	console.time('recalc')
+	await Consciousness.recalcEntitiesPropId(db)
+	console.timeLog('recalc', 'recalcEntitiesPropId')
+
+	
+	await Consciousness.recalcMulti(db)
+	console.timeLog('recalc', 'recalcMulti')
+
+	
+	await Consciousness.recalcTexts(db)
+	console.timeLog('recalc', 'recalcTexts')
+
+	
+	await Consciousness.recalcKeyIndex(db)
+	console.timeLog('recalc', 'recalcKeyIndex')
+
+	
+	await Consciousness.recalcRowsKeyIdRepeatIndex(db)
+	console.timeLog('recalc', 'recalcRowsKeyIdRepeatIndex')
+
+	
+	await Consciousness.recalcRepresentSheet(db)
+	console.timeLog('recalc', 'recalcRepresentSheet')
+	
+	
+	await Consciousness.recalcRepresentCol(db)
+	console.timeLog('recalc', 'recalcRepresentCol')
+
+	
+	await Consciousness.recalcRepresentRow(db)
+	console.timeLog('recalc', 'recalcRepresentRow')
+
+	
+	await Consciousness.recalcRepresentCell(db)
+	console.timeLog('recalc', 'recalcRepresentCell')
+
+	
+	await Consciousness.recalcRepresentRowKey(db)
+	console.timeLog('recalc', 'recalcRepresentRowKey')
+
+	
+	await Consciousness.recalcRepresentRowSummary(db)
+	console.timeLog('recalc', 'recalcRepresentRowSummary')
+
+
+	await Consciousness.insertItems(db) //insert items
+	console.timeLog('recalc', 'insertItems')
+
+
 	await Consciousness.recalcRepresentValueByEntity(db)
-	for (const entity of entities) {
-		
-		await Consciousness.recalcRepresentItemSummaryByEntity(db, entity)
-	}
+	console.timeLog('recalc', 'recalcRepresentValueByEntity')
+
+
+	await Consciousness.recalcRepresentItemSummary(db)
+	console.timeLog('recalc', 'recalcRepresentItemSummary')
+
 	await Consciousness.recalcRepresent(db)
-	await Consciousness.recalcWinner(db)
+	console.timeLog('recalc', 'recalcRepresent')
+
+	
 	await Consciousness.recalcMaster(db)
+	console.timeLog('recalc', 'recalcMaster')
+
 	
+	await Consciousness.recalcWinner(db)
+	console.timeLog('recalc', 'recalcWinner')
+
 	await Consciousness.recalcAppear(db)
-	
-	for (const entity of entities) {
-		for (const source of sources) {
-			await Consciousness.recalcSearchByEntityIdAndSourceId(db, entity.entity_id, source.source_id)
-		}
-	}
+	console.timeLog('recalc', 'recalcAppear')
+
+	console.timeEnd('recalc')
+
+	Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
+	Consciousness.recalcItemSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
 }
 
 // Constellation.recalcRepresentBySource = async (db, source) => { //Уже есть sheets, cols, cells, rows

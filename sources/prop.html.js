@@ -8,7 +8,7 @@ export const ROOT = (data, env, entity = data.entity) => err(data, env, ["PROP"]
 	<div id="PROP"></div>
 `
 export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data.result ? '' : `
-	<div style="opacity:0.5; float:right">Свойство у <a href="entity/${entity.entity_id}">${entity.entity_title}</a></div>
+	<div style="opacity:0.5; float:right"><a href="props">Свойства</a></div>
 	<h1>${prop.name}&nbsp;<sup style="color:var(--primary)">${prop.unit}</sup></h1>
 	<p>
 		
@@ -68,6 +68,30 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 				${prop.prop_nick}
 			</td>
 		</tr>
+		<tr>
+			<td>
+				Синонимы
+			</td>
+			<td>
+				<div style="display: grid; gap: 0.25em; margin-bottom: 0.25em">
+					${data.synonyms.map(syn => showSynonym(data, env, syn)).join('')}
+				</div>
+				${field.prompt({
+					edit: true,
+					cls: 'a',
+					value: 'Добавить', 
+					name: 'col_title',
+					input: '',
+					ok: 'Добавить', 
+					label: 'Укажите имя колонки', 
+					descr: 'Если не будет одноимённого свойства, свойство для колонки попробует определиться по синонимам.',
+					type: 'text', 
+					action: '/-sources/set-prop-synonym-create', 
+					args: {prop_id: prop.prop_id},
+					reloaddiv: env.layer.div
+				})}
+			</td>
+		</tr>
 	</table>
 	
 	${showComment(data, env, prop)}
@@ -123,6 +147,18 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 			args: {prop_id: prop.prop_id}
 		})}
 	</div>
+`
+const showSynonym = (data, env, syn) => `
+	<div>${syn.col_title}
+			${field.button({
+				cls: 'transparent mute',
+				label: svg.cross(), 
+				confirm: 'Удалить синоним, зависимые назначения свойств сбросятся?',
+				action: '/-sources/set-prop-synonym-delete',
+				reloaddiv: env.layer.div,
+				args: {col_nick: syn.col_nick, prop_id: data.prop.prop_id},
+				reloaddiv: env.layer.div
+			})}</div>
 `
 const showValueTr = (data, env, row) => `
 	<tr style="${row.pruning ? 'background: hsl(0, 100%, 97%)' : ''}">

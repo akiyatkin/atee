@@ -1,8 +1,148 @@
 {
+	"pub":["root_crumb"],
 	"root_title":"Каталог",
-	"root_crumb":"bed",
+	"root_crumb":"/bed",
+	"subgroup_dependence": true,
+	"props":{
+		"БрендАрт":{
+			"descr":"Идентификатор товарной позиции, которую можно продать",
+			"type":"value",
+			"multi":false,
+			"column":true,
+			"filter":false,
+			"card":"just"
+		},
+		"Бренд":{
+			"descr":"",
+			"type":"value",
+			"multi":false,
+			"column":true,
+			"filter":"row",
+			"card":"brand"
+		},
+		"Тип товара":{
+			"descr":"Основной критерий формирования групп, каждый тип товара в ручную должен быть соотнесён с какой-то группой",
+			"type":"value",
+			"multi":true,
+			"column":true,
+			"filter":false,
+			"card":"model"
+		},
+		"Модель":{
+			"descr":"Одна или несколько позиций у бренда",
+			"type":"value",
+			"multi":false,
+			"column":true,
+			"filter":false,
+			"card":"model"
+		},
+		"Арт": {
+			"descr":"Ключ (Модель Позиция) без Бренда",
+			"type":"value",
+			"column":false,
+			"multi": false,
+			"filter":"row",
+			"card":"just"
+		},
+		"Позиция": {
+			"descr":"Слово для выбора позиции на странице модели",
+			"type":"value",
+			"column":true,
+			"multi": false,
+			"filter":"row",
+			"card":"just"
+		},
+		"Старая цена": {
+			"descr":"",
+			"type":"number",
+			"column":true,
+			"multi":false,
+			"filter":"slider",
+			"card":false
+		},
+		"videos":{
+			"descr":"Автоматическое, дополняемое свойство. Начинается с http или с /",
+			"type":"text",
+			"multi":false,
+			"column":true,
+			"filter":false,
+			"card":"justwithtitle"
+		},
+		"files":{
+			"descr":"Автоматическое, дополняемое свойство. Начинается с http или с /",
+			"type":"text",
+			"multi":false,
+			"column":true,
+			"filter":false,
+			"card":"justwithtitle"
+		},
+		"texts":{
+			"descr":"Автоматическое, дополняемое свойство. Начинается с http или с /",
+			"type":"text",
+			"multi":false,
+			"column":true,
+			"filter":false,
+			"card":"justwithtitle"
+		},
+		"images":{
+			"descr":"Автоматическое, дополняемое свойство. Начинается с http или с /",
+			"type":"text",
+			"multi":false,
+			"column":true,
+			"filter":false,
+			"card":"justwithtitle"
+		},
+		"Наименование":{
+			"descr":"",
+			"type":"text",
+			"multi":false,
+			"column":true,
+			"filter":false,
+			"card":"modelhidden"
+		},
+		"Наличие":{
+			"descr":"Слово, которое покажется на плашке. Акция, На заказ, В наличии, Много, Несколько, Распродажа, Новинка",
+			"type":"value",
+			"multi":false,
+			"column":true,
+			"filter":"select",
+			"card":"justwithtitle"
+		},
+		"Цена":{
+			"descr":"",
+			"type":"number",
+			"multi":false,
+			"column":true,
+			"filter":"slider",
+			"card":false
+		},
+		"Группа":{
+			"descr":"",
+			"type":"value",
+			"multi":false,
+			"column":true,
+			"filter":"row",
+			"card":"just"
+		},
+		"Скрыть фильтры":{
+			"descr":"",
+			"type":"value",
+			"multi":false,
+			"column":true,
+			"filter":false,
+			"card":false
+		},
+		"Описание":{
+			"descr":"",
+			"type":"text",
+			"multi":false,
+			"column":true,
+			"filter":false,
+			"card":"just"
+		}
+	},
 	"limit":10,
-	"pos_entity_title":"Позиция",
+	"pos_entity_title":"БрендАрт",
 	"mod_entity_title":"Модель",
 	"partners":{
 		"1998":{

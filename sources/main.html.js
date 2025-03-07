@@ -23,6 +23,7 @@ export const TABLE = (data, env) => !data.result ? '' : `
 		<thead>
 			<tr>
 				<td>Источник</td>
+				<td>Тип</td>
 				<td>Статус</td>
 				<td>Проверен</td>
 				<td>Актуальность</td>
@@ -90,13 +91,16 @@ const showScriptReload = (data, env) => `
 		setTimeout(async () => {
 			const Client = await window.getClient()
 			Client.reloaddiv('${env.layer.div}')
-		}, 1000)
+		}, 4000)
 	</script>
 `
 const showSourceTr = (data, env, source) => `
 	<tr data-id="${source.source_id}" style="white-space: nowrap;" class="item status_${source.class}">
 		<td>
 			<a href="sheet?source_id=${source.source_id}">${source.source_title}</a>
+		</td>
+		<td>
+			${source.master ? 'Мастер' : 'Прайс'}
 		</td>
 		<td>
 			${source.status} <b>${ago.short(source.date_start)}</b>

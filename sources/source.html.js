@@ -52,6 +52,22 @@ const defcustom = (value) => {
 }
 const showDatas = (data, env, source) => `
 	${source.date_load ? '' : showNoLoad(data, env, source)}
+	<div style="margin:0.5em 0">
+		Ключевое свойство по умолчанию: ${field.search({
+			cls: 'a',
+			heading: 'Ключ по умолчанию',
+			search:'/-sources/get-source-entity-search',
+			value: source.entity_id ? showSourceEntity(data, env, source) : 'не определено', 
+			label: 'Название сущности', 
+			descr: 'Применяется к листам, для которых ключевое свойство явно не указано.',
+			type: 'text',
+			name: 'entity_id',
+			find: 'entity_id',
+			action: '/-sources/set-source-entity',
+			args: {source_id: source.source_id},
+			reloaddiv: ["TABLE","TOP"]
+		})}
+	</div>
 	<table>
 		<thead>
 			<tr>
@@ -264,7 +280,7 @@ const showStat = (data, env, source) => `
 			<td>date_mtime</td>
 			<td title="Когда стоит загрузить: ${date.dmyhi(source.date_mtime)} (Изменения)"><nobr>${date.ai(source.date_mtime)}</nobr></td>
 			<td>
-				${source.msg_check || 'Нет сообщений'}
+				${source.msg_check ? '<i>' + source.msg_check + '</i>' : 'Нет сообщения'}
 			</td>
 			
 		</tr>
@@ -279,7 +295,7 @@ const showStat = (data, env, source) => `
 			<td>date_content</td>
 			<td title="Дата полученных данных: ${date.dmyhi(source.date_content)} (Актуальность) "><nobr>${date.ai(source.date_content)}</nobr></td>
 			<td>
-				 ${source.msg_load || 'Нет сообщений'}
+				 ${source.msg_load ? '<i>' + source.msg_load + '</i>' : 'Нет сообщения'}
 			</td>
 			
 		</tr>
@@ -374,22 +390,7 @@ const showControll = (data, env, source) => `
 				})(document.currentScript.previousElementSibling)
 			</script>
 		</div>
-		<div>
-			Ключевое свойство по умолчанию: ${field.search({
-				cls: 'a',
-				heading: 'Ключ по умолчанию',
-				search:'/-sources/get-source-entity-search',
-				value: source.entity_id ? showSourceEntity(data, env, source) : 'не определено', 
-				label: 'Название сущности', 
-				descr: 'Применяется к листам, для которых ключевое свойство явно не указано.',
-				type: 'text',
-				name: 'entity_id',
-				find: 'entity_id',
-				action: '/-sources/set-source-entity',
-				args: {source_id: source.source_id},
-				reloaddiv: ["TABLE","TOP"]
-			})}
-		</div>
+		
 		<div>
 			Создание новых сущностей:
 			${field.setpop({
@@ -401,7 +402,7 @@ const showControll = (data, env, source) => `
 				args: {source_id: source.source_id, sourceprop: 'master'}
 			})}
 		</div>
-		<div>
+		<!-- <div>
 			Зависимость от данных из других источников: 
 			${field.setpop({
 				heading:'Зависимость источника',
@@ -412,7 +413,7 @@ const showControll = (data, env, source) => `
 				values: {"":"независимый", "1":"зависимый"},
 				args: {source_id: source.source_id, sourceprop: 'dependent'}
 			})}
-		</div>
+		</div> -->
 		<div>
 			<button class="a">Экспорт пользовательских настроек</button>
 			<script>

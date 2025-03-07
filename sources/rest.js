@@ -96,6 +96,12 @@ rest.addResponse('prop', ['admin'], async view => {
 	const prop_id = await view.get('prop_id#required')
 	const prop = view.data.prop = await Sources.getProp(db, prop_id)
 	const entity = view.data.entity = await Sources.getEntity(db, prop_id)
+	
+	view.data.synonyms = await db.all(`
+		SELECT col_title, col_nick
+		FROM sources_synonyms
+		WHERE prop_id = :prop_id
+	`, {prop_id})
 
 	const list = await db.all(`
 		SELECT co.prop_id, ce.text, count(ce.text) as count, 
@@ -819,13 +825,15 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 			ce.pruning + 0 as pruning,
 			ce.represent_cell + 0 as represent_cell,
 			ce.represent + 0 as represent,
-			ce.winner + 0 as winner,
+			nvl(wi.entity_id, 0) as winner,
 			it.master + 0 as master
 		FROM sources_cells ce
 			LEFT JOIN sources_rows ro on (ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index)
 			LEFT JOIN sources_sheets sh on (sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index)
 			LEFT JOIN sources_items it on (it.entity_id = sh.entity_id and ro.key_id = it.key_id)
 			LEFT JOIN sources_values va on (va.value_id = ro.key_id)
+			LEFT JOIN sources_winners wi on (wi.entity_id = sh.entity_id and wi.key_id = ro.key_id and wi.prop_id = wi.entity_id)
+			-- LEFT JOIN sources_winners wi on (wi.source_id = ce.source_id and wi.sheet_index = ce.sheet_index and wi.row_index = ce.row_index and wi.col_index = ce.col_index and wi.prop_id = wi.entity_id)
 			LEFT JOIN sources_appears ap on (ap.key_nick = va.value_nick and ap.source_id = ce.source_id and ap.entity_id = sh.entity_id)
 		WHERE ce.source_id = :source_id and ce.sheet_index = :sheet_index
 		and (${where_search.join(' or ')})
@@ -833,6 +841,31 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 		
 		ORDER BY ce.row_index, ce.col_index
 	`, {source_id, sheet_index, date_appear}) 
+	// const cells = []
+	// console.log({source_id, sheet_index, date_appear}, `
+	// 	SELECT 
+	// 		ce.row_index, 
+	// 		ce.col_index, 
+	// 		ce.multi_index,
+	// 		ce.text,
+	// 		ce.pruning + 0 as pruning,
+	// 		ce.represent_cell + 0 as represent_cell,
+	// 		ce.represent + 0 as represent,
+	// 		nvl(wi.entity_id, 0) as winner,
+	// 		it.master + 0 as master
+	// 	FROM sources_cells ce
+	// 		LEFT JOIN sources_rows ro on (ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index)
+	// 		LEFT JOIN sources_sheets sh on (sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index)
+	// 		LEFT JOIN sources_items it on (it.entity_id = sh.entity_id and ro.key_id = it.key_id)
+	// 		LEFT JOIN sources_values va on (va.value_id = ro.key_id)
+	// 		LEFT JOIN sources_winners wi on (wi.source_id = ce.source_id and wi.sheet_index = ce.sheet_index and wi.row_index = ce.row_index and wi.col_index = ce.col_index and wi.prop_id = wi.entity_id)
+	// 		LEFT JOIN sources_appears ap on (ap.key_nick = va.value_nick and ap.source_id = ce.source_id and ap.entity_id = sh.entity_id)
+	// 	WHERE ce.source_id = :source_id and ce.sheet_index = :sheet_index
+	// 	and (${where_search.join(' or ')})
+	// 	and (${where_and.join(' and ')})
+		
+	// 	ORDER BY ce.row_index, ce.col_index
+	// `)
 
 	const texts = view.data.texts = []
 	const winners = view.data.winners = []

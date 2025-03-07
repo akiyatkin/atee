@@ -1,5 +1,5 @@
 import nicked from '/-nicked'
-import Bed from "/-bed/Bed.js"
+import Bed from "/-bed/api/Bed.js"
 import User from "/-user/User.js"
 import config from "/-config"
 
@@ -15,18 +15,51 @@ rest.extra(rest_funcs)
 import rest_db from '/-db/rest.db.js'
 rest.extra(rest_db)
 
+import rest_admin from '/-controller/rest.admin.js'
+rest.extra(rest_admin)
+
+rest.addArgument('next_id', ['mint'])
+rest.addArgument('id', ['mint'])
+rest.addVariable('id#required', ['id', 'required'])
+
+
 rest.addArgument('p', ['int'], (view, n) => n || 1)
 rest.addArgument('count', ['int'])
-rest.addArgument('page_nick', ['nicked'])
-rest.addVariable('page', ['page_nick'], async (view, page_nick) => {
-	if (page_nick == null) return null
+
+rest.addArgument('group_nick', ['nicked'])
+rest.addVariable('group', ['group_nick','null'], async (view, group_nick) => {
+	if (group_nick == null) return null
 	const db = await view.get('db')
-	const page = await Bed.getPageByNick(db, page_nick)
-	if (!page) return view.err('Страница не найдена', 404)
-	page.parent = page.parent_id ? await Bed.getPageById(db, page.parent_id) : false
-	return page
+	const group = await Bed.getGroupByNick(db, group_nick)
+	if (!group) return view.err('Группа не найдена', 404)
+	return group
 })
-rest.addVariable('page#required', ['page', 'required'])
+rest.addVariable('group_nick#required', ['group_nick', 'required'])
+rest.addVariable('group#required', ['group', 'required'])
+
+rest.addArgument('next_nick', ['nicked'])
+rest.addArgument('prop_nick', ['nicked'])
+rest.addVariable('prop', ['prop_nick','null'], async (view, prop_nick) => {
+	if (prop_nick == null) return null
+	const db = await view.get('db')
+	const prop = await Bed.getPropByNick(db, prop_nick)
+	if (!prop) return view.err('Свойство не найдено', 404)
+	return prop
+})
+rest.addVariable('prop_nick#required', ['prop_nick', 'required'])
+rest.addVariable('prop#required', ['prop', 'required'])
+
+
+rest.addArgument('value_nick', ['nicked'])
+rest.addVariable('value', ['value_nick','null'], async (view, value_nick) => {
+	if (value_nick == null) return null
+	const db = await view.get('db')
+	const value = await Bed.getValueByNick(db, value_nick)
+	if (!value) return view.err('Значение не найдено', 404)
+	return value
+})
+rest.addVariable('value_nick#required', ['value_nick', 'required'])
+rest.addVariable('value#required', ['value', 'required'])
 
 
 
@@ -51,37 +84,9 @@ rest.addArgument('m', (view, m) => {
 })
 
 rest.addVariable('md', async (view) => {
-	const conf = await config('bed')
 	const db = await view.get('db')
 	const origm = await view.get('m')
-	const page = await view.get('page#required')
-
-	const mgetorig = Bed.makemd(origm)
-	page.mpage = await Bed.getMpage(db, page.page_id)
-	
-
-	const childs = await Bed.getChilds(db, page.group_id)
-	const mdchilds = []
-	for (const child of childs) {
-
-		child.mpage = await Bed.getMpage(db, child.page_id)
-		mdchilds.push(child.mpage)
-	}
-	const {props, values} = await Bed.getmdids(db, [mgetorig, page.mpage, ...mdchilds])
-
-	page.mpage = Bed.mdfilter(page.mpage, props, values)
-
-	for (const child of childs) {
-		child.mpage = Bed.mdfilter(child.mpage, props, values)
-	}
-
-	const mget = Bed.mdfilter(mgetorig, props, values)
-	
-	const pos_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.pos_entity_title)})
-	const mod_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.mod_entity_title)})
-	
-	const m = Bed.makemark(mget).join(':')
-	return {m, page, mget, childs, props, values, pos_entity_id, mod_entity_id}
-
-	
+	const group = await view.get('group#required')
+	const md = await Bed.getmd(db, origm, group)
+	return md
 })

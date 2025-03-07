@@ -8,10 +8,21 @@ export const ROOT = (data, env) => err(data, env) || `
 	<p>
 		Папка с источниками <b>${data.dir}</b>
 	</p>
-	<div style="display: grid; gap: 0.25em; margin: 2em 0">
-		<a href="/@atee/controller">Авторизация</a>
-	</div>
 	<div style="display: grid; gap: 1em; margin: 2em 0">
+		<div>
+			<p>
+				${field.button({
+					confirm: 'Пересчитать?',
+					label:'Пересчитать связи',
+					action:'/-sources/set-recalc',
+					reloaddiv: env.layer.div
+				})}
+			</p>
+			<p>
+				Настройки типов, разделение по запятым, связи свойств с колонками, видимость &mdash; точечно пересчитываются при разных действиях. 
+				Можно пересчитать сразу всё, на случай если после какого-то действия остался непересчитанный артефакт.
+			</p>
+		</div>
 		<div>
 			<p>
 				Кэш сохраняется с <b>${date.dmyhi(data.date_access)}</b>

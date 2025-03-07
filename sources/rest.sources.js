@@ -55,7 +55,7 @@ rest.addArgument('next_id', ['mint'])
 rest.addArgument('old_id', ['mint'])
 rest.addVariable('old_id#required', ['old_id', 'required'])
 rest.addArgument('sourceprop', (view, prop) => {
-	if (~['dependent','renovate','master'].indexOf(prop)) return prop
+	if (~['renovate','master'].indexOf(prop)) return prop
 	return null
 })
 rest.addArgument('custom', (view, prop) => {
@@ -113,6 +113,9 @@ rest.addVariable('sheet_title#required', ['sheet_title', 'required'])
 
 rest.addArgument('col_title',['null'])
 rest.addVariable('col_title#required', ['col_title', 'required'])
+
+rest.addArgument('col_nick', ['nicked','null'])
+rest.addVariable('col_nick#required', ['col_nick', 'required'])
 
 rest.addArgument('comment', ['string'])
 rest.addArgument('source_id', ['sint'], async (view, source_id) => {

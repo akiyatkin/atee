@@ -88,7 +88,6 @@ rest.addResponse('get-source-export', ['admin'], async view => {
 			so.source_title, 
 			pr.prop_title,
 			so.ordain,
-			so.dependent + 0 as dependent,
 			so.master + 0 as master,
 			so.renovate + 0 as renovate,
 			so.comment,
@@ -104,7 +103,6 @@ rest.addResponse('get-source-export', ['admin'], async view => {
 	
 	if (source.represent_source == 1) delete source.represent_source
 	if (source.prop_title == null) delete source.prop_title
-	if (source.dependent == 0) delete source.dependent
 	if (source.master == 1) delete source.master
 	if (source.renovate == 1) delete source.renovate
 	if (source.represent_sheets == 1) delete source.represent_sheets

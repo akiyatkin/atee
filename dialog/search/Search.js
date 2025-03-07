@@ -113,7 +113,7 @@ export const Search = {
 		if (!ans.list?.length) {
 			title.innerHTML = tplobj.TITLEBODY({ ...need, ans })
 		} else {
-			title.innerHTML = ''
+			title.innerHTML = tplobj.TITLEBODY({ ...need, ans })
 		}
 
 		body.innerHTML = tplobj.BODY({ ...need, ans })

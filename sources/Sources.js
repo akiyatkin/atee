@@ -64,7 +64,7 @@ Sources.load = async (db, source, visitor) => {
 	`, source)
 
 	const res = {}
-	source.error = await Sources.execRestFunc(source.file, 'get-load', visitor, res)
+	source.error = await Sources.execRestFunc(source.file, 'get-load', visitor, res, {source_id: source.source_id})
 	source.msg_load = res.data?.msg || ''
 	source.duration_rest = Date.now() - timer_rest
 
@@ -177,6 +177,9 @@ Sources.cleanSheets = (sheets) => {
 	}
 	return sheets
 }
+Sources.VALUE_LENGTH = 127
+Sources.PROP_LENGTH = 63
+Sources.COL_LENGTH = 63
 Sources.insertSheets = async (db, source, sheets) => {
 	const {source_id} = source
 	
@@ -197,9 +200,9 @@ Sources.insertSheets = async (db, source, sheets) => {
 		
 		for (const col_index in head) {
 
-			const col_title = head[col_index].slice(-63).trim()
+			const col_title = head[col_index].slice(-Sources.COL_LENGTH).trim()
 			let col_nick = nicked(col_title)
-			if (col_nick.length > 63) col_nick = nicked(col_nick.slice(-63))
+			if (col_nick.length > Sources.COL_LENGTH) col_nick = nicked(col_nick.slice(-Sources.COL_LENGTH))
 
 			await db.exec(`
 				INSERT INTO sources_cols (source_id, sheet_index, col_index, col_nick, col_title)
@@ -229,7 +232,7 @@ Sources.check = async (db, source, visitor) => {
 	if (source.date_start) return
 	const res = {}
 	const timer = Date.now()
-	source.error = await Sources.execRestFunc(source.file, 'get-check', visitor, res)
+	source.error = await Sources.execRestFunc(source.file, 'get-check', visitor, res, {source_id: source.source_id})
 	//date_content может быть больше чем date_mtime из обработки
 	source.date_mtime = Math.round(Math.max(source.date_content || 0, Number(res.data?.date_mtime || 0) || 0, res.modified || 0) / 1000)
 	source.msg_check = res.data?.msg || ''
@@ -269,25 +272,7 @@ Sources.reorderProps = async (db) => {
 	}
 	return Promise.all(promises)
 }
-Sources.reorderEntities = async (db) => {
-	const list = await db.colAll(`
-		SELECT entity_id
-		FROM sources_entities
-		ORDER BY ordain
-	`)
-	let ordain = 0
-	const promises = []
-	for (const entity_id of list) {
-		ordain = ordain + 2
-		const r = db.exec(`
-			UPDATE sources_entities
-			SET ordain = :ordain
-			WHERE entity_id = :entity_id
-		`, {ordain, entity_id})
-		promises.push(r)
-	}
-	return Promise.all(promises)
-}
+
 Sources.reorderSources = async (db) => {
 	const list = await db.colAll(`
 		SELECT source_id
@@ -351,7 +336,6 @@ const SELECT_SOURCE = `
 	so.duration_check,
 	so.duration_insert,
 	so.master + 0 as master,
-	so.dependent + 0 as dependent,
 	so.comment,
 	so.error,
 	so.msg_check,
@@ -372,6 +356,18 @@ const SELECT_SOURCE = `
 	pr.represent_prop + 0 as represent_prop,
 	pr.prop_title
 `
+Sources.getPropByTitle = async (db, prop_title) => {
+	const prop_nick = nicked(prop_title)
+	const prop = await db.fetch(`
+		SELECT 
+			pr.prop_title as entity_title,
+			pr.prop_plural as entity_plural,
+			${SELECT_PROP}
+		FROM sources_props pr
+		WHERE pr.prop_nick = :prop_nick
+	`, {prop_nick})
+	return prop
+}
 Sources.getProp = async (db, prop_id) => {
 	const prop = await db.fetch(`
 		SELECT 
@@ -578,7 +574,7 @@ Sources.getCellByIndex = async (db, source_id, sheet_index, row_index, col_index
 			ce.represent_cell + 0 as represent_cell,
 			ce.represent + 0 as represent,
 			ce.pruning + 0 as pruning,
-			ce.winner + 0 as winner,
+			nvl(wi.entity_id, 0) as winner,
 			ce.value_id,
 			ce.text,
 			ce.date,
@@ -600,6 +596,7 @@ Sources.getCellByIndex = async (db, source_id, sheet_index, row_index, col_index
 			LEFT JOIN sources_values vak on (vak.value_id = ro.key_id)
 			LEFT JOIN sources_sheets sh on (sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index)
 			LEFT JOIN sources_items it on (it.entity_id = sh.entity_id and ro.key_id = it.key_id)
+			LEFT JOIN sources_winners wi on (wi.prop_id = co.prop_id and wi.entity_id = sh.entity_id and wi.key_id = ro.key_id and wi.prop_id = wi.entity_id)
 			LEFT JOIN sources_custom_cells cce on (
 				cce.source_id = ce.source_id and cce.sheet_title = sh.sheet_title 
 				and cce.col_title = co.col_title
@@ -815,13 +812,13 @@ Sources.getSources = async (db, entity_id) => {
 			FROM sources_sheets 
 			WHERE entity_id = :entity_id
 		)
-		ORDER BY so.ordain
+		ORDER BY so.master DESC, so.ordain
 	`, {entity_id}) : await db.all(`
 		SELECT 
 		${SELECT_SOURCE}
 		FROM sources_sources so
 			LEFT JOIN sources_props pr on pr.prop_id = so.entity_id
-		ORDER BY so.ordain
+		ORDER BY so.master DESC, so.ordain
 	`)
 	for (const source of list) {
 		Sources.calcSource(source)
@@ -867,12 +864,16 @@ Sources.getNameUnit = (title) => {
 }
 Sources.createProp = async (db, prop_title, type = 'text') => {
 	//const ordain = await db.col('SELECT max(ordain) FROM sources_props') + 1
-	const prop_nick = nicked(prop_title)
+
+	prop_title = prop_title.slice(-Sources.PROP_LENGTH).trim()
+	let prop_nick = nicked(prop_title)
+	if (prop_nick.length > Sources.PROP_LENGTH) prop_nick = nicked(prop_nick.slice(-Sources.PROP_LENGTH))
+
 	const ordain = 0
 	const {name, unit} = Sources.getNameUnit(prop_title)
 	const prop_id = await db.insertId(`
 		INSERT INTO sources_props (prop_title, prop_nick, type, ordain, name, unit, prop_2, prop_5, prop_plural)
-   		VALUES (:prop_title, :prop_nick, type, :ordain, :name, :unit, :name, :name, :name)
+   		VALUES (:prop_title, :prop_nick, :type, :ordain, :name, :unit, :name, :name, :name)
    		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title), prop_id = LAST_INSERT_ID(prop_id)
 	`, {prop_title, prop_nick, ordain, name, unit, type})
 	await Sources.reorderProps(db)
