@@ -5,9 +5,9 @@
 		"source:SOURCE":"none",
 		"main:TABLE":"none",
 		"sheet:SHEETS":"none",
-		"*sheet:TABLE":"none",
 		"sheet:SOURCE":"none",
 		"sheet:DATES":"none",
+		"recalc:RTABLE":"none",
 		"positions:TABLE":"none",
 		"position:TABLE":"none",
 		"disappear:TABLE":"none",
@@ -17,13 +17,42 @@
 		"source:TOP":"none",
 		"entity:ENTITY":"none"
 	},
+	"global":{
+		"source:SOURCE":["recalc"],
+		"main:TABLE":["recalc"],
+		"sheet:TABLE":["recalc"],
+		"sheet:SHEETS":["recalc"],
+		"sheet:SOURCE":["recalc"],
+		"sheet:DATES":["recalc"],
+		"recalc:RTABLE":["recalc"],
+		"positions:TABLE":["recalc"],
+		"position:TABLE":["recalc"],
+		"disappear:TABLE":["recalc"],
+		"entity:PROPS":["recalc"],
+		"source:TABLE":["recalc"],
+		"props:TABLE":["recalc"],
+		"source:TOP":["recalc"],
+		"entity:ENTITY":["recalc"],
+		"source:TABLE":["recalc"],
+		"recalc:RTABLE":["recalc"],
+		"source:TABLE":["recalc"],
+		"props:TABLE":["recalc"],
+		"positions:TABLE":["recalc"],
+		"position:TABLE":["recalc"],
+		"disappear:TABLE":["recalc"],
+		"main:TABLE":["recalc"]
+	},
 	"frame":{
 		
 	},
 	"head":{
 		"title":"Источники данных"
 	},
+	"parsedtpl":{
+		"recalc:RTABLE":"${env.timings.view_time}"
+	},
 	"json":{
+		"recalc:RTABLE":"/-sources/get-recalc",
 		"main:ROOT":"/-sources/main",
 		"main:TABLE":"/-sources/main",
 		"entities:ROOT":"/-sources/entities",
@@ -57,6 +86,7 @@
 		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
 	},
 	"tpl":{
+		"recalc":"/-sources/recalc.html.js",
 		"frame":"/-controller/frame.html.js",
 		"controller":"/-controller/layout.html.js",
 		"index":"/-controller/index-board.html.js",
@@ -80,6 +110,12 @@
 		"index:ROOT": {
 			"MAIN":"main:ROOT",
 			"ASIDE":"aside:ROOT"
+		},
+		"aside:ROOT":{
+			"RECALC":"recalc:ROOT"
+		},
+		"recalc:ROOT":{
+			"RTABLE":"recalc:RTABLE"
 		},
 		"main:ROOT": {
 			"TABLE": "main:TABLE"

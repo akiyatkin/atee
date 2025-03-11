@@ -18,6 +18,21 @@ rest.extra(rest_admin)
 import rest_search from "/-dialog/search/rest.search.js" //аргументы hash, search 
 rest.extra(rest_search)
 
+rest.addResponse('get-recalc', ['admin'], async view => {
+	const db = await view.get('db')
+
+	view.data.last = Sources.recalc.last && Sources.recalc.last.getTime() + 1000 > Date.now() ? Math.round(Sources.recalc.last.getTime()) : false
+
+	const titles = await db.all(`
+		SELECT 
+			so.source_title, so.date_start
+		FROM
+			sources_sources so
+		WHERE so.date_start is not null
+	`)
+	return view.ret()
+})
+
 rest.addResponse('get-entity-export', ['admin'], async view => {
 	const db = await view.get('db')
 	const entity_id = await view.get('entity_id#required')

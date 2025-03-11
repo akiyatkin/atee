@@ -832,8 +832,8 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 			LEFT JOIN sources_sheets sh on (sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index)
 			LEFT JOIN sources_items it on (it.entity_id = sh.entity_id and ro.key_id = it.key_id)
 			LEFT JOIN sources_values va on (va.value_id = ro.key_id)
-			LEFT JOIN sources_winners wi on (wi.entity_id = sh.entity_id and wi.key_id = ro.key_id and wi.prop_id = wi.entity_id)
-			-- LEFT JOIN sources_winners wi on (wi.source_id = ce.source_id and wi.sheet_index = ce.sheet_index and wi.row_index = ce.row_index and wi.col_index = ce.col_index and wi.prop_id = wi.entity_id)
+			-- LEFT JOIN sources_winners wi on (wi.entity_id = sh.entity_id and wi.key_id = ro.key_id and wi.prop_id = wi.entity_id)
+			LEFT JOIN sources_winners wi on (wi.source_id = ce.source_id and wi.sheet_index = ce.sheet_index and wi.row_index = ce.row_index and wi.col_index = ce.col_index)
 			LEFT JOIN sources_appears ap on (ap.key_nick = va.value_nick and ap.source_id = ce.source_id and ap.entity_id = sh.entity_id)
 		WHERE ce.source_id = :source_id and ce.sheet_index = :sheet_index
 		and (${where_search.join(' or ')})
@@ -841,6 +841,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 		
 		ORDER BY ce.row_index, ce.col_index
 	`, {source_id, sheet_index, date_appear}) 
+	console.log(7, cells[0])
 	// const cells = []
 	// console.log({source_id, sheet_index, date_appear}, `
 	// 	SELECT 

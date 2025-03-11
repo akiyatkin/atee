@@ -237,7 +237,6 @@ export const POPUP = (data, env) => err(data, env, []) || `
 `
 const representStatus = (bit) => `${bit ? '<span style="color:green">Показано</span>' : '<span style="color:red">Скрыто</span>'}`
 const showSummary = (data, env) => `
-	
 	<table>
 		<!-- <tr><td>Как значение свойства</td><td>${representStatus(data.cell.represent_text_summary)}</td><td>represent_text_summary</td></tr>
 		<tr><td>Как значение ячейки</td><td>${representStatus(data.cell.represent_cell_summary)}</td><td>represent_cell_summary</td></tr> -->

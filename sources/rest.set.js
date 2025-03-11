@@ -421,11 +421,14 @@ rest.addAction('set-source-load', ['admin','checkstart'], async view => {
 
 	if (!source.date_check) await Sources.check(db, source, view.visitor)
 	//if (source.error) return view.err('Для загрузки необходимо устранить ошибку')
-	Sources.load(db, source, view.visitor).then(async end => {
+		
+	Sources.load(db, source, view.visitor).then(async endrecalc => {
 		await Consequences.loaded(db, source_id)
-		if (end) end()
+		if (endrecalc) endrecalc()
 	})
-	
+	Sources.recalc(db, async () => {
+		await Consequences.all(db)
+	})
 	
 	
 	//return view.ret('Загрузка запущена!')
@@ -563,8 +566,11 @@ rest.addAction('set-source-entity-reset', ['admin','checkstart'], async view => 
 		SET entity_id = null
 		WHERE source_id = :source_id
 	`, {source_id})
+	view.data.entity_id = "не определено"
 
-	await Consequences.loaded(db, source_id)
+	Sources.recalc(db, async () => {
+		await Consequences.all(db)
+	})
 	return view.ret()
 })
 rest.addAction('set-sheet-entity-reset', ['admin','checkstart'], async view => {
@@ -641,7 +647,11 @@ rest.addAction('set-source-entity', ['admin','checkstart'], async view => {
 		SET entity_id = :entity_id
 		WHERE source_id = :source_id
 	`, {entity_id, source_id})
-	await Consequences.loaded(db, source_id)
+	const entity = await Sources.getProp(db, entity_id)
+	view.data.entity_id = entity.prop_title
+	Sources.recalc(db, async () => {
+		await Consequences.all(db)
+	})
 	return view.ret()
 })
 

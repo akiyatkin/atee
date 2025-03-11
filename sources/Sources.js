@@ -55,6 +55,8 @@ Sources.renovate = async (db, source, visitor) => {
 // 		WHERE source_id = :source_id
 // 	`, {source_id, duration: Date.now() - timer})
 // }
+
+
 Sources.load = async (db, source, visitor) => {
 	if (source.date_start) return false
 	
@@ -96,27 +98,56 @@ Sources.load = async (db, source, visitor) => {
 		source.error = 'Ошибка при внесении данных: ' + e.toString()
 	})
 
-	
 	source.date_content = Math.round(Number(res.data?.date_content || 0) / 1000)
 	source.date_mtime = Math.max(source.date_content || 0, source.date_mtime || 0)
+	source.date_load = Math.round(Date.now() / 1000)
+	source.duration_insert = Date.now() - timer_insert
+
 	await Sources.setSource(db, `
-		date_load = now(), 
+		date_load = FROM_UNIXTIME(:date_load), 
 		error = :error,
 		date_content = FROM_UNIXTIME(:date_content), 
-		date_mtime = FROM_UNIXTIME(:date_mtime)
+		date_mtime = FROM_UNIXTIME(:date_mtime),
+		duration_insert = :duration_insert,
+		date_start = null
 	`, source)
-	const end = async () => {
-		source.duration_insert = Date.now() - timer_insert
+
+	//Если пересчёт не надо сохранять, то не надо вызывать endrecalc. Метка пересчёта Sources.recalc.start не связана с сохраннением
+	const timer_recalc = Date.now()
+	const endrecalc = async () => {
+		source.duration_recalc = Date.now() - timer_recalc
 		await Sources.setSource(db, `
-			duration_insert = :duration_insert,
-			date_start = null
+			duration_recalc = :duration_recalc
 		`, source)
 	}
-	end.source = source
-	return end
+	endrecalc.source = source
+	return endrecalc
 }
 
-
+Sources.recalc = async (db, func) => {
+	if (Sources.recalc.start) {
+		Sources.recalc.all = true //Повторный запуск
+		return
+	} else {
+		Sources.recalc.start = new Date() //Первый запуск
+	}
+	
+	console.log('recalc', 'func', 'start')
+	await func(db)
+	console.log('recalc', 'func', 'end')
+	
+	while (Sources.recalc.all) {
+		Sources.recalc.all = false
+		console.log('recalc', 'all', 'start')
+		await Consequences.all(db)
+		console.log('recalc', 'all', 'end')
+	}
+	Sources.recalc.last = new Date()
+	Sources.recalc.start = false	
+}
+Sources.recalc.last = false
+Sources.recalc.all = false
+Sources.recalc.start = false
 
 
 
@@ -335,6 +366,7 @@ const SELECT_SOURCE = `
 	so.duration_rest,
 	so.duration_check,
 	so.duration_insert,
+	so.duration_recalc,
 	so.master + 0 as master,
 	so.comment,
 	so.error,
@@ -563,6 +595,7 @@ Sources.cell = async (db, {source_id, sheet_title, key_id, repeat_index, col_tit
 	return Sources.getCellByIndex(db, source_id, sheet_index, row_index, col_index, multi_index)
 	//return Sources.getCell(db, source_id, sheet_title, key_id, repeat_index, col_title, multi_index)
 }
+
 Sources.getCellByIndex = async (db, source_id, sheet_index, row_index, col_index, multi_index = 0) => {
 	const cell = await db.fetch(`
 		SELECT 

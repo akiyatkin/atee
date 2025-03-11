@@ -24,7 +24,7 @@ const showScriptReload = (data, env, source) => `
 	</script>
 `
 export const ROOT = (data, env, source = data.source) => err(data, env, ['DATES','SHEETS','TABLE','SOURCE']) || `
-	<div style="float:right"><a href="../sources">Источник</a></div>
+	<div style="float:right"><a href="../sources">Источники</a></div>
 	<h1>${source.source_title}</h1>
 
 	<style>
@@ -317,7 +317,7 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 					<td>
 						<button 
 							title="Изменить видимость листа" 
-							class="eye represent_sheet transparent ${data.sheet.cls.main} ${data.sheet.cls.custom}"
+							class="eye represent_sheet transparent ${data.sheet.cls.main} ${data.sheet.cls.custom}">
 							${svg.eye()}
 						</button>
 					</td>
@@ -337,9 +337,9 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 					btn.addEventListener('click', async () => {
 						const represent = await import('/-sources/represent.js').then(r => r.default)
 						const data = await represent.set(btn, name, {source_id, sheet_title})
-						if (!data.result) return
-						const Client = await window.getClient()
-						Client.reloaddiv('${env.layer.div}')
+						//if (!data.result) return
+						//const Client = await window.getClient()
+						//Client.reloaddiv('${env.layer.div}')
 					})
 				})(document.currentScript.parentElement)
 			</script>

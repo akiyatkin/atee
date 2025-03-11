@@ -295,7 +295,7 @@ field.radio = ({name, action = '', value = '', values}) => `
 	</div>
 `
 //approved
-field.switch = ({name = 'value', reloaddiv, go, goid, reload, action, value, values = {}, args = {}}) => {
+field.switch = ({name = 'value', reloaddiv, global, go, goid, reload, action, value, values = {}, args = {}}) => {
 	return `
 	<span>
 		<button class="a field" style="display: inline-block; cursor:pointer;">${values[value || ""] ?? value}</button><script>
@@ -317,6 +317,7 @@ field.switch = ({name = 'value', reloaddiv, go, goid, reload, action, value, val
 					const Client = await window.getClient()
 
 					if (${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
+					if (${!!global}) Client.global(${JSON.stringify(global)})
 					if (${!!go}) Client.go("${go}" + ("${goid}" ? ans["${goid}"] : ''))
 					if (${!!reload}) Client.reload()
 
@@ -557,7 +558,7 @@ field.search = ({heading = '', cls = '', edit = true, label = 'Поиск', link
 }
 
 //approved
-field.button = ({label, name = '', cls = '', action, args = {}, go = '', reloaddiv = '', goid = '', confirm, reload}) => {
+field.button = ({label, name = '', cls = '', action, args = {}, go = '', global = '', reloaddiv = '', goid = '', confirm, reload}) => {
 	return `
 		<span>
 			<button class="field ${cls}">${label}</button>
@@ -578,6 +579,7 @@ field.button = ({label, name = '', cls = '', action, args = {}, go = '', reloadd
 
 						if (${!!name} && (ans["${name}"] || ans["${name}"] == 0)) btn.innerHTML = ans["${name}"]
 						if (${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
+						if (${!!global}) Client.global(${JSON.stringify(global)})
 						if (${!!go}) Client.go("${go}" + ("${goid}" ? ans["${goid}"] : ''))
 						if (${!!reload}) Client.reload()
 					})

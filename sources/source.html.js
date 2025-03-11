@@ -7,7 +7,7 @@ import words from "/-words/words.js"
 export const css = ['/-sources/represent.css']
 
 export const ROOT = (data, env, source = data.source) => err(data, env,['SOURCE']) || `
-	<a href="../sources" style="float:right">Источник</a>
+	<a href="../sources" style="float:right">Источники</a>
 	<div id="SOURCE"></div>
 `
 export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
@@ -64,8 +64,7 @@ const showDatas = (data, env, source) => `
 			name: 'entity_id',
 			find: 'entity_id',
 			action: '/-sources/set-source-entity',
-			args: {source_id: source.source_id},
-			reloaddiv: ["TABLE","TOP"]
+			args: {source_id: source.source_id}
 		})}
 	</div>
 	<table>
@@ -113,9 +112,9 @@ const showDatas = (data, env, source) => `
 					const sheet_title = titles[sheet_index]
 					const data = await represent.set(btn, name, {sheet_title, source_id})
 					if (!data.result) return
-					const Client = await window.getClient()
 					remove.style.display = 'block'
-					Client.reloaddiv('${env.layer.div}')
+					//const Client = await window.getClient()
+					//Client.reloaddiv('${env.layer.div}')
 				})
 			}
 		})(document.currentScript.parentElement)
@@ -128,9 +127,9 @@ const showDatas = (data, env, source) => `
 			btn.addEventListener('click', async () => {
 				const represent = await import('/-sources/represent.js').then(r => r.default)
 				const data = await represent.set(btn, name, {source_id})
-				if (!data.result) return
-				const Client = await window.getClient()
-				Client.reloaddiv('${env.layer.div}')
+				//if (!data.result) return
+				//const Client = await window.getClient()
+				//Client.reloaddiv('${env.layer.div}')
 			})
 		})(document.currentScript.parentElement)
 	</script>
@@ -188,8 +187,7 @@ const showSheetTr = (data, env, source, sheet) => `
 					cls:'transparent',
 					label:svg.cross(),
 					action:'/-sources/set-sheet-delete',
-					args:{source_id: source.source_id, title: sheet.sheet_title},
-					reloaddiv: env.layer.div
+					args:{source_id: source.source_id, title: sheet.sheet_title}
 				})}
 			</span>
 		</td>
@@ -234,7 +232,10 @@ const showComment = (data, env, source) => `
 const showStatus = (data, env, source) => `
 	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
 		<div class="status_${source.class}">
-			${source.status}${source.date_start ? '... ':''}<b>${ago.short(source.date_start)}</b>. Актуализация ${field.setpop({
+			${source.status}${source.date_start ? '... ':''}<b>${ago.short(source.date_start)}</b>. 
+		</div>
+		<div>
+			Актуализация ${field.setpop({
 				heading:'Актуализация',
 				value: source.renovate,
 				name: 'bit',
@@ -245,7 +246,13 @@ const showStatus = (data, env, source) => `
 			})}.
 		</div>
 		<div>
-			Актуальность <b>${date.ai(source.date_content) || 'нет даты'}</b>. Ревизия администратора
+			Загружено ${date.ai(source.date_load) || 'нет даты'}.
+		</div>
+		<div>
+			Актуальность ${date.ai(source.date_content) || 'нет даты'}.
+		</div>
+		<div>
+			Ревизия администратора
 			${field.prompt({
 				value: date.dmy(source.date_exam), 
 				cls: 'a',
@@ -326,6 +333,14 @@ const showSettings = (data, env, source = data.source) => `
 			</td>
 			<td>
 				${ago.pass(source.duration_insert)}
+			</td>
+		</tr>
+		<tr>
+			<td>
+				Время пересчёта
+			</td>
+			<td>
+				${ago.pass(source.duration_recalc)}
 			</td>
 		</tr>
 	</table>

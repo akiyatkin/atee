@@ -248,7 +248,7 @@ const defcustom = (value) => {
 	if (value) return 'represent-def-1'
 	else return 'represent-custom-0'
 }
-rest.addAction('set-represent_sheets', ['admin'], async view => {
+rest.addAction('set-represent_sheets', ['admin','checkstart'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const source = await Sources.getSource(db, source_id)
@@ -258,9 +258,13 @@ rest.addAction('set-represent_sheets', ['admin'], async view => {
 		SET represent_sheets = :newvalue
    		WHERE source_id = :source_id
 	`, {source_id, newvalue})
-	await Consequences.represent(db)
-	view.data.cls = `represent-${source.represent_source} ${defcustom(source.represent_sheets)}`
-	
+
+	view.data.cls = {main: `represent-${source.represent_source}`, custom: defcustom(newvalue)}
+
+	Sources.recalc(db, async () => {
+		await Consequences.all(db)
+	})
+
 	return view.ret()
 })
 rest.addAction('set-represent_rows', ['admin'], async view => {
@@ -321,7 +325,7 @@ rest.addAction('set-represent_values', ['admin'], async view => {
 	return view.ret()
 })
 
-rest.addAction('set-represent_sheet', ['admin'], async view => {
+rest.addAction('set-represent_sheet', ['admin','checkstart'], async view => {
 	const db = await view.get('db')
 	const sheet_title = await view.get('sheet_title#required')
 	const source_id = await view.get('source_id#required')
@@ -336,9 +340,12 @@ rest.addAction('set-represent_sheet', ['admin'], async view => {
    		ON DUPLICATE KEY UPDATE represent_custom_sheet = VALUES(represent_custom_sheet)
 	`, {...sheet, newvalue})
 	
-
-	await Consequences.represent(db)
 	view.data.cls = represent.calcCls(source.represent_source, newvalue, source.represent_sheets)
+	
+	Sources.recalc(db, async () => {
+		await Consequences.all(db)
+	})
+	
 	return view.ret()
 })
 rest.addAction('set-represent_source', ['admin'], async view => {

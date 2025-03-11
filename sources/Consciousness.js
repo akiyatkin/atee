@@ -75,6 +75,7 @@ Consciousness.recalcEntitiesPropId = async (db) => { //Определить enti
 		UPDATE sources_sources so, sources_sheets sh
 			LEFT JOIN sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
 		SET sh.entity_id = nvl(csh.entity_id, so.entity_id)
+		WHERE so.source_id = sh.source_id
 	`)
 
 	
@@ -361,6 +362,7 @@ Consciousness.setCellType = async (db, cell) => {
 	`, {...cell, value_id, number, date, pruning})
 }
 Consciousness.recalcMulti = async (db) => { //prop_id может не быть, тогда multi считаем false
+
 	const list = await db.all(`
 		SELECT 
 			co.source_id,
@@ -375,7 +377,7 @@ Consciousness.recalcMulti = async (db) => { //prop_id может не быть, 
 		WHERE ce.source_id = co.source_id
 			AND ce.col_index = co.col_index
 			AND ce.sheet_index = co.sheet_index
-		GROUP BY ce.sheet_index, ce.row_index, ce.col_index
+		GROUP BY ce.source_id, ce.sheet_index, ce.row_index, ce.col_index
 		HAVING (multi AND cnt = 1 AND INSTR(text, ', ')) OR (!multi AND cnt > 1)
 	`)
 	for (const {source_id, sheet_index, row_index, col_index, text, cnt, multi} of list) {		

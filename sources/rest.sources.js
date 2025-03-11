@@ -2,7 +2,7 @@ import nicked from '/-nicked'
 import fs from "fs/promises"
 import Rest from "/-rest"
 import config from '/-config'
-
+import Sources from "/-sources/Sources.js"
 
 const rest = new Rest()
 
@@ -143,6 +143,7 @@ rest.addFunction('checkstart', async (view) => {
 	const db = await view.get('db')
 	const source_title = await db.col(`select source_title FROM sources_sources where date_start is not null`)
 	if (source_title) return view.err('Дождитесь загрузки '+ source_title)
+	if (Sources.recalcinprogress) return view.err('Дождитесь пересчёта')
 })
 rest.addArgument('item_id', ['mint'], async (view, item_id) => {
 	if (!item_id) return null
