@@ -112,16 +112,7 @@ Sources.load = async (db, source, visitor) => {
 		date_start = null
 	`, source)
 
-	//Если пересчёт не надо сохранять, то не надо вызывать endrecalc. Метка пересчёта Sources.recalc.start не связана с сохраннением
-	const timer_recalc = Date.now()
-	const endrecalc = async () => {
-		source.duration_recalc = Date.now() - timer_recalc
-		await Sources.setSource(db, `
-			duration_recalc = :duration_recalc
-		`, source)
-	}
-	endrecalc.source = source
-	return endrecalc
+	return true
 }
 
 Sources.recalc = async (db, func) => {
@@ -132,20 +123,22 @@ Sources.recalc = async (db, func) => {
 		Sources.recalc.start = new Date() //Первый запуск
 	}
 	
-	console.log('recalc', 'func', 'start')
+	console.time('recalc-func')
 	await func(db)
-	console.log('recalc', 'func', 'end')
+	console.timeEnd('recalc-func')
 	
 	while (Sources.recalc.all) {
 		Sources.recalc.all = false
-		console.log('recalc', 'all', 'start')
+		console.time('recalc-all')
 		await Consequences.all(db)
-		console.log('recalc', 'all', 'end')
+		console.timeEnd('recalc-all')
 	}
-	Sources.recalc.last = new Date()
+	Sources.recalc.lastend = new Date()
+	Sources.recalc.laststart = Sources.recalc.start
 	Sources.recalc.start = false	
 }
-Sources.recalc.last = false
+Sources.recalc.lastend = false
+Sources.recalc.laststart = false
 Sources.recalc.all = false
 Sources.recalc.start = false
 
@@ -343,9 +336,6 @@ const SELECT_ENTITY = `
 	pr.prop_id, 
 	pr.prop_title as entity_title,
 	pr.prop_nick as entity_nick,
-	pr.prop_plural as entity_plural,
-	pr.prop_2,
-	pr.prop_5,
 	pr.comment,
 	pr.represent_prop + 0 as represent_entity,
 	pr.represent_prop + 0 as represent_prop,
@@ -366,7 +356,6 @@ const SELECT_SOURCE = `
 	so.duration_rest,
 	so.duration_check,
 	so.duration_insert,
-	so.duration_recalc,
 	so.master + 0 as master,
 	so.comment,
 	so.error,
@@ -382,8 +371,6 @@ const SELECT_SOURCE = `
 	pr.prop_id, 
 	pr.prop_title as entity_title,
 	pr.prop_nick as entity_nick,
-	pr.prop_2 as entity_2,
-	pr.prop_5 as entity_5,
 	pr.represent_prop + 0 as represent_entity,
 	pr.represent_prop + 0 as represent_prop,
 	pr.prop_title
@@ -393,7 +380,6 @@ Sources.getPropByTitle = async (db, prop_title) => {
 	const prop = await db.fetch(`
 		SELECT 
 			pr.prop_title as entity_title,
-			pr.prop_plural as entity_plural,
 			${SELECT_PROP}
 		FROM sources_props pr
 		WHERE pr.prop_nick = :prop_nick
@@ -404,7 +390,6 @@ Sources.getProp = async (db, prop_id) => {
 	const prop = await db.fetch(`
 		SELECT 
 			pr.prop_title as entity_title,
-			pr.prop_plural as entity_plural,
 			${SELECT_PROP}
 		FROM sources_props pr
 		WHERE pr.prop_id = :prop_id
@@ -423,7 +408,6 @@ Sources.getSheets = async (db, source_id) => {
 			cast(csh.represent_custom_sheet as SIGNED) as represent_custom_sheet,
 			
 			csh.entity_id,
-			pr.prop_plural as entity_plural,
 			pr.prop_title as entity_title,
 			pr.prop_title
 
@@ -441,7 +425,6 @@ Sources.getSheets = async (db, source_id) => {
 			sh.sheet_title,
 			sh.entity_id,
 			cast(sh.represent_sheet as SIGNED) as represent_sheet,
-			pr.prop_plural as entity_plural,
 			pr.prop_title as entity_title,
 			pr.prop_title
 		FROM sources_sheets sh
@@ -509,6 +492,22 @@ Sources.getSheets = async (db, source_id) => {
 		sheet.cls = represent.calcCls(source.represent_source, sheet.custom?.represent_custom_sheet, source.represent_sheets)
 	}
 	return list.filter(sheet => sheet.loaded)
+}
+Sources.getSheetByTitle = async (db, source_id, sheet_title) => {
+	const sheet = await db.fetch(`
+		SELECT 
+			sh.sheet_title,
+			sh.sheet_index,
+			sh.key_index,
+			sh.entity_id,
+			sh.source_id,
+			sh.represent_sheet + 0 as represent_sheet,
+			csh.represent_custom_sheet + 0 as represent_custom_sheet
+		FROM sources_sheets sh
+			left join sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
+		WHERE sh.source_id = :source_id and sh.sheet_title = :sheet_title
+	`, {source_id, sheet_title})
+	return sheet
 }
 Sources.getSheetByIndex = async (db, source_id, sheet_index) => {
 	const sheet = await db.fetch(`
@@ -620,7 +619,7 @@ Sources.getCellByIndex = async (db, source_id, sheet_index, row_index, col_index
 			ro.repeat_index,
 			cce.represent_custom_cell + 0 as represent_custom_cell,
 			ce.represent_cell_summary + 0 as represent_cell_summary,
-			ce.represent_text_summary + 0 as represent_text_summary,
+			ce.represent_item_summary + 0 as represent_item_summary,
 			it.master + 0 as master
 		FROM sources_cells ce
 			LEFT JOIN sources_values va on (va.value_id = ce.value_id)
@@ -681,7 +680,7 @@ Sources.getCell = async (db, source_id, sheet_title, key_id, repeat_index, col_t
 	// 		ro.repeat_index,
 	// 		cce.represent_custom_cell + 0 as represent_custom_cell,
 	// 		ce.represent_cell_summary + 0 as represent_cell_summary,
-	// 		ce.represent_text_summary + 0 as represent_text_summary,
+	// 		ce.represent_item_summary + 0 as represent_item_summary,
 	// 		it.master + 0 as master
 	// 	FROM sources_cells ce
 	// 		LEFT JOIN sources_values va on (va.value_id = ce.value_id)
@@ -784,7 +783,7 @@ Sources.getValue = async (db, prop_id, value_id) => {
 			va.value_id,
 			va.value_nick,
 			va.value_title,
-			cva.represent_custom_value
+			cva.represent_custom_value + 0 as represent_custom_value
 		FROM sources_values va
 			LEFT JOIN sources_custom_values cva on (cva.value_nick = va.value_nick and cva.prop_id = :prop_id)
 		WHERE va.value_id = :value_id
@@ -905,8 +904,8 @@ Sources.createProp = async (db, prop_title, type = 'text') => {
 	const ordain = 0
 	const {name, unit} = Sources.getNameUnit(prop_title)
 	const prop_id = await db.insertId(`
-		INSERT INTO sources_props (prop_title, prop_nick, type, ordain, name, unit, prop_2, prop_5, prop_plural)
-   		VALUES (:prop_title, :prop_nick, :type, :ordain, :name, :unit, :name, :name, :name)
+		INSERT INTO sources_props (prop_title, prop_nick, type, ordain, name, unit)
+   		VALUES (:prop_title, :prop_nick, :type, :ordain, :name, :unit)
    		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title), prop_id = LAST_INSERT_ID(prop_id)
 	`, {prop_title, prop_nick, ordain, name, unit, type})
 	await Sources.reorderProps(db)

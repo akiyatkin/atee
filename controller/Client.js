@@ -109,7 +109,7 @@ export const Client = {
 	cursor:history.length - 1,
 	
 	refreshState: (scroll = false) => {
-		return Client.replaceState(Client.search, scroll)
+		return Client.replaceState(Client.next?.search ?  Client.next.search : Client.search + location.hash, scroll)
 	},
 	scroll: promise => {
 		const go = () => {
@@ -169,6 +169,7 @@ export const Client = {
 		Client.history[Client.cursor] = {scroll: [window.scrollX, window.scrollY]}
 
 		history.replaceState({cursor:Client.cursor, view:Client.view}, null, search) //Так резолвятся точки, но не слеш в конце
+
 		search = Client.getSearch()
 		//history.replaceState({cursor:Client.cursor, view:Client.view}, null, search) //А так и слэш. Ну и фиг с ним, резолвим сами в makeabs
 
@@ -278,7 +279,11 @@ export const Client = {
 		for (const layer of json.layers) {
 			const elements = layer.sys.template.content
 			if (!layer.sys.div) continue; //слой может быть в onlyclient и ещё не показался если какое-то обновление сразу после загрузки
+			const old = layer.sys.div.style.minHeight
+			layer.sys.div.style.minHeight = layer.sys.div.offsetHeight + 'px'
 			layer.sys.div.replaceChildren(elements)
+			layer.sys.div.style.minHeight = old
+
 			window.waitClient.stack.push(evalScripts(layer.sys.div))
 			const promise = Promise.all(window.waitClient.stack)
 			window.waitClient.stack = []
@@ -429,6 +434,7 @@ const applyCrossing = async () => {
 		Client.bread = bread
 		Client.search = search
 		Client.next = false
+
 		promise.resolve(search)
 
 		if (req.ut && req.ut < timings.update_time) {

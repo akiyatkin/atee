@@ -30,10 +30,10 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 	
 	const list = await db.all(`
 		SELECT distinct va.value_title, va.value_nick, da.value_id
-		FROM ${from.join(', ')}, sources_data da
+		FROM ${from.join(', ')}, sources_wvalues da
 			LEFT JOIN sources_values as va on (da.value_id = va.value_id)
 		WHERE ${where.join(' and ')}
-		and da.key_id = pos.key_id and da.prop_id = :prop_id
+		and da.key_id = win.key_id and da.prop_id = :prop_id
 		and va.value_nick like "%${hash.join('%" and va.value_nick like "%')}%"
 		ORDER BY RAND()
 		LIMIT 12
@@ -41,10 +41,10 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 
 	view.ans.count = await db.col(`
 		SELECT count(distinct da.value_id)
-		FROM ${from.join(', ')}, sources_data da
+		FROM ${from.join(', ')}, sources_wvalues da
 			LEFT JOIN sources_values as va on (da.value_id = va.value_id)
 		WHERE ${where.join(' and ')}
-		and da.key_id = pos.key_id and da.prop_id = :prop_id
+		and da.key_id = win.key_id and da.prop_id = :prop_id
 		and va.value_nick like "%${hash.join('%" and va.value_nick like "%')}%"
 	`, {...bind, prop_id})
 

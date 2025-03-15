@@ -243,12 +243,14 @@ Bed.getmdwhere = (md, mgroup = {}, hashs = [], partner = '') => {
 		pos_entity_id: md.pos_entity_id,
 		mod_entity_id: md.mod_entity_id
 	}
-	//win.key_id - позиция, win.value_id - модель
-	const from = ['sources_winners win, sources_items wit, sources_cells wce']
+	//win.key_id - позиция, wva.value_id - модель
+	const from = ['sources_winners win, sources_wvalues wva, sources_items wit']
 	const where = [
-		'wit.entity_id = win.entity_id and wit.key_id = win.key_id',
-		'wce.source_id = win.source_id and wce.sheet_index = win.sheet_index and wce.row_index = win.row_index and wce.col_index = win.col_index',
-		'win.entity_id=:pos_entity_id and win.prop_id=:mod_entity_id'  //У позиций считывает значение модели, модель может быть без Бренда потому что бренд у позиции уже будет
+		'win.entity_id = :pos_entity_id and win.prop_id = :mod_entity_id',
+		'wva.entity_id = win.entity_id and wva.key_id = win.key_id and wva.prop_id = win.prop_id',
+		'wit.entity_id = win.entity_id and wit.key_id = win.key_id'
+		
+		  
 	]
 	if (hashs.length) {
 		const where_search = []
@@ -258,7 +260,7 @@ Bed.getmdwhere = (md, mgroup = {}, hashs = [], partner = '') => {
 		}
 		where.push(`(${where_search.join(' or ')})`)
 	}
-	const sort = ['win.win_id','wce.multi_index'] //, 'pos.prop_ordain', 'pos.multi_index'
+	const sort = ['win.source_id, win.sheet_index, win.row_index, wva.multi_index']
 
 	let i = 0
 
@@ -268,7 +270,7 @@ Bed.getmdwhere = (md, mgroup = {}, hashs = [], partner = '') => {
 		if (values == 'empty') {
 			i++
  			from[0] += `
-				LEFT JOIN sources_winners da${i} on (
+				LEFT JOIN sources_wvalues da${i} on (
 					da${i}.entity_id = win.entity_id 
 					and da${i}.key_id = win.key_id
 					and da${i}.prop_id = ${prop.prop_id}
@@ -277,17 +279,13 @@ Bed.getmdwhere = (md, mgroup = {}, hashs = [], partner = '') => {
  			where.push(`da${i}.prop_id is null`)
  		} else {
  			i++
- 			from.push(`sources_winners da${i}, sources_cells ce${i}`)
- 			where.push(`
- 				ce${i}.sheet_index = da${i}.sheet_index
- 				and ce${i}.row_index = da${i}.row_index
- 				and ce${i}.col_index = da${i}.col_index
- 			`)
-			where.push(`da${i}.entity_id = win.entity_id`)
-			where.push(`da${i}.key_id = win.key_id`)
-			where.push(`da${i}.prop_id = ${prop.prop_id}`)
+ 			
 			const ids = []
 			if (prop.type == 'number') {
+				from.push(`sources_wnumbers da${i}`)
+				where.push(`da${i}.entity_id = win.entity_id`)
+				where.push(`da${i}.key_id = win.key_id`)
+				where.push(`da${i}.prop_id = ${prop.prop_id}`)
 				for (let name in values) {
 					let value = name
 					if (~['upto','from'].indexOf(name)) {
@@ -303,26 +301,29 @@ Bed.getmdwhere = (md, mgroup = {}, hashs = [], partner = '') => {
 					if (~['upto','from'].indexOf(name)) {
 						sort = []
 						if (name == 'upto') {
-							where.push(`ce${i}.number <= ${value_nick}`)
-							sort.push(`ce${i}.number DESC`)
+							where.push(`da${i}.number <= ${value_nick}`)
+							sort.push(`da${i}.number DESC`)
 						}
 						if (name == 'from') {
-							where.push(`ce${i}.number >= ${value_nick}`)
-							sort.push(`ce${i}.number ASC`)
+							where.push(`da${i}.number >= ${value_nick}`)
+							sort.push(`da${i}.number ASC`)
 						}
 					} else {
 						if (value_nick == value) ids.push(value_nick)
 						//else  ids.push(prop.prop_id + ', false')	
 					}
 				}
-				if (ids.length) where.push(`ce${i}.number in (${ids.join(',')})`)
+				if (ids.length) where.push(`da${i}.number in (${ids.join(',')})`)
 			} else if (prop.type == 'value') {
-
+				from.push(`sources_wvalues da${i}`)
+				where.push(`da${i}.entity_id = win.entity_id`)
+				where.push(`da${i}.key_id = win.key_id`)
+				where.push(`da${i}.prop_id = ${prop.prop_id}`)
 				for (const value_nick in values) {
 					const value = md.values[value_nick]
 					ids.push(value?.value_id || 0)
 				}
-				if (ids.length) where.push(`ce${i}.value_id in (${ids.join(',')})`)
+				if (ids.length) where.push(`da${i}.value_id in (${ids.join(',')})`)
 			} else {
 				//значения других типов пропускаем
 			}

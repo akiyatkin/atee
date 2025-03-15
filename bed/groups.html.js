@@ -145,7 +145,7 @@ const showTableGroups = (data, env, group) => `
 			</tr>
 		</thead>
 		<tbody draggable="false">
-			${data.list.map(group => showGroup(data, env, group)).join('')}
+			${data.childs.map(group => showGroup(data, env, group)).join('')}
 		</tbody>
 	</table>
 	${showScriptDragGroups(data, env)}
@@ -191,7 +191,7 @@ const showMarks = (data, env, group) => `
 export const ROOT = (data, env) => err(data, env, []) || `
 	${data.group ? showParent(data, env) : ''}
 	<h1>${data.group ? showEdit(data, env, data.group) : 'Группы'}</h1>
-	<pre>${data.sql}</pre>
+	<!-- <pre>${data.sql}</pre> -->
 	<table>
 		<tr><td>Моделей</td><td>${data.modcount}</td></tr>
 		<tr><td>Позиций</td><td>${data.poscount}</td></tr>
@@ -199,7 +199,7 @@ export const ROOT = (data, env) => err(data, env, []) || `
 	${showGroups(data, env, data.group)}
 	${data.group?.filters?.length ? showTableFilters(data, env, data.group) : ''}
 	${!data.group ? '' : showMarks(data, env, data.group)}
-	${!data.freeitems.head.length ? '' : showFree(data, env, data.group)}
+	${!data.freetable ? '' : showFree(data, env, data.group)}
 	
 `
 const showGroups = (data, env, group) => `
@@ -219,18 +219,18 @@ const showGroups = (data, env, group) => `
 			reloaddiv: env.layer.div
 		})}
 	</p>
-	${data.list.length ? showTableGroups(data, env, data.group) : ''}	
+	${data.childs.length ? showTableGroups(data, env, data.group) : ''}	
 	
 `
 const showFree = (data, env) => `
-	<h2>Свободные позиции</h2>
+	<h2>Свободные позиции (${data.freetable?.count || 0})</h2>
 	<div class="revscroll">
 		<table>
 			<thead>
-				${showTr(data, env, data.freeitems.head)}
+				${showTr(data, env, data.freetable.head)}
 			</thead>
 			<tbody>
-				${data.freeitems.rows.map(row => showTr(data, env, row)).join('')}
+				${data.freetable.rows.map(row => showTr(data, env, row)).join('')}
 			</tbody>
 		</table>
 	</div>

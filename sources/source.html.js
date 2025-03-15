@@ -186,7 +186,7 @@ const showSheetTr = (data, env, source, sheet) => `
 					confirm:'Удалить все настройки пользователя у этого листа, его строк, колонок и ячеек?',
 					cls:'transparent',
 					label:svg.cross(),
-					action:'/-sources/set-sheet-delete',
+					action:'/-sources/set-sheet-custom-delete',
 					args:{source_id: source.source_id, title: sheet.sheet_title}
 				})}
 			</span>
@@ -333,14 +333,6 @@ const showSettings = (data, env, source = data.source) => `
 			</td>
 			<td>
 				${ago.pass(source.duration_insert)}
-			</td>
-		</tr>
-		<tr>
-			<td>
-				Время пересчёта
-			</td>
-			<td>
-				${ago.pass(source.duration_recalc)}
 			</td>
 		</tr>
 	</table>

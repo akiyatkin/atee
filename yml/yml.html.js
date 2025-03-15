@@ -6,7 +6,7 @@ yml.ROOT = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
 <shop>
 	<name>${env.name||env.host}</name>
 	<company>${env.company||env.host}</company>
-	<url>${env.host}</url>
+	<url>https://${env.host}</url>
 	<email>${env.email || ''}</email>
 	<currencies>
 		<currency id="RUR" rate="1"/>

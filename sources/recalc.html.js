@@ -2,26 +2,30 @@ import date from "/-words/date.html.js"
 import field from "/-dialog/field.html.js"
 export const RTABLE = (data, env) => `
 	${!data?.result ? data?.msg || 'Ошибка на сервере' : showStat(data, env)}
-	<div class="counter">0</div>
+	<span class="counter"></span> сек
 	
 	<script>
 		(async div => {
 			const Recalc = await import("/-sources/Recalc.js").then(r => r.default)
-			const last = ${data.last ? true : false}
-			
-			if (last) div.classList.add('alert')
+			const start = ${data.start}
+			if (start) div.classList.add('alert')
 			else div.classList.remove('alert')
 
-			if (Recalc.waslast && !last) {
-				Recalc.waslast = false
+			if (Recalc.was && !start) {
+				Recalc.was = false
 				const Client = await window.getClient()
+				const represent = await import('/-sources/represent.js').then(r => r.default)
+				represent.reload()
 				return Client.global("recalc")
 			}
-			Recalc.waslast ||= last
+			if (!Recalc.was && start) Recalc.counter = 0
+			Recalc.was ||= start
 
 
 			const divcounter = document.querySelector('.counter')
-			divcounter.innerHTML = ++Recalc.counter
+			//if (start) Recalc.counter++
+			if (start) Recalc.counter = Math.round((Date.now() - start) / 1000)
+			divcounter.innerHTML = Recalc.counter
 			setTimeout(async () => {
 				if (!divcounter.closest('body')) return
 				const Client = await window.getClient()

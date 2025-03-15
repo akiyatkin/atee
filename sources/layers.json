@@ -4,7 +4,7 @@
 	"animate":{
 		"source:SOURCE":"none",
 		"main:TABLE":"none",
-		"sheet:SHEETS":"none",
+		"sheet:TABLE":"none",
 		"sheet:SOURCE":"none",
 		"sheet:DATES":"none",
 		"recalc:RTABLE":"none",
@@ -21,7 +21,6 @@
 		"source:SOURCE":["recalc"],
 		"main:TABLE":["recalc"],
 		"sheet:TABLE":["recalc"],
-		"sheet:SHEETS":["recalc"],
 		"sheet:SOURCE":["recalc"],
 		"sheet:DATES":["recalc"],
 		"recalc:RTABLE":["recalc"],
@@ -63,7 +62,6 @@
 	"jsontpl":{
 		"sheet:ROOT":"/-sources/sheet?source_id=${env.bread.get.source_id ?? ''}",
 		"sheet:DATES":"/-sources/sheet-dates?source_id=${env.bread.get.source_id ?? ''}&appear=${env.bread.get.appear ?? ''}&hashs=${env.bread.get.search ?? ''}",
-		"sheet:SHEETS":"/-sources/sheet-sheets?source_id=${env.bread.get.source_id ?? ''}&sheet_index=${env.bread.get.sheet_index ?? ''}&keyfilter=${env.bread.get.keyfilter ?? ''}&appear=${env.bread.get.appear ?? ''}&hashs=${env.bread.get.search ?? ''}",
 		"sheet:TABLE":"/-sources/sheet-table?source_id=${env.bread.get.source_id ?? ''}&sheet_index=${env.bread.get.sheet_index ?? ''}&keyfilter=${env.bread.get.keyfilter ?? ''}&appear=${env.bread.get.appear ?? ''}&hashs=${env.bread.get.search ?? ''}",
 		"sheet:SOURCE":"/-sources/sheet-source?source_id=${env.bread.get.source_id ?? ''}",
 		"positions:ROOT":"/-sources/positions?entity_id=${env.crumb.name}",
@@ -194,10 +192,9 @@
 					"MAIN":"sheet:ROOT"
 				},
 				"sheet:ROOT":{
+					"SOURCE":"sheet:SOURCE",
 					"DATES":"sheet:DATES",
-					"SHEETS":"sheet:SHEETS",
-					"TABLE":"sheet:TABLE",
-					"SOURCE":"sheet:SOURCE"
+					"TABLE":"sheet:TABLE"
 				}
 			}
 		},

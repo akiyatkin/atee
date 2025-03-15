@@ -30,16 +30,18 @@ rest.addVariable('bit#required', ['bit','required'])
 rest.addArgument('id', ['mint'])
 rest.addVariable('id#required', ['id', 'required'])
 
-rest.addArgument('sheet_index', ['mint'])
+rest.addArgument('sheet_index', ['null', 'mint'])
 rest.addVariable('sheet_index#required', ['sheet_index', 'required'])
-rest.addVariable('sheet_index#or0', async (view) => {
+rest.addVariable('sheet_index#orNull', async (view) => {
 	const source_id = await view.get('source_id#required')
-	const sheet_index = await view.get('sheet_index#required')
+	const sheet_index = await view.get('sheet_index')
+	if (sheet_index === null) return null
 	const db = await view.get('db')
 	const is = await db.col('select source_id from sources_sheets where source_id=:source_id and sheet_index=:sheet_index', {source_id, sheet_index})
-	if (!is) return 0
+	if (!is) return null
 	return sheet_index
 })
+
 
 rest.addArgument('repeat_index', ['mint'])
 rest.addVariable('repeat_index#required', ['repeat_index', 'required'])

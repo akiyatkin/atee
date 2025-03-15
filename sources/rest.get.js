@@ -21,8 +21,10 @@ rest.extra(rest_search)
 rest.addResponse('get-recalc', ['admin'], async view => {
 	const db = await view.get('db')
 
-	view.data.last = Sources.recalc.last && Sources.recalc.last.getTime() + 1000 > Date.now() ? Math.round(Sources.recalc.last.getTime()) : false
+	view.data.start = Sources.recalc.start ? Sources.recalc.start.getTime() : false
+	if (!view.data.start && Sources.recalc.lastend) view.data.start = Sources.recalc.lastend.getTime() + 1000 > Date.now() ? Sources.recalc.laststart.getTime() : false
 
+	
 	const titles = await db.all(`
 		SELECT 
 			so.source_title, so.date_start

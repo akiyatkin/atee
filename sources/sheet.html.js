@@ -10,19 +10,19 @@ const showSourceEntity = (data, env, source, entity = source) => `
 const showError = (data, env, source) => `
 	<p style="background-color:${source.error ? '#f5e6e6' : '#eaf7d1'}">${source.error || 'Ошибок не было'}</p>
 `
-const showScriptReload = (data, env, source) => `
-	<style>
-		#MAIN {
-			opacity: 0.8;
-		}
-	</style>
-	<script>
-		setTimeout(async () => {
-			const Client = await window.getClient()
-			Client.reloaddiv(['SOURCE','SHEETS', 'DATES', 'TABLE'])
-		}, 3000)
-	</script>
-`
+// const showScriptReload = (data, env, source) => `
+// 	<style>
+// 		#MAIN {
+// 			opacity: 0.8;
+// 		}
+// 	</style>
+// 	<script>
+// 		setTimeout(async () => {
+// 			const Client = await window.getClient()
+// 			Client.reloaddiv(['SOURCE','SHEETS', 'DATES', 'TABLE'])
+// 		}, 3000)
+// 	</script>
+// `
 export const ROOT = (data, env, source = data.source) => err(data, env, ['DATES','SHEETS','TABLE','SOURCE']) || `
 	<div style="float:right"><a href="../sources">Источники</a></div>
 	<h1>${source.source_title}</h1>
@@ -72,7 +72,6 @@ export const ROOT = (data, env, source = data.source) => err(data, env, ['DATES'
 
 	</div>
 	<div id="DATES"></div>
-	<div id="SHEETS"></div>
 	<div id="TABLE"></div>
 `
 export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
@@ -80,7 +79,6 @@ export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
 		${field.button({
 			label: 'Загрузить', 
 			action: '/-sources/set-source-load',
-			reloaddiv: env.layer.div,
 			args: {source_id: source.source_id}
 		})}
 	</div>
@@ -97,7 +95,6 @@ export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
 			 
 		}
 		${source.error ? showError(data, env, source) : ''}
-		${source.date_start ? showScriptReload(data, env, source) : ''}
 	</div>
 	
 	<div title="${date.dmyhi(data.source.date_load)}">Загрузка <b>${date.ai(data.source.date_load)}</b> за ${date.pass(data.source.duration_rest + data.source.duration_insert + data.source.duration_check)}</div>
@@ -105,15 +102,15 @@ export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
 	<div title="${date.dmyhi(data.source.date_exam)}">Ревизия <a href="source/${data.source.source_id}">${date.dmy(data.source.date_exam)}</a></div>
 `
 export const DATES = (data, env) => !data.result ? `` : `
-	<div style="align-items: center; flex-grow: 1; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
+	<div id="date" style="align-items: center; flex-grow: 1; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
 		
 		<div style="background: linear-gradient(-30deg, #00aaff55, #4466ff22); padding: 0.5em; flex-grow: 1; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
 			${data.dates.map(dateup => showDate(data, env, dateup)).join('')}
 		</div>
 		<div style="background: linear-gradient(-30deg, #00aaff55, #4466ff22); padding: 0.5em; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
-			<div><a class="${env.bread.get.keyfilter == 'yes' ? 'active' : ''}" data-keyfilter="yes" href="sheet${addget({keyfilter: 'yes'}, env.bread.get)}#SHEETS">С&nbsp;ключом<sup>${data.quantity_of_keys}</sup></a></div>
-			<div><a class="${env.bread.get.keyfilter == 'not' ? 'active' : ''}" data-keyfilter="not" href="sheet${addget({keyfilter: 'not'}, env.bread.get)}#SHEETS">Без&nbsp;ключа&nbsp;<sup>${data.quantity_without_keys}</sup></a></div>
-			<div><a class="${env.bread.get.keyfilter == 'all' ? 'active' : ''}" data-keyfilter="all" href="sheet${addget({keyfilter: 'all'}, env.bread.get)}#SHEETS">Всё&nbsp;<sup>${data.quantity_without_keys + data.quantity_of_keys}</sup></a></div>
+			<div><a class="${env.bread.get.keyfilter == 'yes' ? 'active' : ''}" data-keyfilter="yes" href="sheet${addget({keyfilter: 'yes'}, env.bread.get)}#date">С&nbsp;ключом<sup>${data.quantity_of_keys}</sup></a></div>
+			<div><a class="${env.bread.get.keyfilter == 'not' ? 'active' : ''}" data-keyfilter="not" href="sheet${addget({keyfilter: 'not'}, env.bread.get)}#date">Без&nbsp;ключа&nbsp;<sup>${data.quantity_without_keys}</sup></a></div>
+			<div><a class="${env.bread.get.keyfilter == 'all' ? 'active' : ''}" data-keyfilter="all" href="sheet${addget({keyfilter: 'all'}, env.bread.get)}#date">Всё&nbsp;<sup>${data.quantity_without_keys + data.quantity_of_keys}</sup></a></div>
 		</div>
 	</div>
 	<script>
@@ -129,7 +126,7 @@ export const DATES = (data, env) => !data.result ? `` : `
 					const params = {keyfilter}
 					const appear = a.dataset.appear
 					if (appear) params.appear = appear
-					a.href = 'sheet' + addget(params, new URLSearchParams(window.location.search))+'#SHEETS'
+					a.href = 'sheet' + addget(params, new URLSearchParams(window.location.search))+'#date'
 				}
 				const origin = location.href
 				//const origin = location.origin + bread.href
@@ -149,33 +146,32 @@ export const DATES = (data, env) => !data.result ? `` : `
 	</script>
 `
 export const SHEETS = (data, env) => !data.result ? `` : `
-	<div style="margin: 1em 0; flex-grow: 1; display: flex; gap:0.5em 1em; flex-wrap: wrap">
-		${data.sheets.map(sheet => showSheet(data, env, sheet)).join('')}
-	</div>
+	
 `
 const showDate = (data, env, dateup, active = dateup.active && (!env.bread.get.keyfilter || env.bread.get.keyfilter == 'appear')) => `
 	<div title="Дата обновления ${date.dmyhi(dateup.date)}">
 		<a class="${active ? 'active' : ''}" 
 		 	data-keyfilter="appear"
 		 	data-appear="${dateup.date}"
-			href="sheet${addget({keyfilter:'appear', appear:dateup.date}, env.bread.get)}#SHEETS">
+			href="sheet${addget({keyfilter:'appear', appear:dateup.date}, env.bread.get)}#date">
 			${dateup.title || date.ai(dateup.date)}&nbsp;<sup>${dateup.count}</sup>
 		</a>
 	</div>
 `
 const showSheet = (data, env, sheet, active = sheet.sheet_index == data.sheet.sheet_index) => {
-	if (!active) return `
-		<div>
-			<a href="sheet${addget({sheet_index:sheet.sheet_index}, env.bread.get)}#TABLE">${sheet.sheet_title}&nbsp;<sup>${sheet.count}</sup></a>
-			${!sheet.entity || sheet.entity.entity_id != data.source.entity_id ? showEntity(data, env, sheet.entity) : ''}
-		</div>
-	`
 	if (active) return `
-		<div>
+		<div class="${sheet.represent ? '' : 'mute'}">
 			${sheet.sheet_title}&nbsp;<sup>${sheet.count}</sup>
 			${!sheet.entity || sheet.entity.entity_id != data.source.entity_id ? showEntity(data, env, sheet.entity) : ''}
 		</div>
 	`
+	if (!active) return `
+		<div class="${sheet.represent ? '' : 'mute'}">
+			<a href="sheet${addget({sheet_index:sheet.sheet_index}, env.bread.get)}#data">${sheet.sheet_title}&nbsp;<sup>${sheet.count}</sup></a>
+			${!sheet.entity || sheet.entity.entity_id != data.source.entity_id ? showEntity(data, env, sheet.entity) : ''}
+		</div>
+	`
+	
 }
 const showEntity = (data, env, entity) => {
 	if (entity) return `
@@ -236,7 +232,10 @@ const showComment = (data, env, source) => `
 	</script>
 `
 export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !data.result ? '' : `
-	<div class="revscroll">
+	<div style="margin: 1em 0; flex-grow: 1; display: flex; gap:0.5em 1em; flex-wrap: wrap">
+		${data.sheets.map(sheet => showSheet(data, env, sheet)).join('')}
+	</div>
+	<div id="data" class="revscroll">
 		<script>
 			(async div => {
 				const cols = ${JSON.stringify(data.cols.map(col => [col.col_title, col.prop_id]))}
@@ -277,18 +276,16 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 							return Dialog.alert('В строке нет ключа')
 						}
 						
-						const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-						const data = await senditmsg(btn, '/-sources/set-row-switch', {
-						 	source_id, sheet_title, key_id, repeat_index
-						})
+						const represent = await import('/-sources/represent.js').then(r => r.default)
+						const data = await represent.set(btn, 'represent_row', {sheet_title, source_id, key_id, repeat_index})
 						if (!data.result) return
 
 						btn.classList.remove('represent-1', 'represent-0', 'represent-custom-1', 'represent-custom-0', 'represent-def-0', 'represent-def-1')
 						btn.classList.add(data.cls.main, data.cls.custom)
-						if (cols.length * keys.length < 1000) {
-							const Client = await window.getClient()
-							Client.reloaddiv('${env.layer.div}')
-						}
+						// if (cols.length * keys.length < 1000) {
+						// 	const Client = await window.getClient()
+						// 	Client.reloaddiv('${env.layer.div}')
+						// }
 					}
 					const prop = e.target.closest('.prop')
 					if (prop) {
@@ -329,20 +326,20 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 			</tbody>
 		</table>
 		<script>
-				(div => {
-					const name = 'represent_sheet'
-					const sheet_title = ${JSON.stringify(sheet.sheet_title)}
-					const source_id = ${data.source.source_id}
-					const btn = div.getElementsByClassName(name)[0]
-					btn.addEventListener('click', async () => {
-						const represent = await import('/-sources/represent.js').then(r => r.default)
-						const data = await represent.set(btn, name, {source_id, sheet_title})
-						//if (!data.result) return
-						//const Client = await window.getClient()
-						//Client.reloaddiv('${env.layer.div}')
-					})
-				})(document.currentScript.parentElement)
-			</script>
+			(div => {
+				const name = 'represent_sheet'
+				const sheet_title = ${JSON.stringify(sheet.sheet_title)}
+				const source_id = ${data.source.source_id}
+				const btn = div.getElementsByClassName(name)[0]
+				btn.addEventListener('click', async () => {
+					const represent = await import('/-sources/represent.js').then(r => r.default)
+					const data = await represent.set(btn, name, {source_id, sheet_title})
+					//if (!data.result) return
+					//const Client = await window.getClient()
+					//Client.reloaddiv('${env.layer.div}')
+				})
+			})(document.currentScript.parentElement)
+		</script>
 		<script>
 			(async div => {
 				const name = 'revscroll_sheet_${source.source_id}_${sheet.sheet_index}'

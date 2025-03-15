@@ -226,7 +226,7 @@ export const POPUP = (data, env) => err(data, env, []) || `
 					
 					const data = await represent.set(btn, name, args)
 					if (!data.result) return
-					represent.reload()
+					//represent.reload()
 				})
 			}
 		})(document.currentScript.parentElement)
@@ -238,7 +238,7 @@ export const POPUP = (data, env) => err(data, env, []) || `
 const representStatus = (bit) => `${bit ? '<span style="color:green">Показано</span>' : '<span style="color:red">Скрыто</span>'}`
 const showSummary = (data, env) => `
 	<table>
-		<!-- <tr><td>Как значение свойства</td><td>${representStatus(data.cell.represent_text_summary)}</td><td>represent_text_summary</td></tr>
+		<!-- <tr><td>Как значение свойства</td><td>${representStatus(data.cell.represent_item_summary)}</td><td>represent_item_summary</td></tr>
 		<tr><td>Как значение ячейки</td><td>${representStatus(data.cell.represent_cell_summary)}</td><td>represent_cell_summary</td></tr> -->
 		<tr><td>Мастер</td><td>${representStatus(data.cell.master)}</td><td>master</td></tr>
 		<tr><td>Видимость</td><td>${representStatus(data.cell.represent)}</td><td>represent</td></tr>

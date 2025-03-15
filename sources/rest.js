@@ -244,8 +244,7 @@ rest.addResponse('disappear', ['admin'], async view => {
 			distinct 
 			so.source_id, so.source_title, 
 				en.prop_id as entity_id, 
-				en.prop_title as entity_title, 
-				en.prop_plural as entity_plural
+				en.prop_title as entity_title
 		FROM 
 			sources_appears ap, 
 			sources_props en, 
@@ -444,130 +443,7 @@ rest.addResponse('sheet-source', ['admin'], async view => {
 	const source = view.data.source = await Sources.getSource(db, source_id)	
 	return view.ret()
 })
-rest.addResponse('sheet-sheets', ['admin'], async view => {
-	const db = await view.get('db')
-	const source_id = await view.get('source_id#required')
-	const source = view.data.source = await Sources.getSource(db, source_id)
-	//const entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
-	const keyfilter = await view.get('keyfilter#required')
 
-	/*
-		appear - конкретная дата появления
-		all - всё как есть
-		yes - всё с ключами
-		not - всё без ключей
-	*/
-
-	const sheet_index = await view.get('sheet_index#or0')
-	
-	const hashs = await view.get('hashs')
-
-	const where_search = []
-	if (!hashs.length) where_search.push('1=1')
-	for (const hash of hashs) {
-		const sql = 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"'
-		where_search.push(sql)
-	}
-	
-	const sheet = view.data.sheet = await Sources.getSheetByIndex(db, source_id, sheet_index)
-	if (!sheet) return view.err('Лист не найден')
-	//view.data.entity = sheet.entity_id && await Sources.getEntity(db, sheet.entity_id) || entity
-
-	const appear = await view.get('appear') //null - последняя дата, 0 - выбрать всё, date - конкретная дата
-
-	const choice_date = appear || await db.col(`
-		SELECT UNIX_TIMESTAMP(max(ap.date_appear))
-		FROM sources_appears ap
-		WHERE ap.source_id = :source_id and date_disappear is null
-	`, {source_id}) || Math.round(Date.now() / 1000)
-	
-	//===================
-	let sheets = []
-
-	if (keyfilter == 'appear') {
-		sheets = view.data.sheets = await db.all(`
-			SELECT 
-				sh.sheet_index,
-				sh.sheet_title,
-				sh.entity_id,
-				count(ro.row_index) as count
-			FROM sources_sheets sh, sources_rows ro, sources_appears ap, sources_values va
-			WHERE sh.source_id = :source_id
-				and ro.source_id = sh.source_id 
-				and va.value_id = ro.key_id
-				and ro.sheet_index = sh.sheet_index
-				and (${where_search.join(' or ')})
-				and ap.key_nick = va.value_nick
-				and ap.entity_id = sh.entity_id
-				and ap.date_appear = FROM_UNIXTIME(:choice_date)
-			GROUP BY sh.sheet_index
-			ORDER by sh.sheet_index
-		`, {source_id, choice_date})
-	} else if (keyfilter == 'all') {
-		sheets = view.data.sheets = await db.all(`
-			SELECT 
-				sh.sheet_index,
-				sh.sheet_title,
-				sh.entity_id,
-				count(ro.row_index) as count
-			FROM sources_sheets sh, sources_rows ro
-			WHERE sh.source_id = :source_id
-				and ro.source_id = sh.source_id 
-				and ro.sheet_index = sh.sheet_index
-				and (${where_search.join(' or ')})
-			GROUP BY sh.sheet_index
-			ORDER by sh.sheet_index
-		`, {source_id, choice_date})
-	} else if (keyfilter == 'yes' || keyfilter == 'not') {
-		sheets = view.data.sheets = await db.all(`
-			SELECT 
-				sh.sheet_index,
-				sh.sheet_title,
-				sh.entity_id,
-				count(ro.row_index) as count
-			FROM sources_sheets sh, sources_rows ro
-			WHERE sh.source_id = :source_id
-				and ro.source_id = sh.source_id 
-				and ro.sheet_index = sh.sheet_index
-				and (${where_search.join(' or ')})
-				and ro.key_id ${keyfilter == 'yes' ? 'is not null' : 'is null'}
-			GROUP BY sh.sheet_index
-			ORDER by sh.sheet_index
-		`, {source_id, choice_date})
-	} else {
-		sheets = view.data.sheets = await db.all(`
-			SELECT 
-				sh.sheet_index,
-				sh.sheet_title,
-				sh.entity_id,
-				count(ro.row_index) as count
-			FROM sources_sheets sh, sources_rows ro
-			WHERE sh.source_id = :source_id
-				and ro.source_id = sh.source_id 
-				and ro.sheet_index = sh.sheet_index
-				and (${where_search.join(' or ')})
-			GROUP BY sh.sheet_index
-			ORDER by sh.sheet_index
-		`, {source_id})
-	}
-	let last_index = null
-	for (const s of sheets) {
-		
-		s.entity = s.entity_id && await Sources.getEntity(db, s.entity_id)
-	}	
-	for (const s of sheets) {
-		if (s.sheet_index > sheet.sheet_index) break
-		last_index = s.sheet_index
-	}
-	if (sheet.sheet_index != last_index) {
-		sheet.count = 0
-		sheet.entity = sheet.entity_id && await Sources.getEntity(db, sheet.entity_id)
-		sheets.splice(last_index || 0, 0, sheet)
-	}
-	
-
-	return view.ret()
-})
 rest.addResponse('sheet-dates', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
@@ -690,7 +566,136 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 	
 	return view.ret()
 })
+// rest.addResponse('sheet-sheets', ['admin'], async view => {
+// 	const db = await view.get('db')
+// 	const source_id = await view.get('source_id#required')
+// 	const source = view.data.source = await Sources.getSource(db, source_id)
+// 	//const entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
+// 	const keyfilter = await view.get('keyfilter#required')
 
+// 	/*
+// 		appear - конкретная дата появления
+// 		all - всё как есть
+// 		yes - всё с ключами
+// 		not - всё без ключей
+// 	*/
+
+// 	let sheet_index = await view.get('sheet_index#orNull')
+// 	if (!sheet_index) sheet_index = 0
+// 	const hashs = await view.get('hashs')
+
+// 	const where_search = []
+// 	if (!hashs.length) where_search.push('1=1')
+// 	for (const hash of hashs) {
+// 		const sql = 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"'
+// 		where_search.push(sql)
+// 	}
+	
+	
+
+// 	const appear = await view.get('appear') //null - последняя дата, 0 - выбрать всё, date - конкретная дата
+
+// 	const choice_date = appear || await db.col(`
+// 		SELECT UNIX_TIMESTAMP(max(ap.date_appear))
+// 		FROM sources_appears ap
+// 		WHERE ap.source_id = :source_id and date_disappear is null
+// 	`, {source_id}) || Math.round(Date.now() / 1000)
+	
+// 	//===================
+// 	let sheets = []
+
+// 	if (keyfilter == 'appear') {
+// 		sheets = view.data.sheets = await db.all(`
+// 			SELECT 
+// 				sh.sheet_index,
+// 				sh.sheet_title,
+// 				sh.entity_id,
+// 				count(ro.row_index) as count
+// 			FROM sources_sheets sh, sources_rows ro, sources_appears ap, sources_values va
+// 			WHERE sh.source_id = :source_id
+// 				and ro.source_id = sh.source_id 
+// 				and va.value_id = ro.key_id
+// 				and ro.sheet_index = sh.sheet_index
+// 				and (${where_search.join(' or ')})
+// 				and ap.key_nick = va.value_nick
+// 				and ap.entity_id = sh.entity_id
+// 				and ap.date_appear = FROM_UNIXTIME(:choice_date)
+// 			GROUP BY sh.sheet_index
+// 			ORDER by sh.sheet_index
+// 		`, {source_id, choice_date})
+// 	} else if (keyfilter == 'all') {
+// 		sheets = view.data.sheets = await db.all(`
+// 			SELECT 
+// 				sh.sheet_index,
+// 				sh.sheet_title,
+// 				sh.entity_id,
+// 				count(ro.row_index) as count
+// 			FROM sources_sheets sh, sources_rows ro
+// 			WHERE sh.source_id = :source_id
+// 				and ro.source_id = sh.source_id 
+// 				and ro.sheet_index = sh.sheet_index
+// 				and (${where_search.join(' or ')})
+// 			GROUP BY sh.sheet_index
+// 			ORDER by sh.sheet_index
+// 		`, {source_id, choice_date})
+// 	} else if (keyfilter == 'yes' || keyfilter == 'not') {
+// 		sheets = view.data.sheets = await db.all(`
+// 			SELECT 
+// 				sh.sheet_index,
+// 				sh.sheet_title,
+// 				sh.entity_id,
+// 				count(ro.row_index) as count
+// 			FROM sources_sheets sh, sources_rows ro
+// 			WHERE sh.source_id = :source_id
+// 				and ro.source_id = sh.source_id 
+// 				and ro.sheet_index = sh.sheet_index
+// 				and (${where_search.join(' or ')})
+// 				and ro.key_id ${keyfilter == 'yes' ? 'is not null' : 'is null'}
+// 			GROUP BY sh.sheet_index
+// 			ORDER by sh.sheet_index
+// 		`, {source_id, choice_date})
+// 	} else {
+// 		sheets = view.data.sheets = await db.all(`
+// 			SELECT 
+// 				sh.sheet_index,
+// 				sh.sheet_title,
+// 				sh.entity_id,
+// 				count(ro.row_index) as count
+// 			FROM sources_sheets sh, sources_rows ro
+// 			WHERE sh.source_id = :source_id
+// 				and ro.source_id = sh.source_id 
+// 				and ro.sheet_index = sh.sheet_index
+// 				and (${where_search.join(' or ')})
+// 			GROUP BY sh.sheet_index
+// 			ORDER by sh.sheet_index
+// 		`, {source_id})
+// 	}
+// 	let last_index = null
+// 	for (const s of sheets) {	
+// 		s.entity = s.entity_id && await Sources.getEntity(db, s.entity_id)
+// 	}
+
+// 	if (sheet_index === null) sheet_index = sheets[0]?.sheet_index || 0
+
+// 	const sheet = view.data.sheet = await Sources.getSheetByIndex(db, source_id, sheet_index)
+// 	if (!sheet) return view.err('Лист не найден')	
+
+// 	for (const s of sheets) {
+// 		if (s.sheet_index > sheet.sheet_index) break
+// 		last_index = s.sheet_index
+// 	}
+
+	
+
+// 	if (sheet.sheet_index != last_index) {
+// 		sheet.count = 0
+// 		sheet.entity = sheet.entity_id && await Sources.getEntity(db, sheet.entity_id)
+// 		sheets.splice(last_index || 0, 0, sheet)
+// 	}
+	
+
+// 	return view.ret()
+// })
 rest.addResponse('sheet-table', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
@@ -698,15 +703,145 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	
 	const hashs = await view.get('hashs')
 	const keyfilter = await view.get('keyfilter#appear')
-	const sheet_index = await view.get('sheet_index#or0')	
+
+	/*
+		appear - конкретная дата появления
+		all - всё как есть
+		yes - всё с ключами
+		not - всё без ключей
+	*/
+
 	
+	
+	
+
+	const where_search = []
+	if (!hashs.length) where_search.push('1=1')
+	for (const hash of hashs) {
+		const sql = 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"'
+		where_search.push(sql)
+	}
+
+	
+
 	const appear = await view.get('appear') //null - последняя дата, 0 - выбрать всё, date - конкретная дата
+
+
+
 	const date_appear = appear || await db.col(`
-		SELECT UNIX_TIMESTAMP(max(ap.date_appear)) as date
+		SELECT UNIX_TIMESTAMP(max(ap.date_appear))
 		FROM sources_appears ap
 		WHERE ap.source_id = :source_id and date_disappear is null
 	`, {source_id}) || Math.round(Date.now() / 1000)
 	
+	//===================
+	let sheets = []
+
+	if (keyfilter == 'appear') {
+		sheets = view.data.sheets = await db.all(`
+			SELECT 
+				sh.sheet_index,
+				sh.sheet_title,
+				sh.entity_id,
+				sh.represent_sheet + 0 as represent_sheet,
+				count(ro.row_index) as count
+			FROM sources_sheets sh, sources_rows ro, sources_appears ap, sources_values va
+			WHERE sh.source_id = :source_id
+				and ro.source_id = sh.source_id 
+				and va.value_id = ro.key_id
+				and ro.sheet_index = sh.sheet_index
+				and (${where_search.join(' or ')})
+				and ap.key_nick = va.value_nick
+				and ap.entity_id = sh.entity_id
+				and ap.date_appear = FROM_UNIXTIME(:date_appear)
+			GROUP BY sh.sheet_index
+			ORDER by sh.sheet_index
+		`, {source_id, date_appear})
+	} else if (keyfilter == 'all') {
+		sheets = view.data.sheets = await db.all(`
+			SELECT 
+				sh.sheet_index,
+				sh.sheet_title,
+				sh.entity_id,
+				sh.represent_sheet + 0 as represent_sheet,
+				count(ro.row_index) as count
+			FROM sources_sheets sh, sources_rows ro
+			WHERE sh.source_id = :source_id
+				and ro.source_id = sh.source_id 
+				and ro.sheet_index = sh.sheet_index
+				and (${where_search.join(' or ')})
+			GROUP BY sh.sheet_index
+			ORDER by sh.sheet_index
+		`, {source_id})
+	} else if (keyfilter == 'yes' || keyfilter == 'not') {
+		sheets = view.data.sheets = await db.all(`
+			SELECT 
+				sh.sheet_index,
+				sh.sheet_title,
+				sh.entity_id,
+				sh.represent_sheet + 0 as represent_sheet,
+				count(ro.row_index) as count
+			FROM sources_sheets sh, sources_rows ro
+			WHERE sh.source_id = :source_id
+				and ro.source_id = sh.source_id 
+				and ro.sheet_index = sh.sheet_index
+				and (${where_search.join(' or ')})
+				and ro.key_id ${keyfilter == 'yes' ? 'is not null' : 'is null'}
+			GROUP BY sh.sheet_index
+			ORDER by sh.sheet_index
+		`, {source_id})
+	} else {
+		sheets = view.data.sheets = await db.all(`
+			SELECT 
+				sh.sheet_index,
+				sh.sheet_title,
+				sh.entity_id,
+				sh.represent_sheet + 0 as represent_sheet,
+				count(ro.row_index) as count
+			FROM sources_sheets sh, sources_rows ro
+			WHERE sh.source_id = :source_id
+				and ro.source_id = sh.source_id 
+				and ro.sheet_index = sh.sheet_index
+				and (${where_search.join(' or ')})
+			GROUP BY sh.sheet_index
+			ORDER by sh.sheet_index
+		`, {source_id})
+	}
+	let last_index = null
+	for (const s of sheets) {	
+		s.represent = s.represent_sheet// && source.represent_sheets
+		s.entity = s.entity_id && await Sources.getEntity(db, s.entity_id)
+	}
+
+	let sheet_index = await view.get('sheet_index#orNull')
+	if (sheet_index === null) sheet_index = sheets[0]?.sheet_index || 0
+
+	const sheet = view.data.sheet = await Sources.getSheetByIndex(db, source_id, sheet_index)
+	if (!sheet) return view.err('Лист не найден')	
+
+	for (const s of sheets) {
+		if (s.sheet_index > sheet.sheet_index) break
+		last_index = s.sheet_index
+	}
+
+	
+
+	if (sheet.sheet_index != last_index) {
+		sheet.count = 0
+		sheet.entity = sheet.entity_id && await Sources.getEntity(db, sheet.entity_id)
+		sheets.splice(last_index || 0, 0, sheet)
+	}
+
+
+
+
+
+
+
+
+
+
+
 
 	const where_and = []
 	if (keyfilter == 'not') {
@@ -719,26 +854,17 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 		where_and.push('1=1')
 	}
 
-	const where_search = []
-	if (!hashs.length) where_search.push('1=1')
-	for (const hash of hashs) {
-		const sql = 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"'
-		where_search.push(sql)
-	}
-
-	
-	
 	const entity = view.data.entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
 	
-	const sheet = view.data.sheet = await db.fetch(`
-		SELECT sh.sheet_title, sh.key_index, sh.sheet_index, sh.entity_id,
-			sh.represent_sheet + 0 as represent_sheet,
-			csh.represent_custom_sheet + 0 as represent_custom_sheet
-		FROM sources_sheets sh
-			left join sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
-		WHERE sh.source_id = :source_id and sh.sheet_index = :sheet_index
-	`, {source_id, sheet_index})
-	if (!sheet) return view.err('Лист не найден')
+	// const sheet = view.data.sheet = await db.fetch(`
+	// 	SELECT sh.sheet_title, sh.key_index, sh.sheet_index, sh.entity_id,
+	// 		sh.represent_sheet + 0 as represent_sheet,
+	// 		csh.represent_custom_sheet + 0 as represent_custom_sheet
+	// 	FROM sources_sheets sh
+	// 		left join sources_custom_sheets csh on (csh.source_id = sh.source_id and csh.sheet_title = sh.sheet_title)
+	// 	WHERE sh.source_id = :source_id and sh.sheet_index = :sheet_index
+	// `, {source_id, sheet_index})
+	// if (!sheet) return view.err('Лист не найден')
 
 	sheet.cls = represent.calcCls(
 		source.represent_source, 
@@ -841,7 +967,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 		
 		ORDER BY ce.row_index, ce.col_index
 	`, {source_id, sheet_index, date_appear}) 
-	console.log(7, cells[0])
+
 	// const cells = []
 	// console.log({source_id, sheet_index, date_appear}, `
 	// 	SELECT 
@@ -904,7 +1030,8 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 
 		winners[text_index] ??= []
 		winners[text_index][col_index] ??= []
-		winners[text_index][col_index][multi_index] = winner
+
+		winners[text_index][col_index][multi_index] = Number(winner)
 	}
 
 	for (const text_index in texts) {

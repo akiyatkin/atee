@@ -25,7 +25,7 @@ rest.addFunction('unsigned', async (view, value, pname) => {
 
 
 rest.addFunction('int', (view, n, pname) => {
-	if (n == null) return n //'0' - true, '' = null
+	if (n == null) return null //'0' - true, '' = null
 	n = Number(n)
 	if (isNaN(n)) return null //view.err('Некорректное число ' + pname)
 	else return n
