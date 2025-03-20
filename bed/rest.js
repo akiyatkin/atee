@@ -57,19 +57,23 @@ rest.addResponse('groups', ['admin'], async view => {
 			order by fi.ordain
 		`, group)
 
-		group.marks = await db.all(`
-			SELECT ma.prop_nick, pr.prop_title, va.value_title, ma.value_nick
-			FROM bed_marks ma
+		group.samples = await db.all(`
+			SELECT gs.sample_id, ma.prop_nick, ma.value_nick, pr.prop_title, va.value_title
+			FROM bed_gsamples gs, bed_marks ma
 				LEFT JOIN sources_props pr on pr.prop_nick = ma.prop_nick
 				LEFT JOIN sources_values va on va.value_nick = ma.value_nick
-			WHERE ma.group_id = :group_id
+			WHERE gs.group_id = :group_id
+			and ma.sample_id = gs.sample_id
 		`, group)
-		group.marks = Object.groupBy(group.marks, mark => mark.prop_nick)
+		group.samples = Object.groupBy(group.samples, row => row.sample_id)
+		for (const sample_id in group.samples) {
+			group.samples[sample_id] = Object.groupBy(group.samples[sample_id], row => row.prop_nick)
+		}
 	}	
 	
 	
 	if (group) {
-		const {where, from, sort, bind} = Bed.getmdwhere(md_group, md_group.group.mgroup)
+		const {where, from, sort, bind} = Bed.getmdwhere(md_group, md_group.group.sgroup)
 		view.data.poscount = await db.col(`
 			SELECT count(distinct win.key_id)
 			FROM ${from.join(', ')}
@@ -106,6 +110,7 @@ rest.addResponse('groups', ['admin'], async view => {
 	for (const group of childs) {
 		const md = await Bed.getmd(db, '', group)
 		const {where, from, sort, bind} = Bed.getmdwhere(md, md.group.mgroup)
+		
 		group.poscount = await db.col(`
 			SELECT count(distinct win.key_id)
 			FROM ${from.join(', ')}

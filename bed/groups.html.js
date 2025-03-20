@@ -53,7 +53,7 @@ const showMark = (data, env, group, marks) => `
 			${marks.map(mark => showValue(data, env, group, mark)).join('')}
 			<div>
 				${field.search({
-					cls: 'a mute',
+					cls: 'a',
 					search: '/-bed/get-prop-value-search?prop_nick='+marks[0].prop_nick+'&group_nick=' + data.group.group_nick,
 					value: 'Добавить',
 					heading: "Выберите значение",
@@ -104,13 +104,36 @@ const showFilter = (data, env, group, filter) => `
 		</td>
 	</tr>
 `
-const showTableMarks = (data, env, group) => `
+const showTableSamples = (data, env, group) => `
+	${Object.entries(group.samples).map(([sample_id, marks]) => showTableMarks(data, env, group, marks)).join('')}
+`
+const showTableMarks = (data, env, group, marks) => `
 	<table style="margin-top:2em">
-		${Object.entries(group.marks).map(([prop_nick, marks]) => showMark(data, env, group, marks)).join('')}
+		${Object.entries(marks).map(([prop_nick, marks]) => showMark(data, env, group, marks)).join('')}
+		<tr><td colspan="2">
+			${field.search({
+			cls: 'a',
+			search:'/-bed/get-mark-prop-search',
+			value: 'Добавить критерий',
+			heading: "Добавить критерий",
+			descr: "Выберите свойство-критерий для попадания позиций в группу <b>" + data.group.group_title + "</b>",
+			label: 'Выберите свойство', 
+			type: 'text',
+			name: 'prop_nick',
+			find: 'prop_nick',
+			action: '/-bed/set-group-mark',
+			args: {group_nick: data.group.group_nick},
+			reloaddiv: env.layer.div
+		})}
+		</td></tr>
 	</table>
 `
 const showTableFilters = (data, env, group) => `
 	<h2>Фильтры</h2>
+	<table draggable="false" class="list" style="margin: 2em 0 1em">
+		${data.group.filters.map(filter => showFilter(data, env, group, filter)).join('')}
+	</table>
+	${showScriptDragFilters(data, env)}
 	<p>
 		${field.search({
 			cls: 'a',
@@ -127,10 +150,6 @@ const showTableFilters = (data, env, group) => `
 			reloaddiv: env.layer.div
 		})}
 	</p>
-	<table draggable="false" class="list" style="margin: 2em 0 1em">
-		${data.group.filters.map(filter => showFilter(data, env, group, filter)).join('')}
-	</table>
-	${showScriptDragFilters(data, env)}
 	
 `
 const showTableGroups = (data, env, group) => `
@@ -151,7 +170,8 @@ const showTableGroups = (data, env, group) => `
 	${showScriptDragGroups(data, env)}
 `
 const showMarks = (data, env, group) => `
-	<h2>Выборка</h2>
+	<h2>Выборки</h2>
+	${Object.keys(data.group.samples).length ? showTableSamples(data, env, group) : ''}
 	<p>
 		${field.search({
 			cls: 'a',
@@ -168,24 +188,6 @@ const showMarks = (data, env, group) => `
 			reloaddiv: env.layer.div
 		})}
 	</p>
-	<p>
-		${field.search({
-			cls: 'a',
-			search:'/-bed/get-mark-prop-search',
-			value: 'Добавить критерий',
-			heading: "Добавить критерий",
-			descr: "Выберите свойство-критерий для попадания позиций в группу <b>" + data.group.group_title + "</b>",
-			label: 'Выберите свойство', 
-			type: 'text',
-			name: 'prop_nick',
-			find: 'prop_nick',
-			action: '/-bed/set-group-mark',
-			args: {group_nick: data.group.group_nick},
-			reloaddiv: env.layer.div
-		})}
-	</p>
-	${Object.keys(data.group.marks).length ? showTableMarks(data, env, group) : ''}
-	
 `
 
 export const ROOT = (data, env) => err(data, env, []) || `
@@ -204,6 +206,7 @@ export const ROOT = (data, env) => err(data, env, []) || `
 `
 const showGroups = (data, env, group) => `
 	<!-- <h2>${data.group ? 'Подгруппы' : 'Группы'}</h2> -->
+	${data.childs.length ? showTableGroups(data, env, data.group) : ''}	
 	<p>
 		${field.prompt({
 			value: data.group ? 'Добавить подгруппу' : 'Добавить группу', 
@@ -219,7 +222,6 @@ const showGroups = (data, env, group) => `
 			reloaddiv: env.layer.div
 		})}
 	</p>
-	${data.childs.length ? showTableGroups(data, env, data.group) : ''}	
 	
 `
 const showFree = (data, env) => `
