@@ -182,7 +182,9 @@ tpl.ROOT = (data, env) => `
 					<div id="PANELBODY"></div>
 					<div id="PANELORDER"></div>
 					<script>
+
 						(div => {
+							
 							const panel = div.closest('.panel')
 							div.addEventListener('click', async () => {
 								if (panel.classList.contains('show')) return
@@ -205,6 +207,15 @@ tpl.ROOT = (data, env) => `
 								const Panel = await import('/-cart/Panel.js').then(r => r.default)
 								Panel.down(panel)
 							}
+							const bodyclick = async e => {
+								if (!div.closest('body')) return window.removeEventListener('click', keydown)
+								if (e.target.closest('${env.scope}')) return //Кликнули внутри
+								//if (panel.classList.contains('hide')) return
+								if (!panel.classList.contains('show')) return
+								const Panel = await import('/-cart/Panel.js').then(r => r.default)
+								Panel.down(panel)
+							}
+							window.addEventListener('click', bodyclick)
 							document.addEventListener('keydown', keydown)
 
 							const crossing = async e => {
@@ -217,7 +228,7 @@ tpl.ROOT = (data, env) => `
 							}
 							window.addEventListener('crossing', crossing)
 
-						})(document.currentScript.previousElementSibling)
+						})(document.currentScript.parentElement)
 					</script>
 				</div>
 			</div>

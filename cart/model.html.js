@@ -214,12 +214,13 @@ tpl.showButtonBuy = (data, env, mod, item = {more:{}}) => `
 			if (ans.count) btn.innerHTML = 'Открыть корзину'
 
 			btn.addEventListener('click', async () => {
-				if (ans.count) {
-					const Panel = await import("/-cart/Panel.js").then(r => r.default)
-					const panel = document.querySelector('.panel')
-					if (!panel) return
-					Panel.up(panel)
-				} else {
+				
+				const Panel = await import("/-cart/Panel.js").then(r => r.default)
+				const panel = document.querySelector('.panel')
+				if (!panel) return
+				Panel.up(panel)
+			
+				if (!ans.count) {
 					const Basket = await import('/-cart/Basket.js').then(r => r.default)
 					Basket.addButton(btn.dataset, 1, 'nocopy')
 					window.dataLayer = window.dataLayer || []
