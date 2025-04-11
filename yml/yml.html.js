@@ -24,12 +24,18 @@ const showParentId = (parent_id) => parent_id ? ` parentId="${parent_id}"` : ''
 yml.category = (group) => `
 	<category id="${group.group_id}" ${showParentId(group.parent_id)}>${group.group_title}</category>
 `
- 		
+
+yml.url = (pos, env) => `
+	<url>https://${env.host}/catalog/${pos.brand_nick}/${pos.model_nick}</url>
+`
+yml.price = (pos, env) => `
+	<price>${pos.Цена || pos.min}</price>
+`
 yml.pos = (pos, env) => `
  	<offer type="vendor.model" id="${pos.model_id}" available="true">
-		<url>https://${env.host}/catalog/${pos.brand_nick}/${pos.model_nick}</url>
+		${yml.url(pos, env)}
 		<model>${pos.Наименование || pos.model_title}</model>
-		<price>${pos.Цена || pos.min}</price>
+		${yml.price(pos, env)}
 		<currencyId>RUB</currencyId>
 		<categoryId>${pos.group_id}</categoryId>
 		${pos.images?.map(yml.image).join('') || ''}
