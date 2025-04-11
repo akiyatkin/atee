@@ -11,7 +11,7 @@ export const ROOT = (data, env) => err(data, env, ['TABLE']) || `
 `
 const showVariation = (data, env, variation) => `
 	<div>
-		<a href="disappear?entity_id=${variation[0].entity_id}">${variation[0].entity_plural}</a>: ${variation.map(row => showSource(data, env, row)).join(', ')}
+		<a href="disappear?entity_id=${variation[0].entity_id}">${variation[0].entity_title}</a>: ${variation.map(row => showSource(data, env, row)).join(', ')}
 	</div>
 `
 const showSource = (data, env, row) => `

@@ -2,7 +2,7 @@ import date from "/-words/date.html.js"
 import field from "/-dialog/field.html.js"
 export const RTABLE = (data, env) => `
 	${!data?.result ? data?.msg || 'Ошибка на сервере' : showStat(data, env)}
-	<span class="counter"></span> сек
+	<span class="counter"></span>
 	
 	<script>
 		(async div => {
@@ -25,7 +25,7 @@ export const RTABLE = (data, env) => `
 			const divcounter = document.querySelector('.counter')
 			//if (start) Recalc.counter++
 			if (start) Recalc.counter = Math.round((Date.now() - start) / 1000)
-			divcounter.innerHTML = Recalc.counter
+			divcounter.innerHTML = Recalc.counter ? Recalc.counter + ' сек' : ''
 			setTimeout(async () => {
 				if (!divcounter.closest('body')) return
 				const Client = await window.getClient()

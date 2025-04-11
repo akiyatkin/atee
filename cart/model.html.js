@@ -108,15 +108,15 @@ const showIprops = (data, env, mod, prop_titles) => {
 	return `
 		<div style="margin-right:0.3ch; font-size:90%">
 			${values.map((v, index) => getitem(data, env, v, index)).join('<span style="display: inline-block; width:1ch"></span>')}
-			<script>
+			<!-- <script>
 				(div => {
 					for (const a of div.getElementsByTagName('a')) {
 						const goalButton = () => {
 							if (!div.closest('body')) return
 							const goal = 'button'
 							const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
+							console.log('Goal.reach ' + goal)
 							if (metrikaid) {
-								console.log('Goal.reach ' + goal)
 								ym(metrikaid, 'reachGoal', goal);
 							}
 						}
@@ -124,7 +124,7 @@ const showIprops = (data, env, mod, prop_titles) => {
 						a.addEventListener('contextmenu', goalButton)
 					}
 				})(document.currentScript.parentElement)
-			</script>
+			</script> -->
 		</div>
 	`
 }

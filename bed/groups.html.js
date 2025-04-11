@@ -157,8 +157,8 @@ const showTableGroups = (data, env, group) => `
 		<thead>
 			<tr>
 				<th>${data.group ? 'Подгруппа' : 'Группа'}</th>
-				<th>Моделей</th>
 				<th>Позиций</th>
+				<th>Моделей</th>
 				<th>Подгрупп</th>
 				<td></td>
 			</tr>
@@ -170,7 +170,7 @@ const showTableGroups = (data, env, group) => `
 	${showScriptDragGroups(data, env)}
 `
 const showMarks = (data, env, group) => `
-	<h2>Выборки</h2>
+	<h2>Выбрано <span title="Позиций ${data.poscount}, моделей ${data.modcount}">(${data.poscount})</span></h2>
 	${Object.keys(data.group.samples).length ? showTableSamples(data, env, group) : ''}
 	<p>
 		${field.search({
@@ -192,15 +192,15 @@ const showMarks = (data, env, group) => `
 
 export const ROOT = (data, env) => err(data, env, []) || `
 	${data.group ? showParent(data, env) : ''}
-	<h1>${data.group ? showEdit(data, env, data.group) : 'Группы'}</h1>
+	<h1>${data.group ? showEdit(data, env, data.group) : 'Группы'}<span style="font-size:12px"></h1>
 	<!-- <pre>${data.sql}</pre> -->
-	<table>
-		<tr><td>Моделей</td><td>${data.modcount}</td></tr>
-		<tr><td>Позиций</td><td>${data.poscount}</td></tr>
-	</table>
+
+	
+	
+	
+	${!data.group ? '' : showMarks(data, env, data.group)}
 	${showGroups(data, env, data.group)}
 	${data.group?.filters?.length ? showTableFilters(data, env, data.group) : ''}
-	${!data.group ? '' : showMarks(data, env, data.group)}
 	${!data.freetable ? '' : showFree(data, env, data.group)}
 	
 `
@@ -225,7 +225,7 @@ const showGroups = (data, env, group) => `
 	
 `
 const showFree = (data, env) => `
-	<h2>Свободные позиции (${data.freetable?.count || 0})</h2>
+	<h2>Свободные позиции <span title="Позиций ${data.freetable?.poscount || 0}, моделей ${data.freetable?.modcount || 0}">(${data.freetable?.poscount || 0})</span></h2>
 	<div class="revscroll">
 		<table>
 			<thead>
@@ -278,9 +278,8 @@ const showGroup = (data, env, group) => `
 			<a href="groups/${group.group_nick}">${group.group_title}</a>
 		</td>
 		
-		
-		<td>${group.modcount}</td>
 		<td>${group.poscount}</td>
+		<td>${group.modcount}</td>
 		<td>${group.childs}</td>
 		<td>
 			${field.button({

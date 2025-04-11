@@ -21,10 +21,13 @@ BedAdmin.reorderGroups = async (db) => {
 	return Promise.all(promises)
 }
 BedAdmin.getFreeItems = async (db, md) => {
-	const from = ['sources_winners win']
+	const from = ['sources_wvalues wmv, sources_winners win']
 	const where = [`
 		win.entity_id = :pos_entity_id 
 		and win.prop_id = :mod_entity_id 
+		and wmv.entity_id = win.entity_id
+		and wmv.prop_id = win.prop_id
+		and wmv.key_id = win.key_id
 	`]
 	let i = 0
 	if (md.group) {
@@ -57,9 +60,15 @@ BedAdmin.getFreeItems = async (db, md) => {
 			where.push('(' + marks.join(' or ') + ')')
 		}
 	}
-
-	const count = await db.col(`
+	const poscount = await db.col(`
 		SELECT count(distinct win.key_id)
+		FROM 
+			${from.join(' ')}
+		WHERE 
+			${where.join(' and ')}
+	`, md)
+	const modcount = await db.col(`
+		SELECT count(distinct wmv.value_id)
 		FROM 
 			${from.join(' ')}
 		WHERE 
@@ -73,7 +82,7 @@ BedAdmin.getFreeItems = async (db, md) => {
 			${where.join(' and ')}
 		LIMIT 500
 	`, md)
-	if (!count) return {count}
+	if (!poscount) return {poscount, modcount}
 	const freeitems = await BedAdmin.getItemsValues(db, list, md)
 	const headid = {}
 	for (const key_id in freeitems) {
@@ -104,7 +113,7 @@ BedAdmin.getFreeItems = async (db, md) => {
 		rows.push(row)
 
 	}
-	return {count, head: props.map(prop => prop.prop_title), rows}
+	return {poscount, modcount, head: props.map(prop => prop.prop_title), rows}
 }
 BedAdmin.getItemsValues = async (db, itemids, md) => {
 	if (!itemids.length) return []
