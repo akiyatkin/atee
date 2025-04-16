@@ -1,10 +1,7 @@
 import nicked from '/-nicked'
 
-const nicks = { }
-const tonick = (from) => {
-	if (!nicks[from]) nicks[from] = nicked(from)
-	return nicks[from]
-}
+
+
 class Hand {
 	constructor (indexes, sheet, conf, row, prop) {
 		this.indexes = indexes
@@ -27,13 +24,14 @@ class Hand {
 	getFrom (from) {
 		const {row, indexes, prop} = this
 		if (!from) from = prop.prop_title
-		const nick = tonick(from)
+		const nick = Hand.tonick(from)
 		const index = indexes[nick]
 		if (!index) return ''
 		let value = row[index] ?? ''
 		if (value.replace) value = value.replace(/\s/g,'')
 		value = parseFloat(value)
 		return value
+		//return Math.round(value)
 	}
 	get (from) {
 		if (from) return this.getFrom(from)
@@ -42,10 +40,12 @@ class Hand {
 		value = this._checkUSD(value)
 		if (!value) return '' //0 за значение не считаем
 		return Math.floor(value)
+		//return Math.round(Math.floor(value))
 	}
-	getSkidka (from) {
+	getSkidka (from, name) {
 		const {row, indexes, conf, prop} = this
 		let value
+
 		if (from) {
 			value = this.getFrom(from)
 		} else {
@@ -53,13 +53,15 @@ class Hand {
 			value = this._checkUSD(value)
 		}
 		if (!value) return ''
-		const discount = conf.skidka
+		const discount = conf[name]
 		if (discount) {
 			const k = (100 - discount) / 100
 			value = value * k
 		}
-		return Math.floor(value)
+		//return Math.round(Math.floor(value))
+		return Math.round(Math.floor(value) * 100) / 100
 	}
+	
 	_checkUSD (value) {
 		const {sheet, conf} = this
 		if (!value) return value
@@ -102,5 +104,9 @@ class Hand {
 	// }
 	
 }
-
+const nicks = {}
+Hand.tonick = (from) => {
+	if (!nicks[from]) nicks[from] = nicked(from)
+	return nicks[from]
+}
 export default Hand

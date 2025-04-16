@@ -621,19 +621,21 @@ export class Upload {
 				
 				for (const new_prop_title in handlers) {
 					const tpl = handlers[new_prop_title]
-					let prop
-					for (const p of props) {
-						if (p.prop_title == new_prop_title) {
-							prop = p
-							break
-						}
-					}
+					const prop = props.find(p => p.prop_title == new_prop_title)
+					// let prop
+					// for (const p of props) {
+					// 	if (p.prop_title == new_prop_title) {
+					// 		prop = p
+					// 		break
+					// 	}
+					// }
 					//if (!prop) continue //Это свойство в этом прайсе не записывается и обработка пропускается
 					try {
 						
 						const hand = new Hand(indexes, sheet, conf, row, prop)
 						
 						const val = interpolate(tpl, row, indexes, sheet, conf, hand, new_prop_title)
+						indexes[Hand.tonick(prop.prop_title)] = prop.index
 						row[prop.index] = val
 						//row[prop.index] = val === '' ? row[prop.index] : val
 					} catch(e) {
