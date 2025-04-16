@@ -42,7 +42,7 @@ class Hand {
 		return Math.floor(value)
 		//return Math.round(Math.floor(value))
 	}
-	getSkidka (from, name) {
+	getSkidka (from, name = "skidka") {
 		const {row, indexes, conf, prop} = this
 		let value
 
