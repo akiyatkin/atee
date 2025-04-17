@@ -47,7 +47,8 @@ tpl.POPUP = (data, env) => `
 
 				const need = await import('/-nicked/getNeed.js').then(r => r.default(inp))
 
-				await window.getClient().then(r => r.pushState('?'+ m +'theme=' + theme + 'partner=' + need.hash))
+				const Client = await window.getClient()
+				Client.go('?'+ m +'theme=' + theme + 'partner=' + need.hash)
 				
 				const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 				Dialog.hide(Dialog.findPopup(form))

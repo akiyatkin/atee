@@ -513,10 +513,13 @@ Catalog.prepareCostMinMax = async (base, model) => {
 	}
 	if (!is_item_cost) return
 
-	let min, max
+	let min, max, empty
 	for (const item of model.items) {
 		const number = item[cost.prop_title]
-		if (!number) continue
+		if (!number) {
+			empty = true
+			continue
+		}
 		if (!min || number < min) min = number
 		if (!max || number > max) max = number
 	}
@@ -527,12 +530,13 @@ Catalog.prepareCostMinMax = async (base, model) => {
 		if (!min_discount || item.discount < min_discount) min_discount = item.discount
 		if (!max_discount || item.discount > max_discount) max_discount = item.discount
 	}
-
-	if (min == max) { //Цена не у всех позиций
-		model[cost.prop_title] = min
-	} else {
-		model['min'] = min
-		model['max'] = max
+	if (!empty) {
+		if (min == max) { //Цена не у всех позиций
+			model[cost.prop_title] = min
+		} else {
+			model['min'] = min
+			model['max'] = max
+		}
 	}
 	if (max_discount) {
 		model.discount = max_discount
