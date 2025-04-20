@@ -4,9 +4,8 @@ const tpl = {}
 export default tpl 
 tpl.CALLBACK = user => `
 	<p>
-		Телефон: ${user.phone}<br>
+		Телефон: ${user.phone ? '+' + user.phone : ''}<br>
 	</p>
-
 	${tpl.signature(user)}
 `
 
@@ -15,7 +14,7 @@ tpl.CONTACTS = user => `
 		Имя: ${user.name || ''}<br>
 		Организация: ${user.org || ''}<br>
 		Email: ${user.email || ''}<br>
-		Телефон: ${user.phone || ''}
+		Телефон: ${user.phone ? '+' + user.phone : ''}
 	</p>
 
 	<pre>${user.text}</pre>

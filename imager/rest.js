@@ -102,10 +102,7 @@ rest.addResponse('webp', async view => {
 	
 	let store
 	const iscache = cache||conf.constraint?.alwayscache
-
-	
 	if (iscache) {
-
 		const name = nicked([src,h,w,fit].join('-')).slice(-127)
 		store = `cache/imager/${name}.webp`
 		const is = await AccessCache.once('isFreshCache' + store, async () => {
@@ -115,7 +112,6 @@ rest.addResponse('webp', async view => {
 			const ostat = await fs.stat(src).catch(e => null)
 			return cstat.mtime > ostat.mtime
 		})
-		
 		if (is) return createReadStream(store)
 	}
 
@@ -135,6 +131,7 @@ rest.addResponse('webp', async view => {
 	} else {
 		inStream = createReadStream(src)
 	}
+
 	if (!inStream) return view.err('Не удалось загрузить', 500)
 
 	const withoutEnlargement = (w && h && fit == 'contain') ? false : true
@@ -152,7 +149,9 @@ rest.addResponse('webp', async view => {
 	})
 	const duplex = inStream.pipe(transform)
 	inStream.on('error', e => duplex.destroy(e))
-	if (!iscache) return duplex
+
+	if (!iscache) return duplex;
+
 
 	(() => {
 		const chunks = []
@@ -166,6 +165,7 @@ rest.addResponse('webp', async view => {
 			const ws = createWriteStream(store)
 			await ws.write(Buffer.concat(chunks))
 			ws.close()
+
 			AccessCache.set('isFreshCache' + store, true)
 		})
 	})()
