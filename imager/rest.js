@@ -105,14 +105,15 @@ rest.addResponse('webp', async view => {
 	if (iscache) {
 		const name = nicked([src,h,w,fit].join('-')).slice(-127)
 		store = `cache/imager/${name}.webp`
-		const is = await AccessCache.once('isFreshCache' + store, async () => {
-			const cstat = await fs.lstat(store).catch(e => null)
-			if (!cstat) return false
-			if (remote) return true //для remote кэш всегда свежий. Чтобы сбросить нужно вручную удалить папку cache
-			const ostat = await fs.stat(src).catch(e => null)
-			return cstat.mtime > ostat.mtime
-		})
-		if (is) return createReadStream(store)
+		
+		// const is = await AccessCache.once('isFreshCache' + store, async () => {
+		// 	const cstat = await fs.lstat(store).catch(e => null)
+		// 	if (!cstat) return false
+		// 	if (remote) return true //для remote кэш всегда свежий. Чтобы сбросить нужно вручную удалить папку cache
+		// 	const ostat = await fs.stat(src).catch(e => null)
+		// 	return cstat.mtime > ostat.mtime
+		// })
+		// if (is) return createReadStream(store)
 	}
 
 	let inStream
@@ -153,22 +154,22 @@ rest.addResponse('webp', async view => {
 	if (!iscache) return duplex;
 
 
-	(() => {
-		const chunks = []
-		duplex.on('data', chunk => {
-			chunks.push(chunk)
-		})
-		duplex.on('error', chunk => {
-			console.log('Imager stream error', src, view.visitor.client.referer)
-		})
-		duplex.on('end', async chunk => {
-			const ws = createWriteStream(store)
-			await ws.write(Buffer.concat(chunks))
-			ws.close()
+	// (() => {
+	// 	const chunks = []
+	// 	duplex.on('data', chunk => {
+	// 		chunks.push(chunk)
+	// 	})
+	// 	duplex.on('error', chunk => {
+	// 		console.log('Imager stream error', src, view.visitor.client.referer)
+	// 	})
+	// 	duplex.on('end', async chunk => {
+	// 		const ws = createWriteStream(store)
+	// 		await ws.write(Buffer.concat(chunks))
+	// 		ws.close()
 
-			AccessCache.set('isFreshCache' + store, true)
-		})
-	})()
+	// 		AccessCache.set('isFreshCache' + store, true)
+	// 	})
+	// })()
 	return duplex
 })
 

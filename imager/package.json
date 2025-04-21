@@ -20,6 +20,6 @@
 		"@atee/nicked": "https://gitpkg.now.sh/akiyatkin/atee/nicked?main"
 	},
 	"dependencies": {
-		"sharp": "^0.31"
+		"sharp": "^0.34"
 	}
 }
