@@ -15,7 +15,7 @@ yml.ROOT = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
 		${data.groups.map(yml.category).join('')}
 	</categories>	
 	<offers>
-		${data.poss.map(pos => yml.pos(pos, env)).join('')}
+		${data.poss.map(pos => yml.pos(data, pos, env)).join('')}
 	</offers>
  </shop>
  </yml_catalog>
@@ -26,21 +26,25 @@ yml.category = (group) => `
 	<category id="${group.group_id}" ${showParentId(group.parent_id)}>${group.group_title}</category>
 `
 
-yml.url = (pos, env) => `
+yml.url = (data, pos, env) => data.partner ? 
+`
+	<url>https://${env.host}/catalog/${pos.brand_nick}/${pos.model_nick}?theme=partner=${data.partner.title}</url>
+` : `
 	<url>https://${env.host}/catalog/${pos.brand_nick}/${pos.model_nick}</url>
 `
-yml.price = (pos, env) => `
+
+yml.price = (data, pos, env) => `
 	<price>${pos.Цена || pos.min}</price>
 `
-yml.oldprice = (pos, env) => !pos['Старая цена'] ? '' : `
+yml.oldprice = (data, pos, env) => !pos['Старая цена'] ? '' : `
 	<oldprice>${pos['Старая цена']}</oldprice>
 `
-yml.pos = (pos, env) => `
+yml.pos = (data, pos, env) => `
  	<offer type="vendor.model" id="${pos.model_id}" available="true">
-		${yml.url(pos, env)}
+		${yml.url(data, pos, env)}
 		<model>${pos.Наименование || pos.model_title}</model>
-		${yml.price(pos, env)}
-		${yml.oldprice(pos, env)}
+		${yml.price(data, pos, env)}
+		${yml.oldprice(data, pos, env)}
 		<currencyId>RUB</currencyId>
 		<categoryId>${pos.group_id}</categoryId>
 		${pos.images?.map(yml.image).join('') || ''}

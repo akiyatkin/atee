@@ -349,10 +349,13 @@ Catalog.prepareCost = async (base, model, partner) => {
 		const change = model => {
 			if (!model[partner.cost]) return
 			if (partner.cost == cost.prop_title) return
+
+			
 			if (!model[oldcost.prop_title]) {
 				model[oldcost.prop_title] = model[cost.prop_title]
 			}
 			model[cost.prop_title] = model[partner.cost]
+
 			//delete model[partner.cost]
 		}
 		change(model)
@@ -545,6 +548,7 @@ Catalog.prepareCostMinMax = async (base, model) => {
 Catalog.getGroupOpt = async (db, visitor, group_id) => {
 	const options = await Showcase.getOptions(visitor)
 	const group = await Catalog.getGroupById(db, visitor, group_id)
+
 	let opt = {}
 
 	const groupids = {}
@@ -1006,6 +1010,7 @@ Catalog.getmdwhere = async (view, md, partner = '') => {
 		let sort = ['min(i.ordain)']
 		where.push('i.model_id = m.model_id')
 		let iprops_dive = false
+
 		if (md.more) {
 			let i = 0
 			for (const prop_nick in md.more) {
@@ -1027,6 +1032,9 @@ Catalog.getmdwhere = async (view, md, partner = '') => {
 				if (values == 'empty') {
 					from[1] = `showcase_items i left join showcase_iprops ip${i} on (ip${i}.model_id = i.model_id and ip${i}.item_num = i.item_num and ip${i}.prop_id = ${prop.prop_id})`
 					where.push(`ip${i}.prop_id is null`)
+				} else if (values == 'any') {
+					from[1] = `showcase_items i left join showcase_iprops ip${i} on (ip${i}.model_id = i.model_id and ip${i}.item_num = i.item_num and ip${i}.prop_id = ${prop.prop_id})`
+					where.push(`ip${i}.prop_id is not null`)
 				} else {
 					from.push(`showcase_iprops ip${i}`)
 					where.push(`ip${i}.model_id = i.model_id`)

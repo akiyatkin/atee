@@ -29,9 +29,9 @@ rest.addResponse('get-yandex', async view => {
 
 	const feed = await view.get('feed')
 	const db = await view.get('db')
+	const partner = await view.get('partner')
 
-
-	const poss = await yml.data(view, feed)
+	const poss = await yml.data(view, feed, partner)
 
 
 	const conf = await config('yml')
@@ -45,6 +45,7 @@ rest.addResponse('get-yandex', async view => {
 		['Описание', 'Наименование', 'model_title'].forEach(name => pos[name] = tostr(pos[name]))
 		if (pos.more) for (const name in pos.more) pos.more[name] = tostr(pos.more[name])
 	})
+	data.partner = partner
 	data.poss = poss
 	
 	const xml = tpl.ROOT(data, {host, email: mail.main || '', ...conf})

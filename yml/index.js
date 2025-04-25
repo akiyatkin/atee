@@ -18,7 +18,7 @@ const yml = {
 		}
 		return groups
 	},
-	data: (view, feed) => cproc(yml, '', async () => {
+	data: (view, feed, partner = false) => cproc(yml, '', async () => {
 		const { db, base } = await view.gets(['db','base'])
 		const conf = await config('yml')
 		const md = conf.feeds[feed]
@@ -32,7 +32,9 @@ const yml = {
 			WHERE ${where.join(' and ')}
 			GROUP BY m.model_id 
 		`)
-		const list = await Catalog.getModelsByItems(db, base, moditem_ids)
+		const list = await Catalog.getModelsByItems(db, base, moditem_ids, partner)
+		// const pos = list.find(pos => pos['model_title'] == 'TSi-Pe25FPN')
+		// console.log(pos)
 		return list
 	})
 }

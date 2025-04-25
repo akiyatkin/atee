@@ -30,8 +30,9 @@ class Hand {
 		let value = row[index] ?? ''
 		if (value.replace) value = value.replace(/\s/g,'')
 		value = parseFloat(value)
-		return value
-		//return Math.round(value)
+		if (!value) return value
+		//return value
+		return Math.round(Math.floor(value)) || 1
 	}
 	get (from) {
 		if (from) return this.getFrom(from)
@@ -39,8 +40,8 @@ class Hand {
 		let value = this.getFrom(from)
 		value = this._checkUSD(value)
 		if (!value) return '' //0 за значение не считаем
-		return Math.floor(value)
-		//return Math.round(Math.floor(value))
+		//return Math.floor(value)
+		return Math.round(Math.floor(value)) || 1
 	}
 	getSkidka (from, name = "skidka") {
 		const {row, indexes, conf, prop} = this
