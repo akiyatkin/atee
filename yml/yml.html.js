@@ -11,8 +11,9 @@ yml.ROOT = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
 	<currencies>
 		<currency id="RUR" rate="1"/>
 	</currencies>
-	<categories>${data.groups.map(yml.category).join('')}
-	</categories>
+	<categories>
+		${data.groups.map(yml.category).join('')}
+	</categories>	
 	<offers>
 		${data.poss.map(pos => yml.pos(pos, env)).join('')}
 	</offers>
@@ -31,11 +32,15 @@ yml.url = (pos, env) => `
 yml.price = (pos, env) => `
 	<price>${pos.Цена || pos.min}</price>
 `
+yml.oldprice = (pos, env) => !pos['Старая цена'] ? '' : `
+	<oldprice>${pos['Старая цена']}</oldprice>
+`
 yml.pos = (pos, env) => `
  	<offer type="vendor.model" id="${pos.model_id}" available="true">
 		${yml.url(pos, env)}
 		<model>${pos.Наименование || pos.model_title}</model>
 		${yml.price(pos, env)}
+		${yml.oldprice(pos, env)}
 		<currencyId>RUB</currencyId>
 		<categoryId>${pos.group_id}</categoryId>
 		${pos.images?.map(yml.image).join('') || ''}
