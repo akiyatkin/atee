@@ -12,7 +12,7 @@ yml.ROOT = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
 		<currency id="RUR" rate="1"/>
 	</currencies>
 	<categories>
-		${data.groups.map(yml.category).join('')}
+		${data.groups.map(group => yml.category(data, env, group)).join('')}
 	</categories>	
 	<offers>
 		${data.poss.map(pos => yml.pos(data, pos, env)).join('')}
@@ -22,8 +22,10 @@ yml.ROOT = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
 `
 
 const showParentId = (parent_id) => parent_id ? ` parentId="${parent_id}"` : ''
-yml.category = (group) => `
-	<category id="${group.group_id}" ${showParentId(group.parent_id)}>${group.group_title}</category>
+yml.category = (data, env, group) => data.partner ? `
+	<category id="${group.group_id}" ${showParentId(group.parent_id)} url="https://${env.host}/catalog/${group.group_nick}?theme=partner=${data.partner.title}">${group.group_title}</category>
+` : `
+	<category id="${group.group_id}" ${showParentId(group.parent_id)} url="https://${env.host}/catalog/${group.group_nick}">${group.group_title}</category>
 `
 
 yml.url = (data, pos, env) => data.partner ? 

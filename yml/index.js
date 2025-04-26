@@ -13,8 +13,8 @@ const yml = {
 		const tree = await Catalog.getTree(db, view.visitor)
 		const groups = []
 		for (const group_id in tree) {
-			const {parent_id, group_title} = tree[group_id]
-			groups.push({group_id, parent_id, group_title})
+			const {parent_id, group_title, group_nick} = tree[group_id]
+			groups.push({group_id, parent_id, group_title, group_nick})
 		}
 		return groups
 	},
