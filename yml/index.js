@@ -5,6 +5,7 @@ import Catalog from "/-catalog/Catalog.js"
 
 await fs.mkdir('cache/yml/', { recursive: true }).catch(e => null)
 
+import rest_docx from '/-docx/rest.js'
 
 
 const yml = {
@@ -12,9 +13,18 @@ const yml = {
 		const db = await view.get('db')
 		const tree = await Catalog.getTree(db, view.visitor)
 		const groups = []
+
+		const conf = await config('showcase')
+		
+
 		for (const group_id in tree) {
-			const {parent_id, group_title, group_nick} = tree[group_id]
-			groups.push({group_id, parent_id, group_title, group_nick})
+			const {parent_id, group_title, group_nick, icon} = tree[group_id]
+
+			const src = conf.pages + group_nick
+			const reans = await rest_docx.get('get-html', { src }, view.visitor)
+			const description = reans.status == 404 ? '' : reans.data
+			
+			groups.push({group_id, parent_id, group_title, group_nick, icon, description})
 		}
 		return groups
 	},

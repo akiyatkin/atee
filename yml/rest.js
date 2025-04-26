@@ -38,8 +38,16 @@ rest.addResponse('get-yandex', async view => {
 	const mail = await config('mail')
 	const host = view.visitor.client.host
 	
+	
+
 	const data = {}
-	data.groups = await yml.groups(view)
+	const groups = await yml.groups(view)
+	groups.forEach(group => {
+		if (group.icon) group.icon = /^http/.test(group.icon) ? encodeURI(group.icon) : 'https://' + host + '/' + encodeURI(group.icon);
+		['description', 'group_title'].forEach(name => group[name] = tostr(group[name]))
+	})
+	data.groups = groups
+
 	poss.forEach(pos => {
 		if (pos.images) pos.images = pos.images.map(src => /^http/.test(src) ? encodeURI(src) : 'https://' + host + '/' + encodeURI(src));
 		['Описание', 'Наименование', 'model_title'].forEach(name => pos[name] = tostr(pos[name]))

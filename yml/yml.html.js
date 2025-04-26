@@ -13,40 +13,59 @@ yml.ROOT = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
 	</currencies>
 	<categories>
 		${data.groups.map(group => yml.category(data, env, group)).join('')}
-	</categories>	
+	</categories>
 	<offers>
 		${data.poss.map(pos => yml.pos(data, pos, env)).join('')}
 	</offers>
+	<collections>
+		${data.groups.map(group => yml.collection(data, env, group)).join('')}
+	</collections>
  </shop>
  </yml_catalog>
 `
 
 const showParentId = (parent_id) => parent_id ? ` parentId="${parent_id}"` : ''
-yml.category = (data, env, group) => data.partner ? `
-	<category id="${group.group_id}" ${showParentId(group.parent_id)} url="https://${env.host}/catalog/${group.group_nick}?theme=partner=${data.partner.title}">${group.group_title}</category>
-` : `
-	<category id="${group.group_id}" ${showParentId(group.parent_id)} url="https://${env.host}/catalog/${group.group_nick}">${group.group_title}</category>
+yml.category = (data, env, group) => `
+	<category id="${group.group_id}" ${showParentId(group.parent_id)}>${group.group_title}</category>
 `
-
-yml.url = (data, pos, env) => data.partner ? 
+yml.collection = (data, env, group) => `
+	<collection id="${group.group_nick}" ${showParentId(group.parent_id)}>
+		<name>${group.group_title}</name>
+		${yml.description(data, env, group)}
+		${yml.picture(data, env, group)}
+		<url>https://${env.host}/catalog/${group.group_nick}${data.partner ? '?theme=partner=' + data.partner.title : ''}</url>
+	</collection>
 `
+yml.description = (data, env, group) => !group.description ? '' : `
+	<description><![CDATA[
+		${group.description}
+	]]></description>
+`
+yml.picture = (data, env, group) => !group.icon ? '' : `
+	<picture>${group.description}</picture>
+`
+yml.collectionid = (data, env, pos) => `
+	<collectionId>${pos.group_nick}</collectionId>
+`
+yml.url = (data, env, pos) => data.partner ? `
 	<url>https://${env.host}/catalog/${pos.brand_nick}/${pos.model_nick}?theme=partner=${data.partner.title}</url>
 ` : `
 	<url>https://${env.host}/catalog/${pos.brand_nick}/${pos.model_nick}</url>
 `
 
-yml.price = (data, pos, env) => `
+yml.price = (data, env, pos) => `
 	<price>${pos.Цена || pos.min}</price>
 `
-yml.oldprice = (data, pos, env) => !pos['Старая цена'] ? '' : `
+yml.oldprice = (data, env, pos) => !pos['Старая цена'] ? '' : `
 	<oldprice>${pos['Старая цена']}</oldprice>
 `
 yml.pos = (data, pos, env) => `
  	<offer type="vendor.model" id="${pos.model_id}" available="true">
-		${yml.url(data, pos, env)}
+		${yml.url(data, env, pos)}
 		<model>${pos.Наименование || pos.model_title}</model>
-		${yml.price(data, pos, env)}
-		${yml.oldprice(data, pos, env)}
+		${yml.price(data, env, pos)}
+		${yml.collectionid(data, env, pos)}
+		${yml.oldprice(data, env, pos)}
 		<currencyId>RUB</currencyId>
 		<categoryId>${pos.group_id}</categoryId>
 		${pos.images?.map(yml.image).join('') || ''}
