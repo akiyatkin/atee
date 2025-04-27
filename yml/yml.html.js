@@ -29,7 +29,7 @@ yml.category = (data, env, group) => `
 	<category id="${group.group_id}" ${showParentId(group.parent_id)}>${group.group_title}</category>
 `
 yml.collection = (data, env, group) => `
-	<collection id="${group.group_nick}" ${showParentId(group.parent_id)}>
+	<collection id="${group.group_nick}">
 		<name>${group.group_title}</name>
 		${yml.description(data, env, group)}
 		${yml.picture(data, env, group)}
