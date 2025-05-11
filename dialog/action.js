@@ -34,6 +34,10 @@ export default async (form, userlayer = {}) => {
 		}, 2000)
 	}
 	await Dialog.open(layer)
+	if (layer.data.result) {
+		const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+		if (Dialog.parents[1]) Dialog.hide(Dialog.parents[0])
+	}
 	return layer.data
 }
 

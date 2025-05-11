@@ -133,6 +133,7 @@ const Autosave = {
 				inp.disabled = disabled
 				if (valsave == null) return
 				if (valsave === '') return
+				if (inp.dataset.autosave == 'noload') return false
 				Autosave.setValChange(inp, valsave);
 				Autosave.statusPip(inp, true);
 			}))

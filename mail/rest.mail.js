@@ -43,8 +43,8 @@ rest.addArgument('phone', ['string'], (view, phone) => {
 	if (!phone) return phone
 	phone = phone.replace(/\D/g,'')
 	phone = phone.replace(/^8/,'7')
-	if (phone[0] != 7) return view.err("Уточните ваш телефон, номер должен начинаться с 7, мы работаем в России")
-	if (phone.length != 11) return view.err("Уточните ваш телефон для связи, должно быть 11 цифр ("+phone+")")
+	if (phone[0] != 7) return view.err("Уточните, пожалуйста, ваш телефон, номер должен начинаться с 7")
+	if (phone.length != 11) return view.err("Уточните, пожалуйста, ваш телефон. В номере должно быть 11 цифр ("+phone+")")
 	return phone
 })
 rest.addVariable('phone#required', async (view) => {

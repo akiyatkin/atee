@@ -256,7 +256,7 @@
 }
 .float-label > .field ~ label,
 .float-label > input ~ label {
-	color: #CCC;
+	color: #999;
 }
 
 @media (max-width: 575px) {
