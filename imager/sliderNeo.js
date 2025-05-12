@@ -26,7 +26,7 @@ export default div => {
 
 	const check = (scrollLeft = slider.scrollLeft) => requestAnimationFrame(() => {
 		for (const left of lefts) left.style.opacity = scrollLeft < 1 ? 0 : 1
-		for (const right of rights) right.style.opacity = slider.offsetWidth + scrollLeft >= slider.scrollWidth ? 0 : 1
+		for (const right of rights) right.style.opacity = slider.offsetWidth + scrollLeft + 1 >= slider.scrollWidth ? 0 : 1
 	})
 	
 
