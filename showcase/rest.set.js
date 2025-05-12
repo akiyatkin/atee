@@ -14,7 +14,7 @@ export default rest
 
 import { whereisit } from '/-controller/whereisit.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
-rest.addAction('set-reset', async view => {
+rest.addAction('set-reset', ['setaccess'], async view => {
 	await view.gets(['admin','start'])
 	const { db } = await view.gets(['db'])
 
@@ -49,8 +49,8 @@ rest.addAction('set-reset', async view => {
 	await Promise.all(promises)
 	
 	return view.ret('База пересоздана')
-}, ['setaccess'])
-rest.addAction('set-brands-clearempty', async view => {
+})
+rest.addAction('set-brands-clearempty', ['setaccess'], async view => {
 	await view.gets(['admin','start'])
 	const { db } = await view.gets(['db'])
 	await db.changedRows(`
@@ -60,7 +60,7 @@ rest.addAction('set-brands-clearempty', async view => {
 		WHERE m.brand_id is null
 	`)
 	return view.ret('Удалено')
-}, ['setaccess'])
+})
 
 const addParents = (group, parent_id, tree) => {
 	if (!parent_id) return
@@ -100,7 +100,7 @@ const getTree = async (db) => {
 	}
 	return tree
 }
-rest.addAction('set-groups-replace', async view => {
+rest.addAction('set-groups-replace', ['setaccess'], async view => {
 	await view.gets(['admin'])
 	const { id, title, base, db } = await view.gets(['id','title', 'base','db'])
 	const parent_nick = base.onicked(title)
@@ -121,8 +121,8 @@ rest.addAction('set-groups-replace', async view => {
 	`, {group_id, parent_id})
 	if (!r) return view.err('Что-то пошло не так')
 	return view.ret('Готово '+id + ' ' + title)
-}, ['setaccess'])
-rest.addAction('set-groups-clearempty', async view => {
+})
+rest.addAction('set-groups-clearempty', ['setaccess'], async view => {
 	await view.gets(['admin','start'])
 	const { db } = await view.gets(['db'])
 
@@ -163,8 +163,8 @@ rest.addAction('set-groups-clearempty', async view => {
 	}
 	
 	return view.ret('Удалено')
-}, ['setaccess'])
-rest.addAction('set-brands-move', async view => {
+})
+rest.addAction('set-brands-move', ['setaccess'], async view => {
 	await view.gets(['admin','start'])
 	const { db, before_id, after_id } = await view.gets(['db','before_id','after_id'])
 	await db.start()
@@ -212,8 +212,8 @@ rest.addAction('set-brands-move', async view => {
 
 	await db.commit()
 	return view.ret('Перенесено')
-}, ['setaccess'])
-rest.addAction('set-groups-move', async view => {
+})
+rest.addAction('set-groups-move', ['setaccess'], async view => {
 	await view.gets(['admin'])
 	const { db, before_id, after_id } = await view.gets(['db','before_id','after_id'])
 	//нужно before поставить перед after
@@ -261,8 +261,8 @@ rest.addAction('set-groups-move', async view => {
 	}
 
 	return view.ret('Перенесено')
-}, ['setaccess'])
-rest.addAction('set-props-move', async view => {
+})
+rest.addAction('set-props-move', ['setaccess'], async view => {
 	await view.gets(['admin','start'])
 	const { db, before_id, after_id } = await view.gets(['db','before_id','after_id'])
 	await db.start()
@@ -296,8 +296,8 @@ rest.addAction('set-props-move', async view => {
 	
 	await db.commit()
 	return view.ret('Упорядочено')
-}, ['setaccess'])
-rest.addAction('set-values-clearempty', async view => {
+})
+rest.addAction('set-values-clearempty', ['setaccess'], async view => {
 	await view.gets(['admin','start'])
 	const { db } = await view.gets(['db'])
 	await db.changedRows(`
@@ -307,8 +307,8 @@ rest.addAction('set-values-clearempty', async view => {
 		WHERE ip.value_id is null
 	`)
 	return view.ret('Удалено')
-}, ['setaccess'])
-rest.addAction('set-props-clearempty', async view => {
+})
+rest.addAction('set-props-clearempty', ['setaccess'], async view => {
 	await view.gets(['admin','start'])
 	const { db } = await view.gets(['db'])
 	await db.changedRows(`
@@ -319,7 +319,7 @@ rest.addAction('set-props-clearempty', async view => {
 	`)
 	//Первый 3 свойства системные model, brand, group
 	return view.ret('Удалено')
-}, ['setaccess'])
+})
 
 rest.addAction('set-models-reorder', async view => {
 	await view.gets(['admin','start'])
@@ -327,7 +327,7 @@ rest.addAction('set-models-reorder', async view => {
 	const r = await upload.reorderModels()
 	return view.fin(r)
 })
-rest.addAction('set-models-clearempty', async view => {
+rest.addAction('set-models-clearempty', ['setaccess'], async view => {
 	await view.gets(['admin','start'])
 	const { db } = await view.gets(['db'])
 	
@@ -339,10 +339,10 @@ rest.addAction('set-models-clearempty', async view => {
 	`)
 	
 	return view.ret('Удалено')
-}, ['setaccess'])
+})
 
 
-rest.addAction('set-tables-loadall', async view => {
+rest.addAction('set-tables-loadall', ['setaccess'], async view => {
 	await view.gets(['admin','start'])
 	const { db, upload } = await view.gets(['db', 'upload'])
 	
@@ -358,7 +358,7 @@ rest.addAction('set-tables-loadall', async view => {
 	view.ans.count = count
 	
 	return view.ret('Внесено ' + count + '<p>'+msgs.join('</p><p>')+'</p>')
-}, ['setaccess'])
+})
 
 rest.addAction('set-prices-clearall', async view => {
 	await view.gets(['admin','start'])
@@ -368,7 +368,7 @@ rest.addAction('set-prices-clearall', async view => {
 	
 	return view.ret('Прайсы очищены')
 })
-rest.addAction('set-tables-clearall', async view => {
+rest.addAction('set-tables-clearall', ['setaccess'], async view => {
 	await view.gets(['admin','start'])
 	const { upload, db } = await view.gets(['upload', 'db'])
 	
@@ -385,9 +385,9 @@ rest.addAction('set-tables-clearall', async view => {
 	// }))
 	
 	return view.ret('Данные очищены')
-}, ['setaccess'])
+})
 
-rest.addAction('set-tables-clear', async view => {
+rest.addAction('set-tables-clear', ['setaccess'], async view => {
 	await view.gets(['admin','start'])
 	const { upload, name } = await view.gets(['upload', 'name'])
 	view.ans.name = name
@@ -395,8 +395,8 @@ rest.addAction('set-tables-clear', async view => {
 	row.ready = false
 	view.ans.row = row
 	return view.ret('Очищено')
-}, ['setaccess'])
-rest.addAction('set-tables-load', async view => {
+})
+rest.addAction('set-tables-load', ['setaccess'], async view => {
 	await view.gets(['admin'])
 	const { upload, name } = await view.gets(['upload','name'])
 	view.ans.name = name
@@ -407,8 +407,8 @@ rest.addAction('set-tables-load', async view => {
 	view.ans.msgs = msgs
 	view.ans.row = row
 	return view.ret('Внесено ' + row.quantity)
-}, ['setaccess'])
-rest.addAction('set-prices-clear', async view => {
+})
+rest.addAction('set-prices-clear', ['setaccess'], async view => {
 	await view.gets(['admin','start'])
 	const { upload, name } = await view.gets(['upload', 'name'])
 	view.ans.name = name
@@ -417,8 +417,8 @@ rest.addAction('set-prices-clear', async view => {
 	view.ans.row = row
 	
 	return view.ret('Очищено')
-}, ['setaccess'])
-rest.addAction('set-prices-load', async view => {
+})
+rest.addAction('set-prices-load', ['setaccess'], async view => {
 	await view.gets(['admin','base'])
 	const { upload, name } = await view.gets(['upload','name'])
 	view.ans.name = name
@@ -429,25 +429,24 @@ rest.addAction('set-prices-load', async view => {
 	return view.ret('Внесено ' + row.quantity)
 })
 
-rest.addAction('set-load', async view => { //Для ручного перехода, при сохранении ссылки	
+rest.addAction('set-load', ['setaccess'], async view => { //Для ручного перехода, при сохранении ссылки	
 	//await view.get('admin')
-	
 	await view.get('start')
 	const upload = await view.get('upload')
 	const res = await upload.applyall()
 	const Location = '/catalog?alert=' + encodeURIComponent(res.msg)
 	view.headers = { Location }
 	return view.ret('', 301)
-}, ['setaccess'])
+})
 
-rest.addAction('set-applyall', async view => {
+rest.addAction('set-applyall', ['setaccess'], async view => {
 	await view.gets(['admin','start'])
 	const { upload } = await view.gets(['upload'])
 	const res = await upload.applyall()
 	Object.assign(view.ans, res)
 	return view.ret(res.msg)
-}, ['setaccess'])
-rest.addAction('set-prices-loadall', async view => {
+})
+rest.addAction('set-prices-loadall', ['setaccess'], async view => {
 	await view.gets(['admin','start'])
 	const { upload } = await view.gets(['upload'])
 	const files = await upload.getNewPrices()
@@ -459,7 +458,7 @@ rest.addAction('set-prices-loadall', async view => {
 	
 	view.ans.count = count
 	return view.ret('Внесено ' + count)
-}, ['setaccess'])
+})
 // rest.addAction('set-files-loadall', async view => {
 // 	await view.gets(['admin'])
 // 	const { visitor, db, config, upload } = await view.gets(['visitor', 'db', 'config', 'upload'])
@@ -471,7 +470,7 @@ rest.addAction('set-prices-loadall', async view => {
 // 	view.ans.count = count
 // 	return view.ret('Связано ' + count)
 // })
-rest.addAction('set-files-indexall', async view => {
+rest.addAction('set-files-indexall', ['setaccess'], async view => {
 	await view.gets(['admin'])
 	const visitor = view.visitor
 	const { db, config, upload } = await view.gets(['db', 'config', 'upload'])
@@ -482,8 +481,8 @@ rest.addAction('set-files-indexall', async view => {
 	view.ans.doublepath = doublepath
 	view.ans.count = count
 	return view.ret('Проиндексировано ' + count)
-}, ['setaccess'])
-rest.addAction('set-files-connectall', async view => {
+})
+rest.addAction('set-files-connectall', ['setaccess'], async view => {
 	await view.gets(['admin'])
 	const visitor = view.visitor
 	const { db, config, upload } = await view.gets(['db', 'config', 'upload'])
@@ -493,4 +492,4 @@ rest.addAction('set-files-connectall', async view => {
 	
 	Object.assign(view.ans, res)
 	return view.ret()
-}, ['setaccess'])
+})

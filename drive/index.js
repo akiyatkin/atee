@@ -27,7 +27,6 @@ export const drive = {
 				}
 			}
 			
-
 			const conf = await config('drive')
 
 			const cert = await fs.readFile(conf.certificate, "utf8").catch(r => false)
