@@ -31,14 +31,22 @@ class Hand {
 		if (value.replace) value = value.replace(/\s/g,'')
 		value = parseFloat(value)
 		if (!value) return value
-		//return value
-		return Math.round(Math.floor(value)) || 1
+		return value
+		//return Math.round(Math.floor(value)) || 1
 	}
-	get (from) {
-		if (from) return this.getFrom(from)
+	getUSDcheck (from) {
 		const {row, indexes} = this
 		let value = this.getFrom(from)
 		value = this._checkUSD(value)
+		if (!value) return '' //0 за значение не считаем
+		//return Math.floor(value)
+		return Math.round(Math.floor(value)) || 1
+	}
+	get (from) { //depricated
+		if (from) return this.getFrom(from)
+		const {row, indexes} = this
+		let value = this.getFrom(from)
+		//value = this._checkUSD(value)
 		if (!value) return '' //0 за значение не считаем
 		//return Math.floor(value)
 		return Math.round(Math.floor(value)) || 1
@@ -49,9 +57,10 @@ class Hand {
 
 		if (from) {
 			value = this.getFrom(from)
+			//value = this._checkUSD(value)
 		} else {
 			value = this.getFrom(prop.prop_title)
-			value = this._checkUSD(value)
+			//value = this._checkUSD(value)
 		}
 		if (!value) return ''
 		const discount = conf[name]
