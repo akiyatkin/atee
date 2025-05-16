@@ -350,14 +350,18 @@ const printDate = (title, d) => d ? `
 const showEmpty = (data, env) => `
 	${data.order.status == 'wait' ? '<p>В заказе ещё нет товаров</p>' : ''}
 `
+tpl.showFIO = (data, env) => `
+	<div class="float-label icon name formfield">
+		<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
+		<label for="${env.sid}name">Получатель (ФИО)</label>
+		${data.order.status == 'wait' ? tpl.svgres('required', data.order.name) : ''}
+	</div>
+`
 tpl.showForm = (data, env) => `
 		
 		<form data-order_nick="${data.order.order_nick}" data-goal="cart" action="/-cart/set-submit?partner=${env.theme.partner || ''}" style="clear:both; border-radius:var(--radius, 10px); display: grid; gap:1rem; ">
-			<div class="float-label icon name formfield">
-				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
-				<label for="${env.sid}name">Получатель (ФИО)</label>
-				${data.order.status == 'wait' ? tpl.svgres('required', data.order.name) : ''}
-			</div>
+			
+			${tpl.showFIO(data,env)}
 			<div class="float-label icon phone formfield">
 				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="contacts_phone" name="phone" type="tel" placeholder="Телефон" value="${data.order.phone || ''}">
 				<label for="contacts_phone">Телефон</label>
@@ -368,6 +372,7 @@ tpl.showForm = (data, env) => `
 				<label for="${env.sid}email">Email</label>
 				${data.order.status == 'wait' ? tpl.svgres('required', data.order.email) : ''}
 			</div>
+			
 			${tpl.showAddress(data,env)}
 			${tpl.formMessage(data, env)}
 			

@@ -265,5 +265,13 @@ filters.props = {
 				filter.values.map(v => filters.item(data, env, filter, v)).join(',</span> <span style="white-space:nowrap; margin-right:0.7em">')
 			}</span>
 		`, filter.opt.descr
+	),
+	rowtext: (data, filter, env) => filters.block(
+		'', 
+		`
+			<span style="white-space:nowrap; margin-right:0.7em;">${
+				filter.values.map(v => filters.item(data, env, filter, v)).join(',</span> <span style="white-space:nowrap; margin-right:0.7em">')
+			}</span>
+		`, filter.opt.descr
 	)
 }

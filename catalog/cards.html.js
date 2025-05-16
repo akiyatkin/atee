@@ -167,7 +167,7 @@ cards.prop = {
 		`<a href="${links.model(data, env, mod)}">${val}</a>`
 	),
 	modelhidden: (data, env, mod, pr, title, val) => cards.prop.just(data, env, mod, pr, title, 
-		`<a style="color:inherit; border:none;" href="${links.model(data, env, mod)}">${val}</a>`
+		`<a style="text-decoration: none; color:inherit; border:none;" href="${links.model(data, env, mod)}">${val}</a>`
 	),
 	modelhiddenwrap: (data, env, mod, pr, title, val) => cards.prop.justwrap(data, env, mod, pr, title, 
 		`<a style="color:inherit; border:none; white-space: normal;" href="${links.model(data, env, mod)}">${val}</a>`

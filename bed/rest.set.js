@@ -34,8 +34,8 @@ rest.addAction('set-group-mark-value-delete', ['admin'], async view => {
 	const value_nick = await view.get('value_nick')
 	const db = await view.get('db')
 	await db.exec(`
-		DELETE FROM bed_marks
-		WHERE group_id = :group_id 
+		DELETE ma FROM bed_marks ma, bed_gsamples gs
+		WHERE gs.group_id = :group_id and gs.sample_id = ma.sample_id
 		and prop_nick = :prop_nick
 		and value_nick = :value_nick
 	`, {
@@ -69,6 +69,7 @@ rest.addAction('set-group-mark', ['admin'], async view => {
 	const group = await view.get('group#required')
 	const db = await view.get('db')
 	const value_nick = ""
+	
 	await db.exec(`
 		INSERT IGNORE INTO bed_marks (group_id, prop_nick, value_nick)
 		VALUES (:group_id, :prop_nick, :value_nick)
