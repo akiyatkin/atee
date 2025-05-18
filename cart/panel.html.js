@@ -712,7 +712,11 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 		const body = div.closest('.body')
 		body.scrollTo(0,0)
 		const panel = div.closest('.panel')
-		Panel.show(panel)
+		if (${data.orders.length || 0} && !panel.querySelectorAll('.blocksum').length) {
+			Panel.hide(panel)
+		} else {
+			Panel.show(panel)	
+		}
 		const title = panel.querySelector('.title')
 		const state = {
 			orders: ${data.orders.length},

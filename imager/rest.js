@@ -111,6 +111,7 @@ rest.addResponse('webp', async view => {
 			if (!cstat) return false
 			if (remote) return true //для remote кэш всегда свежий. Чтобы сбросить нужно вручную удалить папку cache
 			const ostat = await fs.stat(src).catch(e => null)
+			if (!ostat) return false
 			return cstat.mtime > ostat.mtime
 		})
 		if (is) return createReadStream(store)

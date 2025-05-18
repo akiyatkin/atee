@@ -22,6 +22,7 @@
 		}
 	},
 	"types": {
+		"mov":"video/mp4",
 		"mp4":"video/mp4",
 		"img":"image/jpeg",
 		"map":"application/javascript",
