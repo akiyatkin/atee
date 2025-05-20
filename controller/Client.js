@@ -129,8 +129,12 @@ export const Client = {
 								if (y != window.scrollY) return
 								const hash = location.hash.slice(1)
 								if (hash) div = document.getElementById(hash)
-								if (div) div.scrollIntoView()
-								else window.scrollTo(0,0)
+								if (div) {
+									div.scrollIntoView()
+								} else {
+									window.scrollTo(0,1)
+									window.scrollTo(0,0)
+								}
 							})
 						}, 1)
 					}, 500)
