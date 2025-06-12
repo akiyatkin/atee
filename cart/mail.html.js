@@ -19,7 +19,7 @@ const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
 const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : ''
 
 tpl.tocheck_subject = (data) => `Заказ с сайта ${data.vars.host}`
-tpl.tocheck = (data) => `
+tpl.tocheck = (data) => !data.order ? `<h1>Корзина пуста</h1>` : `
 	<h1>${tpl.TITLES[data.order.status]} № ${data.order.order_nick}</h1>
 	<div style="margin-bottom:1rem">
 		ФИО: ${data.order.name}<br>
