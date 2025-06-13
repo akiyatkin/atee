@@ -20,7 +20,7 @@ const forbidden = (view, m) => {
 	console.log(m, view.req.src, 'referer:', view.visitor.client.referer)
 	return view.err(m, 403)
 }
-rest.addArgument('src', (view, src, prop) => {
+rest.addArgument('src', ['string'], (view, src, prop) => {
 	const remote = /^https?:\/\//i.test(src)
 	src = src.replace(/^\/\-imager\/webp\?src=/,'')	
 	if (/^\//.test(src)) {
