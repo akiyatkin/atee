@@ -29,6 +29,7 @@ const yml = {
 		return groups
 	},
 	data: (view, feed, partner = false) => cproc(yml, '', async () => {
+		console.log('yml.data()')
 		const { db, base } = await view.gets(['db','base'])
 		const conf = await config('yml')
 		const md = conf.feeds[feed]
