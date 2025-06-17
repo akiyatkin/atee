@@ -1,6 +1,7 @@
 export const css = ['/-sources/revscroll.css']
 import err from "/-controller/err.html.js"
 import field from "/-dialog/field.html.js"
+import print from "/-words/print.html.js"
 import svg from "/-sources/svg.html.js"
 const showParent = (data, env) => `
 	<a href="groups/${data.group?.parent_nick || ''}">${data.group?.parent_title || 'Группы'}</a>
@@ -26,7 +27,7 @@ const showEdit = (data, env, group) => `
 const showRed = (nick) => `
 	<span style="color:red">${nick}</span>
 `
-const showValue = (data, env, group, mark) => `
+const showValue = (data, env, group, mark) => !mark.value_nick ? '' : `
 	<div>
 		${mark.value_title || showRed(mark.value_nick)}
 		${!mark.value_title ? '' : field.button({
@@ -44,7 +45,7 @@ const showValue = (data, env, group, mark) => `
 		})}
 	</div>
 `
-const showMark = (data, env, group, marks) => `
+const showMark = (data, env, group, sample_id, marks) => !marks[0].prop_nick ? '' : `
 	<tr>
 		<td>
 			${marks[0].prop_title || showRed(marks[0].prop_nick)}
@@ -54,7 +55,7 @@ const showMark = (data, env, group, marks) => `
 			<div>
 				${field.search({
 					cls: 'a',
-					search: '/-bed/get-prop-value-search?prop_nick='+marks[0].prop_nick+'&group_nick=' + data.group.group_nick,
+					search: '/-bed/get-prop-value-search?prop_nick=' + marks[0].prop_nick + '&group_nick=' + data.group.group_nick,
 					value: 'Добавить',
 					heading: "Выберите значение",
 					descr: "Выберите значение критерия <b>" + marks[0].prop_title + "</b> для попадания позиций в группу <b>" + group.group_title + "</b>",
@@ -62,20 +63,19 @@ const showMark = (data, env, group, marks) => `
 					type: 'text',
 					name: 'value_nick',
 					find: 'value_nick',
-					action: '/-bed/set-group-mark-value',
-					args: {group_nick: group.group_nick, prop_nick: marks[0].prop_nick},
+					action: '/-bed/set-sample-prop-value',
+					args: { sample_id, prop_nick: marks[0].prop_nick},
 					reloaddiv: env.layer.div
 				})}
 				${marks[0].value_nick ? '' : field.button({
 					cls: 'transparent mute',
 					label: svg.cross(), 
-					confirm: 'Удалить занчение?',
-					action: '/-bed/set-group-mark-value-delete',
+					confirm: 'Удалить критерий?',
+					action: '/-bed/set-sample-prop-delete',
 					reloaddiv: env.layer.div,
 					args: {
 						prop_nick: marks[0].prop_nick, 
-						group_nick: group.group_nick, 
-						value_nick: ''
+						sample_id
 					},
 					reloaddiv: env.layer.div
 				})}
@@ -94,7 +94,6 @@ const showFilter = (data, env, group, filter) => `
 				label: svg.cross(), 
 				confirm: 'Удалить занчение?',
 				action: '/-bed/set-filter-delete',
-				reloaddiv: env.layer.div,
 				args: {
 					prop_nick: filter.prop_nick, 
 					group_nick: group.group_nick, 
@@ -105,26 +104,34 @@ const showFilter = (data, env, group, filter) => `
 	</tr>
 `
 const showTableSamples = (data, env, group) => `
-	${Object.entries(group.samples).map(([sample_id, marks]) => showTableMarks(data, env, group, marks)).join('')}
+	${Object.entries(group.samples).map(([sample_id, marks]) => showTableMarks(data, env, group, sample_id, marks)).join('')}
 `
-const showTableMarks = (data, env, group, marks) => `
+const showTableMarks = (data, env, group, sample_id, marks) => `
 	<table style="margin-top:2em">
-		${Object.entries(marks).map(([prop_nick, marks]) => showMark(data, env, group, marks)).join('')}
+		${Object.entries(marks).map(([prop_nick, marks]) => showMark(data, env, group, sample_id, marks)).join('')}
 		<tr><td colspan="2">
 			${field.search({
-			cls: 'a',
-			search:'/-bed/get-mark-prop-search',
-			value: 'Добавить критерий',
-			heading: "Добавить критерий",
-			descr: "Выберите свойство-критерий для попадания позиций в группу <b>" + data.group.group_title + "</b>",
-			label: 'Выберите свойство', 
-			type: 'text',
-			name: 'prop_nick',
-			find: 'prop_nick',
-			action: '/-bed/set-group-mark',
-			args: {group_nick: data.group.group_nick},
-			reloaddiv: env.layer.div
-		})}
+				cls: 'a',
+				search:'/-bed/get-sample-prop-search',
+				value: 'Добавить критерий',
+				heading: "Добавить критерий",
+				descr: "Выберите свойство-критерий для попадания позиций в группу <b>" + data.group.group_title + "</b>",
+				label: 'Выберите свойство', 
+				type: 'text',
+				name: 'prop_nick',
+				find: 'prop_nick',
+				action: '/-bed/set-sample-prop-create',
+				args: {sample_id},
+				reloaddiv: env.layer.div
+			})}
+			${field.button({
+				cls: 'transparent mute',
+				label: svg.cross(), 
+				confirm: 'Удалить всю выборку?',
+				action: '/-bed/set-sample-delete',
+				reloaddiv: env.layer.div,
+				args: {sample_id}
+			})}	
 		</td></tr>
 	</table>
 `
@@ -175,7 +182,7 @@ const showMarks = (data, env, group) => `
 	<p>
 		${field.search({
 			cls: 'a',
-			search:'/-bed/get-mark-prop-search',
+			search:'/-bed/get-sample-prop-search',
 			value: 'Добавить выборку',
 			heading: "Добавить критерий",
 			descr: "Выберите свойство-критерий для попадания позиций в группу <b>" + data.group.group_title + "</b>",
@@ -183,7 +190,7 @@ const showMarks = (data, env, group) => `
 			type: 'text',
 			name: 'prop_nick',
 			find: 'prop_nick',
-			action: '/-bed/set-group-mark',
+			action: '/-bed/set-sample-create',
 			args: {group_nick: data.group.group_nick},
 			reloaddiv: env.layer.div
 		})}
@@ -225,7 +232,7 @@ const showGroups = (data, env, group) => `
 	
 `
 const showFree = (data, env) => `
-	<h2>Свободные позиции <span title="Позиций ${data.freetable?.poscount || 0}, моделей ${data.freetable?.modcount || 0}">(${data.freetable?.poscount || 0})</span></h2>
+	<h2 title="Нераспределённые позиции в родительской группе ${data.group.parent_title || 'самого верхнего уровня'}">Свободные позиции <span title="Позиций ${data.freetable?.poscount || 0}, моделей ${data.freetable?.modcount || 0}">(${data.freetable?.poscount || 0})</span></h2>
 	<div class="revscroll">
 		<table>
 			<thead>

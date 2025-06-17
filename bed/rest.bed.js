@@ -22,6 +22,9 @@ rest.addArgument('next_id', ['mint'])
 rest.addArgument('id', ['mint'])
 rest.addVariable('id#required', ['id', 'required'])
 
+rest.addArgument('sample_id', ['sint'])
+rest.addVariable('sample_id#required', ['sample_id', 'required'])
+
 
 rest.addArgument('p', ['int'], (view, n) => n || 1)
 rest.addArgument('count', ['int'])

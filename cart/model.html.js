@@ -108,23 +108,20 @@ const showIprops = (data, env, mod, prop_titles) => {
 	return `
 		<div style="margin-right:0.3ch; font-size:90%">
 			${values.map((v, index) => getitem(data, env, v, index)).join('<span style="display: inline-block; width:1ch"></span>')}
-			<!-- <script>
+			<script>
 				(div => {
+					const reachGoal = goal => {
+						if (!div.closest('body')) return
+						console.log('Goal.reach ' + goal)
+						const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
+						if (metrikaid) ym(metrikaid, 'reachGoal', goal)
+					}
 					for (const a of div.getElementsByTagName('a')) {
-						const goalButton = () => {
-							if (!div.closest('body')) return
-							const goal = 'button'
-							const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
-							console.log('Goal.reach ' + goal)
-							if (metrikaid) {
-								ym(metrikaid, 'reachGoal', goal);
-							}
-						}
-						a.addEventListener('click', goalButton)
-						a.addEventListener('contextmenu', goalButton)
+						a.addEventListener('click', e => reachGoal('position'))
+						a.addEventListener('contextmenu', e => reachGoal('position'))
 					}
 				})(document.currentScript.parentElement)
-			</script> -->
+			</script>
 		</div>
 	`
 }

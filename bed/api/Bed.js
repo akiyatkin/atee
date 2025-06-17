@@ -92,7 +92,7 @@ Bed.getMgroupDirect = async (db, group_id) => {
 	const marks = await db.all(`
 		SELECT 
 			gs.sample_id, ma.prop_nick, ma.value_nick
-		FROM bed_gsamples gs, bed_marks ma
+		FROM bed_samples gs, bed_samplepropvalues ma
 		WHERE gs.group_id = :group_id 
 			and gs.sample_id = ma.sample_id
 			and ma.value_nick is not null

@@ -16,7 +16,7 @@ rest.extra(rest_bedadmin)
 // 	const prop = await view.get('prop#required')
 // 	const db = await view.get('db')
 // 	await db.exec(`
-// 		DELETE FROM bed_marks
+// 		DELETE FROM bed_samplepropvalues
 // 		WHERE group_id = :group_id 
 // 		and prop_nick = :prop_nick
 // 	`, {
@@ -34,7 +34,7 @@ rest.addAction('set-group-mark-value-delete', ['admin'], async view => {
 	const value_nick = await view.get('value_nick')
 	const db = await view.get('db')
 	await db.exec(`
-		DELETE ma FROM bed_marks ma, bed_gsamples gs
+		DELETE ma FROM bed_samplepropvalues ma, bed_samples gs
 		WHERE gs.group_id = :group_id and gs.sample_id = ma.sample_id
 		and prop_nick = :prop_nick
 		and value_nick = :value_nick
@@ -47,38 +47,88 @@ rest.addAction('set-group-mark-value-delete', ['admin'], async view => {
 
 	return view.ret()
 })
-rest.addAction('set-group-mark-value', ['admin'], async view => {
-	const prop_nick = await view.get('prop_nick#required')
-	const group = await view.get('group#required')
-	const value_nick = await view.get('value_nick#required')
+rest.addAction('set-sample-delete', ['admin'], async view => {
+	const sample_id = await view.get('sample_id#required')
 	const db = await view.get('db')
 	await db.exec(`
-		INSERT IGNORE INTO bed_marks (group_id, prop_nick, value_nick)
-		VALUES (:group_id, :prop_nick, :value_nick)
+		DELETE sa FROM bed_samples sa
+		WHERE sa.sample_id = :sample_id
 	`, {
-		group_id: group.group_id, 
-		prop_nick, value_nick
+		sample_id
 	})
-	await db.exec(`DELETE FROM bed_marks WHERE prop_nick = :prop_nick and value_nick = ""`, {prop_nick})
+
+	//await BedAdmin.reorderGroups(db)
 
 	return view.ret()
 })
-rest.addAction('set-group-mark', ['admin'], async view => {
+rest.addAction('set-sample-prop-delete', ['admin'], async view => {
+	const sample_id = await view.get('sample_id#required')
+	const prop_nick = await view.get('prop_nick#required')
+	const db = await view.get('db')
+	await db.exec(`
+		DELETE sp, spv FROM bed_sampleprops sp
+		LEFT JOIN bed_samplepropvalues spv on spv.sample_id = sp.sample_id and sp.prop_nick = sp.prop_nick
+		WHERE sp.sample_id = :sample_id and sp.prop_nick = :prop_nick
+		and sp.prop_nick = :prop_nick
+		and sp.sample_id = :sample_id
+	`, {
+		sample_id, 
+		prop_nick
+	})
+
+	//await BedAdmin.reorderGroups(db)
+
+	return view.ret()
+})
+rest.addAction('set-sample-prop-value', ['admin'], async view => {
+	const prop_nick = await view.get('prop_nick#required')
+	const sample_id = await view.get('sample_id#required')
+	const value_nick = await view.get('value_nick#required')
+	const db = await view.get('db')
+	await db.exec(`
+		INSERT IGNORE INTO bed_samplepropvalues (sample_id, prop_nick, value_nick)
+		VALUES (:sample_id, :prop_nick, :value_nick)
+	`, {
+		sample_id, 
+		prop_nick, value_nick
+	})
+	await db.exec(`DELETE FROM bed_samplepropvalues WHERE prop_nick = :prop_nick and value_nick = ""`, {prop_nick})
+
+	return view.ret()
+})
+rest.addAction('set-sample-prop-create', ['admin'], async view => {
+	const prop = await view.get('prop#required')
+	if (prop.type != 'value') return view.err('Выборка может быть только по свойствам value')
+	const sample_id = await view.get('sample_id#required')
+	const db = await view.get('db')
+		
+	await db.exec(`
+		INSERT IGNORE INTO bed_sampleprops (sample_id, prop_nick)
+		VALUES (:sample_id, :prop_nick)
+	`, {
+		sample_id: sample_id, 
+		prop_nick: prop.prop_nick
+	})
+	return view.ret()
+})
+rest.addAction('set-sample-create', ['admin'], async view => {
 	const prop = await view.get('prop#required')
 	if (prop.type != 'value') return view.err('Выборка может быть только по свойствам value')
 	const group = await view.get('group#required')
 	const db = await view.get('db')
-	const value_nick = ""
-	
-	await db.exec(`
-		INSERT IGNORE INTO bed_marks (group_id, prop_nick, value_nick)
-		VALUES (:group_id, :prop_nick, :value_nick)
+	const sample_id = await db.insertId(`
+		INSERT INTO bed_samples (group_id)
+		VALUES (:group_id)
 	`, {
-		group_id: group.group_id, 
-		prop_nick: prop.prop_nick, 
-		value_nick
+		group_id: group.group_id
+	})	
+	await db.exec(`
+		INSERT INTO bed_sampleprops (sample_id, prop_nick)
+		VALUES (:sample_id, :prop_nick)
+	`, {
+		sample_id: sample_id, 
+		prop_nick: prop.prop_nick
 	})
-
 	return view.ret()
 })
 rest.addAction('set-group-filter', ['admin'], async view => {
@@ -110,11 +160,11 @@ rest.addAction('set-group-create', ['admin'], async view => {
 
 	const parent_id = group?.group_id || null
 	const ordain = await db.col(`select max(ordain) from bed_groups where parent_id <=> :parent_id`, {parent_id}) || 0
-	const level = group?.level || 0
+	//const level = group?.level || 0
 	await db.exec(`
-		INSERT INTO bed_groups (group_nick, group_title, group_name, parent_id, level, ordain)
-		VALUES (:group_nick, :group_title, :group_title, :parent_id, :level, :ordain + 1)
-	`, {parent_id, group_title, group_nick, level, ordain})	
+		INSERT INTO bed_groups (group_nick, group_title, group_name, parent_id, ordain)
+		VALUES (:group_nick, :group_title, :group_title, :parent_id, :ordain + 1)
+	`, {parent_id, group_title, group_nick, ordain})	
 	
 
 	await BedAdmin.reorderGroups(db)

@@ -56,7 +56,7 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 	
 	return view.ret()
 })
-rest.addResponse('get-mark-prop-search', ['admin'], async view => {
+rest.addResponse('get-sample-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hash = await view.get('hash')
 	

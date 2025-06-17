@@ -47,7 +47,7 @@ rest.addResponse('groups', ['admin'], async view => {
 	
 	const md_parent = await Bed.getmd(db, '', parent)
 	const md_group = await Bed.getmd(db, '', group)
-
+	
 	if (group) {
 		group.filters = await db.all(`
 			SELECT fi.prop_nick, pr.prop_title, pr.prop_id
@@ -58,12 +58,13 @@ rest.addResponse('groups', ['admin'], async view => {
 		`, group)
 
 		group.samples = await db.all(`
-			SELECT gs.sample_id, ma.prop_nick, ma.value_nick, pr.prop_title, va.value_title
-			FROM bed_gsamples gs, bed_marks ma
-				LEFT JOIN sources_props pr on pr.prop_nick = ma.prop_nick
-				LEFT JOIN sources_values va on va.value_nick = ma.value_nick
-			WHERE gs.group_id = :group_id
-			and ma.sample_id = gs.sample_id
+			SELECT sa.sample_id, sp.prop_nick, spv.value_nick, pr.prop_title, va.value_title
+			FROM bed_samples sa
+				LEFT JOIN bed_sampleprops sp on sp.sample_id = sa.sample_id
+				LEFT JOIN bed_samplepropvalues spv on (spv.sample_id = sa.sample_id and spv.prop_nick = sp.prop_nick)
+				LEFT JOIN sources_props pr on pr.prop_nick = sp.prop_nick
+				LEFT JOIN sources_values va on va.value_nick = spv.value_nick
+			WHERE sa.group_id = :group_id
 		`, group)
 		group.samples = Object.groupBy(group.samples, row => row.sample_id)
 		for (const sample_id in group.samples) {
