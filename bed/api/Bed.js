@@ -72,7 +72,7 @@ Bed.getGroupById = async (db, group_id) => {
 	`, {group_id})
 	return group
 }
-Bed.getChilds = async (db, group_id) => {
+Bed.getChilds = async (db, group_id = null) => {
 	const childs = await db.all(`
 		SELECT
 			gr.group_nick,
@@ -88,22 +88,72 @@ Bed.getChilds = async (db, group_id) => {
 	`, {group_id})
 	return childs
 }
-Bed.getMgroupDirect = async (db, group_id) => {
-	const marks = await db.all(`
-		SELECT 
-			gs.sample_id, ma.prop_nick, ma.value_nick
-		FROM bed_samples gs, bed_samplepropvalues ma
-		WHERE gs.group_id = :group_id 
-			and gs.sample_id = ma.sample_id
-			and ma.value_nick is not null
+
+Bed.getSamplesByGroupId = async (db, group_id = false) => {	
+	if (!group_id) return []
+	const list = await db.all(`
+		SELECT sa.sample_id, sp.prop_nick, spv.value_nick, sp.spec
+		FROM bed_samples sa
+			LEFT JOIN bed_sampleprops sp on sp.sample_id = sa.sample_id
+			LEFT JOIN bed_samplevalues spv on (spv.sample_id = sa.sample_id and spv.prop_nick = sp.prop_nick)
+		WHERE sa.group_id = :group_id
+		ORDER BY sa.date_create, sp.date_create, spv.date_create
 	`, {group_id})
-	const sgroup = {}
-	for (const {prop_nick, sample_id, value_nick} of marks) {
-		sgroup[sample_id] ??= {}
-		sgroup[sample_id][prop_nick] ??= {}
-		sgroup[sample_id][prop_nick][value_nick] ??= 1
+
+
+
+	const sampleids = {}
+	for (const {sample_id, prop_nick, value_nick, spec} of list) {
+		sampleids[sample_id] ??= {}
+		if (spec == 'exactly') {
+			sampleids[sample_id][prop_nick] ??= []
+			if (value_nick) sampleids[sample_id][prop_nick].push(value_nick)
+		} else {
+			sampleids[sample_id][prop_nick] = spec
+		}
+		
 	}
-	return Object.values(sgroup)
+	/*
+		[
+			{
+				cena: {from:1, upto:2}
+				art: [nick, some, test],
+				images: empty,
+				ves: any,
+			}, {
+				...	
+			}
+		]
+	*/
+	return Object.values(sampleids)
+}
+Bed.getGroupSamples = async (db, group_id = false, childsamples = []) => {
+	const samples = Bed.mergeSamples(await Bed.getSamplesByGroupId(db, group_id), childsamples)
+	const group = await Bed.getGroupById(db, group_id)
+	if (group_id && group.parent_id) return Bed.getGroupSamples(db, group.parent_id, samples) //childsamples
+	return samples
+}
+Bed.getOldSamples = async (db, group_id) => { //depricated
+	const values = await db.all(`
+		SELECT 
+			sv.sample_id, 
+			sv.prop_nick, 
+			sv.value_nick
+		FROM 
+			bed_samples gs, 
+			bed_samplevalues sv
+		WHERE 
+			gs.group_id = :group_id 
+			and gs.sample_id = sv.sample_id
+			and sv.value_nick is not null
+	`, {group_id})
+	const samples = {}
+	for (const {prop_nick, sample_id, value_nick} of values) {
+		samples[sample_id] ??= {}
+		samples[sample_id][prop_nick] ??= {}
+		samples[sample_id][prop_nick][value_nick] ??= 1
+	}
+	return Object.values(samples)
 }
 /*
 	lgroup = [
@@ -131,11 +181,27 @@ Bed.mutliSMD = (psgroup, csgroup) => {
 	}
 	return list
 }
+Bed.mergeSamples = (mains = [], childs = []) => {
+	let list = []
+	if (!childs.length) list = mains
+	else if (!mains.length) list = childs
+	for (const main of mains) {
+		for (const child of childs) {
+			const ch = {...child}
+			for (const prop_nick in main) {
+				ch[prop_nick] ??= {}
+				Object.assign(ch[prop_nick], main[prop_nick]) //остаётся значение из mains. Ограничения main важней.
+			}
+			list.push(ch)
+		}
+	}
+	return list
+}
 Bed.getSgroup = async (db, group_id, csgroup = []) => { //lgroup поднимаемся наверх от lgroup, уточняем lgroup
 	if (!group_id) return csgroup
-	const psgroup = await Bed.getMgroupDirect(db, group_id)
+	const samples = await Bed.getOldSamples(db, group_id)
 	
-	const list = Bed.mutliSMD(psgroup, csgroup)
+	const list = Bed.mutliSMD(samples, csgroup)
 	const parent_id = await db.col(`select parent_id from bed_groups where group_id = :group_id`, {group_id})
 	return Bed.getSgroup(db, parent_id, list)
 }
@@ -201,12 +267,6 @@ Bed.mdfilter = (mgroup, props, values) => {
 	return newmgroup
 }
 Bed.getmdids = async (db, andsamples) => {
-
-	// let samples = []
-	// for (const smd of andsamples) {
-	// 	samples = Bed.mutliSMD(samples, smd)
-	// }
-
 	const prop_nicks = []
 	const value_nicks = []
 	for (const samples of andsamples) { //and
@@ -248,8 +308,8 @@ Bed.getmd = async (db, origm, group) => {
 	}
 
 	const schilds = childs.map(child => child.sgroup)
-	const andsamples = [[mgetorig], group?.sgroup || [], ...schilds]
-	const {props, values} = await Bed.getmdids(db, andsamples)
+	
+	const {props, values} = await Bed.getmdids(db, [[mgetorig], group?.sgroup || [], ...schilds])
 
 	
 	const mget = Bed.mdfilter(mgetorig, props, values)
@@ -264,8 +324,11 @@ Bed.getmd = async (db, origm, group) => {
 	return {m, group, mget, childs, props, values, pos_entity_id, mod_entity_id}
 }
 Bed.getmdwhere = (md, sgroup = [], hashs = [], partner = '') => {
-	
 	const samples = Bed.mutliSMD([md.mget], sgroup)
+
+	// if (md.group.group_nick == 'test') {
+	// 	console.log(samples)	
+	// }
 	
 	//const mall = {...md.mget, ...mgroup}
 

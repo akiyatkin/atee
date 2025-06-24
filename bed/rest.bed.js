@@ -25,6 +25,12 @@ rest.addVariable('id#required', ['id', 'required'])
 rest.addArgument('sample_id', ['sint'])
 rest.addVariable('sample_id#required', ['sample_id', 'required'])
 
+rest.addArgument('spec', (view, val) => {
+	if (!val) return val
+	if (!~['exactly','any','empty'].indexOf(val)) return view.err('Некорректный spec')
+	return val
+})
+rest.addVariable('spec#required',['spec','required'])
 
 rest.addArgument('p', ['int'], (view, n) => n || 1)
 rest.addArgument('count', ['int'])

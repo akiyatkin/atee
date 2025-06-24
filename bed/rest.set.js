@@ -16,7 +16,7 @@ rest.extra(rest_bedadmin)
 // 	const prop = await view.get('prop#required')
 // 	const db = await view.get('db')
 // 	await db.exec(`
-// 		DELETE FROM bed_samplepropvalues
+// 		DELETE FROM bed_samplevalues
 // 		WHERE group_id = :group_id 
 // 		and prop_nick = :prop_nick
 // 	`, {
@@ -34,7 +34,7 @@ rest.addAction('set-group-mark-value-delete', ['admin'], async view => {
 	const value_nick = await view.get('value_nick')
 	const db = await view.get('db')
 	await db.exec(`
-		DELETE ma FROM bed_samplepropvalues ma, bed_samples gs
+		DELETE ma FROM bed_samplevalues ma, bed_samples gs
 		WHERE gs.group_id = :group_id and gs.sample_id = ma.sample_id
 		and prop_nick = :prop_nick
 		and value_nick = :value_nick
@@ -67,7 +67,7 @@ rest.addAction('set-sample-prop-delete', ['admin'], async view => {
 	const db = await view.get('db')
 	await db.exec(`
 		DELETE sp, spv FROM bed_sampleprops sp
-		LEFT JOIN bed_samplepropvalues spv on spv.sample_id = sp.sample_id and sp.prop_nick = sp.prop_nick
+		LEFT JOIN bed_samplevalues spv on (spv.sample_id = sp.sample_id and spv.prop_nick = sp.prop_nick)
 		WHERE sp.sample_id = :sample_id and sp.prop_nick = :prop_nick
 		and sp.prop_nick = :prop_nick
 		and sp.sample_id = :sample_id
@@ -80,20 +80,51 @@ rest.addAction('set-sample-prop-delete', ['admin'], async view => {
 
 	return view.ret()
 })
+rest.addAction('set-sample-prop-spec', ['admin'], async view => {
+	const spec = await view.get('spec#required')
+	const prop_nick = await view.get('prop_nick#required')
+	const sample_id = await view.get('sample_id#required')
+	const db = await view.get('db')
+
+	await db.exec(`
+		UPDATE bed_sampleprops 
+		SET spec = :spec
+		WHERE sample_id = :sample_id and prop_nick = :prop_nick
+	`, {
+		spec,
+		sample_id, 
+		prop_nick
+	})
+
+	
+	await db.exec(`
+		DELETE FROM bed_samplevalues WHERE sample_id = :sample_id and prop_nick = :prop_nick
+	`, {sample_id, prop_nick})
+
+	return view.ret()
+})
 rest.addAction('set-sample-prop-value', ['admin'], async view => {
 	const prop_nick = await view.get('prop_nick#required')
 	const sample_id = await view.get('sample_id#required')
 	const value_nick = await view.get('value_nick#required')
 	const db = await view.get('db')
+
 	await db.exec(`
-		INSERT IGNORE INTO bed_samplepropvalues (sample_id, prop_nick, value_nick)
+		UPDATE bed_sampleprops 
+		SET spec = 'exactly'
+		WHERE sample_id = :sample_id and prop_nick = :prop_nick
+	`, {
+		sample_id, 
+		prop_nick
+	})
+	await db.exec(`
+		INSERT IGNORE INTO bed_samplevalues (sample_id, prop_nick, value_nick)
 		VALUES (:sample_id, :prop_nick, :value_nick)
 	`, {
 		sample_id, 
 		prop_nick, value_nick
 	})
-	await db.exec(`DELETE FROM bed_samplepropvalues WHERE prop_nick = :prop_nick and value_nick = ""`, {prop_nick})
-
+	
 	return view.ret()
 })
 rest.addAction('set-sample-prop-create', ['admin'], async view => {

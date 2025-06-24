@@ -30,7 +30,7 @@ const showRed = (nick) => `
 const showValue = (data, env, group, mark) => !mark.value_nick ? '' : `
 	<div>
 		${mark.value_title || showRed(mark.value_nick)}
-		${!mark.value_title ? '' : field.button({
+		${field.button({
 			cls: 'transparent mute',
 			label: svg.cross(), 
 			confirm: 'Удалить занчение?',
@@ -45,36 +45,70 @@ const showValue = (data, env, group, mark) => !mark.value_nick ? '' : `
 		})}
 	</div>
 `
-const showMark = (data, env, group, sample_id, marks) => !marks[0].prop_nick ? '' : `
+const descrPropValue = (data, env, group, prop) => `
+	Выберите значение критерия 
+	<b>${prop.prop_title}</b> 
+	для попадания позиций в группу
+`
+// ${prop.type != 'number' ? '' : field.prompt({
+// 	cls: 'a',
+// 	value: 'Добавить',
+// 	heading: "Укажите значение",
+// 	descr: descrPropNumber(data, env, group, marks[0]),
+// 	label: 'Укажите значение', 
+// 	type: 'number',
+// 	name: 'value_nick',
+// 	find: 'value_nick',
+// 	action: '/-bed/set-sample-prop-value',
+// 	args: { sample_id, prop_nick: marks[0].prop_nick},
+// 	reloaddiv: env.layer.div
+// })}
+// <script>
+// 	(async div => {
+// 		for (const button of div.getElementsByTagName('button')) {
+// 			button.addEventListener('click', () => {
+// 				const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+// 				Dialog.hide()
+// 			})
+// 		}
+		
+		
+// 	})(document.currentScript.parentElement)
+// </script>
+
+const showProp = (data, env, group, sample_id, props, prop = props[0]) => !prop.prop_nick ? '' : `
 	<tr>
 		<td>
-			${marks[0].prop_title || showRed(marks[0].prop_nick)}
+			${props[0].prop_title || showRed(props[0].prop_nick)}
 		</td>
 		<td>
-			${marks.map(mark => showValue(data, env, group, mark)).join('')}
+			${prop.spec != 'any' ? '' : '<i>Любое значение</i>'}
+			${prop.spec != 'empty' ? '' : '<i>Без значения</i>'}
+			${prop.spec != 'exactly' ? '' : props.map(mark => showValue(data, env, group, mark)).join('')}
 			<div>
-				${field.search({
+				${prop.type != 'value' ? '' : field.search({
 					cls: 'a',
-					search: '/-bed/get-prop-value-search?prop_nick=' + marks[0].prop_nick + '&group_nick=' + data.group.group_nick,
+					search: '/-bed/get-prop-value-search?spec&prop_nick=' + props[0].prop_nick + '&group_nick=' + data.group.group_nick,
 					value: 'Добавить',
 					heading: "Выберите значение",
-					descr: "Выберите значение критерия <b>" + marks[0].prop_title + "</b> для попадания позиций в группу <b>" + group.group_title + "</b>",
+					descr: descrPropValue(data, env, group, props[0]),
 					label: 'Выберите значение', 
 					type: 'text',
 					name: 'value_nick',
 					find: 'value_nick',
 					action: '/-bed/set-sample-prop-value',
-					args: { sample_id, prop_nick: marks[0].prop_nick},
+					args: { sample_id, prop_nick: props[0].prop_nick},
 					reloaddiv: env.layer.div
 				})}
-				${marks[0].value_nick ? '' : field.button({
+				
+				${prop.value_nick ? '' : field.button({
 					cls: 'transparent mute',
 					label: svg.cross(), 
 					confirm: 'Удалить критерий?',
 					action: '/-bed/set-sample-prop-delete',
 					reloaddiv: env.layer.div,
 					args: {
-						prop_nick: marks[0].prop_nick, 
+						prop_nick: props[0].prop_nick, 
 						sample_id
 					},
 					reloaddiv: env.layer.div
@@ -104,11 +138,11 @@ const showFilter = (data, env, group, filter) => `
 	</tr>
 `
 const showTableSamples = (data, env, group) => `
-	${Object.entries(group.samples).map(([sample_id, marks]) => showTableMarks(data, env, group, sample_id, marks)).join('')}
+	${Object.entries(data.samples).map(([sample_id, props]) => showTableSampleProps(data, env, group, sample_id, props)).join('')}
 `
-const showTableMarks = (data, env, group, sample_id, marks) => `
+const showTableSampleProps = (data, env, group, sample_id, props) => `
 	<table style="margin-top:2em">
-		${Object.entries(marks).map(([prop_nick, marks]) => showMark(data, env, group, sample_id, marks)).join('')}
+		${Object.entries(props).map(([prop_nick, props]) => showProp(data, env, group, sample_id, props)).join('')}
 		<tr><td colspan="2">
 			${field.search({
 				cls: 'a',
@@ -124,7 +158,7 @@ const showTableMarks = (data, env, group, sample_id, marks) => `
 				args: {sample_id},
 				reloaddiv: env.layer.div
 			})}
-			${field.button({
+			${Object.entries(props).length ? '' : field.button({
 				cls: 'transparent mute',
 				label: svg.cross(), 
 				confirm: 'Удалить всю выборку?',
@@ -138,7 +172,7 @@ const showTableMarks = (data, env, group, sample_id, marks) => `
 const showTableFilters = (data, env, group) => `
 	<h2>Фильтры</h2>
 	<table draggable="false" class="list" style="margin: 2em 0 1em">
-		${data.group.filters.map(filter => showFilter(data, env, group, filter)).join('')}
+		${data.filters.map(filter => showFilter(data, env, group, filter)).join('')}
 	</table>
 	${showScriptDragFilters(data, env)}
 	<p>
@@ -176,9 +210,9 @@ const showTableGroups = (data, env, group) => `
 	</table>
 	${showScriptDragGroups(data, env)}
 `
-const showMarks = (data, env, group) => `
+const showSamples = (data, env, group) => `
 	<h2>Выбрано <span title="Позиций ${data.poscount}, моделей ${data.modcount}">(${data.poscount})</span></h2>
-	${Object.keys(data.group.samples).length ? showTableSamples(data, env, group) : ''}
+	${Object.keys(data.samples).length ? showTableSamples(data, env, group) : ''}
 	<p>
 		${field.search({
 			cls: 'a',
@@ -205,9 +239,9 @@ export const ROOT = (data, env) => err(data, env, []) || `
 	
 	
 	
-	${!data.group ? '' : showMarks(data, env, data.group)}
+	${!data.group ? '' : showSamples(data, env, data.group)}
 	${showGroups(data, env, data.group)}
-	${data.group?.filters?.length ? showTableFilters(data, env, data.group) : ''}
+	${data.filters?.length ? showTableFilters(data, env, data.group) : ''}
 	${!data.freetable ? '' : showFree(data, env, data.group)}
 	
 `
@@ -232,7 +266,7 @@ const showGroups = (data, env, group) => `
 	
 `
 const showFree = (data, env) => `
-	<h2 title="Нераспределённые позиции в родительской группе ${data.group.parent_title || 'самого верхнего уровня'}">Свободные позиции <span title="Позиций ${data.freetable?.poscount || 0}, моделей ${data.freetable?.modcount || 0}">(${data.freetable?.poscount || 0})</span></h2>
+	<h2 title="Нераспределённые позиции в родительской группе">Свободные позиции <span title="Позиций ${data.freetable?.poscount || 0}, моделей ${data.freetable?.modcount || 0}">(${data.freetable?.poscount || 0})</span></h2>
 	<div class="revscroll">
 		<table>
 			<thead>

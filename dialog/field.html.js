@@ -421,7 +421,7 @@ field.prompt = ({
 							type:'${type}',
 							layer,
 							onlyfuture: ${onlyfuture},
-							descr: '${descr || ''}',
+							descr: ${JSON.stringify(descr)},
 							value: '${value ?? ''}',
 							input: savedinput,
 							name:'${name}',
@@ -505,7 +505,7 @@ field.prompt = ({
 // if (${!!reload}) Client.reload()
 
 
-field.search = ({heading = '', cls = '', edit = true, label = 'Поиск', link, descr, value, name = 'name', search, find = 'find', action, confirm, args = {}, go, reloaddiv, goid, reload}) => {
+field.search = ({heading = '', cls = '', edit = true, label = 'Поиск', link, descr = '', value, name = 'name', search, find = 'find', action, confirm, args = {}, go, reloaddiv, goid, reload}) => {
 	if (!edit) return `${value||label}`
 	return `
 		<span>
@@ -513,11 +513,11 @@ field.search = ({heading = '', cls = '', edit = true, label = 'Поиск', link
 				(btn => {
 					btn.addEventListener('click', async () => {
 						const Search = await import('/-dialog/search/Search.js').then(r => r.default)
-						let descr = '${descr || ''}'
+						let descr = ${JSON.stringify(descr)}
 						Search.open({
 							heading: ${JSON.stringify(heading)}, 
 							action:'${search}',
-							descr: descr,
+							descr,
 							placeholder:'${label}',
 							click: async (row, need) => {
 								const link = "${link || ''}"

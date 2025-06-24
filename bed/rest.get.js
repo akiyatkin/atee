@@ -14,6 +14,7 @@ rest.extra(rest_bed)
 
 rest.addResponse('get-prop-value-search', ['admin'], async view => {
 	const db = await view.get('db')
+	const spec = await view.get('spec') != null
 	const hash = await view.get('hash')
 	const prop = await view.get('prop#required')
 	const prop_id = prop.prop_id
@@ -52,7 +53,19 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 		row['left'] = row.value_title
 		row['right'] = ''
 		return row
-	})	
+	})
+	if (spec) {
+		view.ans.list.push({
+			action:'/-bed/set-sample-prop-spec?spec=any',
+			left: '<i>Любое значение</i>',
+			right: ''
+		})
+		view.ans.list.push({
+			action:'/-bed/set-sample-prop-spec?spec=empty',
+			left: '<i>Без значения</i>',
+			right: ''
+		})
+	}
 	
 	return view.ret()
 })

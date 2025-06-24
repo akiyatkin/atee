@@ -43,36 +43,39 @@ rest.addResponse('settings', ['admin'], async view => {
 rest.addResponse('groups', ['admin'], async view => {
 	const db = await view.get('db')
 	const group = view.data.group = await view.get('group')
-	const parent = group?.parent_id ? await Bed.getGroupById(db, group.parent_id) : false
 	
-	const md_parent = await Bed.getmd(db, '', parent)
-	const md_group = await Bed.getmd(db, '', group)
-	
+
 	if (group) {
-		group.filters = await db.all(`
+		view.data.filters = await db.all(`
 			SELECT fi.prop_nick, pr.prop_title, pr.prop_id
 			FROM bed_filters fi
 				LEFT JOIN sources_props pr on pr.prop_nick = fi.prop_nick
 			WHERE fi.group_id = :group_id
 			order by fi.ordain
 		`, group)
+		
+		//group.samples = await Bed.getSamples(db, group.group_id)
 
-		group.samples = await db.all(`
-			SELECT sa.sample_id, sp.prop_nick, spv.value_nick, pr.prop_title, va.value_title
+		const samples = await db.all(`
+			SELECT sa.sample_id, sp.prop_nick, sp.spec, pr.type, spv.value_nick, pr.prop_title, va.value_title
 			FROM bed_samples sa
 				LEFT JOIN bed_sampleprops sp on sp.sample_id = sa.sample_id
-				LEFT JOIN bed_samplepropvalues spv on (spv.sample_id = sa.sample_id and spv.prop_nick = sp.prop_nick)
+				LEFT JOIN bed_samplevalues spv on (spv.sample_id = sa.sample_id and spv.prop_nick = sp.prop_nick)
 				LEFT JOIN sources_props pr on pr.prop_nick = sp.prop_nick
 				LEFT JOIN sources_values va on va.value_nick = spv.value_nick
 			WHERE sa.group_id = :group_id
+			ORDER BY sa.date_create, sp.date_create, spv.date_create
 		`, group)
-		group.samples = Object.groupBy(group.samples, row => row.sample_id)
-		for (const sample_id in group.samples) {
-			group.samples[sample_id] = Object.groupBy(group.samples[sample_id], row => row.prop_nick)
+		view.data.samples = Object.groupBy(samples, row => row.sample_id)
+		for (const sample_id in view.data.samples) {
+			view.data.samples[sample_id] = Object.groupBy(view.data.samples[sample_id], row => row.prop_nick)
+			delete view.data.samples[sample_id]['null']
 		}
-	}	
+	}
+
 	
-	
+	const md_group = await Bed.getmd(db, '', group)
+
 	if (group) {
 		const {where, from, sort, bind} = Bed.getmdwhere(md_group, md_group.group.sgroup)
 		view.data.poscount = await db.col(`
@@ -90,8 +93,15 @@ rest.addResponse('groups', ['admin'], async view => {
 		view.data.poscount = await db.col(`select count(distinct key_id) from sources_wvalues WHERE entity_id = :pos_entity_id and prop_id = :mod_entity_id`, md_group)
 	}
 
+	//const parent = group?.parent_id ? await Bed.getGroupById(db, group.parent_id) : false
+	//const md_parent = await Bed.getmd(db, '', parent)
+	
+	const conf = await config('bed')	
+	const pos_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.pos_entity_title)})
+	const mod_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.mod_entity_title)})
+	const bind = {pos_entity_id, mod_entity_id}
 
-	view.data.freetable = group ? await BedAdmin.getFreeItems(db, md_parent) : false
+	view.data.freetable = group ? await BedAdmin.getFreeItems(db, bind, group?.parent_id) : false
 
 
 	const childs = view.data.childs = await db.all(`
@@ -110,8 +120,8 @@ rest.addResponse('groups', ['admin'], async view => {
 	`, {group_id: group?.group_id || null})
 	for (const group of childs) {
 		const md = await Bed.getmd(db, '', group)
-		const {where, from, sort, bind} = Bed.getmdwhere(md, md.group.mgroup)
-		
+		const {where, from, sort, bind} = Bed.getmdwhere(md, md.group.sgroup)
+
 		group.poscount = await db.col(`
 			SELECT count(distinct win.key_id)
 			FROM ${from.join(', ')}

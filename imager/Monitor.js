@@ -43,6 +43,11 @@ Monitor.init = div => {
 		hide()
 		if (link) show(link)
 	}
+	const reachGoal = goal => {
+		console.log('Goal.reach ' + goal)
+		const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
+		if (metrikaid) ym(metrikaid, 'reachGoal', goal)
+	}
 	for (const link of links) {
 		
 		// const small = link.querySelector('.small')
@@ -65,7 +70,10 @@ Monitor.init = div => {
 					hide()
 				}
 			} else {
-				if (!showed) return show(link)
+				if (!showed) {
+					reachGoal('monitor')
+					return show(link)
+				}
 			}
 		})
 	}

@@ -28,11 +28,13 @@ const createPool = async () => {
 		...CONF.config
 	}).catch(e => console.log('db connect - ', e))
 	if (db) {
-		const [rows, fields] = await db.query("show variables like 'max_connections'")
-		let connectionLimit = rows[0].Value - 1
+		//const [rows, fields] = await db.query("show variables like 'max_connections'")
+		//let connectionLimit = rows[0].Value - 1
 		// connectionLimit = Math.round(connectionLimit / 2)
-		const limit = 120
-		connectionLimit = connectionLimit < limit ? connectionLimit : limit
+		//const limit = 120
+		//connectionLimit = connectionLimit < limit ? connectionLimit : limit
+		const connectionLimit = 5
+		
 		console.log('db ready - connectionLimit: ' + connectionLimit)
 		conf = {
 			...DEF, 
