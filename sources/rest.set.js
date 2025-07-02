@@ -247,7 +247,7 @@ const loadSources = async (db, visitor, list, callback) => {
 	const res = []
 	for (const source of mylist) {
 		const end = await Sources.load(db, source, visitor)
-		if (end) await end()
+		//if (end) await end()
 	}
 }
 const loadSourcesAll = async (db, visitor) => {
@@ -288,10 +288,10 @@ const renovateSourcesAll = async (db, visitor) => {
 const renovateSources = async (db, visitor, list, callback) => {
 	const proms1 = list.filter(callback).map(source => Sources.renovate(db, source, visitor))
 	await Promise.all(proms1)
-	for await (const end of proms1) {
-		if (!end) continue
-		await end()
-	}
+	// for await (const end of proms1) {
+	// 	if (!end) continue
+	// 	await end()
+	// }
 }
 rest.addAction('set-sources-check', ['admin','checkstart'], async view => {
 	/*
@@ -547,7 +547,7 @@ rest.addAction('set-prop-ordain', ['admin','checkstart'], async view => {
 	//await Consequences порядок свойств ничего не меняет
 	return view.ret()
 })
-rest.addAction('set-reset-values', ['admin'], async (view) => {
+rest.addAction('set-reset-values', ['admin','checkstart'], async (view) => {
 	const db = await rest.data('db')
 	
 	
@@ -558,13 +558,21 @@ rest.addAction('set-reset-values', ['admin'], async (view) => {
 	// await db.exec(`DELETE FROM sources_sheets`)
 	// await db.exec(`DELETE FROM sources_items`)
 	// await db.exec(`DELETE FROM sources_values`)
-	await db.exec(`SET FOREIGN_KEY_CHECKS = 0`)
+	
+	await db.exec(`SET FOREIGN_KEY_CHECKS = 0`) //truncate быстрей, но с FK не работает
+	console.log('sources_appears')
 	await db.exec(`TRUNCATE TABLE sources_appears`)
+	console.log('sources_cells')
 	await db.exec(`TRUNCATE TABLE sources_cells`)
+	console.log('sources_cols')
 	await db.exec(`TRUNCATE TABLE sources_cols`)
+	console.log('sources_rows')
 	await db.exec(`TRUNCATE TABLE sources_rows`)
+	console.log('sources_sheets')
 	await db.exec(`TRUNCATE TABLE sources_sheets`)
+	console.log('sources_items')
 	await db.exec(`TRUNCATE TABLE sources_items`)
+	console.log('sources_values')
 	await db.exec(`TRUNCATE TABLE sources_values`)
 	await db.exec(`SET FOREIGN_KEY_CHECKS = 1`)
 

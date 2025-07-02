@@ -32,8 +32,7 @@ rest.addResponse('get-yandex', async view => {
 	const partner = await view.get('partner')
 
 	const poss = await yml.data(view, feed, partner)
-
-
+	
 	const conf = await config('yml')
 	const mail = await config('mail')
 	const host = view.visitor.client.host

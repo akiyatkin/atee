@@ -18,6 +18,9 @@ rest.extra(rest_db)
 import rest_admin from '/-controller/rest.admin.js'
 rest.extra(rest_admin)
 
+import rest_search from "/-dialog/search/rest.search.js" //аргументы hashs, hash, search 
+rest.extra(rest_search)
+
 rest.addArgument('next_id', ['mint'])
 rest.addArgument('id', ['mint'])
 rest.addVariable('id#required', ['id', 'required'])
@@ -31,6 +34,14 @@ rest.addArgument('spec', (view, val) => {
 	return val
 })
 rest.addVariable('spec#required',['spec','required'])
+
+rest.addArgument('type', (view, val) => {
+	if (!val) return val
+	if (!~['sampleprop','samplevalue','sample'].indexOf(val)) return view.err('Некорректный type')
+	return val
+})
+rest.addVariable('type#required',['type','required'])
+
 
 rest.addArgument('p', ['int'], (view, n) => n || 1)
 rest.addArgument('count', ['int'])
@@ -52,7 +63,7 @@ rest.addVariable('prop', ['prop_nick','null'], async (view, prop_nick) => {
 	if (prop_nick == null) return null
 	const db = await view.get('db')
 	const prop = await Bed.getPropByNick(db, prop_nick)
-	if (!prop) return view.err('Свойство не найдено', 404)
+	if (!prop) return null
 	return prop
 })
 rest.addVariable('prop_nick#required', ['prop_nick', 'required'])
@@ -72,11 +83,11 @@ rest.addVariable('value#required', ['value', 'required'])
 
 
 
-rest.addArgument('search', ['string']) //Строка поиска
-rest.addVariable('hashs', ['search'], (view, hashs) => {
-	hashs = hashs.split(',').map(hash => unique(nicked(hash).split('-')).filter(r => r).sort()).filter(r => r.length)
-	return hashs
-})
+// rest.addArgument('search', ['string']) //Строка поиска
+// rest.addVariable('hashs', ['search'], (view, hashs) => {
+// 	hashs = hashs.split(',').map(hash => unique(nicked(hash).split('-')).filter(r => r).sort()).filter(r => r.length)
+// 	return hashs
+// })
 
 
 

@@ -84,11 +84,13 @@ export const Search = {
 			Search.fetchNow(form)
 		//}, 100)
 	},
-	fetchCreate: ({hash, partner}, action) => {
+	version: 'hashs',
+	fetchCreate: (need, action) => {
+		const {query, hash, partner} = need
 		const fetch_promise = createPromise('Search promise ' + hash)
 		const controller = new AbortController()
 		const signal = controller.signal
-		const promise = fetch(action + (/\?/.test(action) ?  '&' : '?') + 'hash=' + hash, {signal}).then(res => res.json()).catch(e => null)
+		const promise = fetch(action + (/\?/.test(action) ?  '&' : '?') + 'query=' + query, {signal}).then(res => res.json()).catch(e => null)
 
 		promise.then((ans) => {
 			fetch_promise.resolve(ans)

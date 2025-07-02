@@ -55,6 +55,7 @@ const showScriptDrag = (data, env) => `
 const showMain = (data, env) => `
 	<div style="margin: 1em 0; display: flex; flex-wrap: wrap; gap: 1em; justify-content: space-between;">
 		${field.button({
+			async: true,
 			label: 'Актуализировать все', 
 			action: '/-sources/set-sources-renovate',
 			reloaddiv: 'TABLE'

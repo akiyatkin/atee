@@ -4,8 +4,12 @@ import rest_funcs from '/-rest/rest.funcs.js'
 const rest = new Rest(rest_funcs)
 
 rest.addVariable('setaccess', async (view, val) => {
-	console.log('setaccess')
-	Access.setAccessTime()
+	view.after(() => {
+		if (view.data.result) {
+			console.log('setaccess')
+			Access.setAccessTime()
+		}
+	})
 	return val
 })
 

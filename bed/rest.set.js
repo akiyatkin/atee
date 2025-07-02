@@ -11,7 +11,7 @@ rest.extra(rest_bed)
 import rest_bedadmin from '/-bed/rest.bedadmin.js'
 rest.extra(rest_bedadmin)
 
-// rest.addAction('set-group-mark-delete', ['admin'], async view => {
+// rest.addAction('set-group-mark-delete', ['admin','setaccess'], async view => {
 // 	const group = await view.get('group#required')
 // 	const prop = await view.get('prop#required')
 // 	const db = await view.get('db')
@@ -28,7 +28,13 @@ rest.extra(rest_bedadmin)
 
 // 	return view.ret()
 // })
-rest.addAction('set-group-mark-value-delete', ['admin'], async view => {
+
+// rest.after(async view => {
+// 	console.log('asdf')
+// 	if (view.data.result) await view.get('setaccess')
+// })
+
+rest.addAction('set-sample-prop-value-delete', ['admin','setaccess'], async view => {
 	const group = await view.get('group#required')
 	const prop_nick = await view.get('prop_nick#required')
 	const value_nick = await view.get('value_nick')
@@ -47,7 +53,7 @@ rest.addAction('set-group-mark-value-delete', ['admin'], async view => {
 
 	return view.ret()
 })
-rest.addAction('set-sample-delete', ['admin'], async view => {
+rest.addAction('set-sample-delete', ['admin','setaccess'], async view => {
 	const sample_id = await view.get('sample_id#required')
 	const db = await view.get('db')
 	await db.exec(`
@@ -61,7 +67,7 @@ rest.addAction('set-sample-delete', ['admin'], async view => {
 
 	return view.ret()
 })
-rest.addAction('set-sample-prop-delete', ['admin'], async view => {
+rest.addAction('set-sample-prop-delete', ['admin','setaccess'], async view => {
 	const sample_id = await view.get('sample_id#required')
 	const prop_nick = await view.get('prop_nick#required')
 	const db = await view.get('db')
@@ -80,7 +86,7 @@ rest.addAction('set-sample-prop-delete', ['admin'], async view => {
 
 	return view.ret()
 })
-rest.addAction('set-sample-prop-spec', ['admin'], async view => {
+rest.addAction('set-sample-prop-spec', ['admin','setaccess'], async view => {
 	const spec = await view.get('spec#required')
 	const prop_nick = await view.get('prop_nick#required')
 	const sample_id = await view.get('sample_id#required')
@@ -103,10 +109,17 @@ rest.addAction('set-sample-prop-spec', ['admin'], async view => {
 
 	return view.ret()
 })
-rest.addAction('set-sample-prop-value', ['admin'], async view => {
+rest.addAction('set-sample-prop-value-create', ['admin','setaccess'], async view => {
 	const prop_nick = await view.get('prop_nick#required')
 	const sample_id = await view.get('sample_id#required')
-	const value_nick = await view.get('value_nick#required')
+	let value_nick = await view.get('value_nick')
+	const query_nick = await view.get('query_nick')
+	if (!value_nick) {
+		if (!query_nick) return view.err('Недостаточно данных')
+		value_nick = query_nick
+		//} else {
+		//if (prop?.type != 'value') return view.err('Выборка может быть только по свойствам value')
+	}
 	const db = await view.get('db')
 
 	await db.exec(`
@@ -127,9 +140,13 @@ rest.addAction('set-sample-prop-value', ['admin'], async view => {
 	
 	return view.ret()
 })
-rest.addAction('set-sample-prop-create', ['admin'], async view => {
-	const prop = await view.get('prop#required')
-	if (prop.type != 'value') return view.err('Выборка может быть только по свойствам value')
+rest.addAction('set-sample-prop-create', ['admin','setaccess'], async view => {
+	let prop_nick = await view.get('prop_nick')
+	const query_nick = await view.get('query_nick')
+	if (!prop_nick) {
+		if (!query_nick) return view.err('Недостаточно данных')
+		prop_nick = query_nick
+	}
 	const sample_id = await view.get('sample_id#required')
 	const db = await view.get('db')
 		
@@ -138,13 +155,19 @@ rest.addAction('set-sample-prop-create', ['admin'], async view => {
 		VALUES (:sample_id, :prop_nick)
 	`, {
 		sample_id: sample_id, 
-		prop_nick: prop.prop_nick
+		prop_nick: prop_nick
 	})
+	
 	return view.ret()
 })
-rest.addAction('set-sample-create', ['admin'], async view => {
-	const prop = await view.get('prop#required')
-	if (prop.type != 'value') return view.err('Выборка может быть только по свойствам value')
+rest.addAction('set-sample-create', ['admin','setaccess'], async view => {
+	let prop_nick = await view.get('prop_nick')
+	const query_nick = await view.get('query_nick')
+	if (!prop_nick) {
+		if (!query_nick) return view.err('Недостаточно данных')
+		prop_nick = query_nick
+	}
+
 	const group = await view.get('group#required')
 	const db = await view.get('db')
 	const sample_id = await db.insertId(`
@@ -158,11 +181,11 @@ rest.addAction('set-sample-create', ['admin'], async view => {
 		VALUES (:sample_id, :prop_nick)
 	`, {
 		sample_id: sample_id, 
-		prop_nick: prop.prop_nick
+		prop_nick: prop_nick
 	})
 	return view.ret()
 })
-rest.addAction('set-group-filter', ['admin'], async view => {
+rest.addAction('set-group-filter', ['admin','setaccess'], async view => {
 	const prop = await view.get('prop#required')
 	if (!~['value','number'].indexOf(prop.type)) return view.err('Тип свойства <b>'+prop.type+'</b> не подходит для фильтра')
 
@@ -178,7 +201,7 @@ rest.addAction('set-group-filter', ['admin'], async view => {
 
 	return view.ret()
 })
-rest.addAction('set-group-create', ['admin'], async view => {
+rest.addAction('set-group-create', ['admin','setaccess'], async view => {
 	const group = await view.get('group')
 	const db = await view.get('db')
 
@@ -202,7 +225,7 @@ rest.addAction('set-group-create', ['admin'], async view => {
 
 	return view.ret()
 })
-rest.addAction('set-filter-delete', ['admin'], async view => {
+rest.addAction('set-filter-delete', ['admin','setaccess'], async view => {
 	const group = await view.get('group#required')
 	const group_id = group.group_id
 	const prop_nick = await view.get('prop_nick#required')
@@ -217,7 +240,7 @@ rest.addAction('set-filter-delete', ['admin'], async view => {
 
 	return view.ret()
 })
-rest.addAction('set-group-delete', ['admin'], async view => {
+rest.addAction('set-group-delete', ['admin','setaccess'], async view => {
 	const group = await view.get('group#required')
 	const db = await view.get('db')
 	const childs = await Bed.getChilds(db, group.group_id)
@@ -231,7 +254,7 @@ rest.addAction('set-group-delete', ['admin'], async view => {
 
 	return view.ret()
 })
-rest.addAction('set-group-title', ['admin'], async view => {
+rest.addAction('set-group-title', ['admin','setaccess'], async view => {
 	const group = await view.get('group#required')
 	const db = await view.get('db')
 
@@ -247,7 +270,7 @@ rest.addAction('set-group-title', ['admin'], async view => {
 	view.data.group_nick = group_nick
 	return view.ret()
 })
-rest.addAction('set-group-ordain', ['admin'], async view => {
+rest.addAction('set-group-ordain', ['admin','setaccess'], async view => {
 	const next_id = await view.get('next_id')
 	const id = await view.get('id#required')
 	const db = await view.get('db')
@@ -266,7 +289,7 @@ rest.addAction('set-group-ordain', ['admin'], async view => {
 
 	return view.ret()
 })
-rest.addAction('set-filter-ordain', ['admin'], async view => {
+rest.addAction('set-filter-ordain', ['admin','setaccess'], async view => {
 	const group = await view.get('group#required')
 	const group_id = group.group_id
 	const next_nick = await view.get('next_nick')

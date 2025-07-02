@@ -3,6 +3,46 @@ import err from "/-controller/err.html.js"
 import field from "/-dialog/field.html.js"
 import print from "/-words/print.html.js"
 import svg from "/-sources/svg.html.js"
+
+export const ROOT = (data, env) => err(data, env, []) || `
+	${data.group ? showParent(data, env) : ''}
+	<h1>${data.group ? showEdit(data, env, data.group) : 'Группы'}<span style="font-size:12px"></h1>
+	<!-- <pre>${data.sql}</pre> -->
+
+	
+	
+	
+	${!data.group ? '' : showSamples(data, env, data.group)}
+	${showGroups(data, env, data.group)}
+	${data.group ? showGroupOptions(data, env) : ''}
+	
+
+
+	${!data.freetable ? '' : showFree(data, env, data.group)}
+	
+`
+
+const showGroupOptions = (data, env) => `
+	<h2>Cвойства на карточках</h2>
+	<h2>Фильтры в группе</h2>
+	${data.filters?.length ? showTableFilters(data, env, data.group) : ''}
+	<p>
+		${field.search({
+			cls: 'a',
+			search:'/-bed/get-group-filter-prop-search',
+			value: 'Добавить фильтр',
+			heading: "Добавить фильтр",
+			descr: "Выберите свойство по которому можно будет фильтровать позиций в группе <b>" + data.group.group_title + "</b>",
+			label: 'Выберите свойство', 
+			type: 'text',
+			name: 'prop_nick',
+			find: 'prop_nick',
+			action: '/-bed/set-group-filter',
+			args: {group_nick: data.group.group_nick},
+			reloaddiv: env.layer.div
+		})}
+	</p>
+`
 const showParent = (data, env) => `
 	<a href="groups/${data.group?.parent_nick || ''}">${data.group?.parent_title || 'Группы'}</a>
 `
@@ -34,7 +74,7 @@ const showValue = (data, env, group, mark) => !mark.value_nick ? '' : `
 			cls: 'transparent mute',
 			label: svg.cross(), 
 			confirm: 'Удалить занчение?',
-			action: '/-bed/set-group-mark-value-delete',
+			action: '/-bed/set-sample-prop-value-delete',
 			reloaddiv: env.layer.div,
 			args: {
 				prop_nick: mark.prop_nick, 
@@ -47,7 +87,7 @@ const showValue = (data, env, group, mark) => !mark.value_nick ? '' : `
 `
 const descrPropValue = (data, env, group, prop) => `
 	Выберите значение критерия 
-	<b>${prop.prop_title}</b> 
+	<b>${prop.prop_title || prop.prop_nick}</b> 
 	для попадания позиций в группу
 `
 // ${prop.type != 'number' ? '' : field.prompt({
@@ -59,7 +99,7 @@ const descrPropValue = (data, env, group, prop) => `
 // 	type: 'number',
 // 	name: 'value_nick',
 // 	find: 'value_nick',
-// 	action: '/-bed/set-sample-prop-value',
+// 	action: '/-bed/set-sample-prop-value-create',
 // 	args: { sample_id, prop_nick: marks[0].prop_nick},
 // 	reloaddiv: env.layer.div
 // })}
@@ -80,39 +120,40 @@ const showProp = (data, env, group, sample_id, props, prop = props[0]) => !prop.
 	<tr>
 		<td>
 			${props[0].prop_title || showRed(props[0].prop_nick)}
+			${field.button({
+				cls: 'transparent mute',
+				label: svg.cross(), 
+				confirm: 'Удалить критерий?',
+				action: '/-bed/set-sample-prop-delete',
+				reloaddiv: env.layer.div,
+				args: {
+					prop_nick: props[0].prop_nick, 
+					sample_id
+				},
+				reloaddiv: env.layer.div
+			})}
 		</td>
 		<td>
 			${prop.spec != 'any' ? '' : '<i>Любое значение</i>'}
 			${prop.spec != 'empty' ? '' : '<i>Без значения</i>'}
 			${prop.spec != 'exactly' ? '' : props.map(mark => showValue(data, env, group, mark)).join('')}
 			<div>
-				${prop.type != 'value' ? '' : field.search({
+				${field.search({
 					cls: 'a',
-					search: '/-bed/get-prop-value-search?spec&prop_nick=' + props[0].prop_nick + '&group_nick=' + data.group.group_nick,
-					value: 'Добавить',
+					search: '/-bed/get-prop-value-search?type=samplevalue&prop_nick=' + props[0].prop_nick + '&group_nick=' + data.group.group_nick,
+					value: 'Добавить значение',
 					heading: "Выберите значение",
 					descr: descrPropValue(data, env, group, props[0]),
 					label: 'Выберите значение', 
 					type: 'text',
 					name: 'value_nick',
 					find: 'value_nick',
-					action: '/-bed/set-sample-prop-value',
+					action: '/-bed/set-sample-prop-value-create',
 					args: { sample_id, prop_nick: props[0].prop_nick},
 					reloaddiv: env.layer.div
 				})}
 				
-				${prop.value_nick ? '' : field.button({
-					cls: 'transparent mute',
-					label: svg.cross(), 
-					confirm: 'Удалить критерий?',
-					action: '/-bed/set-sample-prop-delete',
-					reloaddiv: env.layer.div,
-					args: {
-						prop_nick: props[0].prop_nick, 
-						sample_id
-					},
-					reloaddiv: env.layer.div
-				})}
+				
 			</div>
 		</td>
 	</tr>
@@ -141,12 +182,12 @@ const showTableSamples = (data, env, group) => `
 	${Object.entries(data.samples).map(([sample_id, props]) => showTableSampleProps(data, env, group, sample_id, props)).join('')}
 `
 const showTableSampleProps = (data, env, group, sample_id, props) => `
-	<table style="margin-top:2em">
+	<table style="margin-top:1em">
 		${Object.entries(props).map(([prop_nick, props]) => showProp(data, env, group, sample_id, props)).join('')}
 		<tr><td colspan="2">
 			${field.search({
 				cls: 'a',
-				search:'/-bed/get-sample-prop-search',
+				search:'/-bed/get-sample-prop-search?type=sampleprop',
 				value: 'Добавить критерий',
 				heading: "Добавить критерий",
 				descr: "Выберите свойство-критерий для попадания позиций в группу <b>" + data.group.group_title + "</b>",
@@ -158,7 +199,7 @@ const showTableSampleProps = (data, env, group, sample_id, props) => `
 				args: {sample_id},
 				reloaddiv: env.layer.div
 			})}
-			${Object.entries(props).length ? '' : field.button({
+			${field.button({
 				cls: 'transparent mute',
 				label: svg.cross(), 
 				confirm: 'Удалить всю выборку?',
@@ -170,28 +211,11 @@ const showTableSampleProps = (data, env, group, sample_id, props) => `
 	</table>
 `
 const showTableFilters = (data, env, group) => `
-	<h2>Фильтры</h2>
+	
 	<table draggable="false" class="list" style="margin: 2em 0 1em">
 		${data.filters.map(filter => showFilter(data, env, group, filter)).join('')}
 	</table>
 	${showScriptDragFilters(data, env)}
-	<p>
-		${field.search({
-			cls: 'a',
-			search:'/-bed/get-filter-prop-search',
-			value: 'Добавить фильтр',
-			heading: "Добавить фильтр",
-			descr: "Выберите свойство по которому можно будет фильтровать позиций в группе <b>" + data.group.group_title + "</b>",
-			label: 'Выберите свойство', 
-			type: 'text',
-			name: 'prop_nick',
-			find: 'prop_nick',
-			action: '/-bed/set-group-filter',
-			args: {group_nick: data.group.group_nick},
-			reloaddiv: env.layer.div
-		})}
-	</p>
-	
 `
 const showTableGroups = (data, env, group) => `
 	<table draggable="false" class="list" style="margin: 2em 0 1em">
@@ -199,7 +223,6 @@ const showTableGroups = (data, env, group) => `
 			<tr>
 				<th>${data.group ? 'Подгруппа' : 'Группа'}</th>
 				<th>Позиций</th>
-				<th>Моделей</th>
 				<th>Подгрупп</th>
 				<td></td>
 			</tr>
@@ -211,16 +234,44 @@ const showTableGroups = (data, env, group) => `
 	${showScriptDragGroups(data, env)}
 `
 const showSamples = (data, env, group) => `
-	<h2>Выбрано <span title="Позиций ${data.poscount}, моделей ${data.modcount}">(${data.poscount})</span></h2>
+	<h2>Выбрано <span title="Позиций ${data.poscount}, моделей ${data.modcount}">${data.poscount}</span></h2>
 	${Object.keys(data.samples).length ? showTableSamples(data, env, group) : ''}
 	<p>
 		${field.search({
 			cls: 'a',
-			search:'/-bed/get-sample-prop-search',
+			search:'/-bed/get-sample-prop-search?type=sample',
 			value: 'Добавить выборку',
 			heading: "Добавить критерий",
-			descr: "Выберите свойство-критерий для попадания позиций в группу <b>" + data.group.group_title + "</b>",
+			descr: "Выберите свойство-критерий для попадания позиций в группу <b>" + data.group.group_title + "</b>.",
 			label: 'Выберите свойство', 
+			type: 'text',
+			name: 'prop_nick',
+			find: 'prop_nick',
+			action: '/-bed/set-sample-create',
+			args: {group_nick: data.group.group_nick},
+			reloaddiv: env.layer.div
+		})},
+		${field.search({
+			cls: 'a',
+			search:'/-bed/get-group-search',
+			value: 'Перенести',
+			heading: "Перенос группы",
+			descr: "Выберите куда перенести группу <b>" + data.group.group_title + "</b>.",
+			label: 'Новая родительская группа', 
+			type: 'text',
+			name: 'prop_nick',
+			find: 'prop_nick',
+			action: '/-bed/set-sample-create',
+			args: {group_nick: data.group.group_nick},
+			reloaddiv: env.layer.div
+		})},
+		${field.search({
+			cls: 'a',
+			search:'/-bed/get-group-search',
+			value: 'Скопировать',
+			heading: "Копирование группы",
+			descr: "Выберите куда скопировать выборки, название и настройки группы <b>" + data.group.group_title + "</b>.",
+			label: 'Новая родительская группа', 
 			type: 'text',
 			name: 'prop_nick',
 			find: 'prop_nick',
@@ -231,20 +282,7 @@ const showSamples = (data, env, group) => `
 	</p>
 `
 
-export const ROOT = (data, env) => err(data, env, []) || `
-	${data.group ? showParent(data, env) : ''}
-	<h1>${data.group ? showEdit(data, env, data.group) : 'Группы'}<span style="font-size:12px"></h1>
-	<!-- <pre>${data.sql}</pre> -->
 
-	
-	
-	
-	${!data.group ? '' : showSamples(data, env, data.group)}
-	${showGroups(data, env, data.group)}
-	${data.filters?.length ? showTableFilters(data, env, data.group) : ''}
-	${!data.freetable ? '' : showFree(data, env, data.group)}
-	
-`
 const showGroups = (data, env, group) => `
 	<!-- <h2>${data.group ? 'Подгруппы' : 'Группы'}</h2> -->
 	${data.childs.length ? showTableGroups(data, env, data.group) : ''}	
@@ -266,7 +304,7 @@ const showGroups = (data, env, group) => `
 	
 `
 const showFree = (data, env) => `
-	<h2 title="Нераспределённые позиции в родительской группе">Свободные позиции <span title="Позиций ${data.freetable?.poscount || 0}, моделей ${data.freetable?.modcount || 0}">(${data.freetable?.poscount || 0})</span></h2>
+	<h2 title="Нераспределённые позиции в родительской группе">Свободные позиции <span title="Позиций ${data.freetable?.poscount || 0}, моделей ${data.freetable?.modcount || 0}">${data.freetable?.poscount || 0}</span></h2>
 	<div class="revscroll">
 		<table>
 			<thead>
@@ -319,8 +357,7 @@ const showGroup = (data, env, group) => `
 			<a href="groups/${group.group_nick}">${group.group_title}</a>
 		</td>
 		
-		<td>${group.poscount}</td>
-		<td>${group.modcount}</td>
+		<td title="Позиций ${data.poscount}, моделей ${data.modcount}">${group.poscount}</td>
 		<td>${group.childs}</td>
 		<td>
 			${field.button({

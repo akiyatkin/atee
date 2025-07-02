@@ -23,180 +23,83 @@ BedAdmin.reorderGroups = async (db) => {
 	}
 	return Promise.all(promises)
 }
-BedAdmin.getFreeItems = async (db, bind, group_id = false) => {
+BedAdmin.getFreeItems = async (db, group_id = false) => {
 	const ans = {poscount:0, modcount:0, head: [], rows:[]}
 
-	let from = 'sources_wvalues wmv, sources_winners win'
-	const where = [`
-		win.entity_id = :pos_entity_id 
-		and win.prop_id = :mod_entity_id 
-		and wmv.entity_id = win.entity_id
-		and wmv.prop_id = win.prop_id
-		and wmv.key_id = win.key_id
-	`]
-	const whereor = []
+	const bind = await Bed.getBind(db)
+
+	const samples = await Bed.getAllSamples(db, group_id)
+	const gw = await Bed.getWhereBySamples(db, samples)
 	
-	const samples = await Bed.getGroupSamples(db, group_id)
 	
-
-	let i = 0
-
-
-	for (const sample of samples) { //OR
-
-		const whereand = []
-		for (const prop_nick in sample) { //Находим позиции группы
-			const prop = await Bed.getPropByNick(db, prop_nick)
-			
-
-			i++
-			from += `
-				LEFT JOIN sources_wvalues da${i} ON (
-					da${i}.entity_id = win.entity_id 
-					and da${i}.key_id = win.key_id 
-					and da${i}.prop_id = ${prop.prop_id || 0}
-				)
-			`
-			if (typeof(sample[prop_nick]) == 'object') {
-				const value_ids = []
-				for (value_nick of sample[prop_nick]) {
-					const value = await Bed.getValueByNick(db, value_nick)
-					value_ids.push(value?.value_id || 0)
-				}
-				if (value_ids.length) whereand.push(`
-					da${i}.value_id in (${value_ids.join(', ')})
-				`)
-			} else if (sample[prop_nick] == 'any') {
-				whereand.push(`
-					da${i}.value_id is not null
-				`)
-			} else if (sample[prop_nick] == 'empty') {
-				whereand.push(`
-					da${i}.value_id is null
-				`)
-			}
-		}
-		if (whereand.length) whereor.push(whereand.join(` and `))
-	}
-	if (whereor.length)	where.push(`(${whereor.join(') or (')})`)
-
-	// const childs = await Bed.getChilds(db, group_id)
-	// for (const child of childs) {
-	// 	await Bed.getSamples(db, child.group_id) //getSamples
-	// 	console.log('sadf', samples)
-	// }
-
-	// console.log(samples)
 	const childs = await Bed.getChilds(db, group_id)
 	let childsamples = []
 	for (const child of childs) { //Исключаем позиции подгрупп
 		const marks = []		
-		const samples = await Bed.getSamplesByGroupId(db, child.group_id)
+		const samples = await Bed.getSamples(db, child.group_id)
+		//if (samples.length)	
 		childsamples.push(...samples)
 	}
 	
-	const marks = []
-	for (const sample of childsamples) {
-		
-		for (const prop_nick in sample) {
-			
-			const prop = await Bed.getPropByNick(db, prop_nick)
-			i++
-			from += `
-				LEFT JOIN sources_wvalues da${i} ON (
-					da${i}.entity_id = win.entity_id 
-					and da${i}.key_id = win.key_id 
-					and da${i}.prop_id = ${prop.prop_id || 0}
-				)
-			`
-
-			if (typeof(sample[prop_nick]) == 'object') {
-				const value_ids = []
-				for (const value_nick of sample[prop_nick]) {
-					const value = await Bed.getValueByNick(db, value_nick)
-					value_ids.push(value.value_id)
-				}
-				if (value_ids.length) marks.push(`(da${i}.value_id not in (${value_ids.join(', ')}) or da${i}.value_id is null)`)
-			} else if (sample[prop_nick] == 'any') {
-				marks.push(`da${i}.value_id is null`)
-			} else if (sample[prop_nick] == 'empty') {
-				marks.push(`da${i}.value_id is not null`)
-			}
-		}
-		
-	}
-
-	if (marks.length) where.push('(' + marks.join(' or ') + ')')
-
-
+	/*
+		Выборка позиций samples (всё кроме указанного)
+		Надо из этой выборки исключить childsamples
+	*/
+	const cw = await Bed.getWhereBySamples(db, childsamples, true)	
 	
-	// const test = await db.col(`
-	// 	SELECT count(distinct win.key_id)
-	// 	FROM ${from}
-	// 	WHERE ${where.join(' and ')}
-	// `, bind)
-	
-	// console.log(test)
-
-
-	//if (!group_id) return ans
-	//return ans
-
-	
-	
-	// if (md.group) {
-	// 	for (const prop_nick in md.group.mgroup) { //Находим позиции группы
-	// 		i++
-	// 		from.push(`
-	// 			left join sources_wvalues da${i} ON (
-	// 				da${i}.entity_id = win.entity_id 
-	// 				and da${i}.key_id = win.key_id 
-	// 				and da${i}.prop_id = ${md.props[prop_nick]?.prop_id || 0}
-	// 			)
-	// 		`)
-	// 		where.push(`
-	// 			da${i}.value_id in (${Object.keys(md.group.mgroup[prop_nick]).map(val => `"${md.values[val]?.value_id || 0}"`).join(', ')})
-	// 		`)
-			
-	// 	}
-	// }
-	// for (const child of md.childs) { //Исключаем позиции подгрупп
-	// 	const marks = []
-	// 	const samples = await Bed.getOldSamples(db, child.group_id)
-
-	// 	for (const prop_nick in samples) {
-	// 		i++
-	// 		from.push(`left join sources_wvalues da${i} ON (da${i}.entity_id = win.entity_id and da${i}.key_id = win.key_id and da${i}.prop_id = ${md.props[prop_nick]?.prop_id || 0})`)
-	// 		const values = Object.keys(samples[prop_nick]).map(val => `"${md.values[val]?.value_id || 0}"`).join(', ')
-	// 		marks.push(`(da${i}.value_id not in (${values}) or da${i}.value_id is null)`)
-	// 	}
-	// 	if (marks.length) {
-	// 		where.push('(' + marks.join(' or ') + ')')
-	// 	}
-	// }
-	ans.poscount = await db.col(`
-		SELECT count(distinct win.key_id)
-		FROM 
-			${from}
-		WHERE 
-			${where.join(' and ')}
-	`, bind)
-	if (!ans.poscount) return ans
-	ans.modcount = await db.col(`
-		SELECT count(distinct wmv.value_id)
-		FROM 
-			${from}
-		WHERE 
-			${where.join(' and ')}
-	`, bind)
 	const list = await db.colAll(`
 		SELECT win.key_id
 		FROM 
-			${from}
+			${gw.from.join(', ')}
+			${gw.join.join(' ')}
 		WHERE 
-			${where.join(' and ')}
+			${gw.where.join(' and ')}
+			and win.key_id not in (
+				SELECT win.key_id
+				FROM 
+					${cw.from.join(', ')}
+					${cw.join.join(' ')}
+				WHERE 
+					${cw.where.join(' and ')}
+			)
 		LIMIT 500
 	`, bind)
+
+
+	ans.poscount = await db.col(`
+		SELECT count(distinct win.key_id)
+		FROM 
+			${gw.from.join(', ')}
+			${gw.join.join(' ')}
+		WHERE 
+			${gw.where.join(' and ')}
+			and win.key_id not in (
+				SELECT win.key_id
+				FROM 
+					${cw.from.join(', ')}
+					${cw.join.join(' ')}
+				WHERE 
+					${cw.where.join(' and ')}
+			)
+	`, bind)
+	if (!ans.poscount) return ans
+	ans.modcount = await db.col(`
+		SELECT count(distinct wva.value_id)
+		FROM 
+			${gw.from.join(', ')}
+			${gw.join.join(' ')}
+		WHERE 
+			${gw.where.join(' and ')}
+			and win.key_id not in (
+				SELECT win.key_id
+				FROM 
+					${cw.from.join(', ')}
+					${cw.join.join(' ')}
+				WHERE 
+					${cw.where.join(' and ')}
+			)
+	`, bind)
+	
 	
 	const freeitems = await BedAdmin.getItemsValues(db, list, bind)
 	const headid = {}

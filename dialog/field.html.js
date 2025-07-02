@@ -540,7 +540,7 @@ field.search = ({heading = '', cls = '', edit = true, label = 'Поиск', link
 								const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 								const args = ${JSON.stringify(args)}
 								args['${name}'] = row['${find}'] || ''
-								args['search'] = need.value
+								args['query'] = need.query
 								const ans = await senditmsg(btn, action, args)
 								if (ans.result && (ans.value || (ans['${name}'] || ans['${name}'] == 0))) btn.innerHTML = ans.value || ans['${name}']
 								if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
@@ -558,7 +558,7 @@ field.search = ({heading = '', cls = '', edit = true, label = 'Поиск', link
 }
 
 //approved
-field.button = ({label, name = '', cls = '', action, args = {}, go = '', global = '', reloaddiv = '', goid = '', confirm, reload}) => {
+field.button = ({label, async = false, name = '', cls = '', action, args = {}, go = '', global = '', reloaddiv = '', goid = '', confirm, reload}) => {
 	return `
 		<span>
 			<button class="field ${cls}">${label}</button>
@@ -567,20 +567,22 @@ field.button = ({label, name = '', cls = '', action, args = {}, go = '', global 
 					btn.addEventListener('click', async () => {
 						if (btn.classList.contains('process')) return
 						const ask = "${confirm || ''}"
+						const async = "${async || ''}"
 						if (ask && !window.confirm(ask)) return
 						const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 						const args = ${JSON.stringify(args)}
-						const ans = await senditmsg(btn, '${action}', args)
-
-						if (!ans.result) return 
-						btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
-
 						const Client = await window.getClient()
-
-						if (${!!name} && (ans["${name}"] || ans["${name}"] == 0)) btn.innerHTML = ans["${name}"]
+						if (async) {
+							senditmsg(btn, '${action}', args)
+						} else {
+							const ans = await senditmsg(btn, '${action}', args)
+							if (!ans.result) return 
+							btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+							if (${!!name} && (ans["${name}"] || ans["${name}"] == 0)) btn.innerHTML = ans["${name}"]
+							if (${!!go}) Client.go("${go}" + ("${goid}" ? ans["${goid}"] : ''))
+						}
 						if (${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
 						if (${!!global}) Client.global(${JSON.stringify(global)})
-						if (${!!go}) Client.go("${go}" + ("${goid}" ? ans["${goid}"] : ''))
 						if (${!!reload}) Client.reload()
 					})
 				})(document.currentScript.previousElementSibling)

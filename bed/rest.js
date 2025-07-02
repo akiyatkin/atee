@@ -54,15 +54,17 @@ rest.addResponse('groups', ['admin'], async view => {
 			order by fi.ordain
 		`, group)
 		
+		
 		//group.samples = await Bed.getSamples(db, group.group_id)
 
 		const samples = await db.all(`
-			SELECT sa.sample_id, sp.prop_nick, sp.spec, pr.type, spv.value_nick, pr.prop_title, va.value_title
+			SELECT distinct sa.sample_id, sp.prop_nick, sp.spec, pr.type, spv.value_nick, pr.prop_title, if(wv.value_id, va.value_title, null) as value_title
 			FROM bed_samples sa
 				LEFT JOIN bed_sampleprops sp on sp.sample_id = sa.sample_id
 				LEFT JOIN bed_samplevalues spv on (spv.sample_id = sa.sample_id and spv.prop_nick = sp.prop_nick)
 				LEFT JOIN sources_props pr on pr.prop_nick = sp.prop_nick
 				LEFT JOIN sources_values va on va.value_nick = spv.value_nick
+				LEFT JOIN sources_wvalues wv on (va.value_id = wv.value_id and wv.prop_id = pr.prop_id)
 			WHERE sa.group_id = :group_id
 			ORDER BY sa.date_create, sp.date_create, spv.date_create
 		`, group)
@@ -73,36 +75,42 @@ rest.addResponse('groups', ['admin'], async view => {
 		}
 	}
 
-	
-	const md_group = await Bed.getmd(db, '', group)
+
+
+	const bind = await Bed.getBind(db)
 
 	if (group) {
-		const {where, from, sort, bind} = Bed.getmdwhere(md_group, md_group.group.sgroup)
+		const {from, join, where, sort} = await Bed.getWhereByGroupId(db, group.group_id)
+		
+		//const {where, from, sort} = Bed.getmdwhere(md_group, md_group.group.sgroup)
 		view.data.poscount = await db.col(`
 			SELECT count(distinct win.key_id)
-			FROM ${from.join(', ')}
+			FROM ${from.join(', ')} ${join.join(' ')}
 			WHERE ${where.join(' and ')}
 		`, bind)
+
+
 		view.data.modcount = await db.col(`
 			SELECT count(distinct wva.value_id)
-			FROM ${from.join(', ')}
+			FROM ${from.join(', ')} ${join.join(' ')}
 			WHERE ${where.join(' and ')}
 		`, bind)
 	} else {
-		view.data.modcount = await db.col(`select count(distinct value_id) from sources_wvalues WHERE entity_id = :pos_entity_id and prop_id = :mod_entity_id`, md_group)
-		view.data.poscount = await db.col(`select count(distinct key_id) from sources_wvalues WHERE entity_id = :pos_entity_id and prop_id = :mod_entity_id`, md_group)
+		view.data.modcount = await db.col(`select count(distinct value_id) from sources_wvalues WHERE entity_id = :pos_entity_id and prop_id = :mod_entity_id`, bind)
+		view.data.poscount = await db.col(`select count(distinct key_id) from sources_wvalues WHERE entity_id = :pos_entity_id and prop_id = :mod_entity_id`, bind)
 	}
 
 	//const parent = group?.parent_id ? await Bed.getGroupById(db, group.parent_id) : false
 	//const md_parent = await Bed.getmd(db, '', parent)
 	
-	const conf = await config('bed')	
-	const pos_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.pos_entity_title)})
-	const mod_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.mod_entity_title)})
-	const bind = {pos_entity_id, mod_entity_id}
+	// const conf = await config('bed')	
+	// const pos_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.pos_entity_title)})
+	// const mod_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.mod_entity_title)})
+	// const bind = {pos_entity_id, mod_entity_id}
 
-	view.data.freetable = group ? await BedAdmin.getFreeItems(db, bind, group?.parent_id) : false
-
+	//view.data.freetable = group ? await BedAdmin.getFreeItems(db, group?.parent_id) : false
+	view.data.freetable = await BedAdmin.getFreeItems(db, group?.parent_id || null)
+	
 
 	const childs = view.data.childs = await db.all(`
 		SELECT 
@@ -119,17 +127,18 @@ rest.addResponse('groups', ['admin'], async view => {
 		ORDER BY gr.ordain
 	`, {group_id: group?.group_id || null})
 	for (const group of childs) {
-		const md = await Bed.getmd(db, '', group)
-		const {where, from, sort, bind} = Bed.getmdwhere(md, md.group.sgroup)
+		// const md = await Bed.getmd(db, '', group)
+		// const {where, from, sort, bind} = Bed.getmdwhere(md, md.group.sgroup)
+		const {from, join, where, sort} = await Bed.getWhereByGroupId(db, group.group_id)
 
 		group.poscount = await db.col(`
 			SELECT count(distinct win.key_id)
-			FROM ${from.join(', ')}
+			FROM ${from.join(', ')} ${join.join(' ')}
 			WHERE ${where.join(' and ')}
 		`, bind)
 		group.modcount = await db.col(`
 			SELECT count(distinct wva.value_id)
-			FROM ${from.join(', ')}
+			FROM ${from.join(', ')} ${join.join(' ')}
 			WHERE ${where.join(' and ')}
 		`, bind)
 	}

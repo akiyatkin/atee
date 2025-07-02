@@ -15,7 +15,7 @@ yml.ROOT = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
 		${data.groups.map(group => yml.category(data, env, group)).join('')}
 	</categories>
 	<offers>
-		${data.poss.map(pos => yml.pos(data, pos, env)).join('')}
+		${data.poss.map(mod => yml.mod(data, mod, env)).join('')}
 	</offers>
 	<collections>
 		${data.groups.map(group => yml.collection(data, env, group)).join('')}
@@ -54,25 +54,27 @@ yml.url = (data, env, pos) => data.partner ? `
 `
 
 yml.price = (data, env, pos) => `
-	<price>${pos.Цена || pos.min}</price>
+	<price>${pos.Цена || pos.items[0]?.Цена}</price>
 `
-yml.oldprice = (data, env, pos) => !pos['Старая цена'] ? '' : `
-	<oldprice>${pos['Старая цена']}</oldprice>
+yml.oldprice = (data, env, pos) => !(pos['Старая цена'] || pos.items[0]?.['Старая цена']) ? '' : `
+	<oldprice>${pos['Старая цена'] || pos.items[0]?.['Старая цена']}</oldprice>
 `
-yml.pos = (data, pos, env) => `
- 	<offer type="vendor.model" id="${pos.model_id}" available="true">
-		${yml.url(data, env, pos)}
-		<model>${pos.Наименование || pos.model_title}</model>
-		${yml.price(data, env, pos)}
-		${yml.collectionid(data, env, pos)}
-		${yml.oldprice(data, env, pos)}
+
+yml.mod = (data, mod, env) => `
+ 	<offer type="vendor.model" id="${mod.model_nick}" available="true">
+		${yml.url(data, env, mod)}
+		<model>${mod.Наименование || mod.model_title}</model>
+		${yml.price(data, env, mod)}
+		${yml.collectionid(data, env, mod)}
+		${yml.oldprice(data, env, mod)}
 		<currencyId>RUB</currencyId>
-		<categoryId>${pos.group_id}</categoryId>
-		${pos.images?.map(yml.image).join('') || ''}
-		<vendor>${pos.brand_title}</vendor>
-		${yml.des(pos.Описание)}
-		<param name="article">${pos.model_title}</param>
-		${Object.entries(pos.more).map(yml.param).join('')}
+		<categoryId>${mod.group_id}</categoryId>
+		${mod.images?.map(yml.image).join('') || ''}
+		<vendor>${mod.brand_title}</vendor>
+		${yml.des(mod.Описание)}
+		<param name="article">${mod.model_title}</param>
+		${Object.entries(mod.more).map(yml.param).join('')}
+		${Object.entries(mod.items[0]?.more || {}).map(yml.param).join('')}
 	</offer>
 `
 yml.des = (des) => des ? `

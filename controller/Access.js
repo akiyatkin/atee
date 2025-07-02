@@ -4,10 +4,11 @@ import config from '/-config'
 
 import times from '/-controller/times.js'
 import Relate from '/-controller/Relate.js'
+import deepFreeze from '/-controller/deepFreeze.js'
 
 const CONF = await config('controller')
 
-export const Access = {
+const Access = {
 	isAdmin: (cookie) => {
 		try {
 			const { access:PASS } = CONF
@@ -24,6 +25,9 @@ export const Access = {
 		times.ACCESS_TIME = Date.now()
 		Access.mapate = new Map()
 		console.log('new access time', Date())
+		Access.poke.list.forEach(poked => {
+			poked.storage = {}
+		})
 	},
 	getAccessTime: () => times.ACCESS_TIME,
 	getUpdateTime: () => times.UPDATE_TIME,
@@ -86,5 +90,28 @@ export const Access = {
 		}
 	}
 }
+
+
+Access.poke = (func) => { //Результат складывать в Мешок не на долго, кэш
+	const poked = (...args) => {
+		const store = poked.storage[args.join(':')] ??= {} //Только простые аргументы должны быть
+		clearTimeout(store.timer)
+		store.timer = setTimeout(() => {
+			delete store.ready
+			delete store.cache
+		}, 1 * 60 * 1000) //hours * min * sec
+		if (!store.ready) {
+			store.cache = deepFreeze(func(...args))
+			
+			store.ready = true
+		}
+		return store.cache
+	}
+	poked.storage = {}
+	Access.poke.list.push(poked)
+	return poked
+}
+Access.poke.list = []
+
 
 export default Access
