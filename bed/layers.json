@@ -15,7 +15,7 @@
 		"settings:ROOT":"/-bed/settings"
 	},
 	"jsontpl":{
-		"groups:ROOT":"/-bed/groups?group_nick=${env.crumb.child?.name ?? ''}",
+		"groups:ROOT":"/-bed/groups?group_id=${env.crumb.child?.name ?? ''}",
 		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
 	},
 	"tpl":{

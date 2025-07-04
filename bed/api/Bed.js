@@ -39,25 +39,22 @@ Bed.getPropByNick = Access.poke(async (db, prop_nick) => {
 	return prop || false
 })
 
-Bed.getGroupByNick = Access.poke(async (db, group_nick) => {
-	const group = await db.fetch(`
-		SELECT 
-			gr.group_id,
-			gr.group_nick,
-			gr.group_title,
-			gr.ordain,
-			gr.group_id,
-			gr.parent_id,
-			pr.group_title as parent_title,
-			pr.group_nick as parent_nick,
-			pr.group_name as parent_name
+Bed.getGroupIdByNick = Access.poke(async (db, group_nick) => {
+	const group_id = await db.col(`
+		SELECT gr.group_id
 		FROM bed_groups gr
-		LEFT JOIN bed_groups pr on (pr.group_id = gr.parent_id)
 		WHERE gr.group_nick = :group_nick
 	`, {group_nick})
-	return group || false
+	return group_id || false
 })
-
+Bed.isNest = Access.poke(async (db, child_id, parent_id) => {
+	//Поднимаемся по родителям
+	if (!parent_id) return true
+	if (!child_id) return false
+	if (child_id == parent_id) return true
+	const child = await Bed.getGroupById(db, child_id)
+	return Bed.isNest(db, child.parent_id, parent_id)
+})
 Bed.getGroupById = Access.poke(async (db, group_id) => {
 	const group = await db.fetch(`
 		SELECT 
@@ -69,7 +66,9 @@ Bed.getGroupById = Access.poke(async (db, group_id) => {
 			gr.parent_id,
 			pr.group_title as parent_title,
 			pr.group_nick as parent_nick,
-			pr.group_name as parent_name
+			pr.group_name as parent_name,
+			gr.self_filters + 0 as self_filters,
+			gr.self_cards + 0 as self_cards
 		FROM bed_groups gr
 			LEFT JOIN bed_groups pr on (pr.group_id = gr.parent_id)
 		WHERE gr.group_id = :group_id

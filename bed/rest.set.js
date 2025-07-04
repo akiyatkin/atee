@@ -11,28 +11,6 @@ rest.extra(rest_bed)
 import rest_bedadmin from '/-bed/rest.bedadmin.js'
 rest.extra(rest_bedadmin)
 
-// rest.addAction('set-group-mark-delete', ['admin','setaccess'], async view => {
-// 	const group = await view.get('group#required')
-// 	const prop = await view.get('prop#required')
-// 	const db = await view.get('db')
-// 	await db.exec(`
-// 		DELETE FROM bed_samplevalues
-// 		WHERE group_id = :group_id 
-// 		and prop_nick = :prop_nick
-// 	`, {
-// 		group_id: group.group_id, 
-// 		prop_nick: prop.prop_nick
-// 	})
-
-// 	await BedAdmin.reorderGroups(db)
-
-// 	return view.ret()
-// })
-
-// rest.after(async view => {
-// 	console.log('asdf')
-// 	if (view.data.result) await view.get('setaccess')
-// })
 
 rest.addAction('set-sample-prop-value-delete', ['admin','setaccess'], async view => {
 	const group = await view.get('group#required')
@@ -151,12 +129,16 @@ rest.addAction('set-sample-prop-create', ['admin','setaccess'], async view => {
 	const db = await view.get('db')
 		
 	await db.exec(`
-		INSERT IGNORE INTO bed_sampleprops (sample_id, prop_nick)
+		INSERT IGNORE INTO bed_sampleprops (prop_nick)
 		VALUES (:sample_id, :prop_nick)
 	`, {
 		sample_id: sample_id, 
 		prop_nick: prop_nick
 	})
+	await db.exec(`
+		INSERT IGNORE INTO bed_props (prop_nick)
+		VALUES (:prop_nick)
+	`, { prop_nick })
 	
 	return view.ret()
 })
@@ -183,51 +165,145 @@ rest.addAction('set-sample-create', ['admin','setaccess'], async view => {
 		sample_id: sample_id, 
 		prop_nick: prop_nick
 	})
+	await db.exec(`
+		INSERT IGNORE INTO bed_props (prop_nick)
+		VALUES (:prop_nick)
+	`, { prop_nick })
 	return view.ret()
 })
+
+
+
+
+rest.addAction('set-group-self_cards', ['admin','setaccess'], async view => {
+	const name = 'self_cards'
+	const group_id = await view.get('group_id#required')
+	const bit = await view.get('bit') || 0
+	const db = await view.get('db')
+	await db.exec(`
+		UPDATE bed_groups
+		SET ${name} = :bit
+		WHERE group_id = :group_id
+	`, {group_id, bit})
+	return view.ret()
+})
+rest.addAction('set-group-card', ['admin','setaccess'], async view => {
+	const prop = await view.get('prop#required')
+	const group_id = await view.get('group_id#required')
+	const db = await view.get('db')
+	await db.exec(`
+		INSERT IGNORE INTO bed_cards (group_id, prop_nick)
+		VALUES (:group_id, :prop_nick)
+	`, {
+		group_id, 
+		prop_nick: prop.prop_nick
+	})
+	await db.exec(`
+		INSERT IGNORE INTO bed_props (prop_nick)
+		VALUES (:prop_nick)
+	`, { prop_nick: prop.prop_nick })
+	return view.ret()
+})
+rest.addAction('set-group-self_filters', ['admin','setaccess'], async view => {
+	const name = 'self_filters'
+	const group_id = await view.get('group_id#required')
+	const bit = await view.get('bit') || 0
+	const db = await view.get('db')
+	await db.exec(`
+		UPDATE bed_groups
+		SET ${name} = :bit
+		WHERE group_id = :group_id
+	`, {group_id, bit})
+	return view.ret()
+})
+
 rest.addAction('set-group-filter', ['admin','setaccess'], async view => {
 	const prop = await view.get('prop#required')
 	if (!~['value','number'].indexOf(prop.type)) return view.err('Тип свойства <b>'+prop.type+'</b> не подходит для фильтра')
 
-	const group = await view.get('group#required')
+	const group_id = await view.get('group_id#required')
 	const db = await view.get('db')
 	await db.exec(`
 		INSERT IGNORE INTO bed_filters (group_id, prop_nick)
 		VALUES (:group_id, :prop_nick)
 	`, {
-		group_id: group.group_id, 
+		group_id, 
 		prop_nick: prop.prop_nick
 	})
-
+	await db.exec(`
+		INSERT IGNORE INTO bed_props (prop_nick)
+		VALUES (:prop_nick)
+	`, { prop_nick: prop.prop_nick })
 	return view.ret()
 })
+
+
+
+
 rest.addAction('set-group-create', ['admin','setaccess'], async view => {
-	const group = await view.get('group')
+	const parent = await view.get('group')
 	const db = await view.get('db')
 
 	const group_title = await view.get('group_title')
-	const group_nick = nicked(group_title)
+	let group_nick = nicked(group_title)
 	if (!group_nick) return view.err('Укажите название')
+	group_nick = nicked((parent?.group_title || '') + '-' + group_nick)
 
-	const ready = await Bed.getGroupByNick(db, group_nick)
-	if (ready) return view.err('Такая подгруппа уже есть в группе ' + ready.parent_title)
+	const ready_id = await Bed.getGroupIdByNick(db, group_nick)
+	const ready = await Bed.getGroupById(db, ready_id)
+	if (ready) return view.err('Такая подгруппа уже есть в ' + (ready.parent_title || 'корне каталога'))
 
-	const parent_id = group?.group_id || null
+	const parent_id = parent?.group_id || null
 	const ordain = await db.col(`select max(ordain) from bed_groups where parent_id <=> :parent_id`, {parent_id}) || 0
 	//const level = group?.level || 0
 	await db.exec(`
 		INSERT INTO bed_groups (group_nick, group_title, group_name, parent_id, ordain)
 		VALUES (:group_nick, :group_title, :group_title, :parent_id, :ordain + 1)
-	`, {parent_id, group_title, group_nick, ordain})	
+	`, {parent_id, group_title, group_nick, ordain})
 	
 
 	await BedAdmin.reorderGroups(db)
 
 	return view.ret()
 })
+
+rest.addAction('set-group-copy', ['admin','setaccess'], async view => {
+	const db = await view.get('db')
+	const parent_nick = await view.get('group_nick')//Куда
+	const what_id = await view.get('group_id#required')//Что
+	const parent_id = await Bed.getGroupIdByNick(db, parent_nick) || null
+
+	const what = await Bed.getGroupById(db, what_id)
+	const parent = await Bed.getGroupById(db, parent_id)
+
+	const group_title = what.group_title + ' копия'
+	const group_nick = nicked((parent?.group_title || '') + '-' + nicked(group_title))
+
+	const ready_id = await Bed.getGroupIdByNick(db, group_nick)
+	const ready = await Bed.getGroupById(db, ready_id)
+	if (ready) return view.err('Такая подгруппа уже есть в ' + (ready.parent_title || 'корне каталога'))
+
+
+	const { self_filters, self_cards } = what
+	const ordain = await db.col(`select max(ordain) from bed_groups where parent_id <=> :parent_id`, {parent_id}) || 0
+	
+	const group_id = view.data.group_id = await db.insertId(`
+		INSERT INTO bed_groups (group_nick, group_title, group_name, parent_id, ordain, self_filters, self_cards)
+		VALUES (:group_nick, :group_title, :group_title, :parent_id, :ordain + 1, :self_filters, :self_cards)
+	`, {parent_id, group_title, group_nick, ordain, self_filters, self_cards})
+
+	//what_id выборку скопировать в group_id
+	//what_id фильтры скопировать в group_id
+	//what_id карточка скопировать в group_id
+	//what_id подгруппы скопировать в group_id
+
+	await BedAdmin.reorderGroups(db)
+
+	return view.ret('Скопировано только имя без подгрупп, свойств, фильтров, выборок. Функция не доделана')
+})
+
 rest.addAction('set-filter-delete', ['admin','setaccess'], async view => {
-	const group = await view.get('group#required')
-	const group_id = group.group_id
+	const group_id = await view.get('group_id#required')
 	const prop_nick = await view.get('prop_nick#required')
 	const db = await view.get('db')
 	
@@ -236,7 +312,49 @@ rest.addAction('set-filter-delete', ['admin','setaccess'], async view => {
 		WHERE group_id = :group_id and prop_nick = :prop_nick
 	`, {group_id, prop_nick})
 
-	await BedAdmin.reorderGroups(db)
+	await BedAdmin.reorderFilters(db)
+
+	return view.ret()
+})
+rest.addAction('set-group-move', ['admin','setaccess'], async view => {
+	const db = await view.get('db')
+	const parent_nick = await view.get('group_nick')//Куда
+	const what_id = await view.get('group_id#required')//Что
+	const parent_id = await Bed.getGroupIdByNick(db, parent_nick) || null
+	if (await Bed.isNest(db, parent_id, what_id)) return view.err('Нельзя перенести группу в её вложенную группу')
+
+	const what = await Bed.getGroupById(db, what_id)
+	const parent = await Bed.getGroupById(db, parent_id)
+
+	const group_title = what.group_title
+	const group_nick = nicked((parent?.group_title || '') + '-' + nicked(group_title))
+
+	const ready_id = await Bed.getGroupIdByNick(db, group_nick)
+	const ready = await Bed.getGroupById(db, ready_id)
+	if (ready) return view.err('Такая подгруппа уже есть в ' + (ready.parent_title || 'корне каталога'))
+
+	await db.exec(`
+		UPDATE bed_groups 
+		SET parent_id = :parent_id, group_nick = :group_nick
+		WHERE group_id = :what_id
+	`, {parent_id, what_id, group_nick})
+
+	view.data.group_nick = group_nick
+
+	return view.ret()
+})
+
+rest.addAction('set-card-delete', ['admin','setaccess'], async view => {
+	const group_id = await view.get('group_id#required')
+	const prop_nick = await view.get('prop_nick#required')
+	const db = await view.get('db')
+	
+	await db.exec(`
+		DELETE FROM bed_cards
+		WHERE group_id = :group_id and prop_nick = :prop_nick
+	`, {group_id, prop_nick})
+
+	await BedAdmin.reorderCards(db)
 
 	return view.ret()
 })
@@ -249,7 +367,7 @@ rest.addAction('set-group-delete', ['admin','setaccess'], async view => {
 		DELETE FROM bed_groups
 		WHERE group_id = :group_id
 	`, group)
-
+	view.data.parent_id = group.parent_id
 	await BedAdmin.reorderGroups(db)
 
 	return view.ret()
@@ -259,9 +377,14 @@ rest.addAction('set-group-title', ['admin','setaccess'], async view => {
 	const db = await view.get('db')
 
 	const group_title = await view.get('group_title')
-	const group_nick = nicked(group_title)
-	const g = await Bed.getGroupByNick(db, group_nick)
-	if (g) return view.err('Такое имя уже есть ' + g.group_title)
+	let group_nick = nicked(group_title)
+	if (!group_nick) return view.err('Укажите название')
+	group_nick = nicked((group?.parent_title || '') + '-' + group_nick)
+
+	const ready_id = await Bed.getGroupIdByNick(db, group_nick)
+	const ready = await Bed.getGroupById(db, ready_id)
+	if (ready) return view.err('Такая подгруппа уже есть в ' + (ready.parent_title || 'корне каталога'))
+
 	await db.exec(`
 		UPDATE bed_groups 
 		SET group_title = :group_title, group_nick = :group_nick 
@@ -290,8 +413,7 @@ rest.addAction('set-group-ordain', ['admin','setaccess'], async view => {
 	return view.ret()
 })
 rest.addAction('set-filter-ordain', ['admin','setaccess'], async view => {
-	const group = await view.get('group#required')
-	const group_id = group.group_id
+	const group_id = await view.get('group_id#required')
 	const next_nick = await view.get('next_nick')
 	const prop_nick = await view.get('prop_nick#required')
 	const db = await view.get('db')
@@ -307,6 +429,26 @@ rest.addAction('set-filter-ordain', ['admin','setaccess'], async view => {
 	`, {ordain, group_id, prop_nick})
 
 	await BedAdmin.reorderFilters(db)	
+
+	return view.ret()
+})
+rest.addAction('set-card-ordain', ['admin','setaccess'], async view => {
+	const group_id = await view.get('group_id#required')
+	const next_nick = await view.get('next_nick')
+	const prop_nick = await view.get('prop_nick#required')
+	const db = await view.get('db')
+
+	let ordain
+	if (!next_nick) ordain = await db.col('SELECT max(ordain) FROM bed_cards') + 1
+	if (next_nick) ordain = await db.col('SELECT ordain FROM bed_cards WHERE prop_nick = :next_nick and group_id = :group_id', {next_nick, group_id}) - 1
+	if (ordain < 0) ordain = 0
+	await db.exec(`
+		UPDATE bed_cards 
+		SET ordain = :ordain 
+		WHERE prop_nick = :prop_nick and group_id = :group_id
+	`, {ordain, group_id, prop_nick})
+
+	await BedAdmin.reorderCards(db)
 
 	return view.ret()
 })

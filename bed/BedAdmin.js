@@ -189,3 +189,22 @@ BedAdmin.reorderFilters = async (db) => {
 	}
 	return Promise.all(promises)
 }
+BedAdmin.reorderCards = async (db) => {
+	const list = await db.all(`
+		SELECT group_id, prop_nick
+		FROM bed_cards
+		ORDER BY ordain
+	`)
+	let ordain = 0
+	const promises = []
+	for (const {group_id, prop_nick} of list) {
+		ordain = ordain + 2
+		const r = db.exec(`
+			UPDATE bed_cards
+			SET ordain = :ordain
+			WHERE group_id = :group_id and prop_nick = :prop_nick
+		`, {ordain, group_id, prop_nick})
+		promises.push(r)
+	}
+	return Promise.all(promises)
+}

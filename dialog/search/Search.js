@@ -131,9 +131,8 @@ export const Search = {
 					
 				}
 				e.preventDefault()
-
 				const r = await state.click(ans.list[index], need)
-				if (r === null || r) Dialog.hide()
+				if (r === null || r) Dialog.hide(form.closest('.dialogframe').parentElement)
 			})
 		}
 	},

@@ -188,7 +188,6 @@ export const Client = {
 			promise = createPromise('loaded and ready')
 			promise.started = createPromise('already started')
 		}
-
 		if (Client.next) {
 			if (Client.next.promise.started.finalled) {
 				Client.next.promise.then(() => Client.crossing(search, promise)).catch(e => null)
@@ -197,12 +196,15 @@ export const Client = {
 			Client.next.search = search
 			const oldpromise = Client.next.promise
 			Client.next.promise = promise
-			oldpromise.started.reject(promise)
+			oldpromise.started.reject(promise.started)
 			oldpromise.reject(promise)
 		}
 
 		Client.next = { search, promise }
-		requestAnimationFrame(applyCrossing)
+		requestAnimationFrame(() => {
+			if (promise.rejected) return
+			applyCrossing()
+		})
 		return promise
 	},
 	show_promise: null,

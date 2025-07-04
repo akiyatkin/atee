@@ -10,8 +10,9 @@ document.addEventListener('keydown', e => {
 	if (!l) return
 	const parent = Dialog.parents[l-1]
 	//e.stopImmediatePropagation()
+	e.stopPropagation()
     Dialog.hide(parent)
-})
+}, true)
 const addCSS = href => { //файл этот нельзя использовать на сервере
 	if (document.head.querySelector('link[href="'+href+'"]')) return
 	const link = document.createElement('link')
@@ -110,8 +111,11 @@ export const Dialog = {
 		const body = cls('dialogbody', dialog)[0]
 		let downe = false
 		//body.addEventListener('mouseover', () => over = true)
+		popup.getElementsByClassName('dialogframe')[0].addEventListener('click', async e => {
+			e.stopPropagation()
+		})
 		dialog.addEventListener('mousedown', (e) => downe = e)
-		dialog.addEventListener('click', async e => {
+		dialog.addEventListener('click', e => {
 			if (downe.screenX != e.screenX) return
 			if (!dialog.classList.contains('show')) return
 			let el = e.target

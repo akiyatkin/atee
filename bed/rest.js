@@ -42,7 +42,8 @@ rest.addResponse('settings', ['admin'], async view => {
 })
 rest.addResponse('groups', ['admin'], async view => {
 	const db = await view.get('db')
-	const group = view.data.group = await view.get('group')
+	const group_id = await view.get('group_id')
+	const group = view.data.group = await Bed.getGroupById(db, group_id)
 	
 
 	if (group) {
@@ -52,6 +53,13 @@ rest.addResponse('groups', ['admin'], async view => {
 				LEFT JOIN sources_props pr on pr.prop_nick = fi.prop_nick
 			WHERE fi.group_id = :group_id
 			order by fi.ordain
+		`, group)
+		view.data.cards = await db.all(`
+			SELECT ca.prop_nick, pr.prop_title, pr.prop_id
+			FROM bed_cards ca
+				LEFT JOIN sources_props pr on pr.prop_nick = ca.prop_nick
+			WHERE ca.group_id = :group_id
+			order by ca.ordain
 		`, group)
 		
 		

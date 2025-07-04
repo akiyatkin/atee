@@ -549,6 +549,7 @@ field.search = ({heading = '', cls = '', edit = true, label = 'Поиск', link
 								if (ans.result && ${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
 								if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
 								if (ans.result && ${!!reload}) Client.reload()
+								console.log(ans.result, ans)
 								return ans.result
 							}
 						})

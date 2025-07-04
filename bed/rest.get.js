@@ -14,7 +14,10 @@ rest.extra(rest_bed)
 rest.addResponse('get-prop-value-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const type = await view.get('type')
-	const hash = await view.get('hash')
+	
+	const hashs = await view.get('hashs')
+	const query_nick = await view.get('query_nick')
+
 	const prop = await view.get('prop')
 	const prop_id = prop?.prop_id
 	
@@ -34,7 +37,7 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 			LEFT JOIN sources_values as va on (da.value_id = va.value_id)
 		WHERE ${where.join(' and ')}
 		and da.key_id = win.key_id and da.prop_id = :prop_id
-		and va.value_nick like "%${hash.join('%" and va.value_nick like "%')}%"
+		and ${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'}
 		ORDER BY RAND()
 		LIMIT 12
 	`, {...bind, prop_id: prop_id || null})
@@ -45,7 +48,7 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 			LEFT JOIN sources_values as va on (da.value_id = va.value_id)
 		WHERE ${where.join(' and ')}
 		and da.key_id = win.key_id and da.prop_id = :prop_id
-		and va.value_nick like "%${hash.join('%" and va.value_nick like "%')}%"
+		and ${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'}
 	`, {...bind, prop_id: prop_id || null})
 
 	view.ans.list = list.map(row => {
@@ -55,10 +58,10 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 	})
 	
 	if (type == 'samplevalue') {
-		if (hash) {
+		if (query_nick) {
 			view.ans.list.push({
 				action:'/-bed/set-sample-prop-value-create',
-				left: '<i>Создать <b>'+hash+'</b></i>',
+				left: '<i>Создать <b>'+query_nick+'</b></i>',
 				right: ''
 			})
 		}
@@ -78,21 +81,30 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 })
 rest.addResponse('get-group-search', ['admin'], async view => {
 	const db = await view.get('db')
-	const hash = await view.get('hash')
+
+	const hashs = await view.get('hashs')
+	const query_nick = await view.get('query_nick')
 	
 	
 
 	const list = await db.all(`
-		SELECT prop_id, prop_title, prop_nick, type
-		FROM sources_props
-		WHERE type = "value" and prop_nick like "%${hash.join('%" and prop_nick like "%')}%"
+		SELECT group_id, group_title, group_nick
+		FROM bed_groups
+		WHERE 
+			${hashs.map(hash => 'group_nick like "%' + hash.join('%" and group_nick like "%') + '%"').join(' or ') || '1 = 1'}
+		ORDER BY RAND()
+		LIMIT 12
 	`)
 
 
 	view.ans.list = list.map(row => {
-		row['left'] = row.prop_title
+		row['left'] = row.group_title
 		row['right'] = ''
 		return row
+	})
+	view.ans.list.push({
+		left: '<i>Корень</i>',
+		right: ''
 	})
 
 
@@ -119,16 +131,6 @@ rest.addResponse('get-group-filter-prop-search', ['admin'], async view => {
 		row['right'] = ''
 		return row
 	})	
-	//const group = await view.get('group#required')
-	// if (group.parent_id) {
-	// 	view.ans.list.push({
-	// 		action:'/-bed/set-filter-inherit',
-	// 		left: '<i>Наследовать от <b>' + group.parent_title + '</b></i>',
-	// 		right: ''
-	// 	})
-	// }
-	
-	
 	if (query_nick) {
 		view.ans.list.push({
 			action:'/-bed/set-group-filter',
@@ -137,7 +139,43 @@ rest.addResponse('get-group-filter-prop-search', ['admin'], async view => {
 		})
 	}
 	view.ans.list.push({
-		action:'/-bed/set-filter-inherit',
+		action:'/-bed/set-group-self_filters',
+		left: '<i>Наследовать</i>',
+		right: ''
+	})
+	
+	
+	view.ans.count = list.length
+	return view.ret()
+})
+rest.addResponse('get-group-card-prop-search', ['admin'], async view => {
+	const db = await view.get('db')
+	const hashs = await view.get('hashs')
+	const query_nick = await view.get('query_nick')
+	
+	const list = await db.all(`
+		SELECT prop_id, prop_title, prop_nick, type
+		FROM sources_props
+		WHERE type in ("value","number","text") 
+		and ${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'}
+		ORDER BY RAND()
+		LIMIT 12
+	`)
+
+	view.ans.list = list.map(row => {
+		row['left'] = row.prop_title
+		row['right'] = ''
+		return row
+	})	
+	if (query_nick) {
+		view.ans.list.push({
+			action:'/-bed/set-group-card',
+			left: '<i>Создать <b>'+query_nick+'</b></i>',
+			right: ''
+		})
+	}
+	view.ans.list.push({
+		action:'/-bed/set-group-self_cards',
 		left: '<i>Наследовать</i>',
 		right: ''
 	})

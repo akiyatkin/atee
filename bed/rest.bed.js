@@ -43,14 +43,28 @@ rest.addArgument('type', (view, val) => {
 rest.addVariable('type#required',['type','required'])
 
 
+rest.addArgument('bit', ['int'], (view, value) => {
+		if (value == null) return null
+		return value ? 1 : 0
+})
+rest.addVariable('bit#required', ['bit','required'])
+
+
 rest.addArgument('p', ['int'], (view, n) => n || 1)
 rest.addArgument('count', ['int'])
+
+
+rest.addArgument('group_id', ['mint'])
+rest.addVariable('group_id#required', ['group_id','required'])
+
+
 
 rest.addArgument('group_nick', ['nicked'])
 rest.addVariable('group', ['group_nick','null'], async (view, group_nick) => {
 	if (group_nick == null) return null
 	const db = await view.get('db')
-	const group = await Bed.getGroupByNick(db, group_nick)
+	const group_id = await Bed.getGroupIdByNick(db, group_nick)
+	const group = await Bed.getGroupById(db, group_id)
 	if (!group) return view.err('Группа не найдена', 404)
 	return group
 })
