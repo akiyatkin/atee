@@ -7,6 +7,7 @@ Drag.make = (div, actionsave, callback) => {
 	div.addEventListener('dragstart', (event) => {
 		const item = event.target
 		if (!item.classList.contains('item')) return
+		if (!item.dataset.id) return
 		activeElement = item
 		item.classList.add('selected')
 	})

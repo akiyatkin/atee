@@ -23,14 +23,15 @@ BedAdmin.reorderGroups = async (db) => {
 	}
 	return Promise.all(promises)
 }
-BedAdmin.getFreeItems = async (db, group_id = false) => {
+
+BedAdmin.getFreeItems = async (db, group_id = false, hashs) => {
 	const ans = {poscount:0, modcount:0, head: [], rows:[]}
 
 	const bind = await Bed.getBind(db)
 
+
 	const samples = await Bed.getAllSamples(db, group_id)
-	const gw = await Bed.getWhereBySamples(db, samples)
-	
+	const gw = await Bed.getWhereBySamples(db, samples, hashs, false, group_id ? false : true) //Если корень и нет samples то вязть всё, если группа и нет samples то пусто
 	
 	const childs = await Bed.getChilds(db, group_id)
 	let childsamples = []
@@ -40,12 +41,11 @@ BedAdmin.getFreeItems = async (db, group_id = false) => {
 		//if (samples.length)	
 		childsamples.push(...samples)
 	}
-	
 	/*
 		Выборка позиций samples (всё кроме указанного)
 		Надо из этой выборки исключить childsamples
 	*/
-	const cw = await Bed.getWhereBySamples(db, childsamples, true)	
+	const cw = await Bed.getWhereBySamples(db, childsamples, hashs, false, false)	
 	
 	const list = await db.colAll(`
 		SELECT win.key_id
@@ -82,6 +82,7 @@ BedAdmin.getFreeItems = async (db, group_id = false) => {
 					${cw.where.join(' and ')}
 			)
 	`, bind)
+
 	if (!ans.poscount) return ans
 	ans.modcount = await db.col(`
 		SELECT count(distinct wva.value_id)

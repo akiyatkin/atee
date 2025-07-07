@@ -215,7 +215,7 @@ tpl.title = (data, env) => `
 		}
 	</style>
 	<div style="float:left; margin-top:1rem">
-		${(!data.group.parent && !data.md.m) ? '<a href="/"><br></a>' : tpl.parenttitle(data, env)}
+		${(!data.group.parent_title && !data.md.m) ? '<a href="/"><br></a>' : tpl.parenttitle(data, env)}
 	</div>
 	
 	<h1 style="clear:both;">

@@ -23,33 +23,69 @@ rest.addResponse('get-search-groups', async (view) => {
 	const group = view.data.group = await view.get('group#required')
 	
 
-	const search = view.data.search = await view.get('search')
+	const query = view.data.search = await view.get('query')
 	const hashs = await view.get('hashs')
-	const md = view.data.md = await view.get('md')
+	
 	const partner = await view.get('partner')
 
-	
+	const origm = await view.get('m')
+	const mgetorig = Bed.makemd(origm)
+	const mget = await Bed.mdfilter(mgetorig)
+	const m = Bed.makemark(mget).join(':')
+	const bind = await Bed.getBind(db)
+
+	const childs = view.data.childs = await Bed.getChilds(db, group?.group_id || null)
 	
 
+	view.data.md = {m, group, mget, ...bind}
 
-	const {where, from, sort, bind} = Bed.getmdwhere(md, md.group.mgroup, hashs, partner)
 	
-	group.count = await db.col(`
-		SELECT count(distinct pos.value_id)
-		FROM ${from.join(', ')}
+	const samples = await Bed.getAllSamples(db, group.group_id)
+	const {from, join, where, sort} = await Bed.getWhereBySamples(db, [...samples, mget], hashs, partner, false)
+
+	view.data.modcount = await db.col(`
+		SELECT count(distinct wva.value_id)
+		FROM ${from.join(', ')} ${join.join(' ')}
 		WHERE ${where.join(' and ')}
 		ORDER BY ${sort.join(', ')}
 	`, bind)
 
-	for (const child of md.childs) {
-		const {where, from, sort, bind} = Bed.getmdwhere(md, child.mgroup, hashs, partner)
+	for (const child of childs) {
+		const samples = await Bed.getAllSamples(db, child.group_id)
+		const {from, join, where, sort} = await Bed.getWhereBySamples(db, [...samples, mget], hashs, partner, false)
 		child.mute = !await db.col(`
-			SELECT pos.value_id
-			FROM ${from.join(', ')}
+			SELECT wva.value_id
+			FROM ${from.join(', ')} ${join.join(' ')}
 			WHERE ${where.join(' and ')}
 			LIMIT 1
 		`, bind)
 	}
+	return view.ret()
+
+
+	const md = view.data.md = await view.get('md')
+	
+
+	
+	
+	
+	
+	// group.count = await db.col(`
+	// 	SELECT count(distinct pos.value_id)
+	// 	FROM ${from.join(', ')}
+	// 	WHERE ${where.join(' and ')}
+	// 	ORDER BY ${sort.join(', ')}
+	// `, bind)
+
+	// for (const child of md.childs) {
+	// 	const {where, from, sort, bind} = Bed.getmdwhere(md, child.mgroup, hashs, partner)
+	// 	child.mute = !await db.col(`
+	// 		SELECT pos.value_id
+	// 		FROM ${from.join(', ')}
+	// 		WHERE ${where.join(' and ')}
+	// 		LIMIT 1
+	// 	`, bind)
+	// }
 
 	
 	view.data.childs = md.childs

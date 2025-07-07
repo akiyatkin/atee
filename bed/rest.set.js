@@ -12,6 +12,38 @@ import rest_bedadmin from '/-bed/rest.bedadmin.js'
 rest.extra(rest_bedadmin)
 
 
+rest.addAction('set-known', ['admin','setaccess'], async view => {
+	const name = 'self_cards'
+	const prop_nick = await view.get('prop_nick#required')
+	const bit = await view.get('bit') || 0
+	const db = await view.get('db')
+	await db.exec(`
+		UPDATE bed_props
+		SET known = :bit
+		WHERE prop_nick = :prop_nick
+	`, {prop_nick, bit})
+	return view.ret()
+})
+rest.addAction('set-sub', ['admin','setaccess'], async view => {
+	const type = await view.get('type#required')
+	const sub = await view.get('sub#required')
+	const db = await view.get('db')
+	const prop_nick = await view.get('prop_nick#required')
+	const tpl = await import(`/-bed/api/${type}s.html.js`).then(r => r.default).catch(r => false)
+	if (!tpl) return view.err('Некорректный type')
+	if (!tpl.prop[sub]) return view.err('Не найден шаблон')
+
+	await db.exec(`
+		UPDATE bed_props 
+		SET ${type}_tpl = :sub
+		WHERE prop_nick = :prop_nick
+	`, { sub, prop_nick })
+	view.data.sub = sub
+	return view.ret()
+})
+
+
+
 rest.addAction('set-sample-prop-value-delete', ['admin','setaccess'], async view => {
 	const group = await view.get('group#required')
 	const prop_nick = await view.get('prop_nick#required')
@@ -127,14 +159,12 @@ rest.addAction('set-sample-prop-create', ['admin','setaccess'], async view => {
 	}
 	const sample_id = await view.get('sample_id#required')
 	const db = await view.get('db')
-		
+	
+	
 	await db.exec(`
-		INSERT IGNORE INTO bed_sampleprops (prop_nick)
+		INSERT IGNORE INTO bed_sampleprops (sample_id, prop_nick)
 		VALUES (:sample_id, :prop_nick)
-	`, {
-		sample_id: sample_id, 
-		prop_nick: prop_nick
-	})
+	`, { sample_id, prop_nick })
 	await db.exec(`
 		INSERT IGNORE INTO bed_props (prop_nick)
 		VALUES (:prop_nick)

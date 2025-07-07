@@ -37,7 +37,7 @@ rest.addVariable('spec#required',['spec','required'])
 
 rest.addArgument('type', (view, val) => {
 	if (!val) return val
-	if (!~['sampleprop','samplevalue','sample'].indexOf(val)) return view.err('Некорректный type')
+	if (!~['sampleprop','samplevalue','sample','card','filter'].indexOf(val)) return view.err('Некорректный type')
 	return val
 })
 rest.addVariable('type#required',['type','required'])
@@ -70,6 +70,9 @@ rest.addVariable('group', ['group_nick','null'], async (view, group_nick) => {
 })
 rest.addVariable('group_nick#required', ['group_nick', 'required'])
 rest.addVariable('group#required', ['group', 'required'])
+
+rest.addArgument('sub', ['string'])
+rest.addVariable('sub#required',['sub','required'])
 
 rest.addArgument('next_nick', ['nicked'])
 rest.addArgument('prop_nick', ['nicked'])

@@ -109,10 +109,13 @@ Bed.getSamples = async (db, group_id = false) => {
 	const sampleids = {}
 	for (const {sample_id, prop_nick, value_nick, spec} of list) {
 		if (!prop_nick) continue
+		if (!value_nick) continue
 		sampleids[sample_id] ??= {}
 		if (spec == 'exactly') {
-			sampleids[sample_id][prop_nick] ??= []
-			if (value_nick) sampleids[sample_id][prop_nick].push(value_nick)
+			sampleids[sample_id][prop_nick] ??= {}
+			sampleids[sample_id][prop_nick][value_nick] = 1
+			// sampleids[sample_id][prop_nick] ??= []
+			// if (value_nick) sampleids[sample_id][prop_nick].push(value_nick)
 		} else {
 			sampleids[sample_id][prop_nick] = spec
 		}
@@ -121,7 +124,11 @@ Bed.getSamples = async (db, group_id = false) => {
 		[
 			{
 				cena: {from:1, upto:2}
-				art: [nick, some, test],
+				art: {
+					nick: 1, 
+					some: 1, 
+					test: 1
+				},
 				images: empty,
 				ves: any,
 			}, {
@@ -198,29 +205,31 @@ Bed.mergeSamples = (groups = [], childs = []) => {
 				if (typeof(group[prop_nick]) == 'object') {
 					if (typeof(ch[prop_nick]) == 'object') {
 						//Найти пересечения
-						ch[prop_nick] = group[prop_nick].filter(item => ch[prop_nick].includes(item))
+						const keys = Object.keys(group[prop_nick]).filter(key => key in ch[prop_nick]);
+						ch[prop_nick] = Object.fromEntries(keys.map(key => [key, obj2[key]]))
+						//ch[prop_nick] = group[prop_nick].filter(item => ch[prop_nick].includes(item))
 					} else if (ch[prop_nick] == 'any') {
 						ch[prop_nick] = group[prop_nick]
 					} else if (ch[prop_nick] == 'empty') { //У родителя список, а ребёнка говорит дай неуказанные, нет пересечений
-						ch[prop_nick] = []
+						ch[prop_nick] = {}
 					}
 				} else if (group[prop_nick] == 'any') {
 					if (typeof(ch[prop_nick]) == 'object') {
-						//не меняется
+						//Не меняется
 					} else if (ch[prop_nick] == 'any') {
 						//Не меняется
 					} else if (ch[prop_nick] == 'empty') {
 						//Нет пересечений
-						ch[prop_nick] = []
+						ch[prop_nick] = {}
 					}
 					ch[prop_nick] = group[prop_nick]
 				} else if (group[prop_nick] == 'empty') {
 					if (typeof(ch[prop_nick]) == 'object') {
 						//Нет пересечений
-						ch[prop_nick] = []
+						ch[prop_nick] = {}
 					} else if (ch[prop_nick] == 'any') {
 						//Нет пересечений
-						ch[prop_nick] = []
+						ch[prop_nick] = {}
 					} else if (ch[prop_nick] == 'empty') {
 						//Не меняется
 					}
@@ -282,16 +291,17 @@ Bed.makemark = (md, ar = [], path = []) => {
 	}
 	return ar
 }
-Bed.mdfilter = (mgroup, props, values) => {
-	//Удалить фильтры свойства и значения которых не существуют
+Bed.mdfilter = async (mgroup) => {
+	//Удалить фильтры свойства и значения, которых не существуют
 	const newmgroup = {}
 	for (const prop_nick in mgroup) {
-		const prop = props[prop_nick]
+		const prop = await Bed.getPropByNick(db, prop_nick)
 		if (!prop) continue
 		newmgroup[prop_nick] = {}
 		if (typeof mgroup[prop_nick] == 'object' && prop.type == 'value') {
 			for (const value_nick in mgroup[prop_nick]) {
-				if (!values[value_nick]) continue
+				const value = await Bed.getValueByNick(db, value_nick)
+				if (!value) continue
 				newmgroup[prop_nick][value_nick] = mgroup[prop_nick][value_nick]
 			}
 			if (!Object.keys(newmgroup[prop_nick]).length) delete newmgroup[prop_nick]
@@ -356,7 +366,7 @@ Bed.getmd = async (db, origm, group) => { //depricated
 	const {props, values} = await Bed.getmdids(db, [[mgetorig], group?.sgroup || [], ...schilds])
 
 	
-	const mget = Bed.mdfilter(mgetorig, props, values)
+	const mget = await Bed.mdfilter(mgetorig, props, values)
 	const m = Bed.makemark(mget).join(':')
 
 
@@ -368,7 +378,7 @@ Bed.getmd = async (db, origm, group) => { //depricated
 
 
 
-Bed.getWhereBySamples = async (db, samples, emptydef = false) => {
+Bed.getWhereBySamples = async (db, samples, hashs = [], partner = '', fulldef = false) => { //fulldef false значит без выборки ничего не показываем, partner нужен чтобы выборка по цене была по нужному ключу
 	//win.key_id - позиция, wva.value_id - модель
 	const from = ['sources_wvalues wva, sources_winners win']
 	const join = []
@@ -376,6 +386,11 @@ Bed.getWhereBySamples = async (db, samples, emptydef = false) => {
 		win.entity_id = :pos_entity_id and win.prop_id = :mod_entity_id 
 		and wva.entity_id = win.entity_id and wva.prop_id = win.prop_id and wva.key_id = win.key_id
 	`]
+	if (hashs.length) {
+		from.unshift('sources_items wit')
+		where.push('wit.entity_id = win.entity_id and wit.key_id = win.key_id')
+		where.push(hashs.map(hash => 'wit.search like "%' + hash.join('%" and wit.search like "%') + '%"').join(' or ') || '1 = 1')
+	}
 
 	const sort = ['win.source_id, win.sheet_index, win.row_index, wva.multi_index']
 
@@ -399,7 +414,7 @@ Bed.getWhereBySamples = async (db, samples, emptydef = false) => {
 			`)
 			if (typeof(sample[prop_nick]) == 'object') {
 				const value_ids = []
-				for (const value_nick of sample[prop_nick]) {
+				for (const value_nick in sample[prop_nick]) {
 					const value = await Bed.getValueByNick(db, value_nick)
 					value_ids.push(value?.value_id || 0)
 				}
@@ -423,21 +438,21 @@ Bed.getWhereBySamples = async (db, samples, emptydef = false) => {
 		if (whereand.length) whereor.push(whereand.join(` and `))
 	}
 	if (whereor.length)	where.push(`((${whereor.join(') or (')}))`)
-	else if (emptydef) where.push(`1=0`)
+	else if (!fulldef) where.push(`1=0`)
 	return {from, join, where, sort}
 }
 
-Bed.getWhereByGroupId = async (db, group_id = false) => {
+Bed.getWhereByGroupId = async (db, group_id = false, hashs = [], partner = false, fulldef = false) => {
 	const bind = await Bed.getBind(db)
 	const samples = await Bed.getAllSamples(db, group_id)
 
-	const {from, join, where, sort} = await Bed.getWhereBySamples(db, samples, true)
+	const {from, join, where, sort} = await Bed.getWhereBySamples(db, samples, hashs, partner, fulldef)
 	return {from, join, where, sort, bind}
 }
 
 
 
-Bed.getmdwhere = (md, sgroup = [], hashs = [], partner = '') => {
+Bed.getmdwhere = (md, sgroup = [], hashs = [], partner = false) => {
 	const samples = Bed.mutliSMD([md.mget], sgroup)
 
 	const bind = {

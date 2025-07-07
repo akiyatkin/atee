@@ -29,7 +29,7 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 	// } else {
 	// 	md = await Bed.getmd(db, '')
 	// }
-	const {from, join, where, sort, bind} = await Bed.getWhereByGroupId(db, group?.parent_id || false)
+	const {from, join, where, sort, bind} = await Bed.getWhereByGroupId(db, group?.parent_id || false,[], false, true)
 	
 	const list = await db.all(`
 		SELECT distinct va.value_title, va.value_nick, da.value_id
@@ -110,6 +110,24 @@ rest.addResponse('get-group-search', ['admin'], async view => {
 
 	view.ans.count = list.length
 
+	return view.ret()
+})
+
+
+rest.addResponse('get-sub', ['admin'], async view => {
+	const db = await view.get('db')
+	const hashs = await view.get('hashs')
+	const query_nick = await view.get('query_nick')
+	const type = await view.get('type')
+	
+	const tpl = await import(`/-bed/api/${type}s.html.js`).then(r => r.default).catch(r => false)
+	if (!tpl) return view.err('Некорректный type')
+	
+	const list = view.data.list = Object.keys(tpl.prop).map(name => ({
+		'left':name,
+		'right':''
+	}))
+//view.ans.count = list.length
 	return view.ret()
 })
 rest.addResponse('get-group-filter-prop-search', ['admin'], async view => {

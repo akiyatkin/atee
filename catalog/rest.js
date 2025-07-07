@@ -86,11 +86,14 @@ rest.addResponse('get-model-head', async (view) => {
 	const ar = []
 	ar.push(`${model.brand_title} ${model.model_title}`)
 	ar.push(getModItemPropValue(item, model, 'Наименование'))
-	ar.push(getModItemPropValue(item, model, 'Позиция'))
+	const position = getModItemPropValue(item, model, 'Позиция') || getModItemPropValue(item, model, 'Арт') || ''
+	if (position) ar.push(position)
 	view.data.title = ar.filter(r => r).join(' ')
+	
 
 	view.data.canonical = `/catalog/${model.brand_nick}/${model.model_nick}`;
-	//view.data.canonical = '/' + model.model_nick
+	if (item_index > 1)
+	view.data.canonical += `/${item_index}`
 
 
 	let text = getModItemPropValue(item, model, 'Описание')

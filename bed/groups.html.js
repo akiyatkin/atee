@@ -21,19 +21,44 @@ export const ROOT = (data, env) => err(data, env, []) || `
 		${env.scope} .block .title {
 			/*margin: 1em;*/
 			font-weight: bold;
+			width: fit-content;
+			border-bottom: dashed 1px gray;
+			cursor: pointer;
 		}
 		${env.scope} .block .body {
-			margin: 1em 0 2em 0;
+			/*margin: 1em 0 2em 0;*/
+			overflow:hidden;
+			max-height: 0;
+			transition: max-height 0.3s;
+		}
+		${env.scope} .block.show .body {
+			max-height: 500px;
 		}
 	</style>
 	${data.group ? showParent(data, env) : ''}
-	<h1>${data.group ? showEdit(data, env, data.group) : 'Группы'}<span style="font-size:12px"></h1>
+	<h1>${data.group ? showEdit(data, env, data.group) : ''}<span style="font-size:12px"></h1>
 	
 	${data.group ? showActions(data, env) : ''}
 	${showGroups(data, env)}
 	${data.group ? showSamples(data, env) : ''}
 	${data.group ? showGroupOptions(data, env) : ''}
 	${data.freetable ? showFree(data, env, data.group) : ''}
+	<script>
+		(div => {
+			for (const block of div.querySelectorAll('.block')) {
+				const title = block.querySelector('.title')
+				const name = 'bed_blocks_' + title.innerText;
+				const body = block.querySelector('.body')
+				if (sessionStorage.getItem(name)) block.classList.toggle('show')
+				title.addEventListener('click', () => {
+					block.classList.toggle('show')
+					const is = block.classList.contains('show')
+					if (is) sessionStorage.setItem(name, 1)
+					else sessionStorage.removeItem(name)
+				})
+			}
+		})(document.currentScript.parentElement)
+	</script>
 `
 const showActions = (data, env) => `
 	${field.search({
@@ -80,22 +105,24 @@ const showGroupOptions = (data, env) => `
 	<div class="block">
 		<div class="title">Фильтры</div>
 		<div class="body">
-			${field.setpop({
-				heading:'Фильтры в группе',
-				value: data.group.self_filters,
-				name: 'bit',
-				action: '/-bed/set-group-self_filters', 
-				values: {"":"Фильтры наследуются", "1":"Свои фильтры"},
-				args: {group_id: data.group.group_id},
-				reloaddiv: env.layer.div
-			})}
+			<p>
+				${field.setpop({
+					heading:'Фильтры в группе',
+					value: data.group.self_filters,
+					name: 'bit',
+					action: '/-bed/set-group-self_filters', 
+					values: {"":"Фильтры наследуются", "1":"Свои фильтры"},
+					args: {group_id: data.group.group_id},
+					reloaddiv: env.layer.div
+				})}
+			</p>
 			${data.group.self_filters ? showFilters(data, env) : ''}
 		</div>
 	</div>
 	<div class="block">
-		<div class="title">Свойства на карточках</div>
+		<div class="title">Карточки</div>
 		<div class="body">
-			${!data.group.self_cards ? field.setpop({
+			<p>${!data.group.self_cards ? field.setpop({
 				heading:'Cвойства на карточках',
 				value: data.group.self_cards,
 				name: 'bit',
@@ -103,7 +130,7 @@ const showGroupOptions = (data, env) => `
 				values: {"":"Свойства на карточках наследуются", "1":"Свои свойства на карточках"},
 				args: {group_id: data.group.group_id},
 				reloaddiv: env.layer.div
-			}) : ''}
+			}) : ''}</p>
 			${data.group.self_cards ? showCards(data, env) : ''}
 		</div>
 	</div>
@@ -360,7 +387,7 @@ const showTableGroups = (data, env, group) => `
 	<table draggable="false" class="list">
 		<thead>
 			<tr>
-				<td>${data.group ? 'Подгруппа' : 'Группа'}</td>
+				<td></td>
 				<td>Позиций</td>
 				<td>Подгрупп</td>
 				<td></td>
@@ -391,38 +418,56 @@ const showSamples = (data, env) => `
 				args: {group_nick: data.group.group_nick},
 				reloaddiv: env.layer.div
 			})}
-			<p>В группу выбрано <span title="Позиций ${data.poscount}, моделей ${data.modcount}">${data.poscount}</span> ${words(data.poscount, 'позиция', 'позиции', 'позиций')}</p>
+			<p>В группу выбрано <span title="Моделей ${data.modcount}, позиций ${data.poscount}">${data.poscount}</span> ${words(data.poscount, 'позиция', 'позиции', 'позиций')}</p>
 		</div>
 	</div>
 `
 
 
 const showGroups = (data, env) => `
-	<div class="block">
-		<div class="title">${data.group ? 'Подгруппы' : 'Группы'}</div>
-		<div class="body">
-			${data.childs.length ? showTableGroups(data, env, data.group) : ''}	
-			<p>
-				${field.prompt({
-					value: 'Добавить ' + (data.group ? 'подгруппу' : 'группу'), 
-					name: 'group_title',
-					input: '',
-					ok: 'ОК', 
-					label: 'Укажите название', 
-					descr: '',
-					cls: 'a',
-					type: 'text', 
-					action: '/-bed/set-group-create', 
-					args: {group_nick: data.group?.group_nick ?? null},
-					reloaddiv: env.layer.div
-				})}
-			</p>
-		</div>
-	</div>
+	
+	${data.childs.length ? showTableGroups(data, env, data.group) : ''}	
+	<p>
+		${field.prompt({
+			value: 'Добавить группу', 
+			name: 'group_title',
+			input: '',
+			ok: 'ОК', 
+			label: 'Укажите название', 
+			descr: '',
+			cls: 'a',
+			type: 'text', 
+			action: '/-bed/set-group-create', 
+			args: {group_nick: data.group?.group_nick ?? null},
+			reloaddiv: env.layer.div
+		})}
+	</p>
+	
 	
 `
 const showFree = (data, env) => `
-	<h2 title="Нераспределённые позиции в родительской группе">Свободные позиции <span title="Позиций ${data.freetable?.poscount || 0}, моделей ${data.freetable?.modcount || 0}">${data.freetable?.poscount || 0}</span></h2>
+	<h2 title="Нераспределённые позиции в родительской группе">Свободные позиции <span title="Моделей ${data.freetable?.modcount || 0}, позиций ${data.freetable?.poscount || 0}, ">${data.freetable?.poscount || 0}</span></h2>
+
+	<form style="display: flex; margin: 1em 0">
+		<div class="float-label">
+			<input id="freeinp" name="search" type="text" placeholder="Поиск" value="${env.bread.get.search ?? ''}">
+			<label for="freeinp">Поиск</label>
+		</div>
+		<button type="submit">Найти</button>
+		<script>
+			(form => {
+				const btn = form.querySelector('button')
+				const input = form.querySelector('input')
+				form.addEventListener('submit', async (e) => {
+					e.preventDefault()
+					const Client = await window.getClient()
+					Client.go('groups${data.group ? '/' + data.group.group_id : ''}?search=' + input.value, false)
+				})
+			})(document.currentScript.parentElement)
+		</script>
+	</form>
+
+	
 	<div class="revscroll">
 		<table>
 			<thead>
@@ -475,7 +520,7 @@ const showGroup = (data, env, group) => `
 			<a href="groups/${group.group_id}">${group.group_title}</a>
 		</td>
 		
-		<td title="Позиций ${data.poscount}, моделей ${data.modcount}">${group.poscount}</td>
+		<td title="Моделей ${group.modcount}, позиций ${group.poscount}">${group.poscount}</td>
 		<td>${group.childs}</td>
 		<td>
 			${field.button({

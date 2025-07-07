@@ -40,11 +40,31 @@ rest.addResponse('settings', ['admin'], async view => {
 
 	return view.ret()
 })
+rest.addResponse('props', ['admin'], async view => {
+	const db = await view.get('db')
+	view.data.props = await db.all(`
+		SELECT 
+			bp.prop_nick, 
+			
+			bp.card_tpl, 
+			bp.filter_tpl, 
+			bp.known + 0 as known,
+			pr.comment,
+			pr.type,
+			pr.multi + 0 as multi,
+			pr.prop_title, 
+			pr.prop_id
+		FROM bed_props bp
+			LEFT JOIN sources_props pr on pr.prop_nick = bp.prop_nick
+		order by pr.ordain
+	`)
+	return view.ret()
+})
 rest.addResponse('groups', ['admin'], async view => {
 	const db = await view.get('db')
 	const group_id = await view.get('group_id')
 	const group = view.data.group = await Bed.getGroupById(db, group_id)
-	
+	const hashs = await view.get('hashs')
 
 	if (group) {
 		view.data.filters = await db.all(`
@@ -117,7 +137,7 @@ rest.addResponse('groups', ['admin'], async view => {
 	// const bind = {pos_entity_id, mod_entity_id}
 
 	//view.data.freetable = group ? await BedAdmin.getFreeItems(db, group?.parent_id) : false
-	view.data.freetable = await BedAdmin.getFreeItems(db, group?.parent_id || null)
+	view.data.freetable = await BedAdmin.getFreeItems(db, group?.parent_id || null, hashs)
 	
 
 	const childs = view.data.childs = await db.all(`

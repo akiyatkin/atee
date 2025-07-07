@@ -33,7 +33,7 @@ export const TITLE = data => `
 	<i>${data.query}...</i>
 `
 export const TITLEBODY = data => {
-	if (data.ans.result && data.ans.list.length && data.ans.list.length == data.ans.count) return ''
+	if (data.ans.result && data.ans.list.length && (data.ans.list.length == data.ans.count || data.ans.count == null)) return ''
 	return data.ans.result ? `
 		${data.query ? pquery(data) : 'найдено: '} ${data.ans.count || 0}
 	` : data.ans.msg || 'Ошибка на сервере'
