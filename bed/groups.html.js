@@ -26,21 +26,20 @@ export const ROOT = (data, env) => err(data, env, []) || `
 			cursor: pointer;
 		}
 		${env.scope} .block .body {
-			/*margin: 1em 0 2em 0;*/
+			interpolate-size: allow-keywords;
+			transition: height 0.3s;
 			overflow:hidden;
-			max-height: 0;
-			transition: max-height 0.3s;
+			height: 0;
 		}
 		${env.scope} .block.show .body {
-			max-height: 500px;
+			height: auto;
 		}
 	</style>
 	${data.group ? showParent(data, env) : ''}
-	<h1>${data.group ? showEdit(data, env, data.group) : ''}<span style="font-size:12px"></h1>
+	<h1>${data.group?.group_title || '<i>Корень</i>'}</h1>
 	
-	${data.group ? showActions(data, env) : ''}
 	${showGroups(data, env)}
-	${data.group ? showSamples(data, env) : ''}
+	${data.group ? showGroupActions(data, env) : ''}
 	${data.group ? showGroupOptions(data, env) : ''}
 	${data.freetable ? showFree(data, env, data.group) : ''}
 	<script>
@@ -60,50 +59,99 @@ export const ROOT = (data, env) => err(data, env, []) || `
 		})(document.currentScript.parentElement)
 	</script>
 `
-const showActions = (data, env) => `
-	${field.search({
-		cls: 'a',
-		search:'/-bed/get-group-search',
-		value: 'Перенести',
-		heading: "Перенос группы",
-		descr: "Выберите куда перенести группу <b>" + data.group.group_title + "</b>.",
-		label: 'Новая родительская группа', 
-		type: 'text',
-		name: 'group_nick',
-		find: 'group_nick',
-		action: '/-bed/set-group-move',
-		args: {group_id: data.group.group_id},
-		reloaddiv: env.layer.div
-	})}, 
-	${field.search({
-		cls: 'a',
-		search:'/-bed/get-group-search',
-		value: 'Копировать',
-		heading: "Копирование группы",
-		descr: "Выберите куда скопировать выборки, название и настройки группы <b>" + data.group.group_title + "</b>.",
-		label: 'Новая родительская группа', 
-		type: 'text',
-		name: 'group_nick',
-		find: 'group_nick',
-		action: '/-bed/set-group-copy',
-		args: {group_id: data.group.group_id},
-		goid: 'group_id',
-		go: 'groups/'
-	})},
-	${field.button({
-		cls: 'a',
-		label: 'Удалить', 
-		confirm: 'Удалить группу?',
-		action: '/-bed/set-group-delete',
-		args: {group_nick: data.group.group_nick},
-		reloaddiv: env.layer.div,
-		goid: 'parent_id',
-		go: 'groups/'
-	})}
-`
-const showGroupOptions = (data, env) => `
+const showGroupActions = (data, env) => `
 	<div class="block">
-		<div class="title">Фильтры</div>
+		<div class="title">Действия</div>
+		<div class="body">
+			<p>
+				${field.search({
+					cls: 'a',
+					search:'/-bed/get-group-search',
+					value: 'Перенести',
+					heading: "Перенос группы",
+					descr: "Выберите куда перенести группу <b>" + data.group.group_title + "</b>.",
+					label: 'Новая родительская группа', 
+					type: 'text',
+					name: 'group_nick',
+					find: 'group_nick',
+					action: '/-bed/set-group-move',
+					args: {group_id: data.group.group_id},
+					reloaddiv: env.layer.div
+				})}, 
+				${field.search({
+					cls: 'a',
+					search:'/-bed/get-group-search',
+					value: 'Копировать',
+					heading: "Копирование группы",
+					descr: "Выберите куда скопировать выборки, название и настройки группы <b>" + data.group.group_title + "</b>.",
+					label: 'Новая родительская группа', 
+					type: 'text',
+					name: 'group_nick',
+					find: 'group_nick',
+					action: '/-bed/set-group-copy',
+					args: {group_id: data.group.group_id},
+					goid: 'group_id',
+					go: 'groups/'
+				})},
+				${field.button({
+					cls: 'a',
+					label: 'Удалить', 
+					confirm: 'Удалить группу?',
+					action: '/-bed/set-group-delete',
+					args: {group_nick: data.group.group_nick},
+					reloaddiv: env.layer.div,
+					goid: 'parent_id',
+					go: 'groups/'
+				})}
+			
+			<table>
+				<tr>
+					<td>Изменить имя</td>
+					<td>
+						${field.prompt({
+							value: data.group.group_title, 
+							name: 'group_title',
+							input: data.group.group_title,
+							ok: 'ОК', 
+							label: 'Укажите название', 
+							descr: '',
+							cls: 'a',
+							type: 'text', 
+							action: '/-bed/set-group-title', 
+							args: {group_id: data.group.group_id},
+							reloaddiv2: env.layer.div
+						})}
+					</td>
+				</tr>
+				<tr>
+					<td>Изменить ник</td>
+					<td>
+						${field.prompt({
+							value: data.group.group_nick, 
+							name: 'group_nick',
+							input: data.group.group_nick,
+							ok: 'ОК', 
+							label: 'Укажите никнейм', 
+							descr: '',
+							cls: 'a',
+							type: 'text', 
+							action: '/-bed/set-group-nick', 
+							args: {group_id: data.group.group_id},
+							reloaddiv2: env.layer.div
+						})}
+					</td>
+				</tr>
+			</table>
+			
+		</div>
+	</div>
+`
+
+const showGroupOptions = (data, env) => `
+	
+	${showGroupSamples(data, env)}
+	<div class="block">
+		<div class="title">Фильтры в группе</div>
 		<div class="body">
 			<p>
 				${field.setpop({
@@ -116,11 +164,11 @@ const showGroupOptions = (data, env) => `
 					reloaddiv: env.layer.div
 				})}
 			</p>
-			${data.group.self_filters ? showFilters(data, env) : ''}
+			${data.group.self_filters ? showGroupFilters(data, env) : ''}
 		</div>
 	</div>
 	<div class="block">
-		<div class="title">Карточки</div>
+		<div class="title">Свойства на карточках</div>
 		<div class="body">
 			<p>${!data.group.self_cards ? field.setpop({
 				heading:'Cвойства на карточках',
@@ -135,7 +183,7 @@ const showGroupOptions = (data, env) => `
 		</div>
 	</div>
 `
-const showFilters = (data, env) => `
+const showGroupFilters = (data, env) => `
 	${data.filters?.length ? showTableFilters(data, env) : ''}
 	<p>
 		${field.search({
@@ -176,22 +224,7 @@ const showCards = (data, env) => `
 const showParent = (data, env) => `
 	<a href="groups/${data.group?.parent_id || ''}">${data.group?.parent_title || '<i>Корень</i>'}</a>
 `
-const showEdit = (data, env, group) => `
-	${group.group_title} ${field.prompt({
-		value: svg.edit(), 
-		name: 'group_title',
-		input: group.group_title,
-		ok: 'ОК', 
-		label: 'Укажите название', 
-		descr: '',
-		cls: 'a mute',
-		type: 'text', 
-		action: '/-bed/set-group-title', 
-		args: {group_nick: group.group_nick},
-		reloaddiv: env.layer.div
-	})}
 
-`
 const showRed = (nick) => `
 	<span style="color:red">${nick}</span>
 `
@@ -399,7 +432,7 @@ const showTableGroups = (data, env, group) => `
 	</table>
 	${showScriptDragGroups(data, env)}
 `
-const showSamples = (data, env) => `
+const showGroupSamples = (data, env) => `
 	<div class="block">
 		<div class="title">Выборки</div>
 		<div class="body">
@@ -429,7 +462,7 @@ const showGroups = (data, env) => `
 	${data.childs.length ? showTableGroups(data, env, data.group) : ''}	
 	<p>
 		${field.prompt({
-			value: 'Добавить группу', 
+			value: 'Добавить подгруппу', 
 			name: 'group_title',
 			input: '',
 			ok: 'ОК', 
@@ -446,37 +479,43 @@ const showGroups = (data, env) => `
 	
 `
 const showFree = (data, env) => `
-	<h2 title="Нераспределённые позиции в родительской группе">Свободные позиции <span title="Моделей ${data.freetable?.modcount || 0}, позиций ${data.freetable?.poscount || 0}, ">${data.freetable?.poscount || 0}</span></h2>
-
-	<form style="display: flex; margin: 1em 0">
-		<div class="float-label">
-			<input id="freeinp" name="search" type="text" placeholder="Поиск" value="${env.bread.get.search ?? ''}">
-			<label for="freeinp">Поиск</label>
+	<div class="block">
+		<div class="title">
+			Нераспределённые позиции 
+			<span title="Моделей ${data.freetable?.modcount || 0}, позиций ${data.freetable?.poscount || 0}, ">${data.freetable?.poscount || 0}</span>
 		</div>
-		<button type="submit">Найти</button>
-		<script>
-			(form => {
-				const btn = form.querySelector('button')
-				const input = form.querySelector('input')
-				form.addEventListener('submit', async (e) => {
-					e.preventDefault()
-					const Client = await window.getClient()
-					Client.go('groups${data.group ? '/' + data.group.group_id : ''}?search=' + input.value, false)
-				})
-			})(document.currentScript.parentElement)
-		</script>
-	</form>
+		<div class="body">
+			<form style="display: flex; margin: 1em 0">
+				<div class="float-label">
+					<input id="freeinp" name="search" type="text" placeholder="Поиск" value="${env.bread.get.search ?? ''}">
+					<label for="freeinp">Поиск</label>
+				</div>
+				<button type="submit">Найти</button>
+				<script>
+					(form => {
+						const btn = form.querySelector('button')
+						const input = form.querySelector('input')
+						form.addEventListener('submit', async (e) => {
+							e.preventDefault()
+							const Client = await window.getClient()
+							Client.go('groups${data.group ? '/' + data.group.group_id : ''}?search=' + input.value, false)
+						})
+					})(document.currentScript.parentElement)
+				</script>
+			</form>
 
-	
-	<div class="revscroll">
-		<table>
-			<thead>
-				${showTr(data, env, data.freetable.head)}
-			</thead>
-			<tbody>
-				${data.freetable.rows.map(row => showTr(data, env, row)).join('')}
-			</tbody>
-		</table>
+			
+			<div class="revscroll">
+				<table>
+					<thead>
+						${showTr(data, env, data.freetable.head)}
+					</thead>
+					<tbody>
+						${data.freetable.rows.map(row => showTr(data, env, row)).join('')}
+					</tbody>
+				</table>
+			</div>
+		</div>
 	</div>
 `
 const showTr = (data, env, row) => `

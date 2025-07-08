@@ -109,13 +109,11 @@ Bed.getSamples = async (db, group_id = false) => {
 	const sampleids = {}
 	for (const {sample_id, prop_nick, value_nick, spec} of list) {
 		if (!prop_nick) continue
-		if (!value_nick) continue
+		if (!value_nick && spec == 'exactly') continue
 		sampleids[sample_id] ??= {}
 		if (spec == 'exactly') {
 			sampleids[sample_id][prop_nick] ??= {}
 			sampleids[sample_id][prop_nick][value_nick] = 1
-			// sampleids[sample_id][prop_nick] ??= []
-			// if (value_nick) sampleids[sample_id][prop_nick].push(value_nick)
 		} else {
 			sampleids[sample_id][prop_nick] = spec
 		}
@@ -140,6 +138,7 @@ Bed.getSamples = async (db, group_id = false) => {
 }
 Bed.getAllSamples = async (db, group_id = false, childsamples = []) => {
 	const groupsamples = await Bed.getSamples(db, group_id)
+
 	if (!groupsamples.length) return []
 	const samples = Bed.mergeSamples(groupsamples, childsamples)
 	const group = await Bed.getGroupById(db, group_id)
@@ -430,6 +429,7 @@ Bed.getWhereBySamples = async (db, samples, hashs = [], partner = '', fulldef = 
 					da${i}.value_id is not null
 				`)
 			} else if (sample[prop_nick] == 'empty') {
+
 				whereand.push(`
 					da${i}.value_id is null
 				`)

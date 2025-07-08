@@ -28,6 +28,9 @@ export const resolve = async (specifier, context, defaultResolve) => {
 				res = await checkfromroot('@atee/' + specifier, context, defaultResolve)
 				if (res) return res
 
+				res = await checkfromroot('@ange/' + specifier, context, defaultResolve)
+				if (res) return res
+
 			}
 		}
 		const r = await defaultResolve(specifier, context, defaultResolve) //Проверка относительного адреса

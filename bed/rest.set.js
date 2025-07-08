@@ -277,7 +277,7 @@ rest.addAction('set-group-create', ['admin','setaccess'], async view => {
 	const group_title = await view.get('group_title')
 	let group_nick = nicked(group_title)
 	if (!group_nick) return view.err('Укажите название')
-	group_nick = nicked((parent?.group_title || '') + '-' + group_nick)
+	//group_nick = nicked((parent?.group_title || '') + '-' + group_nick)
 
 	const ready_id = await Bed.getGroupIdByNick(db, group_nick)
 	const ready = await Bed.getGroupById(db, ready_id)
@@ -357,19 +357,18 @@ rest.addAction('set-group-move', ['admin','setaccess'], async view => {
 	const parent = await Bed.getGroupById(db, parent_id)
 
 	const group_title = what.group_title
-	const group_nick = nicked((parent?.group_title || '') + '-' + nicked(group_title))
-
-	const ready_id = await Bed.getGroupIdByNick(db, group_nick)
-	const ready = await Bed.getGroupById(db, ready_id)
-	if (ready) return view.err('Такая подгруппа уже есть в ' + (ready.parent_title || 'корне каталога'))
+	
+	// const group_nick = nicked((parent?.group_title || '') + '-' + nicked(group_title))
+	// const ready_id = await Bed.getGroupIdByNick(db, group_nick)
+	// const ready = await Bed.getGroupById(db, ready_id)
+	// if (ready) return view.err('Такая подгруппа уже есть в ' + (ready.parent_title || 'корне каталога'))
 
 	await db.exec(`
 		UPDATE bed_groups 
-		SET parent_id = :parent_id, group_nick = :group_nick
+		SET parent_id = :parent_id
 		WHERE group_id = :what_id
-	`, {parent_id, what_id, group_nick})
+	`, {parent_id, what_id})
 
-	view.data.group_nick = group_nick
 
 	return view.ret()
 })
@@ -403,24 +402,46 @@ rest.addAction('set-group-delete', ['admin','setaccess'], async view => {
 	return view.ret()
 })
 rest.addAction('set-group-title', ['admin','setaccess'], async view => {
-	const group = await view.get('group#required')
+	const group_id = await view.get('group_id#required')
 	const db = await view.get('db')
 
 	const group_title = await view.get('group_title')
 	let group_nick = nicked(group_title)
 	if (!group_nick) return view.err('Укажите название')
-	group_nick = nicked((group?.parent_title || '') + '-' + group_nick)
+	//group_nick = nicked((group?.parent_title || '') + '-' + group_nick)
 
+	// const ready_id = await Bed.getGroupIdByNick(db, group_nick)
+	// const ready = await Bed.getGroupById(db, ready_id)
+	// if (ready) return view.err('Такая подгруппа уже есть в ' + (ready.parent_title || 'корне каталога'))
+
+	await db.exec(`
+		UPDATE bed_groups 
+		SET group_title = :group_title
+		WHERE group_id = :group_id
+	`, {group_id, group_title})
+	view.data.group_title = group_title
+	return view.ret()
+})
+
+rest.addAction('set-group-nick', ['admin','setaccess'], async view => {
+	const group_id = await view.get('group_id#required')
+	const db = await view.get('db')
+
+	let group_nick = await view.get('group_nick#required')
+	group_nick = nicked(group_nick)
+	if (!group_nick) return view.err('Укажите название')
+	
 	const ready_id = await Bed.getGroupIdByNick(db, group_nick)
 	const ready = await Bed.getGroupById(db, ready_id)
 	if (ready) return view.err('Такая подгруппа уже есть в ' + (ready.parent_title || 'корне каталога'))
 
 	await db.exec(`
 		UPDATE bed_groups 
-		SET group_title = :group_title, group_nick = :group_nick 
+		SET group_nick = :group_nick
 		WHERE group_id = :group_id
-	`, {...group, group_title, group_nick})
+	`, {group_id, group_nick})
 	view.data.group_nick = group_nick
+
 	return view.ret()
 })
 rest.addAction('set-group-ordain', ['admin','setaccess'], async view => {

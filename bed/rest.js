@@ -116,6 +116,11 @@ rest.addResponse('groups', ['admin'], async view => {
 			FROM ${from.join(', ')} ${join.join(' ')}
 			WHERE ${where.join(' and ')}
 		`, bind)
+		console.log(`
+			SELECT count(distinct win.key_id)
+			FROM ${from.join(', ')} ${join.join(' ')}
+			WHERE ${where.join(' and ')}
+		`)
 
 
 		view.data.modcount = await db.col(`
