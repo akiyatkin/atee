@@ -6,15 +6,64 @@ import filter from "/-nicked/filter.js"
 import fs from 'fs/promises'
 import config from '/-config'
 
-const Bed = {}
-export default Bed
+const Shop = {}
+export default Shop
 
 
 
+// Shop.getAllGroupIdFilterIds = Access.poke(async (db) => {
+// 	const rows = await db.all(`
+// 		SELECT 
+// 			fi.group_id, pr.prop_id
+// 		FROM shop_filters fi, sources_props pr
+// 		WHERE pr.prop_nick = fi.prop_nick
+// 	`)
+// 	const list = Object.groupBy(rows, ({ group_id }) => group_id)
+// 	for (const group_id in list) {
+// 		list[group_id] = list[group_id].map(({prop_id}) => prop_id)
+// 	}
+// 	return list
+// })
+Shop.getAllGroupIds = Access.poke(async (db) => {
+	const group_ids = await db.colAll(`select group_id from shop_groups`)
+	return group_ids
+})
 
-
-
-Bed.getValueByNick = Access.poke(async (db, value_nick) => {
+Shop.getGroupIdsBySnap = async (db, snap) => {
+	/*
+		snap = {
+			'cena':[{value_nick, number}]
+		}
+	*/
+	const group_ids = await Shop.getAllGroupIds(db)
+	const list = []
+	for (const group_id of group_ids) {
+		const samples = await Shop.getSamplesByGroupId(db, group_id)
+		if (!Shop.isSnapSamples(snap, samples)) continue
+		list.push(group_id)
+	}
+	return list
+}
+Shop.isSnapSamples = (snap, samples) => {
+	for (const sample of samples) {
+		let r = false
+		for (const prop_nick in sample) {
+			if (!snap[prop_nick]) {
+				r = false
+				break;
+			}
+			if (snap[prop_nick].some(row => sample[prop_nick][row.value_nick ?? row.number])) {
+				r = true
+				continue
+			} else {
+				r = false
+				break;
+			}
+		}
+		if (r) return true
+	}
+}
+Shop.getValueByNick = Access.poke(async (db, value_nick) => {
 	const value = await db.fetch(`
 		SELECT 
 			va.value_nick,
@@ -25,7 +74,7 @@ Bed.getValueByNick = Access.poke(async (db, value_nick) => {
 	`, {value_nick})
 	return value
 })
-Bed.getPropByNick = Access.poke(async (db, prop_nick) => {
+Shop.getPropByNick = Access.poke(async (db, prop_nick) => {
 	const prop = await db.fetch(`
 		SELECT 
 			spr.prop_nick,
@@ -33,29 +82,29 @@ Bed.getPropByNick = Access.poke(async (db, prop_nick) => {
 			spr.prop_id,
 			spr.type
 		FROM sources_props spr
-		LEFT JOIN bed_props bpr on (spr.prop_nick = bpr.prop_nick)
+		LEFT JOIN shop_props bpr on (spr.prop_nick = bpr.prop_nick)
 		WHERE spr.prop_nick = :prop_nick
 	`, {prop_nick})
 	return prop || false
 })
 
-Bed.getGroupIdByNick = Access.poke(async (db, group_nick) => {
+Shop.getGroupIdByNick = Access.poke(async (db, group_nick) => {
 	const group_id = await db.col(`
 		SELECT gr.group_id
-		FROM bed_groups gr
+		FROM shop_groups gr
 		WHERE gr.group_nick = :group_nick
 	`, {group_nick})
 	return group_id || false
 })
-Bed.isNest = Access.poke(async (db, child_id, parent_id) => {
+Shop.isNest = Access.poke(async (db, child_id, parent_id) => {
 	//Поднимаемся по родителям
 	if (!parent_id) return true
 	if (!child_id) return false
 	if (child_id == parent_id) return true
-	const child = await Bed.getGroupById(db, child_id)
-	return Bed.isNest(db, child.parent_id, parent_id)
+	const child = await Shop.getGroupById(db, child_id)
+	return Shop.isNest(db, child.parent_id, parent_id)
 })
-Bed.getGroupById = Access.poke(async (db, group_id) => {
+Shop.getGroupById = Access.poke(async (db, group_id) => {
 	const group = await db.fetch(`
 		SELECT 
 			gr.group_id,
@@ -69,13 +118,13 @@ Bed.getGroupById = Access.poke(async (db, group_id) => {
 			pr.group_name as parent_name,
 			gr.self_filters + 0 as self_filters,
 			gr.self_cards + 0 as self_cards
-		FROM bed_groups gr
-			LEFT JOIN bed_groups pr on (pr.group_id = gr.parent_id)
+		FROM shop_groups gr
+			LEFT JOIN shop_groups pr on (pr.group_id = gr.parent_id)
 		WHERE gr.group_id = :group_id
 	`, {group_id})
 	return group
 })
-Bed.getChilds = async (db, group_id = null) => {
+Shop.getChilds = async (db, group_id = null) => {
 	const childs = await db.all(`
 		SELECT
 			gr.group_nick,
@@ -84,25 +133,32 @@ Bed.getChilds = async (db, group_id = null) => {
 			gr.group_id,
 			gr.parent_id
 		FROM
-			bed_groups gr
+			shop_groups gr
 		WHERE
 			gr.parent_id <=> :group_id
 		ORDER BY gr.ordain
 	`, {group_id})
 	return childs
 }
+Shop.getSamples = (db, group_id) => Shop.getSamplesByGroupId(db, group_id) //depricated
+Shop.getSamplesByGroupId = Access.poke(async (db, group_id = false) => {	
+	
 
-Bed.getSamples = async (db, group_id = false) => {	
-	if (!group_id) return []
-
-	const list = await db.all(`
+	const list = group_id ? await db.all(`
 		SELECT sa.sample_id, sp.prop_nick, spv.value_nick, sp.spec
-		FROM bed_samples sa
-			LEFT JOIN bed_sampleprops sp on sp.sample_id = sa.sample_id
-			LEFT JOIN bed_samplevalues spv on (spv.sample_id = sa.sample_id and spv.prop_nick = sp.prop_nick)
+		FROM shop_samples sa
+			LEFT JOIN shop_sampleprops sp on sp.sample_id = sa.sample_id
+			LEFT JOIN shop_samplevalues spv on (spv.sample_id = sa.sample_id and spv.prop_nick = sp.prop_nick)
 		WHERE sa.group_id = :group_id
 		ORDER BY sa.date_create, sp.date_create, spv.date_create
-	`, {group_id})
+	`, {group_id}) : await db.all(`
+		SELECT sa.sample_id, sp.prop_nick, spv.value_nick, sp.spec
+		FROM shop_groups gr, shop_samples sa
+			LEFT JOIN shop_sampleprops sp on sp.sample_id = sa.sample_id
+			LEFT JOIN shop_samplevalues spv on (spv.sample_id = sa.sample_id and spv.prop_nick = sp.prop_nick)
+		WHERE gr.parent_id is null and sa.group_id = gr.group_id
+		ORDER BY sa.date_create, sp.date_create, spv.date_create
+	`)
 
 
 
@@ -135,25 +191,25 @@ Bed.getSamples = async (db, group_id = false) => {
 		]
 	*/
 	return Object.values(sampleids)
-}
-Bed.getAllSamples = async (db, group_id = false, childsamples = []) => {
-	const groupsamples = await Bed.getSamples(db, group_id)
+})
+Shop.getAllSamples = async (db, group_id = false, childsamples = []) => {
+	const groupsamples = await Shop.getSamples(db, group_id)
 
 	if (!groupsamples.length) return []
-	const samples = Bed.mergeSamples(groupsamples, childsamples)
-	const group = await Bed.getGroupById(db, group_id)
-	if (group_id && group.parent_id) return Bed.getAllSamples(db, group.parent_id, samples) //childsamples
+	const samples = Shop.mergeSamples(groupsamples, childsamples)
+	const group = await Shop.getGroupById(db, group_id)
+	if (group_id && group.parent_id) return Shop.getAllSamples(db, group.parent_id, samples) //childsamples
 	return samples
 }
-Bed.getOldSamples = async (db, group_id) => { //depricated
+Shop.getOldSamples = async (db, group_id) => { //depricated
 	const values = await db.all(`
 		SELECT 
 			sv.sample_id, 
 			sv.prop_nick, 
 			sv.value_nick
 		FROM 
-			bed_samples gs, 
-			bed_samplevalues sv
+			shop_samples gs, 
+			shop_samplevalues sv
 		WHERE 
 			gs.group_id = :group_id 
 			and gs.sample_id = sv.sample_id
@@ -177,7 +233,7 @@ Bed.getOldSamples = async (db, group_id) => { //depricated
 		}
 	]
 */
-Bed.mutliSMD = (psgroup, csgroup) => {
+Shop.mutliSMD = (psgroup, csgroup) => {
 	let list = []
 	if (!csgroup.length) list = psgroup
 	else if (!psgroup.length) list = csgroup
@@ -193,7 +249,7 @@ Bed.mutliSMD = (psgroup, csgroup) => {
 	}
 	return list
 }
-Bed.mergeSamples = (groups = [], childs = []) => {
+Shop.mergeSamples = (groups = [], childs = []) => {
 	let list = []
 	if (!childs.length) list = groups
 	else if (!groups.length) list = childs
@@ -240,15 +296,15 @@ Bed.mergeSamples = (groups = [], childs = []) => {
 	}
 	return list
 }
-Bed.getSgroup = async (db, group_id, csgroup = []) => { //lgroup поднимаемся наверх от lgroup, уточняем lgroup
+Shop.getSgroup = async (db, group_id, csgroup = []) => { //lgroup поднимаемся наверх от lgroup, уточняем lgroup
 	if (!group_id) return csgroup
-	const samples = await Bed.getOldSamples(db, group_id)
+	const samples = await Shop.getOldSamples(db, group_id)
 	
-	const list = Bed.mutliSMD(samples, csgroup)
-	const parent_id = await db.col(`select parent_id from bed_groups where group_id = :group_id`, {group_id})
-	return Bed.getSgroup(db, parent_id, list)
+	const list = Shop.mutliSMD(samples, csgroup)
+	const parent_id = await db.col(`select parent_id from shop_groups where group_id = :group_id`, {group_id})
+	return Shop.getSgroup(db, parent_id, list)
 }
-Bed.makemd = (m) => {
+Shop.makemd = (m) => {
 	m = m.replaceAll(/([^:]+)::\./ug, ":$1:$1.")
 	const mds = m.split(':').filter(s => s).map((item) => {
         item = item.replace(/\+/g, '%20')
@@ -278,28 +334,28 @@ Bed.makemd = (m) => {
 	})
 	return newmd
 }
-Bed.makemark = (md, ar = [], path = []) => {
+Shop.makemark = (md, ar = [], path = []) => {
 	if (!path.length) delete md.m
 	for (const name in md) {
 		const val = md[name]
 		if (typeof(val) == 'object') {
-			Bed.makemark(val, ar, [...path, name] )	
+			Shop.makemark(val, ar, [...path, name] )	
 		} else {
 			ar.push([...path, name+'='+val].join('.'))
 		}
 	}
 	return ar
 }
-Bed.mdfilter = async (mgroup) => {
+Shop.mdfilter = async (mgroup) => {
 	//Удалить фильтры свойства и значения, которых не существуют
 	const newmgroup = {}
 	for (const prop_nick in mgroup) {
-		const prop = await Bed.getPropByNick(db, prop_nick)
+		const prop = await Shop.getPropByNick(db, prop_nick)
 		if (!prop) continue
 		newmgroup[prop_nick] = {}
 		if (typeof mgroup[prop_nick] == 'object' && prop.type == 'value') {
 			for (const value_nick in mgroup[prop_nick]) {
-				const value = await Bed.getValueByNick(db, value_nick)
+				const value = await Shop.getValueByNick(db, value_nick)
 				if (!value) continue
 				newmgroup[prop_nick][value_nick] = mgroup[prop_nick][value_nick]
 			}
@@ -310,7 +366,7 @@ Bed.mdfilter = async (mgroup) => {
 	}
 	return newmgroup
 }
-Bed.getmdids = async (db, andsamples) => {
+Shop.getmdids = async (db, andsamples) => {
 	const prop_nicks = []
 	const value_nicks = []
 	for (const samples of andsamples) { //and
@@ -340,36 +396,38 @@ Bed.getmdids = async (db, andsamples) => {
 	`)
 	return {values, props}
 }
-Bed.getBind = Access.poke(async (db) => {
-	const conf = await config('bed')
+Shop.getBind = Access.poke(async (db) => {
+	const conf = await config('shop')
 	const pos_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.pos_entity_title)})
-	if (!pos_entity_id) console.log('Не найден conf.pos_entity_title')
+	if (!pos_entity_id) console.log('Не найден prop_id по conf.pos_entity_title', conf.pos_entity_title)
 	const mod_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.mod_entity_title)})
-	if (!mod_entity_id) console.log('Не найден conf.mod_entity_title')
-	return {pos_entity_id, mod_entity_id}
+	if (!mod_entity_id) console.log('Не найден prop_id по conf.mod_entity_title', conf.mod_entity_title)
+	const brand_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.brand_entity_title)})
+	if (!brand_entity_id) console.log('Не найден prop_id по conf.brand_entity_title', conf.brand_entity_title)
+	return {pos_entity_id, mod_entity_id, brand_entity_id}
 })
 
-Bed.getmd = async (db, origm, group) => { //depricated
+Shop.getmd = async (db, origm, group) => { //depricated
 	
-	const mgetorig = Bed.makemd(origm)
-	if (group) group.sgroup = await Bed.getSgroup(db, group.group_id)
+	const mgetorig = Shop.makemd(origm)
+	if (group) group.sgroup = await Shop.getSgroup(db, group.group_id)
 	
-	const childs = await Bed.getChilds(db, group?.group_id || null)
+	const childs = await Shop.getChilds(db, group?.group_id || null)
 	for (const child of childs) {
-		child.sgroup = await Bed.getSgroup(db, child.group_id)
+		child.sgroup = await Shop.getSgroup(db, child.group_id)
 		
 	}
 
 	const schilds = childs.map(child => child.sgroup)
 	
-	const {props, values} = await Bed.getmdids(db, [[mgetorig], group?.sgroup || [], ...schilds])
+	const {props, values} = await Shop.getmdids(db, [[mgetorig], group?.sgroup || [], ...schilds])
 
 	
-	const mget = await Bed.mdfilter(mgetorig, props, values)
-	const m = Bed.makemark(mget).join(':')
+	const mget = await Shop.mdfilter(mgetorig, props, values)
+	const m = Shop.makemark(mget).join(':')
 
 
-	const bind = await Bed.getBind(db)
+	const bind = await Shop.getBind(db)
 	
 	
 	return {m, group, mget, childs, props, values, ...bind}
@@ -377,7 +435,7 @@ Bed.getmd = async (db, origm, group) => { //depricated
 
 
 
-Bed.getWhereBySamples = async (db, samples, hashs = [], partner = '', fulldef = false) => { //fulldef false значит без выборки ничего не показываем, partner нужен чтобы выборка по цене была по нужному ключу
+Shop.getWhereBySamples = async (db, samples, hashs = [], partner = '', fulldef = false) => { //fulldef false значит без выборки ничего не показываем, partner нужен чтобы выборка по цене была по нужному ключу
 	//win.key_id - позиция, wva.value_id - модель
 	const from = ['sources_wvalues wva, sources_winners win']
 	const join = []
@@ -400,39 +458,70 @@ Bed.getWhereBySamples = async (db, samples, hashs = [], partner = '', fulldef = 
 
 		const whereand = []
 		for (const prop_nick in sample) { //Находим позиции группы
-			const prop = await Bed.getPropByNick(db, prop_nick)
+			const prop = await Shop.getPropByNick(db, prop_nick)
 			
 
 			i++
-			join.push(`
-				LEFT JOIN sources_wvalues da${i} ON (
-					da${i}.entity_id = win.entity_id 
-					and da${i}.key_id = win.key_id 
-					and da${i}.prop_id = ${prop.prop_id || 0}
-				)
-			`)
-			if (typeof(sample[prop_nick]) == 'object') {
-				const value_ids = []
-				for (const value_nick in sample[prop_nick]) {
-					const value = await Bed.getValueByNick(db, value_nick)
-					value_ids.push(value?.value_id || 0)
-				}
-				if (value_ids.length) {
+			
+			if (prop.type == 'value') {
+				join.push(`
+					LEFT JOIN sources_wvalues da${i} ON (
+						da${i}.entity_id = win.entity_id 
+						and da${i}.key_id = win.key_id 
+						and da${i}.prop_id = ${prop.prop_id || 0}
+					)
+				`)
+				if (typeof(sample[prop_nick]) == 'object') {
+					const value_ids = []
+					for (const value_nick in sample[prop_nick]) {
+						const value = await Shop.getValueByNick(db, value_nick)
+						value_ids.push(value?.value_id || 0)
+					}
+					if (value_ids.length) {
+						whereand.push(`
+							da${i}.value_id in (${value_ids.join(', ')})
+						`)
+					} else {
+						whereand.push(`1 = 0`)
+					}
+				} else if (sample[prop_nick] == 'any') {
 					whereand.push(`
-						da${i}.value_id in (${value_ids.join(', ')})
+						da${i}.value_id is not null
 					`)
-				} else {
-					whereand.push(`1 = 0`)
-				}
-			} else if (sample[prop_nick] == 'any') {
-				whereand.push(`
-					da${i}.value_id is not null
-				`)
-			} else if (sample[prop_nick] == 'empty') {
+				} else if (sample[prop_nick] == 'empty') {
 
-				whereand.push(`
-					da${i}.value_id is null
+					whereand.push(`
+						da${i}.value_id is null
+					`)
+				}
+			} else if (prop.type == 'number') {
+				join.push(`
+					LEFT JOIN sources_wnumbers da${i} ON (
+						da${i}.entity_id = win.entity_id 
+						and da${i}.key_id = win.key_id 
+						and da${i}.prop_id = ${prop.prop_id || 0}
+					)
 				`)
+				if (typeof(sample[prop_nick]) == 'object') {
+					const numbers = Object.keys(sample[prop_nick])
+					if (numbers.length) {
+						whereand.push(`
+							da${i}.number in (${numbers.join(', ')})
+						`)
+					} else {
+						whereand.push(`1 = 0`)
+					}
+				} else if (sample[prop_nick] == 'any') {
+					whereand.push(`
+						da${i}.number is not null
+					`)
+				} else if (sample[prop_nick] == 'empty') {
+					whereand.push(`
+						da${i}.number is null
+					`)
+				}
+			} else { //что делать если в sample не существующее свойство, должно быть найдено 0
+				where.push(`1=0`)
 			}
 		}
 		if (whereand.length) whereor.push(whereand.join(` and `))
@@ -442,18 +531,18 @@ Bed.getWhereBySamples = async (db, samples, hashs = [], partner = '', fulldef = 
 	return {from, join, where, sort}
 }
 
-Bed.getWhereByGroupId = async (db, group_id = false, hashs = [], partner = false, fulldef = false) => {
-	const bind = await Bed.getBind(db)
-	const samples = await Bed.getAllSamples(db, group_id)
+Shop.getWhereByGroupId = async (db, group_id = false, hashs = [], partner = false, fulldef = false) => {
+	const bind = await Shop.getBind(db)
+	const samples = await Shop.getAllSamples(db, group_id)
 
-	const {from, join, where, sort} = await Bed.getWhereBySamples(db, samples, hashs, partner, fulldef)
+	const {from, join, where, sort} = await Shop.getWhereBySamples(db, samples, hashs, partner, fulldef)
 	return {from, join, where, sort, bind}
 }
 
 
 
-Bed.getmdwhere = (md, sgroup = [], hashs = [], partner = false) => {
-	const samples = Bed.mutliSMD([md.mget], sgroup)
+Shop.getmdwhere = (md, sgroup = [], hashs = [], partner = false) => {
+	const samples = Shop.mutliSMD([md.mget], sgroup)
 
 	const bind = {
 		pos_entity_id: md.pos_entity_id,
@@ -552,7 +641,7 @@ Bed.getmdwhere = (md, sgroup = [], hashs = [], partner = false) => {
 	
 	return {where, from, sort, bind}
 }
-Bed.getModelsByItems = async (db, moditems_ids, partner, bind) => { //[{value_id, key_ids}]
+Shop.getModelsByItems = async (db, moditems_ids, partner, bind) => { //[{value_id, key_ids}]
 	if (!moditems_ids.length) return []
 	
 	const modbypos = {}
@@ -562,7 +651,7 @@ Bed.getModelsByItems = async (db, moditems_ids, partner, bind) => { //[{value_id
 		})
 	}
 
-	// const conf = await config('bed')
+	// const conf = await config('shop')
 	// const pos_entity_id = await db.col('SELECT prop_id FROM sources_props where prop_nick = :entity_nick', {entity_nick:nicked(conf.pos_entity_title)})
 
 	const itemprops = await db.all(`
@@ -638,7 +727,7 @@ Bed.getModelsByItems = async (db, moditems_ids, partner, bind) => { //[{value_id
 	//Все нестандартные отличия по позициям вынесли в item_props остальное в model_props
 	const columns = await db.colAll(`
 		SELECT pr.prop_title
-		FROM bed_columns col, sources_props pr 
+		FROM shop_columns col, sources_props pr 
 		WHERE pr.prop_nick = col.prop_nick
 	`)
 	for (const model of list) {
@@ -693,8 +782,8 @@ Bed.getModelsByItems = async (db, moditems_ids, partner, bind) => { //[{value_id
 
 	//Навели порядок в ценах
 	for (const model of list) {
-		Bed.prepareCost(model, partner)
-		Bed.prepareCostMinMax(model)
+		Shop.prepareCost(model, partner)
+		Shop.prepareCostMinMax(model)
 		// let is_item_cost, is_item_oldcost
 		// for (const item of model.items) {
 		// 	if (item.cols[cost.prop_title]) is_item_cost = true
@@ -757,7 +846,7 @@ Bed.getModelsByItems = async (db, moditems_ids, partner, bind) => { //[{value_id
 	// //Восстановили сортировку моделей
 	// list = ids.map(id => list.find(m => m.model_id == id))
 }
-Bed.prepareCost = (model, partner) => {
+Shop.prepareCost = (model, partner) => {
 	partner = partner || {}
 	/*
 	Есть items, Цена, Старая цена, discount обычные характеристики, partner не применён.
@@ -928,7 +1017,7 @@ Bed.prepareCost = (model, partner) => {
 	}
 	
 }
-Bed.prepareCostMinMax = (model) => {
+Shop.prepareCostMinMax = (model) => {
 	const cost = {prop_title: 'Цена', prop_nick: 'cena'}
 	if (!model.items) return
 	

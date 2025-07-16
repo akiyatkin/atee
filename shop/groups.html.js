@@ -46,7 +46,7 @@ export const ROOT = (data, env) => err(data, env, []) || `
 		(div => {
 			for (const block of div.querySelectorAll('.block')) {
 				const title = block.querySelector('.title')
-				const name = 'bed_blocks_' + title.innerText;
+				const name = 'shop_blocks_' + title.innerText;
 				const body = block.querySelector('.body')
 				if (sessionStorage.getItem(name)) block.classList.toggle('show')
 				title.addEventListener('click', () => {
@@ -66,7 +66,7 @@ const showGroupActions = (data, env) => `
 			<p>
 				${field.search({
 					cls: 'a',
-					search:'/-bed/get-group-search',
+					search:'/-shop/get-group-search',
 					value: 'Перенести',
 					heading: "Перенос группы",
 					descr: "Выберите куда перенести группу <b>" + data.group.group_title + "</b>.",
@@ -74,13 +74,13 @@ const showGroupActions = (data, env) => `
 					type: 'text',
 					name: 'group_nick',
 					find: 'group_nick',
-					action: '/-bed/set-group-move',
+					action: '/-shop/set-group-move',
 					args: {group_id: data.group.group_id},
 					reloaddiv: env.layer.div
 				})}, 
 				${field.search({
 					cls: 'a',
-					search:'/-bed/get-group-search',
+					search:'/-shop/get-group-search',
 					value: 'Копировать',
 					heading: "Копирование группы",
 					descr: "Выберите куда скопировать выборки, название и настройки группы <b>" + data.group.group_title + "</b>.",
@@ -88,7 +88,7 @@ const showGroupActions = (data, env) => `
 					type: 'text',
 					name: 'group_nick',
 					find: 'group_nick',
-					action: '/-bed/set-group-copy',
+					action: '/-shop/set-group-copy',
 					args: {group_id: data.group.group_id},
 					goid: 'group_id',
 					go: 'groups/'
@@ -97,7 +97,7 @@ const showGroupActions = (data, env) => `
 					cls: 'a',
 					label: 'Удалить', 
 					confirm: 'Удалить группу?',
-					action: '/-bed/set-group-delete',
+					action: '/-shop/set-group-delete',
 					args: {group_nick: data.group.group_nick},
 					reloaddiv: env.layer.div,
 					goid: 'parent_id',
@@ -117,7 +117,7 @@ const showGroupActions = (data, env) => `
 							descr: '',
 							cls: 'a',
 							type: 'text', 
-							action: '/-bed/set-group-title', 
+							action: '/-shop/set-group-title', 
 							args: {group_id: data.group.group_id},
 							reloaddiv2: env.layer.div
 						})}
@@ -135,7 +135,7 @@ const showGroupActions = (data, env) => `
 							descr: '',
 							cls: 'a',
 							type: 'text', 
-							action: '/-bed/set-group-nick', 
+							action: '/-shop/set-group-nick', 
 							args: {group_id: data.group.group_id},
 							reloaddiv2: env.layer.div
 						})}
@@ -158,7 +158,7 @@ const showGroupOptions = (data, env) => `
 					heading:'Фильтры в группе',
 					value: data.group.self_filters,
 					name: 'bit',
-					action: '/-bed/set-group-self_filters', 
+					action: '/-shop/set-group-self_filters', 
 					values: {"":"Фильтры наследуются", "1":"Свои фильтры"},
 					args: {group_id: data.group.group_id},
 					reloaddiv: env.layer.div
@@ -174,7 +174,7 @@ const showGroupOptions = (data, env) => `
 				heading:'Cвойства на карточках',
 				value: data.group.self_cards,
 				name: 'bit',
-				action: '/-bed/set-group-self_cards', 
+				action: '/-shop/set-group-self_cards', 
 				values: {"":"Свойства на карточках наследуются", "1":"Свои свойства на карточках"},
 				args: {group_id: data.group.group_id},
 				reloaddiv: env.layer.div
@@ -188,7 +188,7 @@ const showGroupFilters = (data, env) => `
 	<p>
 		${field.search({
 			cls: 'a',
-			search:'/-bed/get-group-filter-prop-search',
+			search:'/-shop/get-group-filter-prop-search',
 			value: 'Добавить фильтр',
 			heading: "Добавить фильтр",
 			descr: "Выберите свойство по которому можно будет фильтровать позиций в группе <b>" + data.group.group_title + "</b>",
@@ -196,7 +196,7 @@ const showGroupFilters = (data, env) => `
 			type: 'text',
 			name: 'prop_nick',
 			find: 'prop_nick',
-			action: '/-bed/set-group-filter',
+			action: '/-shop/set-group-filter',
 			args: {group_id: data.group.group_id},
 			reloaddiv: env.layer.div
 		})}
@@ -207,7 +207,7 @@ const showCards = (data, env) => `
 	<p>
 		${field.search({
 			cls: 'a',
-			search:'/-bed/get-group-card-prop-search',
+			search:'/-shop/get-group-card-prop-search',
 			value: 'Добавить свойство',
 			heading: "Добавить свойство",
 			descr: "Выберите свойство, которое показать на карточке в группе <b>" + data.group.group_title + "</b>",
@@ -215,7 +215,7 @@ const showCards = (data, env) => `
 			type: 'text',
 			name: 'prop_nick',
 			find: 'prop_nick',
-			action: '/-bed/set-group-card',
+			action: '/-shop/set-group-card',
 			args: {group_id: data.group.group_id},
 			reloaddiv: env.layer.div
 		})}
@@ -235,7 +235,7 @@ const showValue = (data, env, mark) => !mark.value_nick ? '' : `
 			cls: 'transparent mute',
 			label: svg.cross(), 
 			confirm: 'Удалить занчение?',
-			action: '/-bed/set-sample-prop-value-delete',
+			action: '/-shop/set-sample-prop-value-delete',
 			reloaddiv: env.layer.div,
 			args: {
 				prop_nick: mark.prop_nick, 
@@ -259,7 +259,7 @@ const descrPropValue = (data, env, prop) => `
 // 	type: 'number',
 // 	name: 'value_nick',
 // 	find: 'value_nick',
-// 	action: '/-bed/set-sample-prop-value-create',
+// 	action: '/-shop/set-sample-prop-value-create',
 // 	args: { sample_id, prop_nick: marks[0].prop_nick},
 // 	reloaddiv: env.layer.div
 // })}
@@ -284,7 +284,7 @@ const showProp = (data, env, sample_id, props, prop = props[0]) => !prop.prop_ni
 				cls: 'transparent mute',
 				label: svg.cross(), 
 				confirm: 'Удалить критерий?',
-				action: '/-bed/set-sample-prop-delete',
+				action: '/-shop/set-sample-prop-delete',
 				reloaddiv: env.layer.div,
 				args: {
 					prop_nick: props[0].prop_nick, 
@@ -299,7 +299,7 @@ const showProp = (data, env, sample_id, props, prop = props[0]) => !prop.prop_ni
 			<div>
 				${field.search({
 					cls: 'a',
-					search: '/-bed/get-prop-value-search?type=samplevalue&prop_nick=' + props[0].prop_nick + '&group_nick=' + data.group.group_nick,
+					search: '/-shop/get-prop-value-search?type=samplevalue&prop_nick=' + props[0].prop_nick + '&group_nick=' + data.group.group_nick,
 					value: 'Добавить значение',
 					heading: "Выберите значение",
 					descr: descrPropValue(data, env, props[0]),
@@ -307,7 +307,7 @@ const showProp = (data, env, sample_id, props, prop = props[0]) => !prop.prop_ni
 					type: 'text',
 					name: 'value_nick',
 					find: 'value_nick',
-					action: '/-bed/set-sample-prop-value-create',
+					action: '/-shop/set-sample-prop-value-create',
 					args: { sample_id, prop_nick: props[0].prop_nick},
 					reloaddiv: env.layer.div
 				})}
@@ -332,7 +332,7 @@ const showScriptDragCards = (data, env) => `
 			const Drag = await import('/-note/theory/Drag.js').then(r => r.default)
 			Drag.make(list, async ({id, next_id}) => {
 				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-				const ans = await senditmsg(list, '/-bed/set-card-ordain', {group_id : "${data.group.group_id}", prop_nick: id, next_nick: next_id})
+				const ans = await senditmsg(list, '/-shop/set-card-ordain', {group_id : "${data.group.group_id}", prop_nick: id, next_nick: next_id})
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>
@@ -347,7 +347,7 @@ const showCard = (data, env, card) => `
 				cls: 'transparent mute',
 				label: svg.cross(), 
 				confirm: 'Удалить свойство?',
-				action: '/-bed/set-card-delete',
+				action: '/-shop/set-card-delete',
 				args: {
 					prop_nick: card.prop_nick, 
 					group_id: data.group.group_id
@@ -367,10 +367,10 @@ const showFilter = (data, env, filter) => `
 				cls: 'transparent mute',
 				label: svg.cross(), 
 				confirm: 'Удалить занчение?',
-				action: '/-bed/set-filter-delete',
+				action: '/-shop/set-filter-delete',
 				args: {
 					prop_nick: filter.prop_nick, 
-					group_nick: data.group.group_nick, 
+					group_id: data.group.group_id, 
 				},
 				reloaddiv: env.layer.div
 			})}			
@@ -386,15 +386,15 @@ const showTableSampleProps = (data, env, sample_id, props) => `
 		<tr><td colspan="2">
 			${field.search({
 				cls: 'a',
-				search:'/-bed/get-sample-prop-search?type=sampleprop',
+				search:'/-shop/get-sample-prop-search?type=sampleprop',
 				value: 'Добавить критерий',
 				heading: "Добавить критерий",
-				descr: "Выберите свойство-критерий для попадания позиций в группу <b>" + data.group.group_title + "</b>",
+				descr: "Выберите свойство-критерий для попадания позиций в группу <b>" + data.group.group_title + "</b>. Подходят value, number.",
 				label: 'Выберите свойство', 
 				type: 'text',
 				name: 'prop_nick',
 				find: 'prop_nick',
-				action: '/-bed/set-sample-prop-create',
+				action: '/-shop/set-sample-prop-create',
 				args: {sample_id},
 				reloaddiv: env.layer.div
 			})}
@@ -402,7 +402,7 @@ const showTableSampleProps = (data, env, sample_id, props) => `
 				cls: 'transparent mute',
 				label: svg.cross(), 
 				confirm: 'Удалить всю выборку?',
-				action: '/-bed/set-sample-delete',
+				action: '/-shop/set-sample-delete',
 				reloaddiv: env.layer.div,
 				args: {sample_id}
 			})}	
@@ -439,7 +439,7 @@ const showGroupSamples = (data, env) => `
 			${Object.keys(data.samples).length ? showTableSamples(data, env) : ''}
 			${field.search({
 				cls: 'a',
-				search:'/-bed/get-sample-prop-search?type=sample',
+				search:'/-shop/get-sample-prop-search?type=sample',
 				value: 'Добавить выборку',
 				heading: "Добавить критерий",
 				descr: "Выберите свойство-критерий для попадания позиций в группу <b>" + data.group.group_title + "</b>.",
@@ -447,7 +447,7 @@ const showGroupSamples = (data, env) => `
 				type: 'text',
 				name: 'prop_nick',
 				find: 'prop_nick',
-				action: '/-bed/set-sample-create',
+				action: '/-shop/set-sample-create',
 				args: {group_nick: data.group.group_nick},
 				reloaddiv: env.layer.div
 			})}
@@ -470,7 +470,7 @@ const showGroups = (data, env) => `
 			descr: '',
 			cls: 'a',
 			type: 'text', 
-			action: '/-bed/set-group-create', 
+			action: '/-shop/set-group-create', 
 			args: {group_nick: data.group?.group_nick ?? null},
 			reloaddiv: env.layer.div
 		})}
@@ -535,7 +535,7 @@ const showScriptDragGroups = (data, env) => `
 			const Drag = await import('/-note/theory/Drag.js').then(r => r.default)
 			Drag.make(list, async ({id, next_id}) => {
 				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-				const ans = await senditmsg(list, '/-bed/set-group-ordain', {id, next_id})
+				const ans = await senditmsg(list, '/-shop/set-group-ordain', {id, next_id})
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>
@@ -548,7 +548,7 @@ const showScriptDragFilters = (data, env) => `
 			const Drag = await import('/-note/theory/Drag.js').then(r => r.default)
 			Drag.make(list, async ({id, next_id}) => {
 				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-				const ans = await senditmsg(list, '/-bed/set-filter-ordain', {group_id : "${data.group.group_id}", prop_nick: id, next_nick: next_id})
+				const ans = await senditmsg(list, '/-shop/set-filter-ordain', {group_id : "${data.group.group_id}", prop_nick: id, next_nick: next_id})
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>
@@ -566,7 +566,7 @@ const showGroup = (data, env, group) => `
 				cls: 'transparent mute',
 				label: svg.cross(), 
 				confirm: 'Удалить группу?',
-				action: '/-bed/set-group-delete',
+				action: '/-shop/set-group-delete',
 				args: {group_nick: group.group_nick},
 				reloaddiv: env.layer.div
 			})}

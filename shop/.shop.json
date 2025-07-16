@@ -1,8 +1,11 @@
 {
 	"pub":["root_crumb"],
 	"root_title":"Каталог",
-	"root_crumb":"/bed",
-	"subgroup_dependence": true,
+	"root_crumb":"/shop",
+	
+	"pos_entity_title":"БрендАрт",
+	"mod_entity_title":"Модель",
+	"brand_entity_title":"Бренд",
 	"props":{
 		"БрендАрт":{
 			"descr":"Идентификатор товарной позиции, которую можно продать",
@@ -142,8 +145,7 @@
 		}
 	},
 	"limit":10,
-	"pos_entity_title":"БрендАрт",
-	"mod_entity_title":"Модель",
+
 	"partners":{
 		"1998":{
 			"title":"1998",

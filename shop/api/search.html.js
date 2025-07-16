@@ -1,4 +1,4 @@
-import cards from "/-bed/api/cards.html.js"
+import cards from "/-shop/api/cards.html.js"
 import words from "/-words/words.js"
 import links from "/-catalog/links.html.js"
 import err from "/-controller/err.html.js"
@@ -8,10 +8,10 @@ export default tpl
 
 
 tpl.ROOT = () => `
-	<div id="BED_GROUPS"></div>
-	<div id="page"><div id="BED_PAG"></div></div>
-	<div id="BED_LIST"></div>
-	<article style="margin-top:4em; margin-bottom: 4em" id="BED_PAGE"></article>
+	<div id="SHOP_GROUPS"></div>
+	<div id="page"><div id="SHOP_PAG"></div></div>
+	<div id="SHOP_LIST"></div>
+	<article style="margin-top:4em; margin-bottom: 4em" id="SHOP_PAGE"></article>
 `
 
 tpl.GROUPS = (data, env) => data.result ? `
@@ -35,10 +35,10 @@ tpl.GROUPS = (data, env) => data.result ? `
 		<div style="display: grid; height: max-content; gap: 0.4em;">
 			${data.childs.length ? tpl.showgroups(data, env) : ''}
 		</div>
-		<div id="BED_FILTERS"></div>
+		<div id="SHOP_FILTERS"></div>
 	</div>
 ` : `
-	<h1>${data.root_title}</h1><div id="BED_FILTERS"></div>
+	<h1>${data.root_title}</h1><div id="SHOP_FILTERS"></div>
 `	
 tpl.PAGINATION = (data, env) => data.result && `
 	${tpl.pag(data, env, 'none')}

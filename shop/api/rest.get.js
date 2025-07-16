@@ -1,4 +1,4 @@
-import Bed from "/-bed/api/Bed.js"
+import Shop from "/-shop/api/Shop.js"
 import config from "/-config"
 
 import Rest from '/-rest'
@@ -9,7 +9,7 @@ export default rest
 import rest_db from '/-db/rest.db.js'
 rest.extra(rest_db)
 
-import rest_bed from '/-bed/rest.bed.js'
+import rest_bed from '/-shop/rest.shop.js'
 rest.extra(rest_bed)
 
 
@@ -17,7 +17,7 @@ rest.addResponse('get-search-groups', async (view) => {
 	
 	const db = await view.get('db')
 
-	const conf = await config('bed')
+	const conf = await config('shop')
 
 	view.data.root_title = conf.root_title
 	const group = view.data.group = await view.get('group#required')
@@ -29,19 +29,19 @@ rest.addResponse('get-search-groups', async (view) => {
 	const partner = await view.get('partner')
 
 	const origm = await view.get('m')
-	const mgetorig = Bed.makemd(origm)
-	const mget = await Bed.mdfilter(mgetorig)
-	const m = Bed.makemark(mget).join(':')
-	const bind = await Bed.getBind(db)
+	const mgetorig = Shop.makemd(origm)
+	const mget = await Shop.mdfilter(mgetorig)
+	const m = Shop.makemark(mget).join(':')
+	const bind = await Shop.getBind(db)
 
-	const childs = view.data.childs = await Bed.getChilds(db, group?.group_id || null)
+	const childs = view.data.childs = await Shop.getChilds(db, group?.group_id || null)
 	
 
 	view.data.md = {m, group, mget, ...bind}
 
 	
-	const samples = await Bed.getAllSamples(db, group.group_id)
-	const {from, join, where, sort} = await Bed.getWhereBySamples(db, [...samples, mget], hashs, partner, false)
+	const samples = await Shop.getAllSamples(db, group.group_id)
+	const {from, join, where, sort} = await Shop.getWhereBySamples(db, [...samples, mget], hashs, partner, false)
 
 	view.data.modcount = await db.col(`
 		SELECT count(distinct wva.value_id)
@@ -51,8 +51,8 @@ rest.addResponse('get-search-groups', async (view) => {
 	`, bind)
 
 	for (const child of childs) {
-		const samples = await Bed.getAllSamples(db, child.group_id)
-		const {from, join, where, sort} = await Bed.getWhereBySamples(db, [...samples, mget], hashs, partner, false)
+		const samples = await Shop.getAllSamples(db, child.group_id)
+		const {from, join, where, sort} = await Shop.getWhereBySamples(db, [...samples, mget], hashs, partner, false)
 		child.mute = !await db.col(`
 			SELECT wva.value_id
 			FROM ${from.join(', ')} ${join.join(' ')}
@@ -78,7 +78,7 @@ rest.addResponse('get-search-groups', async (view) => {
 	// `, bind)
 
 	// for (const child of md.childs) {
-	// 	const {where, from, sort, bind} = Bed.getmdwhere(md, child.mgroup, hashs, partner)
+	// 	const {where, from, sort, bind} = Shop.getmdwhere(md, child.mgroup, hashs, partner)
 	// 	child.mute = !await db.col(`
 	// 		SELECT pos.value_id
 	// 		FROM ${from.join(', ')}
@@ -102,11 +102,11 @@ rest.addResponse('get-search-list', async (view) => {
 	const partner = await view.get('partner')
 	const p = await view.get('p')
 	const count = await view.get('count')
-	const conf = await config('bed')
+	const conf = await config('shop')
 	view.data.m = md.m
 	view.data.limit = conf.limit
 	
-	const {from, where, sort, bind} = Bed.getmdwhere(md, md.group.mgroup, hashs, partner)
+	const {from, where, sort, bind} = Shop.getmdwhere(md, md.group.mgroup, hashs, partner)
 
 	
 	
@@ -129,7 +129,7 @@ rest.addResponse('get-search-list', async (view) => {
 	`, bind)
 	
 	
-	const list = await Bed.getModelsByItems(db, moditem_ids, partner, bind)
+	const list = await Shop.getModelsByItems(db, moditem_ids, partner, bind)
 
 	
 

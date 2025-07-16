@@ -10,23 +10,25 @@
 		"title":"Источники данных"
 	},
 	"json":{
-		"props:ROOT":"/-bed/props",
-		"main:ROOT":"/-bed/main",
-		"settings:ROOT":"/-bed/settings"
+		"props:ROOT":"/-shop/props",
+		"main:ROOT":"/-shop/main",
+		"settings:ROOT":"/-shop/settings",
+		"brands:ROOT":"/-shop/brands"
 	},
 	"jsontpl":{
-		"groups:ROOT":"/-bed/groups?group_id=${env.crumb.child?.name ?? ''}&query=${env.bread.get.search ?? ''}",
+		"groups:ROOT":"/-shop/groups?group_id=${env.crumb.child?.name ?? ''}&query=${env.bread.get.search ?? ''}",
 		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
 	},
 	"tpl":{
 		"frame":"/-controller/frame.html.js",
 		"controller":"/-controller/layout.html.js",
-		"settings":"/-bed/settings.html.js",
+		"settings":"/-shop/settings.html.js",
+		"brands":"/-shop/brands.html.js",
 		"index":"/-controller/index-board.html.js",
-		"aside":"/-bed/aside.html.js",
-		"main":"/-bed/main.html.js",
-		"props":"/-bed/props.html.js",
-		"groups":"/-bed/groups.html.js"
+		"aside":"/-shop/aside.html.js",
+		"main":"/-shop/main.html.js",
+		"props":"/-shop/props.html.js",
+		"groups":"/-shop/groups.html.js"
 	},
 	"layout":{
 		"index:ROOT": {
@@ -35,6 +37,14 @@
 		}
 	},
 	"childs":{
+		"brands":{
+			"head":{"title":"Бренды"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"brands:ROOT"
+				}
+			}
+		},
 		"settings":{
 			"head":{"title":"Настройки"},
 			"layout":{

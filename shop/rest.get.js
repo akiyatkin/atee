@@ -1,4 +1,4 @@
-import Bed from "/-bed/api/Bed.js"
+import Shop from "/-shop/api/Shop.js"
 import nicked from "/-nicked"
 import Rest from '/-rest'
 const rest = new Rest()
@@ -7,7 +7,7 @@ export default rest
 
 
 
-import rest_bed from '/-bed/rest.bed.js'
+import rest_bed from '/-shop/rest.shop.js'
 rest.extra(rest_bed)
 
 
@@ -24,12 +24,12 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 	const group = await view.get('group#required')
 	// let md
 	// if (group.parent_id) {
-	// 	const parent = await Bed.getGroupById(db, group.parent_id)
-	// 	md = await Bed.getmd(db, '', parent)
+	// 	const parent = await Shop.getGroupById(db, group.parent_id)
+	// 	md = await Shop.getmd(db, '', parent)
 	// } else {
-	// 	md = await Bed.getmd(db, '')
+	// 	md = await Shop.getmd(db, '')
 	// }
-	const {from, join, where, sort, bind} = await Bed.getWhereByGroupId(db, group?.parent_id || false,[], false, true)
+	const {from, join, where, sort, bind} = await Shop.getWhereByGroupId(db, group?.parent_id || false,[], false, true)
 	
 	const list = await db.all(`
 		SELECT distinct va.value_title, va.value_nick, da.value_id
@@ -59,19 +59,22 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 	
 	if (type == 'samplevalue') {
 		if (query_nick) {
-			view.ans.list.push({
-				action:'/-bed/set-sample-prop-value-create',
-				left: '<i>Создать <b>'+query_nick+'</b></i>',
-				right: ''
-			})
+			const prop = await Shop.getPropByNick(db, query_nick)
+			if (!prop) {
+				view.ans.list.push({
+					action:'/-shop/set-sample-prop-value-create',
+					left: '<i>Создать <b>' + query_nick + '</b></i>',
+					right: ''
+				})
+			}
 		}
 		view.ans.list.push({
-			action:'/-bed/set-sample-prop-spec?spec=any',
+			action:'/-shop/set-sample-prop-spec?spec=any',
 			left: '<i>Любое значение</i>',
 			right: ''
 		})
 		view.ans.list.push({
-			action:'/-bed/set-sample-prop-spec?spec=empty',
+			action:'/-shop/set-sample-prop-spec?spec=empty',
 			left: '<i>Без значения</i>',
 			right: ''
 		})
@@ -89,7 +92,7 @@ rest.addResponse('get-group-search', ['admin'], async view => {
 
 	const list = await db.all(`
 		SELECT group_id, group_title, group_nick
-		FROM bed_groups
+		FROM shop_groups
 		WHERE 
 			${hashs.map(hash => 'group_nick like "%' + hash.join('%" and group_nick like "%') + '%"').join(' or ') || '1 = 1'}
 		ORDER BY RAND()
@@ -120,7 +123,7 @@ rest.addResponse('get-sub', ['admin'], async view => {
 	const query_nick = await view.get('query_nick')
 	const type = await view.get('type')
 	
-	const tpl = await import(`/-bed/api/${type}s.html.js`).then(r => r.default).catch(r => false)
+	const tpl = await import(`/-shop/api/${type}s.html.js`).then(r => r.default).catch(r => false)
 	if (!tpl) return view.err('Некорректный type')
 	
 	const list = view.data.list = Object.keys(tpl.prop).map(name => ({
@@ -150,18 +153,59 @@ rest.addResponse('get-group-filter-prop-search', ['admin'], async view => {
 		return row
 	})	
 	if (query_nick) {
-		view.ans.list.push({
-			action:'/-bed/set-group-filter',
-			left: '<i>Создать <b>'+query_nick+'</b></i>',
-			right: ''
-		})
+		const prop = await Shop.getPropByNick(db, query_nick)
+		if (!prop) {
+			view.ans.list.push({
+				action:'/-shop/set-group-filter',
+				left: '<i>Создать <b>' + query_nick + '</b></i>',
+				right: ''
+			})
+		}
 	}
 	view.ans.list.push({
-		action:'/-bed/set-group-self_filters',
+		action:'/-shop/set-group-self_filters',
 		left: '<i>Наследовать</i>',
 		right: ''
 	})
 	
+	
+	view.ans.count = list.length
+	return view.ret()
+})
+rest.addResponse('get-prop-search', ['admin'], async view => {
+	const db = await view.get('db')
+	const hashs = await view.get('hashs')
+	const query_nick = await view.get('query_nick')
+	
+	const list = await db.all(`
+		SELECT prop_id, prop_title, prop_nick, type
+		FROM sources_props
+		WHERE type in ("value","number","text") 
+		and ${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'}
+		ORDER BY RAND()
+		LIMIT 12
+	`)
+
+	view.ans.list = list.map(row => {
+		row['left'] = row.prop_title
+		row['right'] = ''
+		return row
+	})	
+	if (query_nick) {
+		const prop = await Shop.getPropByNick(db, query_nick)
+		const ready = await db.col(`
+			SELECT bp.prop_nick
+			FROM shop_props bp
+			WHERE bp.prop_nick = :query_nick
+		`, {query_nick})
+		if (!prop && !ready) {
+			view.ans.list.push({
+				action:'/-shop/set-prop-create',
+				left: '<i>Создать <b>' + query_nick + '</b></i>',
+				right: ''
+			})
+		}
+	}
 	
 	view.ans.count = list.length
 	return view.ret()
@@ -186,14 +230,17 @@ rest.addResponse('get-group-card-prop-search', ['admin'], async view => {
 		return row
 	})	
 	if (query_nick) {
-		view.ans.list.push({
-			action:'/-bed/set-group-card',
-			left: '<i>Создать <b>'+query_nick+'</b></i>',
-			right: ''
-		})
+		const prop = await Shop.getPropByNick(db, query_nick)
+		if (!prop) {
+			view.ans.list.push({
+				action:'/-shop/set-group-card',
+				left: '<i>Создать <b>'+query_nick+'</b></i>',
+				right: ''
+			})
+		}
 	}
 	view.ans.list.push({
-		action:'/-bed/set-group-self_cards',
+		action:'/-shop/set-group-self_cards',
 		left: '<i>Наследовать</i>',
 		right: ''
 	})
@@ -220,7 +267,7 @@ rest.addResponse('get-sample-prop-search', ['admin'], async view => {
 	const list = await db.all(`
 		SELECT prop_id, prop_title, prop_nick, type
 		FROM sources_props
-		WHERE type = "value" 
+		WHERE type in ("value","number") 
 		and ${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'}
 	`)
 
@@ -234,17 +281,20 @@ rest.addResponse('get-sample-prop-search', ['admin'], async view => {
 	
 	if (type == 'sample') {
 		if (query_nick) {
-			view.ans.list.push({
-				action:'/-bed/set-sample-create',
-				left: '<i>Создать <b>'+query_nick+'</b></i>',
-				right: ''
-			})
+			const prop = await Shop.getPropByNick(db, query_nick)
+			if (!prop) {
+				view.ans.list.push({
+					action:'/-shop/set-sample-create',
+					left: '<i>Создать <b>'+query_nick+'</b></i>',
+					right: ''
+				})
+			}
 		}
 	}
 	if (type == 'sampleprop') {
 		if (query_nick) {
 			view.ans.list.push({
-				action:'/-bed/set-sample-prop-create',
+				action:'/-shop/set-sample-prop-create',
 				left: '<i>Создать <b>'+query_nick+'</b></i>',
 				right: ''
 			})

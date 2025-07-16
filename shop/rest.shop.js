@@ -1,5 +1,5 @@
 import nicked from '/-nicked'
-import Bed from "/-bed/api/Bed.js"
+import Shop from "/-shop/api/Shop.js"
 import User from "/-user/User.js"
 import config from "/-config"
 
@@ -63,8 +63,8 @@ rest.addArgument('group_nick', ['nicked'])
 rest.addVariable('group', ['group_nick','null'], async (view, group_nick) => {
 	if (group_nick == null) return null
 	const db = await view.get('db')
-	const group_id = await Bed.getGroupIdByNick(db, group_nick)
-	const group = await Bed.getGroupById(db, group_id)
+	const group_id = await Shop.getGroupIdByNick(db, group_nick)
+	const group = await Shop.getGroupById(db, group_id)
 	if (!group) return view.err('Группа не найдена', 404)
 	return group
 })
@@ -79,7 +79,7 @@ rest.addArgument('prop_nick', ['nicked'])
 rest.addVariable('prop', ['prop_nick','null'], async (view, prop_nick) => {
 	if (prop_nick == null) return null
 	const db = await view.get('db')
-	const prop = await Bed.getPropByNick(db, prop_nick)
+	const prop = await Shop.getPropByNick(db, prop_nick)
 	if (!prop) return null
 	return prop
 })
@@ -91,7 +91,7 @@ rest.addArgument('value_nick', ['nicked'])
 rest.addVariable('value', ['value_nick','null'], async (view, value_nick) => {
 	if (value_nick == null) return null
 	const db = await view.get('db')
-	const value = await Bed.getValueByNick(db, value_nick)
+	const value = await Shop.getValueByNick(db, value_nick)
 	if (!value) return view.err('Значение не найдено', 404)
 	return value
 })
@@ -109,7 +109,7 @@ rest.addVariable('value#required', ['value', 'required'])
 
 
 rest.addArgument('partner', async (view, partner_nick) => {
-	const conf = await config('bed')
+	const conf = await config('shop')
 	const data = conf.partners[partner_nick]
 	if (!data) return false
 	data.key = partner_nick
@@ -124,6 +124,6 @@ rest.addVariable('md', async (view) => {
 	const db = await view.get('db')
 	const origm = await view.get('m')
 	const group = await view.get('group#required')
-	const md = await Bed.getmd(db, origm, group)
+	const md = await Shop.getmd(db, origm, group)
 	return md
 })

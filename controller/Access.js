@@ -25,9 +25,8 @@ const Access = {
 		times.ACCESS_TIME = Date.now()
 		Access.mapate = new Map()
 		console.log('new access time', Date())
-		Access.poke.list.forEach(poked => {
-			poked.storage = {}
-		})
+		Access.poke.list.forEach(poked => poked.storage = {})
+		Access.wait.list.forEach(waited => waited.storage = {})
 	},
 	getAccessTime: () => times.ACCESS_TIME,
 	getUpdateTime: () => times.UPDATE_TIME,
@@ -91,15 +90,36 @@ const Access = {
 	}
 }
 
+Access.wait = (func) => { //Результат складывать в Мешок не на долго, кэш. При обращении продлевать таймер
+	const waited = (...args) => {
+		const store = waited.storage[args.join(':')] ??= {} //Только простые аргументы должны быть
+		clearTimeout(store.timer)
+		store.timer = setTimeout(() => {
+			delete store.ready
+			delete store.cache
+		}, 24 * 60 * 60 * 1000) //(1 день = 24 * 60 * 60 * 1000)
+		if (!store.ready) {
+			store.cache = deepFreeze(func(...args))
+			
+			store.ready = true
+		}
+		return store.cache
+	}
+	waited.storage = {}
+	Access.wait.list.push(waited)
+	return waited
+}
+Access.wait.list = []
 
-Access.poke = (func) => { //Результат складывать в Мешок не на долго, кэш
+
+Access.poke = (func) => { //Результат складывать в Мешок не на долго, кэш. При обращении продлевать таймер
 	const poked = (...args) => {
 		const store = poked.storage[args.join(':')] ??= {} //Только простые аргументы должны быть
 		clearTimeout(store.timer)
 		store.timer = setTimeout(() => {
 			delete store.ready
 			delete store.cache
-		}, 1 * 60 * 1000) //hours * min * sec
+		}, 1 * 60 * 60 * 1000) //(1 час = 1 * 60 * 60 * 1000)
 		if (!store.ready) {
 			store.cache = deepFreeze(func(...args))
 			

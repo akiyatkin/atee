@@ -11,6 +11,22 @@ export const ROOT = (data, env) => `
 `
 
 const showProps = (data, env) => `
+	<p>
+		${field.search({
+			cls: 'a',
+			search:'/-shop/get-prop-search',
+			value: 'Добавить фильтр',
+			heading: "Добавить фильтр",
+			descr: "Выберите свойство",
+			label: 'Выберите свойство', 
+			type: 'text',
+			name: 'prop_nick',
+			find: 'prop_nick',
+			action: '/-shop/set-prop-create',
+			args: {},
+			reloaddiv: env.layer.div
+		})}
+	</p>
 	<div class="revscroll" style="margin: 2em 0">
 		<table draggable="false" class="list">
 			<thead>
@@ -43,7 +59,7 @@ const showTr = (data, env, prop) => `
 		<td>
 			${field.search({
 				cls: 'a',
-				search: '/-bed/get-sub?type=card',
+				search: '/-shop/get-sub?type=card',
 				value: prop.card_tpl,
 				heading: "Шаблон для карточки",
 				descr: '',
@@ -51,14 +67,14 @@ const showTr = (data, env, prop) => `
 				type: 'text',
 				name: 'sub',
 				find: 'left',
-				action: '/-bed/set-sub?type=card',
+				action: '/-shop/set-sub?type=card',
 				args: { prop_nick: prop.prop_nick}
 			})}
 		</td>
 		<td>
 			${field.search({
 				cls: 'a',
-				search: '/-bed/get-sub?type=filter',
+				search: '/-shop/get-sub?type=filter',
 				value: prop.filter_tpl,
 				heading: "Шаблон для фильтра",
 				descr: '',
@@ -66,7 +82,7 @@ const showTr = (data, env, prop) => `
 				type: 'text',
 				name: 'sub',
 				find: 'left',
-				action: '/-bed/set-sub?type=filter',
+				action: '/-shop/set-sub?type=filter',
 				args: { prop_nick: prop.prop_nick}
 			})}
 		</td>
@@ -75,7 +91,7 @@ const showTr = (data, env, prop) => `
 				value: prop.known,
 				name: 'bit',
 				descr: 'Общая обработка означает, что свойство покажется вместе со всеми свойствами. Есть в массиве more. Свойство со специальной обработкой покажется там где его покажет программист, по умолчанию нигде не покажется. Нет в массиве more.',
-				action: '/-bed/set-known', 
+				action: '/-shop/set-known', 
 				values: {"":"Общая", "1":"Специальная"},
 				args: {prop_nick: prop.prop_nick}
 			})}
