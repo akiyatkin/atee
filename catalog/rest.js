@@ -102,7 +102,8 @@ rest.addResponse('get-model-head', async (view) => {
 	text = text.replace(/<style([\S\s]*?)>([\S\s]*?)<\/style>/ig, '').replace(/<h1[^>]*>.*<\/h1>/iu, "").replace(/<\/?[^>]+(>|$)/g, " ").replace(/\s+/," ").trim()
 	const r = text.match(/.{200}[^\.!]*[\.!]/u)
 	text = (r ? r[0] : text).replaceAll(' ,', ',')
-	view.data.description = text
+
+	view.data.description = text + (position ? ' ' + position : '')
 
 
 	if (model.images) {
