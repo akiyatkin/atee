@@ -19,6 +19,7 @@ export const TABLE = (data, env) => err(data, env) || `
 			max-width: 300px;
 		}
 	</style>
+	
 	<div class="revscroll" style="margin: 2em 0">
 		<table draggable="false" class="list">
 			<thead>
@@ -56,7 +57,7 @@ export const TABLE = (data, env) => err(data, env) || `
 			})(document.currentScript.parentElement)
 		</script>
 	</div>
-	<div style="margin:2em 0 4em; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
+	<div style="margin:2em 0 2em; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
 		${field.prompt({
 			value: 'Добавить свойство', 
 			name: 'title',

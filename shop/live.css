@@ -1,0 +1,80 @@
+.liveform {
+	position: relative;
+}
+/*
+.liveform .suggestion:hover,
+.liveform .suggestion:hover + div {
+	background-color: #eee;
+}*/
+
+
+.liveform .livemenu {
+	opacity: 0;
+	border: solid 1px #eee;
+	/*border-radius: 0 0 5px 5px;*/
+	position: absolute;
+	margin-top: 0px;
+	left: 0;
+	right: 0;
+	z-index: 25;
+	background-color: white;
+	transition: opacity 0.3s, max-height 0.3s;
+	pointer-events: none;
+	/*visibility: hidden;*/
+	max-height: 0;
+	
+}
+.liveform .livemenu.show {
+	overflow-y: auto;
+	pointer-events: auto;
+	/*visibility: visible;*/
+	max-height: 100vh;
+	opacity: 1;
+}
+
+
+
+
+.liveform .livetitle {
+	/*opacity: 0;*/
+	/*max-height: 0;*/
+	/*font-style: italic;*/
+	opacity: 0.7;
+	overflow: hidden;
+	transition: opacity 0.3s, max-height 1s;
+	padding: 5px;
+	padding-bottom: 0;
+}
+
+.liveform .livetitle.show {
+	opacity: 1;
+	max-height: 25px;
+}
+
+
+
+.liveform .livebody {
+	padding: 5px;
+	padding-top: 0;	
+	opacity: 1;
+	transition: opacity 0.3s;
+}
+.liveform .livebody.mute {
+	opacity: 0.3;
+}
+
+
+
+.liveform .liveselect {
+	transition: 0.1s;
+	cursor: pointer;
+	padding: 2px 5px;
+	margin-left: -6px;
+	margin-right: -6px;
+	display: grid;
+	grid-template-columns: 1fr max-content;
+}
+.liveform .liveselect:hover {
+	background-color: var(--link-color, lightblue);
+	color: white;
+}

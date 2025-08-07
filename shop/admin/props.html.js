@@ -14,15 +14,15 @@ const showProps = (data, env) => `
 	<p>
 		${field.search({
 			cls: 'a',
-			search:'/-shop/get-prop-search',
-			value: 'Добавить фильтр',
-			heading: "Добавить фильтр",
+			search:'/-shop/admin/get-prop-search',
+			value: 'Добавить свойство',
+			heading: "Добавить свойство",
 			descr: "Выберите свойство",
 			label: 'Выберите свойство', 
 			type: 'text',
 			name: 'prop_nick',
 			find: 'prop_nick',
-			action: '/-shop/set-prop-create',
+			action: '/-shop/admin/set-prop-create',
 			args: {},
 			reloaddiv: env.layer.div
 		})}
@@ -37,6 +37,7 @@ const showProps = (data, env) => `
 				<td>Фильтр</td>
 				<td>Обработка</td>
 				<td>Комментарий</td>
+				<td></td>
 			</thead>
 			<tbody>
 				${data.props.map(row => showTr(data, env, row)).join('')}
@@ -59,7 +60,7 @@ const showTr = (data, env, prop) => `
 		<td>
 			${field.search({
 				cls: 'a',
-				search: '/-shop/get-sub?type=card',
+				search: '/-shop/admin/get-sub?type=card',
 				value: prop.card_tpl,
 				heading: "Шаблон для карточки",
 				descr: '',
@@ -67,14 +68,14 @@ const showTr = (data, env, prop) => `
 				type: 'text',
 				name: 'sub',
 				find: 'left',
-				action: '/-shop/set-sub?type=card',
+				action: '/-shop/admin/set-sub?type=card',
 				args: { prop_nick: prop.prop_nick}
 			})}
 		</td>
 		<td>
 			${field.search({
 				cls: 'a',
-				search: '/-shop/get-sub?type=filter',
+				search: '/-shop/admin/get-sub?type=filter',
 				value: prop.filter_tpl,
 				heading: "Шаблон для фильтра",
 				descr: '',
@@ -82,7 +83,7 @@ const showTr = (data, env, prop) => `
 				type: 'text',
 				name: 'sub',
 				find: 'left',
-				action: '/-shop/set-sub?type=filter',
+				action: '/-shop/admin/set-sub?type=filter',
 				args: { prop_nick: prop.prop_nick}
 			})}
 		</td>
@@ -91,7 +92,7 @@ const showTr = (data, env, prop) => `
 				value: prop.known,
 				name: 'bit',
 				descr: 'Общая обработка означает, что свойство покажется вместе со всеми свойствами. Есть в массиве more. Свойство со специальной обработкой покажется там где его покажет программист, по умолчанию нигде не покажется. Нет в массиве more.',
-				action: '/-shop/set-known', 
+				action: '/-shop/admin/set-known', 
 				values: {"":"Общая", "1":"Специальная"},
 				args: {prop_nick: prop.prop_nick}
 			})}
@@ -103,7 +104,18 @@ const showTr = (data, env, prop) => `
 				action: '/-sources/set-prop-comment', 
 				args: {prop_id: prop.prop_id},
 				value: prop.comment
-			}) : ''}
+			}) : '<i>&mdash;</i>'}
+		</td>
+		<td>
+			${field.button({
+				cls: 'transparent mute',
+				label: svg.cross(), 
+				confirm: 'Удалить настройки свойства?',
+				action: '/-shop/admin/set-prop-delete',
+				reloaddiv: env.layer.div,
+				args: {prop_nick: prop.prop_nick},
+				reloaddiv: env.layer.div
+			})}
 		</td>
 	</tr>
 `

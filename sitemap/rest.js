@@ -78,7 +78,6 @@ const interpolate = (val, env) => new Function('env', 'return `'+val+'`')(env)
 
 
 rest.addResponse('get-head', async view => {
-
 	const rule = await view.get('rule')
 	const bread = await view.get('bread')
 	const theme = await view.get('theme')

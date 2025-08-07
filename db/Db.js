@@ -47,6 +47,9 @@ const createPool = async () => {
 }
 let pool = await createPool()
 export class Db {
+	toString () {
+		return 'Db'
+	}
 	constructor () {
 		this.transdeep = 0
 		this.conf = conf

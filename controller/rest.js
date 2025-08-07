@@ -223,19 +223,32 @@ rest.addResponse('get-head', async view => {
 })
 const getDiff = (players, nlayers, reloaddivs, reloadtss, globals, layers = []) => {
 	nlayers?.forEach(nlayer => {
-		const player = players.find(player => {
+		const rlayer = players.find(player => {
 			return nlayer.div == player.div 
 			&& nlayer.ts == player.ts 
-			&& nlayer.json == player.json 
 			&& nlayer.html == player.html 
+		})
+		const player = rlayer ? [rlayer].find(player => {
+			return nlayer.json == player.json 
 			&& nlayer.parsed == player.parsed 
 			&& !~reloaddivs.indexOf(player.div)
 			&& !~reloadtss.indexOf(player.ts)
 			&& (!player.global || !globals.some(g => ~player.global.indexOf(g)))
-		})
+		}) : false
+		// const player = players.find(player => {
+		// 	return nlayer.div == player.div 
+		// 	&& nlayer.ts == player.ts 
+		// 	&& nlayer.json == player.json 
+		// 	&& nlayer.html == player.html 
+		// 	&& nlayer.parsed == player.parsed 
+		// 	&& !~reloaddivs.indexOf(player.div)
+		// 	&& !~reloadtss.indexOf(player.ts)
+		// 	&& (!player.global || !globals.some(g => ~player.global.indexOf(g)))
+		// })
 		if (player) {
 			getDiff(player.layers || [], nlayer.layers, reloaddivs, reloadtss, globals, layers)
 		} else {
+			if (rlayer && !nlayer.animate) nlayer.animate = 'none' //show reparse
 			layers.push(nlayer) //Слой не найден, его надо показать
 		}
 	})

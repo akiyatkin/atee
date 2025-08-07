@@ -1,5 +1,5 @@
 import nicked from '/-nicked'
-import Shop from "/-shop/api/Shop.js"
+import Shop from "/-shop/Shop.js"
 import User from "/-user/User.js"
 import config from "/-config"
 
@@ -15,39 +15,19 @@ rest.extra(rest_funcs)
 import rest_db from '/-db/rest.db.js'
 rest.extra(rest_db)
 
-import rest_admin from '/-controller/rest.admin.js'
-rest.extra(rest_admin)
-
 import rest_search from "/-dialog/search/rest.search.js" //аргументы hashs, hash, search 
 rest.extra(rest_search)
 
-rest.addArgument('next_id', ['mint'])
-rest.addArgument('id', ['mint'])
-rest.addVariable('id#required', ['id', 'required'])
 
-rest.addArgument('sample_id', ['sint'])
-rest.addVariable('sample_id#required', ['sample_id', 'required'])
 
-rest.addArgument('spec', (view, val) => {
-	if (!val) return val
-	if (!~['exactly','any','empty'].indexOf(val)) return view.err('Некорректный spec')
-	return val
+rest.addVariable('root#required', async view => {
+	const conf = await config('shop')
+	const db = await view.get('db')
+	const group_id = await Shop.getGroupIdByNick(db, conf.root_nick)
+	const root = await Shop.getGroupById(db, group_id)
+	if (!root) return view.err('Группа верхнего уровня не найдена', conf.root_nick)
+	return root
 })
-rest.addVariable('spec#required',['spec','required'])
-
-rest.addArgument('type', (view, val) => {
-	if (!val) return val
-	if (!~['sampleprop','samplevalue','sample','card','filter'].indexOf(val)) return view.err('Некорректный type')
-	return val
-})
-rest.addVariable('type#required',['type','required'])
-
-
-rest.addArgument('bit', ['int'], (view, value) => {
-		if (value == null) return null
-		return value ? 1 : 0
-})
-rest.addVariable('bit#required', ['bit','required'])
 
 
 rest.addArgument('p', ['int'], (view, n) => n || 1)
@@ -59,44 +39,36 @@ rest.addVariable('group_id#required', ['group_id','required'])
 
 
 
-rest.addArgument('group_nick', ['nicked'])
-rest.addVariable('group', ['group_nick','null'], async (view, group_nick) => {
-	if (group_nick == null) return null
+rest.addArgument('group_nick', ['nicked'], async (view, group_nick) => {
+	if (!group_nick) return null
 	const db = await view.get('db')
 	const group_id = await Shop.getGroupIdByNick(db, group_nick)
-	const group = await Shop.getGroupById(db, group_id)
-	if (!group) return view.err('Группа не найдена', 404)
+	if (!group_id) return view.err('Группа не найдена', 404)
+	
+	if (!Shop.canI(db, group_id)) return view.err('Нет доступа к группе', 403)
+	
+	return group_nick
+
+})
+rest.addVariable('group', async (view) => {
+	const conf = await config('shop')
+	const group_nick = await view.get('group_nick') || conf.root_nick
+	const db = await view.get('db')
+	const group_id = await Shop.getGroupIdByNick(db, group_nick)
+	const group = await Shop.getGroupById(db, group_id)	
 	return group
 })
 rest.addVariable('group_nick#required', ['group_nick', 'required'])
 rest.addVariable('group#required', ['group', 'required'])
 
-rest.addArgument('sub', ['string'])
-rest.addVariable('sub#required',['sub','required'])
-
-rest.addArgument('next_nick', ['nicked'])
-rest.addArgument('prop_nick', ['nicked'])
-rest.addVariable('prop', ['prop_nick','null'], async (view, prop_nick) => {
-	if (prop_nick == null) return null
-	const db = await view.get('db')
-	const prop = await Shop.getPropByNick(db, prop_nick)
-	if (!prop) return null
-	return prop
-})
-rest.addVariable('prop_nick#required', ['prop_nick', 'required'])
-rest.addVariable('prop#required', ['prop', 'required'])
 
 
-rest.addArgument('value_nick', ['nicked'])
-rest.addVariable('value', ['value_nick','null'], async (view, value_nick) => {
-	if (value_nick == null) return null
-	const db = await view.get('db')
-	const value = await Shop.getValueByNick(db, value_nick)
-	if (!value) return view.err('Значение не найдено', 404)
-	return value
-})
-rest.addVariable('value_nick#required', ['value_nick', 'required'])
-rest.addVariable('value#required', ['value', 'required'])
+/*
+rest.addArgument('hru', ['string'])
+rest.addVariable('hru#required', ['hru', 'required'])
+Если нужна страница бренда, надо создать такую группу и она должна быть вложена в Каталог. 
+У группы может быть статус коллекция, что будет означать что группа в иерархии не показана, но подгруппы будут показаны.
+*/
 
 
 
@@ -106,24 +78,44 @@ rest.addVariable('value#required', ['value', 'required'])
 // 	return hashs
 // })
 
-
-
-rest.addArgument('partner', async (view, partner_nick) => {
+rest.addArgument('partner', async (view, key) => {
 	const conf = await config('shop')
-	const data = conf.partners[partner_nick]
-	if (!data) return false
-	data.key = partner_nick
-	return data
+	const partner = conf.partners[key]
+	if (!partner) return false
+	partner.key = key
+	if (partner.cost) partner.cost_nick = nicked(partner.cost)
+	partner.toString = () => key
+	return partner
 })
+
+
 rest.addArgument('m', (view, m) => {
 	if (m) view.nostore = true //безчисленное количество комбинаций, браузеру не нужно запоминать	
 	return m || ''
 })
-
 rest.addVariable('md', async (view) => {
 	const db = await view.get('db')
 	const origm = await view.get('m')
-	const group = await view.get('group#required')
-	const md = await Shop.getmd(db, origm, group)
+	const query = await view.get('query')
+	const hashs = await view.get('hashs')
+	
+	const md = await Shop.getmd(db, origm, query, hashs)
 	return md
+})
+
+
+
+rest.addArgument('brendmodel', ['nicked'])
+rest.addVariable('brendmodel#required', ['brendmodel', 'required'])
+rest.addArgument('art', ['nicked'])
+rest.addVariable('art#required', ['art', 'required'])
+
+rest.addVariable('model#required', async view => {
+	const db = await view.get('db')
+	
+	const brendmodel = await view.get('brendmodel#required')
+	const partner = await view.get('partner')
+	const model = await Shop.getModelByBrendmodel(db, brendmodel, partner)
+	if (!model) return view.err('Модель не найдена', 404)
+	return model
 })

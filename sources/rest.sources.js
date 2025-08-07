@@ -141,7 +141,7 @@ rest.addArgument('value_id', ['mint'], async (view, value_id) => {
 	if (!value_id) return view.err('Значение не найдено', 404)
 	return value_id
 })
-rest.addFunction('checkstart', async (view) => {
+rest.addFunction('checkstart', ['setaccess'], async (view) => {
 	const db = await view.get('db')
 	const source_title = await db.col(`select source_title FROM sources_sources where date_start is not null`)
 	if (source_title) return view.err('Дождитесь загрузки '+ source_title)

@@ -24,7 +24,7 @@ const Server = {
 				return response.end()
 			}
 			const error_before = (code, status) => {
-				console.log('error_before content', request.url, code, status)
+				//console.log('error_before content', request.url, code, status)
 				response.writeHead(code, status)
 				return response.end()
 			}

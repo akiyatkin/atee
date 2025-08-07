@@ -92,6 +92,11 @@ const Access = {
 
 Access.wait = (func) => { //Результат складывать в Мешок не на долго, кэш. При обращении продлевать таймер
 	const waited = (...args) => {
+		if (CONF.checkpoke) {
+			args.forEach(arg => {
+				if (typeof(arg) == 'object' && arg.toString === Object.prototype.toString) console.log('Access.poke', 'нет своего toString()', arg)
+			})
+		}
 		const store = waited.storage[args.join(':')] ??= {} //Только простые аргументы должны быть
 		clearTimeout(store.timer)
 		store.timer = setTimeout(() => {
@@ -99,8 +104,11 @@ Access.wait = (func) => { //Результат складывать в Мешо�
 			delete store.cache
 		}, 24 * 60 * 60 * 1000) //(1 день = 24 * 60 * 60 * 1000)
 		if (!store.ready) {
-			store.cache = deepFreeze(func(...args))
-			
+			if (CONF.checkpoke) {
+				store.cache = deepFreeze(func(...args))
+			} else {
+				store.cache = func(...args)
+			}
 			store.ready = true
 		}
 		return store.cache
@@ -122,7 +130,6 @@ Access.poke = (func) => { //Результат складывать в Мешо�
 		}, 1 * 60 * 60 * 1000) //(1 час = 1 * 60 * 60 * 1000)
 		if (!store.ready) {
 			store.cache = deepFreeze(func(...args))
-			
 			store.ready = true
 		}
 		return store.cache

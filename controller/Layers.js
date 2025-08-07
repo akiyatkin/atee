@@ -186,7 +186,10 @@ export default class Layers {
 			delete r.layout
 			Layers.runByRootLayer(r.root, layer => {
 				const ts = layer.ts
-				if (rule.animate && rule.animate[ts]) layer.animate = rule.animate[ts]			
+
+				if (rule.animate && rule.animate[ts]) layer.animate = rule.animate[ts]
+				//layer.animate = 'none'
+
 				if (!rule.depth || rule.depth[ts] == null) return
 				const dif = rule.depth[ts] - layer.depth
 				layer.depth += dif

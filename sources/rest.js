@@ -119,6 +119,7 @@ rest.addResponse('prop', ['admin'], async view => {
 			and ce.text != ''
 		GROUP BY ce.text
 		ORDER BY ce.pruning DESC, count(ce.text) DESC
+		LIMIT 100
 	`, {prop_id})
 	const custom = await db.allto('value_nick', `
 		SELECT cva.value_nick, cva.represent_custom_value + 0 as represent_custom_value

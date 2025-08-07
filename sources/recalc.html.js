@@ -26,11 +26,12 @@ export const RTABLE = (data, env) => `
 			//if (start) Recalc.counter++
 			if (start) Recalc.counter = Math.round((Date.now() - start) / 1000)
 			divcounter.innerHTML = Recalc.counter ? Recalc.counter + ' сек' : ''
-			setTimeout(async () => {
+			if (start) setTimeout(async () => {
 				if (!divcounter.closest('body')) return
 				const Client = await window.getClient()
-				Client.reloaddiv("${env.layer.div}")	
+				Client.reloaddiv("${env.layer.div}")
 			}, 1000)
+			
 		})(document.currentScript.parentElement)
 	</script>
 `

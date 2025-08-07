@@ -79,7 +79,8 @@ export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
 		${field.button({
 			label: 'Загрузить', 
 			action: '/-sources/set-source-load',
-			args: {source_id: source.source_id}
+			args: {source_id: source.source_id},
+			global: ['recalc']
 		})}
 	</div>
 	

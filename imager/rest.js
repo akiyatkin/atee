@@ -149,6 +149,7 @@ rest.addResponse('webp', async view => {
 		quality: 80,
 		lossless: false
 	})
+	
 	const duplex = inStream.pipe(transform)
 	inStream.on('error', e => duplex.destroy(e))
 

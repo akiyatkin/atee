@@ -895,13 +895,14 @@ Sources.getNameUnit = (title) => {
 	return {name, unit}
 }
 Sources.createProp = async (db, prop_title, type = 'text') => {
-	//const ordain = await db.col('SELECT max(ordain) FROM sources_props') + 1
+	
 
 	prop_title = prop_title.slice(-Sources.PROP_LENGTH).trim()
 	let prop_nick = nicked(prop_title)
 	if (prop_nick.length > Sources.PROP_LENGTH) prop_nick = nicked(prop_nick.slice(-Sources.PROP_LENGTH))
 
-	const ordain = 0
+	
+	const ordain = await db.col('SELECT max(ordain) FROM sources_props') + 1
 	const {name, unit} = Sources.getNameUnit(prop_title)
 	const prop_id = await db.insertId(`
 		INSERT INTO sources_props (prop_title, prop_nick, type, ordain, name, unit)

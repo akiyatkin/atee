@@ -338,7 +338,7 @@ rest.addAction('set-sources-renovate', ['admin','checkstart'], async view => {
 	view.headers.Location = encodeURI(go)
 	return view.ret('', 301)
 })
-rest.addAction('set-sources-load', ['admin'], async view => {
+rest.addAction('set-sources-load', ['admin', 'setaccess'], async view => {
 	const db = await view.get('db')
 	
 	const promise = Sources.recalc(db, async () => {
@@ -609,7 +609,7 @@ rest.addAction('set-reset-values', ['admin','checkstart'], async (view) => {
 	
 	return view.ret('Данные очищены')
 })
-rest.addAction('set-reset-start', ['admin'], async (view) => {
+rest.addAction('set-reset-start', ['admin','setaccess'], async (view) => {
 	const db = await rest.data('db') //База данных могла не перезапуститься и процесс загрузки ещё идёт
 	await db.exec(`UPDATE sources_sources SET date_start = null`)
 	//await Consequences если данные источника были победителями, то просто ничего не прокажется, так как старые были удалены при внесении и победителя не будет
@@ -744,7 +744,7 @@ rest.addAction('set-source-check', ['admin','checkstart'], async view => {
 	return view.ret(`<p>${source.error || source.status}<p><i>${ans?.msg || ''}</i>`)
 })
 
-rest.addAction('set-source-exam', ['admin'], async view => {
+rest.addAction('set-source-exam', ['admin', 'setaccess'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const date = await view.get('date')
@@ -830,27 +830,27 @@ rest.addAction('set-prop-delete', ['admin','checkstart'], async view => {
 	`, {prop_id})
 
 	Sources.recalc(db, async () => {
-		// await Consciousness.recalcEntitiesPropId(db)
-		// await Consciousness.recalcMulti(db)
-		// await Consciousness.recalcTexts(db)
-		// await Consciousness.recalcKeyIndex(db)
-		// await Consciousness.recalcRowsKeyIdRepeatIndex(db)
-		// await Consciousness.insertItems(db)
+		await Consciousness.recalcEntitiesPropId(db) //Вместо оригинального свойства колонке может назначиться другое по синониму
+		await Consciousness.recalcMulti_byProp(db, prop_id)
+		await Consciousness.recalcTexts_byProp(db, prop_id)
+		await Consciousness.recalcKeyIndex(db)
+		await Consciousness.recalcRowsKeyIdRepeatIndex(db)
+		await Consciousness.insertItems(db)
 
 		// await Consciousness.recalcRepresentSheet(db)
 		// await Consciousness.recalcRepresentCol(db)
-		// await Consciousness.recalcRepresentRow(db)
-		// await Consciousness.recalcRepresentCell(db)
-		// await Consciousness.recalcRepresentCellRowKey(db)
-		// await Consciousness.recalcRepresentCellSummary(db)
-		// await Consciousness.recalcRepresentItemValue(db)
-		// await Consciousness.recalcRepresentItemSummary(db)
-		// await Consciousness.recalcRepresent(db)
+		await Consciousness.recalcRepresentRow(db)
+		await Consciousness.recalcRepresentCell(db)
+		await Consciousness.recalcRepresentCellRowKey(db)
+		await Consciousness.recalcRepresentCellSummary(db)
+		await Consciousness.recalcRepresentItemValue(db)
+		await Consciousness.recalcRepresentItemSummary(db)
+		await Consciousness.recalcRepresent(db)
 		
-		// await Consciousness.recalcMaster(db)
-		// await Consciousness.recalcWinner(db)
+		await Consciousness.recalcMaster(db)
+		await Consciousness.recalcWinner(db)
 
-		// await Consciousness.recalcAppear(db)
+		await Consciousness.recalcAppear(db)
 		await Consciousness.recalcRowSearch(db)
 		await Consciousness.recalcItemSearch(db)
 	})
@@ -1354,7 +1354,7 @@ rest.addAction('set-source-title', ['admin','checkstart'], async view => {
 	return view.ret()
 })
 
-rest.addAction('set-prop-title', ['admin'], async view => {
+rest.addAction('set-prop-title', ['admin','setaccess'], async view => {
 
 	const db = await view.get('db')
 	const prop_id = await view.get('prop_id#required')
@@ -1372,29 +1372,7 @@ rest.addAction('set-prop-title', ['admin'], async view => {
 	`, {prop_id, prop_title, prop_nick})
 	Sources.recalc(db, async () => {		
 
-		await Consciousness.recalcEntitiesPropId(db)
-		await Consciousness.recalcMulti(db)
-		await Consciousness.recalcTexts(db)
-		await Consciousness.recalcKeyIndex(db)
-		await Consciousness.recalcRowsKeyIdRepeatIndex(db)
-		await Consciousness.insertItems(db)
-
-		await Consciousness.recalcRepresentSheet(db)
-		await Consciousness.recalcRepresentCol(db)
-		await Consciousness.recalcRepresentRow(db)
-		await Consciousness.recalcRepresentCell(db)
-		await Consciousness.recalcRepresentCellRowKey(db)
-		await Consciousness.recalcRepresentCellSummary(db)
-		await Consciousness.recalcRepresentItemValue(db)
-		await Consciousness.recalcRepresentItemSummary(db)
-		await Consciousness.recalcRepresent(db)
 		
-		await Consciousness.recalcMaster(db)
-		await Consciousness.recalcWinner(db)
-
-		await Consciousness.recalcAppear(db)
-		await Consciousness.recalcRowSearch(db)
-		await Consciousness.recalcItemSearch(db)
 	})
 	return view.ret()
 })

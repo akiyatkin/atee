@@ -76,14 +76,15 @@ YML.getSheet = (sheets, title) => {
 	sheets.push(sheet)
 	return sheet
 }
-YML.getName = (param, synonyms) => {
-	const name = param['@_name'] + (param['@_unit'] ?  ', ' + param['@_unit'] : '')
+YML.getName = (param, synonyms, renameCol) => {
+	const name = renameCol(param['@_name'] + (param['@_unit'] ?  ', ' + param['@_unit'] : ''))
 	for (const rname in synonyms) {
 		if (~synonyms[rname].indexOf(name)) return rname
 	}
 	return name 
 }
-YML.load = async (SRC, {headers = {}, getHead, getRow, synonyms}) => {
+YML.load = async (SRC, {headers = {}, renameCol = col_title => col_title, getHead, getRow, synonyms}) => {
+	//
 	const {offers, date_content, categories} = await YML.parse(SRC, headers)
 	const sheets = []
 	for (const offer of offers) {
@@ -97,7 +98,7 @@ YML.load = async (SRC, {headers = {}, getHead, getRow, synonyms}) => {
 		for (const param of offer.param) {
 			param['#text'] = String(param['#text'] || '').trim()
 			if (!param['#text']) continue
-			const name = YML.getName(param, synonyms)
+			const name = YML.getName(param, synonyms, renameCol)
 			if (!~sheet.head.indexOf(name)) sheet.head.push(name)
 		}
 	}
@@ -107,7 +108,7 @@ YML.load = async (SRC, {headers = {}, getHead, getRow, synonyms}) => {
 		for (let i = row.length, l = sheet.head.length; i < l; i++ ) {
 			const paramname = sheet.head[i]
 			const values = offer.param
-		 		.filter(param => YML.getName(param, synonyms) == paramname && param['#text'])
+		 		.filter(param => YML.getName(param, synonyms, renameCol) == paramname && param['#text'])
 		 		.map(param => param['#text'].replaceAll(',', '&comma;'))
 		 		.join(', ')
 		 	row.push(values || null)

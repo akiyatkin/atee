@@ -60,19 +60,11 @@ export const Client = {
 		promise.then(() => window.scrollTo(...Client.history[Client.cursor].scroll)).catch(() => null)
 	},
 	click: (a) => {
-		let search = a.dataset.clientsearch ?? a.getAttribute('href')
+		let search = a.getAttribute('href')
 		const scroll = a.dataset.scroll != 'none'
 		const promise = Client.pushState(search, scroll)
 		return animate('a', a, a.dataset.animate, promise)
 	},
-	// fixa: (a) => {
-	// 	let search = a.dataset.clientsearch ?? a.getAttribute('href')
-	// 	a.dataset.clientsearch = search
-	// 	search = Client.makeabs(search)
-	// 	a.href = search
-	// },
-	// mousedown: (a) => Client.fixa(a),
-	// focus: (a) => Client.fixa(a),
 	getPath: () => decodeURI(location.pathname.replace(/\/$/,'')) || '/',
 	getSearch: () => Client.getPath() + decodeURI(location.search) + location.hash,
 	reloaddivs:[],

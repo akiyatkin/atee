@@ -180,7 +180,10 @@ WS.writeSearch = (note) => {
 WS.setTitle = (ws, note) => {
 	const db = note.db
 	const note_id = note.note_id
-	const title = clearText((note.text.match(/\s*(.*)\n*/)?.[1] || '').slice(0,255).trim())
+
+	const title = note.text.match(/^[^\S\n]*[^<>\s][^<>\n]*(?=\n|$)/m)?.[0] || ''
+	//const title = clearText((note.text.match(/\s*(.*)\n*/)?.[1] || '').slice(0,255).trim())
+
 	if (note.title == title) return
 	note.title = title
 	const nick = nicked(title).slice(0,255).trim()
