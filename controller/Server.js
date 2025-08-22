@@ -133,6 +133,7 @@ const Server = {
 				} else {
 					//if (json.push?.length) response.setHeader('Link', json.push.join(','));
 					if (json.push?.length) {
+						console.log(json.push)
 						response.writeEarlyHints({
 							'link': json.push
 						})
