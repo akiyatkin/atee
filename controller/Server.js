@@ -132,11 +132,10 @@ const Server = {
 					//return view.err('', 301)
 				} else {
 					//if (json.push?.length) response.setHeader('Link', json.push.join(','));
-					console.log(!!response.writeEarlyHints)
 					if (json.push?.length && response.writeEarlyHints) {
-						// response.writeEarlyHints({
-						// 	'link': json.push
-						// })
+						response.writeEarlyHints({
+							'link': json.push
+						})
 					}
 
 
