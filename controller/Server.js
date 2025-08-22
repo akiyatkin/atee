@@ -132,8 +132,7 @@ const Server = {
 					//return view.err('', 301)
 				} else {
 					//if (json.push?.length) response.setHeader('Link', json.push.join(','));
-					if (json.push?.length) {
-						console.log(json.push)
+					if (json.push) {
 						response.writeEarlyHints({
 							'link': json.push
 						})
