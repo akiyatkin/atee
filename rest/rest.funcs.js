@@ -9,6 +9,7 @@ rest.addFunction('string', (view, n) => n != null ? String(n) : '')
 rest.addFunction('checkbox', (view, n) => !!n)
 rest.addFunction('isset', (view, v) => v !== null)
 rest.addFunction('0', (view, v) => v || 0)
+rest.addFunction('1', (view, v) => v || 1)
 rest.addFunction('null', (view, v) => v === '' ? null : v)
 
 

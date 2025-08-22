@@ -98,6 +98,29 @@ export const Live = {
 		const tplobj = await import('/-shop/live.html.js')
 		title.innerHTML = tplobj.TITLEBODY({ ...need, ans })
 		body.innerHTML = tplobj.BODY({ ...need, ans })
+
+
+		if (!ans.result) return
+
+		// Нужен ли impressions и click в быстром поиске? Если ищу, значит знаю что хочу и это только detail.
+		// const Client = await window.getClient()
+		// const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
+
+		// const products = ans.list.map((model, i) => {
+		// 	return Ecommerce.getProduct(ans, {
+		// 		coupon:Client.theme.partner,
+		// 		item: model.items[0], 
+		// 		listname: 'Быстрый поиск', 
+		// 		position: i + 1,
+		// 		group_nick: model.groups[0]
+		// 	})
+		// })
+		// Ecommerce.impressions(products)
+		// for (const a of body.getElementsByClassName('item')){
+		// 	a.addEventListener('contextmenu', () => Ecommerce.click(products.filter(product => product.sku == a.dataset.brendart)))
+		// 	a.addEventListener('auxclick', () => Ecommerce.click(products.filter(product => product.sku == a.dataset.brendart)))
+		// 	a.addEventListener('click', () => Ecommerce.click(products.filter(product => product.sku == a.dataset.brendart)))
+		// }
 	},
 	getNeed: async input => {
 		const { default:getNeed } = await import('/-nicked/getNeed.js')
@@ -109,7 +132,7 @@ export const Live = {
 	},
 	init: form => {
 		const state = Live.getState(form)
-		const input = form.elements.search
+		const input = form.elements.query
 		if (!input) return false
 		input.classList.add('liveinput')
 		input.setAttribute('autocomplete','off')
@@ -133,21 +156,28 @@ export const Live = {
 		form.addEventListener('submit', async e => {
 			e.preventDefault()
 			const need = await Live.getNeed(input)
+			const src = form.dataset.path + (need.query ? '?query=' + need.query : '')
+			console.log(src)
+			//const addget = await import('/-sources/addget.js').then(r => r.default)
+			//let src = form.dataset.path + addget({query:need.query})
+
+
+			// const url = new URL(location)
+			// const m = url.searchParams.get('m')
+			// const r = url.pathname.split('/')
+			// const value = r[1] == 'shop' && r[2] && !r[3] ? r[2] : ''
+			// let src = form.dataset.path
+			// const newm = []
+			// if (m) newm.push(m)
+			// if (value) newm.push(`value=${value}`)
+			// //if (need.hash) 
+			// newm.push(`query=${need.query}`)
+			// if (newm.length) {
+			// 	src += '?m='+newm.join(':')
+			// }
+
 			const Client = await window.getClient()
-			const url = new URL(location)
-			const m = url.searchParams.get('m')
-			const r = url.pathname.split('/')
-			const value = r[1] == 'shop' && r[2] && !r[3] ? r[2] : ''
-			let src = form.dataset.path
-			const newm = []
-			if (m) newm.push(m)
-			if (value) newm.push(`value=${value}`)
-			//if (need.hash) 
-			newm.push(`query=${need.query}`)
-			if (newm.length) {
-				src += '?m='+newm.join(':')
-			}
-			Client.pushState(src)	
+			Client.pushState(src)
 			// if (m) {
 			// 	Client.pushState(need.hash ? `/catalog/${need.query}?m=${m}` : `/catalog?m=${m}`)	
 			// } else {

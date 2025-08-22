@@ -1,3 +1,4 @@
+import Ecommerce from "/-shop/Ecommerce.js"
 export const css = ['/-float-label/style.css']
 import cards from "/-shop/cards.html.js"
 const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
@@ -23,10 +24,14 @@ const checkbox = (name, title, checked) => `
 		<label for="contacts_${name}">${title}</label>
 	</div>
 `
-
-export const ROOT = (data, env) => `${showBody(data, env, data.model.recap)}`
-export const showBody = (data, env, recap) => {
-	const gain = (name) => cards.gainFirstTitle(data, env, recap, name)
+const getSelItem = (data, env) => {
+	const model = data.model
+	const art = env.crumb.child?.name || ''
+	return model.items.find(item => item.art[0] == art) || false
+}
+export const ROOT = (data, env) => `${showBody(data, env, data.model, getSelItem(data, env))}`
+export const showBody = (data, env, model, item) => {
+	const gain = (name) => cards.getSomeTitle(data, item, name)
 
 	return `
 		<p>
@@ -35,10 +40,10 @@ export const showBody = (data, env, recap) => {
 		<p>
 			Менеджер перезвонит в рабочее время.
 		</p>
-		<form action="/-catalog/set-order" data-goal='callorder'>
-			<input name="brand_nick" type="hidden" value="${recap.brend[0]}">
-			<input name="model_nick" type="hidden" value="${recap.model[0]}">
-			<input name="partner" type="hidden" value="${data.partner}">
+		<form action="/-shop/set-order" data-goal='callorder'>
+			<input name="brendmodel" type="hidden" value="${item.brendmodel[0]}">
+			<input name="art" type="hidden" value="${item.art[0]}">
+			<input name="partner" type="hidden" value="${env.theme.partner}">
 			<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom:1rem">
 				<div class="float-label icon phone">
 					<input required id="${env.sid}phone" name="phone" type="tel" placeholder="Телефон">
@@ -67,20 +72,33 @@ export const showBody = (data, env, recap) => {
 
 				const Dialog = await import("/-dialog/Dialog.js").then(r => r.default)
 				if (Dialog.parents.length) {
-					const goalButton = () => {
-						const goal = 'button'
+					const reachGoal = goal => {
+						console.log('Goal.reach ' + goal)
 						const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
-						if (metrikaid) {
-							console.log('Goal.reach ' + goal)
-							ym(metrikaid, 'reachGoal', goal)
-						}
+						if (metrikaid) ym(metrikaid, 'reachGoal', goal)
 					}
-					goalButton()
+					reachGoal('button')
 				}
 
-				form.addEventListener('submit', e => {
+				form.addEventListener('submit', async e => {
 					e.preventDefault()
-					import('/-dialog/submit.js').then(r => r.default(form, {tpl:'/-dialog/contacts.html.js', sub:'MSG'}))
+					const submit = await import('/-dialog/submit.js').then(r => r.default)
+					const ans = await submit(form, {tpl:'/-dialog/contacts.html.js', sub:'MSG'})
+					if (!ans.result) return
+					
+					
+					const products = [${JSON.stringify(
+						Ecommerce.getProduct(data, {
+							coupon:env.theme.partner,
+							item: item, 
+							listname: 'Корзина', 
+							position: 1,
+							quantity: 1,
+							group_nick: model.groups[0]
+						})
+					)}]
+					const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
+					Ecommerce.purchase(products)
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>

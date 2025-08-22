@@ -46,6 +46,11 @@ const User = {
 		const newuser = await User.getUserById(db, new_id)
 		return newuser
 	},
+	createAndSet: async (db, view) => {
+		const user = await User.create(db)
+		User.setCookie(view, user)
+		return user.user_id
+	},
 	sendSub: async (sub, email, data) => { //на конкретный адрес пользователя
 		const tpl = await import('/-user/mail.html.js').then(res => res.default)
 		if (!tpl[sub]) return false

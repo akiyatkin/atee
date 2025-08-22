@@ -1,7 +1,4 @@
-import links from '/-catalog/links.html.js'
-import common from '/-catalog/common.html.js'
-import { words } from '/-words/words.js'
-import ti from '/-words/ti.js'
+import words from '/-words/words.js'
 import cards from "/-shop/cards.html.js"
 export const MENU = () => `
 	<div class="livemenu">
@@ -14,7 +11,7 @@ export const TITLE = data => `
 `
 export const TITLEBODY = data => data.ans?.result ? `
 	${data.query?pquery(data):''}
-	<a href="${data.ans.conf.root_path}/group/${data.ans.conf.root_nick}?query=${data.query}">${countmodels(data.ans.count)}</a> 
+	<a href="${cards.getGroupPath(data.ans, data.ans.groups[data.ans.conf.root_nick])}?query=${data.query}">${countmodels(data.ans.count)}</a> 
 	в ${countgroups(data.ans.gcount)}
 ` : 'Ошибка на сервере'
 const countmodels = (count) => `${count} ${words(count,'модель','модели','моделей')}`
@@ -24,24 +21,24 @@ export const BODY = data => `
 	${data.ans.result ? BODYshow(data) : ''}
 `
 const BODYshow = data => `
-	
-	${data.ans.groups.map(group => suggestionGroup(group, data)).join('')}
-	${data.ans.list.map(mod => suggestion(mod, data)).join('')}
+	${data.ans.childs.map(group_nick => suggestionGroup(data, data.ans.groups[group_nick])).join('')}
+	${data.ans.list.map(model => suggestion(data, model)).join('')}
 `
-export const suggestion = (mod, data) => `
-	<a draggable="false" href="${data.ans.conf.root_path}/item/${mod.brendmodel_nick}/${mod.art_nick}" 
-		style="white-space: normal; padding-top: 4px; display: grid; grid-template-columns: 1fr max-content; grid-gap: 5px 5px;">
-		<span>
-			${mod.naimenovanie_title || ''} ${mod.brend_title} ${mod.model_title}
-		</span>
-		<span style="text-align:right">${mod.cena_title ? cost(mod.cena_title) : ''}</span>
-	</a>
-`
- const cost = cena => `
- 	${cena}${cards.unit()}
-`
-const suggestionGroup = (group, data) => `
-	<a draggable="false" href="${data.ans.conf.root_path}/group/${group.group_nick}?query=${data.query}" 
+export const suggestion = (data, model) => {
+	const gain = name => cards.getSomeTitle(data.ans, model.recap, name)
+	return `
+		<a class="item" data-brendart="${model.items[0].brendart[0]}" draggable="false" href="${cards.getItemPath(data.ans, model.items[0])}" 
+			style="white-space: normal; padding-top: 4px; display: grid; grid-template-columns: 1fr min-content; grid-gap: 5px 5px;">
+			<span>
+				${cards.getItemName(data.ans, model.recap)}
+			</span>
+			<span style="text-align:right">${cards.cost(model.items[0])}</span>
+		</a>
+	`
+}
+
+const suggestionGroup = (data, group) => `
+	<a draggable="false" href="${cards.getGroupPath(data.ans, group)}?query=${data.query}" 
 		style="display: block; padding-top: 4px; font-weight:bold">
 		${group.group_title}
 	</a>

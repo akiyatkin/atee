@@ -7,8 +7,8 @@ export default rest
 
 
 
-import rest_bed from '/-shop/admin/rest.shopadmin.js'
-rest.extra(rest_bed)
+import rest_shopadmin from '/-shop/admin/rest.shopadmin.js'
+rest.extra(rest_shopadmin)
 
 
 rest.addResponse('get-prop-value-search', ['admin'], async view => {
@@ -26,13 +26,14 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 	
 	const {from, join, where, sort, bind} = await Shop.getWhereByGroupId(db, group?.parent_id || false,[], false, true)
 	
+	//Проблемы с производительностью 
 	const list = await db.all(`
-		SELECT distinct va.value_title, va.value_nick, da.value_id
+		SELECT distinct da.value_id, va.value_title, va.value_nick
 		FROM ${from.join(', ')} ${join.join(' ')}, sources_wvalues da
 			LEFT JOIN sources_values as va on (da.value_id = va.value_id)
 		WHERE ${where.join(' and ')}
 		and da.key_id = win.key_id and da.prop_id = :prop_id
-		and ${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'}
+		and (${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'})
 		ORDER BY RAND()
 		LIMIT 12
 	`, {...bind, prop_id: prop_id || null})
@@ -43,7 +44,7 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 			LEFT JOIN sources_values as va on (da.value_id = va.value_id)
 		WHERE ${where.join(' and ')}
 		and da.key_id = win.key_id and da.prop_id = :prop_id
-		and ${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'}
+		and (${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'})
 	`, {...bind, prop_id: prop_id || null})
 
 	view.ans.list = list.map(row => {
@@ -141,7 +142,7 @@ rest.addResponse('get-group-filter-prop-search', ['admin'], async view => {
 		SELECT prop_id, prop_title, prop_nick, type
 		FROM sources_props
 		WHERE type in ("value","number") 
-		and ${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'}
+		and (${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
 		ORDER BY RAND()
 		LIMIT 12
 	`)
@@ -180,7 +181,7 @@ rest.addResponse('get-prop-search', ['admin'], async view => {
 		SELECT prop_id, prop_title, prop_nick, type
 		FROM sources_props
 		WHERE type in ("value","number","text") 
-		and ${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'}
+		and (${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
 		ORDER BY RAND()
 		LIMIT 12
 	`)
@@ -218,7 +219,7 @@ rest.addResponse('get-group-card-prop-search', ['admin'], async view => {
 		SELECT prop_id, prop_title, prop_nick, type
 		FROM sources_props
 		WHERE type in ("value","number","text") 
-		and ${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'}
+		and (${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
 		ORDER BY RAND()
 		LIMIT 12
 	`)
@@ -267,7 +268,7 @@ rest.addResponse('get-sample-prop-search', ['admin'], async view => {
 		SELECT prop_id, prop_title, prop_nick, type
 		FROM sources_props
 		WHERE type in ("value","number") 
-		and ${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'}
+		and (${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
 	`)
 
 	view.ans.list = list.map(row => {
@@ -303,4 +304,14 @@ rest.addResponse('get-sample-prop-search', ['admin'], async view => {
 		}
 	}
 	return view.ret()
+})
+rest.addResponse('get-export', ['admin'], async view => {
+	const db = await view.get('db')
+
+	const tables = rest_shopadmin.exporttables
+	const dump = {}
+	for (const table of tables) {
+		dump[table] = await db.all(`SELECT * FROM ${table}`)	
+	}
+	return view.ret('<textarea style="width: 100%;" rows="10">' + JSON.stringify(dump) + '</textarea>')
 })

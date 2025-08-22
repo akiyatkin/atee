@@ -1,16 +1,13 @@
-import common from "/-catalog/common.html.js"
-import number from "/-cart/number-block.html.js"
+import cards from "/-shop/cards.html.js"
+import number from "/-shop/cart/number-block.html.js"
 import words from "/-words/words.js"
 import cost from "/-words/cost.js"
 import ago from "/-words/ago.js"
 import date from "/-words/date.html.js"
-
+import Ecommerce from '/-shop/Ecommerce.js'
 
 const tpl = {}
 export default tpl
-
-const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
-const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : ''
 
 tpl.css = [...number.css, '/-float-label/style.css']
 tpl.ROOT = (data, env) => `
@@ -95,7 +92,7 @@ tpl.ROOT = (data, env) => `
 			
 			${env.scope} .panel .body {
 
-				max-height: 110px;
+				max-height: calc(8em - 5px);
 				transition: max-height 0.3s;
 /*				overflow: auto;*/
 				overflow-y: scroll;
@@ -111,7 +108,7 @@ tpl.ROOT = (data, env) => `
 			@media (max-width:480px) {
 				${env.scope} .panel .body {
 /*					max-height: 145px;*/
-					max-height: 95px;
+					max-height: 8em;
 				}
 			}
 			${env.scope} .panel .body::-webkit-scrollbar { 
@@ -137,23 +134,28 @@ tpl.ROOT = (data, env) => `
 				margin-top: calc(-1em - 25px - 2px);
 			}
 			${env.scope} .panel .body .padding {
-				padding: 18px 0 20px 0;
+				padding: 23px 0 20px 0;
 			}
 			${env.scope} .panel.show .body .padding {
 				padding: 30px 0 20px 0;
 			}
 			
+			
 			${env.scope} .panel .body .content {
 				display: grid; 
-				grid-template-columns: 1fr 1fr; 
+				grid-template-columns: 1fr; 
 				gap: 0 2rem;
 			}
+			${env.scope} .panel.show .body .content {
+				grid-template-columns: 1fr 1fr; 
+			}
+
 			@media (max-width: 1199px) {
 				
 				${env.scope} .panel .mobhide {
 					display: none;
 				}
-				${env.scope} .panel .body .content {
+				${env.scope} .panel.up .body .content {
 					grid-template-columns: 1fr;
 				}
 			}
@@ -188,14 +190,14 @@ tpl.ROOT = (data, env) => `
 							const panel = div.closest('.panel')
 							div.addEventListener('click', async () => {
 								if (panel.classList.contains('show')) return
-								const Panel = await import('/-cart/Panel.js').then(r => r.default)
+								const Panel = await import('/-shop/cart/Panel.js').then(r => r.default)
 								Panel.up(panel)
 							})
 							//window.addEventListener('click', async e => {
 							//	if (e.target.closest('.panel')) return
 							//	const panel = div.closest('.panel')
 							//	if (!panel.classList.contains('show')) return
-							//	const Panel = await import('/-cart/Panel.js').then(r => r.default)
+							//	const Panel = await import('/-shop/cart/Panel.js').then(r => r.default)
 							//	Panel.down(panel)
 							//})
 
@@ -204,7 +206,7 @@ tpl.ROOT = (data, env) => `
 								if (e.code != "Escape") return
 								if (panel.classList.contains('hide')) return
 								if (!panel.classList.contains('show')) return
-								const Panel = await import('/-cart/Panel.js').then(r => r.default)
+								const Panel = await import('/-shop/cart/Panel.js').then(r => r.default)
 								Panel.down(panel)
 							}
 							const bodyclick = async e => {
@@ -212,7 +214,7 @@ tpl.ROOT = (data, env) => `
 								if (e.target.closest('${env.scope}')) return //Кликнули внутри
 								//if (panel.classList.contains('hide')) return
 								if (!panel.classList.contains('show')) return
-								const Panel = await import('/-cart/Panel.js').then(r => r.default)
+								const Panel = await import('/-shop/cart/Panel.js').then(r => r.default)
 								Panel.down(panel)
 							}
 							window.addEventListener('click', bodyclick)
@@ -223,7 +225,7 @@ tpl.ROOT = (data, env) => `
 								const bread = e.detail.bread
 								const Client = await window.getClient()
 								if (bread.href == Client.search) return //Адрес не менялся
-								const Panel = await import('/-cart/Panel.js').then(r => r.default)
+								const Panel = await import('/-shop/cart/Panel.js').then(r => r.default)
 								Panel.down(panel)
 							}
 							window.addEventListener('crossing', crossing)
@@ -240,21 +242,21 @@ tpl.ROOT = (data, env) => `
 			const hand = panel.querySelector('.hand')
 			const btnup = hand.querySelector('.btnup')
 			btnup.addEventListener('click', async () => {
-				const Panel = await import('/-cart/Panel.js').then(r => r.default)
+				const Panel = await import('/-shop/cart/Panel.js').then(r => r.default)
 				Panel.toggle(panel)
 			})
 			const title = hand.querySelector('.title')
 			title.addEventListener('click', async () => {
-				const Panel = await import('/-cart/Panel.js').then(r => r.default)
+				const Panel = await import('/-shop/cart/Panel.js').then(r => r.default)
 				Panel.toggle(panel)
 			})
 			const btnhide = hand.querySelector('.btnhide')
 			btnhide.addEventListener('click', async () => {
-				const Panel = await import('/-cart/Panel.js').then(r => r.default)
+				const Panel = await import('/-shop/cart/Panel.js').then(r => r.default)
 				Panel.hide(panel)
 			})
 			panel.addEventListener('click', async e => {
-				const Panel = await import('/-cart/Panel.js').then(r => r.default)
+				const Panel = await import('/-shop/cart/Panel.js').then(r => r.default)
 				const a = e.target.closest('a')
 				if (!a) return
 				Panel.toggle(panel)
@@ -270,7 +272,7 @@ const checkbox = (name, title, checked) => `
 		<label for="contacts_${name}">${title}</label>
 	</div>
 `
-tpl.SUM = (sum) => `${cost(sum)}${common.unit()}`
+tpl.SUM = (sum) => `${cost(sum)}${cards.unit()}`
 tpl.TITLE = (obj) => obj.length ? `<b>${obj.length}</b> ${words(obj.length, 'позиция','позиции','позиций')} <b>${tpl.SUM(obj.sum)}</b>` : `<b>${obj.orders}</b> ${words(obj.orders, 'заказ','заказа','заказов')}` //`В заказе ещё нет товаров` 
 const TITLES = {
 	"wait":"Оформить заказ",
@@ -326,7 +328,7 @@ tpl.ORDER = (data, env) => tpl.isShowPanel(data) ? `
 		<div class="whenshow">
 			<h1 style="margin-top:1rem;">${TITLES[data.order.status]}
 			${data.user.manager ? showCrown() : ''}
-			<a href="/cart/mail" style="color:inherit; margin-left:1ch; margin-bottom: 2rem; float:right; font-weight: normal">№ ${data.order.order_nick}</a></h1>
+			<a href="/shop/mail" style="color:inherit; margin-left:1ch; margin-bottom: 2rem; float:right; font-weight: normal">№ ${data.order.order_nick}</a></h1>
 			${data.order.status != 'wait' ? showDate(data.order, env) : ''}
 			${data.list.length ? tpl.showForm(data, env) : showEmpty(data, env)}
 			${data.orders.length > 1 ? showOrders(data, env) : ''}
@@ -334,7 +336,7 @@ tpl.ORDER = (data, env) => tpl.isShowPanel(data) ? `
 	</div>
 ` : ``
 const showCrown = () => `
-	<a href="/cart/manager/${new Date().getFullYear()}/${new Date().getMonth() + 1}?status=check" title="Вы администратор и можете на любой email оформить заказ. Заказ будет доступен и Вам и новому пользователю">
+	<a href="/shop/manager/${new Date().getFullYear()}/${new Date().getMonth() + 1}?status=check" title="Вы администратор и можете на любой email оформить заказ. Заказ будет доступен и Вам и новому пользователю">
 		<svg style="color: var(--success); margin-bottom: 3px;" width="24" height="24" viewBox="0 0 18 18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.179 13.425h13.656v3.02H2.179v-3.02z" fill="currentColor" fill-opacity=".8"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8.999 1L2.093 11.031h4.25l6.662-4.315L9 1z" fill="currentColor" fill-opacity=".6"/><path fill-rule="evenodd" clip-rule="evenodd" d="M2.067 12.641L.5 3.752l12.76 8.89H2.068z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M15.927 12.641l1.607-8.858L3.857 12.64h12.07z" fill="currentColor" fill-opacity=".8"/></svg>
 	</a>
 `
@@ -359,7 +361,7 @@ tpl.showFIO = (data, env) => `
 `
 tpl.showForm = (data, env) => `
 		
-		<form data-order_nick="${data.order.order_nick}" data-goal="cart" action="/-cart/set-submit?partner=${env.theme.partner || ''}" style="clear:both; border-radius:var(--radius, 10px); display: grid; gap:1rem; ">
+		<form data-order_nick="${data.order.order_nick}" data-goal="cart" action="/-shop/cart/set-submit?partner=${env.theme.partner || ''}" style="clear:both; border-radius:var(--radius, 10px); display: grid; gap:1rem; ">
 			
 			${tpl.showFIO(data,env)}
 			<div class="float-label icon phone formfield">
@@ -435,12 +437,12 @@ const showOrders = (data, env) => `
 		(div => {
 			for (const button of div.getElementsByTagName('button')) {
 				button.addEventListener('click', async () => {
-					const ans = await fetch('/-cart/set-newactive?' + new URLSearchParams({ order_id: button.dataset.order_id }).toString()).then(r => r.json()).catch(e => {
+					const ans = await fetch('/-shop/cart/set-newactive?' + new URLSearchParams({ order_id: button.dataset.order_id }).toString()).then(r => r.json()).catch(e => {
 						console.log(e)
 						return {msg:'Ошибка на сервере'}
 					})
 					const Client = await window.getClient()
-					Client.global('cart')
+					Client.global('shop')
 				})
 			}
 		})(document.currentScript.previousElementSibling)
@@ -491,9 +493,9 @@ const showSubmit = (data, env) => `
 			}
 			const request = async (res, input) => {
 				setres(res, 'loader')
-				const ans = await fetch('/-cart/set-field?order_id&'+ new URLSearchParams({
+				const ans = await fetch('/-shop/cart/set-field?order_id&'+ new URLSearchParams({
 					field: input.name,
-					value: input.value
+					fieldvalue: input.value
 				}).toString()).then(r => r.json()).catch(e => {
 					console.log(e)
 					return {msg:'Ошибка на сервере'}
@@ -504,6 +506,8 @@ const showSubmit = (data, env) => `
 				else setres(res, ans.result ? 'success' : 'error', ans.msg)
 				return ans
 			}
+			
+
 			for (const field of form.querySelectorAll('.formfield')) {
 				const res = field.querySelector('.res')
 				if (!res) continue
@@ -531,7 +535,8 @@ const showSubmit = (data, env) => `
 				input.addEventListener('input', async () => {
 					const ans = await request(res, input)
 				})
-			}
+			}			
+			
 			form.addEventListener('submit', async e => {
 				e.preventDefault()
 				const btndiv = form.querySelector('.submit')
@@ -549,8 +554,8 @@ const showSubmit = (data, env) => `
 				}
 				
 				//const input = form.
-				const Basket = await import('/-cart/Basket.js').then(r => r.default)
-				const utms = await Basket.setUtms()
+				const Basket = await import('/-shop/cart/Basket.js').then(r => r.default)
+				const utms = await Basket.getArgWithUtms()
 				form.elements.source.value = utms.source
 				form.elements.content.value = utms.content
 				form.elements.campaign.value = utms.campaign
@@ -573,52 +578,47 @@ const showSubmit = (data, env) => `
 				if (ans.result) {
 					//setres(res, 'success', ans.msg)
 					const Client = await window.getClient()
-					Client.global('cart')
+					Client.global('shop')
 					//Client.reloadts('${env.layer.ts}')
 				} else {
 					setres(res, 'error', ans.msg) 
 				}
 
 				if (ans.result) {
-					window.dataLayer = window.dataLayer || []
-					dataLayer.push({
-						"ecommerce": {
-							"currencyCode": "RUB",
-							"purchase": {
-								"actionField": {
-									"id" : form.dataset.order_nick,
-									"coupon" : form.dataset.partner
-								},
-								"products": ans.products
-							}
-						}
-					})
+					const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
+					Ecommerce.purchase({actionField: {
+						"id" : form.dataset.order_nick,
+						"coupon" : form.dataset.partner
+					}, products: ans.products})
 				}
 			})
+
+			
 			const btnclear = form.querySelector('.clear')
 			btnclear.addEventListener('click', async (e) => {
 				e.preventDefault()
-				const order_id = btnclear.dataset.order_id
-				const sendit = await import('/-dialog/sendit.js').then(r => r.default)
+				const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
 
-				const ans = await sendit(btnclear, '/-cart/set-clear', {order_id})
-				if (ans.msg) {
-					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-					Dialog.alert(ans.msg)
-				}
-				if (ans.result) {
-					window.dataLayer = window.dataLayer || []
-					dataLayer.push({
-						"ecommerce": {
-							"currencyCode": "RUB",
-							"remove": {
-								"products": ans.products
-							}
-						}
-					})
-				}
+				const order_id = btnclear.dataset.order_id
+				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
+
+				const data = await senditmsg(btnclear, '/-shop/cart/set-clear', {order_id})
+
 				const Client = await window.getClient()
-				Client.global('cart')
+				Client.global('shop')
+				if (data.result) {
+					const products = data.list.map((pos, i) => {
+						return Ecommerce.getProduct(data, {
+							coupon:Client.theme.partner,
+							item: pos.item, 
+							listname: 'Корзина', 
+							position: i + 1, 
+							quantity: 0,
+							group_nick: pos.groups[0]
+						})
+					})
+					Ecommerce.remove(products)
+				}
 			})
 		})(document.currentScript.parentElement)
 	</script>
@@ -653,7 +653,7 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 				max-width: 100%;
 				margin: 0 auto;
 				display: grid;
-				grid-template-columns: max-content 1fr 1fr;
+				grid-template-columns: max-content 1fr max-content;
 				gap: 1rem;
 			}
 			${env.scope} .cost {
@@ -695,9 +695,9 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 			<h1 style="margin-top:1rem;">&nbsp;</h1>
 		</div>
 		<div class="list">
-			${data.list.map(mod => tpl.showPos(mod, env)).join('')}
-			<!-- <div></div><div></div><div style="margin-top:1rem; text-align: right;"><a href="/cart/mail">Спецификация</a></div> -->
-			<!-- <div><a href="/cart/mail">Спецификация</a></div> -->
+			${data.list.map(pos => tpl.showPos(data, env, pos, pos.item)).join('')}
+			<!-- <div></div><div></div><div style="margin-top:1rem; text-align: right;"><a href="/shop/mail">Спецификация</a></div> -->
+			<!-- <div><a href="/shop/mail">Спецификация</a></div> -->
 		</div>
 		
 		
@@ -706,7 +706,8 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 	</div>
 	
 	<script type="module">
-		import Panel from '/-cart/Panel.js'
+		import Panel from '/-shop/cart/Panel.js'
+		import Ecommerce from '/-shop/Ecommerce.js'
 		import pantpl from "${env.layer.tpl}"
 		const div = document.getElementById("${env.layer.div}")
 		const body = div.closest('.body')
@@ -719,107 +720,66 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 		}
 		const title = panel.querySelector('.title')
 		const state = {
-			orders: ${data.orders.length},
-			list: []
+			orders: ${data.orders.length}
 		}
 		const recalc = () => {
 			state.length = 0
 			state.sum = 0
-			for (const store of state.list) {
-				if (!Number(store.count)) continue
+			for (const product of products) {
+				if (!Number(product.quantity)) continue
 				state.length++
-				state.sum += Number(store.sum)
+				state.sum += product.price * product.quantity
 			}
 		}
 		panel.classList.add('up')
-		for (const block of panel.querySelectorAll('.blocksum')) {
-			const modd = block.dataset
+		const products = ${JSON.stringify(data.list.map((pos, i) => Ecommerce.getProduct(data, {
+			coupon:env.theme.partner,
+			item: pos.item, 
+			listname: 'Корзина', 
+			position: i + 1, 
+			group_nick: pos.groups[0]
+		})))}
+
+		const blocks = panel.querySelectorAll('.blocksum')
+		for (const i in blocks) {
+			const block = blocks[i]
+			if (!block.dataset) continue //entries, blocks nodes array
+			const product = products[i]
 			const input = block.querySelector('input[type=number]')
 			const modsum = block.querySelector('.modsum')
-			state.list.push(modd)
+			product.quantity = input.value
+			
+			const args = {}
+			args.brendart_nick = product.sku
+			args.nocopy = false //Копировать или создать пустую copy = true - значит можно копировать заказ если редактируется не активный заказ
+
 			input.addEventListener('input', async () => {
 				if (input.value < 0) input.value = 1
 				if (input.value > 1000) input.value = 1000
 
-				const oldcount = modd.count
-				modd.count = input.value
-				const diff = modd.count - oldcount
-				modd.sum = modd.cost * modd.count
-				modsum.innerHTML = pantpl.SUM(modd.sum)
-				recalc()
-				title.innerHTML = pantpl.TITLE(state)
-				const Basket = await import('/-cart/Basket.js').then(r => r.default)
-				const ans = await Basket.add(modd, input.value)
+				const oldcount = product.quantity
+				args.quantity = product.quantity = input.value
 
-				window.dataLayer = window.dataLayer || []
-				if (diff < 0) {
-					dataLayer.push({
-						"ecommerce": {
-							"currencyCode": "RUB",
-							"remove": {
-								"products": [
-									{
-										"id": modd.model_nick,
-										"brand": modd.brand_title,
-										"name": modd.name,
-										"price": modd.cost,
-										"category": modd.group_title,
-										"quantity": diff * -1,
-										"variant" : modd.variant,
-										"list": "Корзина"
-									}
-								]
-							}
-						}
-					})
-				}
-				if (diff > 0) {
-					dataLayer.push({
-						"ecommerce": {
-							"currencyCode": "RUB",
-							"add": {
-								"products": [
-									{
-										"id": modd.model_nick,
-										"name": modd.name,
-										"category": modd.group_title,
-										"brand": modd.brand_title,
-										"price": modd.cost,
-										"quantity": diff,
-										"variant" : modd.variant,
-										"list": "Корзина"
-									}
-								]
-							}
-						}
-					})
-				}
+				const Basket = await import('/-shop/cart/Basket.js').then(r => r.default)
+				
+				const ans = await Basket.add(input, args)
+
+				if (product.quantity - oldcount < 0) Ecommerce.remove([product])
+				else Ecommerce.add([product])
+
+				recalc()
+				modsum.innerHTML = pantpl.SUM(product.price * product.quantity)
+				title.innerHTML = pantpl.TITLE(state)
 			})
+
 			const del = block.querySelector('.del')
 			del.addEventListener('click', async () => {
-				const Basket = await import('/-cart/Basket.js').then(r => r.default)
-				const ans = await Basket.remove(modd)
-				window.dataLayer = window.dataLayer || []
-				dataLayer.push({
-					"ecommerce": {
-						"currencyCode": "RUB",
-						"remove": {
-							"products": [
-								{
-									"id": modd.model_nick,
-									"brand": modd.brand_title,
-									"name": modd.name,
-									"price": modd.cost,
-									"category": modd.group_title,
-									"quantity": input.value,
-									"variant" : modd.variant,
-									"list": "Корзина"
-								}
-							]
-						}
-					}
-				})
+				const Basket = await import('/-shop/cart/Basket.js').then(r => r.default)
+				args.quantity = 0
+				const ans = await Basket.remove(del, args)
+				Ecommerce.remove([product])
 			})
+
 		}
 		recalc()
 		title.innerHTML = pantpl.TITLE(state)
@@ -834,66 +794,63 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 	</script>
 `
 
-tpl.showModification = (mod, env) => `
+tpl.showModification = (data, env, item) => `
 	<div style="margin-bottom:0.25em">
-		<button class="a">${mod.modification || getv(mod,'Модификация')}</button>
+		<button class="a">${mod.modification || cards.getSomeTitle(data, env, item, 'modifikaciya')}</button>
 		<script>
 			(btn => {
 				btn.addEventListener('click', async () => {
 					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 					const popup = await Dialog.open({
-						tpl:"/-cart/modification.html.js",
+						tpl:"/-shop/cart/modification.html.js",
 						sub:"ROOT",
-						json:"/-cart/get-modification?brand_nick=${mod.brand_nick}&model_nick=${mod.model_nick}&item_num=${mod.item_num}"
+						json:"/-shop/cart/get-modification?brand_nick=${mod.brand_nick}&model_nick=${mod.model_nick}&item_num=${mod.item_num}"
 					})
 					const form = popup.getElementsByTagName('form')[0]
 					form.addEventListener('submit', async e => {
 						e.preventDefault()
 						const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-						const ans = await senditmsg(btn, '/-cart/set-modification?brand_nick=${mod.brand_nick}&model_nick=${mod.model_nick}&item_num=${mod.item_num}', new FormData(form))
+						const ans = await senditmsg(btn, '/-shop/cart/set-modification?brand_nick=${mod.brand_nick}&model_nick=${mod.model_nick}&item_num=${mod.item_num}', new FormData(form))
 						if (ans.result) Dialog.hide()
 						const Client = await window.getClient()
-						Client.global('cart')
+						Client.global('shop')
 					})
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>
 	</div>
-
 `
-tpl.showPos = (mod, env) => `
-	<a href="/catalog/${mod.brand_nick}/${mod.model_nick}" class="image">${mod.images?.[0] ? tpl.showImage(mod) : ''}</a>
-	<div class="info">
-		<div>
-			${mod.brand_title} ${mod.model_title}${prefixif(' (', getv(mod,'Позиция') || getv(mod,'Арт'),')')}
+/* tpl.getItemTitle = (data, env, item) => `
+	Может выдать если нет Наименования и Арт совпадает с Моделью (в данных тупо Kemppi Minarc)
+	cards.getItemName - Kemppi Minarc 
+	gain - Kemppi Minarc 
+*/
+tpl.showPos = (data, env, pos, item) => {
+	const gain = name => cards.getSomeTitle(data, item, name)
+	const naimenovanie = gain('naimenovanie')
+	return `
+		<a href="${cards.getItemPath(data, item)}" class="image">${item.images ? tpl.showImage(data, env, pos, item) : ''}</a>
+		<div class="info">
+			<div>
+				${naimenovanie ? naimenovanie + '.' : ''}
+				<div><a href="${cards.getItemPath(data, item)}">${gain('brend')} ${gain('art')}</a></div>
+			</div>
+			${item.modifikaciya ? tpl.showModification(data, env, item) : ''}
+			<div style="margin: 0.5em 0;"><b>${cards.cost(item)}</b></div>
 		</div>
-		${getv(mod,'Модификация') ? tpl.showModification(mod, env) : ''}
-		<div><b>${cost(mod.Цена)}${common.unit()}</b></div>
-	</div>
-	<div class="cost blocksum" 
-	data-name=${JSON.stringify(mod['Наименование'] || mod.model_title)}
-	data-partner="${env.theme.partner || ''}"
-	data-brand_nick="${mod.brand_nick}" 
-	data-brand_title="${mod.brand_title}" 
-	data-group_title="${mod.group_title}" 
-	data-model_nick="${mod.model_nick}"
-	data-item_num="${mod.item_num || 1}"
-	data-variant=${JSON.stringify(getv(mod, 'Позиция') || getv(mod, 'Арт') || mod.item_num)}
-	data-sum="${mod.sum}"
-	data-cost="${mod.Цена || 0}" 
-	data-count="${mod.count || 0}">
-
-		<div style="grid-area: input;">${number.INPUT({min:0, max:1000, value:mod.count, name:mod.model_nick})}</div>
-		<div style="grid-area: sum"><b class="modsum">${tpl.SUM(mod.sum)}</b></div>
-		<div style="grid-area: remove">
-			<button title="Удалить из корзины" class="delbtn del transparent">
-				<svg style="fill:currentColor;" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<path d="M20 6H16V5C16 4.20435 15.6839 3.44129 15.1213 2.87868C14.5587 2.31607 13.7956 2 13 2H11C10.2044 2 9.44129 2.31607 8.87868 2.87868C8.31607 3.44129 8 4.20435 8 5V6H4C3.73478 6 3.48043 6.10536 3.29289 6.29289C3.10536 6.48043 3 6.73478 3 7C3 7.26522 3.10536 7.51957 3.29289 7.70711C3.48043 7.89464 3.73478 8 4 8H5V19C5 19.7956 5.31607 20.5587 5.87868 21.1213C6.44129 21.6839 7.20435 22 8 22H16C16.7956 22 17.5587 21.6839 18.1213 21.1213C18.6839 20.5587 19 19.7956 19 19V8H20C20.2652 8 20.5196 7.89464 20.7071 7.70711C20.8946 7.51957 21 7.26522 21 7C21 6.73478 20.8946 6.48043 20.7071 6.29289C20.5196 6.10536 20.2652 6 20 6ZM10 5C10 4.73478 10.1054 4.48043 10.2929 4.29289C10.4804 4.10536 10.7348 4 11 4H13C13.2652 4 13.5196 4.10536 13.7071 4.29289C13.8946 4.48043 14 4.73478 14 5V6H10V5ZM17 19C17 19.2652 16.8946 19.5196 16.7071 19.7071C16.5196 19.8946 16.2652 20 16 20H8C7.73478 20 7.48043 19.8946 7.29289 19.7071C7.10536 19.5196 7 19.2652 7 19V8H17V19Z"/>
-				</svg>
-			</button>
+		<div class="cost blocksum">
+			<div style="grid-area: input; padding-top:3px;">${number.INPUT({min:0, max:1000, value:pos.quantity, name: pos.brendart_nick})}</div>
+			<div style="grid-area: sum"><b class="modsum">${tpl.SUM(pos.sum)}</b></div>
+			<div style="grid-area: remove">
+				<button title="Удалить из корзины" class="delbtn del transparent">
+					<svg style="fill:currentColor;" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M20 6H16V5C16 4.20435 15.6839 3.44129 15.1213 2.87868C14.5587 2.31607 13.7956 2 13 2H11C10.2044 2 9.44129 2.31607 8.87868 2.87868C8.31607 3.44129 8 4.20435 8 5V6H4C3.73478 6 3.48043 6.10536 3.29289 6.29289C3.10536 6.48043 3 6.73478 3 7C3 7.26522 3.10536 7.51957 3.29289 7.70711C3.48043 7.89464 3.73478 8 4 8H5V19C5 19.7956 5.31607 20.5587 5.87868 21.1213C6.44129 21.6839 7.20435 22 8 22H16C16.7956 22 17.5587 21.6839 18.1213 21.1213C18.6839 20.5587 19 19.7956 19 19V8H20C20.2652 8 20.5196 7.89464 20.7071 7.70711C20.8946 7.51957 21 7.26522 21 7C21 6.73478 20.8946 6.48043 20.7071 6.29289C20.5196 6.10536 20.2652 6 20 6ZM10 5C10 4.73478 10.1054 4.48043 10.2929 4.29289C10.4804 4.10536 10.7348 4 11 4H13C13.2652 4 13.5196 4.10536 13.7071 4.29289C13.8946 4.48043 14 4.73478 14 5V6H10V5ZM17 19C17 19.2652 16.8946 19.5196 16.7071 19.7071C16.5196 19.8946 16.2652 20 16 20H8C7.73478 20 7.48043 19.8946 7.29289 19.7071C7.10536 19.5196 7 19.2652 7 19V8H17V19Z"/>
+					</svg>
+				</button>
+			</div>
 		</div>
-	</div>
-`
-tpl.showImage = mod => `
-	<img alt="" width="80" height="70" src="/-imager/webp?fit=contain&h=100&w=100&src=${encodeURIComponent(mod.images[0])}">
+	`
+}
+tpl.showImage = (data, env, pos, item) => `
+	<img alt="${pos.brendart_nick}" width="80" height="70" src="/-imager/webp?fit=contain&h=100&w=100&src=${encodeURIComponent(item.images[0])}">
 `

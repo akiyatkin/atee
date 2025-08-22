@@ -6,7 +6,7 @@ const rest = new Rest(rest_funcs)
 import Mail from '/-mail'
 
 rest.addArgument('g-recaptcha-response')
-rest.addVariable('recaptcha', async (view) => {
+rest.addVariable('recaptcha', async (view) => { //depricated use recaptcha#required
 	view.nostore = true
 	const gresponse = await view.get('g-recaptcha-response')
 	const visitor = view.visitor
@@ -25,7 +25,7 @@ rest.addVariable('recaptcha', async (view) => {
 	if (!result || !result['success']) return view.err('Не пройдена защита от спама')
 	return true
 })
-
+rest.addVariable('recaptcha#required', ['recaptcha'])
 
 rest.addFunction('toemail', ['string'], (view, email) => {
 	if (email && !Mail.isEmail(email)) return view.err('Уточните Email-адрес')
@@ -69,9 +69,10 @@ rest.addVariable('name#required', ['name'], (view, name) => {
 	return name
 })
 
-rest.addArgument('terms',['checkbox'], (view, terms) => {
+rest.addArgument('terms',['checkbox'], (view, terms) => { //depricated use term#required
 	if (!terms) return view.err('Требуется согласие на обработку персональных данных')
 })
+rest.addVariable('terms#required', ['terms'])
 
 rest.addArgument('utms', (view, utms) => UTM.parse(utms))
 

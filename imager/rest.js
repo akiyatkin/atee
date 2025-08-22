@@ -143,13 +143,13 @@ rest.addResponse('webp', async view => {
 		fit: sharp.fit[fit],
 		position: 'centre',
 		withoutReduction: false,
-		withoutEnlargement: withoutEnlargement, //Пропорции недолжны меняться размеров оригинала не зватает
+		withoutEnlargement: withoutEnlargement, //Пропорции недолжны меняться размеров оригинала не хватает
 		background: { r: 255, g: 255, b: 255, alpha: 0 }
 	}).webp({
 		quality: 80,
 		lossless: false
 	})
-	
+
 	const duplex = inStream.pipe(transform)
 	inStream.on('error', e => duplex.destroy(e))
 

@@ -12,8 +12,8 @@ import rest_set from '/-shop/admin/rest.set.js'
 rest.extra(rest_set)
 import rest_get from '/-shop/admin/rest.get.js'
 rest.extra(rest_get)
-import rest_bed from '/-shop/admin/rest.shopadmin.js'
-rest.extra(rest_bed)
+import rest_shopadmin from '/-shop/admin/rest.shopadmin.js'
+rest.extra(rest_shopadmin)
 
 rest.addResponse('main', async view => {
 	const isdb = await view.get('isdb')
@@ -35,6 +35,7 @@ rest.addResponse('settings', ['admin'], async view => {
 
 	const conf = await config('shop')
 	view.data.dir = conf.dir
+	view.data.exporttables = rest_shopadmin.exporttables
 
 	const db = await view.get('db')
 

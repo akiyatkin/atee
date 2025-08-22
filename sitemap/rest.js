@@ -162,6 +162,7 @@ rest.addResponse('get-layers-sitemap', async view => {
 	Layers.runByIndex(source, (index, path) => {
 		if (~path.indexOf(false)) return //Секции child и то что в них вложено пропускаем
 		let head = index.head
+		if (!head) return
 		if (head.hidden) return
 		if (!head.title) return
 		if (head.json) return

@@ -11,11 +11,9 @@
 		"positions:TABLE":"none",
 		"position:TABLE":"none",
 		"disappear:TABLE":"none",
-		"entity:PROPS":"none",
 		"source:TABLE":"none",
 		"props:TABLE":"none",
-		"source:TOP":"none",
-		"entity:ENTITY":"none"
+		"source:TOP":"none"
 	},
 	"global":{
 		"source:SOURCE":["recalc"],
@@ -27,11 +25,11 @@
 		"positions:TABLE":["recalc"],
 		"position:TABLE":["recalc"],
 		"disappear:TABLE":["recalc"],
-		"entity:PROPS":["recalc"],
+		
 		"source:TABLE":["recalc"],
 		"props:TABLE":["recalc"],
 		"source:TOP":["recalc"],
-		"entity:ENTITY":["recalc"],
+
 		"source:TABLE":["recalc"],
 		"recalc:RTABLE":["recalc"],
 		"source:TABLE":["recalc"],
@@ -39,7 +37,10 @@
 		"positions:TABLE":["recalc"],
 		"position:TABLE":["recalc"],
 		"disappear:TABLE":["recalc"],
-		"main:TABLE":["recalc"]
+		"main:TABLE":["recalc"],
+
+		"entity2:PROPS":["recalc"],
+		"entity2:ENTITY":["recalc"]
 	},
 	"frame":{
 		
@@ -74,8 +75,8 @@
 		"source:SOURCE":"/-sources/source?source_id=${env.crumb.name}",
 		"source:TOP":"/-sources/source?source_id=${env.crumb.name}",
 		"source:TABLE":"/-sources/source?source_id=${env.crumb.name}",
-		"entity:ROOT":"/-sources/entity?entity_id=${env.crumb.name}",
-		"entity:ENTITY":"/-sources/entity?entity_id=${env.crumb.name}",
+		"2entity:ROOT":"/-sources/entity?entity_id=${env.crumb.name}",
+		"2entity:ENTITY":"/-sources/entity?entity_id=${env.crumb.name}",
 		
 		"prop:ROOT":"/-sources/prop?prop_id=${env.crumb.name}",
 		"prop:PROP":"/-sources/prop?prop_id=${env.crumb.name}",
@@ -97,7 +98,7 @@
 		"prop":"/-sources/prop.html.js",
 		
 		"entities":"/-sources/entities.html.js",
-		"entity":"/-sources/entity.html.js",
+		"2entity":"/-sources/entity.html.js",
 
 		"settings":"/-sources/settings.html.js",
 		"positions":"/-sources/positions.html.js",
@@ -232,7 +233,7 @@
 				}
 			}
 		},
-		"entity":{
+		"entity2":{
 			"layout":{},
 			"child":{
 				"head":{"title":"Сущность"},

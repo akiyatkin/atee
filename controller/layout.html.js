@@ -2,14 +2,14 @@ const controller = {}
 export default controller
 
 controller.HEAD = (data, env) => 
-env.bread.status != 200 ? `
-	<script>
-		window.getClient = () => new Promise(() => {})
-		window.addEventListener('popstate', () => {
-			location.reload()
-		})
-	</script>
-` :
+// env.bread.status != 200 ? `
+// 	<script>
+// 		window.getClient = () => new Promise(() => {})
+// 		window.addEventListener('popstate', () => {
+// 			location.reload()
+// 		})
+// 	</script>
+// ` :
 `<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<script>//Делаем SPA переходы http:

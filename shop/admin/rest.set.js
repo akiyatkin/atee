@@ -5,8 +5,8 @@ import nicked from "/-nicked"
 import Rest from '/-rest'
 const rest = new Rest()
 export default rest
-import rest_bed from '/-shop/rest.shop.js'
-rest.extra(rest_bed)
+import rest_shop from '/-shop/rest.shop.js'
+rest.extra(rest_shop)
 
 import rest_shopadmin from '/-shop/admin/rest.shopadmin.js'
 rest.extra(rest_shopadmin)
@@ -305,6 +305,7 @@ rest.addAction('set-group-create', ['admin','setaccess'], async view => {
 	const group_title = await view.get('group_title')
 	let group_nick = nicked(group_title)
 	if (!group_nick) return view.err('Укажите название')
+	if (~group_title.indexOf('/')) return view.err('Название группы не должно содержать слэш (/) этот символ используется в Ecommerce для обозначения иерархии групп.')
 	//if (~['items'].indexOf(group_nick)) return view.err('Ник зарезервирован ' + group_nick)
 	//group_nick = nicked((parent?.group_title || '') + '-' + group_nick)
 
@@ -434,6 +435,7 @@ rest.addAction('set-group-title', ['admin','setaccess'], async view => {
 	const db = await view.get('db')
 
 	const group_title = await view.get('group_title')
+	if (~group_title.indexOf('/')) return view.err('Название группы не должно содержать слэш (/) этот символ используется в Ecommerce для обозначения иерархии групп.')
 	//let group_nick = nicked(group_title)
 	//if (!group_nick) return view.err('Укажите название')
 	//group_nick = nicked((group?.parent_title || '') + '-' + group_nick)
@@ -530,5 +532,56 @@ rest.addAction('set-card-ordain', ['admin','setaccess'], async view => {
 
 	await ShopAdmin.reorderCards(db)
 
+	return view.ret()
+})
+
+rest.addResponse('set-import', ['admin'], async view => {
+	const db = await view.get('db')
+	const json = await view.get('json')
+	if (!json) return view.err('Укажите данные')
+
+	let dump
+	try {
+		dump = JSON.parse(json)
+	} catch(e) {
+		 return view.err('Данные не распознаны')
+	}
+
+	const tables = rest_shopadmin.exporttables
+
+	for (const table of tables) {
+		if (!dump[table]) return view.err('Ошибка: не найдены данные для ' + table)
+	}
+	
+	await db.exec(`SET FOREIGN_KEY_CHECKS = 0`) //truncate быстрей, но с FK не работает
+	for (const table in dump) {
+		const rows = dump[table]
+		if (!rows.length) continue
+
+		const keys = Object.keys(rows[0])
+		await db.exec(`TRUNCATE TABLE ${table}`)
+		await db.exec(`SET SESSION time_zone = @@session.time_zone;`)
+
+		
+
+		await db.exec(`
+			INSERT INTO ${table} (${keys.join(', ')})
+			VALUES 
+				${'(' + rows.map(row => {
+					return Object.values(row).map((value, i) => {
+						if (value === null) return "null"
+						if (value?.type == "Buffer") return value.data[0]
+						//if (keys[i] == 'date_create') return 'CONVERT_TZ(STR_TO_DATE("'+value+'", "%Y-%m-%dT%H:%i:%s.%fZ"), @@session.time_zone, "+00:00")'
+						//if (keys[i] == 'date_create') return 'STR_TO_DATE("'+value+'", "%Y-%m-%dT%H:%i:%s.%fZ")'
+
+						if (~keys[i].indexOf('date_')) return 'CONVERT_TZ(SUBSTRING("'+value+'", 1, 19), "+00:00", @@session.time_zone)'
+						//if (keys[i] == 'date_create') return 'CAST("'+value+'" AS DATETIME)'
+						
+						return '"' + value + '"'
+					}).join(',')
+				}).join('),(') + ')'}
+		`)
+	}
+	await db.exec(`SET FOREIGN_KEY_CHECKS = 1`)
 	return view.ret()
 })

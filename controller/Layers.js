@@ -11,7 +11,10 @@ const split = (sep, str) => {
 const wakeup = (root, rule, depth = 0) => {
 	if (!rule) return 
 	//if (!rule.layout) return
-	if (!rule.layout) rule.empty = true
+	if (!rule.layout) {
+		rule.layout = {}
+		rule.empty = true
+	}
 	for (const pts in rule.layout ?? {}) {
 		for (const div in rule.layout[pts]) {
 			const tsf = rule.layout[pts][div]
@@ -106,7 +109,6 @@ export default class Layers {
 	}
 	static getParsedIndex(rule, timings, bread, interpolate, theme) {
 		const {index, status, depth} = Layers.getIndex(rule, bread)
-
 		if (!index) return []
 		if (!index.root.layers) return []
 		if (index.empty) return []
@@ -162,9 +164,10 @@ export default class Layers {
 	}
 	static async getRule(root) {
 		if (RULS[root]) return RULS[root]
+
 		//root должен быть без ведущего слэша и работать с дефисом
-		const layers = Layers.getInstance(root)
-		const source = await layers.getSource()
+		const objlayers = Layers.getInstance(root)
+		const source = await objlayers.getSource()
 		const rule = structuredClone(source)
 		
 		applyframes(rule) //встраиваем фреймы
@@ -203,12 +206,12 @@ export default class Layers {
 		if (!Layers.store[root]) Layers.store[root] = new Layers(root)
 		return Layers.store[root]
 	}
-	static getIndex(source, bread) { //У path нет ведущего слэша
+	static getIndex(rule, bread) { //У path нет ведущего слэша
 
 		let top = bread.top
 		let status = 200
 		let depth = bread.depth
-		let index = source
+		let index = rule
 		while (top.child) {
 			top = top.child
 			index = (index.childs && Object.hasOwn(index.childs, top.name)) ? index.childs[top.name] : index.child
@@ -216,19 +219,20 @@ export default class Layers {
 			status = 404
 			depth = 1
 
-			// index = source.childs?.[status]
+			// index = rule.childs?.[status]
 			// if (index) break
 			// status = 500
-			// index = source.childs?.[status]
+			// index = rule.childs?.[status]
 			
-			index = source.childs?.error
+			index = rule.childs?.error
 			if (index) break
 			status = 500
-			index = source.childs?.error
+			index = rule.childs?.error
 
 			if (!index) depth = null
 			break
-		}
+		}		
+
 		return {
 			index, depth, status
 		}

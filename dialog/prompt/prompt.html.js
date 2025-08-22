@@ -32,19 +32,31 @@ export const POPUP = (data, env) => `
 		${heading(env)}
 		${descr(env)}
 		<form>
-			<div class="float-label">
-				<input value="${input(env)}" 
-					${type(env) == 'date' ? showDateAttr(env) : ''}
-					
-					name="${name(env)}" placeholder="${placeholder(env)}" id="${env.sid}s" type="${type(env)}">
-				<label for="${env.sid}s">${placeholder(env)}</label>
-			</div>
+			${type(env) == 'area' ? showArea(data, env) : showInput(data, env)}
+			
 			<div align="right" style="margin-top:1rem">
 				<button type="submit">${ok(env)}</button>
 			</div>
 		</form>
 		<div id="PROMPTTEXT"></div>
 	</div>
+`
+const showInput = (data, env) => `
+	<div class="float-label">
+		<input value="${input(env)}" 
+			${type(env) == 'date' ? showDateAttr(env) : ''}
+			
+			name="${name(env)}" placeholder="${placeholder(env)}" id="${env.sid}s" type="${type(env)}">
+		<label for="${env.sid}s">${placeholder(env)}</label>
+	</div>
+`
+const showArea = (data, env) => `
+	
+	<textarea style="width:100%" rows="10" value="${input(env)}" 
+		${type(env) == 'date' ? showDateAttr(env) : ''}
+			
+			name="${name(env)}" placeholder="${placeholder(env)}"></textarea>
+		
 `
 const showDateAttr = (env) => `
 	min="${onlyfuture(env) ? new Date().toISOString().split('T')[0] : '2000-01-01'}" 

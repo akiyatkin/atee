@@ -2,12 +2,13 @@ import cards from "/-shop/cards.html.js"
 import words from "/-words/words.js"
 import err from "/-controller/err.html.js"
 import ddd from "/-words/date.html.js"
+import Ecommerce from "/-shop/Ecommerce.js"
 const tpl = {}
 export default tpl
 
 
 tpl.ROOT = (data, env) => `
-	<div id="SHOP_TITLE"></div>
+	<div id="SHOP_TITLE">${tpl.TITLE(data, env)}</div>
 	<div class="grid">
 		<style>
 			${env.scope} > .grid {
@@ -29,7 +30,7 @@ tpl.ROOT = (data, env) => `
 	</div>
 	<div id="page"><div id="SHOP_PAG"></div></div>
 	<div id="SHOP_LIST"></div>
-	<article style="margin-top:4em; margin-bottom: 4em" id="SHOP_PAGE"></article>
+	<article style="margin-top:4em; margin-bottom: 4em" id="SHOP_PAGE">${data.text}</article>
 `
 
 
@@ -59,7 +60,12 @@ tpl.pag = (data, env, scroll) => `
 				gap:1rem
 			}
 			${env.scope} .pagination .page {
-				padding:0 1rem; border: solid 1px #aaa; color: white; font-size: 1.3rem; background-color: gray;
+				padding:0 1rem; 
+				border: solid 1px #aaa; color: white; 
+				font-size: 1.3rem; 
+				background-color: gray;
+				min-width:4.2ch;
+				text-align: center;
 			}
 			${env.scope} .pagination .disabled {
 				opacity: 0.5;
@@ -103,7 +109,7 @@ tpl.pagt.link = (data, env, scroll = '', title, page) => `
 				const reqs = []
 				if (m) reqs.push('m=' + m)
 				if (page > 1) {
-					reqs.push('page=' + page)
+					reqs.push('p=' + page)
 					const count = Card.numberOfCards(${data.limit})
 					if (count) reqs.push('count=' + count)
 				}
@@ -111,7 +117,7 @@ tpl.pagt.link = (data, env, scroll = '', title, page) => `
 				return '?' + reqs.join('&')
 			}
 			onload(() => {
-				a.href = "${cards.getGroupPath(data, env, data.group)}" + getreq('${data.m || ''}', '${page}') + "${!scroll?'#page':''}"	
+				a.href = "${cards.getGroupPath(data, data.group)}" + getreq('${data.m || ''}', '${page}') + "${!scroll?'#page':''}"	
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>
@@ -122,39 +128,37 @@ tpl.pagt.disabled = (data, env, scroll, title) => `
 
 
 tpl.listcards = (data, env) => {
-	
-	const impressions = data.list.map((mod, index) => {
-		const gain = (name) => cards.gainFirstTitle(data, env, mod.recap, name)
-		const impression = {
-			"id": mod.recap.model[0],
-			"name" : gain('naimenovanie') || gain('model'),
-			"price": gain('cena'),
-			"brand": gain('brend'),
-			"category": data.group.group_title,
-			"position": index + 1,
-			"list": "Каталог"
-		}
-		return impression
+	// const products = data.list.map((model, index) => {
+	// 	return model.items.map(item => Ecommerce.getProduct(data, {
+	// 		coupon:env.theme.partner,
+	// 		item, 
+	// 		listname: 'Каталог', 
+	// 		group_nick: model.groups[0],
+	// 		position: index + 1
+	// 	}))
+	// }).flat()
+	const products = data.list.map((model, i) => {
+		return Ecommerce.getProduct(data, {
+			coupon:env.theme.partner,
+			item: model.items[0], 
+			listname: 'Каталог', 
+			group_nick: model.groups[0],
+			position: i + 1
+		})
 	})
 
 	return `
 		<div style="margin-top:1rem; margin-bottom: 2rem">
 			${cards.LIST(data, env)}
 		</div>
-		<script>
-			(async div => {
-				const Card = await import('/-shop/Card.js').then(r => r.default)
-				const limit = Card.numberOfCards(${data.limit})
-				const count = Math.min(limit, ${data.list.length})
-				window.dataLayer = window.dataLayer || []
-				const impressions = ${JSON.stringify(impressions)}.slice(0, count)
-				dataLayer.push({
-					"ecommerce": {
-						"currencyCode": "RUB",
-						impressions
-					}
-				})
-			})(document.currentScript.previousElementSibling)
+		<script type="module">
+			import Ecommerce from "/-shop/Ecommerce.js"
+			import Card from "/-shop/Card.js"
+
+			const limit = Card.numberOfCards(${data.limit})
+			const count = Math.min(limit, ${data.list.length})
+			const products = ${JSON.stringify(products)}.filter(product => product.position <= count)
+			Ecommerce.impressions(products)
 		</script>
 	`
 }
@@ -180,7 +184,7 @@ tpl.showGroupItem = (data, env, group) => `
 	<div>
 		<a class="${data.group.group_nick == group.group_nick ? 'selected' :''} ${group.modcount ? '' :'mute'}"
 			data-scroll="none"
-			href="${cards.getGroupPath(data, env, group)}${data.md.m ? '?m=' + data.md.m : ''}">${group.group_title}</a>
+			href="${cards.getGroupPath(data, group)}${cards.addget(env.bread, {m:data.md.m})}">${group.group_title}</a>
 	</div>
 `
 
@@ -217,28 +221,29 @@ tpl.TITLE = (data, env) => err(data, env) || `
 	</style>
 
 	<div style="margin: 1em 0 0.5em">
-		${tpl.showParentLink(data, env)}
+		${tpl.showParentLink(data, env) || '&nbsp;'}
 	</div>
-	<h1 style="margin-top:0">
-		${data.group.group_title}
-		${tpl.showPart(data, env, data.md.query, {query: null})}
-		${tpl.showSelected(data, env)}
-	</h1>
+	<h1 style="margin-top:0">${tpl.getTitleH1(data, env.bread)}</h1>
 `
-tpl.showSelected = (data, env) => {
+tpl.getTitleH1 = (data, bread) => `
+	${data.group.group_title}
+	${tpl.showPart(data, bread, data.md.query, {query: null})}
+	${tpl.showSelected(data, bread)}
+`
+tpl.showSelected = (data, bread) => {
 	return Object.keys(data.md.mget || {}).map(prop_nick => {
 		const values = data.md.mget[prop_nick]
 		const prop = data.props[prop_nick]
 
 		if (values == 'empty') {
 			const title = {'cena':'Без цен', 'images':'Без картинок'}[prop_nick] || prop.prop_title + ' отсутствует' 
-			return tpl.showPart(data, env, title, {m: data.md.m + ':' + prop_nick})
+			return tpl.showPart(data, bread, title, {m: data.md.m + ':' + prop_nick})
 		} else if (typeof(values) == 'object') {
 			if (prop.type == 'value') {
 				return Object.keys(values).map(value_nick => {
 					const title = data.values[value_nick].value_title
 					const m = data.md.m + ':' + prop_nick + '.' + value_nick
-					return tpl.showPart(data, env, title, {m})
+					return tpl.showPart(data, bread, title, {m})
 				}).join(' ')
 			} else if (prop.type == 'number'){
 				return Object.keys(values).map(value_nick => {
@@ -246,10 +251,10 @@ tpl.showSelected = (data, env) => {
 					
 					if (value_nick == 'from' || value_nick == 'upto') {
 						const title = values[value_nick] + cards.unit(prop)
-						return tpl.showPart(data, env, (value_nick == 'from' ? 'от ' : 'до ') + title, get)
+						return tpl.showPart(data, bread, (value_nick == 'from' ? 'от ' : 'до ') + title, get)
 					} else {
 						const title = value_nick + cards.unit(prop)
-						return tpl.showPart(data, env, title, get)
+						return tpl.showPart(data, bread, title, get)
 					}
 				}).join(' ')
 			}
@@ -268,13 +273,13 @@ tpl.showSelected = (data, env) => {
 
 
 
-tpl.showPart = (data, env, title, get) => !title ? '' : `
+tpl.showPart = (data, bread, title, get) => !title ? '' : `
 	<a data-scroll="none" class="clearlink"
-		href="${cards.getGroupPath(data, env, data.group)}${cards.addget(data, env, get)}">
+		href="${cards.getGroupPath(data, data.group)}${cards.addget(bread, get)}">
 		<span class="title">${title}</span>
 		<span class="krest" style="font-size:1rem; line-height: 2rem;">✕</span>
 	</a>
 `
 tpl.showParentLink = (data, env) => data.group.group_nick == data.conf.root_nick ? '' : `
-	<a data-scroll="none" href="${cards.getParentPath(data, env, data.group)}${cards.addget(data, env, {m:data.md.m, page: null})}">${data.group.parent_title}</a>
+	<a data-scroll="none" href="${cards.getParentPath(data, data.group)}${cards.addget(env.bread, {m:data.md.m, page: null})}">${data.group.parent_title}</a>
 `

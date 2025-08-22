@@ -29,9 +29,10 @@ rest.addVariable('root#required', async view => {
 	return root
 })
 
+rest.addArgument('image_src', ['string'])
 
-rest.addArgument('p', ['int'], (view, n) => n || 1)
-rest.addArgument('count', ['int'])
+rest.addArgument('p', ['sint','unsigned','1'])
+rest.addArgument('count', ['sint','unsigned','0'])
 
 
 rest.addArgument('group_id', ['mint'])
@@ -45,7 +46,7 @@ rest.addArgument('group_nick', ['nicked'], async (view, group_nick) => {
 	const group_id = await Shop.getGroupIdByNick(db, group_nick)
 	if (!group_id) return view.err('Группа не найдена', 404)
 	
-	if (!Shop.canI(db, group_id)) return view.err('Нет доступа к группе', 403)
+	if (!Shop.isInRoot(db, group_id)) return view.err('Нет доступа к группе', 403)
 	
 	return group_nick
 
@@ -79,12 +80,8 @@ rest.addVariable('hru#required', ['hru', 'required'])
 // })
 
 rest.addArgument('partner', async (view, key) => {
-	const conf = await config('shop')
-	const partner = conf.partners[key]
-	if (!partner) return false
-	partner.key = key
-	if (partner.cost) partner.cost_nick = nicked(partner.cost)
-	partner.toString = () => key
+	if (!key) return false
+	const partner = await Shop.getPartnerByKey(key)
 	return partner
 })
 

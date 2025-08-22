@@ -521,13 +521,13 @@ Consciousness.setCellType = async (db, cell) => {
 			
 
 			if (!value_nick) pruning = true
-			if (value_nick) {
+			//if (value_nick) {
 				value_id = await db.col(`select value_id from sources_values where value_nick = :value_nick`, {value_nick})
 				if (!value_id) value_id = await db.insertId(`
 					INSERT INTO sources_values (value_title, value_nick)
 			   		VALUES (:value_title, :value_nick)
-				`, {value_title, value_nick})
-			}
+				`, {value_title: value_nick ? value_title : '', value_nick})
+			//}
 		}
 	}
 	await db.exec(`

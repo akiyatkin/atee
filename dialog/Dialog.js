@@ -34,12 +34,14 @@ export const Dialog = {
 		const theme = await import('/-controller/Theme.js').then(r => r.default.get())
 		//const layer = {tpl, sub, json, div:id}
 		
-		const look = { theme }
-		const env = { layer, ...look }
+		
+		const env = { layer }
 		env.sid = 'sid-' + layer.div + '-' + layer.sub + '-'
 		env.scope = '#' + layer.div
 		const Client = await window.getClient()
 		env.bread = Client.bread
+		env.theme = Client.theme
+		env.crumb = env.bread.getCrumb(layer.depth || 0)
 		const html = tplobj[sub](layer.data, env)
 		return html
 	},

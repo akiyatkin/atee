@@ -118,6 +118,7 @@ const showIprops = (data, env, mod, prop_titles) => {
 					}
 					for (const a of div.getElementsByTagName('a')) {
 						a.addEventListener('click', e => reachGoal('position'))
+						a.addEventListener('auxclick', e => reachGoal('position'))
 						a.addEventListener('contextmenu', e => reachGoal('position'))
 					}
 				})(document.currentScript.parentElement)

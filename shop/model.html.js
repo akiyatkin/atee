@@ -1,45 +1,43 @@
 import cards from "/-shop/cards.html.js"
-import nicked from "/-nicked"
 import cost from "/-words/cost.js"
-import filters from "/-shop/filters.html.js"
 
-import ti from "/-words/ti.js"
+import Ecommerce from "/-shop/Ecommerce.js"
 
 const tpl = {}
 export default tpl
-const getItem = (data, env) => {
+tpl.getSelItem = (data, env) => {
 	const model = data.model
-	const art = env.crumb.child?.name || ''
-	return model.items.find(item => item.art == art) || model.items[0]
+	const art = env.crumb.name || ''
+	return model.items.find(item => item.art[0] == art) || false
 }
-tpl.ROOT = (data, env) => `
-	${data.result ? tpl.showmodel(data, env, data.model, getItem(data, env)) : tpl.showerror(data, env)}
-`
+tpl.ROOT = (data, env) => data.result ? tpl.showModel(data, env, data.model) : tpl.showError(data, env)
 
-tpl.showerror = (data, env) => `
-	<div style="margin: 1em 0 0.5em">${tpl.groupLink(data, env, data.root)}</div>
-	<h1 style="margin-top:0"><b>${env.crumb.name}</b></h1>
+tpl.showError = (data, env) => `
+	<div style="margin: 1em 0 0.5em">${tpl.showGroupLink(data, env, data.root)}</div>
+	<h1 id="page" style="margin-top:0"><b>${env.crumb.parent.name}</b></h1>
 	<p>
 		Модель в магазине не найдена
 	</p>
 `
-tpl.groupLink = (data, env, group) => `
-	<a data-scroll="none" href="${cards.getGroupPath(data, env, group)}">${group.group_title}</a>
-`
+tpl.showGroupLink = (data, env, group) => `
+	<a data-scroll="none" href="${cards.getGroupPath(data, group)}">${group.group_title}</a>`
 tpl.showBreadcrumbs = (data, env, model) => `
 	<div style="margin: 1em 0 0.5em; display: flex; justify-content: space-between;">
 		${cards.badgecss(data, env)}
-		<div>${data.groups.map(group => tpl.groupLink(data, env, group)).join(', ')}</div>
+		<div>${model.groups.map(group_nick => tpl.showGroupLink(data, env, data.groups[group_nick])).join(', ')}</div>
 		<div>${cards.badgenalichie(data, env, model)}</div>
 	</div>
 `
-tpl.showmodel = (data, env, model, item) =>`
+
+tpl.showModel = (data, env, model, selitem = tpl.getSelItem(data, env)) =>`
 	${tpl.showBreadcrumbs(data, env, model)}
-	<h1 style="margin-top:0">${cards.getModelName(data, env, item)}</h1>
-	${tpl.maindata(data, env, model, item)}
+	<h1 id="page" style="margin-top:0">${cards.getItemName(data, selitem)}</h1>
+	${tpl.showMainData(data, env, model, selitem)}
 	<div style="margin-bottom:2rem">
-		${item['skryt-filtry'] ? '' : tpl.props(data, env, model, item)}
-		${model.iprops.length ? tpl.showitems(data, env, model) : ''}
+		${model.iprops.length ? tpl.showItemsTable(data, env, model) : ''}
+		${model.recap.naimenovanie?.length > 1 || model.recap.opisanie?.length > 1 ? model.items.map(item => tpl.showItemDescription(data, env, item, model)).join('') : ''}
+		${selitem['skryt-filtry'] ? '' : tpl.showModelProps(data, env, model)}
+		
 	</div>
 	<div class="modtext" style="margin-bottom:2rem">
 		<style>
@@ -48,7 +46,7 @@ tpl.showmodel = (data, env, model, item) =>`
 				height: auto;
 			}
 		</style>
-		${(item.texts || []).join(' ')}
+		${(selitem.texts || []).join(' ')}
 	</div>
 	<div class="modfiles" style="margin-bottom:2rem">
 		${data.files.map(tpl.filerow).join('')}
@@ -56,52 +54,118 @@ tpl.showmodel = (data, env, model, item) =>`
 `
 
 
-tpl.props = (data, env, model, item) => {
-	const mprops = Object.keys(item).filter(prop_nick => {
+tpl.showModelProps = (data, env, model) => {
+	const mprops = Object.keys(model.recap).filter(prop_nick => {
 		if (~model.iprops.indexOf(prop_nick)) return false
-		const pr = data.props[prop_nick]
-		if (pr.known) return false
+		const prop = data.props[prop_nick]
+		if (prop.known) return false
 		return true
+	}).sort((a, b) => {
+		const propa = data.props[a]
+		const propb = data.props[b]
+		return propa.ordain - propb.ordain
 	})
 	if (!mprops.length) return ''
 	return `
 		<h2>Характеристики</h2>
 		<table>
-			${mprops.map(prop_nick => {
-				const pr = data.props[prop_nick]
-				const val = cards.gainTitles(data, env, item, prop_nick)
-				return tpl.showTrProp(data, env, pr, val)
-			}).join('')}
+			<tr><th>${data.props.brend.prop_title}</th><td>
+				${tpl.filters(data, env, model, model.recap, 'brend')}
+			</td></tr>
+			${tpl.showTrProp(data, env, model.recap, 'model')}
+			${mprops.map(prop_nick => tpl.showTrProp(data, env, model.recap, prop_nick)).join('')}
 		</table>
 	`
 }
-tpl.showTrProp = (data, env, pr, val) => `
-	<tr><th>${pr.prop_title}</th><td>${val}</td></tr>
-`
-tpl.showitems = (data, env, model) => `
-	<table style="margin-top:2em">
-		<thead><tr>${model.iprops.filter(prop_nick => prop_nick != 'opisanie').map(prop_nick => tpl.itemhead(data, env, prop_nick)).join('')}</tr></thead>
-		<tbody>
-			${model.items.map(item => tpl.itembody(data, env, model, item)).join('')}
-		</tbody>
-	</table>
-	${(model.recap.naimenovanie?.length > 1 || model.recap.opisanie?.length > 1) ? model.items.map(item => tpl.showItemDescription(data, env, item, model)).join('') : ''}
-`
-tpl.showItemDescription = (data, env, item, model) => {
-	const gain = prop_nick => cards.gainTitles(data, env, item, prop_nick)
+tpl.showTrProp = (data, env, item, prop_nick) => {
+	const prop = data.props[prop_nick]
+	if (!prop) return ''
+	const val = cards.getSomeTitles(data, item, prop_nick).join(', ')
+	if (!val) return ''
 	return `
-		<h2>${gain('art')} &mdash; ${model.recap.naimenovanie?.length > 1 ? gain('naimenovanie') : gain('poziciya')}</h2>
-		<p>${gain('opisanie')}</p>
+		<tr><th>${prop.prop_title}</th><td>${val}</td></tr>
 	`
 }
-tpl.itemhead = (data, env, prop_nick) => `<th>${data.props[prop_nick].prop_title}</th>`
-tpl.itembody = (data, env, model, item) => `
-	<tr>
-		${model.iprops.filter(prop_nick => prop_nick != 'opisanie').map(prop_nick => tpl.itemprop(data, env, item, prop_nick)).join('')}
-	</tr>
+tpl.isItemPropNotTable = (data, env, prop_nick) => {
+	const prop = data.props[prop_nick]
+	if (prop.type != 'text') return false
+	if (prop.known) return false
+	return true
+}
+tpl.isItemPropForTable = (data, env, prop_nick) => {
+	const prop = data.props[prop_nick]
+	if (prop.type == 'text') return false
+	if (prop.known) return false
+	return true
+}
+tpl.showItemsTable = (data, env, model) => `
+	<table style="margin-top:2em; margin-bottom: 2em">
+		<thead>
+			<tr>
+				<td>Арт</td>
+				${model.iprops.filter(prop_nick => tpl.isItemPropForTable(data, env, prop_nick)).map(prop_nick => tpl.itemhead(data, env, prop_nick)).join('')}
+				${model.recap.cena ? '<td>Цена</td>' : ''}
+			</tr>
+		</thead>
+		<tbody>
+			${model.items.map((item, i) => tpl.showItemsTableBodyTr(data, env, model, item, i)).join('')}
+		</tbody>
+	</table>
 `
+tpl.showItemsTableBodyTr = (data, env, model, item, i) => {
+	const selected = item.art[0] == env.crumb.name
+	const art_td = tpl.showArtlink(data, env, model, item, i)
+	return `
+		<tr style="${selected ? 'font-weight:bold;' : ''}">
+			<td>${art_td}</td>
+			${model.iprops.filter(prop_nick => tpl.isItemPropForTable(data, env, prop_nick)).map(prop_nick => tpl.itemprop(data, env, item, prop_nick)).join('')}
+			${model.recap.cena ? '<td>' + cards.cost(item) + '</td>' : ''}
+		</tr>
+	`
+}
+tpl.showItemDescription = (data, env, item, model) => {
+	const gain = prop_nick => cards.getSomeTitles(data, item, prop_nick)
+	return `
+		<h2>${model.recap.naimenovanie?.length > 1 ? gain('naimenovanie') : gain('art')}</h2>
+		${model.recap.naimenovanie?.length > 1 ? '<p>' + cards.line('Арт', gain('art')) + '</p>' : ''}
+		<p>${gain('opisanie')}</p>
+		${model.iprops.filter(prop_nick => tpl.isItemPropNotTable(data, env, prop_nick)).map(prop_nick => {
+			return cards.line(data.props[prop_nick].prop_title, cards.getSomeTitles(data, item, prop_nick))
+		}).join('')}
+	`
+}
+tpl.showArtlink = (data, env, model, item, i) => {
+	const path = cards.getItemPath(data, item)
+	const art_title = cards.getSomeTitle(data, item, 'art')
+	const selected = item.art[0] == env.crumb.name
+	const art_td = selected ? `<b>${art_title}</b>` : `
+		<a href="${path}#page">${art_title}</a>
+		<script>
+			(async btn => {
+				const products = [${JSON.stringify(
+					Ecommerce.getProduct(data, {
+						coupon:env.theme.partner,
+						item: item, 
+						listname: 'Модель', 
+						position: i + 1, //Позиции одной модели на одном месте получается находятся
+						group_nick: model.groups[0]
+					})
+				)}]
+				const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
+				btn.addEventListener('click', () => Ecommerce.click(products))
+				btn.addEventListener('contextmenu', () => Ecommerce.click(products))
+				btn.addEventListener('auxclick', () => Ecommerce.click(products))
+
+			})(document.currentScript.previousElementSibling)
+		</script>
+	`
+	return art_td
+}
+tpl.itemhead = (data, env, prop_nick) => `<th>${data.props[prop_nick].prop_title}</th>`
+
+
 tpl.itemprop = (data, env, item, prop_nick) => `
-	<td>${cards.gainTitles(data, env, item, prop_nick)}</td>
+	<td>${cards.getSomeTitles(data, item, prop_nick)}</td>
 `
 
 tpl.filerow = f => `
@@ -112,9 +176,10 @@ tpl.filerow = f => `
 	`
 
 tpl.showGallery = (data, env, item) => `
-	<div class="imagecontent">
+	<div>
 		<style>
-			${env.scope} img {
+			${env.scope} .imagemin,
+			${env.scope} .imagemax {
 				max-width: 100%; height:auto
 			}
 			${env.scope} .imagemin.selected {
@@ -125,8 +190,8 @@ tpl.showGallery = (data, env, item) => `
 				cursor: pointer;
 			}
 		</style>
-		<img class="imagemax ${item.images.length > 1 ? 'pointer' : ''}" alt="" 
-			${cards.imager(item.images[0], 500, 500)}
+		<img class="imagemax" fetchpriority="high" style="${item.images.length > 1 ? 'cursor:pointer' : ''}" alt="" 
+			${cards.imager(cards.getSomeTitle(data, item, 'images'), 500, 500)}
 		>
 		${item.images.length > 1 ? tpl.showPreviews(data, env, item) : ''}
 		<script>
@@ -164,11 +229,11 @@ tpl.showPreviews = (data, env, item) => `
 		<div style="color: rgba(0,0,0,0.3); pointer-events: none; opacity: 0; position: absolute; height: 100%; display: flex; align-items: center;" class="left">
 			&nbsp;←&nbsp;
 		</div>
-		<div style="color: rgba(0,0,0,0.3); pointer-events: none; position: absolute; height: 100%; right: 0px; display: flex; align-items: center; opacity: 1;" class="right">
+		<div style="color: rgba(0,0,0,0.3); pointer-events: none; position: absolute; height: 100%; right: 0px; display: flex; align-items: center;" class="right">
 			&nbsp;→&nbsp;
 		</div>
 		<div class="sliderNeo" style="cursor: pointer; overflow-x: scroll; white-space: nowrap; display: flex; gap: 1ch; padding: 1ch 0;">
-			${item.images.map((src, i) => tpl.showPreview(data, env, item, src, i)).join('')}
+			${cards.getSomeTitles(data, item, 'images').map((src, i) => tpl.showPreview(data, env, item, src, i)).join('')}
 		</div>
 	</div>
 	<script>
@@ -188,18 +253,18 @@ tpl.showPreviews = (data, env, item) => `
 
 
 
-tpl.maindata = (data, env, model, item) => `
+tpl.showMainData = (data, env, model, selitem) => `
 	<div class="mod_content">
 		<style>
 			${env.scope} .mod_content {
 				display: grid;
-				grid-template-columns: 1fr 1fr;
+				grid-template-columns: 2fr 3fr;
 				gap: 2rem;
 				padding-bottom: 1rem;
 			}
-			@media (max-width: 900px){
+			@media (max-width: 1199px){
 				${env.scope} .mod_content {
-					
+					grid-template-columns: 1fr 1fr;
 				}
 			}
 			@media (max-width: 705px){
@@ -209,150 +274,208 @@ tpl.maindata = (data, env, model, item) => `
 				}
 			}
 		</style>	
-		${item.images ? tpl.showGallery(data, env, item) : ''}
+		
+		${model.recap.images ? tpl.showGallery(data, env, selitem || model.recap) : ''}
+		
 		<div>
-			${cards.line('Модель', cards.gainFirstTitle(data, env, item, 'model'))}
-			${cards.line('Бренд', tpl.filters(data, env, model, item, 'brend'))}
-			${cards.line('Скидка', cards.getItemDiscount(item))}
-			<div style="text-align:right; display: grid; gap: 1em; margin: 1em 0 2em;">
-				<div>${cards.basket(data, env, item)}</div>
-				<div>${tpl.itemChoice(data, env, model, item)}</div>
+			${cards.line('Модель', '<b>'+cards.getSomeTitle(data, model.recap, 'model') + '</b>')}
+			${cards.line('Бренд', tpl.filters(data, env, model, model.recap, 'brend'))}
+			${cards.line('Скидка', cards.getItemDiscount(model.recap))}
+
+			
+
+			${model.recap.cena.length > 1 ? cards.block(cards.price(model.recap)) : ''}
+			${(model.items.length > 1 || !selitem) ? cards.block(tpl.showItemButtons(data, env, model)) : ''}
+			${selitem ? cards.block(tpl.showTableItem(data, env, model, selitem)) : ''}
+			<div style="text-align: right;">
+				${selitem ? cards.block(selitem.cena ? tpl.buyButton(data, env, model, selitem) : tpl.orderButton(data, env, model, selitem)) : ''}
 			</div>
-			<i>${cards.gainFirstTitle(data, env, item, 'opisanie')}</i>
+
+			${selitem ? '<div style="font-style:italic; margin-top:2em">' + cards.getSomeTitle(data, selitem, 'opisanie') + '</div>' : ''}
+			
+			
+			${selitem ? tpl.ecomDetail(data, env, model, selitem) : ''}
 		</div>
 	</div>
+	
+`
+
+
+tpl.ecomDetail = (data, env, model, selitem) => `
 	<script type="module">
-		window.dataLayer = window.dataLayer || []
-		dataLayer.push({
-			"ecommerce": {
-				"currencyCode": "RUB",
-				"detail": {products:[${JSON.stringify(cards.product(data, env, item))}]}
-			}
-		})
+		import Ecommerce from "/-shop/Ecommerce.js"
+		const products = [${JSON.stringify(Ecommerce.getProduct(data, {
+			coupon:env.theme.partner,
+			item: selitem, 
+			group_nick: model.groups[0],
+			listname: 'Модель', 
+			position: 1
+		}))}]
+		Ecommerce.detail(products)
 	</script>
 `
-tpl.itemChoice = (data, env, model, item) => `
-	${(data.conf.cart ? tpl.orderButtonCart : tpl.orderButton)(data, env, model, item)}
-`
-tpl.orderButtonCart = (data, env, model, item) => {
-
-
-	if (model.items.length == 1) {
-		return item.cena ? '<p>' + tpl.buyButton(data, env, item) + '<p>' : tpl.orderButton(data, env, model, item)
-	}
-	return ''
-	//if (!model.Цена) return tpl.orderButton(data, env, model)	//Добавить в корзину точно ничего нельзя
-	
-	
-	const prop_nicks = ["posiciya","art"]
-	let html = filters.block("", tpl.showIprops(data, env, model, prop_nicks)) 
-	return html
-	html += `
+tpl.showTableItem = (data, env, model, selitem) => `
 	<style>
+		${env.scope} .tableitem {
+			margin:1em 0;
+			padding:0;
+			display: table;
+		}
 		${env.scope} .tableitem th,
 		${env.scope} .tableitem td {
+			padding:1px 5px;
 			font-size:13px;
-			padding:2px 1ch;
 		}
 	</style>
 	<table class="tableitem">
-		${model.item_props.map(pr => {
-			if (pr.prop_title == 'Скидка') return ''
-			if (pr.prop_title == 'Цена') return ''
-			const val = common.prtitle(item, pr)
+		${tpl.showTrProp(data, env, selitem, 'art')}
+		${model.iprops.map(prop_nick => {
+			if (!tpl.isItemPropForTable(data, env, prop_nick)) return ''
+			const val = cards.getSomeTitles(data, selitem, prop_nick)
 			if (val == null) return ''
-			return tpl.showTrProp(data, env, pr, val)
+			return tpl.showTrProp(data, env, selitem, prop_nick)
 		}).join('')}
-	</table>`
+	</table>
+`
+const showCost = (value) => value ? `${cost(value)}${common.unit()}` : ''
+const showItemIfCost = (mod, item, oldcost = item['Старая цена'] || mod['Старая цена']) => mod.Цена ? '' : (item.Цена ? `
+	<p>
+		<s>${showCost(oldcost)}</s>
 
-	html += showItemIfCost(model, item)
-	
-	
+		<big>&nbsp;<b>${showCost(item.Цена || mod.Цена)}</b>&nbsp;</big>
+		${item.discount ? showDiscount(item) : ''}
 
-	if (!item.Цена && !model.Цена) return html + tpl.orderButton(data, env, model, item)
-	return html + '<p>' + tpl.buyButton(data, env, item) + '<p>'
-}
-const getitem = (data, env, v, index) => ischoice(env, index) ? 
-`<span style="display: inline-block; margin-top:0.3em; border-radius:var(--radius);
+	</p>
+`: `
+	<p>
+		<big><b>Цена по запросу</b></big>
+	</p>
+`)
+
+
+tpl.getItemButton = (data, env, model, item, i) => {
+	const selected = item.art[0] == env.crumb.name
+	const title = cards.getVariant(data, env, model, item)
+
+	return selected ? 
+	`<span style="display: inline-block; border-radius:var(--radius);
+			padding:0 1ch; line-height: 2;
+			border:solid rgba(0,0,0,0.7) 3px;">
+		${title}
+	</span>` : 
+	`<a style="text-decoration:none; display:inline-block; border-radius:var(--radius);
 		padding:0 1ch; line-height: 2;
-		border:solid rgba(0,0,0,0.7) 3px;">
-	${v}
-</span>` : 
-`<a style="margin-top:0.3em; display:inline-block; border-radius:var(--radius);
-	padding:0 1ch; line-height: 2;
-	border:solid rgba(0,0,0,0.15) 3px;" 
-	class="a" data-scroll="none" rel="nofollow" 
-	href="${env.crumb}${index ? '/' + index : ''}${links.setm(data)}">
-	${v}
-</a>`
-tpl.showIprops = (data, env, mod, prop_nicks) => {
-	const values = mod.items.reduce((ak, item) => {
-		const prop_nick = prop_nicks.find(prop_nick => item[prop_nick])
-		ak.push(prop_nick ? cards.gainTitles(data, env, item, prop_nick) : '')
-		return ak
-	}, [])
-	return `
-		<div style="margin-right:0.3ch; font-size:90%">
-			${values.map((v, index) => getitem(data, env, v, index)).join('<span style="display: inline-block; width:1ch"></span>')}
-			<script>
-				(div => {
-					const reachGoal = goal => {
-						if (!div.closest('body')) return
-						console.log('Goal.reach ' + goal)
-						const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
-						if (metrikaid) ym(metrikaid, 'reachGoal', goal)
-					}
-					for (const a of div.getElementsByTagName('a')) {
-						a.addEventListener('click', e => reachGoal('position'))
-						a.addEventListener('contextmenu', e => reachGoal('position'))
-					}
-				})(document.currentScript.parentElement)
-			</script>
-		</div>
-	`
+		border:solid rgba(0,0,0,0.15) 3px;" 
+		class="a" data-scroll="none" rel="nofollow" 
+		href="${cards.getItemPath(data, item)}">
+		${title}
+	</a><script>
+		(async btn => {
+			const products = [${JSON.stringify(
+				Ecommerce.getProduct(data, {
+					coupon:env.theme.partner,
+					item: item, 
+					listname: 'Модель', 
+					position: i + 1, //Позиции одной модели на одном месте получается находятся
+					group_nick: model.groups[0]
+				})
+			)}]
+			const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
+			btn.addEventListener('click', () => Ecommerce.click(products))
+			btn.addEventListener('contextmenu', () => Ecommerce.click(products))
+			btn.addEventListener('auxclick', () => Ecommerce.click(products))
+
+		})(document.currentScript.previousElementSibling)
+	</script>
+`
 }
 
-tpl.buyButton = (data, env, item) => {
-	const gain = (name) => cards.gainFirstTitle(data, env, item, name)
-	const product = cards.product(data, env, item)
+tpl.showItemButtons = (data, env, model) => `
+	<div style="display: flex; flex-wrap: wrap; gap: 1ch;">
+		${model.items.map((item, i) => tpl.getItemButton(data, env, model, item, i)).join('')}
+		<script>
+			(async div => {
+				const reachGoal = goal => {
+					if (!div.closest('body')) return
+					console.log('Goal.reach ' + goal)
+					const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
+					if (metrikaid) ym(metrikaid, 'reachGoal', goal)
+				}
+				for (const a of div.getElementsByTagName('a')) {
+					a.addEventListener('click', e => reachGoal('position'))
+					a.addEventListener('contextmenu', e => reachGoal('position'))
+					a.addEventListener('auxclick', e => reachGoal('position'))
+				}
+
+				const products = ${JSON.stringify(
+					model.items.map((item, i) => {
+						if (item.art[0] == env.crumb.name) return ''
+						return Ecommerce.getProduct(data, {
+							coupon:env.theme.partner,
+							item: item, 
+							listname: 'Модель', 
+							position: i + 1,
+							group_nick: model.groups[0]
+						})
+					}).filter(val => val)
+				)}
+				const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
+				Ecommerce.impressions(products)
+
+			})(document.currentScript.parentElement)
+		</script>
+	</div>
+`
+
+
+
+tpl.buyButton = (data, env, model, selitem) => {
+	if (!data.conf.cart) return tpl.orderButton(data, env, model, selitem)
+	const gain = (name) => cards.getSomeTitle(data, selitem, name)
 	return `
-		<button 
-			data-brendart="${item.brendart[0]}"
-			data-partner="${env.theme.partner || ''}"
-			style="font-size:1.2rem; opacity: 0">
-			Добавить в корзину
-		</button>
+		<div style="margin-bottom: 1em">${cards.price(selitem)}</div>
+		<button style="font-size:1.2rem; opacity: 0">Добавить в корзину</button>
 		<script>
 			(async btn => {
+				const brendart_nick = "${selitem.brendart[0]}"
+				const product = ${JSON.stringify(Ecommerce.getProduct(data, {
+					coupon:env.theme.partner,
+					item: selitem, 
+					group_nick: model.groups[0],
+					listname: 'Модель', 
+					position: 1,
+					quantity: 1
+				}))}
+				
 				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-				const ans = await senditmsg(btn.parentElement, '/-cart/get-added', btn.dataset)
+				const ans = await senditmsg(btn.parentElement, '/-shop/cart/get-added', {brendart_nick})
 			
 				btn.style.opacity = 1
-				if (ans.count) btn.innerHTML = 'Открыть корзину'
-				const product = ${JSON.stringify(product)}
+				if (ans.quantity) btn.innerHTML = 'Открыть корзину'
+				
 				btn.addEventListener('click', async () => {
-					
-					const Panel = await import("/-cart/Panel.js").then(r => r.default)
+					const Client = await window.getClient()
+					const partner = Client.theme.partner
+
+					const Panel = await import("/-shop/cart/Panel.js").then(r => r.default)
 					const panel = document.querySelector('.panel')
 					if (!panel) return
 					Panel.up(panel)
 				
-					if (!ans.count) {
-						const Basket = await import('/-cart/Basket.js').then(r => r.default)
-						Basket.addButton(btn.dataset, 1, 'nocopy')
-						window.dataLayer = window.dataLayer || []
-						
-						dataLayer.push({
-							"ecommerce": {
-								"currencyCode": "RUB",    
-								"add": {
-									"products": [{
-										...product,
-										"quantity": 1
-									}]
-								}
-							}
-						})
+					if (!ans.quantity) {
+						const Basket = await import('/-shop/cart/Basket.js').then(r => r.default)
+						await Basket.addButton(btn, {brendart_nick, quantity: 1, nocopy: 1})
+
+						const Ecommerce = await import("/-shop/Ecommerce.js").then(r => r.default)
+						product.quantity = 1
+						Ecommerce.add([product])
+
+						const reachGoal = goal => {
+							console.log('Goal.reach ' + goal)
+							const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
+							if (metrikaid) ym(metrikaid, 'reachGoal', goal)
+						}
+						reachGoal('basket')
 					}
 				})
 			})(document.currentScript.previousElementSibling)
@@ -361,91 +484,47 @@ tpl.buyButton = (data, env, item) => {
 }
 
 
-tpl.detail = (data, env, model, item) => {
 
-	
-	
-	
-	return `
-		
-	`
-}
 tpl.filters = (data, env, model, item, prop_nick) => item[prop_nick].map(nick => `
-	<a rel="nofollow" href="${cards.getGroupPath(data, env, data.groups[0])}/${cards.addget(data, env, {m: prop_nick + '::.' + nick + '=1'})}">
+	<a rel="nofollow" href="${cards.getGroupPath(data, data.groups[model.groups[0]])}${cards.addget(env.bread, {m: prop_nick + '::.' + nick + '=1'})}">
 		${data.values[nick].value_title || nick}
 	</a>
 `).join(', ')
-tpl.orderButton = (data, env, model, item) => `
+tpl.orderButton = (data, env, model, item) =>  `
+	<div style="margin-bottom:1em">${item.cena ? cards.price(item) : '<big><b>Цена по запросу</b></big>'}</div>
 	<button style="font-size:1.2em;">${item.cena ? 'Сделать заказ' : 'Оставить запрос'}</button>
 	<script>
 		(btn => {
+			const product = ${JSON.stringify(Ecommerce.getProduct(data, {
+				coupon:env.theme.partner,
+				item: item, 
+				group_nick: model.groups[0],
+				listname: 'Модель', 
+				position: 1,
+				quantity: 1
+			}))}
 			btn.addEventListener('click', async () => {
 				btn.disabled = true
 				const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 				await Dialog.open({
 					tpl:'/-shop/order.html.js', 
+					depth: ${env.layer.depth},
 					sub:'ROOT',
 					json: '/-shop/get-model?brendmodel=${item.brendmodel[0]}&partner=${env.theme.partner ?? ''}'
 				})
 				btn.disabled = false
+
+				const Ecommerce = await import("/-shop/Ecommerce.js").then(r => r.default)
+				Ecommerce.add([product])
+
+				const reachGoal = goal => {
+					console.log('Goal.reach ' + goal)
+					const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
+					if (metrikaid) ym(metrikaid, 'reachGoal', goal)
+				}
+				reachGoal('basket')
+
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
-
-
-
-
-
-
-
-
-
-
-
-
-	// tpl.showprop = (prop_title, val) => `
-	// 	<div style="margin: 0.25rem 0; display: flex">
-	// 		<div style="padding-right: 0.5rem">${prop_title}:</div>
-	// 		<div>${val}</div>
-	// 	</div>
-	// `
-	
-
-	// tpl.prop = {
-	// 	default: (data, env, mod, pr, title, val) => tpl.showprop(title, val),
-	// 	bold: (data, env, mod, pr, title, val) => cards.prop.default(data, mod, pr, title, `<b>${val}</b>`),
-	// 	brand: (data, env, mod, pr, title, val) => cards.prop.default(data, mod, pr, title, 
-	// 		`<a href="/catalog/${mod.brand_nick}">${mod.brand_title}</a>`
-	// 	),
-	// 	group: (data, env, mod, pr, title, val) => cards.prop.p(data, mod, pr, title, 
-	// 		`<a style="max-width:100%" href="/catalog/${mod.group_nick}"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block">${mod.group_title}</span></a>`
-	// 	),
-	// 	cost: (data, env, mod, pr, title, val) => cards.prop.bold(data, mod, pr, title, `${cost(val)}${common.unit()}`),
-	// 	hideable: (data, mod, pr, title, val) => cards.prop.default(data, mod, pr, title, val.length < 30 ? val : `
-	// 		<span class="a" onclick="this.style.display = 'none'; this.nextElementSibling.style.display = ''">Показать</span>
-	// 		<span onclick="this.style.display = 'none'; this.previousElementSibling.style.display = ''" style="display: none">${val}</span>
-	// 	`),
-	// 	link: (data, env, mod, pr, title, val) => cards.prop.default(data, mod, pr, title, 
-	// 		`<a href="/catalog/${links.addm(data)}more.${pr.prop_nick}::.${nicked(val)}=1">${val}</a>`
-	// 	),
-	// 	just: (data, env, mod, pr, title, val) => `
-	// 		<div style="margin: 0.25rem 0; display: flex">
-	// 			<div title="${common.prtitle(mod, pr)}" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-	// 				${val}
-	// 			</div>
-	// 		</div>
-	// 	`,
-	// 	justlink: (data, env, mod, pr, title, val) => cards.prop.just(data, mod, pr, title, 
-	// 		`<a href="/catalog/${links.addm(data)}more.${pr.prop_nick}::.${nicked(val)}=1">${val}</a>`
-	// 	),
-	// 	amodel: (data, env, mod, pr, title, val) => cards.prop.just(data, mod, pr, title, 
-	// 		`<a href="/catalog/${mod.brand_nick}/${mod.model_nick}${links.setm(data)}">${mod.brand_title} ${mod.model_title}</a>`
-	// 	),
-	// 	p: (data, env, mod, pr, title, val) => `<div style="margin: 0.25rem 0;">${val}</div>`,
-	// 	empty: () => '',
-	// 	filter: (data, env, mod, pr, title, val) => cards.prop.default(data, env, mod, pr, title, 
-	// 		val.split(',').filter(r => r).map(value => `<a rel="nofollow" href="${links.val(data, env, mod, pr, value)}">${value}</a>`).join(', ')
-	// 	)
-
-	// }

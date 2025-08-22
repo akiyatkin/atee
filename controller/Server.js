@@ -1,5 +1,5 @@
 import { router, readTextStream, loadJSON, loadTEXT } from './router.js'
-import http from 'http'
+import http from 'node:http'
 import fs from 'fs/promises'
 import { ReadStream } from 'fs'
 import { pipeline } from 'stream/promises'
@@ -117,6 +117,7 @@ const Server = {
 				
 				const reans = await rest.get('get-layers', req, visitor)
 				let json = reans.data
+				
 				let status = json.status
 				const headers = {...reans.headers}
 
@@ -130,11 +131,20 @@ const Server = {
 					info = { nostore: true, html: '' }
 					//return view.err('', 301)
 				} else {
+					//if (json.push?.length) response.setHeader('Link', json.push.join(','));
+					if (json.push?.length) {
+						response.writeEarlyHints({
+							'link': json.push
+						})
+					}
+
+
 					// if (!json.layers) return error_before(500, 'layers not defined')
 					// if (!json.layers.length) return error_before(500, 'layers empty')
 					const bread = new Bread(route.path, route.get, route.search, json.root) //root+path+get = search
 					bread.status = status
 					try {
+
 						if (!json.layers?.length) throw { status:404 }
 						info = await controller(json, visitor, bread) //client передаётся в rest у слоёв, чтобы у rest были cookie, host и ip
 						status = Math.max(info.status, status)
@@ -152,11 +162,15 @@ const Server = {
 						if (status != 404) console.log(e)
 						try {
 							info = await controller(json, visitor, bread)
+
 						} catch(e) {
 							return error_before(500, 'erorr in error controller')
 						}
 					}
-					if (json.push?.length) response.setHeader('Link', json.push.join(','));
+					
+
+
+
 				}
 				response.writeHead(status, {
 					'Content-Type': conf.types['html'] + '; charset=utf-8',
@@ -275,9 +289,8 @@ const controller = async ({ vt, st, ut, layers, theme }, visitor, bread) => {
 	const timings = {view_time:vt, access_time:st, update_time:ut}
 	const host = visitor.client.host
 	const look = {bread, timings, theme, host} //???head - этим отличается look в interpolate в get-layers head нет
-
 	const doc = new Doc()
-	
+	//console.log(layers[0].layers[0])
 	await runLayers(layers, async layer => {
 
 		const env = { layer, ...look }

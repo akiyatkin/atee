@@ -232,7 +232,7 @@ rest.addResponse('get-sitemap', async view => {
 rest.addResponse('get-sitemap-root', async view => {
 	const headings = await view.get('headings')
 	view.data.all = headings
-	view.data.heading = headings['']
+	view.data.heading = headings[''] || {title: '', items:[]}
 	view.data.headings = Object.entries(headings).filter(([nick, heading]) => nick).map(([nick, heading]) => ({title: heading.title, nick}))
 	return view.ret()
 })

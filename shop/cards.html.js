@@ -1,12 +1,53 @@
 import nicked from "/-nicked"
 import cost from "/-words/cost.js"
 import addget from '/-sources/addget.js'
-
+import unique from "/-nicked/unique.js"
+import Ecommerce from '/-shop/Ecommerce.js'
+import ddd from "/-words/date.html.js"
 const cards = {}
 export default cards
 
-const getv = (moditem, prop_title) => moditem[prop_title] ?? moditem.more[prop_title] ?? ''
-const getItemModPropValue = (item, mod, prop_title) => getv(mod, prop_title) || getv(item, prop_title) || ''
+
+cards.unit = (prop) => {
+	if (!prop) return '&nbsp;руб.'
+	if (prop.unit) return '&nbsp;' + prop.unit 
+	if (prop.prop_nick == 'cena') return cards.unit()
+	return ''
+}
+//cards.getGroupPath = (data, env, group) => data.conf.root_path + (group.group_nick == data.conf.root_nick ? '' : '/group/' + group.group_nick)
+//cards.getParentPath = (data, env, group) => data.conf.root_path + (group.parent_nick == data.conf.root_nick ? '' : '/group/' + group.parent_nick)
+cards.getGroupPath = (data, group) => [data.conf.root_path, 'group', group.group_nick].join('/')
+cards.getParentPath = (data, group) => data.conf.root_path + (group.group_nick == data.conf.root_nick ? '' : '/group/' + group.parent_nick)
+cards.getItemPath = (data, item) => [data.conf.root_path, 'item', item.brendmodel[0], item.art[0]].join('/')
+
+cards.getItemName = (data, selitem) => { //ecommerce.name
+	const gain = (name) => cards.getSomeTitle(data, selitem, name)
+	if (selitem.naimenovanie) return gain('naimenovanie')
+	return gain('brend') + ' ' + gain('model')
+}
+
+cards.getVariant = (data, env, model, item) => { //ecommerce.variant
+	if (model.items.length == 1) return '' //variant не будет указан
+	const list = model.iprops.filter(prop_nick => {
+		const prop = data.props[prop_nick]
+		if (prop.type == 'text') return false
+		if (prop.known) return false
+		if (model.recap[prop_nick].length < 2) return false //В имя не надо вставлять то что нельзя выбрать если значение только одно
+		if (!item[prop_nick]) return false
+		return true
+	}).map(prop_nick => {
+		const prop = data.props[prop_nick]
+		const titles = cards.getSomeTitles(data, item, prop_nick)
+		if (prop.unit) return titles.map(title => title + ' ' + prop.unit)
+		return titles
+	})
+	const title = unique(list.flat()).join(', ') 
+	//if (!title) cards.getSomeTitles(data, item, 'art') //Несколько art и отличие не найдено - но sku будет отличаться
+	return title
+}
+
+
+
 
 cards.LIST = (data, env) => `
 	<style>
@@ -33,10 +74,11 @@ cards.LIST = (data, env) => `
 	</style>
 	${cards.badgecss(data, env)}
 	<div class="listcards" style="display: grid;">	
-		${data.list.map(mod => cards.card(data, env, mod)).join('')}
+		${data.list.map((model, i) => cards.card(data, env, model, i)).join('')}
 	</div>
 	${(data.pagination?.page == 1 && data.pagination?.last > 1) ? cards.scriptRemoveSuperfluous(data) : ''}
 `
+
 cards.scriptRemoveSuperfluous = (data) => `
 	<script>
 		(async listcards => {
@@ -75,19 +117,19 @@ cards.badgecss = (data, env) => `
 		}
 	</style>
 `
-cards.product = (data, env, item) => {
-	const gain = (name) => cards.gainFirstTitle(data, env, item, name)
-	const product = {
-		"id": item.model[0],
-		"name" : gain('naimenovanie') || gain('model'),
-		"price": gain('cena'),
-		"brand": gain('brend'),
-		"variant" : gain('poziciya') || gain('art'),
-		"category": (data.group || data.groups[0]).group_title
-	}
-	return product
-}
-cards.card = (data, env, mod) => {
+// cards.product = (data, env, item) => {
+// 	const gain = (name) => cards.getSomeTitle(data, item, name)
+// 	const product = {
+// 		"id": item.brendmodel[0],
+// 		"name" : gain('naimenovanie') || gain('model'),
+// 		"price": gain('cena'),
+// 		"brand": gain('brend'),
+// 		"variant" : gain('art'),
+// 		"category": (data.group || data.groups[0]).group_title
+// 	}
+// 	return product
+// }
+cards.card = (data, env, model, i) => {
 	return `
 		<div style="
 			min-width: 0; /*fix overflow-text ellipsis*/
@@ -95,61 +137,49 @@ cards.card = (data, env, mod) => {
 			position:relative; 
 			display:flex; flex-direction: column; justify-content: space-between; box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)" 
 			class="shadow">
-	 		${cards.data(data, env, mod)}
+	 		${cards.data(data, env, model)}
 	 		<script>
-				(card => {
-					const product = ${JSON.stringify(cards.product(data, env, mod.recap))}
-					card.addEventListener('click', () => {	
-						window.dataLayer = window.dataLayer || []
-						dataLayer.push({
-							"ecommerce": {
-						        "currencyCode": "RUB",
-						        "click": {
-						            "products": [
-										{
-											...product,
-											"list": "Каталог"
-										}
-									]
-								}
-							}
+				(async card => {
+					const products = [${JSON.stringify(
+						Ecommerce.getProduct(data, {
+							coupon:env.theme.partner,
+							item: model.items[0], 
+							listname: 'Каталог', 
+							position: i + 1, //Позиции одной модели на одном месте получается находятся
+							group_nick: model.groups[0]
 						})
-					})
+					)}]
+					const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
+					card.addEventListener('click', () => Ecommerce.click(products))
+					card.addEventListener('contextmenu', () => Ecommerce.click(products))
+					card.addEventListener('auxclick', () => Ecommerce.click(products))
+
 				})(document.currentScript.parentNode)
 			</script>
 	 	</div>
 	`
 }
-cards.data = (data, env, mod) => `
+cards.data = (data, env, model) => `
 	<div style="margin: 1rem 1rem 0.5rem 1rem;; flex-grow:1; display:flex; flex-direction: column; justify-content: space-between">
-		${cards.nalichie(data, env, mod)}
-		<a href="${cards.getItemPath(data, env, mod.items[0])}"
+		${cards.nalichie(data, env, model)}
+		<a href="${cards.getItemPath(data, model.items[0])}"
 			style="
 				padding: 0; color: inherit; border: none; 
 				white-space: normal; display: block; flex-grow:1
 		">
-			${cards.image(data, env, mod.recap)}
+			${cards.image(data, env, model.items[0])}
 		</a>
 		<div>
-			${cards.props(data, env, mod)}
+			${cards.props(data, env, model)}
 		</div>
 		
 	</div>
-	<div style="text-align:right; margin: 0rem 0.9rem 1rem 0.9rem">${cards.basket(data, env, mod.recap)}</div>
+	<div style="text-align:right; margin: 0rem 0.9rem 1rem 0.9rem">${cards.price(model.recap)}</div>
 `
 
-cards.unit = (prop) => {
-	if (!prop) return '&nbsp;руб.'
-	if (prop.unit) return '&nbsp;' + prop.unit 
-	if (prop.prop_nick == 'cena') return cards.unit()
-	return ''
-}
-//cards.getGroupPath = (data, env, group) => data.conf.root_path + (group.group_nick == data.conf.root_nick ? '' : '/group/' + group.group_nick)
-//cards.getParentPath = (data, env, group) => data.conf.root_path + (group.parent_nick == data.conf.root_nick ? '' : '/group/' + group.parent_nick)
-cards.getGroupPath = (data, env, group) => [data.conf.root_path, 'group', group.group_nick].join('/')
-cards.getParentPath = (data, env, group) => data.conf.root_path + (group.group_nick == data.conf.root_nick ? '' : '/group/' + group.parent_nick)
-cards.getItemPath = (data, env, item) => [data.conf.root_path, 'item', item.brendmodel[0], item.art[0]].join('/')
-cards.gainFirstTitle = (data, env, item, prop_nick) => {
+
+
+cards.getSomeTitle = (data, item, prop_nick) => {
 	if (!item[prop_nick]) return ''
 	const prop = data.props[prop_nick]
 	const first = item[prop_nick][0]
@@ -161,8 +191,9 @@ cards.gainFirstTitle = (data, env, item, prop_nick) => {
 		return first
 	}
 }
-cards.gainTitles = (data, env, item, prop_nick) => {
-	if (!item[prop_nick]) return ''
+
+cards.getSomeTitles = (data, item, prop_nick) => {
+	if (!item[prop_nick]) return []
 	const prop = data.props[prop_nick]
 	return item[prop_nick].map(nick => {
 		if (prop.type == 'value') {
@@ -172,20 +203,25 @@ cards.gainTitles = (data, env, item, prop_nick) => {
 		} else { //text, number
 			return nick
 		}
-	}).join(', ')
-	
+	})
 }
-cards.props = (data, env, mod) => `
+//cards.gain Titles = (data, env, item, prop_nick) => cards.getSomeTitles(data, item, prop_nick).join(', ')
+cards.props = (data, env, model) => `
 	<div>
-		${data.group.cards.map(prop_nick => {
-			const pr = data.props[prop_nick]
-			const fn = cards.prop[pr.card_tpl] || cards.prop['default']
-			const val = mod.recap[prop_nick]
-			if (!val) return ''
-			return fn(data, env, mod, pr, pr.name, cards.gainTitles(data, env, mod.recap, prop_nick) + (pr.unit ? (' ' + pr.unit) : ''), val)
-		}).join('')}
+		${data.group.cards.map(prop_nick => cards.printProp(data, env, model, prop_nick)).join('')}
 	</div>
 `
+cards.printProp = (data, env, model, prop_nick) => {
+	const pr = data.props[prop_nick]
+	const fn = cards.prop[pr.card_tpl] || cards.prop['default']
+	const nicks = model.recap[prop_nick]
+	if (!nicks) return ''
+
+	const gainTitles = (nick) => cards.getSomeTitles(data, model.recap, nick || prop_nick).join(', ') + unit
+	const gainTitle = (nick) => cards.getSomeTitle(data, model.recap, nick || prop_nick) + unit
+	const unit = (pr.unit ? (' ' + pr.unit) : '')
+	return fn(data, env, model, pr, nicks, gainTitle, gainTitles)
+}
 cards.just = val => `
 	<div style="margin: 0.25em 0">
 		${val}
@@ -196,44 +232,48 @@ cards.line = (title, val) => !val ? '' : `
 		${title}: ${val}
 	</div>
 `
-
+cards.block = (html) => `
+	<div style="margin: 1em 0;">
+		${html}
+	</div>
+`
 cards.prop = {
-	default: (data, env, mod, pr, title, val) => cards.prop.line(data, env, mod, pr, title, val),
+	default: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.prop.line(data, env, model, pr, nicks, gainTitle, gainTitles),
 	
-	line: (data, env, mod, pr, title, val) => cards.line(title, val),
-	linefilter: (data, env, mod, pr, title, val, nicks) => {
-		if (!val) return ''
+	line: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.line(pr.prop_title, gainTitles()),
+	linefilter: (data, env, model, pr, nicks, gainTitle, gainTitles) => {
 		if (!~['number','value'].indexOf(pr.type)) return ''
-		return cards.line(title, nicks.map(nick => {
+		return cards.line(pr.prop_title, nicks.map(nick => {
 			const val = data.values[nick].value_title
-			if (data.md.mget[pr.prop_nick]?.[nick]) return `<b>${val}</b>`
+			if (data.md.mget[pr.prop_nick]?.[nick]) return `<b>${gainTitles()}</b>`
 			return `
-				<a rel="nofollow" href="${cards.getGroupPath(data, env, data.group)}/${cards.addget(data, env, {m:data.md.m + ':' + pr.prop_nick + '::.' + nicks[0] + '=1'})}#page">${val}</a>
+				<a rel="nofollow" href="${cards.getGroupPath(data, data.group)}/${cards.addget(env.bread, {m:data.md.m + ':' + pr.prop_nick + '::.' + nicks[0] + '=1'})}#page">${gainTitles()}</a>
 			`
 		}).join(', '))
 	},
-	linebold: (data, env, mod, pr, title, val) => cards.line(title, `<b>${val}</b>`),
+	linebold: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.line(pr.prop_title, `<b>${gainTitles()}</b>`),
 
-	just: (data, env, mod, pr, title, val) => cards.just(val),
-	justbrandmodel: (data, env, mod, pr, title, val) => cards.just(`<b>${cards.gainFirstTitle(data, env, mod.recap, 'brend')} ${cards.gainFirstTitle(data, env, mod.recap, 'model')}</b>`),
-	justlinkmodel: (data, env, mod, pr, title, val) => cards.just(`<a href="${cards.getItemPath(data, env, mod.items[0])}">${val}</a>`),
-	justlinkmodelhidden: (data, env, mod, pr, title, val) => cards.just(`<a style="color:inherit; border:none;" href="${cards.getItemPath(data, env, mod.items[0])}">${val}</a>`),
-	justfilter: (data, env, mod, pr, title, val, nicks) => {
-		if (!val) return ''
+	just: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.just(gainTitles()),
+
+	justbrandmodel: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.just(`<b>${gainTitle('brend')} ${gainTitle('model')}</b>`),
+	justlinkmodel: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.just(`<a href="${cards.getItemPath(data, model.items[0])}">${gainTitle()}</a>`),
+	justlinkmodelhidden: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.just(`<a style="color:inherit; border:none;" href="${cards.getItemPath(data, model.items[0])}">${gainTitle()}</a>`),
+	
+	justfilter: (data, env, model, pr, nicks, gainTitle, gainTitles) => {
 		if (!~['number','value'].indexOf(pr.type)) return ''
 		return cards.just(nicks.map(nick => {
 			const val = data.values[nick].value_title
-			if (data.md.mget[pr.prop_nick]?.[nick]) return `<b>${val}</b>`
+			if (data.md.mget[pr.prop_nick]?.[nick]) return `<b>${gainTitles()}</b>`
 			return `
-				<a rel="nofollow" href="${cards.getGroupPath(data, env, data.group)}/${cards.addget(data, env, {m:data.md.m + ':' + pr.prop_nick + '::.' + nicks[0] + '=1'})}#page">${val}</a>
+				<a rel="nofollow" href="${cards.getGroupPath(data, data.group)}/${cards.addget(env.bread, {m:data.md.m + ':' + pr.prop_nick + '::.' + nicks[0] + '=1'})}#page">${gainTitles()}</a>
 			`
 		}).join(', '))
 	},
-	justbold: (data, env, mod, pr, title, val) => cards.just(`<b>${val}</b>`),
-	justellipsis: (data, env, mod, pr, title, val) => cards.just(`
+	justbold: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.just(`<b>${gainTitles()}</b>`),
+	justellipsis: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.just(`
 		<div style="display: flex">
 			<div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-				${val}
+				${gainTitles()}
 			</div>
 		</div>
 	`),
@@ -241,13 +281,15 @@ cards.prop = {
 	
 	empty: () => ''
 }
-cards.addget = (data, env, get) => addget(get, env.bread.get, ['m', 'search', 'sort', 'count'])
+cards.addget = (bread, get) => addget(get, bread.get, ['m', 'query', 'sort', 'count'])
 
+cards.cost = (item) => item.cena ? cost(item.cena[0]) + cards.unit() : ''
 
-cards.basket = (data, env, recap) => {
+cards.price = (item) => {
 	let html = ''
-	const staraya = recap['staraya-cena']
-	const cena = recap.cena
+	const staraya = item['staraya-cena']
+	const cena = item.cena
+	if (!cena) return html
 	if (staraya) {
 		html += `<s style="opacity: .5;">${cost(staraya.at(0))}${cards.unit()}</s>`
 	}
@@ -269,12 +311,7 @@ cards.propTitle = prop => {
 	const unit = cards.unit(prop)
 	return prop.name + (unit ? (',' + unit) : '')
 }
-cards.getModelName = (data, env, item) => {
-	const gain = (name) => cards.gainFirstTitle(data, env, item, name)
-	return `
-		${gain('naimenovanie') || gain('model')}
-	`
-}
+
 cards.image = (data, env, item) => `
 	${item.images
 		? (
@@ -310,10 +347,10 @@ cards.getModelDiscount = (model) => {
 }
 
 cards.badgenalichie = (data, env, mod) => {
-	const gain = (name) => cards.gainFirstTitle(data, env, mod.recap, name)
+	const gain = (name) => cards.getSomeTitle(data, mod.recap, name)
 	const discount = cards.getModelDiscount(mod)
 	return mod.recap.nalichie ? `
-		<a rel="nofollow" href="${cards.getGroupPath(data, env, data.group)}${cards.addget(data, env, {m:data.md.m + ':nalichie::.' + mod.recap.nalichie?.[0] + '=1'})}" 
+		<a rel="nofollow" href="${cards.getGroupPath(data, data.group)}${cards.addget(env.bread, {m:data.md.m + ':nalichie::.' + mod.recap.nalichie?.[0] + '=1'})}" 
 			class="badge badge_${mod.recap.nalichie?.[0]}">
 			${gain('nalichie')}
 		</a>
@@ -332,7 +369,7 @@ cards.imgs = (data, env, item) => `
 			&nbsp;→&nbsp;
 		</div>
 		<div class="sliderNeo" style="cursor: pointer; overflow-x: scroll; white-space: nowrap; font-size:0;">
-			${item.images.map(src => cards.img(data, env, item, src)).join('')}
+			${cards.getSomeTitles(data, item, 'images').map(src => cards.img(data, env, item, src)).join('')}
 		</div>
 	</div>
 	<script>
@@ -347,7 +384,7 @@ cards.imgs = (data, env, item) => `
 cards.img = (data, env, item, src) => `
 	<img 
 		loading="lazy"
-		alt="${cards.gainFirstTitle(data, env, item, 'model')}" 
+		alt="${cards.getSomeTitle(data, item, 'model')}" 
 		style="max-width: 100%; margin: 0 auto; height:auto" 
 		${cards.imager(src, 400, 400)}
 	>	

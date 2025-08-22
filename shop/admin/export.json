@@ -1,0 +1,2811 @@
+{
+    "shop_cards": [
+    {
+        "group_id": 1,
+        "prop_nick": "brendmodel",
+        "ordain": 8
+    },
+    {
+        "group_id": 1,
+        "prop_nick": "cvet",
+        "ordain": 10
+    },
+    {
+        "group_id": 1,
+        "prop_nick": "naimenovanie",
+        "ordain": 2
+    },
+    {
+        "group_id": 4,
+        "prop_nick": "material-izdeliya",
+        "ordain": 6
+    },
+    {
+        "group_id": 4,
+        "prop_nick": "seriya",
+        "ordain": 4
+    }],
+    "shop_filters": [
+    {
+        "group_id": 1,
+        "prop_nick": "brend",
+        "ordain": 2
+    },
+    {
+        "group_id": 1,
+        "prop_nick": "cena",
+        "ordain": 4
+    },
+    {
+        "group_id": 1,
+        "prop_nick": "cvet",
+        "ordain": 10
+    },
+    {
+        "group_id": 1,
+        "prop_nick": "dlina-mm",
+        "ordain": 6
+    },
+    {
+        "group_id": 1,
+        "prop_nick": "vysota-mm",
+        "ordain": 8
+    },
+    {
+        "group_id": 4,
+        "prop_nick": "art",
+        "ordain": 12
+    },
+    {
+        "group_id": 4,
+        "prop_nick": "tip-izdeliya",
+        "ordain": 14
+    }],
+    "shop_groups": [
+    {
+        "group_id": 1,
+        "group_title": "Каталог",
+        "group_name": "Каталог",
+        "group_nick": "katalog",
+        "ordain": 16,
+        "parent_id": null,
+        "self_filters":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "self_cards":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "group_id": 2,
+        "group_title": "Светильники для помещений",
+        "group_name": "Светильники для помещений",
+        "group_nick": "katalog-svetilniki-dlya-pomesheniy",
+        "ordain": 14,
+        "parent_id": 1,
+        "self_filters":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "self_cards":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "group_id": 3,
+        "group_title": "Уличные светильники",
+        "group_name": "Уличные светильники",
+        "group_nick": "ulichnye-svetilniki",
+        "ordain": 8,
+        "parent_id": 1,
+        "self_filters":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "self_cards":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "group_id": 4,
+        "group_title": "Праздничное освещение",
+        "group_name": "Праздничное освещение",
+        "group_nick": "prazdnichnoe-osveshenie",
+        "ordain": 4,
+        "parent_id": 1,
+        "self_filters":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "self_cards":
+        {
+            "type": "Buffer",
+            "data": [0]
+        }
+    },
+    {
+        "group_id": 5,
+        "group_title": "Светодиодные ленты",
+        "group_name": "Светодиодные ленты",
+        "group_nick": "svetodiodnye-lenty",
+        "ordain": 6,
+        "parent_id": 1,
+        "self_filters":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "self_cards":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "group_id": 6,
+        "group_title": "Лампы светодиодные",
+        "group_name": "Лампы светодиодные",
+        "group_nick": "lampy-svetodiodnye",
+        "ordain": 10,
+        "parent_id": 1,
+        "self_filters":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "self_cards":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "group_id": 7,
+        "group_title": "Электротовары",
+        "group_name": "Электротовары",
+        "group_nick": "elektrotovary",
+        "ordain": 12,
+        "parent_id": 1,
+        "self_filters":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "self_cards":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "group_id": 31,
+        "group_title": "test",
+        "group_name": "test",
+        "group_nick": "test",
+        "ordain": 18,
+        "parent_id": null,
+        "self_filters":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "self_cards":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "group_id": 37,
+        "group_title": "В группе 0 и есть 1315 свободных",
+        "group_name": "kjl",
+        "group_nick": "v-gruppe-0-i-est-1315-svobodnyh",
+        "ordain": 22,
+        "parent_id": null,
+        "self_filters":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "self_cards":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "group_id": 38,
+        "group_title": ";lk;l",
+        "group_name": ";lk;l",
+        "group_nick": "lk-l",
+        "ordain": 20,
+        "parent_id": null,
+        "self_filters":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "self_cards":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "group_id": 53,
+        "group_title": "Вложенная с 0 свободных",
+        "group_name": "asd",
+        "group_nick": "v-gruppe-1315-svobodnyh-poziciy-vlojennaya-s-0-svobodnyh",
+        "ordain": 2,
+        "parent_id": 37,
+        "self_filters":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "self_cards":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "group_id": 54,
+        "group_title": "Односпальные кровати",
+        "group_name": "Односпальные кровати",
+        "group_nick": "odnospalnye-krovati",
+        "ordain": 24,
+        "parent_id": null,
+        "self_filters":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "self_cards":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "group_id": 58,
+        "group_title": "Elektrostandard",
+        "group_name": "Elektrostandard",
+        "group_nick": "elektrostandard",
+        "ordain": 26,
+        "parent_id": null,
+        "self_filters":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "self_cards":
+        {
+            "type": "Buffer",
+            "data": [0]
+        }
+    }],
+    "shop_props": [
+    {
+        "prop_nick": "art",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_nick": "brend",
+        "card_tpl": "justbrandmodel",
+        "filter_tpl": "just",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_nick": "brendart",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_nick": "brendmodel",
+        "card_tpl": "justbrandmodel",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_nick": "cena",
+        "card_tpl": "default",
+        "filter_tpl": "slider",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_nick": "cvet",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [0]
+        }
+    },
+    {
+        "prop_nick": "dlina-mm",
+        "card_tpl": "default",
+        "filter_tpl": "slider",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [0]
+        }
+    },
+    {
+        "prop_nick": "gabarity-sm",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [0]
+        }
+    },
+    {
+        "prop_nick": "garantiynyy-srok-do-01-07-2020-mes",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [0]
+        }
+    },
+    {
+        "prop_nick": "images",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_nick": "istochnik",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_nick": "list",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_nick": "material-izdeliya",
+        "card_tpl": "just",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [0]
+        }
+    },
+    {
+        "prop_nick": "model",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_nick": "modifikaciya",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [0]
+        }
+    },
+    {
+        "prop_nick": "naimenovanie",
+        "card_tpl": "justlinkmodelhidden",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_nick": "nalichie",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_nick": "opisanie",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_nick": "poziciya",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_nick": "seriya",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [0]
+        }
+    },
+    {
+        "prop_nick": "srok-slujby-g",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [0]
+        }
+    },
+    {
+        "prop_nick": "srok-slujby-svetodiodov-ch",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [0]
+        }
+    },
+    {
+        "prop_nick": "ssylki-na-video",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_nick": "tip-izdeliya",
+        "card_tpl": "default",
+        "filter_tpl": "default",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [0]
+        }
+    },
+    {
+        "prop_nick": "vysota-mm",
+        "card_tpl": "default",
+        "filter_tpl": "slider",
+        "known":
+        {
+            "type": "Buffer",
+            "data": [0]
+        }
+    }],
+    "shop_sampleprops": [
+    {
+        "sample_id": 24,
+        "prop_nick": "material-izdeliya",
+        "date_create": "2025-07-16T07:52:52.000Z",
+        "spec": "exactly"
+    },
+    {
+        "sample_id": 32,
+        "prop_nick": "model",
+        "date_create": "2025-06-30T01:34:25.000Z",
+        "spec": "exactly"
+    },
+    {
+        "sample_id": 35,
+        "prop_nick": "model",
+        "date_create": "2025-07-01T00:43:22.000Z",
+        "spec": "exactly"
+    },
+    {
+        "sample_id": 36,
+        "prop_nick": "brend",
+        "date_create": "2025-07-18T18:31:57.000Z",
+        "spec": "exactly"
+    },
+    {
+        "sample_id": 37,
+        "prop_nick": "brendart",
+        "date_create": "2025-08-04T14:18:22.000Z",
+        "spec": "exactly"
+    }],
+    "shop_samples": [
+    {
+        "sample_id": 24,
+        "group_id": 1,
+        "date_create": "2025-06-29T22:41:55.000Z"
+    },
+    {
+        "sample_id": 32,
+        "group_id": 38,
+        "date_create": "2025-06-30T01:34:25.000Z"
+    },
+    {
+        "sample_id": 35,
+        "group_id": 4,
+        "date_create": "2025-07-01T00:43:22.000Z"
+    },
+    {
+        "sample_id": 36,
+        "group_id": 58,
+        "date_create": "2025-07-18T18:31:57.000Z"
+    },
+    {
+        "sample_id": 37,
+        "group_id": 54,
+        "date_create": "2025-08-04T14:18:22.000Z"
+    }],
+    "shop_samplevalues": [
+    {
+        "sample_id": 24,
+        "prop_nick": "material-izdeliya",
+        "value_nick": "alyuminievyy-splav",
+        "date_create": "2025-07-24T23:27:19.000Z",
+        "number": null
+    },
+    {
+        "sample_id": 24,
+        "prop_nick": "material-izdeliya",
+        "value_nick": "metall",
+        "date_create": "2025-07-18T15:54:54.000Z",
+        "number": null
+    },
+    {
+        "sample_id": 24,
+        "prop_nick": "material-izdeliya",
+        "value_nick": "plastik",
+        "date_create": "2025-07-16T07:52:56.000Z",
+        "number": null
+    },
+    {
+        "sample_id": 32,
+        "prop_nick": "model",
+        "value_nick": "25052-led-10w-4200k-belyy-chernyy",
+        "date_create": "2025-06-30T01:34:28.000Z",
+        "number": null
+    },
+    {
+        "sample_id": 35,
+        "prop_nick": "model",
+        "value_nick": "40127-led",
+        "date_create": "2025-08-02T09:55:30.000Z",
+        "number": null
+    },
+    {
+        "sample_id": 35,
+        "prop_nick": "model",
+        "value_nick": "40153-led",
+        "date_create": "2025-08-02T09:51:08.000Z",
+        "number": null
+    },
+    {
+        "sample_id": 35,
+        "prop_nick": "model",
+        "value_nick": "mrl-1029",
+        "date_create": "2025-08-02T09:55:08.000Z",
+        "number": null
+    },
+    {
+        "sample_id": 36,
+        "prop_nick": "brend",
+        "value_nick": "elektrostandard",
+        "date_create": "2025-07-18T18:32:01.000Z",
+        "number": null
+    },
+    {
+        "sample_id": 37,
+        "prop_nick": "brendart",
+        "value_nick": "elektrostandard-a070990",
+        "date_create": "2025-08-04T14:19:42.000Z",
+        "number": null
+    }],
+    "sources_custom_cells": [],
+    "sources_custom_cols": [
+    {
+        "source_id": 1,
+        "sheet_title": "Уличные светильники",
+        "col_title": "sheet_name",
+        "represent_custom_col": null,
+        "prop_id": 49,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Подсветка",
+        "col_title": "БрендМодель",
+        "represent_custom_col": null,
+        "prop_id": 61,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Архитектурная подсветка",
+        "col_title": "Гарантийный срок до 01.07.2020, мес.",
+        "represent_custom_col": null,
+        "prop_id": 50,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Лента 12 В",
+        "col_title": "Длина ленты, м",
+        "represent_custom_col": null,
+        "prop_id": 36,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Уличные светильники",
+        "col_title": "Источник",
+        "represent_custom_col": null,
+        "prop_id": 52,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Уличные светильники",
+        "col_title": "Источник света",
+        "represent_custom_col": null,
+        "prop_id": 57,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Лента 12 В",
+        "col_title": "Класс защиты от поражения электрическим током",
+        "represent_custom_col": null,
+        "prop_id": 33,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Настольные лампы",
+        "col_title": "Количество светодиодов, шт.",
+        "represent_custom_col": null,
+        "prop_id": 47,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Лента 12 В",
+        "col_title": "Количество светодиодов, шт./м",
+        "represent_custom_col": null,
+        "prop_id": 30,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Уличные светильники",
+        "col_title": "Лист",
+        "represent_custom_col": null,
+        "prop_id": 51,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Лента 12 В",
+        "col_title": "Место использования",
+        "represent_custom_col": null,
+        "prop_id": 34,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Лента 12 В",
+        "col_title": "Минимальный отрезок реза, мм",
+        "represent_custom_col": null,
+        "prop_id": 26,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Лента 12 В",
+        "col_title": "Обязательна установка в профиль",
+        "represent_custom_col": null,
+        "prop_id": 28,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Лента 12 В",
+        "col_title": "Питание",
+        "represent_custom_col": null,
+        "prop_id": 31,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Лента 12 В",
+        "col_title": "Способ монтажа",
+        "represent_custom_col": null,
+        "prop_id": 38,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Лента 12 В",
+        "col_title": "Срок службы светодиодов, ч",
+        "represent_custom_col": null,
+        "prop_id": 35,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Лента 12 В",
+        "col_title": "Тип светодиодов",
+        "represent_custom_col": null,
+        "prop_id": 37,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Настольные лампы",
+        "col_title": "Тип товара",
+        "represent_custom_col": null,
+        "prop_id": null,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Лента 12 В",
+        "col_title": "Угол рассеивания, °",
+        "represent_custom_col": null,
+        "prop_id": 40,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Лента 12 В",
+        "col_title": "Умный дом Minimir Home",
+        "represent_custom_col": null,
+        "prop_id": 29,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Подсветка",
+        "col_title": "Цвет",
+        "represent_custom_col": null,
+        "prop_id": 63,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Подсветка",
+        "col_title": "Цвет арматуры",
+        "represent_custom_col": null,
+        "prop_id": 62,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Лента 12 В",
+        "col_title": "Цвет свечения",
+        "represent_custom_col": null,
+        "prop_id": 39,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Лента 12 В",
+        "col_title": "Цвет свечения [для фильтров]",
+        "represent_custom_col": null,
+        "prop_id": 27,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Подсветка",
+        "col_title": "Цветовая температура, К",
+        "represent_custom_col": null,
+        "prop_id": 66,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Комплектующие для светодиодной ленты",
+        "col_title": "Цена",
+        "represent_custom_col": null,
+        "prop_id": null,
+        "noprop": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Лента 12 В",
+        "col_title": "Ширина, мм",
+        "represent_custom_col": null,
+        "prop_id": 32,
+        "noprop": null
+    },
+    {
+        "source_id": 5,
+        "sheet_title": "Лист 1",
+        "col_title": "Колонка 1",
+        "represent_custom_col": null,
+        "prop_id": 54,
+        "noprop": null
+    },
+    {
+        "source_id": 5,
+        "sheet_title": "Лист 1",
+        "col_title": "Колонка 2",
+        "represent_custom_col": null,
+        "prop_id": null,
+        "noprop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "source_id": 6,
+        "sheet_title": "List 1",
+        "col_title": "Column 1",
+        "represent_custom_col": null,
+        "prop_id": null,
+        "noprop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "source_id": 6,
+        "sheet_title": "List 1",
+        "col_title": "Column 2",
+        "represent_custom_col": null,
+        "prop_id": null,
+        "noprop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    }],
+    "sources_custom_rows": [
+    {
+        "source_id": 1,
+        "sheet_title": "Линейные светодиодные светильники",
+        "key_nick": "elektrostandard-a046088",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Патроны для ламп",
+        "key_nick": "elektrostandard-a050295",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Подсветка",
+        "key_nick": "elektrostandard-a056599",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Подсветка",
+        "key_nick": "elektrostandard-a069821",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Подсветка",
+        "key_nick": "elektrostandard-a069822",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Светодиодная лента",
+        "key_nick": "elektrostandard-a065973",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Светодиодная лента",
+        "key_nick": "elektrostandard-a065974",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Серия 101",
+        "key_nick": "elektrostandard-pro-a041464",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Серия 101",
+        "key_nick": "elektrostandard-pro-a041466",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Серия 101",
+        "key_nick": "elektrostandard-pro-a041467",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Серия 101 серебро матовое",
+        "key_nick": "elektrostandard-pro-a041491",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Серия 101 чёрная шагрень",
+        "key_nick": "elektrostandard-pro-a042952",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Серия 101 чёрная шагрень",
+        "key_nick": "elektrostandard-pro-a042953",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Уличные светильники",
+        "key_nick": "elektrostandard-a070175",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Шинопроводы",
+        "key_nick": "elektrostandard-a062325",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Шинопроводы",
+        "key_nick": "elektrostandard-a067495",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Шинопроводы",
+        "key_nick": "elektrostandard-a067504",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Шинопроводы",
+        "key_nick": "elektrostandard-a067505",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Шинопроводы",
+        "key_nick": "elektrostandard-a067998",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Шинопроводы",
+        "key_nick": "elektrostandard-a067999",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Шинопроводы",
+        "key_nick": "elektrostandard-a068000",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Шинопроводы",
+        "key_nick": "elektrostandard-a069715",
+        "repeat_index": 0,
+        "represent_custom_row": null
+    }],
+    "sources_custom_sheets": [
+    {
+        "source_id": 1,
+        "sheet_title": "Комплектующие",
+        "represent_custom_sheet": null,
+        "entity_id": 1
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Комплектующие для светодиодной ленты",
+        "represent_custom_sheet": null,
+        "entity_id": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Пульты и контроллеры",
+        "represent_custom_sheet": null,
+        "entity_id": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Серия 101",
+        "represent_custom_sheet": null,
+        "entity_id": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Серия 101 серебро матовое",
+        "represent_custom_sheet": null,
+        "entity_id": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Серия 101 чёрная шагрень",
+        "represent_custom_sheet": null,
+        "entity_id": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Уличные светильники",
+        "represent_custom_sheet": null,
+        "entity_id": null
+    },
+    {
+        "source_id": 1,
+        "sheet_title": "Шинопроводы",
+        "represent_custom_sheet": null,
+        "entity_id": null
+    },
+    {
+        "source_id": 5,
+        "sheet_title": "Лист 1",
+        "represent_custom_sheet": null,
+        "entity_id": null
+    },
+    {
+        "source_id": 6,
+        "sheet_title": "List 1",
+        "represent_custom_sheet": null,
+        "entity_id": null
+    }],
+    "sources_custom_values": [
+    {
+        "prop_id": 1,
+        "value_nick": "elektrostandard-a062325",
+        "represent_custom_value": null
+    },
+    {
+        "prop_id": 52,
+        "value_nick": "elektrostandart",
+        "represent_custom_value": null
+    },
+    {
+        "prop_id": 51,
+        "value_nick": "shinoprovody",
+        "represent_custom_value": null
+    }],
+    "sources_sources": [
+    {
+        "source_id": 1,
+        "source_title": "Elektrostandard",
+        "source_nick": "elektrostandard",
+        "date_check": "2025-07-09T02:34:48.000Z",
+        "date_content": "2025-08-10T16:44:00.000Z",
+        "date_load": "2025-08-10T18:12:18.000Z",
+        "date_mtime": "2025-08-10T16:44:00.000Z",
+        "date_exam": "2025-02-19T21:22:10.000Z",
+        "duration_rest": 7994,
+        "duration_insert": 99501,
+        "duration_check": 21,
+        "entity_id": 1,
+        "dependent":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "master":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "comment": "<br>",
+        "represent_source":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_sheets":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_cells":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_cols":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_rows":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "renovate":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "date_start": null,
+        "date_recalc": null,
+        "ordain": 6,
+        "error": "",
+        "msg_check": "Скачивание новых данных запланировано по воскресеньям",
+        "msg_load": "Выгрузка с elektrostandard.ru"
+    },
+    {
+        "source_id": 5,
+        "source_title": "Test",
+        "source_nick": "test",
+        "date_check": "2025-07-09T02:34:48.000Z",
+        "date_content": "2025-07-09T02:34:49.000Z",
+        "date_load": "2025-07-09T02:34:49.000Z",
+        "date_mtime": "2025-07-09T02:34:49.000Z",
+        "date_exam": "2025-03-09T23:38:21.000Z",
+        "duration_rest": 15,
+        "duration_insert": 35,
+        "duration_check": 4,
+        "entity_id": 54,
+        "dependent":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "master":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "comment": "",
+        "represent_source":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_sheets":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_cells":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_cols":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_rows":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "renovate":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "date_start": null,
+        "date_recalc": null,
+        "ordain": 4,
+        "error": "",
+        "msg_check": "Тестовые данные готовы к загрузке",
+        "msg_load": "Тестовые данные загружены"
+    },
+    {
+        "source_id": 6,
+        "source_title": "King",
+        "source_nick": "king",
+        "date_check": "2025-07-09T02:34:48.000Z",
+        "date_content": "2025-07-09T02:34:49.000Z",
+        "date_load": "2025-07-09T02:34:49.000Z",
+        "date_mtime": "2025-07-09T02:34:49.000Z",
+        "date_exam": "2025-03-11T01:07:46.000Z",
+        "duration_rest": 5,
+        "duration_insert": 35,
+        "duration_check": 6,
+        "entity_id": 53,
+        "dependent":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "master":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "comment": "12345",
+        "represent_source":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_sheets":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_cells":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_cols":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_rows":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "renovate":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "date_start": null,
+        "date_recalc": null,
+        "ordain": 2,
+        "error": "",
+        "msg_check": "King готов к загрузке",
+        "msg_load": "King загружен"
+    }],
+    "sources_props": [
+    {
+        "prop_id": 1,
+        "prop_title": "БрендАрт",
+        "prop_nick": "brendart",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "БрендАрт",
+        "unit": "",
+        "ordain": 10,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 2,
+        "prop_title": "Бренд",
+        "prop_nick": "brend",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Бренд",
+        "unit": "",
+        "ordain": 20,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 3,
+        "prop_title": "Модель",
+        "prop_nick": "model",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Модель",
+        "unit": "",
+        "ordain": 12,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 4,
+        "prop_title": "Цена",
+        "prop_nick": "cena",
+        "type": "number",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Цена",
+        "unit": "",
+        "ordain": 18,
+        "comment": "<br>",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 6,
+        "prop_title": "Описание",
+        "prop_nick": "opisanie",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Описание",
+        "unit": "",
+        "ordain": 14,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 7,
+        "prop_title": "Ссылки на картинки",
+        "prop_nick": "ssylki-na-kartinki",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "name": "Ссылки на картинки",
+        "unit": "",
+        "ordain": 58,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 8,
+        "prop_title": "Вес, кг",
+        "prop_nick": "ves-kg",
+        "type": "number",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Вес",
+        "unit": "кг",
+        "ordain": 112,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 9,
+        "prop_title": "Габариты, см",
+        "prop_nick": "gabarity-sm",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Габариты",
+        "unit": "см",
+        "ordain": 116,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 10,
+        "prop_title": "Высота, мм",
+        "prop_nick": "vysota-mm",
+        "type": "number",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Высота",
+        "unit": "мм",
+        "ordain": 110,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 12,
+        "prop_title": "Диапазон рабочих температур, °C",
+        "prop_nick": "diapazon-rabochih-temperatur-c",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Диапазон рабочих температур",
+        "unit": "°C",
+        "ordain": 108,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 13,
+        "prop_title": "Тип изделия",
+        "prop_nick": "tip-izdeliya",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Тип изделия",
+        "unit": "",
+        "ordain": 106,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 14,
+        "prop_title": "Ссылки на файлы",
+        "prop_nick": "ssylki-na-fayly",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "name": "Ссылки на файлы",
+        "unit": "",
+        "ordain": 62,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 15,
+        "prop_title": "Длина, мм",
+        "prop_nick": "dlina-mm",
+        "type": "number",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Длина",
+        "unit": "мм",
+        "ordain": 104,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 16,
+        "prop_title": "Срок службы, г.",
+        "prop_nick": "srok-slujby-g",
+        "type": "number",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Срок службы",
+        "unit": "г.",
+        "ordain": 102,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 17,
+        "prop_title": "Материал изделия",
+        "prop_nick": "material-izdeliya",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "name": "Материал изделия",
+        "unit": "",
+        "ordain": 100,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 20,
+        "prop_title": "Степень пылевлагозащиты",
+        "prop_nick": "stepen-pylevlagozashity",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Степень пылевлагозащиты",
+        "unit": "",
+        "ordain": 98,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 23,
+        "prop_title": "Гарантийный срок, мес.",
+        "prop_nick": "garantiynyy-srok-mes",
+        "type": "number",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Гарантийный срок",
+        "unit": "мес.",
+        "ordain": 96,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 24,
+        "prop_title": "Серия",
+        "prop_nick": "seriya",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Серия",
+        "unit": "",
+        "ordain": 84,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 25,
+        "prop_title": "Арт",
+        "prop_nick": "art",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Арт",
+        "unit": "",
+        "ordain": 26,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 26,
+        "prop_title": "Минимальный отрезок реза, мм",
+        "prop_nick": "minimalnyy-otrezok-reza-mm",
+        "type": "number",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Минимальный отрезок реза",
+        "unit": "мм",
+        "ordain": 94,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 27,
+        "prop_title": "Цвет свечения [для фильтров]",
+        "prop_nick": "cvet-svecheniya-dlya-filtrov",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Цвет свечения [для фильтров]",
+        "unit": "",
+        "ordain": 92,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 28,
+        "prop_title": "Обязательна установка в профиль",
+        "prop_nick": "obyazatelna-ustanovka-v-profil",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Обязательна установка в профиль",
+        "unit": "",
+        "ordain": 90,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 29,
+        "prop_title": "Умный дом Minimir Home",
+        "prop_nick": "umnyy-dom-minimir-home",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Умный дом Minimir Home",
+        "unit": "",
+        "ordain": 88,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 30,
+        "prop_title": "Количество светодиодов, шт./м",
+        "prop_nick": "kolichestvo-svetodiodov-sht-m",
+        "type": "number",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Количество светодиодов",
+        "unit": "шт./м",
+        "ordain": 86,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 31,
+        "prop_title": "Питание",
+        "prop_nick": "pitanie",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Питание",
+        "unit": "",
+        "ordain": 82,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 32,
+        "prop_title": "Ширина, мм",
+        "prop_nick": "shirina-mm",
+        "type": "number",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Ширина",
+        "unit": "мм",
+        "ordain": 80,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 33,
+        "prop_title": "Класс защиты от поражения электрическим током",
+        "prop_nick": "klass-zashity-ot-porajeniya-elektricheskim-tokom",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Класс защиты от поражения электрическим током",
+        "unit": "",
+        "ordain": 78,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 34,
+        "prop_title": "Место использования",
+        "prop_nick": "mesto-ispolzovaniya",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Место использования",
+        "unit": "",
+        "ordain": 76,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 35,
+        "prop_title": "Срок службы светодиодов, ч",
+        "prop_nick": "srok-slujby-svetodiodov-ch",
+        "type": "number",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Срок службы светодиодов",
+        "unit": "ч",
+        "ordain": 74,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 36,
+        "prop_title": "Длина ленты, м",
+        "prop_nick": "dlina-lenty-m",
+        "type": "number",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Длина ленты",
+        "unit": "м",
+        "ordain": 72,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 37,
+        "prop_title": "Тип светодиодов",
+        "prop_nick": "tip-svetodiodov",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Тип светодиодов",
+        "unit": "",
+        "ordain": 70,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 38,
+        "prop_title": "Способ монтажа",
+        "prop_nick": "sposob-montaja",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Способ монтажа",
+        "unit": "",
+        "ordain": 68,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 39,
+        "prop_title": "Цвет свечения",
+        "prop_nick": "cvet-svecheniya",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Цвет свечения",
+        "unit": "",
+        "ordain": 66,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 40,
+        "prop_title": "Угол рассеивания, °",
+        "prop_nick": "ugol-rasseivaniya",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Угол рассеивания",
+        "unit": "°",
+        "ordain": 64,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 41,
+        "prop_title": "images",
+        "prop_nick": "images",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "name": "images",
+        "unit": "",
+        "ordain": 16,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 42,
+        "prop_title": "files",
+        "prop_nick": "files",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "files",
+        "unit": "",
+        "ordain": 52,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 43,
+        "prop_title": "videos",
+        "prop_nick": "videos",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "videos",
+        "unit": "",
+        "ordain": 46,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 44,
+        "prop_title": "texts",
+        "prop_nick": "texts",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "texts",
+        "unit": "",
+        "ordain": 42,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 45,
+        "prop_title": "Ссылки на видео",
+        "prop_nick": "ssylki-na-video",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Ссылки на видео",
+        "unit": "",
+        "ordain": 24,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 47,
+        "prop_title": "Количество светодиодов, шт.",
+        "prop_nick": "kolichestvo-svetodiodov-sht",
+        "type": "number",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Количество светодиодов",
+        "unit": "шт.",
+        "ordain": 38,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 48,
+        "prop_title": "Тип товара",
+        "prop_nick": "tip-tovara",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "name": "Тип товара",
+        "unit": "",
+        "ordain": 56,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 49,
+        "prop_title": "sheet_name",
+        "prop_nick": "sheet-name",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "sheet_name",
+        "unit": "",
+        "ordain": 50,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 50,
+        "prop_title": "Гарантийный срок до 01.07.2020, мес.",
+        "prop_nick": "garantiynyy-srok-do-01-07-2020-mes",
+        "type": "number",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Гарантийный срок до 01.07.2020",
+        "unit": "мес.",
+        "ordain": 44,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 51,
+        "prop_title": "Лист",
+        "prop_nick": "list",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Лист",
+        "unit": "",
+        "ordain": 28,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 52,
+        "prop_title": "Источник",
+        "prop_nick": "istochnik",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Источник",
+        "unit": "",
+        "ordain": 22,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 53,
+        "prop_title": "Column 1",
+        "prop_nick": "column-1",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Column 1",
+        "unit": "",
+        "ordain": 48,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 54,
+        "prop_title": "Колонка 1",
+        "prop_nick": "kolonka-1",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Колонка 1",
+        "unit": "",
+        "ordain": 54,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 55,
+        "prop_title": "Column 2",
+        "prop_nick": "column-2",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "name": "Column 2",
+        "unit": "",
+        "ordain": 40,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 56,
+        "prop_title": "Колонка 2",
+        "prop_nick": "kolonka-2",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Колонка 2",
+        "unit": "",
+        "ordain": 36,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 57,
+        "prop_title": "Источник света",
+        "prop_nick": "istochnik-sveta",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Источник света",
+        "unit": "",
+        "ordain": 60,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 58,
+        "prop_title": "Тест, руб.",
+        "prop_nick": "test-rub",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Тест",
+        "unit": "руб.",
+        "ordain": 34,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 60,
+        "prop_title": "Наименование",
+        "prop_nick": "naimenovanie",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Наименование",
+        "unit": "",
+        "ordain": 8,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 61,
+        "prop_title": "БрендМодель",
+        "prop_nick": "brendmodel",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "БрендМодель",
+        "unit": "",
+        "ordain": 6,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 62,
+        "prop_title": "Цвет арматуры",
+        "prop_nick": "cvet-armatury",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Цвет арматуры",
+        "unit": "",
+        "ordain": 32,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 63,
+        "prop_title": "Цвет",
+        "prop_nick": "cvet",
+        "type": "value",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "name": "Цвет",
+        "unit": "",
+        "ordain": 30,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 64,
+        "prop_title": "Скрыть фильтры",
+        "prop_nick": "skryt-filtry",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Скрыть фильтры",
+        "unit": "",
+        "ordain": 4,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 65,
+        "prop_title": "Позиция",
+        "prop_nick": "poziciya",
+        "type": "text",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Позиция",
+        "unit": "",
+        "ordain": 2,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    },
+    {
+        "prop_id": 66,
+        "prop_title": "Цветовая температура, К",
+        "prop_nick": "cvetovaya-temperatura-k",
+        "type": "number",
+        "multi":
+        {
+            "type": "Buffer",
+            "data": [0]
+        },
+        "name": "Цветовая температура",
+        "unit": "К",
+        "ordain": 114,
+        "comment": "",
+        "represent_prop":
+        {
+            "type": "Buffer",
+            "data": [1]
+        },
+        "represent_values":
+        {
+            "type": "Buffer",
+            "data": [1]
+        }
+    }],
+    "sources_synonyms": [
+    {
+        "col_nick": "gabarity-sm",
+        "col_title": "Габариты, см",
+        "prop_id": 8
+    },
+    {
+        "col_nick": "torgovaya-gruppa",
+        "col_title": "Торговая группа",
+        "prop_id": 48
+    }]
+}

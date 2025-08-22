@@ -9,5 +9,5 @@ tpl.ROOT = (data, env) => err(data, env) || `
 	</div>
 `
 tpl.showGroup = (data, env, group) => `
-	<a data-scroll="none" href="${cards.getGroupPath(data, env, group)}${cards.addget(data, env,{m:data.md.m})}">${group.group_title}</a>
+	<div><a data-scroll="none" href="${cards.getGroupPath(data, group)}${cards.addget(env.bread, {m:data.md.m})}">${group.group_title}</a></div>
 `

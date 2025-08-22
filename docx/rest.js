@@ -66,17 +66,15 @@ rest.addResponse('get-head', async view => {
 	
 	const list = await getList(dir)
 	const finfo = list.find(finfo => finfo.name == name)
+	const head = { title:name }
 	if (!finfo) {
 		view.status = 404
-		return {
-			title:name
-		}
+		return head
 	}
-	return {
-		image_src: finfo.img,
-		title:finfo.heading, 
-		description:finfo.preview
-	}
+	head.title = finfo.heading
+	if (finfo.preview) head.description = finfo.preview
+	if (finfo.img) head.image_src = finfo.img
+	return head
 })
 
 rest.addResponse('get-sitemap', async view => {
@@ -91,16 +89,17 @@ rest.addResponse('get-sitemap', async view => {
 	const list = await getList(dir)
 	let files = {}
 	for (const finfo of list) {
-		files[finfo.name] = {
-			name: finfo.heading ? finfo.heading : finfo.name,
-			title: finfo.heading
-		}
+		const head = { title: finfo.name }
+		if (finfo.heading) head.title = finfo.heading
+		if (finfo.preview) head.description = finfo.preview
+		if (finfo.img) head.image_src = finfo.img
+		files[finfo.name] = head
 	}
 	const nick = nicked(title)
 	view.ans.headings = {
 		[nick]: {
 			title: title,
-			childs: files
+			items: files
 		}
 	}
 	return view.ret()
@@ -164,6 +163,7 @@ const getList = (src) => {
 			} else {
 				finfo.htmlsrc = src + finfo.file
 				const im = html.match(/<img[^>]*src="([^"]*)"[^>]*>/iu)
+
 				if (im) finfo.img = im[1]
 			}
 			

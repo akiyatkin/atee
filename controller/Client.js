@@ -542,7 +542,8 @@ const loadAll = (layers, promises = [], proc = {}) => {
 			}
 		} else if (layer.html) {
 			let promise = fetch(layer.html).then(res => {
-				if (res.status != 200) {
+				if (res.status != 200) { //get-search-page в группе каталога 404 и при переходах по группам страница обноволяются постоянно.
+					console.log(layer.html, layer.sub)
 					location.reload()
 					return new Promise(() => {})//reload сразу не происходит, надо зависнуть
 				}

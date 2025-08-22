@@ -1,13 +1,6 @@
-import fs from "fs/promises"
 import nicked from '/-nicked'
-import docx from '/-docx'
-import mail from '/-mail'
 import config from '/-config'
-import unique from "/-nicked/unique.js"
-import Access from "/-controller/Access.js"
-
 import Shop from "/-shop/Shop.js"
-
 import Rest from "/-rest"
 const rest = new Rest()
 export default rest

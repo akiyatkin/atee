@@ -32,7 +32,9 @@ export const ROOT = (data, env) => `
 	${css(data, env)}
     ${showBlock(data, env, data.heading)}
     <hr>
-	${data.headings.map(group => group ? showGroup(data, env, group) : '').join('')}
+    <div style="display: grid; gap: 0.5em; margin-top:2em">
+		${data.headings.map(group => group ? showGroup(data, env, group) : '').join('')}
+	</div>
 `
 const showGroup = (data, env, group) => `
 	<div><a href="${env.crumb}/${group.nick}">${group.title}</a></div>

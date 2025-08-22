@@ -76,6 +76,7 @@ rest.addArgument('rt', ['array']) //reloadts
 rest.addResponse('get-layers', async view => {
 	view.nostore = true
 	view.headers = {}
+
 	const req = await view.gets(['rt', 'rd', 'pv', 'nt', 'st', 'ut', 'rg', 'vt'])	
 
 	const {
@@ -88,6 +89,8 @@ rest.addResponse('get-layers', async view => {
 		vt: view_time, 
 		rg: globals 
 	} = req
+
+	
 	//console.log(req)
 	const visitor = view.visitor
 	const host = visitor.client.host
@@ -105,21 +108,22 @@ rest.addResponse('get-layers', async view => {
 	
 
 	if (!next) return view.err()
-	// if (globals.length) {
-	// 	return view.err() //Ну или перезагрузиться	
-	// }
-	// view.data.gs = globals
 	
 	const nroute = await router(next)
 	view.data.root = nroute.root
 	
 	if (nroute.rest || nroute.secure) return view.err()
+	const bread = new Bread(nroute.path, nroute.get, nroute.search, nroute.root)
 	const rule = await Layers.getRule(nroute.root)
 	
+
+
 	if (!rule) return view.err('Bad type layers.json')
 
-	const bread = new Bread(nroute.path, nroute.get, nroute.search, nroute.root)
 	
+	
+
+
 	const theme = Theme.harvest(bread.get, cookie)
 	if (bread.get.theme != null) {
 		Theme.set(view, theme)
@@ -138,10 +142,14 @@ rest.addResponse('get-layers', async view => {
 			'return `'+val+'`'
 		)(env, host, timings, layer, bread, crumb, theme)
 	}
+	
+
 
 	const { index: nopt, status } = Layers.getParsedIndex(rule, timings, bread, interpolate, theme) //{ index: {push, root}, status }
 	bread.status = status
-
+	
+	
+	
 	if (!nopt?.root) return view.err()
 	
 	if (nopt.check) {
@@ -153,11 +161,7 @@ rest.addResponse('get-layers', async view => {
 		}
 	}
 
-	
 		
-		
-	
-	//view.data.checks = nopt.checks //wtf?
 	view.data.status = status
 
 	view.data.theme = theme
@@ -184,10 +188,7 @@ rest.addResponse('get-layers', async view => {
 	
 	
 	const { index: popt } = Layers.getParsedIndex(rule, ptimings, pbread, interpolate, ptheme)
-	//view.data.status = Math.max()
 	if (!popt.root) return view.err()
-
-	
 	
 	
 

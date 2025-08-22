@@ -6,16 +6,16 @@ export const ROOT = (data, env) => `
 		<div>
 			<div style="position: sticky; top:1em">
 				<div style="display: grid; gap: 0.25em; margin-bottom: 1em">
-					<a href="/@atee/sources">Источники</a>
-					<a href="props">Свойства</a>
-					<a href="disappear">Исчезли</a>
+					<div><a href="/@atee/sources">Источники</a></div>
+					<div><a href="props">Свойства</a></div>
+					<div><a href="disappear">Исчезли</a></div>
 				</div>
 				<div id="RECALC"></div>
 			</div>
 		</div>
 		<div style="display: grid; gap: 0.25em">
-			<a href="memory">Память</a>
-			<a href="settings">Настройки</a>
+			<div><a href="memory">Память</a></div>
+			<div><a href="settings">Настройки</a></div>
 		</div>
 	</div>
 `
