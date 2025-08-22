@@ -133,9 +133,9 @@ const Server = {
 				} else {
 					//if (json.push?.length) response.setHeader('Link', json.push.join(','));
 					if (json.push?.length && response.writeEarlyHints) {
-						response.writeEarlyHints({
-							'link': json.push
-						})
+						// response.writeEarlyHints({
+						// 	'link': json.push
+						// })
 					}
 
 
