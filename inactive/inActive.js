@@ -1,7 +1,8 @@
-
+import isViewport from "./isViewport.js"
 const inActive = new Promise(resolve => {
     //const base = document.activeElement
     const init = () => {
+        if (!isViewport(document.body)) return false
         // document.body.removeEventListener('click', init)
         // document.body.removeEventListener('mouseover', init)
         // window.removeEventListener('click', init)

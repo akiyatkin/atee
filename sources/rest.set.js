@@ -7,7 +7,7 @@ import date from '/-words/date.html.js'
 import eye from "/-sources/represent.js"
 
 import Sources from "/-sources/Sources.js"
-import Consequences from "/-sources/Consequences.js"
+
 import Consciousness from "/-sources/Consciousness.js"
 
 import Rest from "/-rest"
@@ -25,7 +25,29 @@ rest.extra(rest_search)
 rest.addAction('set-recalc', ['admin','checkstart'], async view => {
 	const db = await view.get('db')
 	Sources.recalc(db, async () => {
-		await Consequences.all(db)
+		await Consciousness.recalcEntitiesPropId(db)
+		await Consciousness.recalcMulti(db)
+		await Consciousness.recalcTexts(db)
+		await Consciousness.recalcKeyIndex(db)
+		await Consciousness.recalcRowsKeyIdRepeatIndex(db)
+		await Consciousness.insertItems(db)
+		
+		await Consciousness.recalcRepresentSheet(db)
+		await Consciousness.recalcRepresentCol(db)
+		await Consciousness.recalcRepresentRow(db)
+		await Consciousness.recalcRepresentCell(db)
+
+		await Consciousness.recalcRepresentCellRowKey(db)
+		await Consciousness.recalcRepresentCellSummary(db)
+		
+		await Consciousness.recalcRepresentItemValue(db)
+		await Consciousness.recalcRepresentItemSummary(db)
+		await Consciousness.recalcRepresent(db)
+		await Consciousness.recalcMaster(db)
+		await Consciousness.recalcWinner(db)
+		await Consciousness.recalcAppear(db)
+		await Consciousness.recalcRowSearch(db)
+		await Consciousness.recalcItemSearch(db)
 	})
 	
 	return view.ret()

@@ -95,7 +95,6 @@ rest.addResponse('prop', ['admin'], async view => {
 	const db = await view.get('db')
 	const prop_id = await view.get('prop_id#required')
 	const prop = view.data.prop = await Sources.getProp(db, prop_id)
-	const entity = view.data.entity = await Sources.getEntity(db, prop_id)
 	
 	view.data.synonyms = await db.all(`
 		SELECT col_title, col_nick
@@ -107,7 +106,6 @@ rest.addResponse('prop', ['admin'], async view => {
 		SELECT co.prop_id, ce.text, count(ce.text) as count, 
 			ce.pruning + 0 as pruning, 
 			max(ce.represent) + 0 as represent, 
-			max(ce.winner) + 0 as winner, 
 			ce.date, 
 			ce.number, ce.value_id, va.value_title, va.value_nick
 		FROM sources_cols co, sources_cells ce
@@ -129,9 +127,9 @@ rest.addResponse('prop', ['admin'], async view => {
 	
 	for (const value of list) {
 		value.cls = represent.calcCls(
-			entity.represent_entity && prop.represent_prop, 
+			prop.represent_prop, 
 			custom[value.value_nick]?.represent_custom_value, 
-			entity.represent_values
+			prop.represent_values
 		)
 
 	}
@@ -285,153 +283,153 @@ rest.addResponse('disappear-table', ['admin'], async view => {
 	}
 	return view.ret()
 })
-rest.addResponse('position', ['admin'], async view => {
-	const db = await view.get('db')
-	const entity_id = await view.get('entity_id#required')
-	const key_id = await view.get('key_id#required')
-	const entity = view.data.entity = await Sources.getEntity(db, entity_id)
-	const item = view.data.item = await Sources.getItem(db, entity_id, key_id)
-	return view.ret()
-})
-rest.addResponse('position-table', ['admin'], async view => {
-	const db = await view.get('db')
-	const entity_id = await view.get('entity_id#required')
-	const key_id = await view.get('key_id#required')
-	const entity = view.data.entity = await Sources.getEntity(db, entity_id)
+// rest.addResponse('position', ['admin'], async view => {
+// 	const db = await view.get('db')
+// 	const entity_id = await view.get('entity_id#required')
+// 	const key_id = await view.get('key_id#required')
+// 	const entity = view.data.entity = await Sources.getEntity(db, entity_id)
+// 	const item = view.data.item = await Sources.getItem(db, entity_id, key_id)
+// 	return view.ret()
+// })
+// rest.addResponse('position-table', ['admin'], async view => {
+// 	const db = await view.get('db')
+// 	const entity_id = await view.get('entity_id#required')
+// 	const key_id = await view.get('key_id#required')
+// 	const entity = view.data.entity = await Sources.getEntity(db, entity_id)
 	
-	const item = view.data.item = await Sources.getItem(db, entity_id, key_id)
+// 	const item = view.data.item = await Sources.getItem(db, entity_id, key_id)
 	
 
-	let cells = await db.all(`
-		SELECT
-			ce.number, 
-			ce.date, 
-			ce.text,
+// 	let cells = await db.all(`
+// 		SELECT
+// 			ce.number, 
+// 			ce.date, 
+// 			ce.text,
 			
-			ce.sheet_index,
-			ce.source_id,
-			ce.row_index,
-			ce.col_index,
-			ce.multi_index,
+// 			ce.sheet_index,
+// 			ce.source_id,
+// 			ce.row_index,
+// 			ce.col_index,
+// 			ce.multi_index,
 
-			sh.sheet_title,
-			so.source_title,
-			va.value_title as value, 
-			co.prop_id, 
-			pr.prop_title,
-			ce.winner + 0 as winner,
-			ce.represent + 0 as represent,
-			ce.pruning + 0 as pruning,
-			ro.key_id
-		FROM sources_sheets sh, sources_sources so, sources_rows ro, sources_items it, sources_cols co, sources_props pr, sources_cells ce
-			LEFT JOIN sources_values va on (va.value_id = ce.value_id)
-		WHERE 
-			sh.entity_id = :entity_id
-			and so.source_id = sh.source_id
-			and ro.source_id = sh.source_id
-			and ro.sheet_index = sh.sheet_index 
-			and ro.key_id = :key_id
-			and it.entity_id = sh.entity_id
-			and it.key_id = ro.key_id
-			and co.source_id = sh.source_id
-			and co.sheet_index = sh.sheet_index
+// 			sh.sheet_title,
+// 			so.source_title,
+// 			va.value_title as value, 
+// 			co.prop_id, 
+// 			pr.prop_title,
+// 			ce.winner + 0 as winner,
+// 			ce.represent + 0 as represent,
+// 			ce.pruning + 0 as pruning,
+// 			ro.key_id
+// 		FROM sources_sheets sh, sources_sources so, sources_rows ro, sources_items it, sources_cols co, sources_props pr, sources_cells ce
+// 			LEFT JOIN sources_values va on (va.value_id = ce.value_id)
+// 		WHERE 
+// 			sh.entity_id = :entity_id
+// 			and so.source_id = sh.source_id
+// 			and ro.source_id = sh.source_id
+// 			and ro.sheet_index = sh.sheet_index 
+// 			and ro.key_id = :key_id
+// 			and it.entity_id = sh.entity_id
+// 			and it.key_id = ro.key_id
+// 			and co.source_id = sh.source_id
+// 			and co.sheet_index = sh.sheet_index
 
-			and pr.prop_id = co.prop_id
+// 			and pr.prop_id = co.prop_id
 
-			and ce.source_id = sh.source_id
-			and ce.sheet_index = sh.sheet_index
-			and ce.row_index = ro.row_index
-			and ce.col_index = co.col_index
-		ORDER BY so.ordain, sh.sheet_index, ro.row_index, pr.ordain, ce.multi_index
-	`, {entity_id, key_id})
-	cells = Object.values(Object.groupBy(cells, (cell => cell.prop_id)))
-	for (const i in cells) {
-		cells[i] = Object.values(Object.groupBy(cells[i], (cell => [cell.source_id, cell.sheet_index, cell.row_index, cell.cell_index].join(':'))))
-	}
-	view.data.cells = cells
-	return view.ret()
-})
-rest.addResponse('positions', ['admin'], async view => {
-	const db = await view.get('db')
-	const entity_id = await view.get('entity_id#required')
-	const entity = view.data.entity = await Sources.getEntity(db, entity_id)
-	const search = view.get('search')
-	return view.ret()
-})
-rest.addResponse('positions-table', ['admin'], async view => {
-	const db = await view.get('db')
-	const entity_id = await view.get('entity_id#required')
-	const entity = view.data.entity = await Sources.getEntity(db, entity_id)
-	const hashs = await view.get('hashs')
+// 			and ce.source_id = sh.source_id
+// 			and ce.sheet_index = sh.sheet_index
+// 			and ce.row_index = ro.row_index
+// 			and ce.col_index = co.col_index
+// 		ORDER BY so.ordain, sh.sheet_index, ro.row_index, pr.ordain, ce.multi_index
+// 	`, {entity_id, key_id})
+// 	cells = Object.values(Object.groupBy(cells, (cell => cell.prop_id)))
+// 	for (const i in cells) {
+// 		cells[i] = Object.values(Object.groupBy(cells[i], (cell => [cell.source_id, cell.sheet_index, cell.row_index, cell.cell_index].join(':'))))
+// 	}
+// 	view.data.cells = cells
+// 	return view.ret()
+// })
+// rest.addResponse('positions', ['admin'], async view => {
+// 	const db = await view.get('db')
+// 	const entity_id = await view.get('entity_id#required')
+// 	const entity = view.data.entity = await Sources.getEntity(db, entity_id)
+// 	const search = view.get('search')
+// 	return view.ret()
+// })
+// rest.addResponse('positions-table', ['admin'], async view => {
+// 	const db = await view.get('db')
+// 	const entity_id = await view.get('entity_id#required')
+// 	const entity = view.data.entity = await Sources.getEntity(db, entity_id)
+// 	const hashs = await view.get('hashs')
 
 	
-	const where_search = []
-	if (!hashs.length) where_search.push('1=1')
-	for (const hash of hashs) {
-		const sql = 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"'
-		where_search.push(sql)
-	}
+// 	const where_search = []
+// 	if (!hashs.length) where_search.push('1=1')
+// 	for (const hash of hashs) {
+// 		const sql = 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"'
+// 		where_search.push(sql)
+// 	}
 
-	const props = await db.allto('prop_id', `
-		SELECT
-			pr.prop_id, pr.prop_title, pr.type
-		FROM sources_props pr
-		WHERE pr.entity_id = :entity_id 
-			and pr.type != "text"
-		ORDER BY pr.ordain
-	`, {entity_id})
+// 	const props = await db.allto('prop_id', `
+// 		SELECT
+// 			pr.prop_id, pr.prop_title, pr.type
+// 		FROM sources_props pr
+// 		WHERE pr.entity_id = :entity_id 
+// 			and pr.type != "text"
+// 		ORDER BY pr.ordain
+// 	`, {entity_id})
 
-	const list = view.data.list = await db.all(`
-		SELECT
-			ce.number, 
-			ce.date, 
-			va.value_title as value, 
-			co.prop_id, 
-			ro.key_id
-		FROM sources_sheets sh, sources_sources so, sources_rows ro, sources_items it, sources_cols co, sources_props pr, sources_cells ce
-			LEFT JOIN sources_values va on (va.value_id = ce.value_id)
-		WHERE 
-			sh.entity_id = :entity_id
-			and so.source_id = sh.source_id
-			and ro.source_id = sh.source_id
-			and ro.sheet_index = sh.sheet_index 
+// 	const list = view.data.list = await db.all(`
+// 		SELECT
+// 			ce.number, 
+// 			ce.date, 
+// 			va.value_title as value, 
+// 			co.prop_id, 
+// 			ro.key_id
+// 		FROM sources_sheets sh, sources_sources so, sources_rows ro, sources_items it, sources_cols co, sources_props pr, sources_cells ce
+// 			LEFT JOIN sources_values va on (va.value_id = ce.value_id)
+// 		WHERE 
+// 			sh.entity_id = :entity_id
+// 			and so.source_id = sh.source_id
+// 			and ro.source_id = sh.source_id
+// 			and ro.sheet_index = sh.sheet_index 
 
-			and it.entity_id = sh.entity_id
-			and it.key_id = ro.key_id
-			and (${where_search.join(' or ')})
-			and co.source_id = sh.source_id
-			and co.sheet_index = sh.sheet_index
+// 			and it.entity_id = sh.entity_id
+// 			and it.key_id = ro.key_id
+// 			and (${where_search.join(' or ')})
+// 			and co.source_id = sh.source_id
+// 			and co.sheet_index = sh.sheet_index
 
-			and pr.prop_id = co.prop_id
+// 			and pr.prop_id = co.prop_id
 
-			and ce.source_id = sh.source_id
-			and ce.sheet_index = sh.sheet_index
-			and ce.row_index = ro.row_index
-			and ce.col_index = co.col_index
-			and ce.winner = 1
-			and (ce.number is not null or ce.value_id is not null or ce.date is not null)
-		ORDER BY so.ordain, sh.sheet_index, ro.row_index, ce.multi_index
-	`, {entity_id})
+// 			and ce.source_id = sh.source_id
+// 			and ce.sheet_index = sh.sheet_index
+// 			and ce.row_index = ro.row_index
+// 			and ce.col_index = co.col_index
+// 			and ce.winner = 1
+// 			and (ce.number is not null or ce.value_id is not null or ce.date is not null)
+// 		ORDER BY so.ordain, sh.sheet_index, ro.row_index, ce.multi_index
+// 	`, {entity_id})
 
-	const rows = view.data.rows = Object.values(Object.groupBy(list, (row => row.key_id)))
+// 	const rows = view.data.rows = Object.values(Object.groupBy(list, (row => row.key_id)))
 
-	for (const i in rows) {
-		const row = rows[i]
-		const byprop = {}
-		for (const cell of row) {
+// 	for (const i in rows) {
+// 		const row = rows[i]
+// 		const byprop = {}
+// 		for (const cell of row) {
 
-			props[cell.prop_id].finded = true
-			const type = props[cell.prop_id].type
-			byprop[cell.prop_id] ??= []
-			let val = cell[type]
-			if (type == 'number') val = Number(val)
-			byprop[cell.prop_id].push(val)
-		}
-		rows[i] = [row[0].key_id, byprop]
-	}
-	view.data.props = Object.values(props).filter(prop => prop.finded)
-	return view.ret()
-})
+// 			props[cell.prop_id].finded = true
+// 			const type = props[cell.prop_id].type
+// 			byprop[cell.prop_id] ??= []
+// 			let val = cell[type]
+// 			if (type == 'number') val = Number(val)
+// 			byprop[cell.prop_id].push(val)
+// 		}
+// 		rows[i] = [row[0].key_id, byprop]
+// 	}
+// 	view.data.props = Object.values(props).filter(prop => prop.finded)
+// 	return view.ret()
+// })
 rest.addResponse('sheet', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')

@@ -3,7 +3,7 @@ import config from "/-config"
 import unique from "/-nicked/unique.js"
 import fs from "fs/promises"
 const Sources = {}
-import Consequences from "/-sources/Consequences.js"
+import Consciousness from "/-sources/Consciousness.js"
 import represent from "/-sources/represent.js"
 
 Sources.execRestFunc = async (file, fnname, visitor, res, req = {}) => {
@@ -130,7 +130,29 @@ Sources.recalc = async (db, func) => {
 	while (Sources.recalc.all) {
 		Sources.recalc.all = false
 		console.time('recalc-all')
-		await Consequences.all(db)
+		await Consciousness.recalcEntitiesPropId(db)
+		await Consciousness.recalcMulti(db)
+		await Consciousness.recalcTexts(db)
+		await Consciousness.recalcKeyIndex(db)
+		await Consciousness.recalcRowsKeyIdRepeatIndex(db)
+		await Consciousness.insertItems(db)
+		
+		await Consciousness.recalcRepresentSheet(db)
+		await Consciousness.recalcRepresentCol(db)
+		await Consciousness.recalcRepresentRow(db)
+		await Consciousness.recalcRepresentCell(db)
+
+		await Consciousness.recalcRepresentCellRowKey(db)
+		await Consciousness.recalcRepresentCellSummary(db)
+		
+		await Consciousness.recalcRepresentItemValue(db)
+		await Consciousness.recalcRepresentItemSummary(db)
+		await Consciousness.recalcRepresent(db)
+		await Consciousness.recalcMaster(db)
+		await Consciousness.recalcWinner(db)
+		await Consciousness.recalcAppear(db)
+		await Consciousness.recalcRowSearch(db)
+		await Consciousness.recalcItemSearch(db)
 		console.timeEnd('recalc-all')
 	}
 	Sources.recalc.lastend = new Date()
@@ -329,8 +351,11 @@ const SELECT_PROP = `
 	pr.prop_nick,
 	pr.multi + 0 as multi,
 	pr.comment,
+	pr.represent_values + 0 as represent_values,
 	pr.represent_prop + 0 as represent_prop
 `
+
+//depricated
 const SELECT_ENTITY = `
 	pr.prop_id as entity_id, 
 	pr.prop_id, 
@@ -962,6 +987,8 @@ Sources.getSourceTitleByKeyId = async (db, prop_id) => {
 
 	return false
 }
+
+//depricated
 Sources.getEntity = async (db, entity_id) => {
 	const entity = await db.fetch(`
 		SELECT 

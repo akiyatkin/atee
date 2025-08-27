@@ -111,7 +111,6 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 				<tr>
 					<td></td>
 					<td>text</td>
-					<td>Преимущество</td>
 					<td>Всего</td>
 					<td>number</td>
 					<td>date</td>
@@ -134,8 +133,9 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 						const represent = await import('/-sources/represent.js').then(r => r.default)
 						const data = await represent.set(btn, name, {prop_id, value_id})
 						if (!data.result) return
-						// const Client = await window.getClient()
-						// Client.reloaddiv('${env.layer.div}')
+						const Client = await window.getClient()
+						Client.global('recalc')
+						//Client.reloaddiv('${env.layer.div}')
 					})
 				}
 			})(document.currentScript.parentElement)
@@ -174,7 +174,6 @@ const showValueTr = (data, env, row) => `
 			<button data-value_id="${row.value_id}" class="represent_value eye transparent ${row.cls?.main} ${row.cls?.custom}">${svg.eye()}</button>
 		</td>
 		<td>${row.text}</td>
-		<td>${row.winner ? 'Показано' : 'Скрыто'}</td>
 		<td>${row.count}</td>
 		<td>${row.number != null ? parseFloat(row.number) : ''}</td>
 		<td><nobr>${date.sdmyhi(row.date)}</nobr></td>

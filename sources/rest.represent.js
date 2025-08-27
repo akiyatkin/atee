@@ -7,7 +7,7 @@ import date from '/-words/date.html.js'
 import represent from "/-sources/represent.js"
 
 import Sources from "/-sources/Sources.js"
-import Consequences from "/-sources/Consequences.js"
+
 import Consciousness from "/-sources/Consciousness.js"
 
 import Rest from "/-rest"
@@ -450,7 +450,7 @@ rest.addAction('set-represent_values', ['admin','checkstart'], async view => {
 	return view.ret()
 })
 
-rest.addAction('set-represent_sheet', ['admin','checkstart'], async view => {
+rest.addAction('set-represent_sheet', ['admin','checkstart','setaccess'], async view => {
 	const db = await view.get('db')
 	const sheet_title = await view.get('sheet_title#required')
 	const source_id = await view.get('source_id#required')
