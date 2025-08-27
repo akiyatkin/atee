@@ -1,6 +1,7 @@
 import isViewport from "./isViewport.js"
 const inActive = new Promise(resolve => {
     //const base = document.activeElement
+    
     const init = () => {
         // document.body.removeEventListener('click', init)
         // document.body.removeEventListener('mouseover', init)
@@ -13,17 +14,19 @@ const inActive = new Promise(resolve => {
         //if (base) base.removeEventListener('blur', init)
         resolve()
     }
-    // document.body.addEventListener('click', init)
-    // document.body.addEventListener('mouseover', init)
+    setTimeout({
+        // document.body.addEventListener('click', init)
+        // document.body.addEventListener('mouseover', init)
 
-    // window.addEventListener('click', init)
-    window.addEventListener('mouseover', init)
-    // window.addEventListener('resize', init)
-    window.addEventListener('keydown', init)
-    window.addEventListener('touchstart', init)
-    
-    //if (base) base.addEventListener('blur', init)
-    //window.addEventListener('scroll', init)
+        // window.addEventListener('click', init)
+        window.addEventListener('mouseover', init)
+        // window.addEventListener('resize', init)
+        window.addEventListener('keydown', init)
+        window.addEventListener('touchstart', init)
+        
+        //if (base) base.addEventListener('blur', init)
+        //window.addEventListener('scroll', init)
+    }, 100)
 })
 
 export { inActive }
