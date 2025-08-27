@@ -14,7 +14,7 @@ const inActive = new Promise(resolve => {
         //if (base) base.removeEventListener('blur', init)
         resolve()
     }
-    setTimeout({
+    setTimeout(() => {
         // document.body.addEventListener('click', init)
         // document.body.addEventListener('mouseover', init)
 
