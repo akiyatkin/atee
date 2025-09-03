@@ -55,7 +55,6 @@
 		"recalc:RTABLE":"/-sources/get-recalc",
 		"main:ROOT":"/-sources/main",
 		"main:TABLE":"/-sources/main",
-		"entities:ROOT":"/-sources/entities",
 		"props:TABLE":"/-sources/props",
 		"settings:ROOT":"/-sources/settings",
 		"memory:ROOT":"/-sources/memory"
@@ -96,10 +95,6 @@
 		"source":"/-sources/source.html.js",
 		"props":"/-sources/props.html.js",
 		"prop":"/-sources/prop.html.js",
-		
-		"entities":"/-sources/entities.html.js",
-		"2entity":"/-sources/entity.html.js",
-
 		"settings":"/-sources/settings.html.js",
 		"positions":"/-sources/positions.html.js",
 		"position":"/-sources/position.html.js",
@@ -214,14 +209,7 @@
 				}
 			}
 		},
-		"entities":{
-			"head":{"title":"Типы содержания"},
-			"layout":{
-				"index:ROOT":{
-					"MAIN":"entities:ROOT"
-				}
-			}
-		},
+		
 		"props":{
 			"head":{"title":"Свойства"},
 			"layout":{
@@ -230,24 +218,6 @@
 				},
 				"props:ROOT":{
 					"TABLE":"props:TABLE"
-				}
-			}
-		},
-		"entity2":{
-			"layout":{},
-			"child":{
-				"head":{"title":"Сущность"},
-				"layout":{
-					"index:ROOT":{
-						"MAIN":"entity:ROOT"
-					},
-					"entity:ROOT":{
-						"ENTITY":"entity:ENTITY"
-						
-					},
-					"entity:ENTITY":{
-						"PROPS":"entity:PROPS"	
-					}
 				}
 			}
 		},

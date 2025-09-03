@@ -9,9 +9,8 @@ table {
     overflow-y: visible;
     display: block;
     max-width: fit-content;
-}
-table {
-	overflow-x: scroll;
+
+	/*overflow-x: scroll;*/
 	-webkit-overflow-scrolling: touch;
 	scroll-behavior: smooth;
 }

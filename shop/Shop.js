@@ -576,7 +576,7 @@ Shop.getBind = Access.wait(async db => {
 
 Shop.getWhereBySamples = async (db, samples, hashs = [], partner = '', fulldef = false) => { //fulldef false значит без выборки ничего не показываем, partner нужен чтобы выборка по цене была по нужному ключу
 	//win.key_id - позиция, wva.value_id - модель
-	const from = ['sources_wvalues wva, sources_winners win']
+	const from = ['sources_wvalues wva, sources_wcells win']
 	const join = []
 	const where = [`
 		win.entity_id = :brendart_prop_id and win.prop_id = :brendmodel_prop_id 
@@ -736,7 +736,7 @@ Shop.getWhereBySamples = async (db, samples, hashs = [], partner = '', fulldef =
 }
 // Shop.getWhereItemsBySamples = async (db, samples, hashs = [], partner = '', fulldef = false) => { //fulldef false значит без выборки ничего не показываем, partner нужен чтобы выборка по цене была по нужному ключу
 // 	//win.key_id - позиция, wva.value_id - модель
-// 	const from = ['sources_winners win']
+// 	const from = ['sources_wcells win']
 // 	const join = []
 // 	const where = [`
 // 		win.entity_id = :brendart_prop_id
@@ -908,7 +908,7 @@ Shop.getWhereByGroupId = async (db, group_id = false, hashs = [], partner = fals
 
 
 // 	//win.key_id - позиция, wva.value_id - модель
-// 	const from = ['sources_winners win, sources_wvalues wva, sources_items wit']
+// 	const from = ['sources_wcells win, sources_wvalues wva, sources_items wit']
 // 	const where = [
 // 		'win.entity_id = :brendart_prop_id and win.prop_id = :brendmodel_prop_id',
 // 		'wva.entity_id = win.entity_id and wva.key_id = win.key_id and wva.prop_id = win.prop_id',
@@ -1085,7 +1085,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 	// 		va.value_nick,
 	// 		pr.type,
 	// 		nvl(nvl(va.value_title, pos.text), nvl(pos.number, pos.date)) as text
-	// 	FROM sources_winners win
+	// 	FROM sources_wcells win
 	// 			LEFT JOIN sources_values va on (va.value_id = pos.value_id)
 	// 			LEFT JOIN sources_props pr on (pr.prop_id = pos.prop_id)
 	// 	WHERE pos.entity_id = :brendart_prop_id
@@ -1106,7 +1106,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 			wtxt.text, 
 			wdate.date
 
-		FROM sources_winners win
+		FROM sources_wcells win
 			LEFT JOIN sources_props pr on (pr.prop_id = win.prop_id)
 			LEFT JOIN sources_wnumbers wnum on (wnum.entity_id = win.entity_id and wnum.key_id = win.key_id and wnum.prop_id = win.prop_id)
 			LEFT JOIN sources_wvalues wval on (wval.entity_id = win.entity_id and wval.key_id = win.key_id and wval.prop_id = win.prop_id)
@@ -1264,7 +1264,7 @@ Shop.getBrendmodelByBrendart = Access.poke(async (db, brendart_nick) => {
 	const brendmodel_nick = await db.col(`
 		select mva.value_nick
 		from 
-			sources_winners win, 
+			sources_wcells win, 
 			sources_wvalues wva,
 			sources_values mva
 				

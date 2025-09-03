@@ -48,11 +48,14 @@ const showScriptDrag = (data, env) => `
 			Drag.make(list, async ({id, next_id}) => {
 				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 				const ans = await senditmsg(list, '/-sources/set-source-ordain', {id, next_id})
+				const Client = await window.getClient()
+				Client.global('recalc')
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
 const showMain = (data, env) => `
+	<p>Повтор свойства перезаписывает предыдущее значение. Источники применяются сверху вниз. Чем ниже, тем приоритетней.</p>
 	<div style="margin: 1em 0; display: flex; flex-wrap: wrap; gap: 1em; justify-content: space-between;">
 		${field.button({
 			async: true,

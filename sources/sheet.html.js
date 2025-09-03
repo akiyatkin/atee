@@ -376,7 +376,7 @@ const showCellTd = (data, env, sheet, source, text_index, col_index, celtexts) =
 	<td${data.prunings[text_index]?.[col_index] ? ' style="color:red"' : ''} class="rep">${celtexts.map((text, multi_index) => showMultiSpan(data, env, sheet, source, text, text_index, col_index, multi_index)).join(',&nbsp;')}</td>
 `
 const showMultiSpan = (data, env, sheet, source, text, text_index, col_index, multi_index) => `
-	<button style="${text ? '' : 'display:block; width:100%'}" class="value transparent ${data.winners[text_index][col_index][multi_index] && data.masters[text_index] ? '' : 'mute'}">${text || '&nbsp;'}</span>
+	<span style="${text ? '' : 'display:block; width:100%'}" class="value transparent ${(data.winners[text_index][col_index][multi_index] && data.masters[text_index]) || col_index == data.sheet.key_index ? '' : 'mute'}">${text || '&nbsp;'}</span>
 `.trim()
 
 const showColTd = (data, env, sheet, source, col) => `

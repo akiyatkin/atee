@@ -5,7 +5,7 @@ import unique from '/-nicked/unique.js'
 import words from '/-words/words.js'
 import date from '/-words/date.html.js'
 import eye from "/-sources/represent.js"
-
+import PerformanceMonitor from "./PerformanceMonitor.js"
 import Sources from "/-sources/Sources.js"
 
 import Consciousness from "/-sources/Consciousness.js"
@@ -24,30 +24,56 @@ rest.extra(rest_search)
 
 rest.addAction('set-recalc', ['admin','checkstart'], async view => {
 	const db = await view.get('db')
+	const monitor = new PerformanceMonitor()
 	Sources.recalc(db, async () => {
-		await Consciousness.recalcEntitiesPropId(db)
-		await Consciousness.recalcMulti(db)
-		await Consciousness.recalcTexts(db)
-		await Consciousness.recalcKeyIndex(db)
-		await Consciousness.recalcRowsKeyIdRepeatIndex(db)
-		await Consciousness.insertItems(db)
-		
-		await Consciousness.recalcRepresentSheet(db)
-		await Consciousness.recalcRepresentCol(db)
-		await Consciousness.recalcRepresentRow(db)
-		await Consciousness.recalcRepresentCell(db)
 
-		await Consciousness.recalcRepresentCellRowKey(db)
-		await Consciousness.recalcRepresentCellSummary(db)
+		monitor.start('recalcEntitiesPropId')
+		await Consciousness.recalcEntitiesPropId(db) //11.14ms
+		monitor.start('recalcMulti')
+		await Consciousness.recalcMulti(db) //1 646.26ms // 1 494.82ms
+		monitor.start('recalcTexts')
+		await Consciousness.recalcTexts(db) //2 875.27ms
+		monitor.start('recalcKeyIndex')
+		await Consciousness.recalcKeyIndex(db) // 3.24ms
+		monitor.start('recalcRowsKeyIdRepeatIndex')
+		await Consciousness.recalcRowsKeyIdRepeatIndex(db) // 537.64ms
+		monitor.start('insertItems') 
+		await Consciousness.insertItems(db) // 408.64ms
+		monitor.start('recalcRepresentSheet')
+		await Consciousness.recalcRepresentSheet(db) // 0.90ms
+		monitor.start('recalcRepresentCol')
+		await Consciousness.recalcRepresentCol(db) // 3.63ms
+		monitor.start('recalcRepresentRow')
+		await Consciousness.recalcRepresentRow(db) // 160.59ms
+		monitor.start('recalcRepresentCell')
+		await Consciousness.recalcRepresentCell(db) //3 672.53ms
+
+		monitor.start('recalcRepresentCellRowKey')
+		await Consciousness.recalcRepresentCellRowKey(db) // 92.16ms
+		monitor.start('recalcRepresentCellSummary')
+		await Consciousness.recalcRepresentCellSummary(db) //5 440.40ms
+
+		monitor.start('recalcRepresentItemValue')
+		await Consciousness.recalcRepresentItemValue(db) // 45.62ms
+		monitor.start('recalcRepresentItemSummary')
+		await Consciousness.recalcRepresentItemSummary(db) //3 161.93ms // 31 927.62ms
+		monitor.start('recalcRepresent')
+		await Consciousness.recalcRepresent(db) // 905.92ms
+		monitor.start('recalcMaster')
+		await Consciousness.recalcMaster(db) // 236.70ms
+		monitor.start('recalcWinner')
+		await Consciousness.recalcWinner(db) //1 165.87ms
 		
-		await Consciousness.recalcRepresentItemValue(db)
-		await Consciousness.recalcRepresentItemSummary(db)
-		await Consciousness.recalcRepresent(db)
-		await Consciousness.recalcMaster(db)
-		await Consciousness.recalcWinner(db)
-		await Consciousness.recalcAppear(db)
+
+		monitor.start('recalcAppear')
+		await Consciousness.recalcAppear(db) // 456.06ms
+		monitor.start('recalcRowSearch')
 		await Consciousness.recalcRowSearch(db)
+		monitor.start('recalcItemSearch')
 		await Consciousness.recalcItemSearch(db)
+
+		monitor.stop()
+		console.log(monitor.getReport())
 	})
 	
 	return view.ret()
@@ -433,32 +459,32 @@ rest.addAction('set-source-ordain', ['admin','checkstart'], async view => {
 		// await Consciousness.recalcMaster(db)
 		await Consciousness.recalcWinner(db)
 
-		// await Consciousness.recalcAppear(db)
-		// await Consciousness.recalcRowSearch(db)
+		// Consciousness.recalcAppear(db)
+		// Consciousness.recalcRowSearch(db)
 		await Consciousness.recalcItemSearch(db)
 	})
 
 	return view.ret()
 })
-rest.addAction('set-entity-ordain', ['admin','checkstart'], async view => {
-	const next_id = await view.get('next_id')
-	const id = await view.get('id')
-	const db = await view.get('db')
+// rest.addAction('set-entity-ordain', ['admin','checkstart'], async view => {
+// 	const next_id = await view.get('next_id')
+// 	const id = await view.get('id')
+// 	const db = await view.get('db')
 
-	let ordain
-	if (!next_id) ordain = await db.col('SELECT max(ordain) FROM sources_entities') + 1
-	if (next_id) ordain = await db.col('SELECT ordain FROM sources_entities WHERE entity_id = :next_id', {next_id}) - 1
-	if (ordain < 0) ordain = 0
-	await db.exec(`
-		UPDATE sources_entities 
-		SET ordain = :ordain 
-		WHERE entity_id = :id
-	`, {ordain, id})
+// 	let ordain
+// 	if (!next_id) ordain = await db.col('SELECT max(ordain) FROM sources_entities') + 1
+// 	if (next_id) ordain = await db.col('SELECT ordain FROM sources_entities WHERE entity_id = :next_id', {next_id}) - 1
+// 	if (ordain < 0) ordain = 0
+// 	await db.exec(`
+// 		UPDATE sources_entities 
+// 		SET ordain = :ordain 
+// 		WHERE entity_id = :id
+// 	`, {ordain, id})
 
-	await Sources.reorderEntities(db)	
-	//await Consequences порядок сущностей никак не влияет на выдачу data или сразу влияет если сортируется
-	return view.ret()
-})
+// 	await Sources.reorderEntities(db)	
+// 	//await Consequences порядок сущностей никак не влияет на выдачу data или сразу влияет если сортируется
+// 	return view.ret()
+// })
 rest.addAction('set-prop-synonym-create', ['admin','checkstart'], async view => {
 	const db = await view.get('db')
 	const col_title = await view.get('col_title#required')
@@ -677,6 +703,7 @@ rest.addAction('set-source-renovate', ['admin','checkstart'], async view => {
 	//return view.ret('Загрузка запущена!')
 	return view.ret()
 })
+
 rest.addAction('set-source-load', ['admin','checkstart'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
@@ -686,33 +713,62 @@ rest.addAction('set-source-load', ['admin','checkstart'], async view => {
 	if (!source.date_check) await Sources.check(db, source, view.visitor)
 	//if (source.error) return view.err('Для загрузки необходимо устранить ошибку')
 		
-	
+	const monitor = new PerformanceMonitor()
 	Sources.recalc(db, async () => {
 		await Sources.load(db, source, view.visitor)
+		
+		const timer_recalc = Date.now()
 
-		await Consciousness.recalcEntitiesPropId(db)
-		await Consciousness.recalcMulti_bySource(db, source_id)
-		await Consciousness.recalcTexts_bySource(db, source_id)
-		await Consciousness.recalcKeyIndex(db)
-		await Consciousness.recalcRowsKeyIdRepeatIndex(db)
-		await Consciousness.insertItems(db)
+		monitor.start('recalcEntitiesPropId_bySource')
+		await Consciousness.recalcEntitiesPropId_bySource(db, source_id) //0 19.38ms
+		monitor.start('recalcMulti_bySource')
+		await Consciousness.recalcMulti_bySource(db, source_id) //2 221.87ms
+		monitor.start('recalcTexts_bySource')
+		await Consciousness.recalcTexts_bySource(db, source_id) //69 968.40ms 	= 13 805.85ms
+		monitor.start('recalcKeyIndex_bySource')
+		await Consciousness.recalcKeyIndex_bySource(db, source_id) //0 1.89ms
+		monitor.start('recalcRowsKeyIdRepeatIndex_bySource')
+		await Consciousness.recalcRowsKeyIdRepeatIndex_bySource(db, source_id) //0 316.84ms
+		monitor.start('insertItems_bySource')
+		await Consciousness.insertItems_bySource(db, source_id) //0 358.99ms
+
+		monitor.start('recalcRepresentSheet_bySource')
+		await Consciousness.recalcRepresentSheet_bySource(db, source_id) //0 1.68ms
+		monitor.start('recalcRepresentCol_bySource')
+		await Consciousness.recalcRepresentCol_bySource(db, source_id) //0 6.08ms
+		monitor.start('recalcRepresentRow_bySource')
+		await Consciousness.recalcRepresentRow_bySource(db, source_id) //0 181.23ms
+		monitor.start('recalcRepresentCell_bySource')
+		await Consciousness.recalcRepresentCell_bySource(db, source_id)	//4 753.68ms
 		
-		await Consciousness.recalcRepresentSheet(db)
-		await Consciousness.recalcRepresentCol(db)
-		await Consciousness.recalcRepresentRow(db)
-		await Consciousness.recalcRepresentCell(db)
-		
-		await Consciousness.recalcRepresentCellRowKey(db)
-		await Consciousness.recalcRepresentCellSummary(db)
-		await Consciousness.recalcRepresentItemValue(db)
-		await Consciousness.recalcRepresentItemSummary(db)
-		await Consciousness.recalcRepresent(db)
-		
-		await Consciousness.recalcMaster(db)
-		await Consciousness.recalcWinner_bySource(db, source_id)
-		await Consciousness.recalcAppear(db)
+		monitor.start('recalcRepresentCellRowKey_bySource')
+		await Consciousness.recalcRepresentCellRowKey_bySource(db, source_id) //0 101.15ms
+		monitor.start('recalcRepresentCellSummary_bySource')
+		await Consciousness.recalcRepresentCellSummary_bySource(db, source_id) //5 476.04ms
+		monitor.start('recalcRepresentItemValue_bySource')
+		await Consciousness.recalcRepresentItemValue_bySource(db, source_id) //0 425.08ms
+		monitor.start('recalcRepresentItemSummary_bySource')
+		await Consciousness.recalcRepresentItemSummary_bySource(db, source_id) //3 363.43ms
+		monitor.start('recalcRepresent_bySource')
+		await Consciousness.recalcRepresent_bySource(db, source_id) //1 132.19ms
+
+		monitor.start('recalcMaster_bySource')
+		await Consciousness.recalcMaster_bySource(db, source_id) //0 224.85ms
+		monitor.start('recalcWinner_bySource')
+		await Consciousness.recalcWinner_bySource(db, source_id) //40 946.25ms
+		monitor.start('recalcAppear_bySource')
+		await Consciousness.recalcAppear_bySource(db, source_id) //0 371.52ms
+		monitor.start('recalcRowSearch_bySource')
 		await Consciousness.recalcRowSearch_bySource(db, source_id)
-		await Consciousness.recalcItemSearch_bySource(db, source_id)
+		monitor.start('recalcItemSearch_bySource')
+		await Consciousness.recalcItemSearch_bySource(db, source_id) 
+		monitor.stop()
+		console.log(monitor.getReport())
+
+		const duration_recalc = Date.now() - timer_recalc
+		await Sources.setSource(db, `
+			duration_recalc = :duration_recalc
+		`, {source_id, duration_recalc})
 	})
 	
 	

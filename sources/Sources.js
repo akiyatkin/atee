@@ -1,6 +1,7 @@
 import nicked from "/-nicked"
 import config from "/-config"
 import unique from "/-nicked/unique.js"
+import BulkInserter from "./BulkInserter.js"
 import fs from "fs/promises"
 const Sources = {}
 import Consciousness from "/-sources/Consciousness.js"
@@ -150,6 +151,7 @@ Sources.recalc = async (db, func) => {
 		await Consciousness.recalcRepresent(db)
 		await Consciousness.recalcMaster(db)
 		await Consciousness.recalcWinner(db)
+		
 		await Consciousness.recalcAppear(db)
 		await Consciousness.recalcRowSearch(db)
 		await Consciousness.recalcItemSearch(db)
@@ -199,33 +201,34 @@ Sources.cleanSheets = (sheets) => {
 
 		sheet.head = sheet.head.map(name => {
 			name = String(name).trim()
-			if (name[0] == '.') name = ''
-			else if (!nicked(name)) name = ''
+			//if (name[0] == '.') name = ''
+			//else if (!nicked(name)) name = ''
 			return name
 		})
 
 		for (const row_index in rows) {
 			if (!Array.isArray(rows[row_index])) rows[row_index] = []
-			rows[row_index] = rows[row_index].map((row, col_index) => sheet.head[col_index] ? row : null)
+			rows[row_index] = rows[row_index].map((col, col_index) => sheet.head[col_index] ? col : null)
 			for (const col_index in rows[row_index]) {
 				if (rows[row_index][col_index] === null) continue
 				rows[row_index][col_index] = String(rows[row_index][col_index]).trim()
 			}
 			
 		}
-		sheet.rows = sheet.rows.filter(row => row.some(val => val))
-		sheet.head = sheet.head.filter(val => val)
-		for (const row_index in rows) {
-			for (const col_index in sheet.head) {
-				//rows[row_index][col_index] ??= ''
-			}
-		}
+		//sheet.rows = sheet.rows.filter(row => row.some(val => val)) //В строке есть хотя бы одно значение
+		//sheet.head = sheet.head.filter(val => val)
+		// for (const row_index in rows) {
+		// 	for (const col_index in sheet.head) {
+		// 		//rows[row_index][col_index] ??= ''
+		// 	}
+		// }
 	}
 	return sheets
 }
 Sources.VALUE_LENGTH = 127
 Sources.PROP_LENGTH = 63
 Sources.COL_LENGTH = 63
+
 Sources.insertSheets = async (db, source, sheets) => {
 	const {source_id} = source
 	
@@ -234,44 +237,64 @@ Sources.insertSheets = async (db, source, sheets) => {
 	await db.exec(`DELETE FROM sources_rows WHERE source_id = :source_id`, source)
 	await db.exec(`DELETE FROM sources_cells WHERE source_id = :source_id`, source)
 	
-	
+	const sources_sheets = new BulkInserter(db, 'sources_sheets', ['source_id', 'sheet_index', 'sheet_title']);
 	for (const sheet_index in sheets) {
 		const {title: sheet_title, rows, head} = sheets[sheet_index]
-		
+		await sources_sheets.insert([source_id, sheet_index, sheet_title])
+		// await db.exec(`
+		// 	INSERT INTO sources_sheets (source_id, sheet_index, sheet_title)
+		// 	VALUES (:source_id, :sheet_index, :sheet_title)
+		// `, {source_id, sheet_index, sheet_title})
+	}
+	await sources_sheets.flush()
 
-		await db.exec(`
-			INSERT INTO sources_sheets (source_id, sheet_index, sheet_title)
-			VALUES (:source_id, :sheet_index, :sheet_title)
-		`, {source_id, sheet_index, sheet_title})
-		
+	const sources_cols = new BulkInserter(db, 'sources_cols', ['source_id', 'sheet_index', 'col_index', 'col_nick', 'col_title']);
+	for (const sheet_index in sheets) {
+		const {title: sheet_title, rows, head} = sheets[sheet_index]
 		for (const col_index in head) {
 
 			const col_title = head[col_index].slice(-Sources.COL_LENGTH).trim()
 			let col_nick = nicked(col_title)
 			if (col_nick.length > Sources.COL_LENGTH) col_nick = nicked(col_nick.slice(-Sources.COL_LENGTH))
-
-			await db.exec(`
-				INSERT INTO sources_cols (source_id, sheet_index, col_index, col_nick, col_title)
-				VALUES (:source_id, :sheet_index, :col_index, :col_nick, :col_title)
-			`, {source_id, sheet_index, col_index, col_nick, col_title})
+			await sources_cols.insert([source_id, sheet_index, col_index, col_nick, col_title])
+			// await db.exec(`
+			// 	INSERT INTO sources_cols (source_id, sheet_index, col_index, col_nick, col_title)
+			// 	VALUES (:source_id, :sheet_index, :col_index, :col_nick, :col_title)
+			// `, {source_id, sheet_index, col_index, col_nick, col_title})
 		}
+	}
+	await sources_cols.flush()
 
+	const sources_rows = new BulkInserter(db, 'sources_rows', ['source_id', 'sheet_index', 'row_index']);
+	for (const sheet_index in sheets) {
+		const {title: sheet_title, rows, head} = sheets[sheet_index]
 		for (const row_index in rows) {
+			await sources_rows.insert([source_id, sheet_index, row_index])
+			// await db.exec(`
+			// 	INSERT INTO sources_rows (source_id, sheet_index, row_index)
+			// 	VALUES (:source_id, :sheet_index, :row_index)
+			// `, {source_id, sheet_index, row_index})
+		}
+	}
+	await sources_rows.flush()
 
-			await db.exec(`
-				INSERT INTO sources_rows (source_id, sheet_index, row_index)
-				VALUES (:source_id, :sheet_index, :row_index)
-			`, {source_id, sheet_index, row_index})
+	const sources_cells = new BulkInserter(db, 'sources_cells', ['source_id', 'sheet_index', 'row_index', 'col_index', 'text']);
+	
+	for (const sheet_index in sheets) {
+		const {title: sheet_title, rows, head} = sheets[sheet_index]
+		for (const row_index in rows) {
 			for (const col_index in rows[row_index]) {
 				const text = rows[row_index][col_index]
 				if (text === null) continue
-				await db.exec(`
-					INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, text)
-					VALUES (:source_id, :sheet_index, :row_index, :col_index, :text)
-				`, {source_id, sheet_index, row_index, col_index, text})
+				await sources_cells.insert([source_id, sheet_index, row_index, col_index, text])
+				// await db.exec(`
+				// 	INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, text)
+				// 	VALUES (:source_id, :sheet_index, :row_index, :col_index, :text)
+				// `, {source_id, sheet_index, row_index, col_index, text})
 			}
 		}
 	}
+	await sources_cells.flush()
 	return sheets
 }
 Sources.check = async (db, source, visitor) => {
@@ -381,6 +404,7 @@ const SELECT_SOURCE = `
 	so.duration_rest,
 	so.duration_check,
 	so.duration_insert,
+	so.duration_recalc,
 	so.master + 0 as master,
 	so.comment,
 	so.error,
@@ -653,7 +677,7 @@ Sources.getCellByIndex = async (db, source_id, sheet_index, row_index, col_index
 			LEFT JOIN sources_values vak on (vak.value_id = ro.key_id)
 			LEFT JOIN sources_sheets sh on (sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index)
 			LEFT JOIN sources_items it on (it.entity_id = sh.entity_id and ro.key_id = it.key_id)
-			LEFT JOIN sources_winners wi on (wi.prop_id = co.prop_id and wi.entity_id = sh.entity_id and wi.key_id = ro.key_id and wi.prop_id = wi.entity_id)
+			LEFT JOIN sources_wcells wi on (wi.prop_id = co.prop_id and wi.entity_id = sh.entity_id and wi.key_id = ro.key_id and wi.prop_id = wi.entity_id)
 			LEFT JOIN sources_custom_cells cce on (
 				cce.source_id = ce.source_id and cce.sheet_title = sh.sheet_title 
 				and cce.col_title = co.col_title
@@ -859,24 +883,16 @@ Sources.getSource = async (db, source_id) => {
 
 Sources.getSources = async (db, entity_id) => {
 	
-	const list = entity_id ? await db.all(`
+	const list = await db.all(`
 		SELECT 
 		${SELECT_SOURCE}
 		FROM sources_sources so
 			LEFT JOIN sources_props pr on pr.prop_id = so.entity_id
-		WHERE so.source_id in (
-			SELECT distinct source_id 
-			FROM sources_sheets 
-			WHERE entity_id = :entity_id
-		)
-		ORDER BY so.master DESC, so.ordain
-	`, {entity_id}) : await db.all(`
-		SELECT 
-		${SELECT_SOURCE}
-		FROM sources_sources so
-			LEFT JOIN sources_props pr on pr.prop_id = so.entity_id
-		ORDER BY so.master DESC, so.ordain
+		ORDER BY 
+			-- so.master DESC, 
+			so.ordain
 	`)
+
 	for (const source of list) {
 		Sources.calcSource(source)
 	}

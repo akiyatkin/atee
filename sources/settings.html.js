@@ -86,6 +86,7 @@ export const ROOT = (data, env) => err(data, env) || `
 			<p>
 				${field.button({
 					label:'Очистить данные',
+					confirm: 'Очистить данные?',
 					action:'/-sources/set-reset-values',
 					reloaddiv: env.layer.div
 				})} 

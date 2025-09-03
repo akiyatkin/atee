@@ -1,6 +1,9 @@
 import Sources from "/-sources/Sources.js"
 import nicked from "/-nicked"
 import unique from "/-nicked/unique.js"
+import BulkInserter from "./BulkInserter.js"
+import BulkDeleter from "./BulkDeleter.js"
+
 const Consciousness = {}
 export default Consciousness
 
@@ -470,6 +473,7 @@ Consciousness.recalcRowsKeyIdRepeatIndex_bySource = async (db, source_id) => {
 			AND ro.row_index = cte.row_index
 	`, {source_id})
 }
+
 Consciousness.setCellType = async (db, cell) => {
 	const type = cell.type
 	const multi = cell.multi
@@ -478,6 +482,7 @@ Consciousness.setCellType = async (db, cell) => {
 	let value_id = null
 	let date = null
 	const text = cell.text
+
 	if (text) {
 		if (type == 'number') {
 			let textnumber = text.replace(/\s/g, '')
@@ -530,22 +535,48 @@ Consciousness.setCellType = async (db, cell) => {
 			//}
 		}
 	}
-	await db.exec(`
-		UPDATE sources_cells
-		SET 
-			value_id = :value_id,
-			number = :number,
-			date = :date,
-			pruning = :pruning
-		WHERE source_id = :source_id 
-			and sheet_index = :sheet_index 
-			and row_index = :row_index 
-			and col_index = :col_index
-			and multi_index = :multi_index
-	`, {...cell, value_id, number, date, pruning})
+	return {...cell, value_id, number, date, pruning}
+	// await db.exec(`
+	// 	UPDATE sources_cells
+	// 	SET 
+	// 		value_id = :value_id,
+	// 		number = :number,
+	// 		date = :date,
+	// 		pruning = :pruning
+	// 	WHERE source_id = :source_id 
+	// 		and sheet_index = :sheet_index 
+	// 		and row_index = :row_index 
+	// 		and col_index = :col_index
+	// 		and multi_index = :multi_index
+	// `, {...cell, value_id, number, date, pruning})
+}
+Consciousness.setListCellType = async (db, list) => {
+	//const sources_sheets = new BulkInserter(db, 'sources_sheets', ['source_id', 'sheet_index', 'sheet_title']);
+	const sources_cells = new BulkInserter(
+		db, 
+		'sources_cells', 
+		['source_id', 'sheet_index', 'row_index', 'col_index', 'multi_index', 'value_id', 'number', 'date', 'pruning'], // Ключевые колонки для WHERE
+		10000, 
+		true
+	)
+	for (const cell of list) {
+		const data = await Consciousness.setCellType(db, cell)
+		await sources_cells.insert([
+			data.source_id,
+			data.sheet_index,
+			data.row_index,
+			data.col_index,
+			data.multi_index,
+			data.value_id,
+			data.number,
+			data.date,
+			data.pruning
+		])
+	}
+	await sources_cells.flush()
 }
 Consciousness.recalcMulti = async (db) => { //prop_id может не быть, тогда multi считаем false
-
+	console.time('recalcMulti')
 	const list = await db.all(`
 		SELECT 
 			co.source_id,
@@ -563,31 +594,27 @@ Consciousness.recalcMulti = async (db) => { //prop_id может не быть, 
 		GROUP BY ce.source_id, ce.sheet_index, ce.row_index, ce.col_index
 		HAVING (multi AND cnt = 1 AND INSTR(text, ', ')) OR (!multi AND cnt > 1)
 	`)
-	for (const {source_id, sheet_index, row_index, col_index, text, cnt, multi} of list) {		
 
-		await db.exec(`
-			DELETE FROM sources_cells
-			WHERE source_id = :source_id 
-				and row_index = :row_index
-				and sheet_index = :sheet_index 
-				and col_index = :col_index
-		`, {source_id, sheet_index, row_index, col_index})
-		if (multi) {
-			const texts = text.split(', ')
-			for (const multi_index in texts) {
-				const text = texts[multi_index]
-				await db.exec(`
-					INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, multi_index, text)
-					VALUES (:source_id, :sheet_index, :row_index, :col_index, :multi_index, :text)
-				`, {source_id, sheet_index, row_index, col_index, multi_index, text})
-			}
-		} else { //multi нет, дубли мёрджим
-			await db.exec(`
-				INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, text)
-				VALUES (:source_id, :sheet_index, :row_index, :col_index, :text)
-			`, {source_id, sheet_index, row_index, col_index, text})
+	console.log(list.length)
+	console.timeEnd('recalcMulti')
+	await Consciousness.recalcMulti_list(db, list)
+}
+Consciousness.recalcMulti_list = async (db, list) => {
+	const delete_sources_cells = new BulkDeleter(db, 'sources_cells', ['source_id', 'sheet_index', 'row_index', 'col_index'])
+	for (const {source_id, sheet_index, row_index, col_index, text, cnt, multi} of list) {		
+		await delete_sources_cells.delete([source_id, sheet_index, row_index, col_index])
+	}
+	await delete_sources_cells.flush()
+
+	const insert_sources_cells = new BulkInserter(db, 'sources_cells', ['source_id', 'sheet_index', 'row_index', 'col_index', 'multi_index', 'text'])
+	for (const {source_id, sheet_index, row_index, col_index, text, cnt, multi} of list) {
+		const texts = multi ? text.split(', ') : [text]
+		for (const multi_index in texts) {
+			const text = texts[multi_index]
+			await insert_sources_cells.insert([source_id, sheet_index, row_index, col_index, multi_index, text])
 		}
 	}
+	await insert_sources_cells.flush()
 }
 Consciousness.recalcMulti_byProp = async (db, prop_id) => {
 
@@ -610,34 +637,37 @@ Consciousness.recalcMulti_byProp = async (db, prop_id) => {
 		GROUP BY ce.source_id, ce.sheet_index, ce.row_index, ce.col_index
 		HAVING (multi AND cnt = 1 AND INSTR(text, ', ')) OR (!multi AND cnt > 1)
 	`, {prop_id})
-	for (const {source_id, sheet_index, row_index, col_index, text, cnt, multi} of list) {		
+	await Consciousness.recalcMulti_list(db, list)
 
-		await db.exec(`
-			DELETE FROM sources_cells
-			WHERE source_id = :source_id 
-				and row_index = :row_index
-				and sheet_index = :sheet_index 
-				and col_index = :col_index
-		`, {source_id, sheet_index, row_index, col_index})
-		if (multi) {
-			const texts = text.split(', ')
-			for (const multi_index in texts) {
-				const text = texts[multi_index]
-				await db.exec(`
-					INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, multi_index, text)
-					VALUES (:source_id, :sheet_index, :row_index, :col_index, :multi_index, :text)
-				`, {source_id, sheet_index, row_index, col_index, multi_index, text})
-			}
-		} else { //multi нет, дубли мёрджим
-			await db.exec(`
-				INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, text)
-				VALUES (:source_id, :sheet_index, :row_index, :col_index, :text)
-			`, {source_id, sheet_index, row_index, col_index, text})
-		}
-	}
+	// for (const {source_id, sheet_index, row_index, col_index, text, cnt, multi} of list) {		
+
+	// 	await db.exec(`
+	// 		DELETE FROM sources_cells
+	// 		WHERE source_id = :source_id 
+	// 			and row_index = :row_index
+	// 			and sheet_index = :sheet_index 
+	// 			and col_index = :col_index
+	// 	`, {source_id, sheet_index, row_index, col_index})
+	// 	if (multi) {
+	// 		const texts = text.split(', ')
+	// 		for (const multi_index in texts) {
+	// 			const text = texts[multi_index]
+	// 			await db.exec(`
+	// 				INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, multi_index, text)
+	// 				VALUES (:source_id, :sheet_index, :row_index, :col_index, :multi_index, :text)
+	// 			`, {source_id, sheet_index, row_index, col_index, multi_index, text})
+	// 		}
+	// 	} else { //multi нет, дубли мёрджим
+	// 		await db.exec(`
+	// 			INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, text)
+	// 			VALUES (:source_id, :sheet_index, :row_index, :col_index, :text)
+	// 		`, {source_id, sheet_index, row_index, col_index, text})
+	// 	}
+	// }
 }
 
 Consciousness.recalcMulti_bySource = async (db, source_id) => {
+	console.time('recalcMulti_bySource')
 	const list = await db.all(`
 		SELECT 
 			co.source_id,
@@ -653,34 +683,38 @@ Consciousness.recalcMulti_bySource = async (db, source_id) => {
 			AND ce.source_id = co.source_id
 			AND ce.col_index = co.col_index
 			AND ce.sheet_index = co.sheet_index
-		GROUP BY co.source_id, ce.sheet_index, ce.row_index, ce.col_index
-		HAVING (multi AND cnt = 1 AND INSTR(text, ', ')) OR (!multi AND cnt > 1)
+		GROUP BY ce.source_id, ce.sheet_index, ce.row_index, ce.col_index
+		HAVING (!multi AND cnt > 1) OR (multi AND cnt = 1 AND INSTR(text, ', '))
+		-- HAVING (!multi AND cnt > 1) OR (multi AND cnt = 1)
 	`, {source_id})
+	console.log(list.length)
+	console.timeEnd('recalcMulti_bySource')
+	await Consciousness.recalcMulti_list(db, list)
 
-	for (const {source_id, sheet_index, row_index, col_index, text, cnt, multi} of list) {		
-		await db.exec(`
-			DELETE FROM sources_cells
-			WHERE source_id = :source_id 
-				and row_index = :row_index
-				and sheet_index = :sheet_index 
-				and col_index = :col_index
-		`, {source_id, sheet_index, row_index, col_index})
-		if (multi) {
-			const texts = text.split(', ')
-			for (const multi_index in texts) {
-				const text = texts[multi_index]
-				await db.exec(`
-					INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, multi_index, text)
-					VALUES (:source_id, :sheet_index, :row_index, :col_index, :multi_index, :text)
-				`, {source_id, sheet_index, row_index, col_index, multi_index, text})
-			}
-		} else { //multi нет, дубли мёрджим
-			await db.exec(`
-				INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, text)
-				VALUES (:source_id, :sheet_index, :row_index, :col_index, :text)
-			`, {source_id, sheet_index, row_index, col_index, text})
-		}
-	}
+	// for (const {source_id, sheet_index, row_index, col_index, text, cnt, multi} of list) {		
+	// 	await db.exec(`
+	// 		DELETE FROM sources_cells
+	// 		WHERE source_id = :source_id 
+	// 			and row_index = :row_index
+	// 			and sheet_index = :sheet_index 
+	// 			and col_index = :col_index
+	// 	`, {source_id, sheet_index, row_index, col_index})
+	// 	if (multi) {
+	// 		const texts = text.split(', ')
+	// 		for (const multi_index in texts) {
+	// 			const text = texts[multi_index]
+	// 			await db.exec(`
+	// 				INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, multi_index, text)
+	// 				VALUES (:source_id, :sheet_index, :row_index, :col_index, :multi_index, :text)
+	// 			`, {source_id, sheet_index, row_index, col_index, multi_index, text})
+	// 		}
+	// 	} else { //multi нет, дубли мёрджим
+	// 		await db.exec(`
+	// 			INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, text)
+	// 			VALUES (:source_id, :sheet_index, :row_index, :col_index, :text)
+	// 		`, {source_id, sheet_index, row_index, col_index, text})
+	// 	}
+	// }
 }
 Consciousness.recalcMulti_bySheet = async (db, source_id, sheet_index) => {
 	const list = await db.all(`
@@ -699,34 +733,36 @@ Consciousness.recalcMulti_bySheet = async (db, source_id, sheet_index) => {
 			AND ce.source_id = co.source_id
 			AND ce.col_index = co.col_index
 			AND ce.sheet_index = co.sheet_index
-		GROUP BY co.source_id, ce.sheet_index, ce.row_index, ce.col_index
+		GROUP BY ce.source_id, ce.sheet_index, ce.row_index, ce.col_index
 		HAVING (multi AND cnt = 1 AND INSTR(text, ', ')) OR (!multi AND cnt > 1)
 	`, {source_id, sheet_index})
 
-	for (const {source_id, sheet_index, row_index, col_index, text, cnt, multi} of list) {		
-		await db.exec(`
-			DELETE FROM sources_cells
-			WHERE source_id = :source_id 
-				and row_index = :row_index
-				and sheet_index = :sheet_index 
-				and col_index = :col_index
-		`, {source_id, sheet_index, row_index, col_index})
-		if (multi) {
-			const texts = text.split(', ')
-			for (const multi_index in texts) {
-				const text = texts[multi_index]
-				await db.exec(`
-					INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, multi_index, text)
-					VALUES (:source_id, :sheet_index, :row_index, :col_index, :multi_index, :text)
-				`, {source_id, sheet_index, row_index, col_index, multi_index, text})
-			}
-		} else { //multi нет, дубли мёрджим
-			await db.exec(`
-				INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, text)
-				VALUES (:source_id, :sheet_index, :row_index, :col_index, :text)
-			`, {source_id, sheet_index, row_index, col_index, text})
-		}
-	}
+	await Consciousness.recalcMulti_list(db, list)
+
+	// for (const {source_id, sheet_index, row_index, col_index, text, cnt, multi} of list) {		
+	// 	await db.exec(`
+	// 		DELETE FROM sources_cells
+	// 		WHERE source_id = :source_id 
+	// 			and row_index = :row_index
+	// 			and sheet_index = :sheet_index 
+	// 			and col_index = :col_index
+	// 	`, {source_id, sheet_index, row_index, col_index})
+	// 	if (multi) {
+	// 		const texts = text.split(', ')
+	// 		for (const multi_index in texts) {
+	// 			const text = texts[multi_index]
+	// 			await db.exec(`
+	// 				INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, multi_index, text)
+	// 				VALUES (:source_id, :sheet_index, :row_index, :col_index, :multi_index, :text)
+	// 			`, {source_id, sheet_index, row_index, col_index, multi_index, text})
+	// 		}
+	// 	} else { //multi нет, дубли мёрджим
+	// 		await db.exec(`
+	// 			INSERT INTO sources_cells (source_id, sheet_index, row_index, col_index, text)
+	// 			VALUES (:source_id, :sheet_index, :row_index, :col_index, :text)
+	// 		`, {source_id, sheet_index, row_index, col_index, text})
+	// 	}
+	// }
 }
 
 Consciousness.recalcTexts_byProp = async (db, prop_id) => {
@@ -762,6 +798,10 @@ Consciousness.recalcTexts_byProp = async (db, prop_id) => {
 			ce.multi_index,
 			ce.text, 
 			pr.type,
+			-- CASE
+			-- 	WHEN pr.type = 'value' THEN ce.nick
+			-- 	ELSE null
+			-- END AS nick,
 			pr.multi + 0 as multi,
 			pr.prop_title
 		FROM sources_cells ce, sources_cols co
@@ -792,12 +832,13 @@ Consciousness.recalcTexts_byProp = async (db, prop_id) => {
 					)
 					
 				)
-	`, {prop_id})	
-	for (const cell of list) {
-		await Consciousness.setCellType(db, cell)
-	}
+	`, {prop_id})
+	await Consciousness.setListCellType(db, list)
+	
 }
+
 Consciousness.recalcTexts_bySource = async (db, source_id) => {
+	console.time('recalcTexts_bySource text')
 	await db.exec(`
 		UPDATE sources_cells ce, sources_cols co
 			LEFT JOIN sources_props pr on (pr.prop_id = co.prop_id)
@@ -806,21 +847,23 @@ Consciousness.recalcTexts_bySource = async (db, source_id) => {
 			ce.number = null, 
 			ce.date = null, 
 			ce.pruning = 0
-		WHERE co.source_id = :source_id
+		WHERE ce.source_id = :source_id
 			AND ce.source_id = co.source_id
 			AND ce.col_index = co.col_index
 			AND ce.sheet_index = co.sheet_index
 			AND 
 				(
 					((pr.type = 'text' OR !pr.type)
-						AND (
-							ce.value_id IS NOT NULL 
-							OR ce.number IS NOT NULL 
-							OR ce.date IS NOT NULL 
-						)
+						-- AND (
+						-- 	ce.value_id IS NOT NULL 
+						-- 	OR ce.number IS NOT NULL 
+						--	OR ce.date IS NOT NULL 
+						-- )
 					)
 				)
 	`, {source_id})
+	console.timeEnd('recalcTexts_bySource text')
+	console.time('recalcTexts_bySource list')
 	const list = await db.all(`
 		SELECT 
 			co.sheet_index, 
@@ -829,11 +872,15 @@ Consciousness.recalcTexts_bySource = async (db, source_id) => {
 			ce.multi_index,
 			ce.text, 
 			pr.type,
+			-- CASE
+			-- 	WHEN pr.type = 'value' THEN ce.nick
+			-- 	ELSE null
+			-- END AS nick,
 			pr.multi + 0 as multi,
 			pr.prop_title
 		FROM sources_cells ce, sources_cols co
 			LEFT JOIN sources_props pr on (pr.prop_id = co.prop_id)
-		WHERE co.source_id = :source_id
+		WHERE ce.source_id = :source_id
 			AND ce.source_id = co.source_id
 			AND ce.col_index = co.col_index
 			AND ce.sheet_index = co.sheet_index
@@ -860,11 +907,11 @@ Consciousness.recalcTexts_bySource = async (db, source_id) => {
 					
 				)
 	`, {source_id})	
-	
+	console.timeEnd('recalcTexts_bySource list')
 	for (const cell of list) {
 		cell.source_id = source_id
-		await Consciousness.setCellType(db, cell)
 	}
+	await Consciousness.setListCellType(db, list)
 	
 }
 Consciousness.recalcTexts_bySheet = async (db, source_id, sheet_index) => {
@@ -877,7 +924,7 @@ Consciousness.recalcTexts_bySheet = async (db, source_id, sheet_index) => {
 			ce.date = null, 
 			ce.pruning = 0
 		WHERE 
-			co.source_id = :source_id and co.sheet_index = :sheet_index
+			ce.source_id = :source_id and ce.sheet_index = :sheet_index
 			AND ce.source_id = co.source_id
 			AND ce.col_index = co.col_index
 			AND ce.sheet_index = co.sheet_index
@@ -899,12 +946,16 @@ Consciousness.recalcTexts_bySheet = async (db, source_id, sheet_index) => {
 			ce.multi_index,
 			ce.text, 
 			pr.type,
+			-- CASE
+			-- 	WHEN pr.type = 'value' THEN ce.nick
+			-- 	ELSE null
+			-- END AS nick,
 			pr.multi + 0 as multi,
 			pr.prop_title
 		FROM sources_cells ce, sources_cols co
 			LEFT JOIN sources_props pr on (pr.prop_id = co.prop_id)
 		WHERE 
-			co.source_id = :source_id and co.sheet_index = :sheet_index
+			ce.source_id = :source_id and ce.sheet_index = :sheet_index
 			AND ce.source_id = co.source_id
 			AND ce.col_index = co.col_index
 			AND ce.sheet_index = co.sheet_index
@@ -931,12 +982,11 @@ Consciousness.recalcTexts_bySheet = async (db, source_id, sheet_index) => {
 					
 				)
 	`, {source_id, sheet_index})	
-	
 	for (const cell of list) {
 		cell.source_id = source_id
 		cell.sheet_index = sheet_index
-		await Consciousness.setCellType(db, cell)
 	}
+	await Consciousness.setListCellType(db, list)
 	
 }
 Consciousness.recalcTexts = async (db) => {
@@ -962,6 +1012,10 @@ Consciousness.recalcTexts = async (db) => {
 			ce.multi_index,
 			ce.text, 
 			pr.type,
+			-- CASE
+			-- 	WHEN pr.type = 'value' THEN ce.nick
+			-- 	ELSE null
+			-- END AS nick,
 			pr.multi + 0 as multi,
 			pr.prop_title
 		FROM sources_cells ce, sources_cols co
@@ -977,9 +1031,7 @@ Consciousness.recalcTexts = async (db) => {
 				(pr.type = 'date' AND ce.date IS NULL)
 			)
 	`)
-	for (const cell of list) {
-		await Consciousness.setCellType(db, cell)
-	}	
+	await Consciousness.setListCellType(db, list)
 }
 // Consciousness.recalcTextsDirect = async (db, source) => { //depricated use recalcTexts
 // 	const {source_id} = source
@@ -1768,10 +1820,10 @@ Consciousness.recalcRepresentItemSummary_bySheet = async (db, source_id, sheet_i
 }
 Consciousness.recalcRepresentItemSummary = async (db) => {
 	//Видимость ячейки по данным сущности - свойство, сущность, значение ключа, значение ячейки - в итоге учитывается
-	await db.exec(`
-		UPDATE sources_cells ce
-		SET ce.represent_item_summary = 0
-	`)
+	// await db.exec(`
+	// 	UPDATE sources_cells ce
+	// 	SET ce.represent_item_summary = 0
+	// `)
 
 	await db.exec(`
 		UPDATE 
@@ -2008,59 +2060,39 @@ Consciousness.recalcRepresentCellRowKey_bySheet = async (db, source_id, sheet_in
 		and ce.sheet_index = ro.sheet_index
 	`, {source_id, sheet_index})
 }
-Consciousness.recalcRowSearch = async (db) => {
 
-	
-	const texts = await db.all(`
-		SELECT ce.sheet_index, 
-			ce.row_index, 
-			GROUP_CONCAT(ce.text SEPARATOR ' ') as text
-		FROM sources_cells ce
-		GROUP BY ce.sheet_index, ce.row_index
-	`)
-
-	for (const {text, sheet_index, row_index} of texts) {
-		let search = nicked(text)
-		search = search.split('-')
-		search = unique(search)
-		search.sort()
-		search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-		await db.exec(`
-			UPDATE sources_rows
-			SET search = :search
-			WHERE sheet_index = :sheet_index
-			and row_index = :row_index
-		`, {sheet_index, row_index, search})
-	}
-}
 Consciousness.recalcRowSearch_bySource = async (db, source_id) => {
 	const texts = await db.all(`
-		SELECT ce.sheet_index, 
+		SELECT 
+			ce.source_id, 
+			ce.sheet_index, 
 			ce.row_index, 
 			GROUP_CONCAT(ce.text SEPARATOR ' ') as text
 		FROM sources_cells ce
 		WHERE ce.source_id = :source_id
 		GROUP BY ce.sheet_index, ce.row_index
 	`, {source_id})
-
-	for (const {text, sheet_index, row_index} of texts) {
-		let search = nicked(text)
-		search = search.split('-')
-		search = unique(search)
-		search.sort()
-		search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-		await db.exec(`
-			UPDATE sources_rows
-			SET search = :search
-			WHERE source_id = :source_id
-			and sheet_index = :sheet_index
-			and row_index = :row_index
-		`, {source_id, sheet_index, row_index, search})
-	}
+	await Consciousness.recalcRowSearch_list(db, texts)
+	// for (const {text, sheet_index, row_index} of texts) {
+	// 	let search = nicked(text)
+	// 	search = search.split('-')
+	// 	search = unique(search)
+	// 	search.sort()
+	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+	// 	await db.exec(`
+	// 		UPDATE sources_rows
+	// 		SET search = :search
+	// 		WHERE source_id = :source_id
+	// 		and sheet_index = :sheet_index
+	// 		and row_index = :row_index
+	// 	`, {source_id, sheet_index, row_index, search})
+	// }
 }
 Consciousness.recalcRowSearch_bySheet = async (db, source_id, sheet_index) => {
 	const texts = await db.all(`
-		SELECT ce.sheet_index, 
+		SELECT 
+			ce.source_id, 
+			ce.sheet_index, 
 			ce.row_index, 
 			GROUP_CONCAT(ce.text SEPARATOR ' ') as text
 		FROM sources_cells ce
@@ -2068,121 +2100,55 @@ Consciousness.recalcRowSearch_bySheet = async (db, source_id, sheet_index) => {
 			ce.source_id = :source_id and ce.sheet_index = :sheet_index
 		GROUP BY ce.sheet_index, ce.row_index
 	`, {source_id, sheet_index})
-
-	for (const {text, sheet_index, row_index} of texts) {
-		let search = nicked(text)
-		search = search.split('-')
-		search = unique(search)
-		search.sort()
-		search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-		await db.exec(`
-			UPDATE sources_rows
-			SET search = :search
-			WHERE source_id = :source_id
-			and sheet_index = :sheet_index
-			and row_index = :row_index
-		`, {source_id, sheet_index, row_index, search})
-	}
+	await Consciousness.recalcRowSearch_list(db, texts)
+	// for (const {text, sheet_index, row_index} of texts) {
+	// 	let search = nicked(text)
+	// 	search = search.split('-')
+	// 	search = unique(search)
+	// 	search.sort()
+	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+	// 	await db.exec(`
+	// 		UPDATE sources_rows
+	// 		SET search = :search
+	// 		WHERE source_id = :source_id
+	// 		and sheet_index = :sheet_index
+	// 		and row_index = :row_index
+	// 	`, {source_id, sheet_index, row_index, search})
+	// }
 }
-Consciousness.recalcItemSearch_bySource = async (db, source_id) => {
+
+Consciousness.recalcRowSearch = async (db) => {
 	const texts = await db.all(`
 		SELECT 
-			wi.entity_id,
-			wi.key_id, 
-			concat(GROUP_CONCAT(ce.text SEPARATOR '-'), "-", GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
-		FROM 
-			sources_winners wi, 
-			sources_cells ce, 
-			sources_props pr
-		WHERE 
-			ce.source_id = :source_id
-			and pr.prop_id = wi.prop_id
-			and wi.source_id = ce.source_id
-			and wi.sheet_index = ce.sheet_index
-			and wi.row_index = ce.row_index
-			and wi.col_index = ce.col_index
-		GROUP BY wi.key_id
-	`, {source_id})
-	for (const {entity_id, key_id, text} of texts) {
-
-		let search = nicked(text)
-		search = search.split('-')
-		search = unique(search)
-		search.sort()
-		search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-		await db.exec(`
-			UPDATE sources_items
-			SET search = :search
-			WHERE entity_id = :entity_id and key_id = :key_id
-		`, {entity_id, key_id, search})
-	}
+			ce.source_id, 
+			ce.sheet_index, 
+			ce.row_index, 
+			GROUP_CONCAT(ce.text SEPARATOR ' ') as text
+		FROM sources_cells ce
+		GROUP BY ce.sheet_index, ce.row_index
+	`)
+	await Consciousness.recalcRowSearch_list(db, texts)
 }
-Consciousness.recalcItemSearch_byKey = async (db, entity_id, key_id) => {
-	const texts = await db.all(`
-		SELECT 
-			wi.entity_id,
-			wi.key_id, 
-			concat(GROUP_CONCAT(ce.text SEPARATOR '-'), "-", GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
-		FROM 
-			sources_winners wi, 
-			sources_cells ce, 
-			sources_props pr
-		WHERE 
-			wi.entity_id = :entity_id and wi.key_id = :key_id
-			and pr.prop_id = wi.prop_id
-			and wi.source_id = ce.source_id
-			and wi.sheet_index = ce.sheet_index
-			and wi.row_index = ce.row_index
-			and wi.col_index = ce.col_index
-		GROUP BY wi.key_id
-	`, {entity_id, key_id})
-	for (const {entity_id, key_id, text} of texts) {
-
+Consciousness.recalcRowSearch_list = async (db, texts) => {
+	const sources_rows = new BulkInserter(db, 'sources_rows', 
+		['source_id', 'sheet_index', 'row_index', 'search'], // Ключевые колонки для WHERE
+		1000, true
+	)
+	for (const {source_id, text, sheet_index, row_index} of texts) {
 		let search = nicked(text)
 		search = search.split('-')
 		search = unique(search)
 		search.sort()
 		search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-		await db.exec(`
-			UPDATE sources_items
-			SET search = :search
-			WHERE entity_id = :entity_id and key_id = :key_id
-		`, {entity_id, key_id, search})
+		await sources_rows.insert([source_id, sheet_index, row_index, search])
+		// await db.exec(`
+		// 	UPDATE sources_rows
+		// 	SET search = :search
+		// 	WHERE sheet_index = :sheet_index
+		// 	and row_index = :row_index
+		// `, {sheet_index, row_index, search})
 	}
-}
-Consciousness.recalcItemSearch_bySheet = async (db, source_id, sheet_index) => {
-	const texts = await db.all(`
-		SELECT 
-			wi.entity_id,
-			wi.key_id, 
-			concat(GROUP_CONCAT(ce.text SEPARATOR '-'), "-", GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
-		FROM 
-			sources_winners wi, 
-			sources_cells ce, 
-			sources_props pr
-		WHERE 
-			ce.source_id = :source_id
-			and ce.sheet_index = :sheet_index
-			and pr.prop_id = wi.prop_id
-			and wi.source_id = ce.source_id
-			and wi.sheet_index = ce.sheet_index
-			and wi.row_index = ce.row_index
-			and wi.col_index = ce.col_index
-		GROUP BY wi.key_id
-	`, {source_id, sheet_index})
-	for (const {entity_id, key_id, text} of texts) {
-
-		let search = nicked(text)
-		search = search.split('-')
-		search = unique(search)
-		search.sort()
-		search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-		await db.exec(`
-			UPDATE sources_items
-			SET search = :search
-			WHERE entity_id = :entity_id and key_id = :key_id
-		`, {entity_id, key_id, search})
-	}
+	await sources_rows.flush()
 }
 Consciousness.recalcItemSearch = async (db) => {
 	await db.exec(`
@@ -2195,7 +2161,7 @@ Consciousness.recalcItemSearch = async (db) => {
 			wi.key_id, 
 			concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
 		FROM 
-			sources_winners wi, 
+			sources_wcells wi, 
 			sources_cells ce, 
 			sources_props pr
 		WHERE 
@@ -2206,24 +2172,144 @@ Consciousness.recalcItemSearch = async (db) => {
 			and wi.col_index = ce.col_index
 		GROUP BY wi.key_id
 	`)
+	await Consciousness.recalcItemSearch_list(db, texts)
+	
+}
+Consciousness.recalcItemSearch_list = async (db, texts) => {
+	const sources_items = new BulkInserter(db, 'sources_items', ['entity_id', 'key_id', 'search'], 50000, true)
 	for (const {entity_id, key_id, text} of texts) {
-
 		let search = nicked(text)
 		search = search.split('-')
-		search = unique(search)
+		search = unique(search).filter(r => r)
 		search.sort()
 		search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-		await db.exec(`
-			UPDATE sources_items
-			SET search = :search
-			WHERE entity_id = :entity_id and key_id = :key_id
-		`, {entity_id, key_id, search})
+		await sources_items.insert([entity_id, key_id, search])
 	}
+	await sources_items.flush()
+
+	// for (const {entity_id, key_id, text} of texts) {
+
+	// 	let search = nicked(text)
+	// 	search = search.split('-')
+	// 	search = unique(search)
+	// 	search.sort()
+	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+	// 	await db.exec(`
+	// 		UPDATE sources_items
+	// 		SET search = :search
+	// 		WHERE entity_id = :entity_id and key_id = :key_id
+	// 	`, {entity_id, key_id, search})
+	// }
 }
+Consciousness.recalcItemSearch_bySource = async (db, source_id) => {
+	const texts = await db.all(`
+		SELECT 
+			wi.entity_id,
+			wi.key_id, 
+			concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
+		FROM 
+			sources_wcells wi, 
+			sources_cells ce, 
+			sources_props pr
+		WHERE 
+			ce.source_id = :source_id
+			and pr.prop_id = wi.prop_id
+			and wi.source_id = ce.source_id
+			and wi.sheet_index = ce.sheet_index
+			and wi.row_index = ce.row_index
+			and wi.col_index = ce.col_index
+		GROUP BY wi.key_id
+	`, {source_id})
+	await Consciousness.recalcItemSearch_list(db, texts)
+	// for (const {entity_id, key_id, text} of texts) {
+
+	// 	let search = nicked(text)
+	// 	search = search.split('-')
+	// 	search = unique(search)
+	// 	search.sort()
+	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+	// 	await db.exec(`
+	// 		UPDATE sources_items
+	// 		SET search = :search
+	// 		WHERE entity_id = :entity_id and key_id = :key_id
+	// 	`, {entity_id, key_id, search})
+	// }
+}
+
+Consciousness.recalcItemSearch_byKey = async (db, entity_id, key_id) => {
+	const texts = await db.all(`
+		SELECT 
+			wi.entity_id,
+			wi.key_id, 
+			concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
+		FROM 
+			sources_wcells wi, 
+			sources_cells ce, 
+			sources_props pr
+		WHERE 
+			wi.entity_id = :entity_id and wi.key_id = :key_id
+			and pr.prop_id = wi.prop_id
+			and wi.source_id = ce.source_id
+			and wi.sheet_index = ce.sheet_index
+			and wi.row_index = ce.row_index
+			and wi.col_index = ce.col_index
+		GROUP BY wi.key_id
+	`, {entity_id, key_id})
+	await Consciousness.recalcItemSearch_list(db, texts)
+	// for (const {entity_id, key_id, text} of texts) {
+
+	// 	let search = nicked(text)
+	// 	search = search.split('-')
+	// 	search = unique(search)
+	// 	search.sort()
+	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+	// 	await db.exec(`
+	// 		UPDATE sources_items
+	// 		SET search = :search
+	// 		WHERE entity_id = :entity_id and key_id = :key_id
+	// 	`, {entity_id, key_id, search})
+	// }
+}
+Consciousness.recalcItemSearch_bySheet = async (db, source_id, sheet_index) => {
+	const texts = await db.all(`
+		SELECT 
+			wi.entity_id,
+			wi.key_id, 
+			concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
+		FROM 
+			sources_wcells wi, 
+			sources_cells ce, 
+			sources_props pr
+		WHERE 
+			ce.source_id = :source_id
+			and ce.sheet_index = :sheet_index
+			and pr.prop_id = wi.prop_id
+			and wi.source_id = ce.source_id
+			and wi.sheet_index = ce.sheet_index
+			and wi.row_index = ce.row_index
+			and wi.col_index = ce.col_index
+		GROUP BY wi.key_id
+	`, {source_id, sheet_index})
+	await Consciousness.recalcItemSearch_list(db, texts)
+	// for (const {entity_id, key_id, text} of texts) {
+
+	// 	let search = nicked(text)
+	// 	search = search.split('-')
+	// 	search = unique(search)
+	// 	search.sort()
+	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+	// 	await db.exec(`
+	// 		UPDATE sources_items
+	// 		SET search = :search
+	// 		WHERE entity_id = :entity_id and key_id = :key_id
+	// 	`, {entity_id, key_id, search})
+	// }
+}
+
 Consciousness.recalcSearchByEntityIdAndSourceId = async (db, entity_id, source_id) => {	
 	await db.exec(`
 		UPDATE sources_items it
-			LEFT JOIN sources_winners wi on (wi.entity_id = it.entity_id and wi.key_id = it.key_id and wi.prop_id = :entity_id)
+			LEFT JOIN sources_wcells wi on (wi.entity_id = it.entity_id and wi.key_id = it.key_id and wi.prop_id = :entity_id)
 		SET search = ''
 		WHERE it.entity_id = :entity_id and wi.entity_id is null
 	`, {entity_id})
@@ -2234,7 +2320,7 @@ Consciousness.recalcSearchByEntityIdAndSourceId = async (db, entity_id, source_i
 			concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
 		FROM 
 			sources_cells ce, 
-			sources_winners wi, 
+			sources_wcells wi, 
 			sources_props pr
 		WHERE 
 			wi.source_id = :source_id
@@ -2291,69 +2377,77 @@ Consciousness.recalcMaster = async (db) => {
 			and so.source_id = sh.source_id
 			and so.master = 1
 	`)
+	
 }
 Consciousness.recalcMaster_bySource = async (db, source_id) => {
-	await db.exec(`
-		UPDATE sources_items it, sources_rows ro, sources_sheets sh
-		SET it.master = 0
-		WHERE 
-		sh.source_id = :source_id
-		and ro.source_id = sh.source_id and ro.sheet_index = sh.sheet_index
-		and it.key_id = ro.key_id and it.entity_id = sh.entity_id
-	`, {source_id})
-	await db.exec(`
-		UPDATE 
-			sources_sources so,
-			sources_sheets sh, 
-			sources_rows ro, 
-			sources_items it
-		SET it.master = 1
-		WHERE
-			so.source_id = :source_id and so.master = 1
-			and sh.source_id = so.source_id
-			and ro.source_id = so.source_id and ro.sheet_index = sh.sheet_index
-			and it.key_id = ro.key_id and it.entity_id = sh.entity_id
-	`, {source_id})
+	return Consciousness.recalcMaster(db)
+	//Источник изменился. У него новые sh.entity_id и были старые sh.entity_id. У него новый master. Если мы стёрли старые, то охватывает всё
+	/*
+		it.key_id it.entity_id master 	= 	ro.key_id sh.entity_id so.master (any)
+	*/
+	// await db.exec(`
+	// 	UPDATE sources_items it, sources_rows ro, sources_sheets sh
+	// 	SET it.master = 0
+	// 	WHERE 
+	// 	sh.source_id = :source_id
+	// 	and ro.source_id = sh.source_id and ro.sheet_index = sh.sheet_index
+	// 	and it.key_id = ro.key_id and it.entity_id = sh.entity_id
+	// `, {source_id})
+	// await db.exec(`
+	// 	UPDATE 
+	// 		sources_sources so,
+	// 		sources_sheets sh, 
+	// 		sources_rows ro, 
+	// 		sources_items it
+	// 	SET it.master = 1
+	// 	WHERE
+	// 		so.source_id = :source_id and so.master = 1
+	// 		and sh.source_id = so.source_id
+	// 		and ro.source_id = so.source_id and ro.sheet_index = sh.sheet_index
+	// 		and it.key_id = ro.key_id and it.entity_id = sh.entity_id
+	// `, {source_id})
 }
 Consciousness.recalcMaster_bySheet = async (db, source_id, sheet_index) => {
-	await db.exec(`
-		UPDATE sources_items it, sources_rows ro, sources_sheets sh
-		SET it.master = 0
-		WHERE 
-		sh.source_id = :source_id and sh.sheet_index = :sheet_index
-		and ro.source_id = sh.source_id and ro.sheet_index = sh.sheet_index
-		and it.key_id = ro.key_id and it.entity_id = sh.entity_id
-	`, {source_id, sheet_index})
-	await db.exec(`
-		UPDATE 
-			sources_sources so,
-			sources_sheets sh, 
-			sources_rows ro, 
-			sources_items it
-		SET it.master = 1
-		WHERE
-			so.source_id = :source_id and so.master = 1
-			and sh.source_id = so.source_id and sh.sheet_index = :sheet_index
-			and ro.source_id = so.source_id and ro.sheet_index = sh.sheet_index
-			and it.key_id = ro.key_id and it.entity_id = sh.entity_id
-	`, {source_id, sheet_index})
+	return Consciousness.recalcMaster(db)
+	// await db.exec(`
+	// 	UPDATE sources_items it, sources_rows ro, sources_sheets sh
+	// 	SET it.master = 0
+	// 	WHERE 
+	// 	sh.source_id = :source_id and sh.sheet_index = :sheet_index
+	// 	and ro.source_id = sh.source_id and ro.sheet_index = sh.sheet_index
+	// 	and it.key_id = ro.key_id and it.entity_id = sh.entity_id
+	// `, {source_id, sheet_index})
+	// await db.exec(`
+	// 	UPDATE 
+	// 		sources_sources so,
+	// 		sources_sheets sh, 
+	// 		sources_rows ro, 
+	// 		sources_items it
+	// 	SET it.master = 1
+	// 	WHERE
+	// 		so.source_id = :source_id and so.master = 1
+	// 		and sh.source_id = so.source_id and sh.sheet_index = :sheet_index
+	// 		and ro.source_id = so.source_id and ro.sheet_index = sh.sheet_index
+	// 		and it.key_id = ro.key_id and it.entity_id = sh.entity_id
+	// `, {source_id, sheet_index})
 }
 Consciousness.recalcWinner_bySource = async (db, source_id) => {
-	const sheets = await db.colAll(`
-		select sheet_index from sources_sheets 
-		where source_id = :source_id
-	`, {source_id})
-	for (const sheet_index of sheets) {
-		await Consciousness.recalcWinner_bySheet(db, source_id, sheet_index)
-	}
+	return Consciousness.recalcWinner(db)
+	// const sheets = await db.colAll(`
+	// 	select sheet_index from sources_sheets 
+	// 	where source_id = :source_id
+	// `, {source_id})
+	// for (const sheet_index of sheets) {
+	// 	await Consciousness.recalcWinner_bySheet(db, source_id, sheet_index)
+	// }
 }
 Consciousness.recalcWinner_byKey = async (db, entity_id, key_id) => {
 	await db.exec(`
-		DELETE FROM sources_winners 
+		DELETE FROM sources_wcells 
 		WHERE entity_id = :entity_id and key_id = :key_id
 	`, {entity_id, key_id})
 	await db.exec(`
-		INSERT INTO sources_winners (
+		INSERT INTO sources_wcells (
 			entity_id, key_id, prop_id, 
 			source_id, sheet_index, row_index, col_index
 		)
@@ -2382,7 +2476,7 @@ Consciousness.recalcWinner_byKey = async (db, entity_id, key_id) => {
 	`, {entity_id, key_id})
 	
 	
-	await db.exec(`DELETE t FROM sources_wvalues t, sources_winners wi 
+	await db.exec(`DELETE t FROM sources_wvalues t, sources_wcells wi 
 		WHERE 
 			wi.entity_id = :entity_id and wi.key_id = :key_id
 			and t.entity_id = wi.entity_id and t.key_id = wi.key_id and t.prop_id = wi.prop_id
@@ -2393,7 +2487,7 @@ Consciousness.recalcWinner_byKey = async (db, entity_id, key_id) => {
 		)
 		SELECT 
 		 	wi.entity_id, wi.key_id, wi.prop_id, ce.value_id, ce.multi_index
-	 	FROM sources_winners wi, sources_cells ce
+	 	FROM sources_wcells wi, sources_cells ce
 	 	WHERE 
 	 		wi.entity_id = :entity_id and wi.key_id = :key_id
 	 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
@@ -2401,7 +2495,7 @@ Consciousness.recalcWinner_byKey = async (db, entity_id, key_id) => {
 	`, {entity_id, key_id})
 
 	
-	await db.exec(`DELETE t FROM sources_wnumbers t, sources_winners wi 
+	await db.exec(`DELETE t FROM sources_wnumbers t, sources_wcells wi 
 		WHERE 
 			wi.entity_id = :entity_id and wi.key_id = :key_id
 			and t.entity_id = wi.entity_id and t.key_id = wi.key_id and t.prop_id = wi.prop_id
@@ -2412,7 +2506,7 @@ Consciousness.recalcWinner_byKey = async (db, entity_id, key_id) => {
 		)
 		SELECT 
 		 	wi.entity_id, wi.key_id, wi.prop_id, ce.number, ce.multi_index
-	 	FROM sources_winners wi, sources_cells ce
+	 	FROM sources_wcells wi, sources_cells ce
 	 	WHERE 
 	 		wi.entity_id = :entity_id and wi.key_id = :key_id
 	 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
@@ -2421,7 +2515,7 @@ Consciousness.recalcWinner_byKey = async (db, entity_id, key_id) => {
 	`, {entity_id, key_id})
 
 
-	await db.exec(`DELETE t FROM sources_wdates t, sources_winners wi 
+	await db.exec(`DELETE t FROM sources_wdates t, sources_wcells wi 
 		WHERE 
 			wi.entity_id = :entity_id and wi.key_id = :key_id
 			and t.entity_id = wi.entity_id and t.key_id = wi.key_id and t.prop_id = wi.prop_id
@@ -2432,7 +2526,7 @@ Consciousness.recalcWinner_byKey = async (db, entity_id, key_id) => {
 		)
 		SELECT 
 		 	wi.entity_id, wi.key_id, wi.prop_id, ce.date, ce.multi_index
-	 	FROM sources_winners wi, sources_cells ce
+	 	FROM sources_wcells wi, sources_cells ce
 	 	WHERE 
 	 		wi.entity_id = :entity_id and wi.key_id = :key_id
 	 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
@@ -2440,7 +2534,7 @@ Consciousness.recalcWinner_byKey = async (db, entity_id, key_id) => {
 	`, {entity_id, key_id})
 	
 	
-	await db.exec(`DELETE t FROM sources_wtexts t, sources_winners wi 
+	await db.exec(`DELETE t FROM sources_wtexts t, sources_wcells wi 
 		WHERE 
 			wi.entity_id = :entity_id and wi.key_id = :key_id
 			and t.entity_id = wi.entity_id and t.key_id = wi.key_id and t.prop_id = wi.prop_id
@@ -2451,7 +2545,7 @@ Consciousness.recalcWinner_byKey = async (db, entity_id, key_id) => {
 		)
 		SELECT 
 		 	wi.entity_id, wi.key_id, wi.prop_id, ce.text, ce.multi_index
-	 	FROM sources_winners wi, sources_cells ce, sources_props pr
+	 	FROM sources_wcells wi, sources_cells ce, sources_props pr
 	 	WHERE 
 	 		wi.entity_id = :entity_id and wi.key_id = :key_id
 	 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
@@ -2460,143 +2554,150 @@ Consciousness.recalcWinner_byKey = async (db, entity_id, key_id) => {
 	`, {entity_id, key_id})
 }
 Consciousness.recalcWinner_bySheet = async (db, source_id, sheet_index) => {
-	const entity_id = await db.col(`
-		select entity_id from sources_sheets 
-		where source_id = :source_id and sheet_index = :sheet_index
-	`, {source_id, sheet_index})
-	if (!entity_id) {
-		const entity_id = await db.col(`
-			select entity_id from sources_winners 
-			where source_id = :source_id and sheet_index = :sheet_index
-			limit 1
-		`, {source_id, sheet_index})
-		if (!entity_id) return
-		return Consciousness.recalcWinner(db)
-	}
+	return Consciousness.recalcWinner(db)
+	// const entity_id = await db.col(`
+	// 	select entity_id from sources_sheets 
+	// 	where source_id = :source_id and sheet_index = :sheet_index
+	// `, {source_id, sheet_index})
+	// if (!entity_id) { //Если у листа нет сущности, значит все его данные невидимы
+	// 	const entity_id = await db.col(`
+	// 		select entity_id from sources_wcells 
+	// 		where source_id = :source_id and sheet_index = :sheet_index
+	// 		limit 1
+	// 	`, {source_id, sheet_index}) //Надо убедиться что и ранее сущности не было
+	// 	if (!entity_id) return
+	// 	return Consciousness.recalcWinner(db) //Ранее была сущность и надо всё пересчитать
+	// }
 	
-	await db.exec(`
-		DELETE wi FROM sources_winners wi
-		WHERE 
-			wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
-	`, {entity_id, source_id, sheet_index})
-	await db.exec(`
-		INSERT INTO sources_winners (
-			entity_id, key_id, prop_id, 
-			source_id, sheet_index, row_index, col_index
-		)
-		SELECT 
-		 	sh.entity_id, ro.key_id, co.prop_id, 
-		 	ce.source_id, ce.sheet_index, ce.row_index, ce.col_index
-	 	FROM sources_cells ce, sources_cols co, sources_sources so, 
-	 		sources_sheets sh, sources_rows ro, sources_props pr, sources_items it
-	 	WHERE 
-	 		sh.entity_id = :entity_id and ro.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
-	 		and ce.sheet_index = co.sheet_index and ce.col_index = co.col_index and ce.multi_index = 0
-	 		and pr.prop_id = co.prop_id
-	 		and it.entity_id = sh.entity_id and it.key_id = ro.key_id and it.master = 1
-	 		and ce.source_id = co.source_id
-	 		and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
-	 		and so.source_id = ce.source_id
-	 		and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
-	 		and ce.represent = 1 
+	// await db.exec(`
+	// 	DELETE wi FROM sources_wcells wi
+	// 	WHERE 
+	// 		wi.entity_id = :entity_id and wi.key_id in (
+	// 			select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index
+	// 		)
+	// `, {entity_id, source_id, sheet_index})
+	// await db.exec(`
+	// 	INSERT INTO sources_wcells (
+	// 		entity_id, key_id, prop_id, 
+	// 		source_id, sheet_index, row_index, col_index
+	// 	)
+	// 	SELECT 
+	// 	 	sh.entity_id, ro.key_id, co.prop_id, 
+	// 	 	ce.source_id, ce.sheet_index, ce.row_index, ce.col_index
+	//  	FROM sources_cells ce, sources_cols co, sources_sources so, 
+	//  		sources_sheets sh, sources_rows ro, sources_props pr, sources_items it
+	//  	WHERE 
+	//  		sh.entity_id = :entity_id and ro.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
+	//  		and ce.sheet_index = co.sheet_index and ce.col_index = co.col_index and ce.multi_index = 0
+	//  		and pr.prop_id = co.prop_id
+	//  		and it.entity_id = sh.entity_id and it.key_id = ro.key_id and it.master = 1
+	//  		and ce.source_id = co.source_id
+	//  		and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
+	//  		and so.source_id = ce.source_id
+	//  		and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
+	//  		and ce.represent = 1 
 	 		
-	 	ORDER BY so.ordain, ce.sheet_index, ce.row_index, pr.ordain
-	 	ON DUPLICATE KEY UPDATE
-  			source_id = VALUES(source_id),
-  			sheet_index = VALUES(sheet_index),
-  			row_index = VALUES(row_index),
-  			col_index = VALUES(col_index)
-	`, {entity_id, source_id, sheet_index})
+	//  	ORDER BY so.ordain, ce.sheet_index, ce.row_index, pr.ordain
+	//  	ON DUPLICATE KEY UPDATE
+  	// 		source_id = VALUES(source_id),
+  	// 		sheet_index = VALUES(sheet_index),
+  	// 		row_index = VALUES(row_index),
+  	// 		col_index = VALUES(col_index)
+	// `, {entity_id, source_id, sheet_index})
 	
 	
-	await db.exec(`DELETE t FROM sources_wvalues t, sources_winners wi 
-		WHERE 
-			wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
-			and t.entity_id = wi.entity_id and t.key_id = wi.key_id and t.prop_id = wi.prop_id
-	`, {entity_id, source_id, sheet_index})
-	await db.exec(`
-		INSERT INTO sources_wvalues (
-			entity_id, key_id, prop_id, value_id, multi_index
-		)
-		SELECT 
-		 	wi.entity_id, wi.key_id, wi.prop_id, ce.value_id, ce.multi_index
-	 	FROM sources_winners wi, sources_cells ce
-	 	WHERE 
-	 		wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
-	 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
-	 		and ce.value_id is not null
-	`, {entity_id, source_id, sheet_index})
+	// await db.exec(`DELETE t FROM sources_wvalues t, sources_wcells wi 
+	// 	WHERE 
+	// 		wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
+	// 		and t.entity_id = wi.entity_id and t.key_id = wi.key_id and t.prop_id = wi.prop_id
+	// `, {entity_id, source_id, sheet_index})
+	// await db.exec(`
+	// 	INSERT INTO sources_wvalues (
+	// 		entity_id, key_id, prop_id, value_id, multi_index
+	// 	)
+	// 	SELECT 
+	// 	 	wi.entity_id, wi.key_id, wi.prop_id, ce.value_id, ce.multi_index
+	//  	FROM sources_wcells wi, sources_cells ce
+	//  	WHERE 
+	//  		wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
+	//  		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
+	//  		and ce.value_id is not null
+	// `, {entity_id, source_id, sheet_index})
 
 	
-	await db.exec(`DELETE t FROM sources_wnumbers t, sources_winners wi 
-		WHERE 
-			wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
-			and	t.entity_id = wi.entity_id and t.key_id = wi.key_id and t.prop_id = wi.prop_id
-	`, {entity_id, source_id, sheet_index})
-	await db.exec(`
-		INSERT INTO sources_wnumbers (
-			entity_id, key_id, prop_id, number, multi_index
-		)
-		SELECT 
-		 	wi.entity_id, wi.key_id, wi.prop_id, ce.number, ce.multi_index
-	 	FROM sources_winners wi, sources_cells ce
-	 	WHERE 
-	 		wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
-	 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
-	 		and ce.number is not null
+	// await db.exec(`DELETE t FROM sources_wnumbers t, sources_wcells wi 
+	// 	WHERE 
+	// 		wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
+	// 		and	t.entity_id = wi.entity_id and t.key_id = wi.key_id and t.prop_id = wi.prop_id
+	// `, {entity_id, source_id, sheet_index})
+	// await db.exec(`
+	// 	INSERT INTO sources_wnumbers (
+	// 		entity_id, key_id, prop_id, number, multi_index
+	// 	)
+	// 	SELECT 
+	// 	 	wi.entity_id, wi.key_id, wi.prop_id, ce.number, ce.multi_index
+	//  	FROM sources_wcells wi, sources_cells ce
+	//  	WHERE 
+	//  		wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
+	//  		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
+	//  		and ce.number is not null
 	 		
-	`, {entity_id, source_id, sheet_index})
+	// `, {entity_id, source_id, sheet_index})
 
 
-	await db.exec(`DELETE t FROM sources_wdates t, sources_winners wi 
-		WHERE 
-			wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
-			and t.entity_id = wi.entity_id and t.key_id = wi.key_id and t.prop_id = wi.prop_id
-	`, {entity_id, source_id, sheet_index})
-	await db.exec(`
-		INSERT INTO sources_wdates (
-			entity_id, key_id, prop_id, date, multi_index
-		)
-		SELECT 
-		 	wi.entity_id, wi.key_id, wi.prop_id, ce.date, ce.multi_index
-	 	FROM sources_winners wi, sources_cells ce
-	 	WHERE 
-	 		wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
-	 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
-	 		and ce.date is not null
-	`, {entity_id, source_id, sheet_index})
+	// await db.exec(`DELETE t FROM sources_wdates t, sources_wcells wi 
+	// 	WHERE 
+	// 		wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
+	// 		and t.entity_id = wi.entity_id and t.key_id = wi.key_id and t.prop_id = wi.prop_id
+	// `, {entity_id, source_id, sheet_index})
+	// await db.exec(`
+	// 	INSERT INTO sources_wdates (
+	// 		entity_id, key_id, prop_id, date, multi_index
+	// 	)
+	// 	SELECT 
+	// 	 	wi.entity_id, wi.key_id, wi.prop_id, ce.date, ce.multi_index
+	//  	FROM sources_wcells wi, sources_cells ce
+	//  	WHERE 
+	//  		wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
+	//  		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
+	//  		and ce.date is not null
+	// `, {entity_id, source_id, sheet_index})
 	
 	
-	await db.exec(`DELETE t FROM sources_wtexts t, sources_winners wi 
-		WHERE 
-			wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
-			and t.entity_id = wi.entity_id and t.key_id = wi.key_id and t.prop_id = wi.prop_id
+	// await db.exec(`DELETE t FROM sources_wtexts t, sources_wcells wi 
+	// 	WHERE 
+	// 		wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
+	// 		and t.entity_id = wi.entity_id and t.key_id = wi.key_id and t.prop_id = wi.prop_id
 		
-	`, {entity_id, source_id, sheet_index})
-	await db.exec(`
-		INSERT INTO sources_wtexts (
-			entity_id, key_id, prop_id, text, multi_index
-		)
-		SELECT 
-		 	wi.entity_id, wi.key_id, wi.prop_id, ce.text, ce.multi_index
-	 	FROM sources_winners wi, sources_cells ce, sources_props pr
-	 	WHERE 
-	 		wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
-	 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
-	 		and wi.prop_id = pr.prop_id
-	 		and pr.type = 'text'
-	`, {entity_id, source_id, sheet_index})
+	// `, {entity_id, source_id, sheet_index})
+	// await db.exec(`
+	// 	INSERT INTO sources_wtexts (
+	// 		entity_id, key_id, prop_id, text, multi_index
+	// 	)
+	// 	SELECT 
+	// 	 	wi.entity_id, wi.key_id, wi.prop_id, ce.text, ce.multi_index
+	//  	FROM sources_wcells wi, sources_cells ce, sources_props pr
+	//  	WHERE 
+	//  		wi.entity_id = :entity_id and wi.key_id in (select a.key_id from sources_rows a where a.source_id = :source_id and a.sheet_index = :sheet_index)
+	//  		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
+	//  		and wi.prop_id = pr.prop_id
+	//  		and pr.type = 'text'
+	// `, {entity_id, source_id, sheet_index})
 }
 Consciousness.recalcWinner = async (db) => {
-	await db.exec(`TRUNCATE TABLE sources_winners`)
+	await db.exec(`TRUNCATE TABLE sources_wcells`)
 	await db.exec(`
-		INSERT INTO sources_winners (
-			entity_id, key_id, prop_id, 
-			source_id, sheet_index, row_index, col_index
+		INSERT INTO sources_wcells (
+			entity_id, key_id, 
+			prop_id, 
+			source_id, sheet_index, 
+			row_index, col_index
 		)
 		SELECT 
-		 	sh.entity_id, ro.key_id, co.prop_id, 
-		 	ce.source_id, ce.sheet_index, ce.row_index, ce.col_index
+		 	sh.entity_id, ro.key_id, 
+		 	co.prop_id, 
+		 	ce.source_id, ce.sheet_index, 
+		 	ce.row_index, ce.col_index
 	 	FROM sources_cells ce, sources_cols co, sources_sources so, 
 	 		sources_sheets sh, sources_rows ro, sources_props pr, sources_items it
 	 	WHERE 
@@ -2618,11 +2719,17 @@ Consciousness.recalcWinner = async (db) => {
 	await db.exec(`TRUNCATE TABLE sources_wvalues`)
 	await db.exec(`
 		INSERT INTO sources_wvalues (
-			entity_id, key_id, prop_id, value_id, multi_index
+			entity_id, key_id, 
+			prop_id, 
+			value_id, 
+			multi_index
 		)
 		SELECT 
-		 	wi.entity_id, wi.key_id, wi.prop_id, ce.value_id, ce.multi_index
-	 	FROM sources_winners wi, sources_cells ce
+		 	wi.entity_id, wi.key_id, 
+		 	wi.prop_id, 
+		 	ce.value_id, 
+		 	ce.multi_index
+	 	FROM sources_wcells wi, sources_cells ce
 	 	WHERE 
 	 		ce.value_id is not null
 	 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
@@ -2632,11 +2739,15 @@ Consciousness.recalcWinner = async (db) => {
 	await db.exec(`TRUNCATE TABLE sources_wnumbers`)
 	await db.exec(`
 		INSERT INTO sources_wnumbers (
-			entity_id, key_id, prop_id, number, multi_index
+			entity_id, key_id, 
+			prop_id, number, 
+			multi_index
 		)
 		SELECT 
-		 	wi.entity_id, wi.key_id, wi.prop_id, ce.number, ce.multi_index
-	 	FROM sources_winners wi, sources_cells ce
+		 	wi.entity_id, wi.key_id, 
+		 	wi.prop_id, ce.number, 
+		 	ce.multi_index
+	 	FROM sources_wcells wi, sources_cells ce
 	 	WHERE 
 	 		ce.number is not null
 	 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
@@ -2646,11 +2757,13 @@ Consciousness.recalcWinner = async (db) => {
 	await db.exec(`TRUNCATE TABLE sources_wdates`)
 	await db.exec(`
 		INSERT INTO sources_wdates (
-			entity_id, key_id, prop_id, date, multi_index
+			entity_id, key_id, 
+			prop_id, date, multi_index
 		)
 		SELECT 
-		 	wi.entity_id, wi.key_id, wi.prop_id, ce.date, ce.multi_index
-	 	FROM sources_winners wi, sources_cells ce
+		 	wi.entity_id, wi.key_id, 
+		 	wi.prop_id, ce.date, ce.multi_index
+	 	FROM sources_wcells wi, sources_cells ce
 	 	WHERE 
 	 		ce.date is not null
 	 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
@@ -2660,11 +2773,13 @@ Consciousness.recalcWinner = async (db) => {
 	await db.exec(`TRUNCATE TABLE sources_wtexts`)
 	await db.exec(`
 		INSERT INTO sources_wtexts (
-			entity_id, key_id, prop_id, text, multi_index
+			entity_id, key_id, 
+			prop_id, text, multi_index
 		)
 		SELECT 
-		 	wi.entity_id, wi.key_id, wi.prop_id, ce.text, ce.multi_index
-	 	FROM sources_winners wi, sources_cells ce, sources_props pr
+		 	wi.entity_id, wi.key_id, 
+		 	wi.prop_id, ce.text, ce.multi_index
+	 	FROM sources_wcells wi, sources_cells ce, sources_props pr
 	 	WHERE 
 	 		pr.type = 'text'
 	 		and wi.prop_id = pr.prop_id

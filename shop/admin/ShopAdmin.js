@@ -113,7 +113,7 @@ const calcWith = async (db, group_id, prop_titles) => {
 	for (const prop_title of prop_titles) {
 		i++
 		const { prop_id } = await Shop.getPropByNick(db, nicked(prop_title))
-		join.push(`left join sources_winners w${i} on (w${i}.entity_id = :brendart_prop_id and w${i}.key_id = win.key_id and w${i}.prop_id = ${prop_id})`)
+		join.push(`left join sources_wcells w${i} on (w${i}.entity_id = :brendart_prop_id and w${i}.key_id = win.key_id and w${i}.prop_id = ${prop_id})`)
 		where.push(`w${i}.key_id is not null`)
 	}
 	const count = await db.col(`
@@ -141,7 +141,7 @@ const calcWithFilters = async (db, group_id, prop_titles = []) => {
 	for (const prop_title of prop_titles) {
 		i++
 		const { prop_id } = await Shop.getPropByNick(db, nicked(prop_title))
-		join.push(`left join sources_winners w${i} on (w${i}.entity_id = :brendart_prop_id and w${i}.key_id = win.key_id and w${i}.prop_id = ${prop_id})`)
+		join.push(`left join sources_wcells w${i} on (w${i}.entity_id = :brendart_prop_id and w${i}.key_id = win.key_id and w${i}.prop_id = ${prop_id})`)
 		where.push(`w${i}.key_id is not null`)
 	}
 
@@ -149,7 +149,7 @@ const calcWithFilters = async (db, group_id, prop_titles = []) => {
 	const rows = (await db.all(`
 		SELECT win.key_id, pr.prop_nick, nvl(wnum.number, val.value_nick) as nick
 		FROM ${from.join(', ')} ${join.join(' ')}
-			LEFT JOIN sources_winners win2 on (win2.entity_id = win.entity_id and win2.key_id = win.key_id)
+			LEFT JOIN sources_wcells win2 on (win2.entity_id = win.entity_id and win2.key_id = win.key_id)
 			LEFT JOIN sources_props pr on (pr.prop_id = win2.prop_id)
 			LEFT JOIN sources_wnumbers wnum on (wnum.entity_id = win.entity_id and wnum.key_id = win.key_id and wnum.prop_id = win2.prop_id)
 			LEFT JOIN sources_wvalues wval on (wval.entity_id = win.entity_id and wval.key_id = win.key_id and wval.prop_id = win2.prop_id)
@@ -373,7 +373,7 @@ ShopAdmin.getItems = async (db, itemids) => {
 			win.key_id,
 			pr.prop_id,
 			nvl(va.value_title, wn.number) as value_title
-		FROM sources_props pr, sources_winners win
+		FROM sources_props pr, sources_wcells win
 			left join sources_wvalues wv on (wv.entity_id = win.entity_id and wv.key_id = win.key_id and wv.prop_id = win.prop_id)
 			left join sources_values va on (va.value_id = wv.value_id) 
 			left join sources_wnumbers wn on (wn.entity_id = win.entity_id and wn.key_id = win.key_id and wn.prop_id = win.prop_id)
@@ -404,7 +404,7 @@ ShopAdmin.getItemsValues = async (db, itemids, bind) => {
 			win.key_id,
 			pr.prop_id,
 			va.value_title
-		FROM sources_winners win, 
+		FROM sources_wcells win, 
 			sources_wvalues wv,
 			sources_values va,
 			sources_props pr

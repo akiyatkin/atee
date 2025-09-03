@@ -335,6 +335,14 @@ const showSettings = (data, env, source = data.source) => `
 				${ago.pass(source.duration_insert)}
 			</td>
 		</tr>
+		<tr>
+			<td>
+				Время пересчёта
+			</td>
+			<td>
+				${ago.pass(source.duration_recalc)}
+			</td>
+		</tr>
 	</table>
 `
 const showButtons = (data, env, source) => `
