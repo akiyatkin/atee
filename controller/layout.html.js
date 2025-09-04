@@ -96,8 +96,8 @@ controller.HEAD = (data, env) =>
 				if (new_access_time) search += '=' + new_access_time
 				location.href = location.pathname + search + location.hash
 			}
-			check()
-			//setTimeout(check, 1000)
+			//check()
+			setTimeout(check, 5000)
 		</script>
 		<script type="module">// Проверка что получен кэш с нужной темой
 			const fromCookie = () => {
