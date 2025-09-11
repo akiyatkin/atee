@@ -27,7 +27,10 @@ represent.popup = async (args, reloaddiv) => {
 	}
 	await Dialog.open(represent.layer, document.body, null, async () => {
 		const Client = await window.getClient()
-		Client.reloaddiv(reloaddiv)
+		Client.global('recalc')
+		if (reloaddiv) {
+			//Client.reloaddiv(reloaddiv)
+		}
 	})
 }
 export default represent

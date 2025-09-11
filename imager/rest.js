@@ -54,6 +54,7 @@ rest.addArgument('h',['int'], (view, v, prop) => {
 	return v
 })
 rest.addArgument('cache', ['isset'])
+rest.addArgument('re', ['isset'])
 
 
 rest.addArgument('fit', ['string'], (view, fit) => {
@@ -86,7 +87,7 @@ rest.addResponse('get-size', async view => {
 })
 rest.addResponse('webp', async view => {
 	const ext = view.ext = 'webp'
-	const { src, h, w, fit, cache } = await view.gets(['src','h','w','fit','cache'])
+	const { src, h, w, fit, cache, re } = await view.gets(['src','h','w','fit','cache','re'])
 
 	const file = (i => ~i ? src.slice(i + 1) : src)(src.lastIndexOf('/'))
 	const name = (i => ~i ? file.slice(0, i) : file)(file.lastIndexOf('.'))
@@ -101,14 +102,16 @@ rest.addResponse('webp', async view => {
 	if (remote) STAT.hosts[hostname] = true
 	
 	let store
-	const iscache = cache||conf.constraint?.alwayscache
+	const iscache = (cache||conf.constraint?.alwayscache) && !re
 	if (iscache) {
 		const name = nicked([src,h,w,fit].join('-')).slice(-127)
 		store = `cache/imager/${name}.webp`
+
 		
 		const is = await AccessCache.once('isFreshCache' + store, async () => {
 			const cstat = await fs.lstat(store).catch(e => null)
 			if (!cstat) return false
+			if (re) return false
 			if (remote) return true //для remote кэш всегда свежий. Чтобы сбросить нужно вручную удалить папку cache
 			const ostat = await fs.stat(src).catch(e => null)
 			if (!ostat) return false
@@ -116,7 +119,7 @@ rest.addResponse('webp', async view => {
 		})
 		if (is) return createReadStream(store)
 	}
-
+	
 	let inStream
 	if (remote) {
 		const provider = /^https:\/\//i.test(src) ? https : http

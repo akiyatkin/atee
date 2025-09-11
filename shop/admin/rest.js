@@ -57,14 +57,14 @@ rest.addResponse('props', ['admin'], async view => {
 			
 			bp.card_tpl, 
 			bp.filter_tpl, 
-			bp.known + 0 as known,
+			pr.known,
 			pr.comment,
 			pr.type,
 			pr.multi + 0 as multi,
 			pr.prop_title, 
 			pr.prop_id
 		FROM shop_props bp
-			LEFT JOIN sources_props pr on pr.prop_nick = bp.prop_nick
+			LEFT JOIN sources_wprops pr on pr.prop_nick = bp.prop_nick
 		order by pr.ordain
 	`)
 	return view.ret()
@@ -81,14 +81,14 @@ rest.addResponse('groups', ['admin'], async view => {
 		view.data.filters = await db.all(`
 			SELECT fi.prop_nick, pr.prop_title, pr.prop_id
 			FROM shop_filters fi
-				LEFT JOIN sources_props pr on pr.prop_nick = fi.prop_nick
+				LEFT JOIN sources_wprops pr on pr.prop_nick = fi.prop_nick
 			WHERE fi.group_id = :group_id
 			order by fi.ordain
 		`, group)
 		view.data.cards = await db.all(`
 			SELECT ca.prop_nick, pr.prop_title, pr.prop_id
 			FROM shop_cards ca
-				LEFT JOIN sources_props pr on pr.prop_nick = ca.prop_nick
+				LEFT JOIN sources_wprops pr on pr.prop_nick = ca.prop_nick
 			WHERE ca.group_id = :group_id
 			order by ca.ordain
 		`, group)
@@ -102,7 +102,7 @@ rest.addResponse('groups', ['admin'], async view => {
 			FROM shop_samples sa
 				LEFT JOIN shop_sampleprops sp on sp.sample_id = sa.sample_id
 				LEFT JOIN shop_samplevalues spv on (spv.sample_id = sa.sample_id and spv.prop_nick = sp.prop_nick)
-				LEFT JOIN sources_props pr on pr.prop_nick = sp.prop_nick
+				LEFT JOIN sources_wprops pr on pr.prop_nick = sp.prop_nick
 				LEFT JOIN sources_values va on va.value_nick = spv.value_nick
 				LEFT JOIN sources_wnumbers wn on wn.number = spv.number
 				LEFT JOIN sources_wvalues wv on (va.value_id = wv.value_id and wv.prop_id = pr.prop_id)

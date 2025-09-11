@@ -34,7 +34,7 @@ const calcBrands = async (db, group_id) => {
 	const bind = await Shop.getBind(db)
 	const {from, join, where} = await Shop.getWhereBySamples(db, samples)
 	const prop = await Shop.getPropByNick(db, 'brend')
-	if (!prop) return -1
+	if (!prop) return 0
 	const count = await db.col(`
 		SELECT count(distinct br.value_id)
 		FROM ${from.join(', ')} ${join.join(' ')}
@@ -48,7 +48,7 @@ const calcSources = async (db, group_id) => {
 	const bind = await Shop.getBind(db)
 	const {from, join, where} = await Shop.getWhereBySamples(db, samples)
 	const prop = await Shop.getPropByNick(db, 'istochnik')
-	if (!prop) return -1
+	if (!prop) return 0
 	const count = await db.col(`
 		SELECT count(distinct br.value_id)
 		FROM ${from.join(', ')} ${join.join(' ')}
@@ -113,6 +113,7 @@ const calcWith = async (db, group_id, prop_titles) => {
 	for (const prop_title of prop_titles) {
 		i++
 		const { prop_id } = await Shop.getPropByNick(db, nicked(prop_title))
+		if (!prop_id) continue
 		join.push(`left join sources_wcells w${i} on (w${i}.entity_id = :brendart_prop_id and w${i}.key_id = win.key_id and w${i}.prop_id = ${prop_id})`)
 		where.push(`w${i}.key_id is not null`)
 	}
@@ -141,6 +142,7 @@ const calcWithFilters = async (db, group_id, prop_titles = []) => {
 	for (const prop_title of prop_titles) {
 		i++
 		const { prop_id } = await Shop.getPropByNick(db, nicked(prop_title))
+		if (!prop_id) continue
 		join.push(`left join sources_wcells w${i} on (w${i}.entity_id = :brendart_prop_id and w${i}.key_id = win.key_id and w${i}.prop_id = ${prop_id})`)
 		where.push(`w${i}.key_id is not null`)
 	}
@@ -150,7 +152,7 @@ const calcWithFilters = async (db, group_id, prop_titles = []) => {
 		SELECT win.key_id, pr.prop_nick, nvl(wnum.number, val.value_nick) as nick
 		FROM ${from.join(', ')} ${join.join(' ')}
 			LEFT JOIN sources_wcells win2 on (win2.entity_id = win.entity_id and win2.key_id = win.key_id)
-			LEFT JOIN sources_props pr on (pr.prop_id = win2.prop_id)
+			LEFT JOIN sources_wprops pr on (pr.prop_id = win2.prop_id)
 			LEFT JOIN sources_wnumbers wnum on (wnum.entity_id = win.entity_id and wnum.key_id = win.key_id and wnum.prop_id = win2.prop_id)
 			LEFT JOIN sources_wvalues wval on (wval.entity_id = win.entity_id and wval.key_id = win.key_id and wval.prop_id = win2.prop_id)
 			LEFT JOIN sources_values val on (val.value_id = wval.value_id)
@@ -341,7 +343,7 @@ ShopAdmin.getFreeTable = async (db, group_id = null, hashs = []) => {
 	}
 	const props = await db.all(`
 		select prop_id, prop_title
-		from sources_props 
+		from sources_wprops 
 		where prop_id in (${Object.keys(headid).join(',')})
 		order by ordain
 	`)
@@ -372,8 +374,10 @@ ShopAdmin.getItems = async (db, itemids) => {
 		SELECT 
 			win.key_id,
 			pr.prop_id,
-			nvl(va.value_title, wn.number) as value_title
-		FROM sources_props pr, sources_wcells win
+			pr.scale,
+			va.value_title, 
+			wn.number
+		FROM sources_wprops pr, sources_wcells win
 			left join sources_wvalues wv on (wv.entity_id = win.entity_id and wv.key_id = win.key_id and wv.prop_id = win.prop_id)
 			left join sources_values va on (va.value_id = wv.value_id) 
 			left join sources_wnumbers wn on (wn.entity_id = win.entity_id and wn.key_id = win.key_id and wn.prop_id = win.prop_id)
@@ -389,8 +393,11 @@ ShopAdmin.getItems = async (db, itemids) => {
 	for (const key_id in items) {
 		const more = Object.groupBy(items[key_id], row => row.prop_id)
 		for (const prop_id in more) {
-			const myvals = more[prop_id].map(row => row.value_title).join(', ')
-			more[prop_id] = myvals
+			if (more[prop_id][0].value_title == null) {
+				more[prop_id] = more[prop_id].map(row => row.number / 10 ** row.scale).join(', ')
+			} else {
+				more[prop_id] = more[prop_id].map(row => row.value_title).join(', ')
+			}
 		}
 		items[key_id] = more
 	}
@@ -407,7 +414,7 @@ ShopAdmin.getItemsValues = async (db, itemids, bind) => {
 		FROM sources_wcells win, 
 			sources_wvalues wv,
 			sources_values va,
-			sources_props pr
+			sources_wprops pr
 		WHERE win.entity_id = :brendart_prop_id
 
 			and wv.entity_id = win.entity_id

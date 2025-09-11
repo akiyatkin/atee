@@ -331,7 +331,7 @@ field.setpop = (conf) => {
 	field.setpop.counter ??= 0
 	field.setpop.counter++
 	return `<span>
-		<button class="a field" style="display: inline-block; cursor:pointer;">${values[value || ""] ?? value}</button><script>
+		<button class="field ${conf.cls || ''}" style="display: inline-block; cursor:pointer;">${values[value || ""] ?? value}</button><script>
 			(btn => {
 				const conf = Object.assign({
 					placeholder: '',
@@ -413,7 +413,7 @@ field.prompt = ({
 		<span>
 			<button class="field ${cls}">${value ?? ''}${unit}</button><script>
 				(btn => {
-					let savedinput = '${input ?? ''}'
+					let savedinput = ${JSON.stringify(input ?? '')}
 					btn.addEventListener('click', async () => {
 						const Prompt = await import('/-dialog/prompt/Prompt.js').then(r => r.default)
 						const layer = ${JSON.stringify(layer)}
@@ -428,6 +428,7 @@ field.prompt = ({
 							placeholder:'${label}',
 							ok: '${ok}',
 							click: async value => {
+
 								const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 								const args = ${JSON.stringify(args)}
 								args['${name}'] = value
@@ -436,6 +437,7 @@ field.prompt = ({
 									const token = await recaptcha.getToken()
 									args["g-recaptcha-response"] = token
 								}
+								console.log(args)
 								const ans = await senditmsg(btn, '${action}', args)
 								if (ans.result && (ans['${name}'] || ans['${name}'] == 0)) {
 									savedinput = btn.innerHTML = ans['${name}'] + '${unit}'
@@ -596,15 +598,35 @@ field.area = ({name, label, action, value, args = {}}) => {
 	const id = 'field-' + nicked(label)
 	return `
 		<div class="float-label success">
-			<div style="overflow:auto;" contenteditable id="${id}" class="field">${value}</div>
+			<textarea wrap="off" style="
+				field-sizing: content;
+			" id="${id}" class="field">${value}</textarea>
 			<label for="${id}">${label}</label>
 			${showStatus()}
-			<script>
-				(float => {
-					const field = float.querySelector('.field')					
+			<script type="module">
+				import Area from '/-note/Area.js'
+				//(float => {
+					//const field = float.querySelector('.field')			
+					const field = document.getElementById('${id}')
+					const float = field.parentElement
+					const TAB = 9
+					const ENTER = 13
+					const HOME = 36
+					const END = 35
+					field.addEventListener('keydown', e => {
+						if (~[HOME, END].indexOf(e.keyCode)) { //input ради preventDefault стандартного действия, нет input
+							e.preventDefault() 
+							Area.keydown(field, e)
+						}
+						if (~[ENTER, TAB].indexOf(e.keyCode)) { //input ради preventDefault стандартного ввода, есть input
+							e.preventDefault()
+							Area.keydown(field, e)
+						}
+					})
+
 					field.addEventListener('input', async () => {
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
-						let value = field.innerHTML
+						let value = field.value
 						const args = ${JSON.stringify(args)}
 						args['${name}'] = value
 						const ans = await sendit(float, '${action}', args)
@@ -615,8 +637,9 @@ field.area = ({name, label, action, value, args = {}}) => {
 						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 						Dialog.alert(float.title || "Сохранено!")
 					})
-				})(document.currentScript.parentElement)
+				//})(document.currentScript.parentElement)
 			</script>
+			
 		</div>
 	`
 }

@@ -125,7 +125,7 @@ const setControlH = (area, symbol = 'm') => {
 	area.selectionStart = selStart + str.length
 	area.selectionEnd = area.selectionStart
 }
-Area.control = async (area) => {
+Area.control = (area) => {
 	const symbol = area.value[area.selectionStart - 1]
 	
 	if (symbol == '+') {
@@ -140,7 +140,7 @@ Area.control = async (area) => {
 		setControlH(area)
 	}
 }
-Area.keydown = async (area, e) => {
+Area.keydown = (area, e) => {
 	if (e.keyCode === HOME) { //Home
 		const text = area.value
 		const startlineFromEnd = getStartline(text, area.selectionEnd)

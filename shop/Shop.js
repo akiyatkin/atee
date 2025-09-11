@@ -17,7 +17,7 @@ export default Shop
 // 	const rows = await db.all(`
 // 		SELECT 
 // 			fi.group_id, pr.prop_id
-// 		FROM shop_filters fi, sources_props pr
+// 		FROM shop_filters fi, sources_wprops pr
 // 		WHERE pr.prop_nick = fi.prop_nick
 // 	`)
 // 	const list = Object.groupBy(rows, ({ group_id }) => group_id)
@@ -187,11 +187,12 @@ Shop.getPropByNick = Access.poke(async (db, prop_nick = false) => {
 			pr.name,
 			pr.type,
 			pr.unit,
+			pr.scale,
 			pr.ordain,
 			nvl(spr.card_tpl, "") as card_tpl,
 			spr.filter_tpl,
-			spr.known + 0 as known
-		FROM sources_props pr
+			pr.known
+		FROM sources_wprops pr
 		LEFT JOIN shop_props spr on (spr.prop_nick = pr.prop_nick)
 		WHERE pr.prop_nick = :prop_nick
 	`, {prop_nick})
@@ -296,7 +297,7 @@ Shop.getSamplesByGroupId = Access.poke(async (db, group_id = null) => {
 		FROM shop_samples sa
 			LEFT JOIN shop_sampleprops sp on sp.sample_id = sa.sample_id
 			LEFT JOIN shop_samplevalues spv on (spv.sample_id = sa.sample_id and spv.prop_nick = sp.prop_nick)
-			LEFT JOIN sources_props pr on pr.prop_nick = sp.prop_nick
+			LEFT JOIN sources_wprops pr on pr.prop_nick = sp.prop_nick
 		WHERE sa.group_id = :group_id and pr.prop_id is not null
 		ORDER BY sa.date_create, sp.date_create, spv.date_create
 	`, {group_id}) : [] 
@@ -518,7 +519,8 @@ Shop.mdfilter = async (db, mgroup) => {
 			} else if (prop.type == 'number') {
 				for (const value_nick in mgroup[prop_nick]) {
 					if (~['upto','from'].indexOf(value_nick)) { //upto и from сохраняются
-						newmgroup[prop_nick][value_nick] = mgroup[prop_nick][value_nick] //1
+						if (mgroup[prop_nick][value_nick] != Number(mgroup[prop_nick][value_nick])) continue
+						newmgroup[prop_nick][value_nick] = mgroup[prop_nick][value_nick]
 					} else {
 						if (value_nick != Number(value_nick)) continue
 						newmgroup[prop_nick][value_nick] = mgroup[prop_nick][value_nick] //1
@@ -530,6 +532,7 @@ Shop.mdfilter = async (db, mgroup) => {
 			newmgroup[prop_nick] = mgroup[prop_nick]
 		}
 	}
+	
 	return newmgroup
 }
 
@@ -1087,7 +1090,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 	// 		nvl(nvl(va.value_title, pos.text), nvl(pos.number, pos.date)) as text
 	// 	FROM sources_wcells win
 	// 			LEFT JOIN sources_values va on (va.value_id = pos.value_id)
-	// 			LEFT JOIN sources_props pr on (pr.prop_id = pos.prop_id)
+	// 			LEFT JOIN sources_wprops pr on (pr.prop_id = pos.prop_id)
 	// 	WHERE pos.entity_id = :brendart_prop_id
 	// 		and key_id in (${moditems_ids.map(row => row.key_ids).join(',')})
 	// 	ORDER BY pos.source_ordain, pos.sheet_index, pos.row_index, prop_ordain, pos.multi_index
@@ -1107,7 +1110,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 			wdate.date
 
 		FROM sources_wcells win
-			LEFT JOIN sources_props pr on (pr.prop_id = win.prop_id)
+			LEFT JOIN sources_wprops pr on (pr.prop_id = win.prop_id)
 			LEFT JOIN sources_wnumbers wnum on (wnum.entity_id = win.entity_id and wnum.key_id = win.key_id and wnum.prop_id = win.prop_id)
 			LEFT JOIN sources_wvalues wval on (wval.entity_id = win.entity_id and wval.key_id = win.key_id and wval.prop_id = win.prop_id)
 			LEFT JOIN sources_wtexts wtxt on (wtxt.entity_id = win.entity_id and wtxt.key_id = win.key_id and wtxt.prop_id = win.prop_id)
@@ -1115,6 +1118,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 			LEFT JOIN sources_values val on (val.value_id = wval.value_id)
 		WHERE win.entity_id = :brendart_prop_id and win.key_id in (${moditems_ids.map(row => row.key_ids).join(',')})
 		and (val.value_id is null or val.value_nick != '')
+		and pr.known != 'system'
 		${props.length ? 'and pr.prop_nick in ("' + props.join('","') + '")' : ''}
 	`, bind))
 
@@ -1711,7 +1715,7 @@ Shop.runGroupUp = async (db, group_id, func) => {
 	
 // 	// const props = await db.allto('prop_nick', `
 // 	// 	SELECT prop_id, prop_nick, prop_title, type, name, unit
-// 	// 	FROM sources_props
+// 	// 	FROM sources_wprops
 // 	// 	WHERE prop_nick in ("${unique(prop_nicks).join('","')}")
 // 	// `)
 // 	// const values = await db.allto('value_nick', `
@@ -1742,7 +1746,7 @@ Shop.runGroupUp = async (db, group_id, func) => {
 	
 // 	const props = await db.allto('prop_nick', `
 // 		SELECT prop_id, prop_nick, prop_title, type, name, unit
-// 		FROM sources_props
+// 		FROM sources_wprops
 // 		WHERE prop_nick in ("${unique(prop_nicks).join('","')}")
 // 	`)
 // 	const values = await db.allto('value_nick', `
@@ -1864,6 +1868,7 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 
 	const filter_tpl = prop.filter_tpl || 'default'
 	const filter = {prop_nick, tpl:filter_tpl, descr: ''}
+	filter.scale = prop.scale
 	if (filter.tpl == 'slider') {
 		if (prop.type != 'number') return false
 		const row = await db.fetch(`

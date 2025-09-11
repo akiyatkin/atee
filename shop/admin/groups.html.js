@@ -221,6 +221,7 @@ const showGroupOptions = (data, env) => `
 			<p>
 				${field.setpop({
 					heading:'Фильтры в группе',
+					cls: 'a',
 					value: data.group.self_filters,
 					name: 'bit',
 					action: '/-shop/admin/set-group-self_filters', 
@@ -663,11 +664,11 @@ const showStatHead = (data, env) => `
 	<td>Источники</td>
 	<td>Актуальность</td>
 	<td title="Позиций со всеми важными свойствами и фильтрами">ОК</td>
-	<td title="Позиций без фильтров">Ф</td>
-	<td title="Позиций без цен">Ц</td>
-	<td title="Позиций без описаний">О</td>
-	<td title="Позиций без наименований">Н</td>
-	<td title="Позиций без картинок">К</td>
+	<td title="Позиций без фильтров">БФ</td>
+	<td title="Позиций без цен">БЦ</td>
+	<td title="Позиций без описаний">БО</td>
+	<td title="Позиций без наименований">БН</td>
+	<td title="Позиций без картинок">БК</td>
 `
 const showStatTds = (data, env, stat) => `
 	<td>${stat.positions}</td>

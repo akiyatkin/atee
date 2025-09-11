@@ -125,14 +125,15 @@ filters.prop = {
 						min-width: 6ch;
 						width: ${String(filter.max).length + 2.2}ch;
 						padding:0 1ch;
-					" class="valueplace" type="text" value="${fromORupto(data, filter)}">
+					" class="valueplace" type="number" value="${fromORupto(data, filter) ? fromORupto(data, filter) / 10 ** filter.scale: ''}">
 					<script>
 						(input => {
-							import('/-catalog/range.js').then(o => o.default).then(range => {
+							import('/-shop/range.js').then(o => o.default).then(range => {
+								const getValue = () => range.getValue(input, ${filter.min}, ${filter.max}, ${data.md.more?.[filter.prop_nick]?.from ? '"from"' : '"upto"'}, ${fromORupto(data, filter) || false}, ${filter.scale})
 								const div = input.closest('.bodyslider')
 								const inputrange = div.querySelector('input[type=range]')
 								input.addEventListener('change', async () => {
-									const { value_nick, direction, click } = range.getValue(input, ${filter.min}, ${filter.max}, ${data.md.more?.[filter.prop_nick]?.from ? '"from"' : '"upto"'}, ${fromORupto(data, filter)})
+									const { value_nick, direction, click } = getValue()
 									const set = value_nick ? '::.'+direction+'=' + value_nick : ''
 									const Client = await window.getClient()
 									//const addget = await import('/-sources/addget.js').then(r => r.default)
@@ -140,6 +141,7 @@ filters.prop = {
 									Client.pushState('${cards.getGroupPath(data, data.group)}' + cards.addget(Client.bread, {m:"${data.md.m}" + ':${filter.prop_nick}' + set }), false)
 								})
 								input.addEventListener('input', () => {
+									console.log('input')
 									inputrange.value = Number(input.value) || 0
 								})	
 							})
@@ -212,16 +214,17 @@ filters.prop = {
 						background-color: var(--thumb-static-color);
 					}*/
 				</style>
-				<div style="grid-column: 1 / 2; grid-row: 1 / 1; opacity: 0.5;">${filter.min}</div>
-				<div style="grid-column: 3 / 4; grid-row: 1 / 1; text-align: right; opacity: 0.5;">${filter.max}</div>
+				<div style="grid-column: 1 / 2; grid-row: 1 / 1; opacity: 0.5;">${filter.min / 10 ** filter.scale}</div>
+				<div style="grid-column: 3 / 4; grid-row: 1 / 1; text-align: right; opacity: 0.5;">${filter.max / 10 ** filter.scale}</div>
 				<div style="grid-column: 2 / 3; grid-row: 1 / 1">
-					<input type="range" step="${filter.step}" 
-						value="${fromORupto(data, filter)||filter.min}" max="${filter.max}" min="${filter.min}">
+					<input type="range" step="${filter.step / 10 ** filter.scale}" 
+						value="${(fromORupto(data, filter)||filter.min) / 10 ** filter.scale}" max="${filter.max / 10 ** filter.scale}" min="${filter.min / 10 ** filter.scale}">
 					<script>
 						(input => {
 							import('/-shop/range.js').then(o => o.default).then(range => {
+								const getValue = () => range.getValue(input, ${filter.min}, ${filter.max}, ${data.md.more?.[filter.prop_nick]?.from ? '"from"' : '"upto"'}, ${fromORupto(data, filter) || false}, ${filter.scale})
 								input.addEventListener('click', async () => {									
-									let { value_nick, direction, click } = range.getValue(input, ${filter.min}, ${filter.max}, ${data.md.more?.[filter.prop_nick]?.from ? '"from"' : '"upto"'}, ${fromORupto(data, filter)})
+									let { value_nick, direction, click } = getValue()
 									if (click) direction = direction == 'upto' ? 'from' : 'upto'
 									//const set = value_nick ? '::.'+direction+'=' + value_nick : ''
 									const set = '::.'+direction+'=' + value_nick
@@ -235,9 +238,9 @@ filters.prop = {
 								const value = div.getElementsByClassName('valueplace')[0]
 								const direct = div.getElementsByClassName('adirect')[0]
 								input.addEventListener('input', () => {
-									const { value_nick, direction, click } = range.getValue(input, ${filter.min}, ${filter.max}, ${data.md.more?.[filter.prop_nick]?.from ? '"from"' : '"upto"'}, ${fromORupto(data, filter)})
+									const { value_nick, direction, click } = getValue()
 									direct.innerHTML = direction == 'upto' ? 'до' : 'от'
-									value.value = value_nick
+									value.value = value_nick / 10 ** ${filter.scale}
 								})
 							})
 						})(document.currentScript.previousElementSibling)

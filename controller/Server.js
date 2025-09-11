@@ -259,7 +259,7 @@ const getHTML = async (layer, env, visitor) => {
 			if (tplobj) {
 				if (tplobj.default) tplobj = tplobj.default
 				try {
-					res.html = tplobj[layer.sub](data, env)
+					res.html = String(tplobj[layer.sub](data, env))
 				} catch(e) {
 					res.html = errmsg(layer, e) //Ошибка покажется вместо шаблона
 					res.status = 500
@@ -267,6 +267,7 @@ const getHTML = async (layer, env, visitor) => {
 			}
 		}
 	}
+
 	return res
 }
 

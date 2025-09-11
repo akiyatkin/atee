@@ -1,6 +1,9 @@
 .status_error {
 	background-color: #FF00000f
 }
+.status_news {
+	background-color: #FFFF000f
+}
 .status_ok {
 /*	background-color: #00FF000f*/
 }

@@ -187,7 +187,9 @@ cards.getSomeTitle = (data, item, prop_nick) => {
 		return data.values[first].value_title
 	} else if (prop.type == 'date') {
 		return ddd.ai(first)
-	} else { //text, number
+	} else if (prop.type == 'number') {
+		return first / 10 ** prop.scale
+	} else { //text
 		return first
 	}
 }
@@ -200,7 +202,9 @@ cards.getSomeTitles = (data, item, prop_nick) => {
 			return data.values[nick].value_title
 		} else if (prop.type == 'date') {
 			return ddd.ai(nick)
-		} else { //text, number
+		} else if (prop.type == 'number') {
+			return nick / 10 ** prop.scale
+		} else { //text
 			return nick
 		}
 	})
@@ -240,7 +244,7 @@ cards.block = (html) => `
 cards.prop = {
 	default: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.prop.line(data, env, model, pr, nicks, gainTitle, gainTitles),
 	
-	line: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.line(pr.prop_title, gainTitles()),
+	line: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.line(pr.name, gainTitles()),
 	linefilter: (data, env, model, pr, nicks, gainTitle, gainTitles) => {
 		if (!~['number','value'].indexOf(pr.type)) return ''
 		return cards.line(pr.prop_title, nicks.map(nick => {

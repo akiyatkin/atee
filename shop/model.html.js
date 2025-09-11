@@ -58,7 +58,7 @@ tpl.showModelProps = (data, env, model) => {
 	const mprops = Object.keys(model.recap).filter(prop_nick => {
 		if (~model.iprops.indexOf(prop_nick)) return false
 		const prop = data.props[prop_nick]
-		if (prop.known) return false
+		if (prop.known != 'more') return false
 		return true
 	}).sort((a, b) => {
 		const propa = data.props[a]
@@ -89,13 +89,13 @@ tpl.showTrProp = (data, env, item, prop_nick) => {
 tpl.isItemPropNotTable = (data, env, prop_nick) => {
 	const prop = data.props[prop_nick]
 	if (prop.type != 'text') return false
-	if (prop.known) return false
+	if (prop.known != 'more') return false
 	return true
 }
 tpl.isItemPropForTable = (data, env, prop_nick) => {
 	const prop = data.props[prop_nick]
 	if (prop.type == 'text') return false
-	if (prop.known) return false
+	if (prop.known != 'more') return false
 	return true
 }
 tpl.showItemsTable = (data, env, model) => `
@@ -284,7 +284,7 @@ tpl.showMainData = (data, env, model, selitem) => `
 
 			
 
-			${model.recap.cena.length > 1 ? cards.block(cards.price(model.recap)) : ''}
+			${model.recap.cena?.length > 1 ? cards.block(cards.price(model.recap)) : ''}
 			${(model.items.length > 1 || !selitem) ? cards.block(tpl.showItemButtons(data, env, model)) : ''}
 			${selitem ? cards.block(tpl.showTableItem(data, env, model, selitem)) : ''}
 			<div style="text-align: right;">

@@ -43,6 +43,9 @@ rest.addVariable('sheet_index#orNull', async (view) => {
 })
 
 
+
+rest.addArgument('limit', ['mint'])
+
 rest.addArgument('repeat_index', ['mint'])
 rest.addVariable('repeat_index#required', ['repeat_index', 'required'])
 rest.addArgument('col_index', ['sint'])
@@ -60,17 +63,19 @@ rest.addArgument('sourceprop', (view, prop) => {
 	if (~['renovate','master'].indexOf(prop)) return prop
 	return null
 })
+rest.addVariable('sourceprop#required', ['sourceprop', 'required'])
 rest.addArgument('custom', (view, prop) => {
 	if (~['col','row','cell','prop','item', 'value', 'sheet'].indexOf(prop)) return prop
 	return null
 })
-
+rest.addVariable('custom#required', ['custom', 'required'])
 rest.addArgument('propprop', (view, prop) => {
 	if (~['multi'].indexOf(prop)) return prop
 	return null
 })
+rest.addVariable('propprop#required', ['propprop', 'required'])
 rest.addArgument('keyfilter', (view, prop) => {
-	if (~['appear','all','yes','not'].indexOf(prop)) return prop
+	if (~['appear','all','yes','not','pruning','unknown'].indexOf(prop)) return prop
 	return 'appear'
 })
 rest.addVariable('keyfilter#required', ['keyfilter', 'required'])
@@ -86,15 +91,26 @@ rest.addArgument('appear', (view, date) => {
 	}
 })
 
+
+rest.addArgument('known', (view, type) => {
+	if (~['system','more','column'].indexOf(type)) return type
+	return null
+})
+rest.addVariable('known#required', ['known', 'required'])
+
+rest.addArgument('scale', ['tint#unsigned'])
+rest.addVariable('scale#required', ['scale', 'required'])
+
 rest.addArgument('type', (view, type) => {
 	if (~['date','text','value','number'].indexOf(type)) return type
 	return null
 })
-
-rest.addVariable('custom#required', ['custom', 'required'])
 rest.addVariable('type#required', ['type', 'required'])
-rest.addVariable('propprop#required', ['propprop', 'required'])
-rest.addVariable('sourceprop#required', ['sourceprop', 'required'])
+
+
+
+
+
 
 rest.addArgument('date', (view, date) => {
 	if (!date) return null

@@ -56,7 +56,7 @@ const showFastProp = (data, env) => `
 						type: btn.innerText,
 						search: "${data.col.col_title}"
 					})
-					if (ans.result) {
+					if (ans.result && !ans.msg) {
 						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 						Dialog.hide()
 					}
@@ -65,18 +65,35 @@ const showFastProp = (data, env) => `
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
+const showScale = (data, env, prop) => `
+	знаков после запятой ${field.prompt({
+		heading:'Точность',
+		value: prop.scale,
+		input: prop.scale,
+		cls: 'a',
+		name: 'scale',
+		label: 'Точность',
+		type: 'number',
+		descr: 'Сколько знаков после запятой для типа number',
+		action: '/-sources/set-prop-scale', 
+		args: {prop_id: prop.prop_id},
+		reloaddiv: env.layer.div
+	})}, 
+`
 const showType = (data, env, prop) => !prop ? '' : `
 	Тип ${field.setpop({
 		heading:'Тип',
+		cls: 'a',
 		value: prop.type,
 		name: 'type',
-		descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче 63 символов. Самый затратный <b>text</b>. Для ключей и связей подходит только value.',
+		descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче 63 символов. И последний оригинальный вариант <b>text</b>. Для ключей и связей подходит только value.',
 		action: '/-sources/set-prop-type', 
 		values: {"number":"number", "date":"date", "value":"value", "text":"text"},
 		args: {prop_id: prop.prop_id},
 		reloaddiv: env.layer.div
-	})}, значений ${field.setpop({
+	})}, ${prop.type == 'number' ? showScale(data, env, prop) : ''}значений ${field.setpop({
 		heading:'Значений',
+		cls: 'a',
 		value: prop.multi,
 		name: 'bit',
 		descr: 'Несколько значений могут быть разделены запятой с пробелом.',
@@ -84,7 +101,16 @@ const showType = (data, env, prop) => !prop ? '' : `
 		values: {"":"одно", "1":"несколько"},
 		args: {prop_id: prop.prop_id, propprop: 'multi'},
 		reloaddiv: env.layer.div
-	})}
+	})}, обработка ${field.setpop({
+		heading:'Обработка свойства',
+		cls: 'a',
+		value: prop.known,
+		name: 'known',
+		descr: '<b>more</b> означает, что у свойства нет специальной обработки и оно покажется вместе со всеми такими свойствами в общем списке. Свойство со специальной обработкой <b>column</b> покажется только там, где его покажет программист, по умолчанию в интерфейсе нигде не покажется, но придёт с данными. Свойство <b>system</b> даже с данными не придёт и может быть использовано для технических обработок, например быть критерием групп.',
+		action: '/-sources/set-known', 
+		values: {"system":"🛡️ system", "more":"🟡 more", "column":"✅ column"},
+		args: {prop_id: prop.prop_id}
+	})}.
 `
 main.row = (data, env, row = data.row) => `Строка ${row.row_index}`
 main.cell = (data, env, cell = data.cell || {text: null}, prop = data.prop) => `
@@ -97,7 +123,7 @@ main.cell = (data, env, cell = data.cell || {text: null}, prop = data.prop) => `
 	
 	<div>${prop ? showTypeStat(data, env, prop, cell) : 'Не выбрано ключевое свойство'}</div>
 	<div style="background: ${cell.winner ? '#eaf7d1': '#f5e6e6'}; padding:1em; margin: 1em 0">
-		${!prop || prop.type == 'text' ? (cell.text ?? '') : (cell.number ?? '') + (cell.date ?? '') + (cell.value_title ?? '')}
+		${!prop || prop.type == 'text' ? (cell.text ?? '') : (cell.number ? cell.number / 10 ** prop.scale : '') + (cell.date ?? '') + (cell.value_title ?? '')}
 	</div>
 	${data.cell ? showSummary(data, env) : ''}
 	
@@ -163,6 +189,13 @@ const defcustom = (value) => {
 	if (value) return 'represent-def-1'
 	else return 'represent-custom-0'
 }
+
+// ${data.item ? showItemRepresentTr(data, env) : ''}
+// ${data.row ? showRowRepresentTr(data, env) : ''}
+// ${data.cell ? showCellRepresentTr(data, env) : ''}
+// ${data.row?.key ? showRowKeyRepresentTr(data, env) : ''}
+// ${data.value ? showValueRepresentTr(data, env) : ''}
+// ${data.source ? showSourceRepresentsTr(data, env) : ''}
 export const POPUP = (data, env) => err(data, env, []) || `
 	<div style="margin-bottom:1em">
 		${main[data.main](data, env)}
@@ -172,16 +205,11 @@ export const POPUP = (data, env) => err(data, env, []) || `
 	
 	<table>
 		<tbody>
-			${data.source ? showSourceRepresentsTr(data, env) : ''}
-			${data.sheet ? showSheetRepresentTr(data, env) : ''}
 			${data.col ? showColRepresentTr(data, env) : ''}
-			${data.row ? showRowRepresentTr(data, env) : ''}
-			${data.cell ? showCellRepresentTr(data, env) : ''}
-			${data.row?.key ? showRowKeyRepresentTr(data, env) : ''}
-			${data.entity ? showEntityRepresentTr(data, env) : ''}
 			${data.prop ? showPropRepresentTr(data, env) : ''}
-			${data.item ? showItemRepresentTr(data, env) : ''}
-			${data.value ? showValueRepresentTr(data, env) : ''}
+			${data.sheet ? showSheetRepresentTr(data, env) : ''}
+			${data.entity ? showEntityRepresentTr(data, env) : ''}
+			
 		</tbody>
 	</table>
 	
@@ -197,7 +225,7 @@ export const POPUP = (data, env) => err(data, env, []) || `
 			const sheet_title = ${JSON.stringify(data.sheet?.sheet_title)}
 			const col_title = ${JSON.stringify(data.col?.col_title)}
 			const multi_index = ${data.cell?.multi_index}
-			const repeat_index = ${data.row?.repeat_index}
+			//const repeat_index = ${data.row?.repeat_index}
 			for (const btn of div.getElementsByClassName('eye')) {
 				btn.addEventListener('click', async () => {
 					const name = btn.dataset.name
@@ -212,9 +240,9 @@ export const POPUP = (data, env) => err(data, env, []) || `
 					else if (name == 'represent_cells') args = {source_id}
 					else if (name == 'represent_source') args = {source_id}
 					else if (name == 'represent_col') args = {source_id, sheet_title, col_title}
-					else if (name == 'represent_row') args = {source_id, sheet_title, key_id, repeat_index}
-					else if (name == 'represent_cell') args = {source_id, sheet_title, col_title, key_id, repeat_index, multi_index}
-					else if (name == 'represent_row_key') args = {source_id, sheet_title, key_id, repeat_index}
+					//else if (name == 'represent_row') args = {source_id, sheet_title, key_id, repeat_index}
+					//else if (name == 'represent_cell') args = {source_id, sheet_title, col_title, key_id, repeat_index, multi_index}
+					//else if (name == 'represent_row_key') args = {source_id, sheet_title, key_id, repeat_index}
 					else if (name == 'represent_entity') args = {entity_id}
 
 					else if (name == 'represent_values') args = {entity_id}
@@ -231,8 +259,8 @@ export const POPUP = (data, env) => err(data, env, []) || `
 			}
 		})(document.currentScript.parentElement)
 	</script>
-	<div style="max-width:500px">
-		По умолчанию что-то скрывается у сомнительных источников (прайсов), когда нужно только что-то конкретное. Если по умолчанию всё показано, значит этот источник c надёжными данными.
+	<div style="max-width:500px; margin-top:1em">
+		Что-то скрывается у сомнительных источников. Например, всё скрыто и что-то выборочно показано или всё показано и что-то выборочно скрыто.
 	</div>
 `
 const representStatus = (bit) => `${bit ? '<span style="color:green">Показано</span>' : '<span style="color:red">Скрыто</span>'}`
@@ -241,44 +269,44 @@ const showSummary = (data, env) => `
 		<!-- <tr><td>Как значение свойства</td><td>${representStatus(data.cell.represent_item_summary)}</td><td>represent_item_summary</td></tr>
 		<tr><td>Как значение ячейки</td><td>${representStatus(data.cell.represent_cell_summary)}</td><td>represent_cell_summary</td></tr> -->
 		<tr><td>Мастер</td><td>${representStatus(data.cell.master)}</td><td>master</td></tr>
-		<tr><td>Видимость</td><td>${representStatus(data.cell.represent)}</td><td>represent</td></tr>
+		<tr><td>Видимость</td><td>${representStatus(data.source.represent_source && data.sheet.represent_sheet && data.col.represent_col && data.prop.represent_prop && data.entity.represent_prop)}</td><td>represent</td></tr>
 		<tr><td>Преимущество</td><td>${representStatus(data.cell.winner)}</td><td>winner</td></tr>
 	</table>
 `
 
-const showRowRepresentTr = (data, env) => `
-	<tr>
-		<td>
-			<button title="Изменить видимость строки" 
-			data-name="represent_row" class="eye transparent ${data.row.cls?.main} ${data.row.cls?.custom}">${svg.eye()}</button>
-		</td>
-		<td>Строка <small title="Индекс строки / Макс индекс">(${data.row.row_index}/${data.row.row_index_max})</small></td><td>${data.row.value_title || '<span style="color:red">Нет ключа</span>'}${data.row.repeat_index ? ' <small>(' + data.row.repeat_index + ')</small>' : ''}</td>
+// const showRowRepresentTr = (data, env) => `
+// 	<tr>
+// 		<td>
+// 			<button title="Изменить видимость строки" 
+// 			data-name="represent_row" class="eye transparent ${data.row.cls?.main} ${data.row.cls?.custom}">${svg.eye()}</button>
+// 		</td>
+// 		<td>Строка <small title="Индекс строки / Макс индекс">(${data.row.row_index}/${data.row.row_index_max})</small></td><td>${data.row.value_title || '<span style="color:red">Нет ключа</span>'}${data.row.repeat_index ? ' <small>(' + data.row.repeat_index + ')</small>' : ''}</td>
 		
-		<td>represent_row</td>
-	</tr>
-`
-const showItemRepresentTr = (data, env) => `
-	<tr>
-		<td>
-			<button title="Изменить видимость позиции" 
-			data-name="represent_item" class="eye transparent ${data.item.cls?.main} ${data.item.cls?.custom}">${svg.eye()}</button>
-		</td>
-		<td>Позиция</td><td>${data.item.value_title} <small>(${data.item.key_id})</small></td>
+// 		<td>represent_row</td>
+// 	</tr>
+// `
+// const showItemRepresentTr = (data, env) => `
+// 	<tr>
+// 		<td>
+// 			<button title="Изменить видимость позиции" 
+// 			data-name="represent_item" class="eye transparent ${data.item.cls?.main} ${data.item.cls?.custom}">${svg.eye()}</button>
+// 		</td>
+// 		<td>Позиция</td><td>${data.item.value_title} <small>(${data.item.key_id})</small></td>
 		
-		<td>represent_item</td>
-	</tr>
-`
-const showValueRepresentTr = (data, env) => `
-	<tr>
-		<td>
-			<button title="Изменить видимость всех таких значений" 
-			data-name="represent_value" class="eye transparent ${data.value.cls?.main} ${data.value.cls?.custom}">${svg.eye()}</button>
-		</td>
-		<td>Значение</td><td>${data.value.value_title}</td>
+// 		<td>represent_item</td>
+// 	</tr>
+// `
+// const showValueRepresentTr = (data, env) => `
+// 	<tr>
+// 		<td>
+// 			<button title="Изменить видимость всех таких значений" 
+// 			data-name="represent_value" class="eye transparent ${data.value.cls?.main} ${data.value.cls?.custom}">${svg.eye()}</button>
+// 		</td>
+// 		<td>Значение</td><td>${data.value.value_title}</td>
 		
-		<td>represent_value</td>
-	</tr>
-`
+// 		<td>represent_value</td>
+// 	</tr>
+// `
 const showPropRepresentTr = (data, env) => `
 	<tr>
 		<td>
@@ -290,28 +318,28 @@ const showPropRepresentTr = (data, env) => `
 		<td>represent_prop</td>		
 	</tr>
 `
-const showRowKeyRepresentTr = (data, env) => `
-	<tr>
-		<td>
-			<button title="Изменить видимость ячейки с ключом строки" 
-			data-name="represent_row_key" class="eye transparent ${data.row.key.cls?.main} ${data.row.key.cls?.custom}">${svg.eye()}</button>
-		</td>
-		<td>Ключ строки <small title="Индекс колонки / Макс индекс">(${data.sheet.key_index ?? '-'}/${data.col.col_index_max})</td><td>${data.row.key.value_title}${data.row.repeat_index ? ' <small>(' + data.row.repeat_index + ')</small>' : ''}</td>
+// const showRowKeyRepresentTr = (data, env) => `
+// 	<tr>
+// 		<td>
+// 			<button title="Изменить видимость ячейки с ключом строки" 
+// 			data-name="represent_row_key" class="eye transparent ${data.row.key.cls?.main} ${data.row.key.cls?.custom}">${svg.eye()}</button>
+// 		</td>
+// 		<td>Ключ строки <small title="Индекс колонки / Макс индекс">(${data.sheet.key_index ?? '-'}/${data.col.col_index_max})</td><td>${data.row.key.value_title}${data.row.repeat_index ? ' <small>(' + data.row.repeat_index + ')</small>' : ''}</td>
 		
-		<td>represent_row_key</td>		
-	</tr>
-`
-const showCellRepresentTr = (data, env) => `
-	<tr>
-		<td>
-			<button title="Изменить видимость колонки" 
-			data-name="represent_cell" class="eye transparent ${data.cell.cls?.main} ${data.cell.cls?.custom}">${svg.eye()}</button>
-		</td>
-		<td>Ячейка <small title="Индекс колонки / Макс индекс">(${data.col.col_index}/${data.col.col_index_max})</small></td><td>${data.cell.full_text}</td>
+// 		<td>represent_row_key</td>		
+// 	</tr>
+// `
+// const showCellRepresentTr = (data, env) => `
+// 	<tr>
+// 		<td>
+// 			<button title="Изменить видимость колонки" 
+// 			data-name="represent_cell" class="eye transparent ${data.cell.cls?.main} ${data.cell.cls?.custom}">${svg.eye()}</button>
+// 		</td>
+// 		<td>Ячейка <small title="Индекс колонки / Макс индекс">(${data.col.col_index}/${data.col.col_index_max})</small></td><td>${data.cell.full_text}</td>
 		
-		<td>represent_cell</td>
-	</tr>
-`
+// 		<td>represent_cell</td>
+// 	</tr>
+// `
 const showColRepresentTr = (data, env) => `
 	<tr>
 		<td>
@@ -341,16 +369,17 @@ const showEntityRepresentTr = (data, env) => `
 			class="eye transparent represent-1 ${defcustom(data.entity.represent_entity)}">${svg.eye()}</button>
 		</td>
 		<td>Сущность</td><td><a href="source/${data.entity.entity_id}">${data.entity.entity_title}</a></td>
-		<td>represent_entity</td>
+		<td>represent_prop</td>
 	</tr>
 	
-	<tr>
-		<td><button title="Видимость значений по умолчанию" data-name="represent_values" 
-			class="eye transparent ${represent(data.entity, ['entity'])} ${defcustom(data.entity.represent_values)}">${svg.eye()}</button></td>
-		<td>Значения</td><td>По умолчанию</td>		
-		<td>represent_values</td>
-	</tr>
+	
 `
+// <tr>
+// 		<td><button title="Видимость значений по умолчанию" data-name="represent_values" 
+// 			class="eye transparent ${represent(data.entity, ['entity'])} ${defcustom(data.entity.represent_values)}">${svg.eye()}</button></td>
+// 		<td>Значения</td><td>По умолчанию</td>		
+// 		<td>represent_values</td>
+// 	</tr>
 const showSourceRepresentsTr = (data, env) => `
 	<tr>
 		<td>

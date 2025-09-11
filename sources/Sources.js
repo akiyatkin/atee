@@ -2,10 +2,13 @@ import nicked from "/-nicked"
 import config from "/-config"
 import unique from "/-nicked/unique.js"
 import BulkInserter from "./BulkInserter.js"
+import Access from "/-controller/Access.js"
 import fs from "fs/promises"
 const Sources = {}
 import Consciousness from "/-sources/Consciousness.js"
+import PerformanceMonitor from "./PerformanceMonitor.js"
 import represent from "/-sources/represent.js"
+const conf = await config('sources')
 
 Sources.execRestFunc = async (file, fnname, visitor, res, req = {}) => {
 	const stat = await fs.stat(file).catch(r => console.log('Ошибка execRestFunc','<==========>', r,'</==========>'))
@@ -116,7 +119,36 @@ Sources.load = async (db, source, visitor) => {
 	return true
 }
 
-Sources.recalc = async (db, func) => {
+Sources.index = async db => {
+	clearTimeout(Sources.deferredIndex.timer)
+	await db.exec(`UPDATE sources_settings SET date_index = now()`)
+	
+	const monitor = new PerformanceMonitor()
+	
+	monitor.start('recalcWinner')
+	await Consciousness.recalcWinner(db) //Есть truncate и данные на сайте исчезнут. Потом выгрузка в транзакции, покажется когда всё выгрузится (10 секунд для 10 000 примерно). 
+
+	monitor.start('recalcAppear')
+	await Consciousness.recalcAppear(db) // 456.06ms
+	monitor.start('recalcRowSearch')
+	await Consciousness.recalcRowSearch(db)
+	monitor.start('recalcItemSearch')
+	await Consciousness.recalcItemSearch(db)
+
+	monitor.stop()
+	console.log(monitor.getReport())
+	Access.setAccessTime()
+}
+Sources.deferredIndex = (db) => {
+	clearTimeout(Sources.deferredIndex.timer)
+	Sources.deferredIndex.timer = setTimeout(() => Sources.index(db), 1000 * 60 * 60)
+}
+
+Sources.recalc = async (db, func, reindex) => {
+
+	//if (!re) return false
+	//if (!reindex) await db.exec(`UPDATE sources_settings SET date_recalc = now()`)
+
 	if (Sources.recalc.start) {
 		Sources.recalc.all = true //Повторный запуск
 		return
@@ -128,38 +160,35 @@ Sources.recalc = async (db, func) => {
 	await func(db)
 	console.timeEnd('recalc-func')
 	
+
 	while (Sources.recalc.all) {
 		Sources.recalc.all = false
-		console.time('recalc-all')
+		console.time('recalc-represent-all')
 		await Consciousness.recalcEntitiesPropId(db)
 		await Consciousness.recalcMulti(db)
 		await Consciousness.recalcTexts(db)
 		await Consciousness.recalcKeyIndex(db)
-		await Consciousness.recalcRowsKeyIdRepeatIndex(db)
 		await Consciousness.insertItems(db)
 		
 		await Consciousness.recalcRepresentSheet(db)
 		await Consciousness.recalcRepresentCol(db)
-		await Consciousness.recalcRepresentRow(db)
-		await Consciousness.recalcRepresentCell(db)
-
-		await Consciousness.recalcRepresentCellRowKey(db)
-		await Consciousness.recalcRepresentCellSummary(db)
-		
-		await Consciousness.recalcRepresentItemValue(db)
-		await Consciousness.recalcRepresentItemSummary(db)
-		await Consciousness.recalcRepresent(db)
 		await Consciousness.recalcMaster(db)
-		await Consciousness.recalcWinner(db)
+		console.timeEnd('recalc-represent-all')
+
+		// await Consciousness.recalcWinner(db)
 		
-		await Consciousness.recalcAppear(db)
-		await Consciousness.recalcRowSearch(db)
-		await Consciousness.recalcItemSearch(db)
-		console.timeEnd('recalc-all')
+		// await Consciousness.recalcAppear(db)
+		// await Consciousness.recalcRowSearch(db)
+		// await Consciousness.recalcItemSearch(db)
+		
 	}
 	Sources.recalc.lastend = new Date()
 	Sources.recalc.laststart = Sources.recalc.start
-	Sources.recalc.start = false	
+	Sources.recalc.start = false
+	if (!reindex) {
+		await db.exec(`UPDATE sources_settings SET date_recalc = now()`)
+		Sources.deferredIndex(db)
+	}
 }
 Sources.recalc.lastend = false
 Sources.recalc.laststart = false
@@ -369,12 +398,13 @@ const SELECT_PROP = `
 	pr.prop_id,
 	pr.name,
 	pr.prop_title,
-	pr.type,
+	pr.type,	
 	pr.unit,
+	pr.scale,
 	pr.prop_nick,
+	pr.known,
 	pr.multi + 0 as multi,
 	pr.comment,
-	pr.represent_values + 0 as represent_values,
 	pr.represent_prop + 0 as represent_prop
 `
 
@@ -387,7 +417,6 @@ const SELECT_ENTITY = `
 	pr.comment,
 	pr.represent_prop + 0 as represent_entity,
 	pr.represent_prop + 0 as represent_prop,
-	pr.represent_values + 0 as represent_values,
 	pr.prop_title,
 	pr.type,
 	pr.prop_nick
@@ -412,13 +441,12 @@ const SELECT_SOURCE = `
 	so.msg_load,
 	so.represent_source + 0 as represent_source,
 	so.represent_sheets + 0 as represent_sheets,
-	so.represent_rows + 0 as represent_rows,
 	so.represent_cols + 0 as represent_cols,
-	so.represent_cells + 0 as represent_cells,
 	so.renovate + 0 as renovate,
 	so.entity_id,
 	pr.prop_id, 
 	pr.prop_title as entity_title,
+	pr.known,
 	pr.prop_nick as entity_nick,
 	pr.represent_prop + 0 as represent_entity,
 	pr.represent_prop + 0 as represent_prop,
@@ -528,16 +556,16 @@ Sources.getSheets = async (db, source_id) => {
 			WHERE source_id = :source_id and sheet_title = :sheet_title
 			LIMIT 1
 		`, sheet)
-		sheet.remove ||= await db.col(`
-			SELECT 1 FROM sources_custom_rows
-			WHERE source_id = :source_id and sheet_title = :sheet_title
-			LIMIT 1
-		`, sheet)
-		sheet.remove ||= await db.col(`
-			SELECT 1 FROM sources_custom_cells
-			WHERE source_id = :source_id and sheet_title = :sheet_title
-			LIMIT 1
-		`, sheet)
+		// sheet.remove ||= await db.col(`
+		// 	SELECT 1 FROM sources_custom_rows
+		// 	WHERE source_id = :source_id and sheet_title = :sheet_title
+		// 	LIMIT 1
+		// `, sheet)
+		// sheet.remove ||= await db.col(`
+		// 	SELECT 1 FROM sources_custom_cells
+		// 	WHERE source_id = :source_id and sheet_title = :sheet_title
+		// 	LIMIT 1
+		// `, sheet)
 		sheet.cls = represent.calcCls(source.represent_source, sheet.custom?.represent_custom_sheet, source.represent_sheets)
 	}
 	return list.filter(sheet => sheet.loaded)
@@ -652,8 +680,6 @@ Sources.getCellByIndex = async (db, source_id, sheet_index, row_index, col_index
 			ce.row_index,
 			ce.col_index,
 			ce.multi_index,
-			ce.represent_cell + 0 as represent_cell,
-			ce.represent + 0 as represent,
 			ce.pruning + 0 as pruning,
 			nvl(wi.entity_id, 0) as winner,
 			ce.value_id,
@@ -663,12 +689,9 @@ Sources.getCellByIndex = async (db, source_id, sheet_index, row_index, col_index
 			va.value_title,
 			sh.sheet_title,
 			co.col_title,
+			co.prop_id,
 			ro.key_id,
 			vak.value_nick as key_nick,
-			ro.repeat_index,
-			cce.represent_custom_cell + 0 as represent_custom_cell,
-			ce.represent_cell_summary + 0 as represent_cell_summary,
-			ce.represent_item_summary + 0 as represent_item_summary,
 			it.master + 0 as master
 		FROM sources_cells ce
 			LEFT JOIN sources_values va on (va.value_id = ce.value_id)
@@ -677,13 +700,7 @@ Sources.getCellByIndex = async (db, source_id, sheet_index, row_index, col_index
 			LEFT JOIN sources_values vak on (vak.value_id = ro.key_id)
 			LEFT JOIN sources_sheets sh on (sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index)
 			LEFT JOIN sources_items it on (it.entity_id = sh.entity_id and ro.key_id = it.key_id)
-			LEFT JOIN sources_wcells wi on (wi.prop_id = co.prop_id and wi.entity_id = sh.entity_id and wi.key_id = ro.key_id and wi.prop_id = wi.entity_id)
-			LEFT JOIN sources_custom_cells cce on (
-				cce.source_id = ce.source_id and cce.sheet_title = sh.sheet_title 
-				and cce.col_title = co.col_title
-				and cce.repeat_index = ro.repeat_index
-				and cce.key_nick = vak.value_nick
-			)
+			LEFT JOIN sources_wcells wi on (wi.source_id = ce.source_id and wi.sheet_index = ce.sheet_index and wi.col_index = ce.col_index and wi.row_index = ce.row_index)
 		WHERE ce.source_id = :source_id 
 			and ce.sheet_index = :sheet_index
 			and ce.row_index = :row_index
@@ -691,6 +708,7 @@ Sources.getCellByIndex = async (db, source_id, sheet_index, row_index, col_index
 			and ce.multi_index = :multi_index
 	`, {source_id, sheet_index, col_index, row_index, multi_index})
 	if (!cell) return
+	cell.winner = Number(cell.winner)
 	cell.full_text = await db.col(`
 		SELECT
 			GROUP_CONCAT(text ORDER BY multi_index SEPARATOR ', ')
@@ -781,10 +799,10 @@ Sources.getRowByIndex = async (db, source_id, sheet_index, row_index) => {
 			ro.sheet_index,
 			sh.sheet_title,
 			ro.row_index,
-			ro.repeat_index,
-			ro.represent_row + 0 as represent_row,
-			ro.represent_row_key + 0 as represent_row_key,
-			cro.represent_custom_row + 0 as represent_custom_row,
+			-- ro.repeat_index,
+			-- ro.represent_row + 0 as represent_row,
+			-- ro.represent_row_key + 0 as represent_row_key,
+			-- cro.represent_custom_row + 0 as represent_custom_row,
 			ro.key_id,
 			sh.key_index,
 			va.value_title,
@@ -792,7 +810,7 @@ Sources.getRowByIndex = async (db, source_id, sheet_index, row_index) => {
 		FROM sources_rows ro
 			LEFT JOIN sources_values va on (va.value_id = ro.key_id)
 			LEFT JOIN sources_sheets sh on (sh.source_id = ro.source_id and sh.sheet_index = ro.sheet_index)
-			LEFT JOIN sources_custom_rows cro on (cro.source_id = ro.source_id and cro.sheet_title = sh.sheet_title and cro.key_nick = va.value_nick and cro.repeat_index = ro.repeat_index)
+			-- LEFT JOIN sources_custom_rows cro on (cro.source_id = ro.source_id and cro.sheet_title = sh.sheet_title and cro.key_nick = va.value_nick and cro.repeat_index = ro.repeat_index)
 		WHERE ro.source_id = :source_id 
 			and ro.sheet_index = :sheet_index
 			and ro.row_index = :row_index
@@ -806,10 +824,10 @@ Sources.getRow = async (db, source_id, sheet_title, key_id, repeat_index) => {
 			ro.sheet_index,
 			sh.sheet_title,
 			ro.row_index,
-			ro.repeat_index,
-			ro.represent_row + 0 as represent_row,
-			ro.represent_row_key + 0 as represent_row_key,
-			cro.represent_custom_row + 0 as represent_custom_row,
+			-- ro.repeat_index,
+			-- ro.represent_row + 0 as represent_row,
+			-- ro.represent_row_key + 0 as represent_row_key,
+			-- cro.represent_custom_row + 0 as represent_custom_row,
 			ro.key_id,
 			sh.key_index,
 			va.value_title,
@@ -817,7 +835,7 @@ Sources.getRow = async (db, source_id, sheet_title, key_id, repeat_index) => {
 		FROM sources_rows ro
 			LEFT JOIN sources_values va on (va.value_id = ro.key_id)
 			LEFT JOIN sources_sheets sh on (sh.source_id = ro.source_id and sh.sheet_index = ro.sheet_index)
-			LEFT JOIN sources_custom_rows cro on (cro.source_id = ro.source_id and cro.sheet_title = sh.sheet_title and cro.key_nick = va.value_nick and cro.repeat_index = ro.repeat_index)
+			-- LEFT JOIN sources_custom_rows cro on (cro.source_id = ro.source_id and cro.sheet_title = sh.sheet_title and cro.key_nick = va.value_nick and cro.repeat_index = ro.repeat_index)
 		WHERE ro.source_id = :source_id 
 			and sh.sheet_title = :sheet_title
 			and ro.sheet_index = sh.sheet_index
@@ -831,10 +849,10 @@ Sources.getValue = async (db, prop_id, value_id) => {
 		SELECT 
 			va.value_id,
 			va.value_nick,
-			va.value_title,
-			cva.represent_custom_value + 0 as represent_custom_value
+			va.value_title
+			-- cva.represent_custom_value + 0 as represent_custom_value
 		FROM sources_values va
-			LEFT JOIN sources_custom_values cva on (cva.value_nick = va.value_nick and cva.prop_id = :prop_id)
+			-- LEFT JOIN sources_custom_values cva on (cva.value_nick = va.value_nick and cva.prop_id = :prop_id)
 		WHERE va.value_id = :value_id
 	`, {value_id, prop_id})
 	return value
@@ -847,12 +865,12 @@ Sources.getItem = async (db, entity_id, key_id) => {
 			va.value_nick as key_nick,
 			va.value_title,
 			it.key_id,
-			it.entity_id,
-			it.represent_value + 0 as represent_value,
-			cva.represent_custom_value + 0 as represent_custom_value
+			it.entity_id
+			-- it.represent_value + 0 as represent_value
+			-- cva.represent_custom_value + 0 as represent_custom_value
 		FROM sources_items it
 			left join sources_values va on (va.value_id = it.key_id)
-			left join sources_custom_values cva on (cva.prop_id = :prop_id and cva.value_nick = va.value_nick)
+			-- left join sources_custom_values cva on (cva.prop_id = :prop_id and cva.value_nick = va.value_nick)
 		WHERE va.value_id = :key_id and va.value_id = it.key_id and it.entity_id = :entity_id
 	`, {key_id, entity_id, prop_id})
 	return item
@@ -885,20 +903,57 @@ Sources.getSources = async (db, entity_id) => {
 	
 	const list = await db.all(`
 		SELECT 
-		${SELECT_SOURCE}
+			${SELECT_SOURCE}
 		FROM sources_sources so
 			LEFT JOIN sources_props pr on pr.prop_id = so.entity_id
-		ORDER BY 
-			-- so.master DESC, 
-			so.ordain
+		ORDER BY so.ordain
 	`)
 
 	for (const source of list) {
+		
 		Sources.calcSource(source)
 	}
 	return list
 }
+Sources.calcSource = source => {
+	
+	source.file = conf.dir + source.source_title + '.js'
+	source.status = Sources.calcStatus(source)
+	source.need = Sources.calcNeed(source)
+	source.class = Sources.calcClass(source)
+}
+Sources.calcNeed = (source) => { 
+	if (!source.renovate) return false
+	if (source.date_start) return false
+	if (source.error) return false
+	if (!source.date_mtime) return true
+	if (!source.date_load) return true
+	if (source.date_load < source.date_mtime) return true
+	return false
+}
+Sources.calcClass = (source) => {
+	if (source.error) return 'error'
+	if (source.date_start) return 'load'
+	if (source.need && source.date_load < source.date_mtime) return 'need'
+	if (source.news) return 'news'
+	return 'ok'
+}
+Sources.calcStatus = (source) => { //Будет загрузка или нет
+	if (source.date_start) return 'Идёт загрузка'
+	if (source.error) return 'Есть ошибка'
+	
+	//if (!source.date_mtime) return 'Нужно выполнить проверку'
+	if (!source.date_mtime) return 'Не было проверки'
 
+	if (!source.date_load && source.renovate) return 'Не загружался'
+	if (!source.date_load && !source.renovate) return 'Не загружался, актуализация запрещена'
+	if (source.date_load < source.date_mtime && source.renovate) return 'Есть изменения'
+	if (source.date_load < source.date_mtime && !source.renovate) return 'Есть изменения, актуализация запрещена'
+	
+	//return 'Текущие данные из источника актуальны'
+	if (source.news) return `Новые колонки`
+	return 'ОК'
+}
 
 Sources.getEntityStat = async (db, entity) => {
 	const sources_by_sources = await db.all(`
@@ -1032,37 +1087,8 @@ Sources.getEntities = async (db) => {
 
 
 
-const conf = await config('sources')
-Sources.calcSource = source => {
-	source.file = conf.dir + source.source_title + '.js'
-	source.status = Sources.calcStatus(source)
-	source.need = Sources.calcNeed(source)
-	source.class = Sources.calcClass(source)
-}
-Sources.calcNeed = (source) => { 
-	if (!source.renovate) return false
-	if (source.date_start) return false
-	if (source.error) return false
-	if (!source.date_mtime) return true
-	if (!source.date_load) return true
-	if (source.date_load < source.date_mtime) return true
-	return false
-}
-Sources.calcClass = (source) => {
-	if (source.error) return 'error'
-	if (source.date_start) return 'load'
-	if (source.need && source.date_load < source.date_mtime) return 'need'
-	return 'ok'
-}
-Sources.calcStatus = (source) => { //Будет загрузка или нет
-	if (source.date_start) return 'Идёт загрузка'
-	if (source.error) return 'Есть ошибка'
-	if (!source.date_mtime) return 'Нужно выполнить проверку'
-	if (!source.date_load && source.renovate) return 'Не загружался'
-	if (!source.date_load && !source.renovate) return 'Не загружался, актуализация запрещена'
-	if (source.date_load < source.date_mtime && source.renovate) return 'Есть изменения'
-	if (source.date_load < source.date_mtime && !source.renovate) return 'Есть изменения, актуализация запрещена'
-	return 'Текущие данные из источника актуальны'
-}
+
+
+
 
 export default Sources

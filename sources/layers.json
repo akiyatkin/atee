@@ -3,7 +3,6 @@
 	
 	"animate":{
 		"source:SOURCE":"none",
-		"main:TABLE":"none",
 		"sheet:TABLE":"none",
 		"sheet:SOURCE":"none",
 		"sheet:DATES":"none",
@@ -17,7 +16,7 @@
 	},
 	"global":{
 		"source:SOURCE":["recalc"],
-		"main:TABLE":["recalc"],
+		"main:ROOT":["recalc"],
 		"sheet:TABLE":["recalc"],
 		"sheet:SOURCE":["recalc"],
 		"sheet:DATES":["recalc"],
@@ -31,13 +30,11 @@
 		"source:TOP":["recalc"],
 
 		"source:TABLE":["recalc"],
-		"recalc:RTABLE":["recalc"],
 		"source:TABLE":["recalc"],
 		"props:TABLE":["recalc"],
 		"positions:TABLE":["recalc"],
 		"position:TABLE":["recalc"],
 		"disappear:TABLE":["recalc"],
-		"main:TABLE":["recalc"],
 
 		"entity2:PROPS":["recalc"],
 		"entity2:ENTITY":["recalc"]
@@ -54,7 +51,6 @@
 	"json":{
 		"recalc:RTABLE":"/-sources/get-recalc",
 		"main:ROOT":"/-sources/main",
-		"main:TABLE":"/-sources/main",
 		"props:TABLE":"/-sources/props",
 		"settings:ROOT":"/-sources/settings",
 		"memory:ROOT":"/-sources/memory"
@@ -62,7 +58,7 @@
 	"jsontpl":{
 		"sheet:ROOT":"/-sources/sheet?source_id=${env.bread.get.source_id ?? ''}",
 		"sheet:DATES":"/-sources/sheet-dates?source_id=${env.bread.get.source_id ?? ''}&appear=${env.bread.get.appear ?? ''}&hashs=${env.bread.get.search ?? ''}",
-		"sheet:TABLE":"/-sources/sheet-table?source_id=${env.bread.get.source_id ?? ''}&sheet_index=${env.bread.get.sheet_index ?? ''}&keyfilter=${env.bread.get.keyfilter ?? ''}&appear=${env.bread.get.appear ?? ''}&hashs=${env.bread.get.search ?? ''}",
+		"sheet:TABLE":"/-sources/sheet-table?source_id=${env.bread.get.source_id ?? ''}&sheet_index=${env.bread.get.sheet_index ?? ''}&keyfilter=${env.bread.get.keyfilter ?? ''}&appear=${env.bread.get.appear ?? ''}&hashs=${env.bread.get.search ?? ''}&limit=${env.bread.get.limit ?? ''}",
 		"sheet:SOURCE":"/-sources/sheet-source?source_id=${env.bread.get.source_id ?? ''}",
 		"positions:ROOT":"/-sources/positions?entity_id=${env.crumb.name}",
 		"positions:TABLE":"/-sources/positions-table?entity_id=${env.crumb.name}&hashs=${env.crumb.child?.name ?? ''}",
@@ -110,9 +106,6 @@
 		},
 		"recalc:ROOT":{
 			"RTABLE":"recalc:RTABLE"
-		},
-		"main:ROOT": {
-			"TABLE": "main:TABLE"
 		}
 	},
 	"childs":{

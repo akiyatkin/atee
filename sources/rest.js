@@ -71,7 +71,24 @@ rest.addResponse('main', async view => {
 
 	const db = await view.get('db')
 	const list = view.data.list = await Sources.getSources(db)
-	
+	for (const source of list) {
+		source.news = await db.col(`
+			SELECT count(*)
+			FROM sources_cols co 
+			WHERE co.source_id = :source_id AND co.prop_id is null AND co.represent_col = 1 
+		`, source)
+		source.prunings = await db.col(`
+			SELECT count(DISTINCT ce.sheet_index, ce.col_index)
+			FROM sources_cells ce
+			WHERE
+			ce.source_id = :source_id
+			and ce.pruning = 1	
+		`, source)
+	}
+
+	await db.exec(`INSERT IGNORE INTO sources_settings (singleton, comment) VALUES ('X','Общий комментарий')`)
+	view.data.comment = await db.col(`select comment from sources_settings`)
+
 	// for (const source of list) {
 	// 	source.entities = await db.colAll(`
 	// 		select e.entity_plural 
@@ -105,7 +122,7 @@ rest.addResponse('prop', ['admin'], async view => {
 	const list = await db.all(`
 		SELECT co.prop_id, ce.text, count(ce.text) as count, 
 			ce.pruning + 0 as pruning, 
-			max(ce.represent) + 0 as represent, 
+			-- max(ce.represent) + 0 as represent, 
 			ce.date, 
 			ce.number, ce.value_id, va.value_title, va.value_nick
 		FROM sources_cols co, sources_cells ce
@@ -119,20 +136,20 @@ rest.addResponse('prop', ['admin'], async view => {
 		ORDER BY ce.pruning DESC, count(ce.text) DESC
 		LIMIT 100
 	`, {prop_id})
-	const custom = await db.allto('value_nick', `
-		SELECT cva.value_nick, cva.represent_custom_value + 0 as represent_custom_value
-		FROM sources_custom_values cva
-		WHERE prop_id = :prop_id
-	`, {prop_id})
+	// const custom = await db.allto('value_nick', `
+	// 	SELECT cva.value_nick, cva.represent_custom_value + 0 as represent_custom_value
+	// 	FROM sources_custom_values cva
+	// 	WHERE prop_id = :prop_id
+	// `, {prop_id})
 	
-	for (const value of list) {
-		value.cls = represent.calcCls(
-			prop.represent_prop, 
-			custom[value.value_nick]?.represent_custom_value, 
-			prop.represent_values
-		)
+	// for (const value of list) {
+	// 	value.cls = represent.calcCls(
+	// 		prop.represent_prop, 
+	// 		custom[value.value_nick]?.represent_custom_value, 
+	// 		prop.represent_values
+	// 	)
 
-	}
+	// }
 	view.data.count = list.length
 	view.data.list = list
 	//view.data.list = list.slice(0, 1000)
@@ -459,6 +476,30 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 		where_search.push(sql)
 	}
 	
+	//Колонок с обрезанными значениями
+	view.data.quantity_with_pruning = await db.col(`
+		SELECT count(DISTINCT ce.sheet_index, ce.col_index)
+		FROM sources_rows ro, sources_cells ce
+		WHERE
+			ce.source_id = :source_id
+			and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
+			and (${where_search.join(' or ')})
+			and ce.pruning = 1		
+	`, {source_id})
+
+	//Колонок с неопределёнными свойствами
+	view.data.quantity_with_unknown = await db.col(`
+		SELECT count(distinct co.col_index)
+		FROM 
+			sources_rows ro, 
+			sources_cols co 
+		WHERE co.source_id = :source_id 
+		and ro.source_id = co.source_id and ro.sheet_index = co.sheet_index
+
+		AND co.prop_id is null AND co.represent_col = 1 
+		and (${where_search.join(' or ')})
+	`, {source_id})
+
 	view.data.quantity_of_keys = await db.col(`
 		SELECT count(*)
 		FROM sources_rows ro, sources_sheets sh
@@ -702,7 +743,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	
 	const hashs = await view.get('hashs')
 	const keyfilter = await view.get('keyfilter#appear')
-
+	const limit = await view.get('limit') || 100
 	/*
 		appear - конкретная дата появления
 		all - всё как есть
@@ -789,6 +830,48 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 			GROUP BY sh.sheet_index
 			ORDER by sh.sheet_index
 		`, {source_id})
+	} else if (keyfilter == 'pruning') {
+		sheets = view.data.sheets = await db.all(`
+			SELECT 
+				sh.sheet_index,
+				sh.sheet_title,
+				sh.entity_id,
+				sh.represent_sheet + 0 as represent_sheet,
+				count(distinct ce.col_index) as count
+			FROM sources_sheets sh, sources_cells ce, sources_rows ro
+			WHERE sh.source_id = :source_id
+				and ce.source_id = sh.source_id 
+				and ce.sheet_index = sh.sheet_index
+				and (${where_search.join(' or ')})
+				and ce.pruning = 1
+				and ro.source_id = ce.source_id
+				and ro.sheet_index = ce.sheet_index
+				and ro.row_index = ce.row_index
+			GROUP BY sh.sheet_index
+			ORDER by sh.sheet_index
+		`, {source_id})
+
+	} else if (keyfilter == 'unknown') {
+		sheets = view.data.sheets = await db.all(`
+			SELECT 
+				sh.sheet_index,
+				sh.sheet_title,
+				sh.entity_id,
+				sh.represent_sheet + 0 as represent_sheet,
+				count(distinct co.col_index) as count
+			FROM sources_sheets sh, sources_cols co, sources_rows ro
+			WHERE sh.source_id = :source_id
+				and co.source_id = sh.source_id 
+				and co.sheet_index = sh.sheet_index
+				and (${where_search.join(' or ')})
+				and co.prop_id is null 
+				and co.represent_col = 1
+				and ro.source_id = sh.source_id
+				and ro.sheet_index = sh.sheet_index
+			GROUP BY sh.sheet_index
+			ORDER by sh.sheet_index
+		`, {source_id})
+
 	} else {
 		sheets = view.data.sheets = await db.all(`
 			SELECT 
@@ -808,7 +891,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	}
 	let last_index = null
 	for (const s of sheets) {	
-		s.represent = s.represent_sheet// && source.represent_sheets
+		//s.represent = s.represent_sheet// && source.represent_sheets
 		s.entity = s.entity_id && await Sources.getEntity(db, s.entity_id)
 	}
 
@@ -874,12 +957,63 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 
 	const sheet_title = sheet.sheet_title
 
-	const cols = view.data.cols = await db.all(`
+	
+	const cols = view.data.cols = 
+	keyfilter == 'pruning' ? await db.all(`
 		SELECT 
 			co.col_index, co.col_nick, pr.prop_nick, 
 			pr.multi + 0 as multi, 
+			pr.known,
+			pr.represent_prop + 0 as represent_prop,
 			pr.type,
 			co.col_title, pr.prop_id, pr.prop_title, pr.prop_id as entity_id,
+			co.represent_col + 0 as represent_col,
+			cco.represent_custom_col + 0 as represent_custom_col
+		FROM sources_cells ce, sources_rows ro, sources_sheets sh, sources_cols co
+			LEFT JOIN sources_custom_cols cco on (cco.source_id = co.source_id and cco.col_title = co.col_title and sheet_title = :sheet_title)
+			LEFT JOIN sources_props pr on pr.prop_id = co.prop_id
+		WHERE
+			co.source_id = :source_id
+			and ce.source_id = co.source_id and ce.col_index = co.col_index and co.sheet_index = ce.sheet_index
+			and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
+			and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
+			and (${where_search.join(' or ')})
+			and (ce.pruning = 1 or ce.col_index = sh.key_index)
+			and co.sheet_index = :sheet_index	
+		GROUP BY co.col_index
+		ORDER BY co.col_index
+	`, {source_id, sheet_index, sheet_title}) : 
+	keyfilter == 'unknown' ? await db.all(`
+		SELECT 
+			co.col_index, co.col_nick, pr.prop_nick, 
+			pr.multi + 0 as multi, 
+			pr.known,
+			pr.represent_prop + 0 as represent_prop,
+			pr.type,
+			co.col_title, pr.prop_id, pr.prop_title, pr.prop_id as entity_id,
+			co.represent_col + 0 as represent_col,
+			cco.represent_custom_col + 0 as represent_custom_col
+		FROM sources_cells ce, sources_sheets sh, sources_cols co
+			LEFT JOIN sources_custom_cols cco on (cco.source_id = co.source_id and cco.col_title = co.col_title and sheet_title = :sheet_title)
+			LEFT JOIN sources_props pr on pr.prop_id = co.prop_id
+		WHERE
+			co.source_id = :source_id
+			and ce.source_id = co.source_id and ce.col_index = co.col_index and co.sheet_index = ce.sheet_index
+			and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
+			and ((co.prop_id is null and co.represent_col = 1) or co.col_index = sh.key_index)
+			and co.sheet_index = :sheet_index	
+		GROUP BY co.col_index
+		ORDER BY co.col_index
+	`, {source_id, sheet_index, sheet_title}) : 
+	await db.all(`
+		SELECT 
+			co.col_index, co.col_nick, pr.prop_nick, 
+			pr.multi + 0 as multi, 
+			pr.known,
+			pr.represent_prop + 0 as represent_prop,
+			pr.type,
+			co.col_title, pr.prop_id, pr.prop_title, pr.prop_id as entity_id,
+			co.represent_col + 0 as represent_col,
 			cco.represent_custom_col + 0 as represent_custom_col
 		FROM sources_cols co
 			LEFT JOIN sources_custom_cols cco on (cco.source_id = co.source_id and cco.col_title = co.col_title and sheet_title = :sheet_title)
@@ -887,6 +1021,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 		WHERE
 			co.source_id = :source_id
 			and co.sheet_index = :sheet_index	
+		GROUP BY co.col_index
 		ORDER BY co.col_index
 	`, {source_id, sheet_index, sheet_title}) 
 
@@ -899,13 +1034,14 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 			source.represent_cols
 		)
 	}
+
 	const rows = view.ans.rows = await db.all(`
 		SELECT 
 			ro.row_index,
 			ro.key_id,
-			ro.represent_row_key + 0 as represent_row_key,
-			ro.represent_row + 0 as represent_row,
-			ro.repeat_index,
+			-- ro.represent_row_key + 0 as represent_row_key,
+			-- ro.represent_row + 0 as represent_row,
+			-- ro.repeat_index,
 			ap.date_appear
 		FROM sources_rows ro
 			LEFT JOIN sources_sheets sh on (sh.source_id = ro.source_id and sh.sheet_index = ro.sheet_index)
@@ -915,32 +1051,36 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 		and (${where_and.join(' and ')})
 		and (${where_search.join(' or ')})
 		ORDER BY ro.row_index
+		LIMIT ${limit}
 	`, {source_id, sheet_index, date_appear})
 
-	
-	const custom_rows = await db.all(`
-		SELECT 
-			va.value_id as key_id,
-			cro.repeat_index, 
-			cro.represent_custom_row + 0 as represent_custom_row
-		FROM sources_custom_rows cro, sources_values va
-		WHERE cro.source_id = :source_id and cro.sheet_title = :sheet_title
-		and va.value_nick = cro.key_nick
-	`, {source_id, sheet_title})
-	const crows = {}
-	for (const {key_id, repeat_index, represent_custom_row} of custom_rows) {
-		crows[key_id] ??= {}
-		crows[key_id][repeat_index] = represent_custom_row
-	}
 
-	for (const row of rows) {
-		row.cls = represent.calcCls(
-			source.represent_source && sheet.represent_sheet, 
-			crows[row.key_id]?.[row.repeat_index], 
-			source.represent_rows
-		)
-	}
-	
+	let max_row_index = 0
+	rows.forEach(row => max_row_index = Math.max(max_row_index, row.row_index))
+
+	// const custom_rows = await db.all(`
+	// 	SELECT 
+	// 		va.value_id as key_id,
+	// 		cro.repeat_index, 
+	// 		cro.represent_custom_row + 0 as represent_custom_row
+	// 	FROM sources_custom_rows cro, sources_values va
+	// 	WHERE cro.source_id = :source_id and cro.sheet_title = :sheet_title
+	// 	and va.value_nick = cro.key_nick
+	// `, {source_id, sheet_title})
+	// const crows = {}
+	// for (const {key_id, repeat_index, represent_custom_row} of custom_rows) {
+	// 	crows[key_id] ??= {}
+	// 	crows[key_id][repeat_index] = represent_custom_row
+	// }
+
+	// for (const row of rows) {
+	// 	row.cls = represent.calcCls(
+	// 		source.represent_source && sheet.represent_sheet, 
+	// 		crows[row.key_id]?.[row.repeat_index], 
+	// 		source.represent_rows
+	// 	)
+	// }
+	const getCols = () => cols.length ? `and ce.col_index in (${cols.map(col => col.col_index)})` : `and 1 = 0`
 	const cells = await db.all(`
 		SELECT 
 			ce.row_index, 
@@ -948,8 +1088,8 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 			ce.multi_index,
 			ce.text,
 			ce.pruning + 0 as pruning,
-			ce.represent_cell + 0 as represent_cell,
-			ce.represent + 0 as represent,
+			-- ce.represent_cell + 0 as represent_cell,
+			-- ce.represent + 0 as represent,
 			nvl(wi.entity_id, 0) as winner,
 			it.master + 0 as master
 		FROM sources_cells ce
@@ -961,10 +1101,12 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 			LEFT JOIN sources_wcells wi on (wi.source_id = ce.source_id and wi.sheet_index = ce.sheet_index and wi.row_index = ce.row_index and wi.col_index = ce.col_index)
 			LEFT JOIN sources_appears ap on (ap.key_nick = va.value_nick and ap.source_id = ce.source_id and ap.entity_id = sh.entity_id)
 		WHERE ce.source_id = :source_id and ce.sheet_index = :sheet_index
+		${~['pruning','unknown'].indexOf(keyfilter) ? getCols() : ''}
 		and (${where_search.join(' or ')})
 		and (${where_and.join(' and ')})
-		
+		and ro.row_index <= ${max_row_index}
 		ORDER BY ce.row_index, ce.col_index
+
 	`, {source_id, sheet_index, date_appear}) 
 
 	// const cells = []
@@ -998,10 +1140,16 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	const prunings = view.data.prunings = []
 	const masters = view.data.masters = []
 	let text_index = -1
+	let pos_index = -1
 	let last_row_index = -1
 	
 	for (const {row_index, col_index, multi_index, text, winner, pruning, master} of cells) {
-		if (last_row_index != row_index) text_index++
+		if (last_row_index != row_index) {
+			text_index++
+			pos_index = -1
+		}
+		
+		if (!multi_index) pos_index++
 		last_row_index = row_index
 
 		prunings[text_index] ??= []
@@ -1039,7 +1187,11 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 			prunings[text_index][col_index] ??= 0
 			winners[text_index][col_index] ??= [0]
 		}
-
+		// for (const pos_index in cols) {
+		// 	texts[text_index][pos_index] ??= [null]
+		// 	prunings[text_index][pos_index] ??= 0
+		// 	winners[text_index][pos_index] ??= [0]
+		// }
 	}
 	return view.ret()
 })

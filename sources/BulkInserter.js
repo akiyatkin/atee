@@ -1,5 +1,5 @@
 class BulkInserter {
-	constructor(db, tableName, columns, batchSize = 1000, onDuplicateUpdate = false) {
+	constructor(db, tableName, columns, batchSize = 100, onDuplicateUpdate = false) {
 		this.tableName = tableName;
 		this.columns = columns;
 		this.batchSize = batchSize;

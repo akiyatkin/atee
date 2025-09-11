@@ -39,7 +39,8 @@ tpl.GROUPS = (data, env) => !data.result ? '' : `
 		${data.childs.length ? tpl.showGroups(data, env) : ''}
 	</div>
 `
-tpl.PAGINATION = (data, env) => data.result && `
+
+tpl.PAGINATION = (data, env) => !data.result ? '' : `
 	${tpl.pag(data, env, 'none')}
 `
 tpl.LIST = (data, env) => data.result ? `
@@ -250,10 +251,10 @@ tpl.showSelected = (data, bread) => {
 					const get = {m:data.md.m + ':' + prop_nick + '.' + value_nick}
 					
 					if (value_nick == 'from' || value_nick == 'upto') {
-						const title = values[value_nick] + cards.unit(prop)
+						const title = (values[value_nick] / 10 ** prop.scale) + cards.unit(prop)
 						return tpl.showPart(data, bread, (value_nick == 'from' ? 'от ' : 'до ') + title, get)
 					} else {
-						const title = value_nick + cards.unit(prop)
+						const title = (value_nick / 10 ** prop.scale) + cards.unit(prop)
 						return tpl.showPart(data, bread, title, get)
 					}
 				}).join(' ')

@@ -21,11 +21,11 @@ rest.extra(rest_search)
 
 rest.exporttables = [
 	'shop_cards', 'shop_filters','shop_groups', 'shop_props', 'shop_sampleprops', 'shop_samples', 'shop_samplevalues',
-	'sources_custom_cells',
+	//'sources_custom_cells',
 	'sources_custom_cols',
-	'sources_custom_rows',
+	//'sources_custom_rows',
 	'sources_custom_sheets',
-	'sources_custom_values',
+	//'sources_custom_values',
 	'sources_sources',
 	'sources_props',
 	'sources_synonyms'

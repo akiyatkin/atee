@@ -26,7 +26,7 @@ const checkbox = (name, title, checked) => `
 `
 const getSelItem = (data, env) => {
 	const model = data.model
-	const art = env.crumb.child?.name || ''
+	const art = env.crumb.name || ''
 	return model.items.find(item => item.art[0] == art) || false
 }
 export const ROOT = (data, env) => `${showBody(data, env, data.model, getSelItem(data, env))}`
@@ -40,7 +40,7 @@ export const showBody = (data, env, model, item) => {
 		<p>
 			Менеджер перезвонит в рабочее время.
 		</p>
-		<form action="/-shop/set-order" data-goal='callorder'>
+		<form action="/-shop/set-order">
 			<input name="brendmodel" type="hidden" value="${item.brendmodel[0]}">
 			<input name="art" type="hidden" value="${item.art[0]}">
 			<input name="partner" type="hidden" value="${env.theme.partner}">
@@ -71,21 +71,18 @@ export const showBody = (data, env, model, item) => {
 				import("/-form/Autosave.js").then(r => r.default.init(form))
 
 				const Dialog = await import("/-dialog/Dialog.js").then(r => r.default)
-				if (Dialog.parents.length) {
-					const reachGoal = goal => {
-						console.log('Goal.reach ' + goal)
-						const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
-						if (metrikaid) ym(metrikaid, 'reachGoal', goal)
-					}
-					reachGoal('button')
+				const reachGoal = goal => {
+					console.log('Goal.reach ' + goal)
+					const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
+					if (metrikaid) ym(metrikaid, 'reachGoal', goal)
 				}
+				if (Dialog.parents.length) reachGoal('button')
 
 				form.addEventListener('submit', async e => {
 					e.preventDefault()
 					const submit = await import('/-dialog/submit.js').then(r => r.default)
 					const ans = await submit(form, {tpl:'/-dialog/contacts.html.js', sub:'MSG'})
 					if (!ans.result) return
-					
 					
 					const products = [${JSON.stringify(
 						Ecommerce.getProduct(data, {
@@ -99,6 +96,8 @@ export const showBody = (data, env, model, item) => {
 					)}]
 					const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
 					Ecommerce.purchase(products)
+					reachGoal('callorder')
+					reachGoal('cart')
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>

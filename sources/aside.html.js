@@ -1,3 +1,4 @@
+import field from "/-dialog/field.html.js"
 export const ROOT = (data, env) => `
 	<div style="height:100%; display: grid; grid-template-rows: max-content 1fr max-content; gap: 1em;">
 		<div>
@@ -14,6 +15,12 @@ export const ROOT = (data, env) => `
 			</div>
 		</div>
 		<div style="display: grid; gap: 0.25em">
+			<div>${field.button({
+				label:'Пересчитать',
+				cls: 'mute a',
+				action:'/-sources/set-recalc',
+				global:'recalc'
+			})}</div>
 			<div><a href="memory">Память</a></div>
 			<div><a href="settings">Настройки</a></div>
 		</div>

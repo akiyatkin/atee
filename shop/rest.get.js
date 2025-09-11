@@ -238,10 +238,9 @@ rest.addResponse('get-model', async (view) => {
 
 
 
-rest.addResponse('get-search-list', async (view) => {
+rest.addResponse('get-search-list', async (view) => {	
 	const md = view.data.md = await view.get('md')
 	const conf = view.data.conf = await config('shop', true)
-	
 	const group = view.data.group = await view.get('group#required') //depricated
 	const group_nick = view.data.group_nick = await view.get('group_nick#required')
 

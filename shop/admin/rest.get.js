@@ -140,7 +140,7 @@ rest.addResponse('get-group-filter-prop-search', ['admin'], async view => {
 	
 	const list = await db.all(`
 		SELECT prop_id, prop_title, prop_nick, type
-		FROM sources_props
+		FROM sources_wprops
 		WHERE type in ("value","number") 
 		and (${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
 		ORDER BY RAND()
@@ -179,7 +179,7 @@ rest.addResponse('get-prop-search', ['admin'], async view => {
 	
 	const list = await db.all(`
 		SELECT prop_id, prop_title, prop_nick, type
-		FROM sources_props
+		FROM sources_wprops
 		WHERE type in ("value","number","text") 
 		and (${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
 		ORDER BY RAND()
@@ -217,7 +217,7 @@ rest.addResponse('get-group-card-prop-search', ['admin'], async view => {
 	
 	const list = await db.all(`
 		SELECT prop_id, prop_title, prop_nick, type
-		FROM sources_props
+		FROM sources_wprops
 		WHERE type in ("value","number","text") 
 		and (${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
 		ORDER BY RAND()
@@ -266,7 +266,7 @@ rest.addResponse('get-sample-prop-search', ['admin'], async view => {
 
 	const list = await db.all(`
 		SELECT prop_id, prop_title, prop_nick, type
-		FROM sources_props
+		FROM sources_wprops
 		WHERE type in ("value","number") 
 		and (${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
 	`)

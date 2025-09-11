@@ -18,15 +18,35 @@ export const TABLE = (data, env) => err(data, env) || `
 			white-space: nowrap;
 			max-width: 300px;
 		}
+		/*${env.scope} table .prop_column:before {
+			content:"✅";
+		}
+		${env.scope} table .prop_more:before {
+			content:"🟡";
+		}
+		${env.scope} table .prop_system:before {
+			content:"🛡️";
+		}*/
 	</style>
-	
+	<div style="margin:2em 0 2em; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
+		${field.prompt({
+			value: 'Добавить свойство', 
+			name: 'title',
+			input: '',
+			label: 'Название свойства', 
+			type: 'text', 
+			action: '/-sources/set-prop-create', 
+			args: {entity_id: data.entity_id},
+			reloaddiv: env.layer.div,
+			goid: 'prop_id'
+		})}
+	</div>
 	<div class="revscroll" style="margin: 2em 0">
 		<table draggable="false" class="list">
 			<thead>
 				<tr>
-					<td>
-						
-					</td>
+					<td></td>
+					<td></td>
 					<td>Свойство</td>
 					<td>Тип</td>
 					<td>Значений</td>
@@ -57,19 +77,7 @@ export const TABLE = (data, env) => err(data, env) || `
 			})(document.currentScript.parentElement)
 		</script>
 	</div>
-	<div style="margin:2em 0 2em; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
-		${field.prompt({
-			value: 'Добавить свойство', 
-			name: 'title',
-			input: '',
-			label: 'Название свойства', 
-			type: 'text', 
-			action: '/-sources/set-prop-create', 
-			args: {entity_id: data.entity_id},
-			reloaddiv: env.layer.div,
-			goid: 'prop_id'
-		})}
-	</div>
+	
 </p>
 `
 const showTr = (data, env, prop) => `
@@ -78,15 +86,28 @@ const showTr = (data, env, prop) => `
 			<button title="Изменить видимость свойства" class="represent_prop eye transparent ${defcustom(prop.represent_prop)}">${svg.eye()}</button>
 		</td>
 		<td>
+			${field.setpop({
+				heading:'Обработка свойства',
+				cls: 'transparent',
+				value: prop.known,
+				name: 'known',
+				descr: '<b>more</b> означает, что у свойства нет специальной обработки и оно покажется вместе со всеми такими свойствами в общем списке. Свойство со специальной обработкой <b>column</b> покажется только там, где его покажет программист, по умолчанию в интерфейсе нигде не покажется, но придёт с данными. Свойство <b>system</b> даже с данными не придёт и может быть использовано для технических обработок, например быть критерием групп.',
+				action: '/-sources/set-known', 
+				values: {"system":"🛡️ system", "more":"🟡 more", "column":"✅ column"},
+				args: {prop_id: prop.prop_id}
+			})}
+		</td>
+		<td>
 			<a href="prop/${prop.prop_id}">${prop.prop_title}</a>
 		</td>
 		<td>
 			<!-- ${prop.type} -->
 			${field.setpop({
 				heading:'Тип',
+				cls: 'a',
 				value: prop.type,
 				name: 'type',
-				descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче 63 символов. Самый затратный <b>text</b>. Для ключей и связей подходит только value.',
+				descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче 63 символов. И последний оригинальный вариант <b>text</b>. Для ключей и связей подходит только value.',
 				action: '/-sources/set-prop-type', 
 				values: {"number":"number", "date":"date", "value":"value", "text":"text"},
 				args: {prop_id: prop.prop_id},
@@ -97,6 +118,7 @@ const showTr = (data, env, prop) => `
 			<!-- ${prop.multi ? "Несколько" : "Одно"} -->
 			${field.setpop({
 				heading:'Значений',
+				cls: 'a',
 				value: prop.multi,
 				name: 'bit',
 				descr: 'Несколько значений могут быть разделены запятой с пробелом. Значений?',

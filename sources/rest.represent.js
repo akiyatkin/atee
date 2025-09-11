@@ -30,7 +30,7 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	let col_title = await view.get('col_title')
 	let sheet_title = await view.get('sheet_title')
 	let multi_index = await view.get('multi_index')
-	let repeat_index = await view.get('repeat_index')
+//	let repeat_index = await view.get('repeat_index')
 	let key_id = await view.get('key_id')
 	
 	const col_index = await view.get('col_index')
@@ -52,18 +52,16 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	}
 	if (row_index != null) {
 		if([source_id, sheet_index].some(v => v == null)) return view.err('Требуется source_id и sheet_index')
-		const r = await db.fetch(`
-			SELECT repeat_index, key_id FROM sources_rows
+		key_id = await db.col(`
+			SELECT key_id FROM sources_rows
 			WHERE source_id = :source_id and sheet_index = :sheet_index and row_index = :row_index 
 		`, {source_id, sheet_index, row_index})
-		repeat_index = r.repeat_index
-		key_id = r.key_id
 	}
 
 
 	
-	if ([sheet_title, col_title, multi_index, repeat_index].some(v => v != null) && !source_id) return view.err('Требуется source_id')
-	if ([col_title, multi_index, repeat_index].some(v => v != null) && sheet_title == null) return view.err('Требуется sheet_title')
+	if ([sheet_title, col_title, multi_index].some(v => v != null) && !source_id) return view.err('Требуется source_id')
+	if ([col_title, multi_index].some(v => v != null) && sheet_title == null) return view.err('Требуется sheet_title')
 	if ([multi_index].some(v => v != null) && col_title == null) return view.err('Требуется col_title')
 	if (!entity_id && !source_id && !prop_id) return view.err('Должно быть указано хоть что-то entity_id, source_id, prop_id')
 
@@ -106,7 +104,7 @@ rest.addResponse('get-represent', ['admin'], async view => {
 
 
 	
-	const row = view.data.row = repeat_index != null || row_index != null ? await Sources.row(db, {source_id, sheet_title, key_id, repeat_index, sheet_index, row_index}) : false
+	const row = view.data.row = row_index != null ? await Sources.getRowByIndex(db, source_id, sheet_index, row_index) : false //(db, {source_id, sheet_title, key_id, repeat_index, sheet_index, row_index})
 	//const row = view.data.row = repeat_index != null ? await Sources.getRow(db, source_id, sheet_title, key_id, repeat_index) : false
 	if (row) {
 		row.row_index_max = await db.col(`
@@ -114,42 +112,43 @@ rest.addResponse('get-represent', ['admin'], async view => {
 			FROM sources_rows ro
 			WHERE ro.source_id = :source_id and ro.sheet_index = :sheet_index
 		`, row)
-		if (row.key_id) {
-			row.repeat_index_max = await db.col(`
-				SELECT max(repeat_index) 
-				FROM sources_rows ro
-				WHERE ro.source_id = :source_id and ro.sheet_index = :sheet_index and ro.key_id = :key_id
-			`, row)
-		} else {
-			row.repeat_index_max = await db.col(`
-				SELECT max(repeat_index) 
-				FROM sources_rows ro
-				WHERE ro.source_id = :source_id and ro.sheet_index = :sheet_index and ro.key_id is null
-			`, row)
-		}
+		// if (row.key_id) {
+		// 	row.repeat_index_max = await db.col(`
+		// 		SELECT max(repeat_index) 
+		// 		FROM sources_rows ro
+		// 		WHERE ro.source_id = :source_id and ro.sheet_index = :sheet_index and ro.key_id = :key_id
+		// 	`, row)
+		// } else {
+		// 	row.repeat_index_max = await db.col(`
+		// 		SELECT max(repeat_index) 
+		// 		FROM sources_rows ro
+		// 		WHERE ro.source_id = :source_id and ro.sheet_index = :sheet_index and ro.key_id is null
+		// 	`, row)
+		// }
 	}
 	if (row) key_id = row.key_id
-	if (row) {
-		row.cls = represent.calcCls(
-			source.represent_source && sheet.represent_sheet && row.represent_row_key, 
-			row.represent_custom_row, 
-			source.represent_rows * !!row.key_id
-		)
+	// if (row) {
+	// 	row.cls = represent.calcCls(
+	// 		source.represent_source && sheet.represent_sheet, 
+	// 		row.represent_custom_row, 
+	// 		source.represent_rows * !!row.key_id
+	// 	)
 
-		row.key = key_id ? await Sources.getCellByIndex(db, source_id, row.sheet_index, row.row_index, row.key_index, 0) : false	
-		if (row.key) {
-			row.key.cls = represent.calcCls(
-				source.represent_source && sheet.represent_sheet && row.represent_row && col.represent_col, 
-				row.key.represent_custom_cell, 
-				source.represent_cells
-			)
-		}
-	}
+	// 	row.key = key_id ? await Sources.getCellByIndex(db, source_id, row.sheet_index, row.row_index, row.key_index, 0) : false	
+	// 	if (row.key) {
+	// 		row.key.cls = represent.calcCls(
+	// 			source.represent_source && sheet.represent_sheet && row.represent_row && col.represent_col, 
+	// 			row.key.represent_custom_cell, 
+	// 			source.represent_cells
+	// 		)
+	// 	}
+	// }
 
 	
 	
-
-	const cell = view.data.cell = (multi_index != null) ? await Sources.cell(db, {source_id, sheet_title, key_id, repeat_index, col_title, multi_index, sheet_index, row_index, col_index}) : false	
+	const cell = view.data.cell = (multi_index != null) ? await Sources.getCellByIndex(db, source_id, sheet_index, row_index, col_index, multi_index) : false	
+	//const cell = view.data.cell = (multi_index != null) ? await Sources.cell(db, {source_id, sheet_title, key_id, repeat_index, col_title, multi_index, sheet_index, row_index, col_index}) : false	
+	
 	//const cell = view.data.cell = (multi_index != null) ? await Sources.getCell(db, source_id, sheet_title, key_id, repeat_index, col_title, multi_index) : false	
 	if (cell) cell.multi_index_max = await db.col(`
 		SELECT max(multi_index) 
@@ -157,13 +156,13 @@ rest.addResponse('get-represent', ['admin'], async view => {
 		WHERE ce.source_id = :source_id and ce.row_index = :row_index and ce.col_index = :col_index
 	`, cell)
 
-	if (cell) {
-		cell.cls = represent.calcCls(
-			source.represent_source && sheet.represent_sheet && (sheet.key_index == cell.col_index || row.represent_row_key) && row.represent_row && col.represent_col, 
-			cell.represent_custom_cell, 
-			source.represent_cells * !!key_id
-		)
-	}
+	// if (cell) {
+	// 	cell.cls = represent.calcCls(
+	// 		source.represent_source && sheet.represent_sheet && (sheet.key_index == cell.col_index || row.represent_row_key) && row.represent_row && col.represent_col, 
+	// 		cell.represent_custom_cell, 
+	// 		source.represent_cells * !!key_id
+	// 	)
+	// }
 	const prop = view.data.prop = prop_id ? await Sources.getProp(db, prop_id) : false
 	//if (prop) entity_id = prop_id
 	const entity = view.data.entity = entity_id ? await Sources.getEntity(db, entity_id) : false
@@ -267,21 +266,14 @@ rest.addAction('set-represent_sheets', ['admin','checkstart'], async view => {
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
 		//await Consciousness.recalcKeyIndex(db)
-		//await Consciousness.recalcRowsKeyIdRepeatIndex(db)
 		//await Consciousness.insertItems(db) //insert items
-
+		
 		await Consciousness.recalcRepresentSheet(db)
 		//await Consciousness.recalcRepresentCol(db)
-		//await Consciousness.recalcRepresentRow(db)
-		//await Consciousness.recalcRepresentCell(db)
-
-		await Consciousness.recalcRepresentCellRowKey(db)
-		await Consciousness.recalcRepresentCellSummary(db)
-		
-		//await Consciousness.recalcRepresentItemValue(db)
-		await Consciousness.recalcRepresentItemSummary(db)
-		await Consciousness.recalcRepresent(db)
 		await Consciousness.recalcMaster(db)
+		return
+
+		
 		await Consciousness.recalcWinner_bySource(db, source_id)//await Consciousness.recalcWinner(db)
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
@@ -306,22 +298,13 @@ rest.addAction('set-represent_rows', ['admin'], async view => {
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
 		//await Consciousness.recalcKeyIndex(db)
-		//await Consciousness.recalcRowsKeyIdRepeatIndex(db)
 		//await Consciousness.insertItems(db) //insert items
 
 		//await Consciousness.recalcRepresentSheet(db)
 		//await Consciousness.recalcRepresentCol(db)
-		await Consciousness.recalcRepresentRow_bySource(db, source_id)
-		//await Consciousness.recalcRepresentCell(db)
-
-		await Consciousness.recalcRepresentCellRowKey(db)
-		await Consciousness.recalcRepresentCellSummary(db)
-		
-		//await Consciousness.recalcRepresentItemValue(db)
-		//await Consciousness.recalcRepresentItemSummary(db)
-		await Consciousness.recalcRepresent(db)
-		
 		await Consciousness.recalcMaster(db)
+		return
+
 		await Consciousness.recalcWinner_bySource(db, source_id)//await Consciousness.recalcWinner(db)
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
@@ -346,22 +329,13 @@ rest.addAction('set-represent_cols', ['admin'], async view => {
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
 		//await Consciousness.recalcKeyIndex(db)
-		//await Consciousness.recalcRowsKeyIdRepeatIndex(db)
 		//await Consciousness.insertItems(db) //insert items
 
 		//await Consciousness.recalcRepresentSheet(db)
 		await Consciousness.recalcRepresentCol_bySource(db, source_id)
-		//await Consciousness.recalcRepresentRow_bySource(db, source_id)
-		//await Consciousness.recalcRepresentCell(db)
-
-		await Consciousness.recalcRepresentCellRowKey(db)
-		await Consciousness.recalcRepresentCellSummary(db)
-		
-		//await Consciousness.recalcRepresentItemValue(db)
-		//await Consciousness.recalcRepresentItemSummary(db)
-		await Consciousness.recalcRepresent(db)
-		
 		await Consciousness.recalcMaster(db)
+		return
+
 		await Consciousness.recalcWinner_bySource(db, source_id)//await Consciousness.recalcWinner(db)
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
@@ -385,22 +359,13 @@ rest.addAction('set-represent_cells', ['admin'], async view => {
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
 		//await Consciousness.recalcKeyIndex(db)
-		//await Consciousness.recalcRowsKeyIdRepeatIndex(db)
 		//await Consciousness.insertItems(db) //insert items
 
 		//await Consciousness.recalcRepresentSheet(db)
 		//await Consciousness.recalcRepresentCol_bySource(db, source_id)
-		//await Consciousness.recalcRepresentRow_bySource(db, source_id)
-		await Consciousness.recalcRepresentCell_bySource(db, source_id)
-		
-		await Consciousness.recalcRepresentCellRowKey(db)
-		await Consciousness.recalcRepresentCellSummary(db)
-		
-		//await Consciousness.recalcRepresentItemValue(db)
-		//await Consciousness.recalcRepresentItemSummary(db)
-		await Consciousness.recalcRepresent(db)
-		
 		await Consciousness.recalcMaster(db)
+		return
+
 		await Consciousness.recalcWinner_bySource(db, source_id)//await Consciousness.recalcWinner(db)
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
@@ -425,22 +390,13 @@ rest.addAction('set-represent_values', ['admin','checkstart'], async view => {
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
 		//await Consciousness.recalcKeyIndex(db)
-		//await Consciousness.recalcRowsKeyIdRepeatIndex(db)
-		//await Consciousness.insertItems(db) //insert items
+		//await Consciousness.insertItems(db) //insert items		
 
 		//await Consciousness.recalcRepresentSheet(db)
 		//await Consciousness.recalcRepresentCol_bySource(db, source_id)
-		//await Consciousness.recalcRepresentRow_bySource(db, source_id)
-		//await Consciousness.recalcRepresentCell_bySource(db, source_id)
-
-		//await Consciousness.recalcRepresentCellRowKey(db)
-		//await Consciousness.recalcRepresentCellSummary(db)
-		
-		await Consciousness.recalcRepresentItemValue(db)
-		await Consciousness.recalcRepresentItemSummary(db)
-		await Consciousness.recalcRepresent(db)
-		
 		await Consciousness.recalcMaster(db)
+		return
+
 		await Consciousness.recalcWinner_bySource(db, source_id)//await Consciousness.recalcWinner(db)
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
@@ -472,22 +428,15 @@ rest.addAction('set-represent_sheet', ['admin','checkstart','setaccess'], async 
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
 		//await Consciousness.recalcKeyIndex(db)
-		//await Consciousness.recalcRowsKeyIdRepeatIndex(db)
-		//await Consciousness.insertItems(db) //insert items
+		//await Consciousness.insertItems(db) //insert items		
 
 		await Consciousness.recalcRepresentSheet_bySheet(db, sheet.source_id, sheet.sheet_index)
-
 		//await Consciousness.recalcRepresentCol(db)
-		//await Consciousness.recalcRepresentRow(db)
-		//await Consciousness.recalcRepresentCell(db)
-		//await Consciousness.recalcRepresentCellRowKey_bySheet(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcRepresentCellSummary_bySheet(db, sheet.source_id, sheet.sheet_index)
-		//await Consciousness.recalcRepresentItemValue(db)
-		//await Consciousness.recalcRepresentItemSummary_bySheet(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcRepresent_bySheet(db, sheet.source_id, sheet.sheet_index)
-		
-		
 		//await Consciousness.recalcMaster_bySheet(db, sheet.source_id, sheet.sheet_index)
+		return
+		
+		
+		
 		await Consciousness.recalcWinner_bySheet(db, sheet.source_id, sheet.sheet_index)//await Consciousness.recalcWinner(db)
 
 		//await Consciousness.recalcAppear(db)
@@ -517,22 +466,13 @@ rest.addAction('set-represent_source', ['admin'], async view => {
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
 		//await Consciousness.recalcKeyIndex(db)
-		//await Consciousness.recalcRowsKeyIdRepeatIndex(db)
 		//await Consciousness.insertItems(db) //insert items
 
 		//await Consciousness.recalcRepresentSheet(db)
 		//await Consciousness.recalcRepresentCol_bySource(db, source_id)
-		//await Consciousness.recalcRepresentRow_bySource(db, source_id)
-		//await Consciousness.recalcRepresentCell_bySource(db, source_id)
-
-		//await Consciousness.recalcRepresentCellRowKey(db)
-		await Consciousness.recalcRepresentCellSummary(db)
-		
-		//await Consciousness.recalcRepresentItemValue(db)
-		//await Consciousness.recalcRepresentItemSummary(db)
-		await Consciousness.recalcRepresent(db)
-		
 		await Consciousness.recalcMaster(db)
+		return
+
 		await Consciousness.recalcWinner_bySource(db, source_id)//await Consciousness.recalcWinner(db)
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
@@ -565,22 +505,13 @@ rest.addAction('set-represent_entity', ['admin'], async view => {
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
 		//await Consciousness.recalcKeyIndex(db)
-		//await Consciousness.recalcRowsKeyIdRepeatIndex(db)
 		//await Consciousness.insertItems(db) //insert items
 
 		//await Consciousness.recalcRepresentSheet(db)
 		//await Consciousness.recalcRepresentCol_bySource(db, source_id)
-		//await Consciousness.recalcRepresentRow_bySource(db, source_id)
-		//await Consciousness.recalcRepresentCell_bySource(db, source_id)
-
-		//await Consciousness.recalcRepresentCellRowKey(db)
-		//await Consciousness.recalcRepresentCellSummary(db)
-		
-		//await Consciousness.recalcRepresentItemValue(db)
-		await Consciousness.recalcRepresentItemSummary_byEntity(db, entity_id)
-		await Consciousness.recalcRepresent(db)
-		
 		await Consciousness.recalcMaster(db)
+		return
+
 		await Consciousness.recalcWinner(db)//await Consciousness.recalcWinner(db)
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
@@ -620,22 +551,14 @@ rest.addAction('set-represent_prop', ['admin'], async view => {
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
 		//await Consciousness.recalcKeyIndex(db)
-		//await Consciousness.recalcRowsKeyIdRepeatIndex(db)
-		//await Consciousness.insertItems(db) //insert items
+		//await Consciousness.insertItems(db) //insert items		
 
 		//await Consciousness.recalcRepresentSheet(db)
 		//await Consciousness.recalcRepresentCol_bySource(db, source_id)
-		//await Consciousness.recalcRepresentRow_bySource(db, source_id)
-		//await Consciousness.recalcRepresentCell_bySource(db, source_id)
-
-		//await Consciousness.recalcRepresentCellRowKey(db)
-		//await Consciousness.recalcRepresentCellSummary(db)
-		
-		//await Consciousness.recalcRepresentItemValue(db)
-		await Consciousness.recalcRepresentItemSummary(db)
-		await Consciousness.recalcRepresent(db)
-		
 		//await Consciousness.recalcMaster(db)
+		return
+
+		
 		await Consciousness.recalcWinner(db)//await Consciousness.recalcWinner(db)
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
@@ -644,116 +567,100 @@ rest.addAction('set-represent_prop', ['admin'], async view => {
 	view.data.cls = `${defcustom(newvalue)}`
 	return view.ret()
 })
-rest.addAction('set-represent_value', ['admin'], async view => {
-	const db = await view.get('db')
-	const prop_id = await view.get('prop_id#required')
-	const prop = await Sources.getProp(db, prop_id)
-	const entity_id = prop_id
-	const value_id = await view.get('value_id#required')
-	const value_nick = await db.col('select value_nick from sources_values where value_id = :value_id', {value_id})
-	const entity = await Sources.getEntity(db, entity_id)
+// rest.addAction('set-represent_value', ['admin'], async view => {
+// 	const db = await view.get('db')
+// 	const prop_id = await view.get('prop_id#required')
+// 	const prop = await Sources.getProp(db, prop_id)
+// 	const entity_id = prop_id
+// 	const value_id = await view.get('value_id#required')
+// 	const value_nick = await db.col('select value_nick from sources_values where value_id = :value_id', {value_id})
+// 	const entity = await Sources.getEntity(db, entity_id)
 	
-	const value = await db.col(`
-		SELECT represent_custom_value + 0
-		FROM sources_custom_values
-		WHERE prop_id = :prop_id and value_nick = :value_nick
-	`, {prop_id, value_nick})
+// 	const value = await db.col(`
+// 		SELECT represent_custom_value + 0
+// 		FROM sources_custom_values
+// 		WHERE prop_id = :prop_id and value_nick = :value_nick
+// 	`, {prop_id, value_nick})
 
-	const newvalue = getCustomSwitch(value, entity.represent_values)
+// 	const newvalue = getCustomSwitch(value, entity.represent_values)
 	
-	await db.exec(`
-		INSERT INTO sources_custom_values (prop_id, value_nick, represent_custom_value)
-   		VALUES (:prop_id, :value_nick, :newvalue)
-   		ON DUPLICATE KEY UPDATE represent_custom_value = VALUES(represent_custom_value)
-	`, {prop_id, value_nick, newvalue})
+// 	await db.exec(`
+// 		INSERT INTO sources_custom_values (prop_id, value_nick, represent_custom_value)
+//    		VALUES (:prop_id, :value_nick, :newvalue)
+//    		ON DUPLICATE KEY UPDATE represent_custom_value = VALUES(represent_custom_value)
+// 	`, {prop_id, value_nick, newvalue})
 
-	Sources.recalc(db, async () => {
-		// await Consciousness.recalcEntitiesPropId(db)
-		// await Consciousness.recalcMulti(db)
-		// await Consciousness.recalcTexts(db)
-		// await Consciousness.recalcKeyIndex(db)
-		// await Consciousness.recalcRowsKeyIdRepeatIndex(db)
-		// await Consciousness.insertItems(db)
-	
-		//await Consciousness.recalcRepresentSheet(db)
-		//await Consciousness.recalcRepresentCol(db)
-		//await Consciousness.recalcRepresentRow(db)
-		//await Consciousness.recalcRepresentCell(db)
-		//await Consciousness.recalcRepresentCellRowKey(db)		
-		//await Consciousness.recalcRepresentCellSummary_bySheet(db, sheet.source_id, sheet.sheet_index)
-		
-		await Consciousness.recalcRepresentItemValue(db)
-		await Consciousness.recalcRepresentItemSummary(db)
+// 	Sources.recalc(db, async () => {
+// 		// await Consciousness.recalcEntitiesPropId(db)
+// 		// await Consciousness.recalcMulti(db)
+// 		// await Consciousness.recalcTexts(db)
+// 		// await Consciousness.recalcKeyIndex(db)
+// 		// await Consciousness.insertItems(db)
 
-		await Consciousness.recalcRepresent(db)
-		//await Consciousness.recalcMaster(db)
-		await Consciousness.recalcWinner(db)
+	
+// 		//await Consciousness.recalcRepresentSheet(db)
+// 		//await Consciousness.recalcRepresentCol(db)
+// 		//await Consciousness.recalcMaster(db)
+// 		return
+// 		await Consciousness.recalcWinner(db)
 
-		//await Consciousness.recalcAppear(db)
-		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-		await Consciousness.recalcItemSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent		
-	})
-	view.data.cls = represent.calcCls(
-		entity.represent_entity, 
-		newvalue, 
-		entity.represent_values
-	)
-	return view.ret()
-})
-rest.addAction('set-represent_item', ['admin'], async view => {
-	const db = await view.get('db')
+// 		//await Consciousness.recalcAppear(db)
+// 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
+// 		await Consciousness.recalcItemSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent		
+// 	})
+// 	view.data.cls = represent.calcCls(
+// 		entity.represent_entity, 
+// 		newvalue, 
+// 		entity.represent_values
+// 	)
+// 	return view.ret()
+// })
+// rest.addAction('set-represent_item', ['admin'], async view => {
+// 	const db = await view.get('db')
 	
-	const entity_id = await view.get('entity_id#required')
-	const key_id = await view.get('key_id#required')
+// 	const entity_id = await view.get('entity_id#required')
+// 	const key_id = await view.get('key_id#required')
 	
-	const entity = await Sources.getEntity(db, entity_id)
-	const item = await Sources.getItem(db, entity_id, key_id)
+// 	const entity = await Sources.getEntity(db, entity_id)
+// 	const item = await Sources.getItem(db, entity_id, key_id)
 	
-	const value = item.represent_custom_value
+// 	const value = item.represent_custom_value
 
-	const newvalue = getCustomSwitch(value, entity.represent_values)
+// 	const newvalue = getCustomSwitch(value, entity.represent_values)
 	
-	await db.exec(`
-		INSERT INTO sources_custom_values (prop_id, value_nick, represent_custom_value)
-   		VALUES (:entity_id, :key_nick, :newvalue)
-   		ON DUPLICATE KEY UPDATE represent_custom_value = VALUES(represent_custom_value)
-	`, {...item, newvalue})
+// 	await db.exec(`
+// 		INSERT INTO sources_custom_values (prop_id, value_nick, represent_custom_value)
+//    		VALUES (:entity_id, :key_nick, :newvalue)
+//    		ON DUPLICATE KEY UPDATE represent_custom_value = VALUES(represent_custom_value)
+// 	`, {...item, newvalue})
 	
 
-	Sources.recalc(db, async () => {
-		// await Consciousness.recalcEntitiesPropId(db)
-		// await Consciousness.recalcMulti(db)
-		// await Consciousness.recalcTexts(db)
-		// await Consciousness.recalcKeyIndex(db)
-		// await Consciousness.recalcRowsKeyIdRepeatIndex(db)
-		// await Consciousness.insertItems(db)
-	
-		//await Consciousness.recalcRepresentSheet(db)
-		//await Consciousness.recalcRepresentCol(db)
-		//await Consciousness.recalcRepresentRow(db)
-		//await Consciousness.recalcRepresentCell(db)
-		//await Consciousness.recalcRepresentCellRowKey(db)		
-		//await Consciousness.recalcRepresentCellSummary_bySheet(db, sheet.source_id, sheet.sheet_index)
-		
-		await Consciousness.recalcRepresentItemValue(db)
-		await Consciousness.recalcRepresentItemSummary(db)
+// 	Sources.recalc(db, async () => {
+// 		// await Consciousness.recalcEntitiesPropId(db)
+// 		// await Consciousness.recalcMulti(db)
+// 		// await Consciousness.recalcTexts(db)
+// 		// await Consciousness.recalcKeyIndex(db)
+// 		// await Consciousness.insertItems(db)
 
-		await Consciousness.recalcRepresent(db)
-		//await Consciousness.recalcMaster(db)
-		await Consciousness.recalcWinner_byKey(db, entity_id, key_id)
-
-		//await Consciousness.recalcAppear(db)
-		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-		await Consciousness.recalcItemSearch_byKey(db, entity_id, key_id) //Асинхронно расчитывается, не зависит от расчёта represent		
-	})
 	
-	view.data.cls = represent.calcCls(
-		entity.represent_prop, 
-		newvalue, 
-		entity.represent_values
-	)
-	return view.ret()
-})
+// 		//await Consciousness.recalcRepresentSheet(db)
+// 		//await Consciousness.recalcRepresentCol(db)
+// 		//await Consciousness.recalcMaster(db)
+// 		return
+// 		await Consciousness.recalcWinner_byKey(db, entity_id, key_id)
+
+// 		//await Consciousness.recalcAppear(db)
+// 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
+// 		await Consciousness.recalcItemSearch_byKey(db, entity_id, key_id) //Асинхронно расчитывается, не зависит от расчёта represent		
+// 	})
+	
+// 	view.data.cls = represent.calcCls(
+// 		entity.represent_prop, 
+// 		newvalue, 
+// 		entity.represent_values
+// 	)
+// 	return view.ret()
+// })
 
 rest.addAction('set-represent_col', ['admin'], async view => {
 	const db = await view.get('db')
@@ -779,22 +686,13 @@ rest.addAction('set-represent_col', ['admin'], async view => {
 		// await Consciousness.recalcMulti(db)
 		// await Consciousness.recalcTexts(db)
 		// await Consciousness.recalcKeyIndex(db)
-		// await Consciousness.recalcRowsKeyIdRepeatIndex(db)
-		// await Consciousness.insertItems(db)
-	
+		// await Consciousness.insertItems(db)		
 		//await Consciousness.recalcRepresentSheet(db)
 		await Consciousness.recalcRepresentCol_bySource(db, sheet.source_id)
-		//await Consciousness.recalcRepresentRow(db)
-		//await Consciousness.recalcRepresentCell(db)
-		await Consciousness.recalcRepresentCellRowKey_bySheet(db, sheet.source_id, sheet.sheet_index)		
-		await Consciousness.recalcRepresentCellSummary_bySheet(db, sheet.source_id, sheet.sheet_index)
-		
-		
-		//await Consciousness.recalcRepresentItemValue(db)
-		//await Consciousness.recalcRepresentItemSummary(db)
-
-		await Consciousness.recalcRepresent_bySheet(db, sheet.source_id, sheet.sheet_index)
 		//await Consciousness.recalcMaster_bySheet(db, sheet.source_id, sheet.sheet_index)
+		return
+
+		
 		await Consciousness.recalcWinner_bySheet(db, sheet.source_id, sheet.sheet_index)
 
 		//await Consciousness.recalcAppear(db)
@@ -809,183 +707,154 @@ rest.addAction('set-represent_col', ['admin'], async view => {
 	)
 	return view.ret()
 })
-rest.addAction('set-represent_row_key', ['admin'], async view => {
-	const db = await view.get('db')
-	const source_id = await view.get('source_id#required')
-	const key_id = await view.get('key_id#required')
-	const repeat_index = await view.get('repeat_index#required')
-	const sheet_title = await view.get('sheet_title#required')
-	const source = await Sources.getSource(db, source_id)
-	const row = await Sources.getRow(db, source_id, sheet_title, key_id, repeat_index)
-	const sheet = await Sources.getSheet(db, source_id, sheet_title)
-	if (!row) return view.err('Строка не найдена')
-	//row.key = await Sources.getCellByIndex(db, source_id, sheet_title, row_index, row.key_index, 0)
-	const col = await Sources.getColByIndex(db, source_id, sheet_title, row.key_index)
-	row.key = await Sources.getCell(db, source_id, sheet_title, key_id, repeat_index, col.col_title, 0)
+// rest.addAction('set-represent_row_key', ['admin'], async view => {
+// 	const db = await view.get('db')
+// 	const source_id = await view.get('source_id#required')
+// 	const key_id = await view.get('key_id#required')
+// 	const repeat_index = await view.get('repeat_index#required')
+// 	const sheet_title = await view.get('sheet_title#required')
+// 	const source = await Sources.getSource(db, source_id)
+// 	const row = await Sources.getRow(db, source_id, sheet_title, key_id, repeat_index)
+// 	const sheet = await Sources.getSheet(db, source_id, sheet_title)
+// 	if (!row) return view.err('Строка не найдена')
+// 	//row.key = await Sources.getCellByIndex(db, source_id, sheet_title, row_index, row.key_index, 0)
+// 	const col = await Sources.getColByIndex(db, source_id, sheet_title, row.key_index)
+// 	row.key = await Sources.getCell(db, source_id, sheet_title, key_id, repeat_index, col.col_title, 0)
 	
-	const value = row.key.represent_cell
+// 	const value = row.key.represent_cell
 
-	const newvalue = getCustomSwitch(value, source.represent_cells)
-
-	
-	await db.exec(`
-		INSERT INTO sources_custom_cells (source_id, sheet_title, col_title, key_nick, repeat_index, represent_custom_cell)
-   		VALUES (:source_id, :sheet_title, :col_title, :key_nick, :repeat_index, :newvalue)
-   		ON DUPLICATE KEY UPDATE represent_custom_cell = VALUES(represent_custom_cell)
-	`, {...row.key, newvalue})
-
-	Sources.recalc(db, async () => {
-		// await Consciousness.recalcEntitiesPropId(db)
-		// await Consciousness.recalcMulti(db)
-		// await Consciousness.recalcTexts(db)
-		// await Consciousness.recalcKeyIndex(db)
-		// await Consciousness.recalcRowsKeyIdRepeatIndex(db)
-		// await Consciousness.insertItems(db)
-	
-		//await Consciousness.recalcRepresentSheet(db)
-		//await Consciousness.recalcRepresentCol(db)
-		//await Consciousness.recalcRepresentRow(db)
-		//await Consciousness.recalcRepresentCell(db)
-		//await Consciousness.recalcRepresentCellRowKey(db)		
-		//await Consciousness.recalcRepresentCellSummary_bySheet(db, sheet.source_id, sheet.sheet_index)
-		
-		await Consciousness.recalcRepresentItemValue(db)
-		await Consciousness.recalcRepresentItemSummary(db)
-
-		await Consciousness.recalcRepresent(db)
-		//await Consciousness.recalcMaster(db)
-		await Consciousness.recalcWinner(db)
-
-		//await Consciousness.recalcAppear(db)
-		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-		await Consciousness.recalcItemSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent		
-	})
-	
-	view.data.cls = represent.calcCls(
-		source.represent_source && sheet.represent_sheet && row.represent_row && col.represent_col, 
-		newvalue, 
-		source.represent_cells
-	)
-	
-	return view.ret()
-})
-rest.addAction('set-represent_row', ['admin'], async view => {
-	const db = await view.get('db')
-	const source_id = await view.get('source_id#required')
-	//const row_index = await view.get('row_index#required')
-	const key_id = await view.get('key_id#required')
-	const repeat_index = await view.get('repeat_index#required')
-	const sheet_title = await view.get('sheet_title#required')
-	const source = await Sources.getSource(db, source_id)
-	const row = await Sources.getRow(db, source_id, sheet_title, key_id, repeat_index)
-	const sheet = await Sources.getSheet(db, source_id, sheet_title)
-	const value = row.represent_custom_row
-
-	const newvalue = getCustomSwitch(value, source.represent_rows)
+// 	const newvalue = getCustomSwitch(value, source.represent_cells)
 
 	
-	await db.exec(`
-		INSERT INTO sources_custom_rows (source_id, sheet_title, key_nick, repeat_index, represent_custom_row)
-   		VALUES (:source_id, :sheet_title, :key_nick, :repeat_index, :newvalue)
-   		ON DUPLICATE KEY UPDATE represent_custom_row = VALUES(represent_custom_row)
-	`, {...row, newvalue})
+// 	await db.exec(`
+// 		INSERT INTO sources_custom_cells (source_id, sheet_title, col_title, key_nick, repeat_index, represent_custom_cell)
+//    		VALUES (:source_id, :sheet_title, :col_title, :key_nick, :repeat_index, :newvalue)
+//    		ON DUPLICATE KEY UPDATE represent_custom_cell = VALUES(represent_custom_cell)
+// 	`, {...row.key, newvalue})
+
+// 	Sources.recalc(db, async () => {
+// 		// await Consciousness.recalcEntitiesPropId(db)
+// 		// await Consciousness.recalcMulti(db)
+// 		// await Consciousness.recalcTexts(db)
+// 		// await Consciousness.recalcKeyIndex(db)
+// 		// await Consciousness.insertItems(db)
+	
+// 		//await Consciousness.recalcRepresentSheet(db)
+// 		//await Consciousness.recalcRepresentCol(db)
+// 		//await Consciousness.recalcMaster(db)
+// 		return
+// 		await Consciousness.recalcWinner(db)
+
+// 		//await Consciousness.recalcAppear(db)
+// 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
+// 		await Consciousness.recalcItemSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent		
+// 	})
+	
+// 	view.data.cls = represent.calcCls(
+// 		source.represent_source && sheet.represent_sheet && row.represent_row && col.represent_col, 
+// 		newvalue, 
+// 		source.represent_cells
+// 	)
+	
+// 	return view.ret()
+// })
+// rest.addAction('set-represent_row', ['admin'], async view => {
+// 	const db = await view.get('db')
+// 	const source_id = await view.get('source_id#required')
+// 	//const row_index = await view.get('row_index#required')
+// 	const key_id = await view.get('key_id#required')
+// 	const repeat_index = await view.get('repeat_index#required')
+// 	const sheet_title = await view.get('sheet_title#required')
+// 	const source = await Sources.getSource(db, source_id)
+// 	const row = await Sources.getRow(db, source_id, sheet_title, key_id, repeat_index)
+// 	const sheet = await Sources.getSheet(db, source_id, sheet_title)
+// 	const value = row.represent_custom_row
+
+// 	const newvalue = getCustomSwitch(value, source.represent_rows)
 
 	
-	Sources.recalc(db, async () => {
-		// await Consciousness.recalcEntitiesPropId(db)
-		// await Consciousness.recalcMulti(db)
-		// await Consciousness.recalcTexts(db)
-		// await Consciousness.recalcKeyIndex(db)
-		// await Consciousness.recalcRowsKeyIdRepeatIndex(db)
-		// await Consciousness.insertItems(db)
-	
-		//await Consciousness.recalcRepresentSheet(db)
-		//await Consciousness.recalcRepresentCol(db)
-		await Consciousness.recalcRepresentRow_bySource(db, sheet.source_id)
-		//await Consciousness.recalcRepresentCell(db)
-		await Consciousness.recalcRepresentCellRowKey_bySheet(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcRepresentCellSummary_bySheet(db, sheet.source_id, sheet.sheet_index)
-		
-		
-		//await Consciousness.recalcRepresentItemValue(db)
-		//await Consciousness.recalcRepresentItemSummary(db)
-
-		await Consciousness.recalcRepresent_bySheet(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcMaster_bySheet(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcWinner_bySheet(db, sheet.source_id, sheet.sheet_index)
-
-		//await Consciousness.recalcAppear(db)
-		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-		await Consciousness.recalcItemSearch_bySheet(db, sheet.source_id, sheet.sheet_index) //Асинхронно расчитывается, не зависит от расчёта represent		
-	})
-	view.data.cls = represent.calcCls(
-		source.represent_source && sheet.represent_sheet && row.represent_row_key, 
-		newvalue, 
-		source.represent_rows
-	)
-	
-	return view.ret()
-})
-rest.addAction('set-represent_cell', ['admin'], async view => {
-	const db = await view.get('db')
-	const source_id = await view.get('source_id#required')
-	//const row_index = await view.get('row_index#required')
-	//const col_index = await view.get('col_index#required')
-	const key_id = await view.get('key_id#required')
-	const repeat_index = await view.get('repeat_index#required')
-	const col_title = await view.get('col_title#required')
-	const sheet_title = await view.get('sheet_title#required')
-	const multi_index = await view.get('multi_index#required')
-	const source = await Sources.getSource(db, source_id)
-	const cell = await Sources.getCell(db, source_id, sheet_title, key_id, repeat_index, col_title, multi_index)
-	const col = await Sources.getCol(db, source_id, sheet_title, col_title)
-	const row = await Sources.getRow(db, source_id, sheet_title, key_id, repeat_index)
-	const sheet = await Sources.getSheet(db, source_id, sheet_title)
-	const value = cell.represent_custom_cell
-	
-	const newvalue = getCustomSwitch(value, source.represent_cells)
+// 	await db.exec(`
+// 		INSERT INTO sources_custom_rows (source_id, sheet_title, key_nick, repeat_index, represent_custom_row)
+//    		VALUES (:source_id, :sheet_title, :key_nick, :repeat_index, :newvalue)
+//    		ON DUPLICATE KEY UPDATE represent_custom_row = VALUES(represent_custom_row)
+// 	`, {...row, newvalue})
 
 	
-	await db.exec(`
-		INSERT INTO sources_custom_cells (source_id, sheet_title, col_title, key_nick, repeat_index, represent_custom_cell)
-   		VALUES (:source_id, :sheet_title, :col_title, :key_nick, :repeat_index, :newvalue)
-   		ON DUPLICATE KEY UPDATE represent_custom_cell = VALUES(represent_custom_cell)
-	`, {...cell, newvalue})
+// 	Sources.recalc(db, async () => {
+// 		// await Consciousness.recalcEntitiesPropId(db)
+// 		// await Consciousness.recalcMulti(db)
+// 		// await Consciousness.recalcTexts(db)
+// 		// 	// await Consciousness.recalcKeyIndex(db)
+// 		// await Consciousness.insertItems(db)
 
-	Sources.recalc(db, async () => {
-		// await Consciousness.recalcEntitiesPropId(db)
-		// await Consciousness.recalcMulti(db)
-		// await Consciousness.recalcTexts(db)
-		// await Consciousness.recalcKeyIndex(db)
-		// await Consciousness.recalcRowsKeyIdRepeatIndex(db)
-		// await Consciousness.insertItems(db)
 	
-		//await Consciousness.recalcRepresentSheet(db)
-		//await Consciousness.recalcRepresentCol(db)
-		//await Consciousness.recalcRepresentRow(db)
-		await Consciousness.recalcRepresentCell_bySource(db, sheet.source_id)
-		await Consciousness.recalcRepresentCellRowKey_bySheet(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcRepresentCellSummary_bySheet(db, sheet.source_id, sheet.sheet_index)
-		
-		
-		//await Consciousness.recalcRepresentItemValue(db)
-		//await Consciousness.recalcRepresentItemSummary(db)
+// 		//await Consciousness.recalcRepresentSheet(db)
+// 		//await Consciousness.recalcRepresentCol(db)
+// 		await Consciousness.recalcMaster_bySheet(db, sheet.source_id, sheet.sheet_index)
+// 		await Consciousness.recalcWinner_bySheet(db, sheet.source_id, sheet.sheet_index)
+// 		return
+// 		//await Consciousness.recalcAppear(db)
+// 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
+// 		await Consciousness.recalcItemSearch_bySheet(db, sheet.source_id, sheet.sheet_index) //Асинхронно расчитывается, не зависит от расчёта represent		
+// 	})
+// 	view.data.cls = represent.calcCls(
+// 		source.represent_source && sheet.represent_sheet && row.represent_row_key, 
+// 		newvalue, 
+// 		source.represent_rows
+// 	)
+	
+// 	return view.ret()
+// })
+// rest.addAction('set-represent_cell', ['admin'], async view => {
+// 	const db = await view.get('db')
+// 	const source_id = await view.get('source_id#required')
+// 	//const row_index = await view.get('row_index#required')
+// 	//const col_index = await view.get('col_index#required')
+// 	const key_id = await view.get('key_id#required')
+// 	const repeat_index = await view.get('repeat_index#required')
+// 	const col_title = await view.get('col_title#required')
+// 	const sheet_title = await view.get('sheet_title#required')
+// 	const multi_index = await view.get('multi_index#required')
+// 	const source = await Sources.getSource(db, source_id)
+// 	const cell = await Sources.getCell(db, source_id, sheet_title, key_id, repeat_index, col_title, multi_index)
+// 	const col = await Sources.getCol(db, source_id, sheet_title, col_title)
+// 	const row = await Sources.getRow(db, source_id, sheet_title, key_id, repeat_index)
+// 	const sheet = await Sources.getSheet(db, source_id, sheet_title)
+// 	const value = cell.represent_custom_cell
+	
+// 	const newvalue = getCustomSwitch(value, source.represent_cells)
 
-		await Consciousness.recalcRepresent_bySheet(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcMaster_bySheet(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcWinner_bySheet(db, sheet.source_id, sheet.sheet_index)
+	
+// 	await db.exec(`
+// 		INSERT INTO sources_custom_cells (source_id, sheet_title, col_title, key_nick, repeat_index, represent_custom_cell)
+//    		VALUES (:source_id, :sheet_title, :col_title, :key_nick, :repeat_index, :newvalue)
+//    		ON DUPLICATE KEY UPDATE represent_custom_cell = VALUES(represent_custom_cell)
+// 	`, {...cell, newvalue})
 
-		//await Consciousness.recalcAppear(db)
-		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-		await Consciousness.recalcItemSearch_bySheet(db, sheet.source_id, sheet.sheet_index) //Асинхронно расчитывается, не зависит от расчёта represent		
-	})
-	view.data.cls = represent.calcCls(
-		source.represent_source && sheet.represent_sheet && row.represent_row && col.represent_col && (sheet.key_index == cell.col_index || row.represent_row_key), 
-		newvalue, 
-		source.represent_rows
-	)
-	return view.ret()
-})
+// 	Sources.recalc(db, async () => {
+// 		// await Consciousness.recalcEntitiesPropId(db)
+// 		// await Consciousness.recalcMulti(db)
+// 		// await Consciousness.recalcTexts(db)
+// 		// 	// await Consciousness.recalcKeyIndex(db)
+// 		// await Consciousness.insertItems(db)
+	
+// 		//await Consciousness.recalcRepresentSheet(db)
+// 		//await Consciousness.recalcRepresentCol(db)
+// 		await Consciousness.recalcMaster_bySheet(db, sheet.source_id, sheet.sheet_index)
+// 		return
+// 		await Consciousness.recalcWinner_bySheet(db, sheet.source_id, sheet.sheet_index)
+
+// 		//await Consciousness.recalcAppear(db)
+// 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
+// 		await Consciousness.recalcItemSearch_bySheet(db, sheet.source_id, sheet.sheet_index) //Асинхронно расчитывается, не зависит от расчёта represent		
+// 	})
+// 	view.data.cls = represent.calcCls(
+// 		source.represent_source && sheet.represent_sheet && row.represent_row && col.represent_col && (sheet.key_index == cell.col_index || row.represent_row_key), 
+// 		newvalue, 
+// 		source.represent_rows
+// 	)
+// 	return view.ret()
+// })
 
 
 

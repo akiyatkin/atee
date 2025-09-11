@@ -18,20 +18,29 @@ rest.extra(rest_admin)
 import rest_search from "/-dialog/search/rest.search.js" //аргументы hash, search 
 rest.extra(rest_search)
 
+
+
 rest.addResponse('get-recalc', ['admin'], async view => {
 	const db = await view.get('db')
 
 	view.data.start = Sources.recalc.start ? Sources.recalc.start.getTime() : false
 	if (!view.data.start && Sources.recalc.lastend) view.data.start = Sources.recalc.lastend.getTime() + 1000 > Date.now() ? Sources.recalc.laststart.getTime() : false
 
-	
-	const titles = await db.all(`
+	view.data.dates = await db.fetch(`
 		SELECT 
-			so.source_title, so.date_start
-		FROM
-			sources_sources so
-		WHERE so.date_start is not null
-	`)
+			UNIX_TIMESTAMP(date_index) as date_index, 
+			UNIX_TIMESTAMP(date_recalc) as date_recalc 
+		FROM sources_settings
+	`)	
+	view.data.indexneed = view.data.dates.date_recalc > view.data.dates.date_index
+
+	// const titles = await db.all(`
+	// 	SELECT 
+	// 		so.source_title, so.date_start
+	// 	FROM
+	// 		sources_sources so
+	// 	WHERE so.date_start is not null
+	// `)
 	return view.ret()
 })
 
@@ -44,8 +53,7 @@ rest.addResponse('get-entity-export', ['admin'], async view => {
 			pr.prop_title,
 			pr.comment,
 			pr.ordain,
-			pr.represent_prop + 0 as represent_prop,
-			pr.represent_values + 0 as represent_values
+			pr.represent_prop + 0 as represent_prop
 
 		FROM sources_props pr on pr.prop_id = en.prop_id
 		WHERE en.entity_id = :entity_id
@@ -82,18 +90,18 @@ rest.addResponse('get-entity-export', ['admin'], async view => {
 	for (const item of entity.items) {
 		if (item.represent_custom_item == null) delete item.represent_custom_item
 	}
-	entity.values = await db.all(`
-		SELECT 
-			pr.prop_title,
-			cva.value_nick,
-			cva.represent_custom_value + 0 as represent_custom_value
-		FROM sources_custom_values cva, sources_props pr
-		WHERE pr.prop_id = cva.prop_id
-		and pr.entity_id = :entity_id
-	`, {entity_id})
-	for (const value of entity.values) {
-		if (value.represent_custom_value == null) delete value.represent_custom_value
-	}
+	// entity.values = await db.all(`
+	// 	SELECT 
+	// 		pr.prop_title,
+	// 		cva.value_nick,
+	// 		cva.represent_custom_value + 0 as represent_custom_value
+	// 	FROM sources_custom_values cva, sources_props pr
+	// 	WHERE pr.prop_id = cva.prop_id
+	// 	and pr.entity_id = :entity_id
+	// `, {entity_id})
+	// for (const value of entity.values) {
+	// 	if (value.represent_custom_value == null) delete value.represent_custom_value
+	// }
 
 	return view.ret()
 })
@@ -110,9 +118,7 @@ rest.addResponse('get-source-export', ['admin'], async view => {
 			so.comment,
 			so.represent_source + 0 as represent_source,
 			so.represent_sheets + 0 as represent_sheets,
-			so.represent_rows + 0 as represent_rows,
 			so.represent_cols + 0 as represent_cols,
-			so.represent_cells + 0 as represent_cells
 		FROM sources_sources so
 			LEFT JOIN sources_props pr on (pr.prop_id = so.entity_id)
 		WHERE source_id = :source_id
@@ -159,29 +165,29 @@ rest.addResponse('get-source-export', ['admin'], async view => {
 			if (col.prop_title == null) delete col.prop_title
 			if (col.noprop == null) delete col.noprop
 		}
-		sheet.rows = await db.all(`
-			SELECT 
-				cro.key_nick,
-				cro.repeat_index,
-				cro.represent_custom_row + 0 as represent_custom_row
-			FROM sources_custom_rows cro
-			WHERE cro.source_id = :source_id and cro.sheet_title = :sheet_title
-		`, {...sheet, source_id})
-		for (const row of sheet.rows) {
-			if (row.represent_custom_row == null) delete row.represent_custom_row
-		}
-		sheet.cells = await db.all(`
-			SELECT 
-				cce.key_nick,
-				cce.repeat_index,
-				cce.col_title,
-				cce.represent_custom_cell + 0 as represent_custom_cell
-			FROM sources_custom_cells cce
-			WHERE cce.source_id = :source_id and cce.sheet_title = :sheet_title
-		`, {...sheet, source_id})
-		for (const cell of sheet.cells) {
-			if (cell.represent_custom_cell == null) delete cell.represent_custom_cell
-		}
+		// sheet.rows = await db.all(`
+		// 	SELECT 
+		// 		cro.key_nick,
+		// 		cro.repeat_index,
+		// 		cro.represent_custom_row + 0 as represent_custom_row
+		// 	FROM sources_custom_rows cro
+		// 	WHERE cro.source_id = :source_id and cro.sheet_title = :sheet_title
+		// `, {...sheet, source_id})
+		// for (const row of sheet.rows) {
+		// 	if (row.represent_custom_row == null) delete row.represent_custom_row
+		// }
+		// sheet.cells = await db.all(`
+		// 	SELECT 
+		// 		cce.key_nick,
+		// 		cce.repeat_index,
+		// 		cce.col_title,
+		// 		cce.represent_custom_cell + 0 as represent_custom_cell
+		// 	FROM sources_custom_cells cce
+		// 	WHERE cce.source_id = :source_id and cce.sheet_title = :sheet_title
+		// `, {...sheet, source_id})
+		// for (const cell of sheet.cells) {
+		// 	if (cell.represent_custom_cell == null) delete cell.represent_custom_cell
+		// }
 	}
 	return view.ret()
 })

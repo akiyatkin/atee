@@ -12,20 +12,42 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 	<h1>${prop.name}&nbsp;<sup style="color:var(--primary)">${prop.unit}</sup></h1>
 	<p>
 		
-		<button class="a">Настроить видимость</button>
-		<script>
-			(btn => {
-				btn.addEventListener('click', async () => {
-					const represent = await import('/-sources/represent.js').then(r => r.default)
-					represent.popup(${JSON.stringify({prop_id: prop.prop_id})}, '${env.layer.div}')
-				})
-			})(document.currentScript.previousElementSibling)
-		</script>
+		
 	</p>
 	<table style="margin: 0em 0">
-		
-		
-		
+		<tr>
+			<td>
+				Видимость
+			</td>
+			<td>
+				<button class="a">Настроить</button>
+				<script>
+					(btn => {
+						btn.addEventListener('click', async () => {
+							const represent = await import('/-sources/represent.js').then(r => r.default)
+							represent.popup(${JSON.stringify({prop_id: prop.prop_id})}, '${env.layer.div}')
+						})
+					})(document.currentScript.previousElementSibling)
+				</script>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				Обработка
+			</td>
+			<td>
+				${field.setpop({
+					heading:'Обработка свойства',
+					cls: 'a',
+					value: prop.known,
+					name: 'known',
+					descr: '<b>more</b> означает, что у свойства нет специальной обработки и оно покажется вместе со всеми такими свойствами в общем списке. Свойство со специальной обработкой <b>column</b> покажется только там, где его покажет программист, по умолчанию в интерфейсе нигде не покажется, но придёт с данными. Свойство <b>system</b> даже с данными не придёт и может быть использовано для технических обработок, например быть критерием групп.',
+					action: '/-sources/set-known', 
+					values: {"system":"🛡️ system", "more":"🟡 more", "column":"✅ column"},
+					args: {prop_id: prop.prop_id}
+				})}
+			</td>
+		</tr>
 		<tr>
 			<td>
 				Значений
@@ -33,6 +55,7 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 			<td>
 				${field.setpop({
 					heading:'Значений',
+					cls: 'a',
 					value: prop.multi,
 					name: 'bit',
 					descr: 'Несколько значений могут быть разделены запятой с пробелом. Значений?',
@@ -51,10 +74,31 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 				${field.setpop({
 					heading:'Тип',
 					value: prop.type,
+					cls: 'a',
 					name: 'type',
-					descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче 63 символов. Самый затратный <b>text</b>. Для ключей и связей подходит только value.',
+					descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче 63 символов. И последний оригинальный вариант <b>text</b>. Для ключей и связей подходит только value.',
 					action: '/-sources/set-prop-type', 
 					values: {"number":"number", "date":"date", "value":"value", "text":"text"},
+					args: {prop_id: prop.prop_id},
+					reloaddiv: env.layer.div
+				})}
+			</td>
+		</tr>
+		<tr>
+			<td>
+				Точность
+			</td>
+			<td>
+				${field.prompt({
+					heading:'Точность',
+					value: prop.scale,
+					input: prop.scale,
+					cls: 'a',
+					name: 'scale',
+					label: 'Точность',
+					type: 'number',
+					descr: 'Сколько знаков после запятой для типа number',
+					action: '/-sources/set-prop-scale', 
 					args: {prop_id: prop.prop_id},
 					reloaddiv: env.layer.div
 				})}
@@ -97,7 +141,7 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 				Ед.изм
 			</td>
 			<td>
-				${prop.unit || ''}
+				${prop.unit || '<i>Может бытиь указано в названии свойства после запятой</i>'}
 			</td>
 		</tr>
 	</table>
@@ -109,7 +153,7 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 		<table style="table-layout: fixed">
 			<thead>
 				<tr>
-					<td></td>
+
 					<td>text</td>
 					<td>Всего</td>
 					<td>number</td>
@@ -156,6 +200,7 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 		})}
 	</div>
 `
+// <td></td>
 const showSynonym = (data, env, syn) => `
 	<div>${syn.col_title}
 			${field.button({
@@ -168,14 +213,14 @@ const showSynonym = (data, env, syn) => `
 				reloaddiv: env.layer.div
 			})}</div>
 `
+// <td>
+// 			<button data-value_id="${row.value_id}" class="represent_value eye transparent ${row.cls?.main} ${row.cls?.custom}">${svg.eye()}</button>
+// 		</td>
 const showValueTr = (data, env, row) => `
 	<tr style="${row.pruning ? 'background: hsl(0, 100%, 97%)' : ''}">
-		<td>
-			<button data-value_id="${row.value_id}" class="represent_value eye transparent ${row.cls?.main} ${row.cls?.custom}">${svg.eye()}</button>
-		</td>
 		<td>${row.text}</td>
 		<td>${row.count}</td>
-		<td>${row.number != null ? parseFloat(row.number) : ''}</td>
+		<td>${row.number != null ? row.number / 10 ** data.prop.scale : ''}</td>
 		<td><nobr>${date.sdmyhi(row.date)}</nobr></td>
 		<td>${row.value_id ?? ''}</td>
 		<td>${row.value_title ?? ''}</td>

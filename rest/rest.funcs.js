@@ -32,6 +32,8 @@ rest.addFunction('int', (view, n, pname) => {
 	else return n
 })
 rest.addFunction('int#0', ['int','0'])
+rest.addFunction('int#required', ['int', 'required'])
+
 
 rest.addFunction('mint', ['int'], (view, num, pname) => {
 	if (!num) return num
@@ -40,17 +42,29 @@ rest.addFunction('mint', ['int'], (view, num, pname) => {
 })
 rest.addFunction('mint#unsigned', ['mint','unsigned'])
 rest.addFunction('mint#0', ['mint','0'])
+rest.addFunction('mint#required', ['mint','required'])
+
 
 rest.addFunction('sint', ['int'], (view, num, pname) => {
 	if (!num) return num
 	if (num > 32000 || num < -32000) return view.err('Передано слишком большое число ' + pname)
 	return num
 })
+rest.addFunction('sint#unsigned', ['sint','unsigned'])
 rest.addFunction('sint#0', ['sint','0'])
-
 rest.addFunction('sint#required', ['sint','required'])
-rest.addFunction('mint#required', ['mint','required'])
-rest.addFunction('int#required', ['int', 'required'])
+
+rest.addFunction('tint', ['int'], (view, num, pname) => {
+	if (!num) return num
+	if (num > 127 || num < -127) return view.err('Передано слишком большое число ' + pname)
+	return num
+})
+rest.addFunction('tint#unsigned', ['tint','unsigned'])
+rest.addFunction('tint#0', ['tint','0'])
+rest.addFunction('tint#required', ['tint','required'])
+
+
+
 
 
 

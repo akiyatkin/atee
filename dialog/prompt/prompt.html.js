@@ -1,3 +1,4 @@
+import nicked from "/-nicked"
 const conf = (env, name, def) => env.layer.conf?.[name] ?? def
 const placeholder = env => conf(env, 'placeholder', 'Укажите что-нибудь')
 const type = env => conf(env, 'type', 'text')
@@ -28,7 +29,7 @@ const input = env => {
 }
 const descr = env => conf(env, 'descr') ? ('<p>' + conf(env, 'descr', '') + '</p>') : ''
 export const POPUP = (data, env) => `
-	<div style="min-width:${min(env)}; max-width:${max(env)}">
+	<div style2="min-width:${min(env)}; max-width:${max(env)}">
 		${heading(env)}
 		${descr(env)}
 		<form>
@@ -50,14 +51,41 @@ const showInput = (data, env) => `
 		<label for="${env.sid}s">${placeholder(env)}</label>
 	</div>
 `
-const showArea = (data, env) => `
-	
-	<textarea style="width:100%" rows="10" value="${input(env)}" 
-		${type(env) == 'date' ? showDateAttr(env) : ''}
-			
-			name="${name(env)}" placeholder="${placeholder(env)}"></textarea>
-		
-`
+const showArea = (data, env) => {
+	const label = placeholder(env)
+	const id = 'prompt-field-' + nicked(label)
+	return `
+		<div class="float-label success">
+			<style>
+				.dialogbody {
+					min-width: auto;
+				}
+			</style>
+			<textarea id="${id}" wrap="off" style="field-sizing: content;" rows="10" ${type(env) == 'date' ? showDateAttr(env) : ''} name="${name(env)}" placeholder="${placeholder(env)}">${input(env)}</textarea>
+			<label for="${id}">${label}</label>
+			<script type="module">
+				import Area from '/-note/Area.js'
+				const field = document.getElementById('${id}')
+				console.log(field)
+				const TAB = 9
+				const ENTER = 13
+				const HOME = 36
+				const END = 35
+				field.addEventListener('keydown', e => {
+					console.log('asdf')
+					if (~[HOME, END].indexOf(e.keyCode)) { //input ради preventDefault стандартного действия, нет input
+						e.preventDefault() 
+						Area.keydown(field, e)
+					}
+					if (~[ENTER, TAB].indexOf(e.keyCode)) { //input ради preventDefault стандартного ввода, есть input
+						e.preventDefault()
+						Area.keydown(field, e)
+					}
+				})
+			</script>		
+		</div>
+	`
+}
 const showDateAttr = (env) => `
 	min="${onlyfuture(env) ? new Date().toISOString().split('T')[0] : '2000-01-01'}" 
 	max="2099-01-01"
