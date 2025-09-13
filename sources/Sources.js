@@ -10,55 +10,7 @@ import PerformanceMonitor from "./PerformanceMonitor.js"
 import represent from "/-sources/represent.js"
 const conf = await config('sources')
 
-Sources.execRestFunc = async (file, fnname, visitor, res, req = {}) => {
-	const stat = await fs.stat(file).catch(r => console.log('Ошибка execRestFunc','<==========>', r,'</==========>'))
-	if (!stat) return 'Не найден файл'
-	res.modified = new Date(stat.mtime).getTime()
-	const rest = await import('/' + file).then(r => r.default).catch(r => console.log(r))
-	if (!rest || !rest.get) return `Исключение в коде ` + file
-	const reans = await rest.get(fnname, req, visitor).catch(r => console.log(r))
-	if (!reans || !reans.data) return `Исключение в ${fnname}`
-	const data = reans.data
-	if (!data.result) {		
-		if (data.msg) return `${fnname} ${data.msg}`
-		else return `Нет результата ${fnname}`
-	}
-	res.data = data
-	return ''
-}
-Sources.setSource = async (db, set, source) => {
-	await db.exec(`
-		UPDATE sources_sources
-		SET ${set}
-		WHERE source_id = :source_id
-	`, source)
-}
-// Sources.setStart = async (db, source_id) => {
-// 	await db.exec(`
-// 		UPDATE sources_sources SET date_start = now() WHERE source_id = :source_id
-// 	`, {source_id})
-// }
-// Sources.setEnd = async (db, source_id) => {
-// 	await db.exec(`
-// 		UPDATE sources_sources SET date_start = null WHERE source_id = :source_id
-// 	`, {source_id})
-// }
-Sources.renovate = async (db, source, visitor) => {
-	await Sources.check(db, source, visitor)
-	if (source.need) {
-		const end = await Sources.load(db, source, visitor)
-		return end
-	} else {
-		return false
-	}
-}
-// Sources.setDuration = async (db, source_id, name, timer) => {
-// 	await db.exec(`
-// 		UPDATE sources_sources
-// 		SET ${name} = :duration
-// 		WHERE source_id = :source_id
-// 	`, {source_id, duration: Date.now() - timer})
-// }
+
 
 
 Sources.load = async (db, source, visitor) => {
@@ -200,6 +152,58 @@ Sources.recalc.start = false
 
 
 
+
+
+
+Sources.execRestFunc = async (file, fnname, visitor, res, req = {}) => {
+	const stat = await fs.stat(file).catch(r => console.log('Ошибка execRestFunc','<==========>', r,'</==========>'))
+	if (!stat) return 'Не найден файл'
+	res.modified = new Date(stat.mtime).getTime()
+	const rest = await import('/' + file).then(r => r.default).catch(r => console.log(r))
+	if (!rest || !rest.get) return `Исключение в коде ` + file
+	const reans = await rest.get(fnname, req, visitor).catch(r => console.log(r))
+	if (!reans || !reans.data) return `Исключение в ${fnname}`
+	const data = reans.data
+	if (!data.result) {		
+		if (data.msg) return `${fnname} ${data.msg}`
+		else return `Нет результата ${fnname}`
+	}
+	res.data = data
+	return ''
+}
+Sources.setSource = async (db, set, source) => {
+	await db.exec(`
+		UPDATE sources_sources
+		SET ${set}
+		WHERE source_id = :source_id
+	`, source)
+}
+// Sources.setStart = async (db, source_id) => {
+// 	await db.exec(`
+// 		UPDATE sources_sources SET date_start = now() WHERE source_id = :source_id
+// 	`, {source_id})
+// }
+// Sources.setEnd = async (db, source_id) => {
+// 	await db.exec(`
+// 		UPDATE sources_sources SET date_start = null WHERE source_id = :source_id
+// 	`, {source_id})
+// }
+Sources.renovate = async (db, source, visitor) => {
+	await Sources.check(db, source, visitor)
+	if (source.need) {
+		const end = await Sources.load(db, source, visitor)
+		return end
+	} else {
+		return false
+	}
+}
+// Sources.setDuration = async (db, source_id, name, timer) => {
+// 	await db.exec(`
+// 		UPDATE sources_sources
+// 		SET ${name} = :duration
+// 		WHERE source_id = :source_id
+// 	`, {source_id, duration: Date.now() - timer})
+// }
 
 
 

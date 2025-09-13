@@ -20,7 +20,10 @@
 		"sheet:TABLE":["recalc"],
 		"sheet:SOURCE":["recalc"],
 		"sheet:DATES":["recalc"],
-		"recalc:RTABLE":["recalc"],
+		
+		"recalc:RTABLE":["recalc","check"],
+
+		
 		"positions:TABLE":["recalc"],
 		"position:TABLE":["recalc"],
 		"disappear:TABLE":["recalc"],
@@ -34,10 +37,7 @@
 		"props:TABLE":["recalc"],
 		"positions:TABLE":["recalc"],
 		"position:TABLE":["recalc"],
-		"disappear:TABLE":["recalc"],
-
-		"entity2:PROPS":["recalc"],
-		"entity2:ENTITY":["recalc"]
+		"disappear:TABLE":["recalc"]
 	},
 	"frame":{
 		

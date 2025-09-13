@@ -76,7 +76,7 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 					value: prop.type,
 					cls: 'a',
 					name: 'type',
-					descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче 63 символов. И последний оригинальный вариант <b>text</b>. Для ключей и связей подходит только value.',
+					descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче <b>127 символов</b>. И последний оригинальный вариант <b>text</b>. Для ключей и связей подходит только value.',
 					action: '/-sources/set-prop-type', 
 					values: {"number":"number", "date":"date", "value":"value", "text":"text"},
 					args: {prop_id: prop.prop_id},

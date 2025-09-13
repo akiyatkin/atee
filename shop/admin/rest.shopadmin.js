@@ -19,19 +19,19 @@ rest.extra(rest_db)
 import rest_search from "/-dialog/search/rest.search.js" //аргументы hashs, hash, search 
 rest.extra(rest_search)
 
-rest.exporttables = [
-	'shop_cards', 'shop_filters','shop_groups', 'shop_props', 'shop_sampleprops', 'shop_samples', 'shop_samplevalues',
-	//'sources_custom_cells',
-	'sources_custom_cols',
-	//'sources_custom_rows',
-	'sources_custom_sheets',
-	//'sources_custom_values',
-	'sources_sources',
-	'sources_props',
-	'sources_synonyms'
-]
 
 rest.addArgument('json', ['string'])
+rest.addVariable('json#required', ['json','required'])
+rest.exporttables = [
+	'shop_cards', 
+	'shop_filters',
+	'shop_groups', 
+	'shop_props', 
+	'shop_sampleprops', 
+	'shop_samples', 
+	'shop_samplevalues'
+]
+
 
 rest.addArgument('group_title', ['string'])
 

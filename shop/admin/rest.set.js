@@ -535,53 +535,13 @@ rest.addAction('set-card-ordain', ['admin','setaccess'], async view => {
 	return view.ret()
 })
 
+
+import ImpExp from "/-sources/ImpExp.js"
 rest.addResponse('set-import', ['admin'], async view => {
 	const db = await view.get('db')
-	const json = await view.get('json')
-	if (!json) return view.err('Укажите данные')
-
-	let dump
-	try {
-		dump = JSON.parse(json)
-	} catch(e) {
-		 return view.err('Данные не распознаны')
-	}
-
-	const tables = rest_shopadmin.exporttables
-
-	for (const table of tables) {
-		if (!dump[table]) return view.err('Ошибка: не найдены данные для ' + table)
-	}
-	
-	await db.exec(`SET FOREIGN_KEY_CHECKS = 0`) //truncate быстрей, но с FK не работает
-	for (const table in dump) {
-		const rows = dump[table]
-		if (!rows.length) continue
-
-		const keys = Object.keys(rows[0])
-		await db.exec(`TRUNCATE TABLE ${table}`)
-		await db.exec(`SET SESSION time_zone = @@session.time_zone;`)
-
-		
-
-		await db.exec(`
-			INSERT INTO ${table} (${keys.join(', ')})
-			VALUES 
-				${'(' + rows.map(row => {
-					return Object.values(row).map((value, i) => {
-						if (value === null) return "null"
-						if (value?.type == "Buffer") return value.data[0]
-						//if (keys[i] == 'date_create') return 'CONVERT_TZ(STR_TO_DATE("'+value+'", "%Y-%m-%dT%H:%i:%s.%fZ"), @@session.time_zone, "+00:00")'
-						//if (keys[i] == 'date_create') return 'STR_TO_DATE("'+value+'", "%Y-%m-%dT%H:%i:%s.%fZ")'
-
-						if (~keys[i].indexOf('date_')) return 'CONVERT_TZ(SUBSTRING("'+value+'", 1, 19), "+00:00", @@session.time_zone)'
-						//if (keys[i] == 'date_create') return 'CAST("'+value+'" AS DATETIME)'
-						
-						return '"' + value + '"'
-					}).join(',')
-				}).join('),(') + ')'}
-		`)
-	}
-	await db.exec(`SET FOREIGN_KEY_CHECKS = 1`)
+	const json = await view.get('json#required')
+	if (!json) return view.err('Укажите данные')	
+	const msg = await ImpExp.import(db, json, rest_shopadmin.exporttables)
+	if (msg) return view.err(msg)
 	return view.ret()
 })

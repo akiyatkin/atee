@@ -86,7 +86,7 @@ const showType = (data, env, prop) => !prop ? '' : `
 		cls: 'a',
 		value: prop.type,
 		name: 'type',
-		descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче 63 символов. И последний оригинальный вариант <b>text</b>. Для ключей и связей подходит только value.',
+		descr: 'Тип определяет способ хранения значений для дальнейшей быстрой выборки. Самый оптимальный <b>number</b>, далее <b>date</b>, затем <b>volume</b> если повторяется и короче <b>127 символов</b>. И последний оригинальный вариант <b>text</b>. Для ключей и связей подходит только value.',
 		action: '/-sources/set-prop-type', 
 		values: {"number":"number", "date":"date", "value":"value", "text":"text"},
 		args: {prop_id: prop.prop_id},
@@ -112,6 +112,9 @@ const showType = (data, env, prop) => !prop ? '' : `
 		args: {prop_id: prop.prop_id}
 	})}.
 `
+main.showOrig = (cell) => `
+	<xmp readonly class="mute" style="white-space: pre-wrap; font-family: inherit; padding:1em; margin: 1em 0">${cell.text}</xmp>
+`
 main.row = (data, env, row = data.row) => `Строка ${row.row_index}`
 main.cell = (data, env, cell = data.cell || {text: null}, prop = data.prop) => `
 	<div style="color:red">${cell.pruning ? 'Значение в ячейке обрезано из-за выбранного типа' : ''}</div>
@@ -122,6 +125,7 @@ main.cell = (data, env, cell = data.cell || {text: null}, prop = data.prop) => `
 	<div style="color:darkgreen">${cell.winner ? 'Значение попадает в итоговые данные' : ''}</div>
 	
 	<div>${prop ? showTypeStat(data, env, prop, cell) : 'Не выбрано ключевое свойство'}</div>
+	${cell.pruning ? main.showOrig(cell) : ''}
 	<div style="background: ${cell.winner ? '#eaf7d1': '#f5e6e6'}; padding:1em; margin: 1em 0">
 		${!prop || prop.type == 'text' ? (cell.text ?? '') : (cell.number ? cell.number / 10 ** prop.scale : '') + (cell.date ?? '') + (cell.value_title ?? '')}
 	</div>
@@ -195,7 +199,7 @@ const defcustom = (value) => {
 // ${data.cell ? showCellRepresentTr(data, env) : ''}
 // ${data.row?.key ? showRowKeyRepresentTr(data, env) : ''}
 // ${data.value ? showValueRepresentTr(data, env) : ''}
-// ${data.source ? showSourceRepresentsTr(data, env) : ''}
+
 export const POPUP = (data, env) => err(data, env, []) || `
 	<div style="margin-bottom:1em">
 		${main[data.main](data, env)}
@@ -205,10 +209,12 @@ export const POPUP = (data, env) => err(data, env, []) || `
 	
 	<table>
 		<tbody>
+
 			${data.col ? showColRepresentTr(data, env) : ''}
 			${data.prop ? showPropRepresentTr(data, env) : ''}
 			${data.sheet ? showSheetRepresentTr(data, env) : ''}
 			${data.entity ? showEntityRepresentTr(data, env) : ''}
+			${data.source ? showSourceRepresentsTr(data, env) : ''}
 			
 		</tbody>
 	</table>
@@ -403,7 +409,7 @@ const showSourceRepresentsTr = (data, env) => `
 		<td>Колонки</td><td>По умолчанию</td>
 		<td>represent_cols</td>
 	</tr>
-	<tr>
+	<!-- <tr>
 		<td><button title="Видимость строк по умолчанию" data-name="represent_rows" 
 			class="eye transparent ${represent(data.source, ['source'])} ${defcustom(data.source.represent_rows)}">${svg.eye()}</button></td>
 		<td>Строки</td><td>По умолчанию</td>
@@ -414,7 +420,7 @@ const showSourceRepresentsTr = (data, env) => `
 			class="eye transparent ${represent(data.source, ['source'])} ${defcustom(data.source.represent_cells)}">${svg.eye()}</button></td>
 		<td>Ячейки</td><td>По умолчанию</td>
 		<td>represent_cells</td>
-	</tr>
+	</tr> -->
 `
 
 

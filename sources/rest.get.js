@@ -18,7 +18,7 @@ rest.extra(rest_admin)
 import rest_search from "/-dialog/search/rest.search.js" //аргументы hash, search 
 rest.extra(rest_search)
 
-
+export default rest
 
 rest.addResponse('get-recalc', ['admin'], async view => {
 	const db = await view.get('db')
@@ -105,92 +105,92 @@ rest.addResponse('get-entity-export', ['admin'], async view => {
 
 	return view.ret()
 })
-rest.addResponse('get-source-export', ['admin'], async view => {
-	const db = await view.get('db')
-	const source_id = await view.get('source_id#required')
-	const source = view.data.source = await db.fetch(`
-		SELECT 
-			so.source_title, 
-			pr.prop_title,
-			so.ordain,
-			so.master + 0 as master,
-			so.renovate + 0 as renovate,
-			so.comment,
-			so.represent_source + 0 as represent_source,
-			so.represent_sheets + 0 as represent_sheets,
-			so.represent_cols + 0 as represent_cols,
-		FROM sources_sources so
-			LEFT JOIN sources_props pr on (pr.prop_id = so.entity_id)
-		WHERE source_id = :source_id
-	`, {source_id})
+// rest.addResponse('get-source-export', ['admin'], async view => {
+// 	const db = await view.get('db')
+// 	const source_id = await view.get('source_id#required')
+// 	const source = view.data.source = await db.fetch(`
+// 		SELECT 
+// 			so.source_title, 
+// 			pr.prop_title,
+// 			so.ordain,
+// 			so.master + 0 as master,
+// 			so.renovate + 0 as renovate,
+// 			so.comment,
+// 			so.represent_source + 0 as represent_source,
+// 			so.represent_sheets + 0 as represent_sheets,
+// 			so.represent_cols + 0 as represent_cols,
+// 		FROM sources_sources so
+// 			LEFT JOIN sources_props pr on (pr.prop_id = so.entity_id)
+// 		WHERE source_id = :source_id
+// 	`, {source_id})
 	
-	if (source.represent_source == 1) delete source.represent_source
-	if (source.prop_title == null) delete source.prop_title
-	if (source.master == 1) delete source.master
-	if (source.renovate == 1) delete source.renovate
-	if (source.represent_sheets == 1) delete source.represent_sheets
-	if (source.represent_rows == 1) delete source.represent_rows
-	if (source.represent_cols == 1) delete source.represent_cols
-	if (source.represent_cells == 1) delete source.represent_cells
-	if (source.comment == null) delete source.comment
+// 	if (source.represent_source == 1) delete source.represent_source
+// 	if (source.prop_title == null) delete source.prop_title
+// 	if (source.master == 1) delete source.master
+// 	if (source.renovate == 1) delete source.renovate
+// 	if (source.represent_sheets == 1) delete source.represent_sheets
+// 	if (source.represent_rows == 1) delete source.represent_rows
+// 	if (source.represent_cols == 1) delete source.represent_cols
+// 	if (source.represent_cells == 1) delete source.represent_cells
+// 	if (source.comment == null) delete source.comment
 
-	const sheets = source.sheets = await db.all(`
-		SELECT 
-			csh.sheet_title, 
-			csh.represent_custom_sheet + 0 as represent_custom_sheet, 
-			pr.prop_title
-		FROM sources_custom_sheets csh
-		LEFT JOIN sources_props pr on pr.prop_id = csh.entity_id
-		WHERE csh.source_id = :source_id
-	`, {source_id})
-	for (const i in sheets) {
-		const sheet = sheets[i]
-		if (sheet.prop_title == null) delete sheet.prop_title
-		if (sheet.represent_custom_sheet == null) delete sheet.represent_custom_sheet
+// 	const sheets = source.sheets = await db.all(`
+// 		SELECT 
+// 			csh.sheet_title, 
+// 			csh.represent_custom_sheet + 0 as represent_custom_sheet, 
+// 			pr.prop_title
+// 		FROM sources_custom_sheets csh
+// 		LEFT JOIN sources_props pr on pr.prop_id = csh.entity_id
+// 		WHERE csh.source_id = :source_id
+// 	`, {source_id})
+// 	for (const i in sheets) {
+// 		const sheet = sheets[i]
+// 		if (sheet.prop_title == null) delete sheet.prop_title
+// 		if (sheet.represent_custom_sheet == null) delete sheet.represent_custom_sheet
 		
 
 
-		sheet.cols = await db.all(`
-			SELECT 
-				cco.col_title,
-				pr.prop_title,
-				cco.noprop + 0 as noprop,
-				cco.represent_custom_col + 0 as represent_custom_col
-			FROM sources_custom_cols cco
-				LEFT JOIN sources_props pr on (pr.prop_id = cco.prop_id)
-			WHERE cco.source_id = :source_id and cco.sheet_title = :sheet_title
-		`, {...sheet, source_id})
-		for (const col of sheet.cols) {
-			if (col.represent_custom_col == null) delete col.represent_custom_col
-			if (col.prop_title == null) delete col.prop_title
-			if (col.noprop == null) delete col.noprop
-		}
-		// sheet.rows = await db.all(`
-		// 	SELECT 
-		// 		cro.key_nick,
-		// 		cro.repeat_index,
-		// 		cro.represent_custom_row + 0 as represent_custom_row
-		// 	FROM sources_custom_rows cro
-		// 	WHERE cro.source_id = :source_id and cro.sheet_title = :sheet_title
-		// `, {...sheet, source_id})
-		// for (const row of sheet.rows) {
-		// 	if (row.represent_custom_row == null) delete row.represent_custom_row
-		// }
-		// sheet.cells = await db.all(`
-		// 	SELECT 
-		// 		cce.key_nick,
-		// 		cce.repeat_index,
-		// 		cce.col_title,
-		// 		cce.represent_custom_cell + 0 as represent_custom_cell
-		// 	FROM sources_custom_cells cce
-		// 	WHERE cce.source_id = :source_id and cce.sheet_title = :sheet_title
-		// `, {...sheet, source_id})
-		// for (const cell of sheet.cells) {
-		// 	if (cell.represent_custom_cell == null) delete cell.represent_custom_cell
-		// }
-	}
-	return view.ret()
-})
+// 		sheet.cols = await db.all(`
+// 			SELECT 
+// 				cco.col_title,
+// 				pr.prop_title,
+// 				cco.noprop + 0 as noprop,
+// 				cco.represent_custom_col + 0 as represent_custom_col
+// 			FROM sources_custom_cols cco
+// 				LEFT JOIN sources_props pr on (pr.prop_id = cco.prop_id)
+// 			WHERE cco.source_id = :source_id and cco.sheet_title = :sheet_title
+// 		`, {...sheet, source_id})
+// 		for (const col of sheet.cols) {
+// 			if (col.represent_custom_col == null) delete col.represent_custom_col
+// 			if (col.prop_title == null) delete col.prop_title
+// 			if (col.noprop == null) delete col.noprop
+// 		}
+// 		// sheet.rows = await db.all(`
+// 		// 	SELECT 
+// 		// 		cro.key_nick,
+// 		// 		cro.repeat_index,
+// 		// 		cro.represent_custom_row + 0 as represent_custom_row
+// 		// 	FROM sources_custom_rows cro
+// 		// 	WHERE cro.source_id = :source_id and cro.sheet_title = :sheet_title
+// 		// `, {...sheet, source_id})
+// 		// for (const row of sheet.rows) {
+// 		// 	if (row.represent_custom_row == null) delete row.represent_custom_row
+// 		// }
+// 		// sheet.cells = await db.all(`
+// 		// 	SELECT 
+// 		// 		cce.key_nick,
+// 		// 		cce.repeat_index,
+// 		// 		cce.col_title,
+// 		// 		cce.represent_custom_cell + 0 as represent_custom_cell
+// 		// 	FROM sources_custom_cells cce
+// 		// 	WHERE cce.source_id = :source_id and cce.sheet_title = :sheet_title
+// 		// `, {...sheet, source_id})
+// 		// for (const cell of sheet.cells) {
+// 		// 	if (cell.represent_custom_cell == null) delete cell.represent_custom_cell
+// 		// }
+// 	}
+// 	return view.ret()
+// })
 rest.addResponse('get-source-entity-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hash = await view.get('hash')
@@ -398,5 +398,12 @@ rest.addResponse('get-inter-prop-search', ['admin'], async view => {
 	view.ans.count = list.length
 	return view.ret()
 })
-export default rest
 
+
+import ImpExp from "/-sources/ImpExp.js"
+rest.addResponse('get-export', ['admin'], async view => {
+	const db = await view.get('db')	
+	const msg = await ImpExp.export(db, rest_sources.exporttables)
+	if (msg) return view.ret(msg)
+	return view.err('Нет данных для экспорта')
+})

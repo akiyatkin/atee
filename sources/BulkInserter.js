@@ -27,7 +27,7 @@ class BulkInserter {
 		}
 		
 		try {
-			const columnsStr = this.columns.join(', ');
+			const columnsStr = '`' + this.columns.join('`, `') + '`';
 			const placeholders = this.columns.map(() => '?').join(', ');
 			
 			// Базовый SQL для вставки

@@ -4,6 +4,66 @@ const require = createRequire(import.meta.url)
 const { XMLParser } = require("fast-xml-parser");
 
 const YML = {}
+YML.getModified = async url => {
+	const lines = await YML.getFirstLines(url, 2)
+	const line = lines[1]
+	const dateMatch = line.match(/date="([^"]+)"/);
+	const dateString = dateMatch ? dateMatch[1] : null;
+	if (!dateString) return false
+	const isoString = dateString.replace(' ', 'T') + ':00'
+	const date = new Date(isoString)
+	return date
+}
+YML.getFirstLines = async (url, n = 1) => {
+	const response = await fetch(url)
+	if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+	return new Promise(async (resolve, reject) => {
+        try {
+            let buffer = '';
+            const lines = [];
+            const reader = response.body.getReader();
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                
+                if (done) {
+                    // Добавляем последнюю строку если есть
+                    if (buffer.trim()) {
+                        lines.push(buffer.trim());
+                    }
+                    resolve(lines);
+                    break;
+                }
+                
+                buffer += new TextDecoder().decode(value);
+                
+                // Обрабатываем все найденные строки
+                while (lines.length < n) {
+                    const newlineIndex = buffer.indexOf('\n');
+                    
+                    if (newlineIndex === -1) break;
+                    
+                    const line = buffer.substring(0, newlineIndex).trim();
+                    if (line) {
+                        lines.push(line);
+                    }
+                    
+                    buffer = buffer.substring(newlineIndex + 1);
+                    
+                    // Если набрали нужное количество строк
+                    if (lines.length >= n) {
+                        reader.cancel();
+                        resolve(lines);
+                        return;
+                    }
+                }
+            }
+        } catch (error) {
+            reject(error)
+        }
+    })
+}
+
 YML.getDateLastWeekDay = (weekDay) => { //0 вс
 	const date = new Date()
 	date.setMilliseconds(0)
@@ -113,10 +173,10 @@ YML.load = async (SRC, {headers = {}, renameCol = col_title => col_title, getHea
 			const paramname = sheet.head[i]
 
 			const values = offer.param
-		 		.filter(param => YML.getName(param, synonyms, renameCol) == paramname && param['#text'])
-		 		.map(param => param['#text'].replaceAll(',', '&comma;'))
-		 		.join(', ')
-		 	row.push(values || null)
+				.filter(param => YML.getName(param, synonyms, renameCol) == paramname && param['#text'])
+				.map(param => param['#text'].replaceAll(',', '&comma;'))
+				.join(', ')
+			row.push(values || null)
 
 		}
 		sheet.rows.push(row)

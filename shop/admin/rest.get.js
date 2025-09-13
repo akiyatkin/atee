@@ -305,13 +305,11 @@ rest.addResponse('get-sample-prop-search', ['admin'], async view => {
 	}
 	return view.ret()
 })
-rest.addResponse('get-export', ['admin'], async view => {
-	const db = await view.get('db')
 
-	const tables = rest_shopadmin.exporttables
-	const dump = {}
-	for (const table of tables) {
-		dump[table] = await db.all(`SELECT * FROM ${table}`)	
-	}
-	return view.ret('<textarea style="width: 100%;" rows="10">' + JSON.stringify(dump) + '</textarea>')
+import ImpExp from "/-sources/ImpExp.js"
+rest.addResponse('get-export', ['admin'], async view => {
+	const db = await view.get('db')	
+	const msg = await ImpExp.export(db, rest_shopadmin.exporttables)
+	if (msg) return view.ret(msg)
+	return view.err('Нет данных для экспорта')
 })

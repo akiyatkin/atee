@@ -19,8 +19,9 @@ export const TOP = (data, env, source = data.source) => !data.result ? '' : `
 	
 	${source.date_start ? showScriptReload(data, env, source) : ''}
 	${showStatus(data, env, source)}
-	${showStat(data, env, source)}
 	${showControll(data, env, source)}
+	${showStat(data, env, source)}
+	
 	${showSettings(data, env, source)}
 
 `
@@ -183,7 +184,7 @@ const showSheetTr = (data, env, source, sheet) => `
 		<td>
 			<span class="remove" style="${!sheet.remove ? 'display:none' : 'display: block'}">
 				${field.button({
-					confirm:'Удалить все настройки пользователя у этого листа, его строк, колонок и ячеек?',
+					confirm:'Удалить все настройки пользователя у этого листа для его колонок?',
 					cls:'transparent',
 					label:svg.cross(),
 					action:'/-sources/set-sheet-custom-delete',
@@ -202,15 +203,22 @@ const showNoLoad = (data, env, source) => `
 	<p>Загрузки ещё не было. Выполните загрузку источника.</p>
 `
 const showComment = (data, env, source) => `
-	<p>
-		${field.area({
+	<div style="float:right">
+		${field.prompt({
+			cls: 'a',
+			type: 'area',
 			name: 'comment', 
-			label: 'Комментарий', 
+			label: 'Общий план',
+			value: svg.edit(), 
 			action: '/-sources/set-source-comment', 
 			args: {source_id: source.source_id},
-			value: source.comment
+			reloaddiv: env.layer.div,
+			input: source.comment
 		})}
-	</p>
+	</div>
+	<pre style="font-style: italic;">${source.comment}</pre>
+
+	
 	<script>
 		(div => {
 			const field = div.querySelector('.field')
@@ -228,14 +236,37 @@ const showComment = (data, env, source) => `
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
-
-const showStatus = (data, env, source) => `
+const showControll = (data, env, source) => `
 	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
-		<div class="status_${source.class}">
-			${source.status}${source.date_start ? '... ':''}<b>${ago.short(source.date_start)}</b>. 
-		</div>
+		
+		
 		<div>
-			Актуализация ${field.setpop({
+			Создание новых сущностей:
+			${field.setpop({
+				heading:'Новые сущности создаются?',
+				cls: 'a',
+				value: source.master,
+				name: 'bit',
+				action: '/-sources/set-source-prop', 
+				values: {"":"только обновляются (прайс)", "1":"создаются и обновляются (мастер)"},
+				args: {source_id: source.source_id, sourceprop: 'master'}
+			})}
+		</div>
+		<!-- <div>
+			Зависимость от данных из других источников: 
+			${field.setpop({
+				heading:'Зависимость источника',
+				cls: 'a',
+				value: source.dependent,
+				name: 'bit',
+				descr: 'Зависимость влияет на порядок загрузки при действии "актуализировать всё". Зависимые источники загружаются в последнюю очередь и могут анализировать загруженные перед ними данные из независимых источников.',
+				action: '/-sources/set-source-prop', 
+				values: {"":"независимый", "1":"зависимый"},
+				args: {source_id: source.source_id, sourceprop: 'dependent'}
+			})}
+		</div> -->
+		<div>
+			Актуализация: ${field.setpop({
 				heading:'Актуализация',
 				cls: 'a',
 				value: source.renovate,
@@ -247,13 +278,7 @@ const showStatus = (data, env, source) => `
 			})}.
 		</div>
 		<div>
-			Загружено ${date.ai(source.date_load) || 'нет даты'}.
-		</div>
-		<div>
-			Актуальность ${date.ai(source.date_content) || 'нет даты'}.
-		</div>
-		<div>
-			Ревизия администратора
+			Ревизия администратора:
 			${field.prompt({
 				value: date.dmy(source.date_exam), 
 				cls: 'a',
@@ -268,6 +293,53 @@ const showStatus = (data, env, source) => `
 				reloaddiv: env.layer.div
 			})}.
 		</div>
+		<div>
+			<span class="a">Настроить видимость</span>
+			<script>
+				(btn => {
+					btn.addEventListener('click', async () => {
+						const represent = await import('/-sources/represent.js').then(r => r.default)
+						represent.popup(${JSON.stringify({source_id: source.source_id})}, '${env.layer.div}')
+					})
+				})(document.currentScript.previousElementSibling)
+			</script>
+		</div>
+		
+	</div>
+`
+// <div>
+// 			<button class="a">Экспорт пользовательских настроек</button>
+// 			<script>
+// 				(btn => {
+// 					btn.addEventListener('click', async () => {
+// 						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+// 						Dialog.open({
+// 							tpl:'${env.layer.tpl}',
+// 							sub:'EXPORT',
+// 							json: '/-sources/get-source-export?source_id=${source.source_id}'
+// 						})
+// 					})
+// 				})(document.currentScript.previousElementSibling)
+// 			</script>
+// 		</div>
+const showStatus = (data, env, source) => `
+	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
+		<blockquote class="status_${source.class}">
+			${source.status}${source.date_start ? '... ':''}<b>${ago.short(source.date_start)}</b>. 
+		</blockquote>
+		
+
+		
+		<!-- <div>
+			Загружено<nobr> date_load</nobr> <b>${date.dmyhi(source.date_load) || 'нет даты'}</b>.
+		</div>
+		<div>
+			Проверка <nobr>date_check</nobr> <b>${date.dmyhi(source.date_check) || 'нет даты'}</b>.
+		</div>
+		<div>
+			Актуальность <nobr>date_content</nobr> <b>${date.dmyhi(source.date_content) || 'нет даты'}</b>.
+		</div>
+		 -->
 	</div>
 	${source.error ? showError(data, env, source) : ''}
 `
@@ -275,47 +347,53 @@ const showError = (data, env, source) => `
 	<p style="background-color:${source.error ? '#f5e6e6' : '#eaf7d1'}">${source.error || 'Ошибок не было'}</p>
 `
 const showStat = (data, env, source) => `
-	
-	<table>
+	<table style="margin:1em 0">
 		<tr>
-			<td>
-				Проверка <nobr>get-check</nobr>
-			</td>
-			<!-- <td>
-				Сообщение get-check 
-			</td> -->
-			<td title="Вызов get-check ${date.dmyhi(source.date_check)} (Проверка)"><nobr>${date.ai(source.date_check)}</nobr></td>
-			<td>date_mtime</td>
-			<td title="Когда стоит загрузить: ${date.dmyhi(source.date_mtime)} (Изменения)"><nobr>${date.ai(source.date_mtime)}</nobr></td>
-			<td>
-				${source.msg_check ? '<i>' + source.msg_check + '</i>' : 'Нет сообщения'}
-			</td>
-			
+			<td>Проверка</td>
+			<td>get-check</td>
+			<!-- <td title="Вызов get-check ${date.dmyhi(source.date_check)} (Проверка)"><nobr>${date.dmyhi(source.date_check)}</nobr></td> -->
+			<!-- <td>date_mtime</td>
+			<td title="Когда стоит загрузить: ${date.dmyhi(source.date_mtime)} (Изменения)"><nobr>${date.dmyhi(source.date_mtime)}</nobr></td> -->
+			<td>${source.msg_check ? '<i>' + source.msg_check + '</i>' : 'Нет сообщения'}</td>
 		</tr>
 		<tr>
 			<td>
-				Загрузка <nobr>get-load</nobr>
+				Загрузка
 			</td>
-			<!-- <td>
-				Сообщение get-load
-			</td> -->
-			<td title="Вызов get-load ${date.dmyhi(source.date_load)} (Загрузка)"><nobr>${date.ai(source.date_load)}</nobr></td>
-			<td>date_content</td>
-			<td title="Дата полученных данных: ${date.dmyhi(source.date_content)} (Актуальность) "><nobr>${date.ai(source.date_content)}</nobr></td>
+			<td>get-load</td>
+			<!-- <td title="Вызов get-load ${date.dmyhi(source.date_load)} (Загрузка)"><nobr>${date.dmyhi(source.date_load)}</nobr></td>
+			<td>date_content</td> -->
+			<!-- <td title="Дата полученных данных: ${date.dmyhi(source.date_content)} (Актуальность) "><nobr>${date.dmyhi(source.date_content)}</nobr></td> -->
 			<td>
 				 ${source.msg_load ? '<i>' + source.msg_load + '</i>' : 'Нет сообщения'}
 			</td>
 			
 		</tr>
-	</table>
 	
-`
-const showSettings = (data, env, source = data.source) => `
-	<table>
 		<tr>
-			<td>
-				Время проверки
-			</td>
+			<td>Дата проверки</td>
+			<td>date_check</td>
+			<td>${date.dmyhi(source.date_check) || 'нет даты'}</td>
+		</tr>
+		<tr>
+			<td>Дата изменений</td>
+			<td>date_mtime</td>
+			<td>${date.dmyhi(source.date_mtime) || 'нет даты'}</td>
+		</tr>
+		<tr>
+			<td>Дата загрузки</td>
+			<td>date_load</td>
+			<td>${date.dmyhi(source.date_load) || 'нет даты'}</td>
+		</tr>
+		<tr>
+			<td>Дата актуальности</td>
+			<td>date_content</td>
+			<td>${date.dmyhi(source.date_content) || 'нет даты'}</td>
+		</tr>
+	
+		<tr>
+			<td>Время проверки</td>
+			<td>duration_check</td>
 			<td>
 				${ago.pass(source.duration_check)}
 			</td>
@@ -324,6 +402,7 @@ const showSettings = (data, env, source = data.source) => `
 			<td>
 				Время обработчика
 			</td>
+			<td>duration_rest</td>
 			<td>
 				${ago.pass(source.duration_rest)}
 			</td>
@@ -332,6 +411,7 @@ const showSettings = (data, env, source = data.source) => `
 			<td>
 				Время внесения
 			</td>
+			<td>duration_insert</td>
 			<td>
 				${ago.pass(source.duration_insert)}
 			</td>
@@ -340,11 +420,26 @@ const showSettings = (data, env, source = data.source) => `
 			<td>
 				Время пересчёта
 			</td>
+			<td>duration_recalc</td>
 			<td>
 				${ago.pass(source.duration_recalc)}
 			</td>
 		</tr>
+		<tr>
+			<th>
+				Время загрузки
+			</th>
+			<td>rest + insert + recalc</td>
+			<th>
+				${ago.pass(source.duration_rest + source.duration_insert + source.duration_recalc)}
+			</th>
+		</tr>
+		
 	</table>
+	
+`
+const showSettings = (data, env, source = data.source) => `
+
 `
 const showButtons = (data, env, source) => `
 	<div style="margin:2em 0; display: flex; flex-wrap:wrap; gap: 1em;">
@@ -393,62 +488,7 @@ const showButtons = (data, env, source) => `
 		})}
 	</div>
 `
-const showControll = (data, env, source) => `
-	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
-		<div>
-			<span class="a">Настроить видимость</span>
-			<script>
-				(btn => {
-					btn.addEventListener('click', async () => {
-						const represent = await import('/-sources/represent.js').then(r => r.default)
-						represent.popup(${JSON.stringify({source_id: source.source_id})}, '${env.layer.div}')
-					})
-				})(document.currentScript.previousElementSibling)
-			</script>
-		</div>
-		
-		<div>
-			Создание новых сущностей:
-			${field.setpop({
-				heading:'Новые сущности создаются?',
-				cls: 'a',
-				value: source.master,
-				name: 'bit',
-				action: '/-sources/set-source-prop', 
-				values: {"":"только обновляются (прайс)", "1":"создаются и обновляются (мастер)"},
-				args: {source_id: source.source_id, sourceprop: 'master'}
-			})}
-		</div>
-		<!-- <div>
-			Зависимость от данных из других источников: 
-			${field.setpop({
-				heading:'Зависимость источника',
-				cls: 'a',
-				value: source.dependent,
-				name: 'bit',
-				descr: 'Зависимость влияет на порядок загрузки при действии "актуализировать всё". Зависимые источники загружаются в последнюю очередь и могут анализировать загруженные перед ними данные из независимых источников.',
-				action: '/-sources/set-source-prop', 
-				values: {"":"независимый", "1":"зависимый"},
-				args: {source_id: source.source_id, sourceprop: 'dependent'}
-			})}
-		</div> -->
-		<div>
-			<button class="a">Экспорт пользовательских настроек</button>
-			<script>
-				(btn => {
-					btn.addEventListener('click', async () => {
-						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-						Dialog.open({
-							tpl:'${env.layer.tpl}',
-							sub:'EXPORT',
-							json: '/-sources/get-source-export?source_id=${source.source_id}'
-						})
-					})
-				})(document.currentScript.previousElementSibling)
-			</script>
-		</div>
-	</div>
-`
+
 export const EXPORT = (data, env) => `
 	<textarea style="width: 60vw;height: 50vh;">${JSON.stringify(data.source, null, 2)}</textarea>
 `

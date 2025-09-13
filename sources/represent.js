@@ -27,7 +27,8 @@ represent.popup = async (args, reloaddiv) => {
 	}
 	await Dialog.open(represent.layer, document.body, null, async () => {
 		const Client = await window.getClient()
-		Client.global('recalc')
+		//Client.global('recalc') рекалк сам обновляется
+		Client.global('check')
 		if (reloaddiv) {
 			//Client.reloaddiv(reloaddiv)
 		}

@@ -216,7 +216,7 @@ const showComment = (data, env, source) => `
 				type: 'area',
 				name: 'comment', 
 				label: 'Комментарий источника',
-				value: 'Изменить', 
+				value: svg.edit(), 
 				action: '/-sources/set-source-comment', 
 				args: {source_id: source.source_id},
 				reloaddiv: env.layer.div,
@@ -333,7 +333,7 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 		
 		<script>
 			(async div => {
-				const name = 'revscroll_sheet_${source.source_id}_${sheet.sheet_index}'
+				const name = 'sources_sheet_${source.source_id}_${sheet.sheet_index}'
 				div.scrollLeft = window.sessionStorage.getItem(name) || 0
 				div.addEventListener('scroll', e => {
 					window.sessionStorage.setItem(name, div.scrollLeft)

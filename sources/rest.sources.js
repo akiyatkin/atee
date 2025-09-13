@@ -11,6 +11,21 @@ rest.extra(rest_db)
 
 import rest_funcs from '/-rest/rest.funcs.js'
 rest.extra(rest_funcs)
+export default rest
+
+
+rest.addArgument('json', ['string'])
+rest.addVariable('json#required', ['json','required'])
+rest.exporttables = [
+	'sources_custom_cols',
+	'sources_custom_sheets',
+	'sources_settings',
+	'sources_sources',
+	'sources_props',
+	'sources_synonyms'
+]
+
+
 rest.addArgument('go', (view, e) => e || false) //Ссылка куда перейти. Как есть попадает в заголовок Location 301
 rest.addArgument('multi', ['sint'], (view, multi) => {
 	if (multi == null) return multi
@@ -98,7 +113,11 @@ rest.addArgument('known', (view, type) => {
 })
 rest.addVariable('known#required', ['known', 'required'])
 
-rest.addArgument('scale', ['tint#unsigned'])
+rest.addArgument('scale', ['tint#unsigned'], (view, val) => {
+	if (val > 10) return view.err('Точность не может быть больше 10')
+	if (val < 0) return view.err('Точность не может быть отрицательной')
+	return val
+})
 rest.addVariable('scale#required', ['scale', 'required'])
 
 rest.addArgument('type', (view, type) => {
@@ -157,7 +176,7 @@ rest.addArgument('value_id', ['mint'], async (view, value_id) => {
 	if (!value_id) return view.err('Значение не найдено', 404)
 	return value_id
 })
-rest.addFunction('checkstart', ['setaccess'], async (view) => {
+rest.addFunction('checkstart', async (view) => { //setaccess нужен, только после индексации
 	const db = await view.get('db')
 	const source_title = await db.col(`select source_title FROM sources_sources where date_start is not null`)
 	if (source_title) return view.err('Дождитесь загрузки '+ source_title)
@@ -193,4 +212,3 @@ rest.addVariable('prop_id#required', ['prop_id', 'required'])
 
 
 
-export default rest

@@ -111,6 +111,7 @@ Consciousness.recalcKeyIndex = async (db) => { //Определить key_index,
 			and co.sheet_index = sh.sheet_index
 			and co.prop_id = sh.entity_id
 	`)
+	await Consciousness.recalcRowsKeyId(db)
 }
 Consciousness.recalcKeyIndex_bySource = async (db, source_id) => { //Определить key_index, по имеющимся entity_id
 	await db.exec(`
@@ -129,6 +130,7 @@ Consciousness.recalcKeyIndex_bySource = async (db, source_id) => { //Опред�
 			and co.sheet_index = sh.sheet_index
 			and co.prop_id = sh.entity_id
 	`, {source_id})
+	await Consciousness.recalcRowsKeyId_bySource(db, source_id)
 }
 Consciousness.recalcKeyIndex_bySheet = async (db, source_id, sheet_index) => { //Определить key_index, по имеющимся entity_id
 	await db.exec(`
@@ -147,6 +149,7 @@ Consciousness.recalcKeyIndex_bySheet = async (db, source_id, sheet_index) => { /
 			and co.sheet_index = sh.sheet_index
 			and co.prop_id = sh.entity_id
 	`, {source_id, sheet_index})
+	await Consciousness.recalcRowsKeyId_bySheet(db, source_id, sheet_index)
 }
 Consciousness.recalcEntitiesPropId = async (db) => { //Определить entity_id, prop_id, key_index
 	
@@ -426,104 +429,104 @@ Consciousness.recalcEntitiesPropId_bySource = async (db, source_id) => { //Оп�
 		and sco.col_title = co.col_title
 	`, {source_id})
 }
-// Consciousness.recalcRowsKeyIdRepeatIndex = async (db) => {
-// 	await db.exec(`
-// 		UPDATE sources_rows ro
-// 		SET ro.key_id = null, ro.repeat_index = null
-// 	`)
-// 	await db.exec(`
-// 		UPDATE sources_rows ro, sources_cells ce, sources_sheets sh
-// 		SET ro.key_id = ce.value_id
-// 		WHERE sh.source_id = ro.source_id
-// 		and sh.sheet_index = ro.sheet_index
-// 		and ce.source_id = ro.source_id
-// 		and ce.row_index = ro.row_index
-// 		and ce.sheet_index = ro.sheet_index
-// 		and ce.col_index = sh.key_index
-// 	`)
-// 	await db.exec(`
-// 		UPDATE sources_rows ro, (
-// 			SELECT 
-// 				source_id, sheet_index, row_index,
-// 				ROW_NUMBER() OVER (PARTITION BY source_id, sheet_index, key_id ORDER BY row_index) - 1 AS repeat_index
-// 			FROM sources_rows
-// 		) cte
-// 		SET ro.repeat_index = cte.repeat_index
-// 		WHERE cte.source_id = ro.source_id
-// 		and ro.sheet_index = cte.sheet_index 
-// 		AND ro.row_index = cte.row_index
-// 	`)
-// }
-// Consciousness.recalcRowsKeyIdRepeatIndex_bySheet = async (db, source_id, sheet_index) => {
-// 	await db.exec(`
-// 		UPDATE sources_rows ro
-// 		SET ro.key_id = null, ro.repeat_index = null
-// 		WHERE 
-// 			ro.source_id = :source_id and ro.sheet_index = :sheet_index
-// 	`, {source_id, sheet_index})
-// 	await db.exec(`
-// 		UPDATE sources_rows ro, sources_cells ce, sources_sheets sh
-// 		SET ro.key_id = ce.value_id
-// 		WHERE 
-// 			ro.source_id = :source_id and ro.sheet_index = :sheet_index
-// 			and sh.source_id = ro.source_id
-// 			and sh.sheet_index = ro.sheet_index
-// 			-- and ce.value_id is not null
-// 			and ce.source_id = ro.source_id
-// 			and ce.row_index = ro.row_index
-// 			and ce.sheet_index = ro.sheet_index
-// 			and ce.col_index = sh.key_index
-// 	`, {source_id, sheet_index})
-// 	await db.exec(`
-// 		UPDATE sources_rows ro, (
-// 			SELECT 
-// 				source_id, sheet_index, row_index,
-// 				ROW_NUMBER() OVER (PARTITION BY source_id, sheet_index, key_id ORDER BY row_index) - 1 AS repeat_index
-// 			FROM sources_rows
-// 		) cte
-// 		SET ro.repeat_index = cte.repeat_index
-// 		WHERE 
-// 			ro.source_id = :source_id and ro.sheet_index = :sheet_index
-// 			and cte.source_id = ro.source_id
-// 			and ro.sheet_index = cte.sheet_index 
-// 			AND ro.row_index = cte.row_index
-// 	`, {source_id, sheet_index})
-// }
-// Consciousness.recalcRowsKeyIdRepeatIndex_bySource = async (db, source_id) => {
-// 	await db.exec(`
-// 		UPDATE sources_rows ro
-// 		SET ro.key_id = null, ro.repeat_index = null
-// 		WHERE 
-// 			ro.source_id = :source_id
-// 	`, {source_id})
-// 	await db.exec(`
-// 		UPDATE sources_rows ro, sources_cells ce, sources_sheets sh
-// 		SET ro.key_id = ce.value_id
-// 		WHERE 
-// 			ro.source_id = :source_id 
-// 			and sh.source_id = ro.source_id
-// 			and sh.sheet_index = ro.sheet_index
-// 			-- and ce.value_id is not null
-// 			and ce.source_id = ro.source_id
-// 			and ce.row_index = ro.row_index
-// 			and ce.sheet_index = ro.sheet_index
-// 			and ce.col_index = sh.key_index
-// 	`, {source_id})
-// 	await db.exec(`
-// 		UPDATE sources_rows ro, (
-// 			SELECT 
-// 				source_id, sheet_index, row_index,
-// 				ROW_NUMBER() OVER (PARTITION BY source_id, sheet_index, key_id ORDER BY row_index) - 1 AS repeat_index
-// 			FROM sources_rows
-// 		) cte
-// 		SET ro.repeat_index = cte.repeat_index
-// 		WHERE 
-// 			ro.source_id = :source_id
-// 			and cte.source_id = ro.source_id
-// 			and ro.sheet_index = cte.sheet_index 
-// 			AND ro.row_index = cte.row_index
-// 	`, {source_id})
-// }
+Consciousness.recalcRowsKeyId = async (db) => {
+	await db.exec(`
+		UPDATE sources_rows ro
+		SET ro.key_id = null
+	`)
+	await db.exec(`
+		UPDATE sources_rows ro, sources_cells ce, sources_sheets sh
+		SET ro.key_id = ce.value_id
+		WHERE sh.source_id = ro.source_id
+		and sh.sheet_index = ro.sheet_index
+		and ce.source_id = ro.source_id
+		and ce.row_index = ro.row_index
+		and ce.sheet_index = ro.sheet_index
+		and ce.col_index = sh.key_index
+	`)
+	// await db.exec(`
+	// 	UPDATE sources_rows ro, (
+	// 		SELECT 
+	// 			source_id, sheet_index, row_index,
+	// 			ROW_NUMBER() OVER (PARTITION BY source_id, sheet_index, key_id ORDER BY row_index) - 1 AS repeat_index
+	// 		FROM sources_rows
+	// 	) cte
+	// 	SET ro.repeat_index = cte.repeat_index
+	// 	WHERE cte.source_id = ro.source_id
+	// 	and ro.sheet_index = cte.sheet_index 
+	// 	AND ro.row_index = cte.row_index
+	// `)
+}
+Consciousness.recalcRowsKeyId_bySheet = async (db, source_id, sheet_index) => {
+	await db.exec(`
+		UPDATE sources_rows ro
+		SET ro.key_id = null
+		WHERE 
+			ro.source_id = :source_id and ro.sheet_index = :sheet_index
+	`, {source_id, sheet_index})
+	await db.exec(`
+		UPDATE sources_rows ro, sources_cells ce, sources_sheets sh
+		SET ro.key_id = ce.value_id
+		WHERE 
+			ro.source_id = :source_id and ro.sheet_index = :sheet_index
+			and sh.source_id = ro.source_id
+			and sh.sheet_index = ro.sheet_index
+			-- and ce.value_id is not null
+			and ce.source_id = ro.source_id
+			and ce.row_index = ro.row_index
+			and ce.sheet_index = ro.sheet_index
+			and ce.col_index = sh.key_index
+	`, {source_id, sheet_index})
+	// await db.exec(`
+	// 	UPDATE sources_rows ro, (
+	// 		SELECT 
+	// 			source_id, sheet_index, row_index,
+	// 			ROW_NUMBER() OVER (PARTITION BY source_id, sheet_index, key_id ORDER BY row_index) - 1 AS repeat_index
+	// 		FROM sources_rows
+	// 	) cte
+	// 	SET ro.repeat_index = cte.repeat_index
+	// 	WHERE 
+	// 		ro.source_id = :source_id and ro.sheet_index = :sheet_index
+	// 		and cte.source_id = ro.source_id
+	// 		and ro.sheet_index = cte.sheet_index 
+	// 		AND ro.row_index = cte.row_index
+	// `, {source_id, sheet_index})
+}
+Consciousness.recalcRowsKeyId_bySource = async (db, source_id) => {
+	await db.exec(`
+		UPDATE sources_rows ro
+		SET ro.key_id = null
+		WHERE 
+			ro.source_id = :source_id
+	`, {source_id})
+	await db.exec(`
+		UPDATE sources_rows ro, sources_cells ce, sources_sheets sh
+		SET ro.key_id = ce.value_id
+		WHERE 
+			ro.source_id = :source_id 
+			and sh.source_id = ro.source_id
+			and sh.sheet_index = ro.sheet_index
+			-- and ce.value_id is not null
+			and ce.source_id = ro.source_id
+			and ce.row_index = ro.row_index
+			and ce.sheet_index = ro.sheet_index
+			and ce.col_index = sh.key_index
+	`, {source_id})
+	// await db.exec(`
+	// 	UPDATE sources_rows ro, (
+	// 		SELECT 
+	// 			source_id, sheet_index, row_index,
+	// 			ROW_NUMBER() OVER (PARTITION BY source_id, sheet_index, key_id ORDER BY row_index) - 1 AS repeat_index
+	// 		FROM sources_rows
+	// 	) cte
+	// 	SET ro.repeat_index = cte.repeat_index
+	// 	WHERE 
+	// 		ro.source_id = :source_id
+	// 		and cte.source_id = ro.source_id
+	// 		and ro.sheet_index = cte.sheet_index 
+	// 		AND ro.row_index = cte.row_index
+	// `, {source_id})
+}
 
 Consciousness.setCellType = async (db, cell) => {
 	const type = cell.type
@@ -545,19 +548,18 @@ Consciousness.setCellType = async (db, cell) => {
 			if (isNaN(number)) {
 				number = null
 				pruning = true
-			}
-			if (number != textnumber) {
+			} else if (number != textnumber) {
 				number = null //Любое обрезанное числов становится null
 				//if (!number) number = null //Обрезанный 0 это null
 				pruning = true
-			}
-			if (number != null) {
+			} else {
 				
 				const number_before_round = (number * (10 ** scale)).toFixed(10)
 				number = Math.round(number_before_round)
 
 				if (number_before_round != number) {
-					number = null
+
+					//number = null
 					pruning = true
 				} else if (number > 2147483647 || number < -2147483647) { //int sql
 					number = null
@@ -589,13 +591,12 @@ Consciousness.setCellType = async (db, cell) => {
 			
 
 			if (!value_nick) pruning = true
-			//if (value_nick) {
-				value_id = await db.col(`select value_id from sources_values where value_nick = :value_nick`, {value_nick})
-				if (!value_id) value_id = await db.insertId(`
-					INSERT INTO sources_values (value_title, value_nick)
-			   		VALUES (:value_title, :value_nick)
-				`, {value_title: value_nick ? value_title : '', value_nick})
-			//}
+			
+			value_id = await db.col(`select value_id from sources_values where value_nick = :value_nick`, {value_nick})
+			if (!value_id) value_id = await db.insertId(`
+				INSERT INTO sources_values (value_title, value_nick)
+				VALUES (:value_title, :value_nick)
+			`, {value_title: value_nick ? value_title : '', value_nick})			
 		}
 	}
 	return {...cell, value_id, number, date, pruning}
@@ -658,7 +659,7 @@ Consciousness.recalcMulti = async (db) => { //prop_id может не быть, 
 		HAVING (multi AND cnt = 1 AND INSTR(text, ', ')) OR (!multi AND cnt > 1)
 	`)
 
-	console.log(list.length)
+	
 	console.timeEnd('recalcMulti')
 	await Consciousness.recalcMulti_list(db, list)
 }
@@ -750,7 +751,6 @@ Consciousness.recalcMulti_bySource = async (db, source_id) => {
 		HAVING (!multi AND cnt > 1) OR (multi AND cnt = 1 AND INSTR(text, ', '))
 		-- HAVING (!multi AND cnt > 1) OR (multi AND cnt = 1)
 	`, {source_id})
-	console.log(list.length)
 	console.timeEnd('recalcMulti_bySource')
 	await Consciousness.recalcMulti_list(db, list)
 

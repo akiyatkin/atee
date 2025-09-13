@@ -8,6 +8,7 @@
 		"url": "git+https://github.com/akiyatkin/atee.git"
 	},
 	"dependencies": {
+		"googleapis": "^67.0.0",
 		"easy-sheets":"^1.0.11"
 	}
 }

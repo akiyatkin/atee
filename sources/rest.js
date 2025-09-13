@@ -37,6 +37,7 @@ rest.addResponse('settings', ['admin'], async view => {
 
 	const conf = await config('sources')
 	view.data.dir = conf.dir
+	view.data.exporttables = rest_sources.exporttables
 
 	const db = await view.get('db')
 	view.data.loads = await db.col(`
@@ -72,6 +73,11 @@ rest.addResponse('main', async view => {
 	const db = await view.get('db')
 	const list = view.data.list = await Sources.getSources(db)
 	for (const source of list) {
+		source.rows = await db.col(`
+			SELECT count(*) 
+			FROM sources_rows 
+			WHERE source_id = :source_id
+		`, source)
 		source.news = await db.col(`
 			SELECT count(*)
 			FROM sources_cols co 
@@ -500,6 +506,7 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 		and (${where_search.join(' or ')})
 	`, {source_id})
 
+	//Строк с ключами
 	view.data.quantity_of_keys = await db.col(`
 		SELECT count(*)
 		FROM sources_rows ro, sources_sheets sh

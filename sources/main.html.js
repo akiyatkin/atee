@@ -2,6 +2,7 @@ import field from "/-dialog/field.html.js"
 import date from "/-words/date.html.js"
 import svg from "/-sources/svg.html.js"
 import ago from "/-words/ago.html.js"
+import words from "/-words/words.html.js"
 import err from "/-controller/err.html.js"
 export const css = ['/-sources/represent.css','/-sources/revscroll.css']
 export const ROOT = (data, env) => `
@@ -33,19 +34,19 @@ const showScriptDrag = (data, env) => `
 	</script>
 `
 const showMain = (data, env) => `
-	<pre>${data.comment}</pre>
-	<p align="right">
+	<div style="float:right">
 		${field.prompt({
 			cls: 'a',
 			type: 'area',
 			name: 'comment', 
 			label: 'Общий план',
-			value: 'Изменить', 
+			value: svg.edit(), 
 			action: '/-sources/set-comment', 
 			reloaddiv: env.layer.div,
 			input: data.comment
 		})}
-	</p>
+	</div>
+	<pre style="font-style: italic;">${data.comment}</pre>
 	<div style="margin: 1em 0; display: flex; flex-wrap: wrap; gap: 1em; justify-content: space-between;">
 		${field.button({
 			async: true,
@@ -59,24 +60,21 @@ const showMain = (data, env) => `
 			reloaddiv: env.layer.div,
 		})}
 	</div>
-	
-		<table draggable="false" class="list">
+	<div>
+		<table draggable="false">
 			<thead>
 				<tr>
 					<td>Источник</td>
-					<td>Тип</td>
 					<td>Статус</td>
 					
 					<td>Комментарий</td>
-					<td></td>
 
-					<td title="Нескрытые колонки без свойств">Колонок</td>
-					<td title="Столбцов с обрезанными значениями">Упрощений</td>
-					<td title="Дата статуса, дата актуализации">Дата</td>
 					
-					<td>Проверен</td>
-					<td>Актуальность</td>
-					<td>Загружен</td>
+					
+					
+					<td>Проверка</td>
+					
+					<td>Загрузка</td>
 					<td>Ревизия</td>
 					
 				</tr>
@@ -85,8 +83,19 @@ const showMain = (data, env) => `
 				${data.list.map(source => showSourceTr(data, env, source)).join('')}
 			</tbody>
 		</table>
-	
-	${data.list.some(source => source.date_start) ? showScriptReload(data, env) : showScriptDrag(data, env)}
+		${data.list.some(source => source.date_start) ? showScriptReload(data, env) : showScriptDrag(data, env)}
+		<script>
+			(async div => {
+				const table = div.getElementsByTagName('table')[0]
+				const name = 'sources_main'
+				table.scrollLeft = window.sessionStorage.getItem(name) || 0
+				table.addEventListener('scroll', e => {
+					window.sessionStorage.setItem(name, table.scrollLeft)
+				}, {passive: true})
+
+			})(document.currentScript.parentElement)
+		</script>
+	</div>
 	<div style="margin:2em 0; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
 		${field.prompt({
 			value: 'Добавить источник', 
@@ -125,62 +134,100 @@ const showSourceTr = (data, env, source) => `
 	<tr data-id="${source.source_id}" style="white-space: nowrap;" class="item status_${source.class}">
 		<td>
 			<a href="sheet?source_id=${source.source_id}">${source.source_title}</a>
+			<div class="mute">${source.master ? 'Данные' : 'Прайс'}</div>
 		</td>
 		<td>
-			${source.master ? 'Мастер' : 'Прайс'}
+			${source.status} 
+			<!-- <b>${ago.short(source.date_start)}</b> -->
+			<div class="mute">
+				<span title="Проверка или загрузка ${date.dmyhi(source.need ? source.date_load : source.date_check)}">${date.dm(source.need ? source.date_load : source.date_check)}</span>
+			</div>
+			<div>
+				<div title="Нескрытые колонки без свойств">${source.news ? showNews(source) : ''}</div>
+				<div title="Столбцов с обрезанными значениями">${source.prunings ? showPrunings(source) : ''}</div>
+			</div>
 		</td>
 		
 		<td>
-			${source.status} <b>${ago.short(source.date_start)}</b>
-		</td>
-		
-		
-		<td style="white-space: pre;">${source.comment}</td>
-		<td>${field.prompt({
-				cls: 'a',
-				type: 'area',
-				name: 'comment', 
-				label: 'Комментарий источника',
-				value: svg.edit(), 
-				action: '/-sources/set-source-comment', 
-				args: {source_id: source.source_id},
-				reloaddiv: env.layer.div,
-				input: source.comment
-			})}</td>
-
-		<td>
-			${source.news ? showNews(source) : ''}
-		</td>
-		<td>
-			${source.prunings ? showPrunings(source) : ''}
-		</td>
-		<td>
-			${date.ai(source.need ? source.date_load : source.date_check)}
+			<div style="float:right">
+				${field.prompt({
+					cls: 'a',
+					type: 'area',
+					name: 'comment', 
+					label: 'Комментарий источника',
+					value: svg.edit(), 
+					action: '/-sources/set-source-comment', 
+					args: {source_id: source.source_id},
+					reloaddiv: env.layer.div,
+					input: source.comment
+				})}
+			</div>
+			<div style="white-space: pre; font-style: italic;">${source.comment}</div>
 		</td>
 
+		
+
 
 		<td>
-			${date.ai(source.date_check)}
+			<div title="Дата проверки ${date.dmyhi(source.date_check)}">
+				${date.dm(source.date_check)}, <span class="mute" title="Длительность проверки">${ago.pass(source.duration_check)}</span>
+			</div>
+			<div class="mute">
+				<span title="Дата последних изменений ${date.dmyhi(source.date_mtime)}">${date.dm(source.date_mtime)}</span>
+			</div>
+			<div>
+				${field.button({
+					cls: 'a',
+					label: 'Проверить', 
+					action: '/-sources/set-source-check',
+					args: {source_id: source.source_id},
+					global: ['recalc']
+				})}
+			</div>
 		</td>
+		
 		<td>
-			${date.ai(source.date_content)}
-		</td>
-		<td>
-			${date.ai(source.date_load)}
+			
+			<span title="Дата загрузки ${date.dmyhi(source.date_load)}">${date.dm(source.date_load)}</span>, <span class="mute" title="Длительность загрузки">${ago.pass(source.duration_rest + source.duration_insert + source.duration_recalc)}</span>
+			<div class="mute">
+				<span title="Дата актуальности в загруженных данных ${date.dmyhi(source.date_content)}">${date.dm(source.date_content)}</span>, ${source.rows} ${words(source.rows, 'строка', 'строки', 'строк')}
+			</div>
+			<div>
+				${field.button({
+					cls: 'a',
+					label: 'Загрузить', 
+					action: '/-sources/set-source-load',
+					args: {source_id: source.source_id},
+					global: ['recalc']
+				})}
+			</div>
 		</td>
 		
 		
 		<td>
-			${date.ai(source.date_exam)}
+			<a href="source/${source.source_id}">${date.dm(source.date_exam)}</a>
+			
 		</td>
 		
 	</tr>
 `
+// ${field.prompt({
+// 				value: date.dm(source.date_exam), 
+// 				cls: 'a',
+// 				name: 'date',
+// 				input: source.date_exam,
+// 				ok: 'ОК', 
+// 				label: 'Дата контроля', 
+// 				descr: 'Отметка администратор, когда была выполнена проверка источника. <br>Проверен код обработчика, описаны типы колонок, синонимы, <br>дата актуальности данных в обработчике определяется корректно.',
+// 				type: 'date', 
+// 				action: '/-sources/set-source-exam', 
+// 				args: {source_id: source.source_id}, 
+// 				reloaddiv: env.layer.div
+// 			})}
 const showNews = (source) => `
-	<a href="sheet?source_id=${source.source_id}&keyfilter=unknown">${source.news}</a>
-	
+	<a class="mute" style="color: red" href="sheet?source_id=${source.source_id}&keyfilter=unknown">${source.news} ${words(source.prunings, 'колонка', 'колонки', 'колонок')}</a>
 `
 const showPrunings = (source) => `
-	<a href="sheet?source_id=${source.source_id}&keyfilter=pruning&limit=10000">${source.prunings}</a>
+	<a class="mute" style="color: red" href="sheet?source_id=${source.source_id}&keyfilter=pruning&limit=10000">${source.prunings} ${words(source.prunings, 'упрощение', 'упрощения', 'упрощений')}</a>
 	
 `
