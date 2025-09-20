@@ -4,14 +4,14 @@ import unique from "/-nicked/unique.js"
 import BulkInserter from "./BulkInserter.js"
 import Access from "/-controller/Access.js"
 import fs from "fs/promises"
-const Sources = {}
+import scheduleDailyTask from "/-sources/scheduleDailyTask.js"
+import Recalc from "/-sources/Recalc.js"
 import Consciousness from "/-sources/Consciousness.js"
 import PerformanceMonitor from "./PerformanceMonitor.js"
 import represent from "/-sources/represent.js"
+
+const Sources = {}
 const conf = await config('sources')
-
-
-
 
 Sources.load = async (db, source, visitor) => {
 	if (source.date_start) return false
@@ -70,82 +70,138 @@ Sources.load = async (db, source, visitor) => {
 
 	return true
 }
+// Sources.getDates = async db => {
+// 	const dates = await db.fetch(`
+// 		SELECT 
+// 			UNIX_TIMESTAMP(date_index) as date_index, 
+// 			UNIX_TIMESTAMP(date_recalc) as date_recalc 
+// 		FROM sources_settings
+// 	`)	
+// 	dates.indexneed = dates.date_recalc > dates.date_index
+// 	return dates
+// }
+Sources.recalcAllChange = async (db) => {
+	await Consciousness.recalcEntitiesPropId(db)
+	await Consciousness.recalcMulti(db)
+	await Consciousness.recalcTexts(db)
+	await Consciousness.recalcKeyIndex(db)
+	await Consciousness.insertItems(db)
 
-Sources.index = async db => {
-	clearTimeout(Sources.deferredIndex.timer)
-	await db.exec(`UPDATE sources_settings SET date_index = now()`)
+	await Consciousness.recalcRepresentSheet(db)
+	await Consciousness.recalcRepresentCol(db)
+	await Consciousness.recalcMaster(db)
+}
+Sources.recalcIndex = async db => {
 	
-	const monitor = new PerformanceMonitor()
 	
-	monitor.start('recalcWinner')
+	
+	//const monitor = new PerformanceMonitor()
+	
+	//monitor.start('recalcWinner')
 	await Consciousness.recalcWinner(db) //Есть truncate и данные на сайте исчезнут. Потом выгрузка в транзакции, покажется когда всё выгрузится (10 секунд для 10 000 примерно). 
 
-	monitor.start('recalcAppear')
+	//monitor.start('recalcAppear')
 	await Consciousness.recalcAppear(db) // 456.06ms
-	monitor.start('recalcRowSearch')
-	await Consciousness.recalcRowSearch(db)
-	monitor.start('recalcItemSearch')
+	// monitor.start('recalcRowSearch')
+	// await Consciousness.recalcRowSearch(db)
+	//monitor.start('recalcItemSearch')
 	await Consciousness.recalcItemSearch(db)
 
-	monitor.stop()
-	console.log(monitor.getReport())
-	Access.setAccessTime()
-}
-Sources.deferredIndex = (db) => {
-	clearTimeout(Sources.deferredIndex.timer)
-	Sources.deferredIndex.timer = setTimeout(() => Sources.index(db), 1000 * 60 * 60)
-}
-
-Sources.recalc = async (db, func, reindex) => {
-
-	//if (!re) return false
-	//if (!reindex) await db.exec(`UPDATE sources_settings SET date_recalc = now()`)
-
-	if (Sources.recalc.start) {
-		Sources.recalc.all = true //Повторный запуск
-		return
-	} else {
-		Sources.recalc.start = new Date() //Первый запуск
-	}
+	//monitor.stop()
+	//console.log(monitor.getReport())
 	
-	console.time('recalc-func')
-	await func(db)
-	console.timeEnd('recalc-func')
+}
+
+// Sources.checkDeferredIndex = async (db) => {
+// 	console.log('Sources.checkDeferredIndex()')
+// 	const dates = await Sources.getDates(db)
+// 	if (dates.indexneed) await Sources.deferredIndex(db)
+// }
+// Sources.deferredIndex = (db) => {
+// 	clearTimeout(Recalc.deferredIndex.timer)
+// 	Sources.deferredIndex.timer = setTimeout(() => Sources.recalcIndex(db), 1000 * 60 * 30)
+// }
+
+
+Sources.scheduleDailyRenovate = (db, time = '01:09') => {	
+	console.log('Sources.scheduleDailyRenovate', time)
+	scheduleDailyTask(time, async () => {
+		const rest_sources = await import("/-sources/rest.js").then(r => r.default)
+		const data = await rest_sources.data('set-sources-renovate')
+		console.log('/-sources/set-sources-renovate', data.result)
+		return data.result
+	})
+}
+
+// Sources.recalcAll = async (db, func) => {
+// 	await Recalc.recalc(db, async () => {
+// 		await func()
+
+// 		await Sources.recalcAllChange(db)
+// 		// return
+		
+		
+// 		// await Consciousness.recalcWinner(db)
+
+// 		// await Consciousness.recalcAppear(db)
+// 		// await Consciousness.recalcRowSearch(db)
+// 		// await Consciousness.recalcItemSearch(db)
+// 	})
+// }
+// Sources.recalc = async (db, func, reindex) => {
+
+// 	//if (!re) return false
+// 	//if (!reindex) await db.exec(`UPDATE sources_settings SET date_recalc = now()`)
+
+// 	if (Sources.recalc.start) {
+// 		//Sources.recalc.all = true //Повторный запуск
+// 		//return
+// 	} else {
+// 		Sources.recalc.start = new Date() //Первый запуск
+// 	}
+	
+// 	console.time('Sources.recalc')
+// 	const promise = func(db)
+// 	const timeout = new Promise(resolve => setTimeout(resolve, 1000));
+// 	await Promise.all([promise, timeout])
+// 	console.timeEnd('Sources.recalc')
 	
 
-	while (Sources.recalc.all) {
-		Sources.recalc.all = false
-		console.time('recalc-represent-all')
-		await Consciousness.recalcEntitiesPropId(db)
-		await Consciousness.recalcMulti(db)
-		await Consciousness.recalcTexts(db)
-		await Consciousness.recalcKeyIndex(db)
-		await Consciousness.insertItems(db)
+// 	// while (Sources.recalc.all) {
+// 	// 	Sources.recalc.all = false
+// 	// 	console.time('Sources.recalcAll')
+// 	// 	await Consciousness.recalcEntitiesPropId(db)
+// 	// 	await Consciousness.recalcMulti(db)
+// 	// 	await Consciousness.recalcTexts(db)
+// 	// 	await Consciousness.recalcKeyIndex(db)
+// 	// 	await Consciousness.insertItems(db)
 		
-		await Consciousness.recalcRepresentSheet(db)
-		await Consciousness.recalcRepresentCol(db)
-		await Consciousness.recalcMaster(db)
-		console.timeEnd('recalc-represent-all')
+// 	// 	await Consciousness.recalcRepresentSheet(db)
+// 	// 	await Consciousness.recalcRepresentCol(db)
+// 	// 	await Consciousness.recalcMaster(db)
+// 	// 	console.timeEnd('Sources.recalcAll')
 
-		// await Consciousness.recalcWinner(db)
+// 	// 	// await Consciousness.recalcWinner(db)
 		
-		// await Consciousness.recalcAppear(db)
-		// await Consciousness.recalcRowSearch(db)
-		// await Consciousness.recalcItemSearch(db)
+// 	// 	// await Consciousness.recalcAppear(db)
+// 	// 	// await Consciousness.recalcRowSearch(db)
+// 	// 	// await Consciousness.recalcItemSearch(db)
 		
-	}
-	Sources.recalc.lastend = new Date()
-	Sources.recalc.laststart = Sources.recalc.start
-	Sources.recalc.start = false
-	if (!reindex) {
-		await db.exec(`UPDATE sources_settings SET date_recalc = now()`)
-		Sources.deferredIndex(db)
-	}
-}
-Sources.recalc.lastend = false
-Sources.recalc.laststart = false
-Sources.recalc.all = false
-Sources.recalc.start = false
+// 	// }
+// 	Sources.recalc.lastend = new Date()
+// 	Sources.recalc.laststart = Sources.recalc.start
+// 	Sources.recalc.start = false
+
+
+// 	if (!reindex) {
+// 		await db.exec(`UPDATE sources_settings SET date_recalc = now()`)
+// 		Sources.deferredIndex(db)
+// 	}
+// }
+// Sources.recalc.lastend = false
+// Sources.recalc.laststart = false
+// //Sources.recalc.all = false
+// Sources.recalc.start = false
 
 
 
@@ -217,7 +273,7 @@ Sources.renovate = async (db, source, visitor) => {
 
 
 
-Sources.cleanSheets = (sheets) => {
+Sources.cleanSheets = (sheets = []) => {
 	const titles = {}
 	sheets = sheets.filter(sheet => {
 		sheet.title = (sheet.title || '').trim()
@@ -404,6 +460,7 @@ const SELECT_PROP = `
 	pr.prop_title,
 	pr.type,	
 	pr.unit,
+	pr.lettercase,
 	pr.scale,
 	pr.prop_nick,
 	pr.known,
@@ -427,6 +484,7 @@ const SELECT_ENTITY = `
 `
 const SELECT_SOURCE = `
 	so.source_id, 
+	so.ordain, 
 	so.source_title,
 	UNIX_TIMESTAMP(so.date_check) as date_check, 
 	UNIX_TIMESTAMP(so.date_content) as date_content, 
@@ -879,15 +937,7 @@ Sources.getItem = async (db, entity_id, key_id) => {
 	`, {key_id, entity_id, prop_id})
 	return item
 }
-Sources.getProps = async (db) => {
-	const list = await db.all(`
-		SELECT 
-		${SELECT_PROP}
-		FROM sources_props pr
-		ORDER BY pr.ordain
-	`)
-	return list
-}
+
 Sources.getSource = async (db, source_id) => {
 	const source = await db.fetch(`
 		SELECT 
@@ -1006,8 +1056,8 @@ Sources.createProp = async (db, prop_title, type = 'text') => {
 	const {name, unit} = Sources.getNameUnit(prop_title)
 	const prop_id = await db.insertId(`
 		INSERT INTO sources_props (prop_title, prop_nick, type, ordain, name, unit)
-   		VALUES (:prop_title, :prop_nick, :type, :ordain, :name, :unit)
-   		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title), prop_id = LAST_INSERT_ID(prop_id)
+		VALUES (:prop_title, :prop_nick, :type, :ordain, :name, :unit)
+		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title), prop_id = LAST_INSERT_ID(prop_id)
 	`, {prop_title, prop_nick, ordain, name, unit, type})
 	await Sources.reorderProps(db)
 	return prop_id

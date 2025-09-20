@@ -35,6 +35,7 @@ const showProps = (data, env) => `
 				<td>Значений</td>
 				<td>Карточка</td>
 				<td>Фильтр</td>
+				<td>Выбор</td>
 				<td>Обработка</td>
 				<td>Комментарий</td>
 				<td></td>
@@ -60,7 +61,7 @@ const showTr = (data, env, prop) => `
 		<td>
 			${field.search({
 				cls: 'a',
-				search: '/-shop/admin/get-sub?type=card',
+				search: '/-shop/admin/get-tpl-sub?type=card',
 				value: prop.card_tpl,
 				heading: "Шаблон для карточки",
 				descr: '',
@@ -68,14 +69,14 @@ const showTr = (data, env, prop) => `
 				type: 'text',
 				name: 'sub',
 				find: 'left',
-				action: '/-shop/admin/set-sub?type=card',
+				action: '/-shop/admin/set-tpl-sub?type=card',
 				args: { prop_nick: prop.prop_nick}
 			})}
 		</td>
 		<td>
 			${field.search({
 				cls: 'a',
-				search: '/-shop/admin/get-sub?type=filter',
+				search: '/-shop/admin/get-tpl-sub?type=filter',
 				value: prop.filter_tpl,
 				heading: "Шаблон для фильтра",
 				descr: '',
@@ -83,7 +84,18 @@ const showTr = (data, env, prop) => `
 				type: 'text',
 				name: 'sub',
 				find: 'left',
-				action: '/-shop/admin/set-sub?type=filter',
+				action: '/-shop/admin/set-tpl-sub?type=filter',
+				args: { prop_nick: prop.prop_nick}
+			})}
+		</td>
+		<td>
+			${field.setpop({
+				heading:'Выбор в фильтре',
+				cls: 'a',
+				value: prop.multichoice,
+				name: 'bit',
+				action: '/-shop/admin/set-prop-multichoice', 
+				values: {"":"Один", "1":"Несколько"},
 				args: { prop_nick: prop.prop_nick}
 			})}
 		</td>

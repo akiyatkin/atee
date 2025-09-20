@@ -6,9 +6,14 @@ const { XMLParser } = require("fast-xml-parser");
 const YML = {}
 YML.getModified = async url => {
 	const lines = await YML.getFirstLines(url, 2)
-	const line = lines[1]
-	const dateMatch = line.match(/date="([^"]+)"/);
-	const dateString = dateMatch ? dateMatch[1] : null;
+	let line = lines[0] || ''
+	let dateMatch = line.match(/date="([^"]+)"/);
+	let dateString = dateMatch ? dateMatch[1] : null;
+	if (!dateString) {
+		line = lines[1] || ''
+		dateMatch = line.match(/date="([^"]+)"/);
+		dateString = dateMatch ? dateMatch[1] : null;
+	}
 	if (!dateString) return false
 	const isoString = dateString.replace(' ', 'T') + ':00'
 	const date = new Date(isoString)

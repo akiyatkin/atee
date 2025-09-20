@@ -44,20 +44,20 @@ const showFilter = (data, filter, env) => `
 
 
 filters.just = (body, descr) => `
-	<div style="margin-bottom: 1em;">
+	<div style="margin-bottom: 1em; clear:both">
 		${frame('<div>', descr, '</div>')}
 		${body}
 	</div>
 `
 filters.line = (title, body, descr) => `
-	<div style="margin-bottom: 1em;">
+	<div style="margin-bottom: 1em; clear:both">
 		<span style="font-weight: bold; padding-right: 0.7em">${title}:</span>
 		${frame('<div>', descr, '</div>')}
 		${body}
 	</div>
 `
 filters.block = (title, body, descr) => `
-	<div style="margin-bottom: 1em;">
+	<div style="margin-bottom: 1em; clear:both">
 		<div style="font-weight: bold; padding-right: 0.7em">${title}</div>
 		${frame('<div>', descr, '</div>')}
 		<div>${body}</div>
@@ -99,6 +99,7 @@ const showDescr = (filter) => `
 	<div>${filter.descr}</div>
 `
 
+//${showHaveMore(data, env, filter, '…')}
 filters.prop = {
 	slider: (data, filter, env) => `
 		<div class="bodyslider" style="margin-bottom: 1rem;">
@@ -283,7 +284,7 @@ filters.prop = {
 		`
 			<span style="white-space:nowrap; margin-right:0.7em">${
 				filter.values.map(value_nick => filters.item(data, env, filter, value_nick)).join(',</span> <span style="white-space:nowrap; margin-right:0.7em">')
-			}</span>
+			}</span>${filter.havemore ? showHaveMore(data, env, filter) : ''}
 		`, filter.descr
 	),
 	just: (data, filter, env) => filters.just(`
@@ -292,27 +293,59 @@ filters.prop = {
 		}</span>
 	`, filter.descr)
 }
+const showHaveMore = (data, env, filter, title = 'выбрать…') => `<span style="white-space:nowrap; margin-left:0.7em; float:right">
+	<span><button class="a mute">${title}</button><script>
+		(btn => {
+			btn.addEventListener('click', async () => {
+				const Search = await import('/-dialog/search/Search.js').then(r => r.default)
+				Search.open({
+					heading: "${data.props[filter.prop_nick].name}${data.props[filter.prop_nick].unit?',&nbsp' + data.props[filter.prop_nick].unit:''}", 
+					action:'/-shop/get-filter-prop-more-search?prop_nick=${filter.prop_nick}&group_nick=${data.group.group_nick}',
+					placeholder:'Найти...',
+					click: async (row, need) => {
+						const cards = await import('/-shop/cards.html.js').then(r => r.default)
+						const Client = await window.getClient()
+						let src = '${cards.getGroupPath(data, data.group)}'
+						if (row.spec) {
+							src += cards.addget(Client.bread, {m:"${data.md.m}" + ':${filter.prop_nick}=' + row.spec })
+						} else {
+							src += cards.addget(Client.bread, {m:"${data.md.m}" + ':${filter.prop_nick}::.' + (row.value_nick || row.number)+'=1' })
+						}
+						Client.go(src, false)
+						return true
+					}
+				})
+			})
+		})(document.currentScript.previousElementSibling)
+	</script></span>
+</span>`
 filters.option = (data, filter, value_nick) => `
 		<option 
 			style="opacity: ${~filter.remains.indexOf(value_nick) ? '1':'0.3'}" 
 			${data.md.mget[filter.prop_nick]?.[value_nick] ? 'selected' : ''} 
 			value="${value_nick}">
-				${data.props[filter.prop_nick].type == 'value' ? data.values[value_nick].value_title : value_nick}
+				${data.props[filter.prop_nick].type == 'value' ? data.values[value_nick]?.value_title || value_nick : value_nick}
 		</option>
 `
-filters.item = (data, env, filter, value_nick) => data.md.mget[filter.prop_nick]?.[value_nick] ? filters.itemChoiced(data, env, filter, value_nick) : filters.itemChoice(data, env, filter, value_nick)
+filters.item = (data, env, filter, value_nick) => {
+	if (data.md.mget[filter.prop_nick]?.[value_nick]) {
+		return filters.itemChoiced(data, env, filter, value_nick)
+	} else {
+		return filters.itemChoice(data, env, filter, value_nick)
+	}
+}
 
 filters.itemChoiced = (data, env, filter, value_nick) => `<a class="clearlink"
 	style="display: inline-block; margin-top:0; border-color: transparent; color:inherit;" 
 	class="a" data-scroll="none" rel="nofollow" 
 	href="${cards.getGroupPath(data, data.group)}${cards.addget(env.bread, {m:data.md.m + ':' + filter.prop_nick + '.' + value_nick})}">
-	${data.props[filter.prop_nick].type == 'value' ? data.values[value_nick].value_title : value_nick}<sup style="position: absolute; margin-left:-2px; margin-top:-2px" class="krest">&nbsp;✕</sup></a>`
+	<span class="value">${data.props[filter.prop_nick].type == 'value' ? (data.values[value_nick]?.value_title || ('<i>' + value_nick + '</i>')) : value_nick}</span><sup style="position: absolute; margin-left:-2px; margin-top:-2px" class="krest">&nbsp;✕</sup></a>`
 
 filters.itemChoice = (data, env, filter, value_nick) => `<a
-	style="display: inline-block; opacity: ${~filter.remains.indexOf(value_nick) ? '1' : '0.3'}" 
+	style="display: inline-block; " 
 	class="a" data-scroll="none" rel="nofollow" 
-	href="${cards.getGroupPath(data, data.group)}${cards.addget(env.bread, {m:data.md.m + ':' + filter.prop_nick + '::.' + value_nick + '=1'})}"
-	>${data.props[filter.prop_nick].type == 'value' ? data.values[value_nick].value_title : value_nick}</a>`
-
+	href="${cards.getGroupPath(data, data.group)}${cards.addget(env.bread, {m:data.md.m + ':' + filter.prop_nick + (filter.multichoice ? '.' : '::.') + value_nick + '=1'})}"
+	>${data.props[filter.prop_nick].type == 'value' ? (data.values[value_nick]?.value_title || value_nick) : value_nick}</a>`
+//opacity: ${~filter.remains.indexOf(value_nick) ? '1' : '0.3'}
 
 

@@ -16,36 +16,39 @@ Drag.make = (div, actionsave, callback) => {
 	if (div.tagName == 'TBODY') {
 		const table = div.closest('table')
 		const thead = table.getElementsByTagName('thead')[0]
-		const tr = thead.children[0]
-		const td = tr.children[0]
+		if (thead) {
+			const tr = thead.children[0]
+			const td = tr.children[0]
 
-		const moveon = document.createElement('span')
-		moveon.innerHTML = '⇵'
-		moveon.style.display = 'none'
-
-		const moveoff = document.createElement('span')
-		moveoff.innerHTML = '⠿'
-		moveoff.style.display = ''
-
-		const move = document.createElement('span')
-		move.style.userSelect = 'none'
-		move.style.paddingRight = '1ch'
-		move.style.cursor = "pointer"
-		move.append(moveon)
-		move.append(moveoff)
-		td.prepend(move)
-		
-		moveon.addEventListener('click', () => {
+			const moveon = document.createElement('span')
+			moveon.innerHTML = '⇵'
 			moveon.style.display = 'none'
+
+			const moveoff = document.createElement('span')
+			moveoff.innerHTML = '⠿'
 			moveoff.style.display = ''
-			activate(false)
-		})
-		moveoff.addEventListener('click', () => {
-			moveon.style.display = ''
-			moveoff.style.display = 'none'
+
+			const move = document.createElement('span')
+			move.style.userSelect = 'none'
+			move.style.paddingRight = '1ch'
+			move.style.cursor = "pointer"
+			move.append(moveon)
+			move.append(moveoff)
+			td.prepend(move)
+			
+			moveon.addEventListener('click', () => {
+				moveon.style.display = 'none'
+				moveoff.style.display = ''
+				activate(false)
+			})
+			moveoff.addEventListener('click', () => {
+				moveon.style.display = ''
+				moveoff.style.display = 'none'
+				activate(true)
+			})
+		} else {
 			activate(true)
-		})
-		
+		}
 	} else {
 		activate(true)
 	}

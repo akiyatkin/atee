@@ -412,11 +412,18 @@ Cart.getBasketFreeze = async (db, order_id) => {
 		ORDER by dateedit DESC
 	`, {order_id})
 	list = (await Promise.all(list.map(async pos => {
-		pos.item = JSON.parse(pos.json)
+		try {
+			pos.item = JSON.parse(pos.json)
+		} catch(e) {
+			console.log(e)
+			return false
+		}
+		if (!pos.item) return false
+		//if (!pos.item.cena) return false
 		pos.groups = await Shop.getLastGroupNicksByItem(db, pos.item)
 		delete pos.json
 		return pos
-	})))
+	}))).filter(v => v)
 	list.forEach(pos => pos.sum = pos.item.cena[0] * pos.quantity)
 	return list
 }
@@ -432,15 +439,14 @@ Cart.getBasketCatalog = async (db, order_id, partner) => {
 		pos.item = await Shop.getItemByBrendart(db, pos.brendart_nick, partner)
 		pos.groups = await Shop.getLastGroupNicksByItem(db, pos.item)
 		return pos
-	}))).filter(pos => pos.item?.cena?.[0] > 0)
+	}))).filter(pos => pos.item?.cena?.length && pos.groups.length)
 
 	list.forEach(pos => pos.sum = pos.item.cena[0] * pos.quantity)
 
 	return list
 }
-Cart.recalcOrder = async (db, order_id, partner) => {
+Cart.recalcOrder = async (db, order_id, list, partner) => {
 	await Cart.setPartner(db, order_id, partner)
-	const list = await Cart.getBasketCatalog(db, order_id, partner)
 	const sum = list.reduce((sum, pos) => sum + pos.sum, 0)
 	const count = list.length
 	await db.exec(`

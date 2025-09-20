@@ -10,16 +10,26 @@
 		"title":"Источники данных"
 	},
 	"json":{
+		"recalc:ROOT":"/-sources/get-recalc",
 		"props:ROOT":"/-shop/admin/props",
 		"main:ROOT":"/-shop/admin/main",
 		"settings:ROOT":"/-shop/admin/settings",
 		"brands:ROOT":"/-shop/admin/brands"
 	},
+	"global":{
+		"groups:ROOT":["recalc"],
+		"recalc:ROOT":["check"]
+	},
+	"parsedtpl":{
+		"recalc:ROOT":"${env.timings.view_time}"
+	},
+	"onlyclient":["recalc:ROOT"],
 	"jsontpl":{
 		"groups:ROOT":"/-shop/admin/groups?group_id=${env.crumb.child?.name ?? ''}&query=${env.bread.get.search ?? ''}",
 		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
 	},
 	"tpl":{
+		"recalc":"/-sources/recalc.html.js",
 		"frame":"/-controller/frame.html.js",
 		"controller":"/-controller/layout.html.js",
 		"settings":"/-shop/admin/settings.html.js",
@@ -34,6 +44,9 @@
 		"index:ROOT": {
 			"MAIN":"main:ROOT",
 			"ASIDE":"aside:ROOT"
+		},
+		"aside:ROOT":{
+			"RECALC":"recalc:ROOT"
 		}
 	},
 	"childs":{

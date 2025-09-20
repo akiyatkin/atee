@@ -3,10 +3,14 @@ import field from "/-dialog/field.html.js"
 import words from "/-words/words.js"
 import svg from "/-sources/svg.html.js"
 import date from "/-words/date.html.js"
-export const css = ['/-sources/represent.css']
+export const css = ['/-sources/represent.css','/-sources/revscroll.css']
+
+//Обновление через check этим не пользуемся reloaddiv: env.layer.conf.reloaddiv
 const main = {}
-main.prop = (data, env) => ``
-main.col = (data, env, col = data.col, entity = data.entity, prop = data.prop, source = data.source) => `
+const tpl = main
+main.head = {}
+main.head.prop = (data, env) => ``
+main.head.col = (data, env, col = data.col, entity = data.entity, prop = data.prop, source = data.source) => `
 	Колонке <b>${col.col_title}</b> соответствует 
 	<b>${field.search({
 		cls: 'a',
@@ -20,22 +24,23 @@ main.col = (data, env, col = data.col, entity = data.entity, prop = data.prop, s
 		find: 'prop_id',
 		action: '/-sources/set-col-prop',
 		args: {source_id: source.source_id, sheet_index: col.sheet_index, col_index: col.col_index},
-		reloaddiv:env.layer.conf.reloaddiv
+		global: 'check'
 	})}</b>
 	${prop ? '' : showFastProp(data, env)}
-	<!-- <script>
-		(div => {
-			const field = div.getElementsByClassName('field')[0]
-			if (!field) return
-			field.addEventListener('field-saved', async e => {
-				const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-				Dialog.hide()
-			})
-		})(document.currentScript.previousElementSibling)
-	</script> -->
 	<div>
 		${showType(data, env, prop)}
 	</div>
+	<!-- <script>
+		(div => {
+			const fields = div.getElementsByClassName('field')
+			for (const field of fields) {
+				field.addEventListener('field-saved', async e => {
+					const represent = await import('/-sources/represent.js').then(r => r.default)
+		 			represent.reload()
+				})
+			}
+		})(document.currentScript.parentElement)
+	</script> -->
 `
 const showFastProp = (data, env) => `
 	<div style="margin-top:0.5em">
@@ -77,7 +82,7 @@ const showScale = (data, env, prop) => `
 		descr: 'Сколько знаков после запятой для типа number',
 		action: '/-sources/set-prop-scale', 
 		args: {prop_id: prop.prop_id},
-		reloaddiv: env.layer.div
+		global: 'check'
 	})}, 
 `
 const showType = (data, env, prop) => !prop ? '' : `
@@ -90,17 +95,17 @@ const showType = (data, env, prop) => !prop ? '' : `
 		action: '/-sources/set-prop-type', 
 		values: {"number":"number", "date":"date", "value":"value", "text":"text"},
 		args: {prop_id: prop.prop_id},
-		reloaddiv: env.layer.div
+		global: 'check'
 	})}, ${prop.type == 'number' ? showScale(data, env, prop) : ''}значений ${field.setpop({
 		heading:'Значений',
 		cls: 'a',
 		value: prop.multi,
 		name: 'bit',
-		descr: 'Несколько значений могут быть разделены запятой с пробелом.',
+		descr: 'Несколько значений могут быть разделены запятой с пробелом. При внесении данных запятую в значении можно заменить на <code>&amp;#44;</code> чтобы избежать разделения. Но при использовании данных надо выполнять обратную замену.',
 		action: '/-sources/set-prop-prop', 
 		values: {"":"одно", "1":"несколько"},
 		args: {prop_id: prop.prop_id, propprop: 'multi'},
-		reloaddiv: env.layer.div
+		global: 'check'
 	})}, обработка ${field.setpop({
 		heading:'Обработка свойства',
 		cls: 'a',
@@ -109,14 +114,58 @@ const showType = (data, env, prop) => !prop ? '' : `
 		descr: '<b>more</b> означает, что у свойства нет специальной обработки и оно покажется вместе со всеми такими свойствами в общем списке. Свойство со специальной обработкой <b>column</b> покажется только там, где его покажет программист, по умолчанию в интерфейсе нигде не покажется, но придёт с данными. Свойство <b>system</b> даже с данными не придёт и может быть использовано для технических обработок, например быть критерием групп.',
 		action: '/-sources/set-known', 
 		values: {"system":"🛡️ system", "more":"🟡 more", "column":"✅ column"},
-		args: {prop_id: prop.prop_id}
+		args: {prop_id: prop.prop_id},
+		global: 'check'
 	})}.
+`
+main.showRelations = (data, env) => `
+	<!-- <table style="margin:1em 0">
+		<tr><td>entity_id</td><td>prop_id</td><td>key_id</td></tr>
+		<tr><td>БрендАрт</td><td>Категория</td><td>Ecola FC5310ECB</td></tr>
+	</table> -->
+
+	<table class="compact" style="margin:1em 0">
+		<tr><td>Сущность</td><td>${data.entity?.prop_title || ''}</td><td>${data.entity?.prop_id || ''}</td></tr>
+		<tr><td>Ключ</td><td>${data.key?.value_title || ''}</td><td>${data.key?.value_id || ''}</td></tr>
+		<tr><td>Свойство</td><td>${data.prop?.prop_title || ''}</td><td>${data.prop?.prop_id || ''}</td></tr>
+	</table>
+	
+	<table class="compact" style="margin:1em 0">
+		<thead>
+			<tr>
+				<td>Источник</td>
+				<td title="source_ordain"></td>
+				<td>Лист</td>
+				<td title="sheet_index"></td>
+				<td title="row_index"></td>
+				<td>Колонка</td>
+				<td title="col_index"></td>
+				<td>text</td>
+			</tr>
+		</thead>
+		<tbody>
+			${data.rels.map(rel => tpl.showRelTr(data, env, rel)).join('')}
+		</tbody>	
+	</table>
+`
+tpl.showRelTr = (data, env, rel) => `
+	<tr style="${rel.winner ? 'background-color: #eaf7d1;': ''} ${rel.choice ? 'font-weight:bold;' : ''}">
+		<td class="${rel.represent_source ? '' : 'mute'}">${rel.source_title}</td>
+		<td class="${rel.represent_source ? '' : 'mute'}" title="ordain">${rel.ordain}</td>
+		<td class="${rel.represent_sheet ? '' : 'mute'}"><a href="sheet?keyfilter=all&sheet_index=${rel.sheet_index}&search=${data.key ? data.key.value_nick : data.cell.text}&source_id=${rel.source_id}">${rel.sheet_title}</a></td>
+		<td class="${rel.represent_sheet ? '' : 'mute'}" title="sheet_index">${rel.sheet_index}</td>
+		<td class="${rel.represent_source && rel.represent_sheet ? '' : 'mute'}" title="row_index">${rel.row_index}</td>
+		<td class="${rel.represent_col ? '' : 'mute'}">${rel.col_title}</td>
+		<td class="${rel.represent_col ? '' : 'mute'}" title="col_index">${rel.col_index}</td>
+		<td class="${rel.represent_source && rel.represent_col && rel.represent_sheet ? '' : 'mute'}">${rel.text}</td>
+	</tr>
 `
 main.showOrig = (cell) => `
 	<xmp readonly class="mute" style="white-space: pre-wrap; font-family: inherit; padding:1em; margin: 1em 0">${cell.text}</xmp>
 `
-main.row = (data, env, row = data.row) => `Строка ${row.row_index}`
-main.cell = (data, env, cell = data.cell || {text: null}, prop = data.prop) => `
+
+main.head.row = (data, env, row = data.row) => `Строка ${row.row_index}`
+main.head.cell = (data, env, cell = data.cell || {text: null}, prop = data.prop) => `
 	<div style="color:red">${cell.pruning ? 'Значение в ячейке обрезано из-за выбранного типа' : ''}</div>
 	<div>${!cell.represent ? 'Ячейка скрыта' : ''}</div>
 	<div>${!cell.winner && cell.represent ? 'Значение заменено другим подходящим значением' : ''}</div>
@@ -124,19 +173,20 @@ main.cell = (data, env, cell = data.cell || {text: null}, prop = data.prop) => `
 	<div>${cell.text === '' ? 'Указана пустая строка, затирает другие значения' : ''}</div>
 	<div style="color:darkgreen">${cell.winner ? 'Значение попадает в итоговые данные' : ''}</div>
 	
-	<div>${prop ? showTypeStat(data, env, prop, cell) : 'Не выбрано ключевое свойство'}</div>
+	<div>${prop ? showTypeStat(data, env, prop, cell) : 'Не выбрано свойство колонки'}</div>
 	${cell.pruning ? main.showOrig(cell) : ''}
-	<div style="background: ${cell.winner ? '#eaf7d1': '#f5e6e6'}; padding:1em; margin: 1em 0">
+	<div style="background: ${cell.winner ? '#eaf7d1': '#f5e6e6'}; padding:1em; margin: 1em 0" title="value_id: ${data.cell?.value_id || ''}">
 		${!prop || prop.type == 'text' ? (cell.text ?? '') : (cell.number ? cell.number / 10 ** prop.scale : '') + (cell.date ?? '') + (cell.value_title ?? '')}
 	</div>
-	${data.cell ? showSummary(data, env) : ''}
+	${data.cell ? main.showSummary(data, env) : ''}
+	${data.rels ? main.showRelations(data, env) : ''}
 	
 `
-main.sheet = (data, env) => `Выбран лист`
-main.source = (data, env) => ``
-main.wtf = (data, env) => `Ошибочный выбор`
-main.entity = (data, env) => ``
-main.item = (data, env) => `
+main.head.sheet = (data, env) => `Выбран лист`
+main.head.source = (data, env) => ``
+main.head.wtf = (data, env) => `Ошибочный выбор`
+main.head.entity = (data, env) => ``
+main.head.item = (data, env) => `
 	<table>
 		${data.item.cells.map(variants => showItemVariants(data, env, variants)).join('')}
 	</table>
@@ -202,7 +252,7 @@ const defcustom = (value) => {
 
 export const POPUP = (data, env) => err(data, env, []) || `
 	<div style="margin-bottom:1em">
-		${main[data.main](data, env)}
+		${main.head[data.main](data, env)}
 	</div>
 	
 	<h1>Видимость</h1>
@@ -270,7 +320,7 @@ export const POPUP = (data, env) => err(data, env, []) || `
 	</div>
 `
 const representStatus = (bit) => `${bit ? '<span style="color:green">Показано</span>' : '<span style="color:red">Скрыто</span>'}`
-const showSummary = (data, env) => `
+main.showSummary = (data, env) => `
 	<table>
 		<!-- <tr><td>Как значение свойства</td><td>${representStatus(data.cell.represent_item_summary)}</td><td>represent_item_summary</td></tr>
 		<tr><td>Как значение ячейки</td><td>${representStatus(data.cell.represent_cell_summary)}</td><td>represent_cell_summary</td></tr> -->

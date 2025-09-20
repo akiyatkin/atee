@@ -13,7 +13,7 @@ tpl.MAIL = (params) => {
 			Телефон: ${params.phone || ''}
 			<br>Email: ${params.email || ''}
 			${params.partner ? tpl.showPartner(params) : ''}
-			<br>Модель: <a href="https://${params.host}/${params.conf.root_path}/item/${params.item.brendmodel[0]}/${params.item.art[0]}">${gain('brend')} ${gain('model')}</a>
+			<br>Модель: <a href="https://${params.host}${params.conf.root_path}/item/${params.item.brendmodel[0]}/${params.item.art?.[0] || params.item.brendart[0]}">${gain('brendmodel')}</a>
 			${params.item.cena ? tpl.showCost(params) : ''}
 		</p>
 		<pre>${params.text}</pre>
@@ -74,7 +74,7 @@ tpl.showPos = (pos, data) => {
 	const naimenovanie = gain('naimenovanie')
 	return `
 		<div style="margin-bottom:1rem">
-			<div>${gain('brend')} ${gain('art')}</div>
+			<div>${gain('brendart')}</div>
 			<div>${pos.modification || ''}</div>
 			<div><b>${pos.quantity}</b> по <b>${cards.cost(pos.item)}</b> = <b>${cost(pos.quantity * pos.item.cena[0])}${cards.unit()}</b></div>
 		</div>

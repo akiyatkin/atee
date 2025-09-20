@@ -23,7 +23,90 @@ rest.addResponse('get-conf', async view => {
 	const conf = view.data.conf = await config('shop', true)
 	return view.ret()
 })
+rest.addResponse('get-filter-prop-more-search', async view => {
+	const db = await view.get('db')	
+	
+	const hashs = await view.get('hashs')
 
+	const prop = await view.get('prop')
+	if (!~['more','column',].indexOf(prop.known)) return view.err('Нет доступа к свойству', 403)
+	if (!~['value','text','date','number',].indexOf(prop.type)) return view.err('Нет доступа к свойству', 403)
+	const prop_id = prop?.prop_id
+	
+	const group = await view.get('group#required')
+	
+	
+	const {from, join, where, sort, bind} = await Shop.getWhereByGroupId(db, group?.parent_id || false,[], false, true)
+	
+	//Проблемы с производительностью 
+	if (prop.type == 'value') {
+		const list = await db.all(`
+			SELECT distinct da.value_id, va.value_title, va.value_nick
+			FROM ${from.join(', ')} ${join.join(' ')}, sources_wvalues da
+				LEFT JOIN sources_values as va on (da.value_id = va.value_id)
+			WHERE ${where.join(' and ')}
+			and da.key_id = win.key_id and da.prop_id = :prop_id
+			and (${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'})
+			ORDER BY RAND()
+			LIMIT 12
+		`, {...bind, prop_id: prop_id || null})
+
+		view.ans.count = await db.col(`
+			SELECT count(distinct da.value_id)
+			FROM ${from.join(', ')} ${join.join(' ')}, sources_wvalues da
+				LEFT JOIN sources_values as va on (da.value_id = va.value_id)
+			WHERE ${where.join(' and ')}
+			and da.key_id = win.key_id and da.prop_id = :prop_id
+			and (${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'})
+		`, {...bind, prop_id: prop_id || null})
+
+		view.ans.list = list.map(row => {
+			row['left'] = row.value_title
+			row['right'] = ''
+			return row
+		})
+	} else if (prop.type == 'number') {
+		const list = await db.all(`
+			SELECT distinct da.number
+			FROM ${from.join(', ')} ${join.join(' ')}, sources_wnumbers da
+			WHERE ${where.join(' and ')}
+			and da.key_id = win.key_id and da.prop_id = :prop_id
+			and (${hashs.map(hash => 'da.number like "%' + hash.join('%" and da.number like "%') + '%"').join(' or ') || '1 = 1'})
+			ORDER BY RAND()
+			LIMIT 12
+		`, {...bind, prop_id: prop_id || null})
+
+		view.ans.count = await db.col(`
+			SELECT count(distinct da.number)
+			FROM ${from.join(', ')} ${join.join(' ')}, sources_wnumbers da
+			WHERE ${where.join(' and ')}
+			and da.key_id = win.key_id and da.prop_id = :prop_id
+			and (${hashs.map(hash => 'da.number like "%' + hash.join('%" and da.number like "%') + '%"').join(' or ') || '1 = 1'})
+		`, {...bind, prop_id: prop_id || null})
+
+		view.ans.list = list.map(row => {
+			row['left'] = row.number
+			row['right'] = ''
+			return row
+		})
+	}
+	
+	
+		
+	// view.ans.list.push({
+	// 	spec: 'any',
+	// 	left: '<i>Любое значение</i>',
+	// 	right: ''
+	// })
+	// view.ans.list.push({
+	// 	spec: 'empty',
+	// 	left: '<i>Без значения</i>',
+	// 	right: ''
+	// })
+	
+	
+	return view.ret()
+})
 rest.addResponse('get-search-filters', async view => {
 	const md = view.data.md = await view.get('md')
 	const partner = await view.get('partner')
@@ -42,18 +125,20 @@ rest.addResponse('get-search-filters', async view => {
 	
 
 
+	
+
+	for (const prop_nick of group.filters) {
+		const filter = await Shop.getFilterConf(db, prop_nick, group, md, partner)
+		if (!filter) continue
+		filters.push(filter)
+	}
+
 	for (const prop_nick in md.mget) {
 	 	if (~group.filters.indexOf(prop_nick)) continue
 	 	const filter = await Shop.getFilterConf(db, prop_nick, group, md, partner)
 	 	if (!filter) continue
 	 	filters.push(filter)
 	}
-
-	for (const prop_nick of group.filters) {
-		const filter = await Shop.getFilterConf(db, prop_nick, group, md, partner)
-		if (!filter) continue
-		filters.push(filter)
-	}	
 
 	const props = view.data.props = {}
 	const values = view.data.values = {}
@@ -129,7 +214,7 @@ rest.addResponse('get-item-head', async view => {
 	const model = await view.get('model#required')
 	const art = await view.get('art')
 	const db = await view.get('db')
-	const item = model.items.find(item => item.art[0] == art) || model.items[0]	
+	const item = model.items.find(item => item.art?.[0] == art || item.brendart[0] == art) || model.items[0]	
 
 	return Shop.getItemHead(db, item)
 })
@@ -187,10 +272,10 @@ rest.addResponse('get-item-check', async (view) => {
 	const art = await view.get('art')
 	const conf = await config('shop', true)
 	const model = view.data.model = await view.get('model#required')
-	const item = model.items.find(item => item.art[0] == art)
+	const item = model.items.find(item => item.art?.[0] == art || item.brendart[0] == art)
 	if (!item) {
 		const item = model.items[0]
-		view.data.redirect = `${conf.root_path}/item/${item.brendmodel[0]}/${item.art[0]}`
+		view.data.redirect = `${conf.root_path}/item/${item.brendmodel[0]}/${item.art?.[0] || item.brendart[0]}`
 	}
 	return view.ret()
 })
@@ -206,7 +291,7 @@ rest.addResponse('get-model', async (view) => {
 	const partner = await view.get('partner')
 	view.data.partner = partner.key
 
-	const model = view.data.model = await view.get('model#required')
+	const model = view.data.model = await view.get('model#required')	
 	
 
 	//const groups = view.data.groups = await Shop.getLastGroupNicksByItem(db, model.recap)
@@ -251,28 +336,67 @@ rest.addResponse('get-search-list', async (view) => {
 	const count = await view.get('count')
 	
 	const bind = await Shop.getBind(db)
-	const samples = await Shop.getSamplesUpByGroupId(db, group.group_id)
-	const marked_samples = Shop.addSamples(samples, [md.mget])
+	// const samples = await Shop.getSamplesUpByGroupId(db, group.group_id)
+	// const marked_samples = Shop.addSamples(samples, [md.mget])
 
-	const {from, join, where, sort} = await Shop.getWhereBySamples(db, marked_samples, md.hashs, partner)
 
+	// const {from, join, where, sort} = await Shop.getWhereBySamples(db, marked_samples, md.hashs, partner)
+
+
+	// const countonpage = count || conf.limit
+	// const start = (p - 1) * countonpage
+	
+	// const moditem_ids = await db.all(`
+	// 	SELECT wva.value_id, GROUP_CONCAT(win.key_id separator ',') as key_ids 
+	// 	FROM ${from.join(', ')} ${join.join(' ')}
+	// 	WHERE ${where.join(' and ')}
+	// 	GROUP BY wva.value_id 
+	// 	ORDER BY ${sort.join(', ')}
+	// 	LIMIT ${start}, ${countonpage}
+	// `, bind)
+
+
+	const groupids = []
+	await Shop.runGroupDown(db, group.group_id, (child) => {
+		groupids.push(child.group_id)
+	})
+
+	const {from, join, where, sort} = await Shop.getWhereBySamples(db, [md.mget], md.hashs, partner, true)
 
 	const countonpage = count || conf.limit
 	const start = (p - 1) * countonpage
 	
 	const moditem_ids = await db.all(`
-		SELECT wva.value_id, GROUP_CONCAT(win.key_id separator ',') as key_ids 
-		FROM ${from.join(', ')} ${join.join(' ')}
+		SELECT 
+			wva.value_id, 
+			GROUP_CONCAT(win.key_id separator ',') as key_ids 
+		FROM shop_itemgroups ig, ${from.join(', ')} ${join.join(' ')}
 		WHERE ${where.join(' and ')}
+		and ig.key_id = win.key_id
+		and ig.group_id in (${groupids.join(',')})
 		GROUP BY wva.value_id 
 		ORDER BY ${sort.join(', ')}
 		LIMIT ${start}, ${countonpage}
 	`, bind)
 	
+	// let moditem_ids = await db.all(`
+	// 	SELECT 
+	// 		wva.value_id, 
+	// 		GROUP_CONCAT(distinct wva.key_id separator ',') as key_ids,
+	// 		GROUP_CONCAT(ig.group_id separator ',') as group_ids 
+	// 	FROM sources_wvalues wva, shop_itemgroups ig
+	// 	WHERE wva.value_id = :value_id and wva.entity_id = :brendart_prop_id and wva.prop_id = :brendmodel_prop_id
+	// 	and ig.key_id = wva.key_id and ig.group_id in (${group_ids.join(',')})
+	// 	GROUP BY wva.value_id 
+	// `, {...bind, ...value})	
+	
 
 	const total = await Shop.getModcount(db, md, partner, group.group_id)
 
+
+
 	const propsoncards = await db.colAll(`select prop_nick from shop_cards`)
+	
 	const props = unique([
 		'art',
 		'brendart',
@@ -281,13 +405,13 @@ rest.addResponse('get-search-list', async (view) => {
 		'model',
 		'naimenovanie',
 		'images',
+		'nalichie',
 		'staraya-cena',
 		'cena',
 		...propsoncards
 	])
 	
 	const list = await Shop.getModelsByItems(db, moditem_ids, partner, props)
-
 
 	let last = total <= countonpage ? 1 : Math.ceil(total / countonpage)
 	const pagination = {

@@ -18,12 +18,12 @@ cards.unit = (prop) => {
 //cards.getParentPath = (data, env, group) => data.conf.root_path + (group.parent_nick == data.conf.root_nick ? '' : '/group/' + group.parent_nick)
 cards.getGroupPath = (data, group) => [data.conf.root_path, 'group', group.group_nick].join('/')
 cards.getParentPath = (data, group) => data.conf.root_path + (group.group_nick == data.conf.root_nick ? '' : '/group/' + group.parent_nick)
-cards.getItemPath = (data, item) => [data.conf.root_path, 'item', item.brendmodel[0], item.art[0]].join('/')
+cards.getItemPath = (data, item) => [data.conf.root_path, 'item', item.brendmodel[0], item.art?.[0] || item.brendart[0]].join('/')
 
 cards.getItemName = (data, selitem) => { //ecommerce.name
 	const gain = (name) => cards.getSomeTitle(data, selitem, name)
 	if (selitem.naimenovanie) return gain('naimenovanie')
-	return gain('brend') + ' ' + gain('model')
+	return gain('brendmodel')
 }
 
 cards.getVariant = (data, env, model, item) => { //ecommerce.variant
@@ -31,7 +31,7 @@ cards.getVariant = (data, env, model, item) => { //ecommerce.variant
 	const list = model.iprops.filter(prop_nick => {
 		const prop = data.props[prop_nick]
 		if (prop.type == 'text') return false
-		if (prop.known) return false
+		if (prop.known == 'column') return false
 		if (model.recap[prop_nick].length < 2) return false //В имя не надо вставлять то что нельзя выбрать если значение только одно
 		if (!item[prop_nick]) return false
 		return true
@@ -184,7 +184,7 @@ cards.getSomeTitle = (data, item, prop_nick) => {
 	const prop = data.props[prop_nick]
 	const first = item[prop_nick][0]
 	if (prop.type == 'value') {
-		return data.values[first].value_title
+		return data.values[first]?.value_title || first
 	} else if (prop.type == 'date') {
 		return ddd.ai(first)
 	} else if (prop.type == 'number') {
@@ -199,7 +199,8 @@ cards.getSomeTitles = (data, item, prop_nick) => {
 	const prop = data.props[prop_nick]
 	return item[prop_nick].map(nick => {
 		if (prop.type == 'value') {
-			return data.values[nick].value_title
+			//console.log(nick, prop, item)
+			return data.values[nick]?.value_title || first
 		} else if (prop.type == 'date') {
 			return ddd.ai(nick)
 		} else if (prop.type == 'number') {
@@ -216,10 +217,12 @@ cards.props = (data, env, model) => `
 	</div>
 `
 cards.printProp = (data, env, model, prop_nick) => {
-	const pr = data.props[prop_nick]
-	const fn = cards.prop[pr.card_tpl] || cards.prop['default']
+	
 	const nicks = model.recap[prop_nick]
 	if (!nicks) return ''
+	const pr = data.props[prop_nick]
+	const fn = cards.prop[pr.card_tpl] || cards.prop['default']
+	
 
 	const gainTitles = (nick) => cards.getSomeTitles(data, model.recap, nick || prop_nick).join(', ') + unit
 	const gainTitle = (nick) => cards.getSomeTitle(data, model.recap, nick || prop_nick) + unit
@@ -248,7 +251,7 @@ cards.prop = {
 	linefilter: (data, env, model, pr, nicks, gainTitle, gainTitles) => {
 		if (!~['number','value'].indexOf(pr.type)) return ''
 		return cards.line(pr.prop_title, nicks.map(nick => {
-			const val = data.values[nick].value_title
+			const val = data.values[nick]?.value_title || nick
 			if (data.md.mget[pr.prop_nick]?.[nick]) return `<b>${gainTitles()}</b>`
 			return `
 				<a rel="nofollow" href="${cards.getGroupPath(data, data.group)}/${cards.addget(env.bread, {m:data.md.m + ':' + pr.prop_nick + '::.' + nicks[0] + '=1'})}#page">${gainTitles()}</a>
@@ -262,11 +265,12 @@ cards.prop = {
 	justbrandmodel: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.just(`<b>${gainTitle('brend')} ${gainTitle('model')}</b>`),
 	justlinkmodel: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.just(`<a href="${cards.getItemPath(data, model.items[0])}">${gainTitle()}</a>`),
 	justlinkmodelhidden: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.just(`<a style="color:inherit; border:none;" href="${cards.getItemPath(data, model.items[0])}">${gainTitle()}</a>`),
+	justlinkmodelboldhidden: (data, env, model, pr, nicks, gainTitle, gainTitles) => cards.just(`<a style="font-weight:bold; color:inherit; border:none;" href="${cards.getItemPath(data, model.items[0])}">${gainTitle()}</a>`),
 	
 	justfilter: (data, env, model, pr, nicks, gainTitle, gainTitles) => {
 		if (!~['number','value'].indexOf(pr.type)) return ''
 		return cards.just(nicks.map(nick => {
-			const val = data.values[nick].value_title
+			const val = data.values[nick]?.value_title || nick
 			if (data.md.mget[pr.prop_nick]?.[nick]) return `<b>${gainTitles()}</b>`
 			return `
 				<a rel="nofollow" href="${cards.getGroupPath(data, data.group)}/${cards.addget(env.bread, {m:data.md.m + ':' + pr.prop_nick + '::.' + nicks[0] + '=1'})}#page">${gainTitles()}</a>
@@ -354,7 +358,7 @@ cards.badgenalichie = (data, env, mod) => {
 	const gain = (name) => cards.getSomeTitle(data, mod.recap, name)
 	const discount = cards.getModelDiscount(mod)
 	return mod.recap.nalichie ? `
-		<a rel="nofollow" href="${cards.getGroupPath(data, data.group)}${cards.addget(env.bread, {m:data.md.m + ':nalichie::.' + mod.recap.nalichie?.[0] + '=1'})}" 
+		<a rel="nofollow" href="${cards.getGroupPath(data, data.groups[mod.groups[0]])}${cards.addget(env.bread, {m:(data.md?.m || '') + ':nalichie::.' + mod.recap.nalichie?.[0] + '=1'})}" 
 			class="badge badge_${mod.recap.nalichie?.[0]}">
 			${gain('nalichie')}
 		</a>

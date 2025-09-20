@@ -349,6 +349,7 @@ field.setpop = (conf) => {
 					args: {}, 
 					go: false, 
 					reloaddiv: false, 
+					global: false,
 					goid: '', 
 					reload: false
 				}, ${JSON.stringify(conf)})
@@ -377,11 +378,14 @@ field.setpop = (conf) => {
 							}
 
 							if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+
+							if (!ans.result) return ans.result
 							const Client = await window.getClient()
-							if (ans.result && conf.reloaddiv) Client.reloaddiv(conf.reloaddiv)
-							if (ans.result && conf.go) Client.go(conf.go + (conf.goid ? ans[conf.goid] : ''))
-							if (ans.result && conf.reload) Client.reload()
-							if (ans.result) Dialog.hide(popup)
+							if (conf.reloaddiv) Client.reloaddiv(conf.reloaddiv)
+							if (conf.global) Client.global(conf.global)
+							if (conf.go) Client.go(conf.go + (conf.goid ? ans[conf.goid] : ''))
+							if (conf.reload) Client.reload()
+							Dialog.hide(popup)
 							return ans.result
 						})
 					}
@@ -437,7 +441,6 @@ field.prompt = ({
 									const token = await recaptcha.getToken()
 									args["g-recaptcha-response"] = token
 								}
-								console.log(args)
 								const ans = await senditmsg(btn, '${action}', args)
 								if (ans.result && (ans['${name}'] || ans['${name}'] == 0)) {
 									savedinput = btn.innerHTML = ans['${name}'] + '${unit}'
@@ -507,7 +510,7 @@ field.prompt = ({
 // if (${!!reload}) Client.reload()
 
 
-field.search = ({heading = '', cls = '', edit = true, label = 'Поиск', link, descr = '', value, name = 'name', search, find = 'find', action, confirm, args = {}, go, reloaddiv, goid, reload}) => {
+field.search = ({heading = '', cls = '', edit = true, label = 'Поиск', link, descr = '', value, name = 'name', search, find = 'find', action, confirm, args = {}, go, global, reloaddiv, goid, reload}) => {
 	if (!edit) return `${value||label}`
 	return `
 		<span>
@@ -549,9 +552,9 @@ field.search = ({heading = '', cls = '', edit = true, label = 'Поиск', link
 								const Client = await window.getClient()
 								
 								if (ans.result && ${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
+								if (ans.result && ${!!global}) Client.global(${JSON.stringify(global)})
 								if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
 								if (ans.result && ${!!reload}) Client.reload()
-								console.log(ans.result, ans)
 								return ans.result
 							}
 						})
@@ -643,11 +646,11 @@ field.area = ({name, label, action, value, args = {}}) => {
 		</div>
 	`
 }
-field.areamin = ({name, label, action, value, args = {}}) => {
+field.areamin = ({name, cls, label, action, value, args = {}}) => {
 	const id = 'field-' + nicked(label)
 	return `
 		
-		<div style="overflow:auto; padding:2px 5px" contenteditable id="${id}" class="field">${value}</div>
+		<div style="overflow:auto; padding:2px 5px" contenteditable id="${id}" class="field ${cls || ''}">${value}</div>
 		<script>
 			(float => {
 				const field = float.querySelector('.field')					
@@ -658,6 +661,11 @@ field.areamin = ({name, label, action, value, args = {}}) => {
 					args['${name}'] = value
 					const ans = await sendit(float, '${action}', args)
 					field.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+					if (ans.msg) {
+						// const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						// Dialog.alert(ans.msg)
+						alert(ans.msg)
+					}
 				})
 			})(document.currentScript.parentElement)
 		</script>

@@ -24,7 +24,7 @@ rest.addResponse('set-order', async (view) => {
     params.ip = view.visitor.client.ip
     params.model = await Shop.getModelByBrendmodel(db, params.brendmodel, params.partner)
     if (!params.model) return view.err('Модель не найдена')
-    params.item = params.model.items.find(item => item.art[0] == params.art) || model.items[0]
+    params.item = params.model.items.find(item => item.art?.[0] == params.art || item.brendart[0] == params.art) || model.items[0]
     
     await Shop.prepareModelsPropsValuesGroups(db, params, [params])
 

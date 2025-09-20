@@ -413,6 +413,13 @@ export class Rest {
 	}
 	extra (rest) {
 		if (this.findextra(rest)) return
+		const allready = rest.runRests(rest => {
+		 	for (const pname in rest.list) {
+		 		const oldrest = this.findrest(pname)
+		 		if (oldrest && oldrest !== rest) return pname
+		 	}
+		})
+		if (allready) console.log('При добавлении свойства найдено уже используемое имя ' + allready)
 		this.extras.push(rest)
 	}
 	findextra (m) {
@@ -564,10 +571,10 @@ export class Rest {
 		
 		return rest.exec(view)
 	}
-	async data (action, req = {}, visitor) { //ans любой
+	async data (action, req = {}, visitor = false) { //ans любой
 		return this.get(action, req, visitor).then(reans => reans.data)
 	}
-	async get (action, req = {}, visitor) { //ans любой
+	async get (action, req = {}, visitor = false) { //ans любой
 
 		if (!visitor) visitor = new Visitor()
 		const rest = this

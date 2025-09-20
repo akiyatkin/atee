@@ -6,7 +6,7 @@ import words from "/-words/words.html.js"
 import svg from "/-sources/svg.html.js"
 import ddd from "/-words/date.html.js"
 
-const spancount = data => `
+const spancount = (data = {}) => `
 	<span title="Моделей ${data.modcount || 0}, позиций ${data.poscount || 0}, ">${data.poscount || 0}</span>
 `
 // const showGroupNick = (data, env) => `
@@ -67,14 +67,14 @@ export const ROOT = (data, env) => err(data, env, []) || `
 	${data.group ? showGroupActions(data, env) : ''}
 	${data.group ? showGroupOptions(data, env) : ''}
 	${data.group ? showGroupStats(data, env) : ''}
-	
+	${data.group?.group_title ? '' : showHelp(data, env)}
 	<script>
 		(div => {
 			for (const block of div.querySelectorAll('.block')) {
 				const title = block.querySelector('.title')
 				const name = 'shop_blocks_' + title.innerText;
 				const body = block.querySelector('.body')
-				if (sessionStorage.getItem(name)) block.classList.toggle('show')
+				if (sessionStorage.getItem(name)) block.classList.add('show')
 				title.addEventListener('click', () => {
 					block.classList.toggle('show')
 					const is = block.classList.contains('show')
@@ -85,8 +85,13 @@ export const ROOT = (data, env) => err(data, env, []) || `
 		})(document.currentScript.parentElement)
 	</script>
 `
+const showHelp = (data, env) => `
+	<p>
+		Из <a href="/@atee/sources">источников</a> попадают все позиции, у которых указаны БрендАрт и БрендМодель попадают в нераспределённые позиции.
+	</p>
+`
 const showGroupStats = (data, env) => `
-	<div class="block">
+	<div class="block${globalThis.sessionStorage?.getItem('shop_blocks_Статистика') ? ' show' : ''}">
 		<div class="title">Статистика</div>
 		<div class="body">
 
@@ -100,7 +105,7 @@ const showGroupStats = (data, env) => `
 						</tr>
 					</thead>
 					<tbody>
-						${(data.stats || []).map(row => showRow(data, env, row)).join('')}
+						${(data.stats || []).map(row => showRow(data, env, data.group, row)).join('')}
 					</tbody>
 				</table>
 			</div>
@@ -108,15 +113,15 @@ const showGroupStats = (data, env) => `
 		</div>
 	</div>
 `
-const showRow = (data, env, stat) => `
+const showRow = (data, env, group, stat) => `
 	<tr>
 		<th>${stat.year}</th>
 		<th>${MONTH[stat.month]}</th>
-		${showStatTds(data, env, stat)}
+		${showStatTds(data, env, group, stat)}
 	</tr>
 `
 const showGroupPositions = (data, env) => `
-	<div class="block">
+	<div class="block${globalThis.sessionStorage?.getItem('shop_blocks_Позиции') ? ' show' : ''}">
 		<div class="title">Позиции</div>
 		<div class="body">
 			<p>Нераспределённые позиции этой группы: ${spancount(data.myfreetable)}</p>
@@ -125,7 +130,7 @@ const showGroupPositions = (data, env) => `
 	</div>
 `
 const showGroupActions = (data, env) => `
-	<div class="block">
+	<div class="block${globalThis.sessionStorage?.getItem('shop_blocks_Действия') ? ' show' : ''}">
 		<div class="title">Действия</div>
 		<div class="body">
 			<p>
@@ -141,7 +146,7 @@ const showGroupActions = (data, env) => `
 					find: 'group_nick',
 					action: '/-shop/admin/set-group-move',
 					args: {group_id: data.group.group_id},
-					reloaddiv: env.layer.div
+					global: 'check'
 				})}, 
 				${field.search({
 					cls: 'a',
@@ -164,7 +169,6 @@ const showGroupActions = (data, env) => `
 					confirm: 'Удалить группу?',
 					action: '/-shop/admin/set-group-delete',
 					args: {group_nick: data.group.group_nick},
-					reloaddiv: env.layer.div,
 					goid: 'parent_id',
 					go: 'groups/'
 				})}
@@ -184,7 +188,7 @@ const showGroupActions = (data, env) => `
 							type: 'text', 
 							action: '/-shop/admin/set-group-title', 
 							args: {group_id: data.group.group_id},
-							reloaddiv2: env.layer.div
+							global: 'check'
 						})}
 					</td>
 				</tr>
@@ -193,7 +197,7 @@ const showGroupActions = (data, env) => `
 					<td>
 						${field.prompt({
 							value: data.group.group_nick, 
-							name: 'group_nick',
+							name: 'next_nick',
 							input: data.group.group_nick,
 							ok: 'ОК', 
 							label: 'Укажите никнейм', 
@@ -202,7 +206,7 @@ const showGroupActions = (data, env) => `
 							type: 'text', 
 							action: '/-shop/admin/set-group-nick', 
 							args: {group_id: data.group.group_id},
-							reloaddiv2: env.layer.div
+							global: 'check'
 						})}
 					</td>
 				</tr>
@@ -215,7 +219,7 @@ const showGroupActions = (data, env) => `
 const showGroupOptions = (data, env) => `
 	
 	${showGroupSamples(data, env)}
-	<div class="block">
+	<div class="block${globalThis.sessionStorage?.getItem('shop_blocks_Фильтры') ? ' show' : ''}">
 		<div class="title">Фильтры</div>
 		<div class="body">
 			<p>
@@ -227,23 +231,24 @@ const showGroupOptions = (data, env) => `
 					action: '/-shop/admin/set-group-self_filters', 
 					values: {"":"Фильтры наследуются", "1":"Свои фильтры"},
 					args: {group_id: data.group.group_id},
-					reloaddiv: env.layer.div
+					global: 'check'
 				})}
 			</p>
 			${data.group.self_filters ? showGroupFilters(data, env) : ''}
 		</div>
 	</div>
-	<div class="block">
+	<div class="block${globalThis.sessionStorage?.getItem('shop_blocks_Карточка') ? ' show' : ''}">
 		<div class="title">Карточка</div>
 		<div class="body">
 			<p>${!data.group.self_cards ? field.setpop({
 				heading:'Cвойства на карточках',
+				cls: 'a',
 				value: data.group.self_cards,
 				name: 'bit',
 				action: '/-shop/admin/set-group-self_cards', 
 				values: {"":"Свойства на карточках наследуются", "1":"Свои свойства на карточках"},
 				args: {group_id: data.group.group_id},
-				reloaddiv: env.layer.div
+				global: 'check'
 			}) : ''}</p>
 			${data.group.self_cards ? showCards(data, env) : ''}
 		</div>
@@ -264,7 +269,7 @@ const showGroupFilters = (data, env) => `
 			find: 'prop_nick',
 			action: '/-shop/admin/set-group-filter',
 			args: {group_id: data.group.group_id},
-			reloaddiv: env.layer.div
+			global: 'check'
 		})}
 	</p>
 `
@@ -283,7 +288,7 @@ const showCards = (data, env) => `
 			find: 'prop_nick',
 			action: '/-shop/admin/set-group-card',
 			args: {group_id: data.group.group_id},
-			reloaddiv: env.layer.div
+			global: 'check'
 		})}
 	</p>
 `
@@ -302,7 +307,7 @@ const showValue = (data, env, mark) => !mark.value_nick ? '' : `
 			label: svg.cross(), 
 			confirm: 'Удалить занчение?',
 			action: '/-shop/admin/set-sample-prop-value-delete',
-			reloaddiv: env.layer.div,
+			global: 'check',
 			args: {
 				prop_nick: mark.prop_nick, 
 				group_nick: data.group.group_nick, 
@@ -351,7 +356,7 @@ const showProp = (data, env, sample_id, props, prop = props[0]) => !prop.prop_ni
 				label: svg.cross(), 
 				confirm: 'Удалить критерий?',
 				action: '/-shop/admin/set-sample-prop-delete',
-				reloaddiv: env.layer.div,
+				global: 'check',
 				args: {
 					prop_nick: props[0].prop_nick, 
 					sample_id
@@ -375,7 +380,7 @@ const showProp = (data, env, sample_id, props, prop = props[0]) => !prop.prop_ni
 					find: 'value_nick',
 					action: '/-shop/admin/set-sample-prop-value-create',
 					args: { sample_id, prop_nick: props[0].prop_nick},
-					reloaddiv: env.layer.div
+					global: 'check'
 				})}
 				
 				
@@ -399,6 +404,8 @@ const showScriptDragCards = (data, env) => `
 			Drag.make(list, async ({id, next_id}) => {
 				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 				const ans = await senditmsg(list, '/-shop/admin/set-card-ordain', {group_id : "${data.group.group_id}", prop_nick: id, next_nick: next_id})
+				const Client = await window.getClient()
+				Client.global('check')
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>
@@ -406,7 +413,8 @@ const showScriptDragCards = (data, env) => `
 const showCard = (data, env, card) => `
 	<tr data-id="${card.prop_nick}" style="white-space: nowrap;" class="item">
 		<td>
-			${card.prop_title || showRed(card.prop_nick)}
+			<a href="${data.conf.root_path}/group/${data.group.group_nick}?m=:${card.prop_nick}=empty">${card.prop_title || showRed(card.prop_nick)}</a>
+			
 		</td>
 		<td>
 			${field.button({
@@ -418,7 +426,7 @@ const showCard = (data, env, card) => `
 					prop_nick: card.prop_nick, 
 					group_id: data.group.group_id
 				},
-				reloaddiv: env.layer.div
+				global: 'check'
 			})}			
 		</td>
 	</tr>
@@ -426,7 +434,7 @@ const showCard = (data, env, card) => `
 const showFilter = (data, env, filter) => `
 	<tr data-id="${filter.prop_nick}" style="white-space: nowrap;" class="item">
 		<td>
-			${filter.prop_title || showRed(filter.prop_nick)}
+			<a href="${data.conf.root_path}/group/${data.group.group_nick}?m=:${filter.prop_nick}=empty">${filter.prop_title || showRed(filter.prop_nick)}</a>
 		</td>
 		<td>
 			${field.button({
@@ -438,7 +446,7 @@ const showFilter = (data, env, filter) => `
 					prop_nick: filter.prop_nick, 
 					group_id: data.group.group_id, 
 				},
-				reloaddiv: env.layer.div
+				global: 'check'
 			})}			
 		</td>
 	</tr>
@@ -462,14 +470,14 @@ const showTableSampleProps = (data, env, sample_id, props) => `
 				find: 'prop_nick',
 				action: '/-shop/admin/set-sample-prop-create',
 				args: {sample_id},
-				reloaddiv: env.layer.div
+				global: 'check'
 			})}
 			${field.button({
 				cls: 'transparent mute',
 				label: svg.cross(), 
 				confirm: 'Удалить всю выборку?',
 				action: '/-shop/admin/set-sample-delete',
-				reloaddiv: env.layer.div,
+				global: 'check',
 				args: {sample_id}
 			})}	
 		</td></tr>
@@ -484,10 +492,10 @@ const showTableFilters = (data, env) => `
 `
 
 const showGroupSamples = (data, env) => `
-	<div class="block">
+	<div class="block${globalThis.sessionStorage?.getItem('shop_blocks_Выборки') ? ' show' : ''}">
 		<div class="title">Выборки</div>
 		<div class="body">
-			${Object.keys(data.samples).length ? showTableSamples(data, env) : ''}
+			${Object.keys(data.samples || {}).length ? showTableSamples(data, env) : ''}
 			${field.search({
 				cls: 'a',
 				search:'/-shop/admin/get-sample-prop-search?type=sample',
@@ -500,7 +508,7 @@ const showGroupSamples = (data, env) => `
 				find: 'prop_nick',
 				action: '/-shop/admin/set-sample-create',
 				args: {group_id: data.group.group_id},
-				reloaddiv: env.layer.div
+				global: 'check'
 			})}
 			<!-- <p>В группу выбрано <span title="Моделей ${data.modcount}, позиций ${data.poscount}">${data.poscount}</span> ${words(data.poscount, 'позиция', 'позиции', 'позиций')}</p> -->
 			<p>Нераспределённые позиции в родительской группе: ${spancount(data.freetable)}</p>
@@ -512,7 +520,7 @@ const showGroupSamples = (data, env) => `
 
 const showGroups = (data, env) => `
 	
-	${data.childs.length ? showTableGroups(data, env, data.group) : ''}	
+	${data.childs?.length ? showTableGroups(data, env, data.group) : ''}	
 	<p>
 		${field.prompt({
 			value: 'Добавить подгруппу', 
@@ -537,7 +545,7 @@ const showFree = (data, env, freetable) => `
 	
 	<form style="display: flex; margin: 1em 0; gap: 1em">
 		<div class="float-label">
-			<input id="freeinp" name="search" type="text" placeholder="Поиск" value="${env.bread.get.search ?? ''}">
+			<input id="freeinp" name="search" type="search" placeholder="Поиск" value="${env.bread.get.search ?? ''}">
 			<label for="freeinp">Поиск</label>
 		</div>
 		<button type="submit">Найти</button>
@@ -558,10 +566,10 @@ const showFree = (data, env, freetable) => `
 	<div class="revscroll">
 		<table>
 			<thead>
-				${showTr(data, env, freetable.head)}
+				${showTr(data, env, freetable?.head || [])}
 			</thead>
 			<tbody>
-				${freetable.rows.map(row => showTr(data, env, row)).join('')}
+				${(freetable?.rows || []).map(row => showTr(data, env, row)).join('')}
 			</tbody>
 		</table>
 	</div>
@@ -629,9 +637,7 @@ const showTableGroups = (data, env, group) => `
 		</script>
 	</div>
 `
-const redTd = (stat, name, sum = stat.positions - stat[name]) => `
-	<td style="opacity:0.5" class="${sum ? 'red' : 'green'}">${sum || '✓'}</td>
-`
+
 const percentTd = (stat, sum = stat.positions ? Math.round(stat.withall / stat.positions * 100) : 0) => `
 	<td class="${sum == 100 ? 'green' : 'red'}" title="${stat.withall}">${sum}%</td>
 `
@@ -641,7 +647,7 @@ const showGroup = (data, env, group, stat = group.stat) => `
 		<td>
 			<a href="groups/${group.group_id}">${group.group_title}</a>
 		</td>
-		${showStatTds(data, env, stat)}
+		${showStatTds(data, env, group, stat)}
 		<td>
 			${field.button({
 				cls: 'transparent mute',
@@ -649,7 +655,7 @@ const showGroup = (data, env, group, stat = group.stat) => `
 				confirm: 'Удалить группу?',
 				action: '/-shop/admin/set-group-delete',
 				args: {group_nick: group.group_nick},
-				reloaddiv: env.layer.div
+				global: 'check'
 			})}
 		</td>
 	</tr>
@@ -670,7 +676,7 @@ const showStatHead = (data, env) => `
 	<td title="Позиций без наименований">БН</td>
 	<td title="Позиций без картинок">БК</td>
 `
-const showStatTds = (data, env, stat) => `
+const showStatTds = (data, env, group, stat = {}) => `
 	<td>${stat.positions}</td>
 	<td>${stat.models}</td>
 	<td>${stat.groups}</td>
@@ -680,11 +686,17 @@ const showStatTds = (data, env, stat) => `
 	<td>${stat.sources}</td>
 	<td>${ddd.ai(stat.date_content)}</td>
 	${percentTd(stat)}
-	${redTd(stat, 'withfilters')}
-	${redTd(stat, 'withcost')}
-	${redTd(stat, 'withdescription')}
-	${redTd(stat, 'withname')}
-	${redTd(stat, 'withimage')}
+	${redTd(data, group, stat, 'withfilters')}
+	${redTd(data, group, stat, 'withcost', 'cena')}
+	${redTd(data, group, stat, 'withdescription', 'opisanie')}
+	${redTd(data, group, stat, 'withname', 'naimenovanie')}
+	${redTd(data, group, stat, 'withimage', 'images')}
+`
+
+const redTd = (data, group, stat, name, filter_prop_nick, sum = stat.positions - stat[name]) => filter_prop_nick ? `
+	<td><a target="about:blank" style="opacity:0.5" class="${sum ? 'red' : 'green'}" href="${data.conf.root_path}/group/${group.group_nick}?m=:${filter_prop_nick}=empty">${sum || '✓'}</a></td>
+` : `
+	<td style="opacity:0.5" class="${sum ? 'red' : 'green'}">${sum || '✓'}</td>
 `
 const MONTH = {
 	"1":"Январь",

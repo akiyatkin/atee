@@ -34,9 +34,9 @@ const showScriptDrag = (data, env) => `
 	</script>
 `
 const showMain = (data, env) => `
-	<div style="float:right">
+	<div style="float:right;position: relative;">
 		${field.prompt({
-			cls: 'a',
+			cls: 'a mute',
 			type: 'area',
 			name: 'comment', 
 			label: 'Общий план',
@@ -46,7 +46,7 @@ const showMain = (data, env) => `
 			input: data.comment
 		})}
 	</div>
-	<pre style="font-style: italic;">${data.comment}</pre>
+	<div style="white-space: pre; font-style: italic;">${data.comment}</div>
 	<div style="margin: 1em 0; display: flex; flex-wrap: wrap; gap: 1em; justify-content: space-between;">
 		${field.button({
 			async: true,
@@ -60,7 +60,8 @@ const showMain = (data, env) => `
 			reloaddiv: env.layer.div,
 		})}
 	</div>
-	<div>
+	
+	<!-- <div class="revscroll"> -->
 		<table draggable="false">
 			<thead>
 				<tr>
@@ -95,7 +96,7 @@ const showMain = (data, env) => `
 
 			})(document.currentScript.parentElement)
 		</script>
-	</div>
+	<!-- </div> -->
 	<div style="margin:2em 0; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
 		${field.prompt({
 			value: 'Добавить источник', 
@@ -134,7 +135,7 @@ const showSourceTr = (data, env, source) => `
 	<tr data-id="${source.source_id}" style="white-space: nowrap;" class="item status_${source.class}">
 		<td>
 			<a href="sheet?source_id=${source.source_id}">${source.source_title}</a>
-			<div class="mute">${source.master ? 'Данные' : 'Прайс'}</div>
+			<div class="mute">${source.master ? 'Мастер' : 'Прайс'}</div>
 		</td>
 		<td>
 			${source.status} 
@@ -149,9 +150,9 @@ const showSourceTr = (data, env, source) => `
 		</td>
 		
 		<td>
-			<div style="float:right">
+			<div style="float:right;position: relative">
 				${field.prompt({
-					cls: 'a',
+					cls: 'a mute',
 					type: 'area',
 					name: 'comment', 
 					label: 'Комментарий источника',
@@ -181,7 +182,7 @@ const showSourceTr = (data, env, source) => `
 					label: 'Проверить', 
 					action: '/-sources/set-source-check',
 					args: {source_id: source.source_id},
-					global: ['recalc']
+					global: 'check'
 				})}
 			</div>
 		</td>
@@ -198,7 +199,7 @@ const showSourceTr = (data, env, source) => `
 					label: 'Загрузить', 
 					action: '/-sources/set-source-load',
 					args: {source_id: source.source_id},
-					global: ['recalc']
+					global: 'check'
 				})}
 			</div>
 		</td>

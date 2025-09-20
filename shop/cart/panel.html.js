@@ -133,6 +133,12 @@ tpl.ROOT = (data, env) => `
 			${env.scope} .panel.hide .hand {
 				margin-top: calc(-1em - 25px - 2px);
 			}
+			${env.scope} .panel.up .body .padding {
+				padding: 20px 0 0 0;
+			}
+			/* #PANELBODY ${env.scope} .panel.up .body #PANELORDER .padding {
+				padding:0;
+			}*/
 			${env.scope} .panel .body .padding {
 				padding: 23px 0 20px 0;
 			}
@@ -140,7 +146,7 @@ tpl.ROOT = (data, env) => `
 				padding: 30px 0 20px 0;
 			}
 			
-			
+
 			${env.scope} .panel .body .content {
 				display: grid; 
 				grid-template-columns: 1fr; 
@@ -394,7 +400,7 @@ tpl.showForm = (data, env) => `
 `
 tpl.formMessage = (data, env) => `
 	<div>
-		Менеджер уточнит стоимость,&nbsp;варинты&nbsp;доставки и&nbsp;в&nbsp;рабочее время свяжется с&nbsp;Вами. Предложение на&nbsp;сайте&nbsp;не&nbsp;является публичной офертой, итоговая цена может&nbsp;отличаться.
+		Менеджер уточнит стоимость,&nbsp;варинты&nbsp;доставки и&nbsp;в&nbsp;рабочее время свяжется с&nbsp;Вами. Предложение на&nbsp;сайте&nbsp;не&nbsp;является публичной офертой, цена может&nbsp;отличаться.
 	</div>
 `
 tpl.showAddress = (data, env) => `
@@ -731,7 +737,7 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 				state.sum += product.price * product.quantity
 			}
 		}
-		panel.classList.add('up')
+		panel.classList.add('up')		
 		const products = ${JSON.stringify(data.list.map((pos, i) => Ecommerce.getProduct(data, {
 			coupon:env.theme.partner,
 			item: pos.item, 
@@ -833,7 +839,7 @@ tpl.showPos = (data, env, pos, item) => {
 		<div class="info">
 			<div>
 				${naimenovanie ? naimenovanie + '.' : ''}
-				<div><a href="${cards.getItemPath(data, item)}">${gain('brend')} ${gain('art')}</a></div>
+				<div><a href="${cards.getItemPath(data, item)}">${gain('brendart')}</a></div>
 			</div>
 			${item.modifikaciya ? tpl.showModification(data, env, item) : ''}
 			<div style="margin: 0.5em 0;"><b>${cards.cost(item)}</b></div>

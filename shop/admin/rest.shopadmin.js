@@ -4,8 +4,8 @@ import Shop from "/-shop/Shop.js"
 const rest = new Rest()
 export default rest
 
-import rest_shop from '/-shop/rest.shop.js'
-rest.extra(rest_shop)
+// import rest_shop from '/-shop/rest.shop.js'
+// rest.extra(rest_shop)
 
 import rest_admin from '/-controller/rest.admin.js'
 rest.extra(rest_admin)
@@ -19,6 +19,47 @@ rest.extra(rest_db)
 import rest_search from "/-dialog/search/rest.search.js" //аргументы hashs, hash, search 
 rest.extra(rest_search)
 
+
+rest.addArgument('prop_nick', ['nicked'], async (view, prop_nick) => {
+	if (!prop_nick) return null
+	const db = await view.get('db')
+	const prop = await Shop.getPropByNick(db, prop_nick)
+	if (!prop) return view.err('Свойство не найдено', 404)	
+	return prop_nick
+
+})
+rest.addVariable('prop', async (view) => {
+	const group_nick = await view.get('prop_nick#required')
+	const db = await view.get('db')
+	const prop = await Shop.getPropByNick(db, group_nick)
+	return prop
+})
+rest.addVariable('prop_nick#required', ['prop_nick', 'required'])
+rest.addVariable('prop#required', ['prop', 'required'])
+
+
+
+
+rest.addArgument('group_nick', ['nicked'], async (view, group_nick) => {
+	if (!group_nick) return null
+	const db = await view.get('db')
+	const group_id = await Shop.getGroupIdByNick(db, group_nick)
+	if (!group_id) return view.err('Группа не найдена', 404)
+	return group_nick
+})
+rest.addVariable('group_nick#required', ['group_nick', 'required'])
+rest.addVariable('group#required', ['group', 'required'])
+rest.addVariable('group', async (view) => {
+	const group_nick = await view.get('group_nick')
+	const db = await view.get('db')
+	const group_id = await Shop.getGroupIdByNick(db, group_nick)
+	const group = await Shop.getGroupById(db, group_id)	
+	if (!group) return null
+	return group
+})
+
+rest.addArgument('group_id', ['mint'])
+rest.addVariable('group_id#required', ['group_id','required'])
 
 rest.addArgument('json', ['string'])
 rest.addVariable('json#required', ['json','required'])
@@ -41,16 +82,17 @@ rest.addVariable('sub#required',['sub','required'])
 
 
 rest.addArgument('next_nick', ['nicked'])
-rest.addArgument('prop_nick', ['nicked'])
-rest.addVariable('prop', ['prop_nick','null'], async (view, prop_nick) => {
-	if (prop_nick == null) return null
-	const db = await view.get('db')
-	const prop = await Shop.getPropByNick(db, prop_nick)
-	if (!prop) return null
-	return prop
-})
-rest.addVariable('prop_nick#required', ['prop_nick', 'required'])
-rest.addVariable('prop#required', ['prop', 'required'])
+rest.addArgument('next_nick#required', ['next_nick','required'])
+// rest.addArgument('prop_nick', ['nicked'])
+// rest.addVariable('prop', ['prop_nick','null'], async (view, prop_nick) => {
+// 	if (prop_nick == null) return null
+// 	const db = await view.get('db')
+// 	const prop = await Shop.getPropByNick(db, prop_nick)
+// 	if (!prop) return null
+// 	return prop
+// })
+// rest.addVariable('prop_nick#required', ['prop_nick', 'required'])
+// rest.addVariable('prop#required', ['prop', 'required'])
 
 
 rest.addArgument('value_nick', ['nicked'])

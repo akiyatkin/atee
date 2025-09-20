@@ -54,7 +54,7 @@ rest.addResponse('props', ['admin'], async view => {
 	view.data.props = await db.all(`
 		SELECT 
 			bp.prop_nick, 
-			
+			bp.multichoice + 0 as multichoice,
 			bp.card_tpl, 
 			bp.filter_tpl, 
 			pr.known,
@@ -72,12 +72,16 @@ rest.addResponse('props', ['admin'], async view => {
 rest.addResponse('groups', ['admin'], async view => {
 	const db = await view.get('db')
 	const group_id = await view.get('group_id')
-	const group = view.data.group = await Shop.getGroupById(db, group_id)
+	const group = view.data.group = await ShopAdmin.getGroupById(db, group_id)
 	const hashs = await view.get('hashs')
 	const bind = await Shop.getBind(db)
+	view.data.conf = await config('shop', true)
 	
 	
+
+
 	if (group) {
+
 		view.data.filters = await db.all(`
 			SELECT fi.prop_nick, pr.prop_title, pr.prop_id
 			FROM shop_filters fi
@@ -93,61 +97,74 @@ rest.addResponse('groups', ['admin'], async view => {
 			order by ca.ordain
 		`, group)
 		view.data.stats = await ShopAdmin.getGroupStats(db, group_id)
-
-
+		
+		
 		const samples = await db.all(`
-			SELECT distinct sa.sample_id, sp.prop_nick, sp.spec, pr.type, 
+			SELECT distinct 
+				sa.sample_id, 
+				sp.prop_nick, 
+				sp.spec, 
+				pr.type, 
 				spv.number,
-				spv.value_nick, pr.prop_title, if(wv.value_id, va.value_title, null) as value_title
+				spv.value_nick, 
+				pr.prop_title, 
+				if(wv.value_id, va.value_title, null) as value_title
 			FROM shop_samples sa
 				LEFT JOIN shop_sampleprops sp on sp.sample_id = sa.sample_id
 				LEFT JOIN shop_samplevalues spv on (spv.sample_id = sa.sample_id and spv.prop_nick = sp.prop_nick)
 				LEFT JOIN sources_wprops pr on pr.prop_nick = sp.prop_nick
 				LEFT JOIN sources_values va on va.value_nick = spv.value_nick
-				LEFT JOIN sources_wnumbers wn on wn.number = spv.number
-				LEFT JOIN sources_wvalues wv on (va.value_id = wv.value_id and wv.prop_id = pr.prop_id)
+				LEFT JOIN sources_wvalues wv on (wv.entity_id = :brendart_prop_id and va.value_id = wv.value_id and wv.prop_id = pr.prop_id)
 			WHERE sa.group_id = :group_id
 			ORDER BY sa.date_create, sp.date_create, spv.date_create
-		`, group)
+		`, {...bind, group_id})
+		
 		view.data.samples = Object.groupBy(samples, row => row.sample_id)
 		for (const sample_id in view.data.samples) {
 			view.data.samples[sample_id] = Object.groupBy(view.data.samples[sample_id], row => row.prop_nick)
 			delete view.data.samples[sample_id]['null']
 		}
-	}
+		
+		
+		view.data.poscount = view.data.stats[0]?.positions
+		view.data.modcount = view.data.stats[0]?.models
 
+		// const s = await ShopAdmin.getSamplesUpByGroupId(db, group_id)
+		// const { from, join, where, sort } = await Shop.getWhereBySamples(db, s)
+		// //const {where, from, sort} = Shop.getmdwhere(md_group, md_group.group.sgroup)
+		// view.data.poscount = await db.col(`
+		// 	SELECT count(distinct win.key_id)
+		// 	FROM ${from.join(', ')} ${join.join(' ')}
+		// 	WHERE ${where.join(' and ')}
+		// `, bind)
 
-
-	
-
-	if (group) {
-		const samples = await Shop.getSamplesUpByGroupId(db, group_id)
-		const { from, join, where, sort } = await Shop.getWhereBySamples(db, samples)
-
-		//const {where, from, sort} = Shop.getmdwhere(md_group, md_group.group.sgroup)
-		view.data.poscount = await db.col(`
-			SELECT count(distinct win.key_id)
-			FROM ${from.join(', ')} ${join.join(' ')}
-			WHERE ${where.join(' and ')}
-		`, bind)
-
-		view.data.modcount = await db.col(`
-			SELECT count(distinct wva.value_id)
-			FROM ${from.join(', ')} ${join.join(' ')}
-			WHERE ${where.join(' and ')}
-		`, bind)
+		// view.data.modcount = await db.col(`
+		// 	SELECT count(distinct wva.value_id)
+		// 	FROM ${from.join(', ')} ${join.join(' ')}
+		// 	WHERE ${where.join(' and ')}
+		// `, bind)
 	} else {
-		view.data.modcount = await db.col(`select count(distinct value_id) from sources_wvalues WHERE entity_id = :brendart_prop_id and prop_id = :brendmodel_prop_id`, bind)
-		view.data.poscount = await db.col(`select count(distinct key_id) from sources_wvalues WHERE entity_id = :brendart_prop_id and prop_id = :brendmodel_prop_id`, bind)
-	}
 
+		const {poscount, modcount} = await db.fetch(`
+			SELECT 
+				COUNT(DISTINCT value_id) AS modcount,
+				COUNT(*) AS poscount  
+			FROM sources_wvalues
+			WHERE entity_id = :brendart_prop_id and prop_id = :brendmodel_prop_id
+		`, bind)
+		view.data.modcount = modcount
+		view.data.poscount = poscount
+
+	}
 	
-	view.data.freetable = await ShopAdmin.getFreeTable(db, group?.parent_id || null, hashs)
-	view.data.myfreetable = await ShopAdmin.getFreeTable(db, group?.group_id || null, hashs)
+	view.data.freetable = await ShopAdmin.getFreeTableByGroupIndex(db, group?.parent_id || null, hashs)
+	view.data.myfreetable = await ShopAdmin.getFreeTableByGroupIndex(db, group?.group_id || null, hashs)
 	
 	
-	// const test1 = await Shop.getSamplesByGroupId(db, 1)
-	// const test4 = await Shop.getSamplesByGroupId(db, 4)
+	
+	
+	// const test1 = await ShopAdmin.getSamplesByGroupId(db, 1)
+	// const test4 = await ShopAdmin.getSamplesByGroupId(db, 4)
 	// const samples = Shop.addSamples(test1, test4)
 	// console.log('test1', test1)
 	// console.log('test4', test4)
@@ -170,24 +187,19 @@ rest.addResponse('groups', ['admin'], async view => {
 		WHERE gr.parent_id <=> :group_id
 		ORDER BY gr.ordain
 	`, { group_id: group?.group_id || null })
-	for (const group of childs) {
-		
-		const { from, join, where, sort } = await Shop.getWhereByGroupId(db, group.group_id)
 
-		
-		group.stat = await ShopAdmin.getGroupStat(db, group.group_id)
-		
+	if (childs.length) {
+		const ym = ShopAdmin.getNowYM()
+		const rows = await db.all(`select *, UNIX_TIMESTAMP(date_content) as date_content 
+			FROM shop_stat 
+			WHERE year = :year and month = :month
+			and group_id in (${childs.map(g => g.group_id).join(',')})
+			ORDER BY year DESC, month DESC
+		`, { ...ym})
 
-		group.poscount = await db.col(`
-			SELECT count(distinct win.key_id)
-			FROM ${from.join(', ')} ${join.join(' ')}
-			WHERE ${where.join(' and ')}
-		`, bind)
-		group.modcount = await db.col(`
-			SELECT count(distinct wva.value_id)
-			FROM ${from.join(', ')} ${join.join(' ')}
-			WHERE ${where.join(' and ')}
-		`, bind)
+		for (const group of childs) {
+			group.stat = rows.find(row => row.group_id == group.group_id)
+		}
 	}
 
 	return view.ret()

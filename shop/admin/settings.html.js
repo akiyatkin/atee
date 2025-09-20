@@ -6,7 +6,26 @@ import date from "/-words/date.html.js"
 export const ROOT = (data, env) => err(data, env) || `
 	<h1>Настройки</h1>
 	<div style="display: grid; gap: 1em; margin: 2em 0">
-		
+		<div>
+			<p>
+				${field.button({
+					confirm: 'Пересчитать?',
+					label:'Пересчитать связи',
+					action:'/-shop/admin/set-recalc',
+					global: 'check'
+				})}
+				${field.button({
+					confirm: 'Опубликовать?',
+					label:'Пересчитать и опубликовать',
+					action:'/-shop/admin/set-recalc-index',
+					global: 'check'
+				})}
+			</p>
+			<p>
+				Настройки типов, разделение по запятым, связи свойств с колонками, видимость &mdash; точечно пересчитываются при разных действиях. 
+				Можно пересчитать сразу всё, на случай если после какого-то действия остался непересчитанный артефакт.
+			</p>
+		</div>
 		<div>
 			<p>
 				Кэш сохраняется с <b>${date.dmyhi(data.date_access)}</b>
@@ -58,6 +77,7 @@ export const ROOT = (data, env) => err(data, env) || `
 					label: 'Вставьте сделанный ранее экспорт',
 					name: 'json',
 					value:'Импорт',
+					global: 'check',
 					action:'/-shop/admin/set-import'
 				})}
 			</p>

@@ -48,6 +48,7 @@ export const TABLE = (data, env) => err(data, env) || `
 					<td></td>
 					<td></td>
 					<td>Свойство</td>
+					<td>Колонок</td>
 					<td>Тип</td>
 					<td>Значений</td>
 					<td>Комментарий</td>
@@ -100,6 +101,7 @@ const showTr = (data, env, prop) => `
 		<td>
 			<a href="prop/${prop.prop_id}">${prop.prop_title}</a>
 		</td>
+		<td>${prop.cols}</td>
 		<td>
 			<!-- ${prop.type} -->
 			${field.setpop({
@@ -121,7 +123,7 @@ const showTr = (data, env, prop) => `
 				cls: 'a',
 				value: prop.multi,
 				name: 'bit',
-				descr: 'Несколько значений могут быть разделены запятой с пробелом. Значений?',
+				descr: 'Несколько значений могут быть разделены запятой с пробелом. При внесении данных запятую в значении можно заменить на <code>&amp;#44;</code> чтобы избежать разделения. Но при использовании данных надо выполнять обратную замену.',
 				action: '/-sources/set-prop-prop', 
 				values: {"":"Одно", "1":"Несколько"},
 				args: {prop_id: prop.prop_id, propprop: 'multi'},

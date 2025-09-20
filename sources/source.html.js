@@ -203,9 +203,9 @@ const showNoLoad = (data, env, source) => `
 	<p>Загрузки ещё не было. Выполните загрузку источника.</p>
 `
 const showComment = (data, env, source) => `
-	<div style="float:right">
+	<div style="float:right;position: relative">
 		${field.prompt({
-			cls: 'a',
+			cls: 'a mute',
 			type: 'area',
 			name: 'comment', 
 			label: 'Общий план',
@@ -217,25 +217,23 @@ const showComment = (data, env, source) => `
 		})}
 	</div>
 	<pre style="font-style: italic;">${source.comment}</pre>
-
-	
-	<script>
-		(div => {
-			const field = div.querySelector('.field')
-			if (!field) return
-			const check = async () => {
-				if (!div.closest('body')) return
-				const data = await fetch('${env.layer.json}').then(r => r.json())
-				if (!div.closest('body')) return
-				if (data.source.comment != field.innerHTML) {
-					alert('Комментарий был изменён на другой вкладке или другим пользователем, обновите страницу!')
-				}
-				setTimeout(check, 30000)
-			}
-			setTimeout(check, 30000)
-		})(document.currentScript.previousElementSibling)
-	</script>
 `
+// <!-- <script>
+// 		(div => {
+// 			const field = div.querySelector('.field')
+// 			if (!field) return
+// 			const check = async () => {
+// 				if (!div.closest('body')) return
+// 				const data = await fetch('${env.layer.json}').then(r => r.json())
+// 				if (!div.closest('body')) return
+// 				if (data.source.comment != field.innerHTML) {
+// 					alert('Комментарий был изменён на другой вкладке или другим пользователем, обновите страницу!')
+// 				}
+// 				setTimeout(check, 30000)
+// 			}
+// 			setTimeout(check, 30000)
+// 		})(document.currentScript.previousElementSibling)
+// 	</script> -->
 const showControll = (data, env, source) => `
 	<div style="margin: 1em 0; display: grid; gap: 0.25em;">
 		

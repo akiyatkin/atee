@@ -24,17 +24,18 @@ rest.addResponse('set-submit', ['terms#required'], async view => {
 	const partner = await view.get('partner')
 	const db = await view.get('db')	
 	const order = await Cart.getOrder(db, order_id)
-	const utms = await view.get('utms')
+	const utms = await view.get('getutms')
 	if (order.status != 'wait') return view.err('Заказ уже отправлен менеджеру')
 	for (const check of ['email','name','phone']) if (!order[check]) return view.err('Заполнены не все поля', 422)
 	
 	const ready = async () => {
 		//await Cart.setPartner(db, order_id, partner)
-		await Cart.recalcOrder(db, order_id, order.partner)
-		await Cart.freeze(db, order_id, order.partner)
+		const list = await Cart.getBasket(db, order, partner)
+		await Cart.recalcOrder(db, order_id, list, partner)
+		await Cart.freeze(db, order_id, partner)
 
 
-		const list = await Cart.getBasket(db, order, order.partner)
+		
 		await Shop.prepareModelsPropsValuesGroups(db, view.data, list)
 		const products = list.map((pos, i) => {
 			const product = Ecommerce.getProduct(view.data, {
@@ -132,11 +133,12 @@ rest.addResponse('set-remove', async view => {
 	const user_id = await view.get('user_id#required')
 
 
-	const utms = await view.get('utms')
+	const utms = await view.get('getutms')
 	const order_id = await Cart.castWaitActive(db, user_id, active_id, utms, false)
 	await Cart.updateUtms(db, order_id, utms)
 	await Cart.removeItem(db, order_id, item)
-	await Cart.recalcOrder(db, order_id, partner)
+	const list = await Cart.getBasket(db, order, partner)
+	await Cart.recalcOrder(db, order_id, list, partner)
 	return view.ret()
 })
 
@@ -151,7 +153,7 @@ rest.addResponse('set-add', async view => {
 	
 	const quantity = await view.get('quantity')
 	const nocopy = await view.get( 'nocopy')
-	const utms = await view.get('utms')
+	const utms = await view.get('getutms')
 
 	const user_id = await view.get('user_id') || await User.createAndSet(db, view)
 
@@ -166,9 +168,9 @@ rest.addResponse('set-add', async view => {
 	
 	if (order.partner?.key != partner?.key) orderrefresh = true
 	view.ans.orderrefresh = orderrefresh
-
 	await Cart.addItem(db, order_id, item.brendart[0], quantity)
-	await Cart.recalcOrder(db, order_id, partner)
+	const list = await Cart.getBasket(db, order, partner)
+	await Cart.recalcOrder(db, order_id, list, partner)
 	return view.ret()
 })
 
@@ -191,7 +193,7 @@ rest.addResponse('set-clear', async view => {
 	await db.affectedRows('DELETE from shop_basket where order_id = :order_id', {order_id})
 
 
-	await Cart.recalcOrder(db, order_id, partner)
+	await Cart.recalcOrder(db, order_id, [], partner)
 
 
 	return view.ret()

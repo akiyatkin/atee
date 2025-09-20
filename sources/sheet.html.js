@@ -68,19 +68,21 @@ export const ROOT = (data, env, source = data.source) => err(data, env, ['DATES'
 		<div style="flex-grow: 1">
 			${showComment(data, env, source)}
 			${showSearch(data, env)}
+			
 		</div>
 
 	</div>
 	<div id="DATES"></div>
 	<div id="TABLE"></div>
 `
+// ${data.issearch ? showSearch(data, env) : showIndex(data, env)}
 export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
 	<div style="margin:0 0 1ch 0;">
 		${field.button({
 			label: 'Загрузить', 
 			action: '/-sources/set-source-load',
 			args: {source_id: source.source_id},
-			global: ['recalc']
+			global: ['check']
 		})}
 	</div>
 	
@@ -106,14 +108,16 @@ export const DATES = (data, env) => !data.result ? `` : `
 	<div id="date" style="align-items: center; flex-grow: 1; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
 		
 		<div style="background: linear-gradient(-30deg, #00aaff55, #4466ff22); padding: 0.5em; flex-grow: 1; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
-			${data.dates.map(dateup => showDate(data, env, dateup)).join('')}
+			${data.dates.map(dateup => showDate(data, env, dateup)).join('')} ${data.indexneed ? showIndex(data, env) : ''}
 		</div>
 		<div style="background: linear-gradient(-30deg, #00aaff55, #4466ff22); padding: 0.5em; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
 			<div><a class="${env.bread.get.keyfilter == 'yes' ? 'active' : ''}" data-keyfilter="yes" data-limit="" href="sheet${addget({keyfilter: 'yes', limit: ''}, env.bread.get)}#date">С&nbsp;ключом<sup>${data.quantity_of_keys}</sup></a></div>
 			<div><a class="${env.bread.get.keyfilter == 'not' ? 'active' : ''}" data-keyfilter="not" data-limit="" href="sheet${addget({keyfilter: 'not', limit: ''}, env.bread.get)}#date">Без&nbsp;ключа&nbsp;<sup>${data.quantity_without_keys}</sup></a></div>
 			<div><a class="${env.bread.get.keyfilter == 'all' ? 'active' : ''}" data-keyfilter="all" data-limit="10000" href="sheet${addget({keyfilter: 'all', limit: 10000}, env.bread.get)}#date">Всё&nbsp;<sup>${data.quantity_without_keys + data.quantity_of_keys}</sup></a></div>
-			<div><a class="${env.bread.get.keyfilter == 'pruning' ? 'active' : ''}" data-keyfilter="pruning" data-limit="10000" href="sheet${addget({keyfilter: 'pruning', limit: 10000}, env.bread.get)}#date">Упрощений&nbsp;<sup>${data.quantity_with_pruning}</sup></a></div>
-			<div><a class="${env.bread.get.keyfilter == 'unknown' ? 'active' : ''}" data-keyfilter="unknown" data-limit="10000" href="sheet${addget({keyfilter: 'unknown', limit: 10000}, env.bread.get)}#date">Колонок&nbsp;<sup>${data.quantity_with_unknown}</sup></a></div>
+			<div><a title="Свойств с упрощёнными/обрезанными данными" class="${env.bread.get.keyfilter == 'pruning' ? 'active' : ''}" data-keyfilter="pruning" data-limit="10000" href="sheet${addget({keyfilter: 'pruning', limit: 10000}, env.bread.get)}#date">Упрощений&nbsp;<sup>${data.quantity_with_pruning}</sup></a></div>
+			<div><a title="Колонок без назначенных свойств и видимых" class="${env.bread.get.keyfilter == 'unknown' ? 'active' : ''}" data-keyfilter="unknown" data-limit="10000" href="sheet${addget({keyfilter: 'unknown', limit: 10000}, env.bread.get)}#date">Колонок&nbsp;<sup>${data.quantity_with_unknown}</sup></a></div>
+			<div><a title="Строки с проигравшими/заменёнными ячейками" class="${env.bread.get.keyfilter == 'passive' ? 'active' : ''}" data-keyfilter="passive" data-limit="" href="sheet${addget({keyfilter: 'passive', limit: ''}, env.bread.get)}#date">Скрыто&nbsp;<sup>${data.quantity_with_passive}</sup></a></div>
+			<div><a title="Строки с победившими/заменяющими ячейками" class="${env.bread.get.keyfilter == 'active' ? 'active' : ''}" data-keyfilter="active" data-limit="" href="sheet${addget({keyfilter: 'active', limit: ''}, env.bread.get)}#date">Показано&nbsp;<sup>${data.quantity_with_active}</sup></a></div>
 		</div>
 	</div>
 	<script>
@@ -152,16 +156,7 @@ export const DATES = (data, env) => !data.result ? `` : `
 export const SHEETS = (data, env) => !data.result ? `` : `
 	
 `
-const showDate = (data, env, dateup, active = dateup.active && (!env.bread.get.keyfilter || env.bread.get.keyfilter == 'appear')) => `
-	<div title="Дата обновления ${date.dmyhi(dateup.date)}">
-		<a class="${active ? 'active' : ''}" 
-		 	data-keyfilter="appear"
-		 	data-appear="${dateup.date}"
-			href="sheet${addget({keyfilter:'appear', appear:dateup.date, limit: ''}, env.bread.get)}#date">
-			${dateup.title || date.ai(dateup.date)}&nbsp;<sup>${dateup.count}</sup>
-		</a>
-	</div>
-`
+
 const showSheet = (data, env, sheet, active = sheet.sheet_index == data.sheet.sheet_index) => {
 	if (active) return `
 		<div class="${sheet.represent_sheet ? '' : 'mute'}">
@@ -207,23 +202,41 @@ const showSearch = (data, env) => `
 		</script>
 	</form>
 `
-const showComment = (data, env, source) => `
-	<div>
-		<pre>${source.comment}</pre>
-		<p align="right">
-			${field.prompt({
-				cls: 'a',
-				type: 'area',
-				name: 'comment', 
-				label: 'Комментарий источника',
-				value: svg.edit(), 
-				action: '/-sources/set-source-comment', 
-				args: {source_id: source.source_id},
-				reloaddiv: env.layer.div,
-				input: source.comment
-			})}
-		</p>
+const showDate = (data, env, dateup, active = dateup.active && (!env.bread.get.keyfilter || env.bread.get.keyfilter == 'appear')) => `
+	<div title="Дата обновления ${date.dmyhi(dateup.date)}">
+		<a class="${active ? 'active' : ''}" 
+		 	data-keyfilter="appear"
+		 	data-appear="${dateup.date}"
+			href="sheet${addget({keyfilter:'appear', appear:dateup.date, limit: ''}, env.bread.get)}#date">
+			${dateup.title || date.ai(dateup.date)}&nbsp;<sup>${dateup.count}</sup>
+		</a>
 	</div>
+`
+const showIndex = (data, env) => `
+	<div>
+		${field.button({
+			label:'Опубликовать',
+			cls: 'a',
+			action:'/-sources/set-recalc-index',
+			global:'check'
+		})}<sup>&nbsp;</sup>
+	</div>
+`
+const showComment = (data, env, source) => `
+	<div style="float:right; position: relative">
+		${field.prompt({
+			cls: 'a',
+			type: 'area',
+			name: 'comment', 
+			label: 'Комментарий источника',
+			value: svg.edit(), 
+			action: '/-sources/set-source-comment', 
+			args: {source_id: source.source_id},
+			reloaddiv: env.layer.div,
+			input: source.comment
+		})}		
+	</div>
+	<div style="white-space: pre; font-style: italic;">${source.comment}</div>
 `
 
 export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !data.result ? '' : `
@@ -234,7 +247,7 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 		<script>
 			(async div => {
 				const cols = ${JSON.stringify(data.cols.map(col => [col.col_title, col.prop_id, col.col_index]))}
-				const keys = ${JSON.stringify(data.rows.map(row => [row.key_id, row.repeat_index, row.row_index]))}
+				const keys = ${JSON.stringify(data.rows.map(row => [row.key_id, row.row_index]))}
 				const sheet_title = ${JSON.stringify(sheet.sheet_title)}
 				const source_id = ${source.source_id}
 				const entity_id = ${data.sheet?.entity_id || null}
@@ -249,12 +262,12 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 						const tr = td.parentElement
 						const tbody = tr.parentElement
 						const text_index = Array.from(tbody.children).indexOf(tr)
-						const [key_id, repeat_index, row_index] = keys[text_index]
+						const [key_id, row_index] = keys[text_index]
 						//const col_index = Array.from(tr.children).indexOf(td) //- 1
 						const pos_index = Array.from(tr.children).indexOf(td) //- 1
 						const [col_title, prop_id, col_index] = cols[pos_index]
 
-						represent.popup({source_id, sheet_title, key_id, repeat_index, col_title, multi_index, col_index, row_index, sheet_index}, '${env.layer.div}')
+						represent.popup({source_id, sheet_title, key_id, col_title, multi_index, col_index, row_index, sheet_index}, '${env.layer.div}')
 					}
 					const btn = e.target.closest('.row')
 					if (btn) {
@@ -266,7 +279,7 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 						const tr = btn.closest('tr')
 						const tbody = tr.parentElement
 						const text_index = Array.from(tbody.children).indexOf(tr)
-						const [key_id, repeat_index] = keys[text_index]
+						const [key_id] = keys[text_index]
 
 						if (!key_id) {
 							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
@@ -274,7 +287,7 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 						}
 						
 						const represent = await import('/-sources/represent.js').then(r => r.default)
-						const data = await represent.set(btn, 'represent_row', {sheet_title, source_id, key_id, repeat_index})
+						const data = await represent.set(btn, 'represent_row', {sheet_title, source_id, key_id})
 						if (!data.result) return
 
 						btn.classList.remove('represent-1', 'represent-0', 'represent-custom-1', 'represent-custom-0', 'represent-def-0', 'represent-def-1')
@@ -319,7 +332,7 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 				white-space: normal;
 			}*/
 		</style>
-		<table class="compact" style="table-layout: fixed;">
+		<table style="table-layout: fixed;">
 			<thead>
 				<tr>
 					
@@ -342,6 +355,7 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 			})(document.currentScript.parentElement)
 		</script>
 	</div>
+	<p align="right"> Лимит: ${data.limit}</p>
 `
 // <td>
 // 						<!-- <button 

@@ -4,10 +4,8 @@ import date from "/-words/date.html.js"
 import svg from "/-sources/svg.html.js"
 export const css = ['/-sources/represent.css','/-sources/revscroll.css']
 
-export const ROOT = (data, env, entity = data.entity) => err(data, env, ["PROP"]) || `
-	<div id="PROP"></div>
-`
-export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data.result ? '' : `
+export const ROOT = (data, env, prop = data.prop, entity = data.entity) => err(data, env, ["PROP"]) || `
+	
 	<div style="opacity:0.5; float:right"><a href="props">Свойства</a></div>
 	<h1>${prop.name}&nbsp;<sup style="color:var(--primary)">${prop.unit}</sup></h1>
 	<p>
@@ -58,11 +56,11 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 					cls: 'a',
 					value: prop.multi,
 					name: 'bit',
-					descr: 'Несколько значений могут быть разделены запятой с пробелом. Значений?',
+					descr: 'Несколько значений могут быть разделены запятой с пробелом. При внесении данных запятую в значении можно заменить на <code>&amp;#44;</code> чтобы избежать разделения. Но при использовании данных надо выполнять обратную замену.',
 					action: '/-sources/set-prop-prop', 
 					values: {"":"Одно", "1":"Несколько"},
 					args: {prop_id: prop.prop_id, propprop: 'multi'},
-					reloaddiv: env.layer.div
+					global: 'check'
 				})}
 			</td>
 		</tr>
@@ -80,7 +78,7 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 					action: '/-sources/set-prop-type', 
 					values: {"number":"number", "date":"date", "value":"value", "text":"text"},
 					args: {prop_id: prop.prop_id},
-					reloaddiv: env.layer.div
+					global: 'check'
 				})}
 			</td>
 		</tr>
@@ -100,7 +98,25 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 					descr: 'Сколько знаков после запятой для типа number',
 					action: '/-sources/set-prop-scale', 
 					args: {prop_id: prop.prop_id},
-					reloaddiv: env.layer.div
+					global: 'check'
+				})}
+			</td>
+		</tr>
+		<tr>
+			<td>
+				Регистр
+			</td>
+			<td>
+				${field.setpop({
+					heading:'Изменить регистр значений',
+					cls: 'a',
+					value: prop.lettercase,
+					name: 'lettercase',
+					descr: 'Одно значение может использоваться у разных свойств. Регистр значения будет изменён для всех свойств, где оно используется. <b>lower</b> &mdash; все прописные, <b>upper</b> &mdash; все заглавные, <b>firstup</b> &mdash; первая заглавная остальные прописные.',
+					action: '/-sources/set-prop-lettercase', 
+					values: {"ignore":"ignore", "lower":"lower", "upper":"upper", "firstup":"firstup"},
+					args: {prop_id: prop.prop_id},
+					global: 'check'
 				})}
 			</td>
 		</tr>
@@ -132,7 +148,7 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 					type: 'text', 
 					action: '/-sources/set-prop-synonym-create', 
 					args: {prop_id: prop.prop_id},
-					reloaddiv: env.layer.div
+					global: 'check'
 				})}
 			</td>
 		</tr>
@@ -141,13 +157,33 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 				Ед.изм
 			</td>
 			<td>
-				${prop.unit || '<i>Может бытиь указано в названии свойства после запятой</i>'}
+				${prop.unit || '<i>Может указываться в названии после запятой</i>'}
+			</td>
+		</tr>
+		<tr>
+			<td>
+				Изменить регистр
+			</td>
+			<td>
+				${field.areamin({
+					value: prop.prop_title,
+					cls: 'a',
+					type: 'text',
+					name: 'title',
+					label: 'Изменить регистр', 
+					action: '/-sources/set-prop-title',
+					global: 'check',
+					args: {prop_id: prop.prop_id}
+				})}
 			</td>
 		</tr>
 	</table>
 	
+
 	${showComment(data, env, prop)}
-		
+	<p>
+		Всего: <b>${data.count}</b>, показано <b>${data.count > 1000 ? 1000 : data.count}</b>.
+	</p>	
 	
 	<div class="revscroll">
 		<table style="table-layout: fixed">
@@ -179,26 +215,12 @@ export const PROP = (data, env, prop = data.prop, entity = data.entity) => !data
 						if (!data.result) return
 						const Client = await window.getClient()
 						Client.global('recalc')
-						//Client.reloaddiv('${env.layer.div}')
 					})
 				}
 			})(document.currentScript.parentElement)
 		</script>
 	</div>
-	<p>
-		Всего: <b>${data.count}</b>, показано <b>${data.count > 1000 ? 1000 : data.count}</b>.
-	</p>
-	<div>
-		${field.text({
-			value: prop.prop_title,
-			type: 'text',
-			name: 'title',
-			label: 'Изменить регистр', 
-			action: '/-sources/set-prop-title',
-			reloaddiv: env.layer.div,
-			args: {prop_id: prop.prop_id}
-		})}
-	</div>
+	
 `
 // <td></td>
 const showSynonym = (data, env, syn) => `
@@ -208,9 +230,8 @@ const showSynonym = (data, env, syn) => `
 				label: svg.cross(), 
 				confirm: 'Удалить синоним, зависимые назначения свойств сбросятся?',
 				action: '/-sources/set-prop-synonym-delete',
-				reloaddiv: env.layer.div,
 				args: {col_nick: syn.col_nick, prop_id: data.prop.prop_id},
-				reloaddiv: env.layer.div
+				global: 'check'
 			})}</div>
 `
 // <td>
@@ -229,29 +250,45 @@ const showValueTr = (data, env, row) => `
 	</tr>
 `
 const showComment = (data, env, prop) => `
-	<div style="margin: 1em 0">
-		${field.area({
+	<div style="float:right;position: relative">
+		${field.prompt({
+			cls: 'a mute',
+			type: 'area',
 			name: 'comment', 
-			label: 'Комментарий', 
+			label: 'Комментарий',
+			value: svg.edit(), 
 			action: '/-sources/set-prop-comment', 
 			args: {prop_id: prop.prop_id},
-			value: prop.comment
+			reloaddiv: env.layer.div,
+			input: prop.comment
 		})}
 	</div>
-	<script>
-		(div => {
-			const field = div.querySelector('.field')
-			if (!field) return
-			const check = async () => {
-				if (!div.closest('body')) return
-				const data = await fetch('${env.layer.json}').then(r => r.json())
-				if (!div.closest('body')) return
-				if (data.prop.comment != field.innerHTML) {
-					alert('Комментарий был изменён на другой вкладке или другим пользователем, обновите страницу!')
-				}
-				setTimeout(check, 30000)
-			}
-			setTimeout(check, 30000)	
-		})(document.currentScript.previousElementSibling)
-	</script>
+	<pre style="font-style: italic;">${prop.comment}</pre>
+
+	
 `
+// <div style="margin: 1em 0">
+// 		${field.area({
+// 			name: 'comment', 
+// 			label: 'Комментарий', 
+// 			action: '/-sources/set-prop-comment', 
+// 			args: {prop_id: prop.prop_id},
+// 			value: prop.comment
+// 		})}
+// 	</div>
+// 	<script>
+// 		(div => {
+// 			const field = div.querySelector('.field')
+// 			if (!field) return
+// 			const check = async () => {
+// 				if (!div.closest('body')) return
+// 				const data = await fetch('${env.layer.json}').then(r => r.json())
+// 				if (!div.closest('body')) return
+// 				if (data.prop.comment != field.innerHTML) {
+// 					alert('Комментарий был изменён на другой вкладке или другим пользователем, обновите страницу!')
+// 				}
+// 				setTimeout(check, 30000)
+// 			}
+// 			setTimeout(check, 30000)	
+// 		})(document.currentScript.previousElementSibling)
+// 	</script>

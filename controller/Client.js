@@ -67,32 +67,37 @@ export const Client = {
 	},
 	getPath: () => decodeURI(location.pathname.replace(/\/$/,'')) || '/',
 	getSearch: () => Client.getPath() + decodeURI(location.search) + location.hash,
-	reloaddivs:[],
-	reloaddiv: (div) => {
-		if (!Array.isArray(div)) div = [div]
-		if (!div.length) return
-		div.forEach(div => {
-			if (~Client.reloaddivs.indexOf(div)) return
-			Client.reloaddivs.push(div)	
-		})
-		return Client.refreshState()
-	},
 	reload: () => { //depricated?
 		//'/' переход с главной
 		//'' переход с ничего
 		Client.search = ''
 		return Client.refreshState()
 	},
+	reloaddivs:[],
+	reloaddiv: (gs) => {
+		const stack_name = 'reloaddivs'
+		if (!Array.isArray(gs)) gs = [gs]
+		gs = gs.filter(gl => gl && !~Client[stack_name].indexOf(gl))
+		if (!gs.length) return
+		Client[stack_name].push(...gs)
+		return Client.refreshState()
+	},
 	reloadtss:[],
-	reloadts: (ts) => {
-		if (~Client.reloadtss.indexOf(ts)) return
-		Client.reloadtss.push(ts)
+	reloadts: (gs) => {
+		const stack_name = 'reloadtss'
+		if (!Array.isArray(gs)) gs = [gs]
+		gs = gs.filter(gl => gl && !~Client[stack_name].indexOf(gl))
+		if (!gs.length) return
+		Client[stack_name].push(...gs)
 		return Client.refreshState()
 	},
 	reloadgs:[],
-	global: (g) => {
-		if (~Client.reloadgs.indexOf(g)) return
-		Client.reloadgs.push(g)
+	global: (gs) => {
+		const stack_name = 'reloadgs'
+		if (!Array.isArray(gs)) gs = [gs]
+		gs = gs.filter(gl => gl && !~Client[stack_name].indexOf(gl))
+		if (!gs.length) return
+		Client[stack_name].push(...gs)
 		return Client.refreshState()
 	},
 	view:Date.now(), //Метка сеанса в котором актуальна Client.history
@@ -248,11 +253,6 @@ export const Client = {
 		
 		await Promise.all(promises)
 
-		if (promise) {
-			if (promise.rejected) return
-			promise.started.resolve(bread.href)
-		}
-
 		if (json.rd) {
 			Client.reloaddivs = Client.reloaddivs.filter(div => {
 				return !~json.rd.indexOf(div)
@@ -268,6 +268,14 @@ export const Client = {
 				return !~json.rg.indexOf(ts)
 			})
 		}
+
+
+		if (promise) {
+			if (promise.rejected) return
+			promise.started.resolve(bread.href)
+		}
+
+		
 		for (const layer of json.layers) {
 			layer.sys.template = document.createElement('template')
 			await addHtml(layer.sys.template, layer, bread, timings, json.theme)

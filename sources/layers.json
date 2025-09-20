@@ -6,7 +6,6 @@
 		"sheet:TABLE":"none",
 		"sheet:SOURCE":"none",
 		"sheet:DATES":"none",
-		"recalc:RTABLE":"none",
 		"positions:TABLE":"none",
 		"position:TABLE":"none",
 		"disappear:TABLE":"none",
@@ -17,11 +16,13 @@
 	"global":{
 		"source:SOURCE":["recalc"],
 		"main:ROOT":["recalc"],
+		
+		"sheet:ROOT":["recalc"],
 		"sheet:TABLE":["recalc"],
 		"sheet:SOURCE":["recalc"],
 		"sheet:DATES":["recalc"],
 		
-		"recalc:RTABLE":["recalc","check"],
+		"recalc:ROOT":["check"],
 
 		
 		"positions:TABLE":["recalc"],
@@ -30,11 +31,10 @@
 		
 		"source:TABLE":["recalc"],
 		"props:TABLE":["recalc"],
+		"prop:ROOT":["recalc"],
 		"source:TOP":["recalc"],
 
-		"source:TABLE":["recalc"],
-		"source:TABLE":["recalc"],
-		"props:TABLE":["recalc"],
+		
 		"positions:TABLE":["recalc"],
 		"position:TABLE":["recalc"],
 		"disappear:TABLE":["recalc"]
@@ -42,14 +42,15 @@
 	"frame":{
 		
 	},
+	"onlyclient":["recalc:ROOT"],
 	"head":{
 		"title":"Источники данных"
 	},
 	"parsedtpl":{
-		"recalc:RTABLE":"${env.timings.view_time}"
+		"recalc:ROOT":"${env.timings.view_time}"
 	},
 	"json":{
-		"recalc:RTABLE":"/-sources/get-recalc",
+		"recalc:ROOT":"/-sources/get-recalc",
 		"main:ROOT":"/-sources/main",
 		"props:TABLE":"/-sources/props",
 		"settings:ROOT":"/-sources/settings",
@@ -74,7 +75,6 @@
 		"2entity:ENTITY":"/-sources/entity?entity_id=${env.crumb.name}",
 		
 		"prop:ROOT":"/-sources/prop?prop_id=${env.crumb.name}",
-		"prop:PROP":"/-sources/prop?prop_id=${env.crumb.name}",
 		
 
 		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
@@ -103,9 +103,6 @@
 		},
 		"aside:ROOT":{
 			"RECALC":"recalc:ROOT"
-		},
-		"recalc:ROOT":{
-			"RTABLE":"recalc:RTABLE"
 		}
 	},
 	"childs":{
@@ -195,9 +192,6 @@
 				"layout":{
 					"index:ROOT":{
 						"MAIN":"prop:ROOT"
-					},
-					"prop:ROOT":{
-						"PROP":"prop:PROP"
 					}
 				}
 			}

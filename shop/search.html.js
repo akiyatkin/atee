@@ -204,7 +204,7 @@ tpl.TITLE = (data, env) => err(data, env) || `
 			border: none; 
 			text-decoration: none
 		}
-		${env.scope} .clearlink .title {
+		${env.scope} .clearlink .value {
 			opacity: 1;
 			transition: color 0.2s, opacity 0.2s;
 		}
@@ -212,7 +212,7 @@ tpl.TITLE = (data, env) => err(data, env) || `
 			transition: color 0.2s, opacity 0.2s;
 			opacity: 0.6;
 		}
-		${env.scope} .clearlink:hover .title {
+		${env.scope} .clearlink:hover .value {
 			opacity: 0.5;
 		}
 		${env.scope} .clearlink:hover .krest {
@@ -237,12 +237,15 @@ tpl.showSelected = (data, bread) => {
 		const prop = data.props[prop_nick]
 
 		if (values == 'empty') {
-			const title = {'cena':'Без цен', 'images':'Без картинок'}[prop_nick] || prop.prop_title + ' отсутствует' 
+			const title = {'cena':'Без цен', 'images':'Без картинок'}[prop_nick] || prop.name + ' отсутствует' 
+			return tpl.showPart(data, bread, title, {m: data.md.m + ':' + prop_nick})
+		} else if (values == 'any') {
+			const title = {'cena':'С ценой', 'images':'С картинками'}[prop_nick] || prop.name + ' указано' 
 			return tpl.showPart(data, bread, title, {m: data.md.m + ':' + prop_nick})
 		} else if (typeof(values) == 'object') {
 			if (prop.type == 'value') {
 				return Object.keys(values).map(value_nick => {
-					const title = data.values[value_nick].value_title
+					const title = data.values[value_nick]?.value_title || value_nick
 					const m = data.md.m + ':' + prop_nick + '.' + value_nick
 					return tpl.showPart(data, bread, title, {m})
 				}).join(' ')
@@ -266,7 +269,7 @@ tpl.showSelected = (data, bread) => {
 // 	"just": (data, env, prop, value) => `
 // 		<a data-scroll="none" class="clearlink" title="${prop.prop_title}" 
 // 			href="${env.crumb}${data.md.m + (data.md.m ? ':' : '')}more.${prop.prop_nick}${value?.value_nick ? '.' : ''}${value?.value_nick || ''}">
-// 			<span class="title">${value?.value_title || ({'cena':'Без цен', 'images':'Без картинок'})[prop.prop_nick] || 'Нет значения'}</span>
+// 			<span class="value">${value?.value_title || ({'cena':'Без цен', 'images':'Без картинок'})[prop.prop_nick] || 'Нет значения'}</span>
 // 			<span class="krest" style="font-size:1rem; line-height: 2rem;">✕</span>
 // 		</a>
 // 	`
@@ -277,7 +280,7 @@ tpl.showSelected = (data, bread) => {
 tpl.showPart = (data, bread, title, get) => !title ? '' : `
 	<a data-scroll="none" class="clearlink"
 		href="${cards.getGroupPath(data, data.group)}${cards.addget(bread, get)}">
-		<span class="title">${title}</span>
+		<span class="value">${title}</span>
 		<span class="krest" style="font-size:1rem; line-height: 2rem;">✕</span>
 	</a>
 `

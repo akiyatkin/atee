@@ -27,7 +27,7 @@ const checkbox = (name, title, checked) => `
 const getSelItem = (data, env) => {
 	const model = data.model
 	const art = env.crumb.name || ''
-	return model.items.find(item => item.art[0] == art) || false
+	return model.items.find(item => item.art?.[0] == art || item.brendart[0] == art) || false
 }
 export const ROOT = (data, env) => `${showBody(data, env, data.model, getSelItem(data, env))}`
 export const showBody = (data, env, model, item) => {
@@ -35,14 +35,14 @@ export const showBody = (data, env, model, item) => {
 
 	return `
 		<p>
-			Заказать <b>${gain('brend')} ${gain('model')}</b>
+			Заказать <b>${gain('brendmodel')}</b>
 		</p>
 		<p>
 			Менеджер перезвонит в рабочее время.
 		</p>
 		<form action="/-shop/set-order">
 			<input name="brendmodel" type="hidden" value="${item.brendmodel[0]}">
-			<input name="art" type="hidden" value="${item.art[0]}">
+			<input name="art" type="hidden" value="${item.art?.[0] || item.brendart[0]}">
 			<input name="partner" type="hidden" value="${env.theme.partner}">
 			<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom:1rem">
 				<div class="float-label icon phone">
@@ -56,7 +56,7 @@ export const showBody = (data, env, model, item) => {
 			</div>
 			<div class="float-label">
 				<textarea placeholder="Дополнительная информация" id="${env.sid}text" 
-					name="text" style="width:100%; box-sizing: border-box; min-height:130px">Добрый день! Интересует ${gain('brend')} ${gain('model')}.</textarea>
+					name="text" style="width:100%; box-sizing: border-box; min-height:130px">Добрый день! Интересует ${gain('brendmodel')}.</textarea>
 				<label for="${env.sid}text">Дополнительная информация</label>
 			</div>
 			<div style="max-width: 500px; margin-top: 1rem;">

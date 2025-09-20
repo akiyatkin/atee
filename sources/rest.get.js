@@ -1,7 +1,7 @@
 import Access from "/-controller/Access.js"
 import nicked from '/-nicked'
 import filter from '/-nicked/filter.js'
-
+import Recalc from "/-sources/Recalc.js"
 import xlsx from "/-xlsx"
 import Rest from "/-rest"
 import config from "/-config"
@@ -22,25 +22,7 @@ export default rest
 
 rest.addResponse('get-recalc', ['admin'], async view => {
 	const db = await view.get('db')
-
-	view.data.start = Sources.recalc.start ? Sources.recalc.start.getTime() : false
-	if (!view.data.start && Sources.recalc.lastend) view.data.start = Sources.recalc.lastend.getTime() + 1000 > Date.now() ? Sources.recalc.laststart.getTime() : false
-
-	view.data.dates = await db.fetch(`
-		SELECT 
-			UNIX_TIMESTAMP(date_index) as date_index, 
-			UNIX_TIMESTAMP(date_recalc) as date_recalc 
-		FROM sources_settings
-	`)	
-	view.data.indexneed = view.data.dates.date_recalc > view.data.dates.date_index
-
-	// const titles = await db.all(`
-	// 	SELECT 
-	// 		so.source_title, so.date_start
-	// 	FROM
-	// 		sources_sources so
-	// 	WHERE so.date_start is not null
-	// `)
+	const dates = view.data.dates = await Recalc.getDates(db)
 	return view.ret()
 })
 

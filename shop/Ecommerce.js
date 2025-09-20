@@ -37,10 +37,10 @@ Ecommerce.getProduct = (data, {coupon, item, listname, position, group_nick, qua
 		"name" : cards.getItemName(data, item), //gain('naimenovanie') || gain('brend') gain('model'),
 		"brand": gain('brend'),
 		"variant": gain('art'),
-		"category": group.category, //Поддерживается иерархия категорий до 5 уровней вложенности. Разделителем уровней является символ /. Например, "Одежда / Мужская одежда / Футболки"
 		"list": listname, //Список к которому относится товар
         "position": position //Позиция товара в списке. Например, 2
-	}
+	}	
+	if (group?.category) 	product.category = group.category //Поддерживается иерархия категорий до 5 уровней вложенности. Разделителем уровней является символ /. Например, "Одежда / Мужская одежда / Футболки"
 	if (quantity !== null) 	product.quantity = quantity
 	if (cena) 				product.price = cena
 	if (oldcost && cena) 	product.discount = oldcost - cena //В валюте цены, сумма скидки
@@ -60,6 +60,9 @@ Ecommerce.getPush = () => {
 
 
 // Воронка: Изучил варианты (impressions), Кликнул (click). Затем очевидные: Детали (detail), Корзина (add), Покупка (purchase)
+
+
+
 /*
 	ДОГМЫ о событиях о product
 	1. После impressions переход в detail только с click. 

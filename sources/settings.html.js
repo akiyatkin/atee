@@ -15,7 +15,13 @@ export const ROOT = (data, env) => err(data, env) || `
 					confirm: 'Пересчитать?',
 					label:'Пересчитать связи',
 					action:'/-sources/set-recalc',
-					reloaddiv: env.layer.div
+					global: 'check'
+				})}
+				${field.button({
+					confirm: 'Опубликовать?',
+					label:'Опубликовать',
+					action:'/-sources/set-recalc-index',
+					global: 'check'
 				})}
 			</p>
 			<p>

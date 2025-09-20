@@ -4,12 +4,21 @@ import Rest from '/-rest'
 const rest = new Rest()
 export default rest
 
-
-
-
 import rest_shopadmin from '/-shop/admin/rest.shopadmin.js'
 rest.extra(rest_shopadmin)
 
+
+// rest.addResponse('get-recalc', ['admin'], async view => {
+// 	const db = await view.get('db')
+// 	const dates = view.data.activities = await ShopAdmin.getActivities(db) //change, index
+// 	//const laststart = (dates.date_recalc || 0) * 1000
+
+// 	// view.data.start = Sources.recalc.start ? Sources.recalc.start.getTime() : false
+// 	// if (!view.data.start && Sources.recalc.lastend) view.data.start = Sources.recalc.laststart && Sources.recalc.lastend.getTime() + 1000 > Date.now() ? Sources.recalc.laststart.getTime() : false
+
+	
+// 	return view.ret()
+// })
 
 rest.addResponse('get-prop-value-search', ['admin'], async view => {
 	const db = await view.get('db')
@@ -113,7 +122,7 @@ rest.addResponse('get-group-search', ['admin'], async view => {
 })
 
 
-rest.addResponse('get-sub', ['admin'], async view => {
+rest.addResponse('get-tpl-sub', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	const query_nick = await view.get('query_nick')
@@ -267,8 +276,9 @@ rest.addResponse('get-sample-prop-search', ['admin'], async view => {
 	const list = await db.all(`
 		SELECT prop_id, prop_title, prop_nick, type
 		FROM sources_wprops
-		WHERE type in ("value","number") 
-		and (${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
+		WHERE 
+		-- type in ("value","number",) and 
+		(${hashs.map(hash => 'prop_nick like "%' + hash.join('%" and prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
 	`)
 
 	view.ans.list = list.map(row => {

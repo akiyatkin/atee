@@ -2,7 +2,7 @@ import os from 'node:os'
 import process from 'node:process'
 import path from 'node:path'
 import fs from 'node:fs/promises'
-
+import Recalc from "/-sources/Recalc.js"
 import Access from "/-controller/Access.js"
 import nicked from '/-nicked'
 import config from "/-config"
@@ -78,21 +78,33 @@ rest.addResponse('main', async view => {
 			FROM sources_rows 
 			WHERE source_id = :source_id
 		`, source)
+
+		// source.news = await db.col(`
+		// 	SELECT count(*)
+		// 	FROM sources_cols co 
+		// 	WHERE co.source_id = :source_id AND co.prop_id is null AND co.represent_col = 1 
+		// `, source)
+
 		source.news = await db.col(`
-			SELECT count(*)
-			FROM sources_cols co 
-			WHERE co.source_id = :source_id AND co.prop_id is null AND co.represent_col = 1 
+			SELECT count(distinct co.col_title)
+			FROM 
+				sources_rows ro, 
+				sources_cols co 
+			WHERE co.source_id = :source_id 
+			and ro.source_id = co.source_id and ro.sheet_index = co.sheet_index
+			AND co.prop_id is null AND co.represent_col = 1 
 		`, source)
+
+
 		source.prunings = await db.col(`
-			SELECT count(DISTINCT ce.sheet_index, ce.col_index)
-			FROM sources_cells ce
+			SELECT count(DISTINCT co.prop_id)
+			FROM sources_cells ce, sources_cols co
 			WHERE
 			ce.source_id = :source_id
+			and co.source_id = ce.source_id and co.sheet_index = ce.sheet_index and co.col_index = ce.col_index
 			and ce.pruning = 1	
 		`, source)
 	}
-
-	await db.exec(`INSERT IGNORE INTO sources_settings (singleton, comment) VALUES ('X','Общий комментарий')`)
 	view.data.comment = await db.col(`select comment from sources_settings`)
 
 	// for (const source of list) {
@@ -110,7 +122,20 @@ rest.addResponse('main', async view => {
 })
 rest.addResponse('props', ['admin'], async view => {
 	const db = await view.get('db')
-	const list = view.data.list = await Sources.getProps(db)
+	const list = view.data.list = await db.all(`
+		SELECT 
+			pr.prop_id,
+			pr.prop_title,
+			pr.type,
+			pr.prop_nick,
+			pr.known,
+			pr.multi + 0 as multi,
+			pr.comment,
+			pr.represent_prop + 0 as represent_prop,
+			(select count(*) from sources_cols co where co.prop_id = pr.prop_id) as cols
+		FROM sources_props pr
+		ORDER BY pr.ordain
+	`)
 	//view.data.list = list.slice(0, 1000)
 	return view.ret()
 })
@@ -457,6 +482,7 @@ rest.addResponse('sheet', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const source = view.data.source = await Sources.getSource(db, source_id)
+	
 	return view.ret()
 })
 rest.addResponse('sheet-source', ['admin'], async view => {
@@ -473,6 +499,9 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 	const entity = view.data.entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
 	const appear = await view.get('appear') //null - последняя дата, 0 - выбрать всё, date - конкретная дата	
 
+	const rdates = await Recalc.getDates(db)
+	view.data.indexneed = !rdates.date_recalc_index
+	//.issearch = !!await db.col(`select search from sources_rows where source_id = :source_id limit 1`, {source_id})
 	const hashs = await view.get('hashs')
 
 	const where_search = []
@@ -482,20 +511,41 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 		where_search.push(sql)
 	}
 	
+	
+	view.data.quantity_with_active = await db.col(`
+		SELECT count(DISTINCT ro.sheet_index, ro.row_index)
+		FROM sources_rows ro, sources_wcells ce
+		WHERE
+			ro.source_id = :source_id
+			and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
+			and (${where_search.join(' or ')})
+	`, {source_id})
+
+	view.data.quantity_with_passive = await db.col(`
+		SELECT count(DISTINCT ro.sheet_index, ro.row_index)
+		FROM sources_rows ro
+			left join sources_wcells ce on (ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index)
+		WHERE
+			ro.source_id = :source_id
+			and ce.col_index is null
+			and (${where_search.join(' or ')})
+	`, {source_id})
+
 	//Колонок с обрезанными значениями
 	view.data.quantity_with_pruning = await db.col(`
-		SELECT count(DISTINCT ce.sheet_index, ce.col_index)
-		FROM sources_rows ro, sources_cells ce
+		SELECT count(DISTINCT co.prop_id)
+		FROM sources_rows ro, sources_cells ce, sources_cols co
 		WHERE
 			ce.source_id = :source_id
 			and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
+			and co.source_id = ce.source_id and co.sheet_index = ce.sheet_index and co.col_index = ce.col_index
 			and (${where_search.join(' or ')})
-			and ce.pruning = 1		
+			and ce.pruning = 1
 	`, {source_id})
 
 	//Колонок с неопределёнными свойствами
 	view.data.quantity_with_unknown = await db.col(`
-		SELECT count(distinct co.col_index)
+		SELECT count(distinct co.col_title)
 		FROM 
 			sources_rows ro, 
 			sources_cols co 
@@ -750,7 +800,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	
 	const hashs = await view.get('hashs')
 	const keyfilter = await view.get('keyfilter#appear')
-	const limit = await view.get('limit') || 100
+	const limit = view.data.limit = await view.get('limit') || 100
 	/*
 		appear - конкретная дата появления
 		all - всё как есть
@@ -759,6 +809,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	*/
 
 	
+
 	
 	
 
@@ -844,16 +895,54 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 				sh.sheet_title,
 				sh.entity_id,
 				sh.represent_sheet + 0 as represent_sheet,
-				count(distinct ce.col_index) as count
-			FROM sources_sheets sh, sources_cells ce, sources_rows ro
+				count(distinct co.prop_id) as count
+			FROM sources_sheets sh, sources_cells ce, sources_rows ro, sources_cols co
 			WHERE sh.source_id = :source_id
 				and ce.source_id = sh.source_id 
+				and co.source_id = ce.source_id and co.sheet_index = ce.sheet_index and co.col_index = ce.col_index
 				and ce.sheet_index = sh.sheet_index
 				and (${where_search.join(' or ')})
 				and ce.pruning = 1
 				and ro.source_id = ce.source_id
 				and ro.sheet_index = ce.sheet_index
 				and ro.row_index = ce.row_index
+			GROUP BY sh.sheet_index
+			ORDER by sh.sheet_index
+		`, {source_id})
+	} else if (keyfilter == 'active') {
+		sheets = view.data.sheets = await db.all(`
+			SELECT 
+				sh.sheet_index,
+				sh.sheet_title,
+				sh.entity_id,
+				sh.represent_sheet + 0 as represent_sheet,
+				count(distinct sh.sheet_index, ro.row_index) as count
+			FROM sources_sheets sh, sources_rows ro, sources_wcells ce
+			WHERE ce.source_id = :source_id
+				and sh.source_id = ce.source_id
+				and sh.sheet_index = ce.sheet_index
+				and ro.source_id = ce.source_id
+				and ro.sheet_index = ce.sheet_index
+				and ro.row_index = ce.row_index
+				and (${where_search.join(' or ')})
+				
+			GROUP BY sh.sheet_index
+			ORDER by sh.sheet_index
+		`, {source_id})
+	} else if (keyfilter == 'passive') {
+		sheets = view.data.sheets = await db.all(`
+			SELECT 
+				sh.sheet_index,
+				sh.sheet_title,
+				sh.entity_id,
+				sh.represent_sheet + 0 as represent_sheet,
+				count(distinct ro.row_index) as count
+			FROM sources_sheets sh, sources_rows ro 
+				left join sources_wcells ce on (ce.source_id = ro.source_id and ce.sheet_index = ro.sheet_index and ce.row_index = ro.row_index)
+			WHERE sh.source_id = :source_id
+				and ro.source_id = sh.source_id and ro.sheet_index = sh.sheet_index
+				and (${where_search.join(' or ')})
+				and ce.row_index is null
 			GROUP BY sh.sheet_index
 			ORDER by sh.sheet_index
 		`, {source_id})
@@ -905,6 +994,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	let sheet_index = await view.get('sheet_index#orNull')
 	if (sheet_index === null) sheet_index = sheets[0]?.sheet_index || 0
 
+
 	const sheet = view.data.sheet = await Sources.getSheetByIndex(db, source_id, sheet_index)
 	if (!sheet) return view.err('Лист не найден')	
 
@@ -932,16 +1022,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 
 
 
-	const where_and = []
-	if (keyfilter == 'not') {
-		where_and.push('ro.key_id is null')
-	} else if (keyfilter == 'yes') {
-		where_and.push('ro.key_id is not null')
-	} else if (keyfilter == 'appear') {
-		where_and.push('(ap.date_appear = FROM_UNIXTIME(:date_appear))')
-	} else {
-		where_and.push('1=1')
-	}
+	
 
 	const entity = view.data.entity = source.entity_id && await Sources.getEntity(db, source.entity_id)
 	
@@ -964,75 +1045,103 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 
 	const sheet_title = sheet.sheet_title
 
+	let cols = []
 	
-	const cols = view.data.cols = 
-	keyfilter == 'pruning' ? await db.all(`
-		SELECT 
-			co.col_index, co.col_nick, pr.prop_nick, 
-			pr.multi + 0 as multi, 
-			pr.known,
-			pr.represent_prop + 0 as represent_prop,
-			pr.type,
-			co.col_title, pr.prop_id, pr.prop_title, pr.prop_id as entity_id,
-			co.represent_col + 0 as represent_col,
-			cco.represent_custom_col + 0 as represent_custom_col
-		FROM sources_cells ce, sources_rows ro, sources_sheets sh, sources_cols co
-			LEFT JOIN sources_custom_cols cco on (cco.source_id = co.source_id and cco.col_title = co.col_title and sheet_title = :sheet_title)
-			LEFT JOIN sources_props pr on pr.prop_id = co.prop_id
-		WHERE
-			co.source_id = :source_id
-			and ce.source_id = co.source_id and ce.col_index = co.col_index and co.sheet_index = ce.sheet_index
-			and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
-			and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
-			and (${where_search.join(' or ')})
-			and (ce.pruning = 1 or ce.col_index = sh.key_index)
-			and co.sheet_index = :sheet_index	
-		GROUP BY co.col_index
-		ORDER BY co.col_index
-	`, {source_id, sheet_index, sheet_title}) : 
-	keyfilter == 'unknown' ? await db.all(`
-		SELECT 
-			co.col_index, co.col_nick, pr.prop_nick, 
-			pr.multi + 0 as multi, 
-			pr.known,
-			pr.represent_prop + 0 as represent_prop,
-			pr.type,
-			co.col_title, pr.prop_id, pr.prop_title, pr.prop_id as entity_id,
-			co.represent_col + 0 as represent_col,
-			cco.represent_custom_col + 0 as represent_custom_col
-		FROM sources_cells ce, sources_sheets sh, sources_cols co
-			LEFT JOIN sources_custom_cols cco on (cco.source_id = co.source_id and cco.col_title = co.col_title and sheet_title = :sheet_title)
-			LEFT JOIN sources_props pr on pr.prop_id = co.prop_id
-		WHERE
-			co.source_id = :source_id
-			and ce.source_id = co.source_id and ce.col_index = co.col_index and co.sheet_index = ce.sheet_index
-			and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
-			and ((co.prop_id is null and co.represent_col = 1) or co.col_index = sh.key_index)
-			and co.sheet_index = :sheet_index	
-		GROUP BY co.col_index
-		ORDER BY co.col_index
-	`, {source_id, sheet_index, sheet_title}) : 
-	await db.all(`
-		SELECT 
-			co.col_index, co.col_nick, pr.prop_nick, 
-			pr.multi + 0 as multi, 
-			pr.known,
-			pr.represent_prop + 0 as represent_prop,
-			pr.type,
-			co.col_title, pr.prop_id, pr.prop_title, pr.prop_id as entity_id,
-			co.represent_col + 0 as represent_col,
-			cco.represent_custom_col + 0 as represent_custom_col
-		FROM sources_cols co
-			LEFT JOIN sources_custom_cols cco on (cco.source_id = co.source_id and cco.col_title = co.col_title and sheet_title = :sheet_title)
-			LEFT JOIN sources_props pr on pr.prop_id = co.prop_id
-		WHERE
-			co.source_id = :source_id
-			and co.sheet_index = :sheet_index	
-		GROUP BY co.col_index
-		ORDER BY co.col_index
-	`, {source_id, sheet_index, sheet_title}) 
+	if (keyfilter == 'pruning') {
+		cols = await db.all(`
+			SELECT 
+				co.col_index, co.col_nick, pr.prop_nick, 
+				pr.multi + 0 as multi, 
+				pr.known,
+				pr.represent_prop + 0 as represent_prop,
+				pr.type,
+				co.col_title, pr.prop_id, pr.prop_title, pr.prop_id as entity_id,
+				co.represent_col + 0 as represent_col,
+				cco.represent_custom_col + 0 as represent_custom_col
+			FROM sources_cells ce, sources_rows ro, sources_sheets sh, sources_cols co
+				LEFT JOIN sources_custom_cols cco on (cco.source_id = co.source_id and cco.col_title = co.col_title and sheet_title = :sheet_title)
+				LEFT JOIN sources_props pr on pr.prop_id = co.prop_id
+			WHERE
+				co.source_id = :source_id
+				and ce.source_id = co.source_id and ce.col_index = co.col_index and co.sheet_index = ce.sheet_index
+				and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
+				and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
+				and (${where_search.join(' or ')})
+				and (ce.pruning = 1 or ce.col_index = sh.key_index)
+				and co.sheet_index = :sheet_index	
+			GROUP BY co.col_index
+			ORDER BY co.col_index
+		`, {source_id, sheet_index, sheet_title})
+	// } else if (keyfilter == 'active') {
+	// 	cols = await db.all(`
+	// 		SELECT 
+	// 			co.col_index, co.col_nick, pr.prop_nick, 
+	// 			pr.multi + 0 as multi, 
+	// 			pr.known,
+	// 			pr.represent_prop + 0 as represent_prop,
+	// 			pr.type,
+	// 			co.col_title, pr.prop_id, pr.prop_title, pr.prop_id as entity_id,
+	// 			co.represent_col + 0 as represent_col,
+	// 			cco.represent_custom_col + 0 as represent_custom_col
+	// 		FROM sources_wcells ce, sources_rows ro, sources_sheets sh, sources_cols co
+	// 			LEFT JOIN sources_custom_cols cco on (cco.source_id = co.source_id and cco.col_title = co.col_title and sheet_title = :sheet_title)
+	// 			LEFT JOIN sources_props pr on pr.prop_id = co.prop_id
+	// 		WHERE
+	// 			co.source_id = :source_id
+	// 			and ce.source_id = co.source_id and ce.col_index = co.col_index and co.sheet_index = ce.sheet_index
+	// 			and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
+	// 			and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
+	// 			and (${where_search.join(' or ')})
+	// 			and co.sheet_index = :sheet_index	
+	// 		GROUP BY co.col_index
+	// 		ORDER BY co.col_index
+	// 	`, {source_id, sheet_index, sheet_title})
+	} else if (keyfilter == 'unknown') {
+		cols = await db.all(`
+			SELECT 
+				co.col_index, co.col_nick, pr.prop_nick, 
+				pr.multi + 0 as multi, 
+				pr.known,
+				pr.represent_prop + 0 as represent_prop,
+				pr.type,
+				co.col_title, pr.prop_id, pr.prop_title, pr.prop_id as entity_id,
+				co.represent_col + 0 as represent_col,
+				cco.represent_custom_col + 0 as represent_custom_col
+			FROM sources_cells ce, sources_sheets sh, sources_cols co
+				LEFT JOIN sources_custom_cols cco on (cco.source_id = co.source_id and cco.col_title = co.col_title and sheet_title = :sheet_title)
+				LEFT JOIN sources_props pr on pr.prop_id = co.prop_id
+			WHERE
+				co.source_id = :source_id
+				and ce.source_id = co.source_id and ce.col_index = co.col_index and co.sheet_index = ce.sheet_index
+				and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
+				and ((co.prop_id is null and co.represent_col = 1) or co.col_index = sh.key_index)
+				and co.sheet_index = :sheet_index	
+			GROUP BY co.col_index
+			ORDER BY co.col_index
+		`, {source_id, sheet_index, sheet_title})
+	} else {
+		cols = await db.all(`
+			SELECT 
+				co.col_index, co.col_nick, pr.prop_nick, 
+				pr.multi + 0 as multi, 
+				pr.known,
+				pr.represent_prop + 0 as represent_prop,
+				pr.type,
+				co.col_title, pr.prop_id, pr.prop_title, pr.prop_id as entity_id,
+				co.represent_col + 0 as represent_col,
+				cco.represent_custom_col + 0 as represent_custom_col
+			FROM sources_cols co
+				LEFT JOIN sources_custom_cols cco on (cco.source_id = co.source_id and cco.col_title = co.col_title and sheet_title = :sheet_title)
+				LEFT JOIN sources_props pr on pr.prop_id = co.prop_id
+			WHERE
+				co.source_id = :source_id
+				and co.sheet_index = :sheet_index	
+			GROUP BY co.col_index
+			ORDER BY co.col_index
+		`, {source_id, sheet_index, sheet_title}) 
+	}
 
-
+	view.data.cols = cols
 
 	for (const col of cols) {
 		col.cls = represent.calcCls(
@@ -1041,25 +1150,71 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 			source.represent_cols
 		)
 	}
+	const where_and = []
+	if (keyfilter == 'not') {
+		where_and.push('ro.key_id is null')
+	} else if (keyfilter == 'yes') {
+		where_and.push('ro.key_id is not null')
+	} else if (keyfilter == 'appear') {
+		where_and.push('(ap.date_appear = FROM_UNIXTIME(:date_appear))')
+	} else {
+		where_and.push('1=1')
+	}
 
-	const rows = view.ans.rows = await db.all(`
-		SELECT 
-			ro.row_index,
-			ro.key_id,
-			-- ro.represent_row_key + 0 as represent_row_key,
-			-- ro.represent_row + 0 as represent_row,
-			-- ro.repeat_index,
-			ap.date_appear
-		FROM sources_rows ro
-			LEFT JOIN sources_sheets sh on (sh.source_id = ro.source_id and sh.sheet_index = ro.sheet_index)
-			LEFT JOIN sources_values va on (va.value_id = ro.key_id)
-			LEFT JOIN sources_appears ap on (ap.source_id = ro.source_id and ap.key_nick = va.value_nick and ap.entity_id = sh.entity_id)
-		WHERE ro.source_id = :source_id and ro.sheet_index = :sheet_index
-		and (${where_and.join(' and ')})
-		and (${where_search.join(' or ')})
-		ORDER BY ro.row_index
-		LIMIT ${limit}
-	`, {source_id, sheet_index, date_appear})
+	let rows = []
+	if (keyfilter == 'active') {
+		rows = view.ans.rows = await db.all(`
+			SELECT 
+				ro.row_index,
+				ro.key_id,
+				ap.date_appear
+			FROM sources_rows ro
+				LEFT JOIN sources_sheets sh on (sh.source_id = ro.source_id and sh.sheet_index = ro.sheet_index)
+				LEFT JOIN sources_values va on (va.value_id = ro.key_id)
+				LEFT JOIN sources_appears ap on (ap.source_id = ro.source_id and ap.key_nick = va.value_nick and ap.entity_id = sh.entity_id)
+				LEFT JOIN sources_wcells wi on (wi.source_id = ro.source_id and wi.sheet_index = ro.sheet_index and wi.row_index = ro.row_index)
+			WHERE ro.source_id = :source_id and ro.sheet_index = :sheet_index
+				and wi.source_id is not null
+				and (${where_search.join(' or ')})
+			GROUP BY wi.row_index
+			ORDER BY ro.row_index
+			LIMIT ${limit}
+		`, {source_id, sheet_index})
+	} else if (keyfilter == 'passive') {
+		rows = view.ans.rows = await db.all(`
+			SELECT 
+				ro.row_index
+			FROM sources_rows ro
+				LEFT JOIN sources_wcells wi on (wi.source_id = ro.source_id and wi.sheet_index = ro.sheet_index and wi.row_index = ro.row_index)
+			WHERE 
+				ro.source_id = :source_id 
+				and ro.sheet_index = :sheet_index
+				and wi.source_id is null
+				and (${where_search.join(' or ')})
+			GROUP BY ro.row_index
+			ORDER BY ro.row_index
+			LIMIT ${limit}
+		`, {source_id, sheet_index})
+	} else {
+		rows = view.ans.rows = await db.all(`
+			SELECT 
+				ro.row_index,
+				ro.key_id,
+				-- ro.represent_row_key + 0 as represent_row_key,
+				-- ro.represent_row + 0 as represent_row,
+				-- ro.repeat_index,
+				ap.date_appear
+			FROM sources_rows ro
+				LEFT JOIN sources_sheets sh on (sh.source_id = ro.source_id and sh.sheet_index = ro.sheet_index)
+				LEFT JOIN sources_values va on (va.value_id = ro.key_id)
+				LEFT JOIN sources_appears ap on (ap.source_id = ro.source_id and ap.key_nick = va.value_nick and ap.entity_id = sh.entity_id)
+			WHERE ro.source_id = :source_id and ro.sheet_index = :sheet_index
+			and (${where_and.join(' and ')})
+			and (${where_search.join(' or ')})
+			ORDER BY ro.row_index
+			LIMIT ${limit}
+		`, {source_id, sheet_index, date_appear})
+	}
 
 
 	let max_row_index = 0
@@ -1088,33 +1243,83 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	// 	)
 	// }
 	const getCols = () => cols.length ? `and ce.col_index in (${cols.map(col => col.col_index)})` : `and 1 = 0`
-	const cells = await db.all(`
-		SELECT 
-			ce.row_index, 
-			ce.col_index, 
-			ce.multi_index,
-			ce.text,
-			ce.pruning + 0 as pruning,
-			-- ce.represent_cell + 0 as represent_cell,
-			-- ce.represent + 0 as represent,
-			nvl(wi.entity_id, 0) as winner,
-			it.master + 0 as master
-		FROM sources_cells ce
-			LEFT JOIN sources_rows ro on (ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index)
-			LEFT JOIN sources_sheets sh on (sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index)
-			LEFT JOIN sources_items it on (it.entity_id = sh.entity_id and ro.key_id = it.key_id)
-			LEFT JOIN sources_values va on (va.value_id = ro.key_id)
-			-- LEFT JOIN sources_wcells wi on (wi.entity_id = sh.entity_id and wi.key_id = ro.key_id and wi.prop_id = wi.entity_id)
-			LEFT JOIN sources_wcells wi on (wi.source_id = ce.source_id and wi.sheet_index = ce.sheet_index and wi.row_index = ce.row_index and wi.col_index = ce.col_index)
-			LEFT JOIN sources_appears ap on (ap.key_nick = va.value_nick and ap.source_id = ce.source_id and ap.entity_id = sh.entity_id)
-		WHERE ce.source_id = :source_id and ce.sheet_index = :sheet_index
-		${~['pruning','unknown'].indexOf(keyfilter) ? getCols() : ''}
-		and (${where_search.join(' or ')})
-		and (${where_and.join(' and ')})
-		and ro.row_index <= ${max_row_index}
-		ORDER BY ce.row_index, ce.col_index
+	let cells = []
+	//if (keyfilter == 'active') {
+		cells = await db.all(`
+			SELECT 
+				ce.row_index, 
+				ce.col_index, 
+				ce.multi_index,
+				ce.text,
+				ce.pruning + 0 as pruning,
+				nvl(wi.entity_id, 0) as winner,
+				it.master + 0 as master
+			FROM sources_cells ce
+				LEFT JOIN sources_rows ro on (ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index)
+				LEFT JOIN sources_sheets sh on (sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index)
+				LEFT JOIN sources_items it on (it.entity_id = sh.entity_id and ro.key_id = it.key_id)
+				LEFT JOIN sources_values va on (va.value_id = ro.key_id)
+				LEFT JOIN sources_wcells wi on (wi.source_id = ce.source_id and wi.sheet_index = ce.sheet_index and wi.row_index = ce.row_index and wi.col_index = ce.col_index)
+				LEFT JOIN sources_appears ap on (ap.key_nick = va.value_nick and ap.source_id = ce.source_id and ap.entity_id = sh.entity_id)
+			WHERE ce.source_id = :source_id and ce.sheet_index = :sheet_index
+			${~['pruning','unknown'].indexOf(keyfilter) ? getCols() : ''}
+			and ro.row_index in (${rows.map(row => row.row_index).join(',') || '(-1)'})
+			ORDER BY ce.row_index, ce.col_index
 
-	`, {source_id, sheet_index, date_appear}) 
+		`, {source_id, sheet_index}) 
+	// } else if (keyfilter == 'passive') {
+	// 	cells = await db.all(`
+	// 		SELECT 
+	// 			ce.row_index, 
+	// 			ce.col_index, 
+	// 			ce.multi_index,
+	// 			ce.text,
+	// 			ce.pruning + 0 as pruning,
+	// 			-- ce.represent_cell + 0 as represent_cell,
+	// 			-- ce.represent + 0 as represent,
+	// 			0 as winner,
+	// 			it.master + 0 as master
+	// 		FROM sources_cells ce
+	// 			LEFT JOIN sources_rows ro on (ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index)
+	// 			LEFT JOIN sources_sheets sh on (sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index)
+	// 			LEFT JOIN sources_items it on (it.entity_id = sh.entity_id and ro.key_id = it.key_id)
+	// 			LEFT JOIN sources_values va on (va.value_id = ro.key_id)
+	// 			LEFT JOIN sources_appears ap on (ap.key_nick = va.value_nick and ap.source_id = ce.source_id and ap.entity_id = sh.entity_id)
+	// 		WHERE ce.source_id = :source_id and ce.sheet_index = :sheet_index
+	// 		and (${where_search.join(' or ')})
+	// 		and ro.row_index in (${rows.map(row => row.row_index).join(',') || '(-1)'})
+	// 		ORDER BY ce.row_index, ce.col_index
+
+	// 	`, {source_id, sheet_index}) 
+	// } else {
+	// 	cells = await db.all(`
+	// 		SELECT 
+	// 			ce.row_index, 
+	// 			ce.col_index, 
+	// 			ce.multi_index,
+	// 			ce.text,
+	// 			ce.pruning + 0 as pruning,
+	// 			-- ce.represent_cell + 0 as represent_cell,
+	// 			-- ce.represent + 0 as represent,
+	// 			nvl(wi.entity_id, 0) as winner,
+	// 			it.master + 0 as master
+	// 		FROM sources_cells ce
+	// 			LEFT JOIN sources_rows ro on (ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index)
+	// 			LEFT JOIN sources_sheets sh on (sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index)
+	// 			LEFT JOIN sources_items it on (it.entity_id = sh.entity_id and ro.key_id = it.key_id)
+	// 			LEFT JOIN sources_values va on (va.value_id = ro.key_id)
+	// 			-- LEFT JOIN sources_wcells wi on (wi.entity_id = sh.entity_id and wi.key_id = ro.key_id and wi.prop_id = wi.entity_id)
+	// 			LEFT JOIN sources_wcells wi on (wi.source_id = ce.source_id and wi.sheet_index = ce.sheet_index and wi.row_index = ce.row_index and wi.col_index = ce.col_index)
+	// 			LEFT JOIN sources_appears ap on (ap.key_nick = va.value_nick and ap.source_id = ce.source_id and ap.entity_id = sh.entity_id)
+	// 		WHERE ce.source_id = :source_id and ce.sheet_index = :sheet_index
+	// 		${~['pruning','unknown'].indexOf(keyfilter) ? getCols() : ''}
+	// 		and (${where_search.join(' or ')})
+	// 		and (${where_and.join(' and ')})
+	// 		and ro.row_index <= ${max_row_index}
+	// 		ORDER BY ce.row_index, ce.col_index
+
+	// 	`, {source_id, sheet_index, date_appear}) 
+	// }
 
 	// const cells = []
 	// console.log({source_id, sheet_index, date_appear}, `

@@ -64,6 +64,25 @@ rest.addVariable('group#required', ['group', 'required'])
 
 
 
+rest.addArgument('prop_nick', ['nicked'], async (view, prop_nick) => {
+	if (!prop_nick) return null
+	const db = await view.get('db')
+	const prop = await Shop.getPropByNick(db, prop_nick)
+	if (!prop) return view.err('Свойство не найдено', 404)	
+	return prop_nick
+
+})
+rest.addVariable('prop', async (view) => {
+	const group_nick = await view.get('prop_nick#required')
+	const db = await view.get('db')
+	const prop = await Shop.getPropByNick(db, group_nick)
+	return prop
+})
+rest.addVariable('prop_nick#required', ['prop_nick', 'required'])
+rest.addVariable('prop#required', ['prop', 'required'])
+
+
+
 /*
 rest.addArgument('hru', ['string'])
 rest.addVariable('hru#required', ['hru', 'required'])
@@ -112,6 +131,7 @@ rest.addVariable('model#required', async view => {
 	
 	const brendmodel = await view.get('brendmodel#required')
 	const partner = await view.get('partner')
+
 	const model = await Shop.getModelByBrendmodel(db, brendmodel, partner)
 	if (!model) return view.err('Модель не найдена', 404)
 	return model

@@ -1,7 +1,6 @@
 import err from "/-controller/err.html.js"
 import field from "/-dialog/field.html.js"
 import date from "/-words/date.html.js"
-export const css = ['/-sources/revscroll.css']
 
 
 export const ROOT = (data, env) => err(data, env, ['TABLE']) || `
@@ -18,20 +17,19 @@ const showSource = (data, env, row) => `
 	<a href="disappear?entity_id=${row.entity_id}&source_id=${row.source_id}">${row.source_title}</a>
 `.trim()
 export const TABLE = (data, env) => !data.result ? '<p><i>Выберите ключевое свойство.</i></p>' : `
-	<div class="revscroll"  style="margin-top:2em">
-		<table>
-			<thead>
-				<tr>
-					<td>Источник</td>
-					<td>Сущность</td>
-					<td>Ключ</td>
-					<td>Появился</td>
-					<td>Исчез</td>
-				</tr>
-			</thead>
-			${data.list.map(row => showTr(data, env, row)).join('')}
-		</table>
-	</div>
+	
+	<table class="compact" style="margin: 2em 0">
+		<thead>
+			<tr>
+				<td>Источник</td>
+				<td>Сущность</td>
+				<td>Ключ</td>
+				<td>Появился</td>
+				<td>Исчез</td>
+			</tr>
+		</thead>
+		${data.list.map(row => showTr(data, env, row)).join('')}
+	</table>	
 `
 const showTr = (data, env, row) => `
 	<tr>

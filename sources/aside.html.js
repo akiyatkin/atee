@@ -1,9 +1,7 @@
 import field from "/-dialog/field.html.js"
 export const ROOT = (data, env) => `
 	<div style="height:100%; display: grid; grid-template-rows: max-content 1fr max-content; gap: 1em;">
-		<div>
-			
-		</div>
+		<div></div>
 		<div>
 			<div style="position: sticky; top:1em">
 				<div style="display: grid; gap: 0.25em; margin-bottom: 1em">
@@ -19,8 +17,16 @@ export const ROOT = (data, env) => `
 				label:'Пересчитать',
 				cls: 'mute a',
 				action:'/-sources/set-recalc',
-				global:'recalc'
+				global:'check'
 			})}</div>
+			<div>
+				${field.button({
+					cls: 'mute a',
+					label:'Опубликовать',
+					action:'/-sources/set-recalc-index',
+					global: 'check'
+				})}
+			</div>
 			<div><a href="memory">Память</a></div>
 			<div><a href="settings">Настройки</a></div>
 		</div>

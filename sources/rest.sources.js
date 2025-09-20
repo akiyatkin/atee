@@ -11,6 +11,10 @@ rest.extra(rest_db)
 
 import rest_funcs from '/-rest/rest.funcs.js'
 rest.extra(rest_funcs)
+
+import rest_recalc from '/-sources/rest.recalc.js'
+rest.extra(rest_recalc)
+
 export default rest
 
 
@@ -90,7 +94,7 @@ rest.addArgument('propprop', (view, prop) => {
 })
 rest.addVariable('propprop#required', ['propprop', 'required'])
 rest.addArgument('keyfilter', (view, prop) => {
-	if (~['appear','all','yes','not','pruning','unknown'].indexOf(prop)) return prop
+	if (~['appear','all','yes','not','pruning','unknown','active','passive'].indexOf(prop)) return prop
 	return 'appear'
 })
 rest.addVariable('keyfilter#required', ['keyfilter', 'required'])
@@ -107,8 +111,16 @@ rest.addArgument('appear', (view, date) => {
 })
 
 
-rest.addArgument('known', (view, type) => {
-	if (~['system','more','column'].indexOf(type)) return type
+
+rest.addArgument('lettercase', (view, lettercase) => {
+	if (~['ignore','upper','lower','firstup'].indexOf(lettercase)) return lettercase
+	return null
+})
+rest.addVariable('lettercase#required', ['lettercase', 'required'])
+
+
+rest.addArgument('known', (view, known) => {
+	if (~['system','more','column'].indexOf(known)) return known
 	return null
 })
 rest.addVariable('known#required', ['known', 'required'])
@@ -176,12 +188,12 @@ rest.addArgument('value_id', ['mint'], async (view, value_id) => {
 	if (!value_id) return view.err('Значение не найдено', 404)
 	return value_id
 })
-rest.addFunction('checkstart', async (view) => { //setaccess нужен, только после индексации
-	const db = await view.get('db')
-	const source_title = await db.col(`select source_title FROM sources_sources where date_start is not null`)
-	if (source_title) return view.err('Дождитесь загрузки '+ source_title)
-	if (Sources.recalcinprogress) return view.err('Дождитесь пересчёта')
-})
+// rest.addFunction('checkrecalc', async (view) => { //setaccess нужен, только после индексации
+// 	const db = await view.get('db')
+// 	const source_title = await db.col(`select source_title FROM sources_sources where date_start is not null`)
+// 	if (source_title) return view.err('Дождитесь загрузки '+ source_title)
+// 	if (Sources.recalc.start) return view.err('Подождите идёт обработка')
+// })
 rest.addArgument('item_id', ['mint'], async (view, item_id) => {
 	if (!item_id) return null
 	const db = await view.get('db')
