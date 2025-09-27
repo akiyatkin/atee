@@ -74,10 +74,8 @@ rest.addVariable('order_id#required', async (view) => {
 
 rest.addVariable('active_id', async view => {
 	const db = await view.get('db')
-	
 	const user_id = await view.get('user_id')
 	if (!user_id) return false
-
 	const order_id = await view.get('order_id')
 	if (order_id) {
 		const active_id = await db.col(`
@@ -85,13 +83,13 @@ rest.addVariable('active_id', async view => {
 			FROM shop_actives 
 			WHERE user_id = :user_id and order_id = :order_id
 		`, {user_id, order_id})
-		return active_id //Является ли текущай заявка активной - вот в чём вопрос
+		return active_id //Является ли текущай заявка в ожидании - вот в чём вопрос, либо да, либо нет
 	}
 	const active_id = await db.col(`
 		SELECT order_id 
 		FROM shop_actives
 		WHERE user_id = :user_id
-	`, {user_id})
+	`, {user_id})	
 	return active_id
 })
 rest.addVariable('active_id#required', ['active_id'], async (view, active_id) => {

@@ -545,6 +545,8 @@ Consciousness.setCellType = async (db, cell) => {
 			if (!multi) textnumber = textnumber.replace('&comma;','.')
 
 			number = parseFloat(textnumber)
+
+			
 			if (isNaN(number)) {
 				number = null
 				pruning = true
@@ -554,11 +556,11 @@ Consciousness.setCellType = async (db, cell) => {
 				pruning = true
 			} else {
 				
-				const number_before_round = (number * (10 ** scale)).toFixed(10)
+				const number_before_round = (number * (10 ** scale)).toFixed(1)
 				number = Math.round(number_before_round)
 
 				if (number_before_round != number) {
-
+					//number
 					//number = null
 					pruning = true
 				} else if (number > 2147483647 || number < -2147483647) { //int sql
@@ -1170,19 +1172,30 @@ Consciousness.recalcTexts = async (db) => {
 // 	}
 // }
 
-Consciousness.insertItems = async (db, entity) => {
-	await db.exec(`
-		TRUNCATE TABLE sources_items 
-	`)
+Consciousness.insertItems = async (db) => {
+	// await db.exec(`
+	// 	TRUNCATE TABLE sources_items 
+	// `)
 
 	await db.exec(`
-		INSERT INTO sources_items (entity_id, key_id)
+		INSERT IGNORE INTO sources_items (entity_id, key_id)
 		SELECT distinct sh.entity_id, ro.key_id
 		FROM sources_rows ro, sources_sheets sh
 		WHERE ro.key_id is not null
 		and ro.source_id = sh.source_id
 		and ro.sheet_index = sh.sheet_index
 	`)
+	await db.exec(`
+		DELETE it FROM sources_items it
+		left join (
+			SELECT distinct sh.entity_id, ro.key_id
+			FROM sources_rows ro, sources_sheets sh
+			WHERE ro.key_id is not null
+			and ro.source_id = sh.source_id
+			and ro.sheet_index = sh.sheet_index
+		) t on (t.key_id = it.key_id and t.entity_id = it.entity_id)
+		WHERE t.key_id is null
+	`)	
 	// await db.exec(`
 	// 	UPDATE 
 	// 		sources_items it, 
@@ -2437,6 +2450,7 @@ Consciousness.recalcItemSearch = async (db) => {
 			and wi.col_index = ce.col_index
 		GROUP BY wi.key_id
 	`)
+	console.log(texts.length) //прайсы с key_id без поиска
 	await Consciousness.recalcItemSearch_list(db, texts)
 	
 }

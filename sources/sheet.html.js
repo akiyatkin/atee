@@ -111,13 +111,13 @@ export const DATES = (data, env) => !data.result ? `` : `
 			${data.dates.map(dateup => showDate(data, env, dateup)).join('')} ${data.indexneed ? showIndex(data, env) : ''}
 		</div>
 		<div style="background: linear-gradient(-30deg, #00aaff55, #4466ff22); padding: 0.5em; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
-			<div><a class="${env.bread.get.keyfilter == 'yes' ? 'active' : ''}" data-keyfilter="yes" data-limit="" href="sheet${addget({keyfilter: 'yes', limit: ''}, env.bread.get)}#date">С&nbsp;ключом<sup>${data.quantity_of_keys}</sup></a></div>
-			<div><a class="${env.bread.get.keyfilter == 'not' ? 'active' : ''}" data-keyfilter="not" data-limit="" href="sheet${addget({keyfilter: 'not', limit: ''}, env.bread.get)}#date">Без&nbsp;ключа&nbsp;<sup>${data.quantity_without_keys}</sup></a></div>
-			<div><a class="${env.bread.get.keyfilter == 'all' ? 'active' : ''}" data-keyfilter="all" data-limit="10000" href="sheet${addget({keyfilter: 'all', limit: 10000}, env.bread.get)}#date">Всё&nbsp;<sup>${data.quantity_without_keys + data.quantity_of_keys}</sup></a></div>
-			<div><a title="Свойств с упрощёнными/обрезанными данными" class="${env.bread.get.keyfilter == 'pruning' ? 'active' : ''}" data-keyfilter="pruning" data-limit="10000" href="sheet${addget({keyfilter: 'pruning', limit: 10000}, env.bread.get)}#date">Упрощений&nbsp;<sup>${data.quantity_with_pruning}</sup></a></div>
-			<div><a title="Колонок без назначенных свойств и видимых" class="${env.bread.get.keyfilter == 'unknown' ? 'active' : ''}" data-keyfilter="unknown" data-limit="10000" href="sheet${addget({keyfilter: 'unknown', limit: 10000}, env.bread.get)}#date">Колонок&nbsp;<sup>${data.quantity_with_unknown}</sup></a></div>
-			<div><a title="Строки с проигравшими/заменёнными ячейками" class="${env.bread.get.keyfilter == 'passive' ? 'active' : ''}" data-keyfilter="passive" data-limit="" href="sheet${addget({keyfilter: 'passive', limit: ''}, env.bread.get)}#date">Скрыто&nbsp;<sup>${data.quantity_with_passive}</sup></a></div>
-			<div><a title="Строки с победившими/заменяющими ячейками" class="${env.bread.get.keyfilter == 'active' ? 'active' : ''}" data-keyfilter="active" data-limit="" href="sheet${addget({keyfilter: 'active', limit: ''}, env.bread.get)}#date">Показано&nbsp;<sup>${data.quantity_with_active}</sup></a></div>
+			<div><a class="${env.bread.get.keyfilter == 'yes' ? 'active' : ''}" data-keyfilter="yes" data-limit="" href="sheet${addget(env.bread.get, {keyfilter: 'yes', limit: ''})}#date">С&nbsp;ключом<sup>${data.quantity_of_keys}</sup></a></div>
+			<div><a class="${env.bread.get.keyfilter == 'not' ? 'active' : ''}" data-keyfilter="not" data-limit="" href="sheet${addget(env.bread.get, {keyfilter: 'not', limit: ''})}#date">Без&nbsp;ключа&nbsp;<sup>${data.quantity_without_keys}</sup></a></div>
+			<div><a class="${env.bread.get.keyfilter == 'all' ? 'active' : ''}" data-keyfilter="all" data-limit="10000" href="sheet${addget(env.bread.get, {keyfilter: 'all', limit: 10000})}#date">Всё&nbsp;<sup>${data.quantity_without_keys + data.quantity_of_keys}</sup></a></div>
+			<div><a title="Свойств с упрощёнными/обрезанными данными" class="${env.bread.get.keyfilter == 'pruning' ? 'active' : ''}" data-keyfilter="pruning" data-limit="10000" href="sheet${addget(env.bread.get, {keyfilter: 'pruning', limit: 10000})}#date">Упрощений&nbsp;<sup>${data.quantity_with_pruning}</sup></a></div>
+			<div><a title="Колонок без назначенных свойств и видимых" class="${env.bread.get.keyfilter == 'unknown' ? 'active' : ''}" data-keyfilter="unknown" data-limit="10000" href="sheet${addget(env.bread.get, {keyfilter: 'unknown', limit: 10000})}#date">Колонок&nbsp;<sup>${data.quantity_with_unknown}</sup></a></div>
+			<div><a title="Строки с проигравшими/заменёнными ячейками" class="${env.bread.get.keyfilter == 'passive' ? 'active' : ''}" data-keyfilter="passive" data-limit="" href="sheet${addget(env.bread.get, {keyfilter: 'passive', limit: ''})}#date">Скрыто&nbsp;<sup>${data.quantity_with_passive}</sup></a></div>
+			<div><a title="Строки с победившими/заменяющими ячейками" class="${env.bread.get.keyfilter == 'active' ? 'active' : ''}" data-keyfilter="active" data-limit="" href="sheet${addget(env.bread.get, {keyfilter: 'active', limit: ''})}#date">Показано&nbsp;<sup>${data.quantity_with_active}</sup></a></div>
 		</div>
 	</div>
 	<script>
@@ -134,7 +134,7 @@ export const DATES = (data, env) => !data.result ? `` : `
 					const params = {keyfilter, limit}
 					const appear = a.dataset.appear
 					if (appear) params.appear = appear
-					a.href = 'sheet' + addget(params, new URLSearchParams(window.location.search))+'#date'
+					a.href = 'sheet' + addget(new URLSearchParams(window.location.search), params)+'#date'
 				}
 				const origin = location.href
 				//const origin = location.origin + bread.href
@@ -166,7 +166,7 @@ const showSheet = (data, env, sheet, active = sheet.sheet_index == data.sheet.sh
 	`
 	if (!active) return `
 		<div class="${sheet.represent_sheet ? '' : 'mute'}">
-			<a href="sheet${addget({sheet_index:sheet.sheet_index}, env.bread.get)}#data">${sheet.sheet_title}&nbsp;<sup>${sheet.count}</sup></a>
+			<a href="sheet${addget(env.bread.get, {sheet_index:sheet.sheet_index})}#data">${sheet.sheet_title}&nbsp;<sup>${sheet.count}</sup></a>
 			${!sheet.entity || sheet.entity.entity_id != data.source.entity_id ? showEntity(data, env, sheet.entity) : ''}
 		</div>
 	`
@@ -190,7 +190,7 @@ const showSearch = (data, env) => `
 			(form => {
 				const go = async () => {
 					const addget = await import('/-sources/addget.js').then(r => r.default)
-					const query = addget({search: form.search.value.trim()}, new URLSearchParams(window.location.search))
+					const query = addget(new URLSearchParams(window.location.search), {search: form.search.value.trim()})
 					const Client = await window.getClient()
 					Client.go('sheet' + query)
 				}
@@ -207,7 +207,7 @@ const showDate = (data, env, dateup, active = dateup.active && (!env.bread.get.k
 		<a class="${active ? 'active' : ''}" 
 		 	data-keyfilter="appear"
 		 	data-appear="${dateup.date}"
-			href="sheet${addget({keyfilter:'appear', appear:dateup.date, limit: ''}, env.bread.get)}#date">
+			href="sheet${addget(env.bread.get, {keyfilter:'appear', appear:dateup.date, limit: ''})}#date">
 			${dateup.title || date.ai(dateup.date)}&nbsp;<sup>${dateup.count}</sup>
 		</a>
 	</div>
@@ -217,7 +217,7 @@ const showIndex = (data, env) => `
 		${field.button({
 			label:'Опубликовать',
 			cls: 'a',
-			action:'/-sources/set-recalc-index',
+			action:'/-sources/set-recalc-publicate',
 			global:'check'
 		})}<sup>&nbsp;</sup>
 	</div>

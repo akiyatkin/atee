@@ -20,7 +20,7 @@ tpl.showError = (data, env) => `
 	</p>
 `
 tpl.showGroupLink = (data, env, group) => `
-	<a data-scroll="none" href="${cards.getGroupPath(data, group)}">${group.group_title}</a>`
+	<a data-scroll="none" href="${cards.getGroupPath(data, group.group_nick)}">${group.group_title}</a>`
 tpl.showBreadcrumbs = (data, env, model) => `
 	<div style="margin: 1em 0 0.5em; display: flex; justify-content: space-between;">
 		${cards.badgecss(data, env)}
@@ -66,13 +66,13 @@ tpl.showModelProps = (data, env, model) => {
 		return propa.ordain - propb.ordain
 	})
 	if (!mprops.length) return ''
+	const gain = (name) => cards.getSomeTitle(data, model.recap, name)
 	return `
 		<h2>Характеристики</h2>
+		<p>
+			${gain('brendmodel') || gain('brendart')}
+		</p>
 		<table>
-			<tr><th>${data.props.brend.prop_title}</th><td>
-				${tpl.filters(data, env, model, model.recap, 'brend')}
-			</td></tr>
-			${tpl.showTrProp(data, env, model.recap, 'model')}
 			${mprops.map(prop_nick => tpl.showTrProp(data, env, model.recap, prop_nick)).join('')}
 		</table>
 	`
@@ -280,7 +280,7 @@ tpl.showMainData = (data, env, model, selitem) => `
 		<div>
 			<b>${cards.line('Модель', cards.getSomeTitle(data, model.recap, 'model'))}</b>
 			${cards.line('Бренд', tpl.filters(data, env, model, model.recap, 'brend'))}
-			${cards.line('Скидка', cards.getItemDiscount(model.recap))}
+			${cards.line('Скидка', cards.getModelDiscount(model))}
 
 			
 
@@ -355,7 +355,7 @@ const showItemIfCost = (mod, item, oldcost = item['Старая цена'] || mo
 
 tpl.getItemButton = (data, env, model, item, i) => {
 	const selected = item.art?.[0] == env.crumb.name || item.brendart[0] == env.crumb.name
-	const title = cards.getVariant(data, env, model, item)
+	const title = cards.getVariant(data, model, item)
 
 	return selected ? 
 	`<span style="display: inline-block; border-radius:var(--radius);
@@ -487,7 +487,7 @@ tpl.buyButton = (data, env, model, selitem) => {
 
 
 tpl.filters = (data, env, model, item, prop_nick) => (item[prop_nick] || []).map(nick => `
-	<a rel="nofollow" href="${cards.getGroupPath(data, data.groups[model.groups[0]])}${cards.addget(env.bread, {m: prop_nick + '::.' + nick + '=1'})}">
+	<a rel="nofollow" href="${cards.getGroupPath(data, model.groups[0])}${cards.addget(env.bread.get, {m: prop_nick + '::.' + nick + '=1'})}">
 		${data.values[nick].value_title || nick}
 	</a>
 `).join(', ')

@@ -769,7 +769,7 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 				const Basket = await import('/-shop/cart/Basket.js').then(r => r.default)
 				
 				const ans = await Basket.add(input, args)
-
+				if (!ans.result) input.value = oldcount
 				if (product.quantity - oldcount < 0) Ecommerce.remove([product])
 				else Ecommerce.add([product])
 

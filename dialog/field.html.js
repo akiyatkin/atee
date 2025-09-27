@@ -410,7 +410,8 @@ field.prompt = ({
 		layer = false,
 		onlyfuture = false,
 		type = 'email', action, args = {}, 
-		goreplace = false, go = false, reloaddiv = false, goid = false, reload = false
+		goreplace = false, go = false, reloaddiv = false, goid = false, reload = false,
+		global = false
 	}) => {
 	if (!edit) return `<span class="${cls}">${value ?? ''}${unit}</span>`
 	return `
@@ -451,6 +452,7 @@ field.prompt = ({
 								const goid = "${goid ? goid : ''}"
 								if (ans.result && ${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
 								if (ans.result && ${!!go} && ${!goreplace}) Client.pushState('${go}' + (goid ? ans[goid] : ''))
+								if (ans.result && ${!!global}) Client.global(${JSON.stringify(global)})
 								if (ans.result && ${!!go} && ${!!goreplace}) Client.replaceState('${go}' + (goid ? ans[goid] : ''))
 								if (ans.result && ${!!reload}) Client.reload()
 								return ans.result
@@ -726,7 +728,6 @@ field.rowtext = ({edit = true, name, label, action, args = {}, value, type = 'te
 					const field = div.querySelector('.field')
 					if (!field) return
 					field.addEventListener('input', async () => {
-						console.log('asdf')
 						const sendit = await import('/-dialog/sendit.js').then(r => r.default)
 						let value = field.value
 						if (~['datetime-local', 'date'].indexOf(field.type)) value = Math.floor(new Date(field.value).getTime() / 1000)

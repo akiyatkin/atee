@@ -30,7 +30,7 @@ rest.addResponse('set-submit', ['terms#required'], async view => {
 	
 	const ready = async () => {
 		//await Cart.setPartner(db, order_id, partner)
-		const list = await Cart.getBasket(db, order, partner)
+		const list = await Cart.basket.get(db, order, partner)
 		await Cart.recalcOrder(db, order_id, list, partner)
 		await Cart.freeze(db, order_id, partner)
 
@@ -137,7 +137,8 @@ rest.addResponse('set-remove', async view => {
 	const order_id = await Cart.castWaitActive(db, user_id, active_id, utms, false)
 	await Cart.updateUtms(db, order_id, utms)
 	await Cart.removeItem(db, order_id, item)
-	const list = await Cart.getBasket(db, order, partner)
+	const order = await Cart.getOrder(db, order_id)
+	const list = await Cart.basket.get(db, order, partner)
 	await Cart.recalcOrder(db, order_id, list, partner)
 	return view.ret()
 })
@@ -145,6 +146,7 @@ rest.addResponse('set-remove', async view => {
 
 rest.addResponse('set-add', async view => {
 	const active_id = await view.get('active_id')
+
 	const partner = await view.get('partner')
 	const db = await view.get('db')
 
@@ -158,6 +160,8 @@ rest.addResponse('set-add', async view => {
 	const user_id = await view.get('user_id') || await User.createAndSet(db, view)
 
 	const order_id = await Cart.castWaitActive(db, user_id, active_id, utms, nocopy)
+
+
 	
 	view.ans.newwaitorder = order_id != active_id
 	await Cart.updateUtms(db, order_id, utms)
@@ -169,7 +173,7 @@ rest.addResponse('set-add', async view => {
 	if (order.partner?.key != partner?.key) orderrefresh = true
 	view.ans.orderrefresh = orderrefresh
 	await Cart.addItem(db, order_id, item.brendart[0], quantity)
-	const list = await Cart.getBasket(db, order, partner)
+	const list = await Cart.basket.get(db, order, partner)
 	await Cart.recalcOrder(db, order_id, list, partner)
 	return view.ret()
 })
@@ -181,7 +185,7 @@ rest.addResponse('set-clear', async view => {
 	const order = await Cart.getOrder(db, order_id)
 	if (order.status != 'wait') return view.err('Заказ уже отправлен менеджеру')
 
-	const list = view.data.list = await Cart.getBasket(db, order, partner)
+	const list = view.data.list = await Cart.basket.get(db, order, partner)
 	await Shop.prepareModelsPropsValuesGroups(db, view.data, list)
 	//await Cart.prepareBasketListPropsValuesGroups(db, view.data, list)
 

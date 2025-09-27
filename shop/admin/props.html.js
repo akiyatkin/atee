@@ -92,10 +92,10 @@ const showTr = (data, env, prop) => `
 			${field.setpop({
 				heading:'Выбор в фильтре',
 				cls: 'a',
-				value: prop.multichoice,
+				value: prop.singlechoice,
 				name: 'bit',
-				action: '/-shop/admin/set-prop-multichoice', 
-				values: {"":"Один", "1":"Несколько"},
+				action: '/-shop/admin/set-prop-singlechoice', 
+				values: {"":"Несколько", "1":"Один"},
 				args: { prop_nick: prop.prop_nick}
 			})}
 		</td>

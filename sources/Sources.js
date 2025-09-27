@@ -80,7 +80,11 @@ Sources.load = async (db, source, visitor) => {
 // 	dates.indexneed = dates.date_recalc > dates.date_index
 // 	return dates
 // }
-Sources.recalcAllChange = async (db) => {
+Sources.recalcAllChanges = async (db) => {
+	await Sources.recalcAllChangesWithoutRowSearch(db)
+	await Consciousness.recalcRowSearch(db)
+}
+Sources.recalcAllChangesWithoutRowSearch = async (db) => {
 	await Consciousness.recalcEntitiesPropId(db)
 	await Consciousness.recalcMulti(db)
 	await Consciousness.recalcTexts(db)
@@ -91,9 +95,7 @@ Sources.recalcAllChange = async (db) => {
 	await Consciousness.recalcRepresentCol(db)
 	await Consciousness.recalcMaster(db)
 }
-Sources.recalcIndex = async db => {
-	
-	
+Sources.recalcWinnerAppearSearch = async db => {
 	
 	//const monitor = new PerformanceMonitor()
 	
@@ -103,7 +105,7 @@ Sources.recalcIndex = async db => {
 	//monitor.start('recalcAppear')
 	await Consciousness.recalcAppear(db) // 456.06ms
 	// monitor.start('recalcRowSearch')
-	// await Consciousness.recalcRowSearch(db)
+	//await Consciousness.recalcRowSearch(db) //делается явно только в set-source-load, set-source-renovate, set-sources-load, set-sources-renovate, set-reset-values, set-source-clear
 	//monitor.start('recalcItemSearch')
 	await Consciousness.recalcItemSearch(db)
 
@@ -111,16 +113,6 @@ Sources.recalcIndex = async db => {
 	//console.log(monitor.getReport())
 	
 }
-
-// Sources.checkDeferredIndex = async (db) => {
-// 	console.log('Sources.checkDeferredIndex()')
-// 	const dates = await Sources.getDates(db)
-// 	if (dates.indexneed) await Sources.deferredIndex(db)
-// }
-// Sources.deferredIndex = (db) => {
-// 	clearTimeout(Recalc.deferredIndex.timer)
-// 	Sources.deferredIndex.timer = setTimeout(() => Sources.recalcIndex(db), 1000 * 60 * 30)
-// }
 
 
 Sources.scheduleDailyRenovate = (db, time = '01:09') => {	
@@ -137,7 +129,7 @@ Sources.scheduleDailyRenovate = (db, time = '01:09') => {
 // 	await Recalc.recalc(db, async () => {
 // 		await func()
 
-// 		await Sources.recalcAllChange(db)
+// 		await Sources.recalcAllChangesWithoutRowSearch(db)
 // 		// return
 		
 		
@@ -195,7 +187,7 @@ Sources.scheduleDailyRenovate = (db, time = '01:09') => {
 
 // 	if (!reindex) {
 // 		await db.exec(`UPDATE sources_settings SET date_recalc = now()`)
-// 		Sources.deferredIndex(db)
+// 		Sources.deferredPublicate(db)
 // 	}
 // }
 // Sources.recalc.lastend = false

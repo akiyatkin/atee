@@ -14,7 +14,7 @@
 		"props:ROOT":"/-shop/admin/props",
 		"main:ROOT":"/-shop/admin/main",
 		"settings:ROOT":"/-shop/admin/settings",
-		"brands:ROOT":"/-shop/admin/brands"
+		"brief:ROOT":"/-shop/admin/brief"
 	},
 	"global":{
 		"groups:ROOT":["recalc"],
@@ -26,6 +26,7 @@
 	"onlyclient":["recalc:ROOT"],
 	"jsontpl":{
 		"groups:ROOT":"/-shop/admin/groups?group_id=${env.crumb.child?.name ?? ''}&query=${env.bread.get.search ?? ''}",
+		"poss:ROOT":"/-shop/admin/poss?query=${env.bread.get.search ?? ''}",
 		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
 	},
 	"tpl":{
@@ -33,7 +34,8 @@
 		"frame":"/-controller/frame.html.js",
 		"controller":"/-controller/layout.html.js",
 		"settings":"/-shop/admin/settings.html.js",
-		"brands":"/-shop/admin/brands.html.js",
+		"brief":"/-shop/admin/brief.html.js",
+		"poss":"/-shop/admin/poss.html.js",
 		"index":"/-controller/index-board.html.js",
 		"aside":"/-shop/admin/aside.html.js",
 		"main":"/-shop/admin/main.html.js",
@@ -50,11 +52,19 @@
 		}
 	},
 	"childs":{
-		"brands":{
-			"head":{"title":"Бренды"},
+		"brief":{
+			"head":{"title":"Сводка"},
 			"layout":{
 				"index:ROOT":{
-					"MAIN":"brands:ROOT"
+					"MAIN":"brief:ROOT"
+				}
+			}
+		},
+		"poss":{
+			"head":{"title":"Позиции"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"poss:ROOT"
 				}
 			}
 		},

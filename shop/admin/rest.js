@@ -15,6 +15,53 @@ rest.extra(rest_get)
 import rest_shopadmin from '/-shop/admin/rest.shopadmin.js'
 rest.extra(rest_shopadmin)
 
+
+rest.addResponse('brief', ['admin'], async view => {
+	const db = await view.get('db')
+	const ym = ShopAdmin.getNowYM()
+	const brands = view.data.brands = await db.all(`
+			select va.value_title as brand_title, sb.*, UNIX_TIMESTAMP(date_cost) as date_cost 
+			from shop_stat_brands sb, sources_values va
+			WHERE year = :year and month = :month
+			and va.value_nick = sb.brand_nick
+			ORDER by year DESC, month DESC
+	`, { ...ym})
+
+	return view.ret()
+})
+rest.addResponse('poss', ['admin'], async view => {
+	const db = await view.get('db')
+	const hashs = await view.get('hashs')
+	const bind = await Shop.getBind(db)
+
+
+	const key_ids = await db.colAll(`
+		SELECT it.key_id
+		FROM sources_items it
+		WHERE it.entity_id = :brendart_prop_id
+		and (${hashs.map(hash => 'it.search like "%' + hash.join('%" and it.search like "%') + '%"').join(' or ') || 'it.search != ""'}) 
+		ORDER BY RAND()
+		LIMIT 25
+	`, {...bind})
+
+	const items = await ShopAdmin.getItems(db, key_ids) //{key_id: {prop_id: text}}
+	const table = await ShopAdmin.getTable(db, items) //items => {head: [prop_title], rows:[[text]], prop_ids, key_ids}
+
+	table.groups = []
+	for (const key_id of table.key_ids) {
+		const groups = await db.all(`
+			select gr.group_title, gr.group_id 
+			from shop_groups gr, shop_itemgroups ig
+			where ig.key_id = :key_id and gr.group_id = ig.group_id
+		`, {key_id})
+		table.groups.push(groups)
+	}
+
+	view.data.table = table
+
+	return view.ret()
+})
+
 rest.addResponse('main', async view => {
 	const isdb = await view.get('isdb')
 	view.data.admin = await Access.isAdmin(view.visitor.client.cookie)
@@ -51,10 +98,10 @@ rest.addResponse('brands', ['admin'], async view => {
 })
 rest.addResponse('props', ['admin'], async view => {
 	const db = await view.get('db')
-	view.data.props = await db.all(`
+	const list = await db.all(`
 		SELECT 
 			bp.prop_nick, 
-			bp.multichoice + 0 as multichoice,
+			bp.singlechoice + 0 as singlechoice,
 			bp.card_tpl, 
 			bp.filter_tpl, 
 			pr.known,
@@ -65,8 +112,30 @@ rest.addResponse('props', ['admin'], async view => {
 			pr.prop_id
 		FROM shop_props bp
 			LEFT JOIN sources_wprops pr on pr.prop_nick = bp.prop_nick
+		WHERE pr.prop_id is null
 		order by pr.ordain
 	`)
+
+	view.data.props = await db.all(`
+		SELECT 
+			bp.prop_nick, 
+			bp.singlechoice + 0 as singlechoice,
+			bp.card_tpl, 
+			bp.filter_tpl, 
+			pr.known,
+			pr.comment,
+			pr.type,
+			pr.multi + 0 as multi,
+			pr.prop_title, 
+			pr.prop_id
+		FROM sources_wprops pr
+			LEFT JOIN shop_props bp on pr.prop_nick = bp.prop_nick
+		order by pr.ordain
+	`)
+	for(const row of list) {
+		view.data.props.unshift(row)
+	}
+	
 	return view.ret()
 })
 rest.addResponse('groups', ['admin'], async view => {
@@ -96,7 +165,7 @@ rest.addResponse('groups', ['admin'], async view => {
 			WHERE ca.group_id = :group_id
 			order by ca.ordain
 		`, group)
-		view.data.stats = await ShopAdmin.getGroupStats(db, group_id)
+		view.data.stats = await ShopAdmin.getGroupHistory(db, group_id)
 		
 		
 		const samples = await db.all(`
@@ -107,6 +176,7 @@ rest.addResponse('groups', ['admin'], async view => {
 				pr.type, 
 				spv.number,
 				spv.value_nick, 
+				pr.scale,
 				pr.prop_title, 
 				if(wv.value_id, va.value_title, null) as value_title
 			FROM shop_samples sa
@@ -126,11 +196,11 @@ rest.addResponse('groups', ['admin'], async view => {
 		}
 		
 		
-		view.data.poscount = view.data.stats[0]?.positions
-		view.data.modcount = view.data.stats[0]?.models
+		view.data.poscount = view.data.stats[0]?.poscount
+		view.data.modcount = view.data.stats[0]?.modcount
 
 		// const s = await ShopAdmin.getSamplesUpByGroupId(db, group_id)
-		// const { from, join, where, sort } = await Shop.getWhereBySamples(db, s)
+		// const { from, join, where, sort } = await Shop.getWhereBySamplesWinMod(db, s)
 		// //const {where, from, sort} = Shop.getmdwhere(md_group, md_group.group.sgroup)
 		// view.data.poscount = await db.col(`
 		// 	SELECT count(distinct win.key_id)
@@ -154,11 +224,13 @@ rest.addResponse('groups', ['admin'], async view => {
 		`, bind)
 		view.data.modcount = modcount
 		view.data.poscount = poscount
-
+		view.data.stats = await ShopAdmin.getHistory(db)
 	}
-	
-	view.data.freetable = await ShopAdmin.getFreeTableByGroupIndex(db, group?.parent_id || null, hashs)
-	view.data.myfreetable = await ShopAdmin.getFreeTableByGroupIndex(db, group?.group_id || null, hashs)
+
+	if (group) {
+		view.data.freetable = await ShopAdmin.getFreeTableByGroupIndex(db, group?.parent_id, hashs)
+		//view.data.myfreetable = await ShopAdmin.getFreeTableByGroupIndex(db, group?.group_id, hashs)
+	}
 	
 	
 	
@@ -190,8 +262,8 @@ rest.addResponse('groups', ['admin'], async view => {
 
 	if (childs.length) {
 		const ym = ShopAdmin.getNowYM()
-		const rows = await db.all(`select *, UNIX_TIMESTAMP(date_content) as date_content 
-			FROM shop_stat 
+		const rows = await db.all(`select *, UNIX_TIMESTAMP(date_cost) as date_cost
+			FROM shop_stat_groups 
 			WHERE year = :year and month = :month
 			and group_id in (${childs.map(g => g.group_id).join(',')})
 			ORDER BY year DESC, month DESC

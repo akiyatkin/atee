@@ -33,64 +33,61 @@ rest.addResponse('get-filter-prop-more-search', async view => {
 	if (!~['value','text','date','number',].indexOf(prop.type)) return view.err('Нет доступа к свойству', 403)
 	const prop_id = prop?.prop_id
 	
-	const group = await view.get('group#required')
+	const {group_id} = await view.get('group#required')
 	
+	const bind = await Shop.getBind(db)
+	//const {from, join, where, sort, bind} = await Shop.getWhereByGroupId(db, group_id || false,[], false, true)
 	
-	const {from, join, where, sort, bind} = await Shop.getWhereByGroupId(db, group?.parent_id || false,[], false, true)
-	
-	//Проблемы с производительностью 
+	let list = []
 	if (prop.type == 'value') {
-		const list = await db.all(`
-			SELECT distinct da.value_id, va.value_title, va.value_nick
-			FROM ${from.join(', ')} ${join.join(' ')}, sources_wvalues da
-				LEFT JOIN sources_values as va on (da.value_id = va.value_id)
-			WHERE ${where.join(' and ')}
-			and da.key_id = win.key_id and da.prop_id = :prop_id
-			and (${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'})
+		list = await db.all(`
+			WITH RECURSIVE group_tree AS (
+				SELECT :group_id as group_id
+				UNION ALL
+				SELECT sg.group_id
+				FROM shop_groups sg, group_tree gt 
+				WHERE sg.parent_id = gt.group_id
+			)
+			SELECT distinct va.value_title, va.value_nick as nick
+			FROM group_tree gt, shop_itemgroups ig, sources_wvalues wva, sources_values va
+			WHERE 
+				ig.group_id = gt.group_id
+				and wva.key_id = ig.key_id
+				and wva.entity_id = :brendart_prop_id
+				and wva.prop_id = :prop_id
+				and va.value_id = wva.value_id
+				and (${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'})
 			ORDER BY RAND()
 			LIMIT 12
-		`, {...bind, prop_id: prop_id || null})
+		`, {...bind, prop_id, group_id})
 
-		view.ans.count = await db.col(`
-			SELECT count(distinct da.value_id)
-			FROM ${from.join(', ')} ${join.join(' ')}, sources_wvalues da
-				LEFT JOIN sources_values as va on (da.value_id = va.value_id)
-			WHERE ${where.join(' and ')}
-			and da.key_id = win.key_id and da.prop_id = :prop_id
-			and (${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'})
-		`, {...bind, prop_id: prop_id || null})
-
-		view.ans.list = list.map(row => {
-			row['left'] = row.value_title
-			row['right'] = ''
-			return row
-		})
+		
 	} else if (prop.type == 'number') {
-		const list = await db.all(`
-			SELECT distinct da.number
-			FROM ${from.join(', ')} ${join.join(' ')}, sources_wnumbers da
-			WHERE ${where.join(' and ')}
-			and da.key_id = win.key_id and da.prop_id = :prop_id
-			and (${hashs.map(hash => 'da.number like "%' + hash.join('%" and da.number like "%') + '%"').join(' or ') || '1 = 1'})
+		list = await db.all(`
+			WITH RECURSIVE group_tree AS (
+				SELECT :group_id as group_id
+				UNION ALL
+				SELECT sg.group_id
+				FROM shop_groups sg, group_tree gt 
+				WHERE sg.parent_id = gt.group_id
+			)
+			SELECT distinct wn.number as nick
+			FROM group_tree gt, shop_itemgroups ig, sources_wnumbers wn
+			WHERE 
+				ig.group_id = gt.group_id
+				and wn.key_id = ig.key_id
+				and wn.entity_id = :brendart_prop_id
+				and wn.prop_id = :prop_id
+				and (${hashs.map(hash => 'wn.number like "%' + hash.join('%" and wn.number like "%') + '%"').join(' or ') || '1 = 1'})
 			ORDER BY RAND()
 			LIMIT 12
-		`, {...bind, prop_id: prop_id || null})
-
-		view.ans.count = await db.col(`
-			SELECT count(distinct da.number)
-			FROM ${from.join(', ')} ${join.join(' ')}, sources_wnumbers da
-			WHERE ${where.join(' and ')}
-			and da.key_id = win.key_id and da.prop_id = :prop_id
-			and (${hashs.map(hash => 'da.number like "%' + hash.join('%" and da.number like "%') + '%"').join(' or ') || '1 = 1'})
-		`, {...bind, prop_id: prop_id || null})
-
-		view.ans.list = list.map(row => {
-			row['left'] = row.number
-			row['right'] = ''
-			return row
-		})
+		`, {...bind, prop_id, group_id})
 	}
-	
+	view.ans.list = list.map(row => {
+		row['left'] = row.value_title || row.nick
+		row['right'] = ''
+		return row
+	})
 	
 		
 	// view.ans.list.push({
@@ -108,23 +105,19 @@ rest.addResponse('get-filter-prop-more-search', async view => {
 	return view.ret()
 })
 rest.addResponse('get-search-filters', async view => {
+
+	
 	const md = view.data.md = await view.get('md')
+
 	const partner = await view.get('partner')
 	const conf = view.data.conf = await config('shop', true)
 	const group = view.data.group = await view.get('group#required')
 
-	
-	
 	const db = await view.get('db')
 
 	
 	const filters = view.data.filters = []
 	
-	// const res = {}
-	// const opt = await Catalog.getGroupOpt(db, view.visitor, group.group_id)
-	
-
-
 	
 
 	for (const prop_nick of group.filters) {
@@ -132,6 +125,8 @@ rest.addResponse('get-search-filters', async view => {
 		if (!filter) continue
 		filters.push(filter)
 	}
+	
+
 
 	for (const prop_nick in md.mget) {
 	 	if (~group.filters.indexOf(prop_nick)) continue
@@ -161,12 +156,11 @@ rest.addResponse('get-search-filters', async view => {
 	return view.ret()
 })
 
-
 rest.addResponse('get-search-root', async view => {
 	view.data.conf = await config('shop', true)
-
-	const md = view.data.md = await view.get('md')
+	const md = view.data.md = await view.get('md')	
 	const group = view.data.group = await view.get('group#required')
+
 	const db = await view.get('db')
 	await Shop.prepareMgetPropsValues(db, view.data, md.mget)
 
@@ -224,17 +218,21 @@ rest.addResponse('get-item-sitemap', async view => {
 	const conf = await config('shop')
 
 	const md = await Shop.getmd(db, '', '', [])
+	
+	console.time('Shop.getPlopsWithPropsNoMultiByMd')
 	const {count, list} = await Shop.getPlopsWithPropsNoMultiByMd(db, root.group_id, md, false, {
 		limit: false,
 		rand: false,
 		nicks:['art','brendmodel'],
 		titles:['opisanie','brend','art','model','naimenovanie', 'images']
 	})
-//MRL LED 1125 дымчатый
+	console.timeEnd('Shop.getPlopsWithPropsNoMultiByMd')
+
+	//MRL LED 1125 дымчатый
 	const childs = {}
 	const root_path = conf.root_path.slice(1)
 	for (const plop of list) {
-		const path = [root_path, 'item', plop.brendmodel_nick, plop.art_nick].join('/')
+		const path = [root_path, 'item', plop.brendmodel_nick, plop.art_nick || plop.brendmodel_nick].join('/')
 		childs[path] = await Shop.getPlopHead(plop)
 	}	
 	const title = 'Позиции';
@@ -251,15 +249,26 @@ rest.addResponse('get-search-groups', async view => {
 	const conf = view.data.conf = await config('shop', true)
 	const group = view.data.group = await view.get('group#required')
 	const db = await view.get('db')
-
+	const bind = await Shop.getBind(db)
 	const childs = view.data.childs = await Shop.getGroupFilterChilds(db, group.group_id)
-	
-	for (const i in childs) {
-		const child = {...childs[i]}
-		child.modcount = await Shop.getModcount(db, md, partner, child.group_id)
-		childs[i] = child
+
+	const modcounts = view.data.modcounts = {}
+	for (const group_nick of childs) {
+		//modcounts[group_nick] = await Shop.getModcount(db, [md.mget], md.hashs, group_nick, partner)
+		const group_id = await Shop.getGroupIdByNick(db, group_nick)
+		const {from, join, where, sort} = await Shop.getWhereByGroupIndexWinMod(db, group_id, [md.mget], md.hashs, partner)		
+		modcounts[group_nick] = await db.col(`
+			SELECT count(distinct win.value_id)
+			FROM ${from.join(', ')} ${join.join(' ')}
+			WHERE ${where.join(' and ')}
+		`, {group_id, ...bind})
 	}
-	
+	const groups = view.data.groups = {}
+	for (const group_nick of childs) {
+	 	groups[group_nick] = await Shop.getGroupByNick(db, group_nick)
+	}
+	Shop.reduce(groups, ['group_title'])
+
 	return view.ret()
 })
 
@@ -294,7 +303,7 @@ rest.addResponse('get-model', async (view) => {
 	const model = view.data.model = await view.get('model#required')	
 	
 
-	//const groups = view.data.groups = await Shop.getLastGroupNicksByItem(db, model.recap)
+	//const groups = view.data.groups = await Shop.samples.getFreeGroupNicksByItem(db, model.recap)
 
 	
 	const groups = view.data.groups = {}
@@ -326,77 +335,68 @@ rest.addResponse('get-model', async (view) => {
 rest.addResponse('get-search-list', async (view) => {	
 	const md = view.data.md = await view.get('md')
 	const conf = view.data.conf = await config('shop', true)
-	const group = view.data.group = await view.get('group#required') //depricated
+	const group = view.data.group = await view.get('group#required')
 	const group_nick = view.data.group_nick = await view.get('group_nick#required')
 
 	const db = await view.get('db')
 	const partner = await view.get('partner')
 
-	const p = await view.get('p')
+	let p = await view.get('p')
 	const count = await view.get('count')
 	
 	const bind = await Shop.getBind(db)
-	// const samples = await Shop.getSamplesUpByGroupId(db, group.group_id)
-	// const marked_samples = Shop.addSamples(samples, [md.mget])
-
-
-	// const {from, join, where, sort} = await Shop.getWhereBySamples(db, marked_samples, md.hashs, partner)
-
-
-	// const countonpage = count || conf.limit
-	// const start = (p - 1) * countonpage
 	
-	// const moditem_ids = await db.all(`
-	// 	SELECT wva.value_id, GROUP_CONCAT(win.key_id separator ',') as key_ids 
-	// 	FROM ${from.join(', ')} ${join.join(' ')}
-	// 	WHERE ${where.join(' and ')}
-	// 	GROUP BY wva.value_id 
-	// 	ORDER BY ${sort.join(', ')}
-	// 	LIMIT ${start}, ${countonpage}
-	// `, bind)
+	//const group_ids = await Shop.getAllGroupIds(db, group.group_id)
+	
+	const {from, join, where, sort} = await Shop.getWhereByGroupIndexSort(db, group.group_id, [md.mget], md.hashs, partner)
+	
+	
+	
+	
+	
 
 
-	const groupids = []
-	await Shop.runGroupDown(db, group.group_id, (child) => {
-		groupids.push(child.group_id)
-	})
+	const modcount = await db.col(`
+		SELECT count(distinct win.value_id)
+		FROM ${from.join(', ')} ${join.join(' ')}
+		WHERE ${where.join(' and ')}
+	`, {group_id: group.group_id, ...bind})
+	//const modcount = moditem_ids[0]?.total_rows || 0
+	//const modcount = await Shop.getModcount(db, md, partner, group_nick)
 
-	const {from, join, where, sort} = await Shop.getWhereBySamples(db, [md.mget], md.hashs, partner, true)
 
 	const countonpage = count || conf.limit
-	const start = (p - 1) * countonpage
 	
+
+	let last = modcount <= countonpage ? 1 : Math.ceil(modcount / countonpage)
+	if (p > last) p = last
+	const pagination = {
+		last: last,
+		page: last < p ? last + 1 : p
+	}
+	const start = (p - 1) * countonpage
+
 	const moditem_ids = await db.all(`
 		SELECT 
-			wva.value_id, 
+			win.value_id, 
 			GROUP_CONCAT(win.key_id separator ',') as key_ids 
-		FROM shop_itemgroups ig, ${from.join(', ')} ${join.join(' ')}
+		FROM ${from.join(', ')} ${join.join(' ')}
 		WHERE ${where.join(' and ')}
-		and ig.key_id = win.key_id
-		and ig.group_id in (${groupids.join(',')})
-		GROUP BY wva.value_id 
-		ORDER BY ${sort.join(', ')}
+		GROUP BY win.value_id 
+		ORDER BY ${sort.join(',')}
 		LIMIT ${start}, ${countonpage}
-	`, bind)
-	
-	// let moditem_ids = await db.all(`
+	`, {group_id: group.group_id, ...bind})
+	// console.log({group_id: group.group_id, ...bind}, `
 	// 	SELECT 
-	// 		wva.value_id, 
-	// 		GROUP_CONCAT(distinct wva.key_id separator ',') as key_ids,
-	// 		GROUP_CONCAT(ig.group_id separator ',') as group_ids 
-	// 	FROM sources_wvalues wva, shop_itemgroups ig
-	// 	WHERE wva.value_id = :value_id and wva.entity_id = :brendart_prop_id and wva.prop_id = :brendmodel_prop_id
-	// 	and ig.key_id = wva.key_id and ig.group_id in (${group_ids.join(',')})
-	// 	GROUP BY wva.value_id 
-	// `, {...bind, ...value})	
-	
-
-	const total = await Shop.getModcount(db, md, partner, group.group_id)
-
-
-
-	const propsoncards = await db.colAll(`select prop_nick from shop_cards`)
-	
+	// 		win.value_id, 
+	// 		GROUP_CONCAT(win.key_id separator ',') as key_ids 
+	// 	FROM ${from.join(', ')} ${join.join(' ')}
+	// 	WHERE ${where.join(' and ')}
+	// 	GROUP BY win.value_id 
+	// 	ORDER BY ${sort.join(',')}
+	// 	LIMIT ${start}, ${countonpage}
+	// `)
+	//const propsoncards = await db.colAll(`select prop_nick from shop_cards`)
 	const props = unique([
 		'art',
 		'brendart',
@@ -408,23 +408,42 @@ rest.addResponse('get-search-list', async (view) => {
 		'nalichie',
 		'staraya-cena',
 		'cena',
-		...propsoncards
+		...group.card_nicks
 	])
-	
 	const list = await Shop.getModelsByItems(db, moditem_ids, partner, props)
 
-	let last = total <= countonpage ? 1 : Math.ceil(total / countonpage)
-	const pagination = {
-		last: last,
-		page: last < p ? last + 1 : p
-	}
-	const res = { list, pagination, count:total, countonpage }
+	const res = { list, pagination, modcount, countonpage }
 	Object.assign(view.data, res)
 	if (!list.length) view.status = 404
 
+
+
 	await Shop.prepareModelsPropsValuesGroups(db, view.data, list)
 	view.data.groups[group_nick] = await Shop.getGroupByNick(db, group_nick)
+
+
+	view.data.filtercost = await (async () => {
+		if (!~group.filter_nicks.indexOf('cena')) return {max:0, min:0}
+		const withoutcostget = {...md.mget}
+		delete withoutcostget.cena
+		const {from, join, where, sort} = await Shop.getWhereByGroupIndexWin(db, group.group_id, [withoutcostget], md.hashs, partner, 'sources_wnumbers')
+		const prop = await Shop.getPropByNick(db, 'cena')
+		const row = await db.fetch(`
+			SELECT max(win.number) as max, min(win.number) as min
+			FROM ${from.join(', ')} ${join.join(' ')}
+			WHERE ${where.join(' and ')}
+			and win.prop_id = :prop_id
+		`, {group_id: group.group_id, ...bind, prop_id: prop.prop_id}) 
+		// row.max = Number(row.max)
+		// row.min = Number(row.min)
+		return row
+	})();
 	
+	Shop.reduce(view.data.groups, ['group_title','category', 'filter_nicks'])
+	Shop.reduce(view.data.values, ['value_title'])
+	Shop.reduce(view.data.props, ['prop_title','card_tpl','name','unit','scale','type'])
+
+
 	return view.ret()
 })
 
@@ -440,93 +459,84 @@ rest.addResponse('get-livemodels', async (view) => {
 	const root = await view.get('root#required')
 	
 
-	//-------------
 	const bind = await Shop.getBind(db)
-	const samples = await Shop.getSamplesUpByGroupId(db, root.group_id)
-	const marked_samples = Shop.addSamples(samples, [md.mget])
-
-	const {from, join, where, sort} = await Shop.getWhereBySamples(db, marked_samples, md.hashs, partner)
-
+	const {from, join, where, sort} = await Shop.getWhereByGroupIndexWinMod(db, root.group_id, [md.mget], md.hashs, partner)
 
 	const countonpage = 12
 	
 	
 	const moditem_ids = await db.all(`
-		SELECT wva.value_id, GROUP_CONCAT(win.key_id separator ',') as key_ids 
+		SELECT win.value_id, GROUP_CONCAT(win.key_id separator ',') as key_ids
 		FROM ${from.join(', ')} ${join.join(' ')}
 		WHERE ${where.join(' and ')}
-		GROUP BY wva.value_id 
+		GROUP BY win.value_id 
 		ORDER BY RAND()
 		LIMIT ${countonpage}
-	`, bind)
+	`, {group_id: root.group_id, ...bind})
 	
+	const count = await db.col(`
+		SELECT count(distinct win.value_id)
+		FROM ${from.join(', ')} ${join.join(' ')}
+		WHERE ${where.join(' and ')}
+	`, {group_id: root.group_id, ...bind})
 
-	const count = await Shop.getModcount(db, md, partner, root.group_id)
+	const group_ids = await db.colAll(`
+		SELECT distinct ig.group_id
+		FROM ${from.join(', ')} ${join.join(' ')}
+		WHERE ${where.join(' and ')}
+	`, {group_id: root.group_id, ...bind})
+	
+	//const count = await Shop.getModcount(db, md, partner, root.group_nick)
 
 	const props = [
-		'art',
-		'brendart',
-		'brendmodel',
-		'brend',
-		'model',
-		'naimenovanie',
-		'images',
-		'staraya-cena',
+		// 'brend',
+		// 'model',
+		// 'images',
+		// 'nalichie',
+		// 'staraya-cena',
+
+		'art', //ссылка на позицию
+		'brendmodel', //если нет наименования
+		'naimenovanie', //главная строка в списке поиска
+		'brendart', //если нет art то используется в ссылке
 		'cena'
+
 	]
+		
 	const list = await Shop.getModelsByItems(db, moditem_ids, partner, props)
 
 	await Shop.prepareModelsPropsValuesGroups(db, view.data, list)
 	view.data.groups[root.group_nick] = root
-	//----------------
-
 	
-	// const {list, count} = await Shop.getPlopsWithPropsNoMultiByMd(db, root.group_id, md, partner, {
-	// 	limit: 12,
-	// 	rand: true,
-	// 	nicks:['art','brendmodel'],
-	// 	titles:['brend','model','art','naimenovanie','images','cena']
-	// })
-
-
-
-
-
-
 	view.data.count = count
 	view.data.list = list
 	if (!list.length) view.status = 404
 
-	// const group_nicks = []
-	// for (const model of list) {
-	// 	group_nicks.push(...model.groups)
-	// }
-
-	const group_ids = await Shop.getGroupIdsBymd(db, root.group_id, md, partner) //Все группы в которые входят позиции, которые соответсвуют поиску md.hashs	
+	//const group_ids = await Shop.getGroupIdsBymd(db, root.group_id, md, partner) //Все группы в которые входят позиции, которые соответсвуют поиску md.hashs	
 	let rootpath = false //Путь до последней общей группы найденных
 	let all = [] //Список все групп вместе с родителями
 	for (const group_id of group_ids) {
 		const path = []
 		await Shop.runGroupUp(db, group_id, group => {
-			path.unshift(group.group_id)
+			path.unshift(group.group_nick)
 			if (group === root) return false
 		})
 		if (!rootpath) rootpath = path
-		rootpath = rootpath.filter(id => ~path.indexOf(id))
+		rootpath = rootpath.filter(group_nick => ~path.indexOf(group_nick))
 		all.push(...path)
 	}
 	all = unique(all)
 
 	view.data.gcount = group_ids.length
 	if (group_ids.length) {
-		const group = await Shop.getGroupById(db, rootpath.pop()) //общий родитель
-		let childs = group.childs.filter(id => ~all.indexOf(id))
+		const group = await Shop.getGroupByNick(db, rootpath.pop()) //общий родитель
+		let childs = group.childs.filter(group_nick => ~all.indexOf(group_nick))
 		if (!childs.length) {
 			childs = [group]
 		} else {
 			for (const i in childs) {
-				const group_id = childs[i]
-				childs[i] = await Shop.getGroupById(db, group_id)
+				const group_nick = childs[i]
+				childs[i] = await Shop.getGroupByNick(db, group_nick)
 			}
 		}
 		view.data.childs = childs.map(group => {
@@ -537,143 +547,12 @@ rest.addResponse('get-livemodels', async (view) => {
 		view.data.childs = []
 	}
 
-	const reduce = (keys, props) => {
-		for (const nick in keys) {
-			const obj = keys[nick]
-			const nobj = {}
-		 	for (const name of props) nobj[name] = obj[name]
-		 	keys[nick] = nobj
-		}
-		
-	}
-	reduce(view.data.groups, ['group_nick', 'group_title'])
-	reduce(view.data.props, ['prop_title', 'type'])
-	reduce(view.data.values, ['value_title'])
-
+	
+	Shop.reduce(view.data.groups, ['group_nick', 'group_title'])
+	Shop.reduce(view.data.props, ['prop_title', 'type'])
+	Shop.reduce(view.data.values, ['value_title'])
 
 	return view.ret()
 })
-
-
-
-// rest.addResponse('get-search-list', async (view) => {	
-// 	const db = await view.get('db')
-// 	const root = view.data.root = await view.get('root#required')
-// 	const group = view.data.group = await view.get('group')
-// 	const search = view.data.search = await view.get('search')
-// 	const hashs = await view.get('hashs')
-// 	const md = view.data.md = await view.get('md')
-// 	const partner = await view.get('partner')
-// 	const p = await view.get('p')
-// 	const count = await view.get('count')
-// 	const conf = await config('shop')
-// 	view.data.m = md.m
-// 	view.data.limit = conf.limit
-	
-// 	const {from, where, sort, bind} = Shop.getmdwhere(md, md.group.mgroup, hashs, partner)
-
-	
-	
-// 	const countonpage = count || conf.limit
-// 	const start = (p - 1) * countonpage
-	
-// 	const moditem_ids = await db.all(`
-// 		SELECT pos.value_id, GROUP_CONCAT(pos.key_id separator ',') as key_ids 
-// 		FROM ${from.join(', ')}
-// 		WHERE ${where.join(' and ')}
-// 		GROUP BY pos.value_id 
-// 		ORDER BY ${sort.join(', ')}
-// 		LIMIT ${start}, ${countonpage}
-// 	`, bind)
-	
-// 	const total = await db.col(`
-// 		SELECT count(distinct pos.value_id)
-// 		FROM ${from.join(', ')}
-// 		WHERE ${where.join(' and ')}
-// 	`, bind)
-	
-	
-// 	const list = await Shop.getModelsByItems(db, moditem_ids, partner, bind)
-
-	
-
-// 	let last = total <= countonpage ? 1 : Math.ceil(total / countonpage)
-// 	const pagination = {
-// 		last: last,
-// 		page: last < p ? last + 1 : p
-// 	}
-// 	const res = { list, pagination, count:total, countonpage }
-// 	Object.assign(view.data, res)
-// 	if (!list.length) view.status = 404
-// 	return view.ret()
-// })
-
-
-
-// rest.addResponse('get-livemodels', async (view) => {
-// 	const db = await view.get('db')
-// 	const query = await view.get('query')
-// 	const hashs = await view.get('hashs')
-// 	const md = await Shop.getmd(db, '', query, hashs)
-
-// 	const conf = view.data.conf = await config('shop', true)
-	
-// 	const partner = await view.get('partner')
-// 	const root = await view.get('root#required')
-	
-	
-// 	const {list, count} = await Shop.getPlopsWithPropsNoMultiByMd(db, root.group_id, md, partner, {
-// 		limit: 12,
-// 		rand: true,
-// 		nicks:['art','brendmodel'],
-// 		titles:['brend','model','art','naimenovanie','images','cena']
-// 	})
-
-// 	view.data.count = count
-// 	view.data.list = list
-// 	if (!list.length) view.status = 404
-
-// 	const group_ids = await Shop.getGroupIdsBymd(db, root.group_id, md, partner) //Все группы в которые входят позиции, которые соответсвуют поиску md.hashs	
-// 	let rootpath = false //Путь до последней общей группы найденных
-// 	let all = [] //Список все групп вместе с родителями
-// 	for (const group_id of group_ids) {
-// 		const path = []
-// 		await Shop.runGroupUp(db, group_id, group => {
-// 			path.unshift(group.group_id)
-// 			if (group === root) return false
-// 		})
-// 		if (!rootpath) rootpath = path
-// 		rootpath = rootpath.filter(id => ~path.indexOf(id))
-// 		all.push(...path)
-// 	}
-// 	all = unique(all)
-
-// 	view.data.gcount = group_ids.length
-// 	if (group_ids.length) {
-// 		const group = await Shop.getGroupById(db, rootpath.pop()) //общий родитель
-// 		let childs = group.childs.filter(id => ~all.indexOf(id))
-// 		if (!childs.length) {
-// 			childs = [group]
-// 		} else {
-// 			for (const i in childs) {
-// 				const group_id = childs[i]
-// 				childs[i] = await Shop.getGroupById(db, group_id)
-// 			}
-// 		}
-// 		const groups = view.data.groups = childs.map(group => {
-// 			const g = {}
-// 			for (const prop of ['group_nick','group_title']) g[prop] = group[prop]
-// 			return g
-// 		})
-		
-// 	} else {
-// 		view.data.groups = []
-// 	}
-
-
-
-// 	return view.ret()
-// })
-
 
 

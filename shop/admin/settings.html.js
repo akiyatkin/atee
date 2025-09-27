@@ -17,7 +17,7 @@ export const ROOT = (data, env) => err(data, env) || `
 				${field.button({
 					confirm: 'Опубликовать?',
 					label:'Пересчитать и опубликовать',
-					action:'/-shop/admin/set-recalc-index',
+					action:'/-shop/admin/set-recalc-publicate',
 					global: 'check'
 				})}
 			</p>

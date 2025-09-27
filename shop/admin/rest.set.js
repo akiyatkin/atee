@@ -21,11 +21,13 @@ rest.addAction('set-recalc', async view => { //Пересчитать в aside �
 	const db = await view.get('db')
 
 	Recalc.recalc(db, async () => {
-		await ShopAdmin.recalcChangeGroups(db) //статистика
+		//await ShopAdmin.recalcIndexGroups(db)
+		//await ShopAdmin.recalcAllStat(db)
+		await ShopAdmin.recalcChangeGroups(db) 
 	})
 	return view.ret()
 })
-// rest.addAction('set-recalc-index', async view => { //Пересчитать в aside меню
+// rest.addAction('set-recalc-publicate', async view => { //Пересчитать в aside меню
 // 	const db = await view.get('db')
 
 // 	Recalc.recalc(db, async () => {
@@ -146,16 +148,16 @@ rest.addAction('set-sample-prop-spec', ['admin','checkrecalc'], async view => {
 rest.addAction('set-sample-prop-value-create', ['admin','checkrecalc'], async view => {
 	const prop_nick = await view.get('prop_nick#required')
 	const sample_id = await view.get('sample_id#required')
-	let value_nick = await view.get('value_nick')
+	let value_nick = await view.get('nick')
 	const query_nick = await view.get('query_nick')
 	let number = null
 	if (!value_nick) {
 		if (!query_nick) return view.err('Недостаточно данных')
 		value_nick = query_nick
-		if (Number(value_nick) == value_nick) number = Number(value_nick)
 		//} else {
 		//if (prop?.type != 'value') return view.err('Выборка может быть только по свойствам value')
 	}
+	if (Number(value_nick) == value_nick) number = Number(value_nick)
 	const db = await view.get('db')
 	const group_id = await db.col(`select group_id from shop_samples where sample_id = :sample_id`, {sample_id})
 	if (!group_id) return view.err('Не найдена группа')
@@ -267,8 +269,8 @@ rest.addAction('set-sample-create', ['admin','checkrecalc'], async view => {
 
 
 
-rest.addAction('set-prop-multichoice', ['admin','setaccess'], async view => {
-	const name = 'multichoice'
+rest.addAction('set-prop-singlechoice', ['admin','setaccess'], async view => {
+	const name = 'singlechoice'
 	const prop = await view.get('prop#required')
 	const {prop_nick} = prop
 	const bit = await view.get('bit') || 0

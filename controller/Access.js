@@ -90,11 +90,40 @@ const Access = {
 	}
 }
 
-Access.wait = (func) => { //Результат складывать в Мешок не на долго, кэш. При обращении продлевать таймер
+Access.blink = (func) => { //При обращении продлевать таймер
+	const blinked = (...args) => {
+		if (CONF.checkpoke) {
+			args.forEach(arg => {
+				if (typeof(arg) == 'object' && arg !== null && arg.toString === Object.prototype.toString) console.log('Access.blink', 'нет своего toString()', arg)
+			})
+		}
+		const store = blinked.storage[args.join(':')] ??= {} //Только простые аргументы должны быть
+		clearTimeout(store.timer)
+		store.timer = setTimeout(() => {
+			delete store.ready
+			delete store.cache
+		}, 10 * 1000) //(10 сек = 10 * 60 * 1000)
+		if (!store.ready) {
+			if (CONF.checkpoke) {
+				store.cache = deepFreeze(func(...args))
+			} else {
+				store.cache = func(...args)
+			}
+			store.ready = true
+		}
+		return store.cache
+	}
+	blinked.storage = {}
+	Access.blink.list.push(blinked)
+	return blinked
+}
+Access.blink.list = []
+
+Access.wait = (func) => { //Результат складывать в Мешок на долго, кэш. При обращении продлевать таймер
 	const waited = (...args) => {
 		if (CONF.checkpoke) {
 			args.forEach(arg => {
-				if (typeof(arg) == 'object' && arg.toString === Object.prototype.toString) console.log('Access.poke', 'нет своего toString()', arg)
+				if (typeof(arg) == 'object' && arg !== null && arg.toString === Object.prototype.toString) console.log('Access.wait', 'нет своего toString()', arg)
 			})
 		}
 		const store = waited.storage[args.join(':')] ??= {} //Только простые аргументы должны быть
@@ -122,6 +151,11 @@ Access.wait.list = []
 
 Access.poke = (func) => { //Результат складывать в Мешок не на долго, кэш. При обращении продлевать таймер
 	const poked = (...args) => {
+		if (CONF.checkpoke) {
+			args.forEach(arg => {
+				if (typeof(arg) == 'object' && arg !== null && arg.toString === Object.prototype.toString) console.log('Access.poke', 'нет своего toString()', arg)
+			})
+		}
 		const store = poked.storage[args.join(':')] ??= {} //Только простые аргументы должны быть
 		clearTimeout(store.timer)
 		store.timer = setTimeout(() => {

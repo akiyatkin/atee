@@ -7,23 +7,27 @@ export const ROOT = (data, env) => `
 				<div style="display: grid; gap: 0.25em; margin-bottom: 1em">
 					<div><a href="groups">Группы</a></div>
 					<div><a href="props">Свойства</a></div>
+					<div><a href="poss">Позиции</a></div>
+					<div><a href="brief">Сводка</a></div>
+					
 				</div>
 				<div id="RECALC"></div>
 			</div>
 		</div>
 		<div style="display: grid; gap: 0.25em">
-			<div>${field.button({
-				label:'Пересчитать статистику',
+			<div title="Индекс групп и статистика">${field.button({
+				label:'Переиндексировать',
 				cls: 'mute a',
 				action:'/-shop/admin/set-recalc',
 				global:'check'
 			})}</div>
-			<div>${field.button({
+			<!-- <div>${field.button({
 				label:'Опубликовать группы',
 				cls: 'mute a',
-				action:'/-shop/admin/set-recalc-index',
+				action:'/-shop/admin/set-recalc-publicate',
 				global:'check'
-			})}</div>
+			})}</div> -->
+
 			<div><a href="/@atee/sources">Источники</a></div>
 			<div><a href="settings">Настройки</a></div>
 		</div>

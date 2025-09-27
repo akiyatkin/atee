@@ -18,9 +18,15 @@ rest.addResponse('main', async view => {
 	view.data.conf = await config('shop', true)
 	const root = view.data.root = await view.get('root#required')
 	const childs = view.data.childs = []
-	for (const i in root.childs) {
-		childs[i] = await Shop.getGroupById(db, root.childs[i])
+
+	const groups = view.data.groups = {}
+	for (const group_nick of root.childs) {
+		const group = await Shop.getGroupByNick(db, group_nick)
+		childs.push(group_nick)
+		groups[group.group_nick] = group
 	}
+	Shop.reduce(groups,['group_title'])
+	
 	return view.ret()
 })
 

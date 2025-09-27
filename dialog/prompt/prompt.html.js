@@ -72,7 +72,6 @@ const showArea = (data, env) => {
 				const HOME = 36
 				const END = 35
 				field.addEventListener('keydown', e => {
-					console.log('asdf')
 					if (~[HOME, END].indexOf(e.keyCode)) { //input ради preventDefault стандартного действия, нет input
 						e.preventDefault() 
 						Area.keydown(field, e)

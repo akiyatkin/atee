@@ -30,12 +30,14 @@ rest.addVariable('rule', async view => {
 	return rule
 })
 
-rest.addVariable('headings', async view => {
-	const source = await view.get('source')
+
+//const getHeadings = async ({source, visitor}) => {
+const getHeadings = Access.poke(async ({source, visitor}) => { //
+	console.time('getHeadings')
 	const headings = {}
 	for (const sitemap of (source.sitemap || [])) {
 
-		const res = await loadJSON(sitemap, view.visitor).then(res => res.data).catch(e => console.log('head', href, e))
+		const res = await loadJSON(sitemap, visitor).then(res => res.data).catch(e => console.log('head', href, e))
 		if (!res.headings) continue
 		for (const nick in res.headings) {
 			const fheading = res.headings[nick]
@@ -47,6 +49,13 @@ rest.addVariable('headings', async view => {
 			headings[nick].items = Object.assign({}, res.headings[nick].items, headings[nick].items, res.headings[nick].items)
 		}
 	}
+	console.timeEnd('getHeadings')
+	return headings
+})
+//}
+rest.addVariable('headings', async view => {
+	const source = await view.get('source')
+	const headings = await getHeadings({source, visitor: view.visitor, toString: () => 'seo headings'})
 	return headings
 })
 rest.addVariable('head', async view => {

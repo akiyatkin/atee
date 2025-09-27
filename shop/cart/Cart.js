@@ -30,9 +30,17 @@ const Cart = {
 	// 	return partner
 	// },
 	freeze: async (db, order_id, partner) => {
-		const list = await Cart.getBasketCatalog(db, order_id, partner)
+		const list = await Cart.basket.getFromCatalog(db, order_id, partner)
 		for (const {brendart_nick, item} of list) { //brendart_nick, modification, count, item
+			for (const prop_nick in item) {
+				const prop = await Shop.getPropByNick(db, prop_nick)	
+				if (prop.type == 'number') { //Нужно сохранить без scale и когда достаётся применить новый на тот момент scale
+					item[prop_nick] = item[prop_nick].map(num => num / 10 ** prop.scale)
+				}
+			}
+			
 			const json = JSON.stringify(item)
+
 			await db.exec(`
 				UPDATE shop_basket
 				SET json = :json
@@ -72,7 +80,7 @@ const Cart = {
 	},
 	getMailData: async (db, sub, order_id, visitor) => {
 		const order = await Cart.getOrder(db, order_id)
-		let list = await Cart.getBasket(db, order)
+		let list = await Cart.basket.get(db, order)
 		list = list.filter(pos => pos.quantity > 0)
 		const vars = {
 			host: visitor.client.host,
@@ -194,6 +202,15 @@ const Cart = {
 		`, { user_id })
 		return wait_id
 	},
+	copyBasket: async (db, from_id, to_id) => {
+		const bind = await Shop.getBind(db)
+		await db.exec(`
+			INSERT INTO shop_basket (order_id, brendart_nick, hash, json, quantity, dateadd, dateedit, modification)
+			SELECT :to_id, ba.brendart_nick, ba.hash, ba.json, ba.quantity, now(), now(), ba.modification
+			FROM shop_basket ba, sources_wvalues wva, sources_values va
+			WHERE ba.order_id = :from_id and ba.brendart_nick = va.value_nick and wva.entity_id = :brendart_prop_id and wva.prop_id = wva.entity_id and va.value_id = wva.value_id
+		`, {...bind, from_id, to_id})
+	},
 	castWaitActive: async (db, user_id, active_id, utms, nocopy = false) => {
 		let user = await User.getUserById(db, user_id)
 		if (!active_id) return Cart.create(db, user, utms)
@@ -201,14 +218,11 @@ const Cart = {
 		if (order.status == 'wait') return active_id
 		let nactive_id
 		if (user.manager) {
-			//Нужно всегда копировать. Умею очищать
+			//Нужно всегда копировать и не добавлять в текущую в ожидании. Умею очищать
 			nactive_id = await Cart.create(db, user, utms, order.order_id)
-			await db.exec(`
-				INSERT INTO shop_basket (order_id, brendart_nick, hash, json, quantity, dateadd, dateedit)
-				SELECT :nactive_id, brendart_nick, hash, json, quantity, now(), now()
-				FROM shop_basket
-				WHERE order_id = :active_id
-			`, {active_id, nactive_id})
+			//Отправленная заявка достаётся из json, а в ожидании достаётся из каталога и позции могут пропасть.
+			//При копировании надо скопировать только те что есть
+			await Cart.copyBasket(db, active_id, nactive_id)
 		} else {
 			nactive_id = await db.col(`
 				SELECT uo.order_id
@@ -222,12 +236,7 @@ const Cart = {
 				//Другого заказа, который можно сделать активным нет, надо создать и скопировать
 				nactive_id = await Cart.create(db, user, utms)
 				if (!nocopy) {
-					await db.exec(`
-						INSERT INTO shop_basket (order_id, brendart_nick, hash, json, quantity, dateadd, dateedit)
-						SELECT :nactive_id, brendart_nick, hash, json, quantity, now(), now()
-						FROM shop_basket
-						WHERE order_id = :active_id
-					`, {active_id, nactive_id})
+					await Cart.copyBasket(db, active_id, nactive_id)
 				}
 			} else {
 				await db.exec(`
@@ -397,54 +406,10 @@ Cart.addItem = async (db, order_id, brendart_nick, quantity = 0) => {
 // 		data.groups[pos.groups[0]] = await Shop.getGroupByNick(db, pos.groups[0])
 // 	}
 // }
-Cart.getBasket = async (db, order, partner) => {
-	if (order.freeze) {
-		return Cart.getBasketFreeze(db, order.order_id)
-	} else {
-		return Cart.getBasketCatalog(db, order.order_id, partner || order.partner)
-	}
-}
-Cart.getBasketFreeze = async (db, order_id) => {
-	let list = await db.all(`
-		SELECT brendart_nick, quantity, modification, json
-		FROM shop_basket 
-		WHERE order_id = :order_id
-		ORDER by dateedit DESC
-	`, {order_id})
-	list = (await Promise.all(list.map(async pos => {
-		try {
-			pos.item = JSON.parse(pos.json)
-		} catch(e) {
-			console.log(e)
-			return false
-		}
-		if (!pos.item) return false
-		//if (!pos.item.cena) return false
-		pos.groups = await Shop.getLastGroupNicksByItem(db, pos.item)
-		delete pos.json
-		return pos
-	}))).filter(v => v)
-	list.forEach(pos => pos.sum = pos.item.cena[0] * pos.quantity)
-	return list
-}
 
-Cart.getBasketCatalog = async (db, order_id, partner) => {
-	let list = await db.all(`
-		SELECT brendart_nick, quantity, modification
-		FROM shop_basket 
-		WHERE order_id = :order_id
-		ORDER by dateedit DESC
-	`, {order_id})
-	list = (await Promise.all(list.map(async pos => {
-		pos.item = await Shop.getItemByBrendart(db, pos.brendart_nick, partner)
-		pos.groups = await Shop.getLastGroupNicksByItem(db, pos.item)
-		return pos
-	}))).filter(pos => pos.item?.cena?.length && pos.groups.length)
 
-	list.forEach(pos => pos.sum = pos.item.cena[0] * pos.quantity)
 
-	return list
-}
+
 Cart.recalcOrder = async (db, order_id, list, partner) => {
 	await Cart.setPartner(db, order_id, partner)
 	const sum = list.reduce((sum, pos) => sum + pos.sum, 0)
@@ -575,4 +540,61 @@ Cart.setStatus = async (db, order_id, status) => {
 	`, {status, order_id})
 }
 
-		
+
+
+
+
+
+Cart.basket = {}		
+Cart.basket.get = async (db, order, partner) => { //Cart.getBasket 
+	if (order.freeze) {
+		return Cart.basket.getFromFreeze(db, order.order_id)
+	} else {
+
+		return Cart.basket.getFromCatalog(db, order.order_id, partner || order.partner)
+	}
+}
+Cart.basket.loadPoss = async (db, order_id, func) => {
+	let poss = await db.all(`
+		SELECT brendart_nick, quantity, modification, json
+		FROM shop_basket 
+		WHERE order_id = :order_id
+		ORDER by dateedit DESC
+	`, {order_id})
+
+	poss = (await Promise.all(poss.map(async pos => {
+		try {
+			await func(pos)
+		} catch(e) {
+			console.log(e)
+			return false
+		}
+		if (!pos.item?.cena) return false
+		delete pos.json
+		pos.group_nicks = await Shop.samples.getFreeGroupNicksByItem(db, pos.item)
+		pos.groups = pos.group_nicks //depricated
+		if (!pos.group_nicks.length) return false
+		pos.sum = pos.item.cena[0] * pos.quantity
+		return pos
+	}))).filter(v => v)
+
+	return poss
+}
+Cart.basket.getFromFreeze = async (db, order_id) => {
+	const poss = await Cart.basket.loadPoss(db, order_id, async pos => {
+		pos.item = JSON.parse(pos.json)
+		for (const prop_nick in pos.item) {
+			const prop = await Shop.getPropByNick(db, prop_nick)	
+			if (prop?.type == 'number') { //Нужно сохранить без scale и когда достаётся применить новый на тот момент scale
+				pos.item[prop_nick] = pos.item[prop_nick].map(num => num * 10 ** prop.scale)
+			}
+		}
+	})
+	return poss
+}
+Cart.basket.getFromCatalog = async (db, order_id, partner) => {
+	const poss = await Cart.basket.loadPoss(db, order_id, async pos => {
+		pos.item = await Shop.getItemByBrendart(db, pos.brendart_nick, partner)
+	})
+	return poss
+}

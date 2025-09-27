@@ -112,7 +112,7 @@ rest.addResponse('set-manager-refresh', ['manager#required'], async view => { //
 	for (const order_id in orders) {
 		const order = orders[order_id]
 		const partner = order.partnerjson ? JSON.parse(order.partnerjson) : false
-		order.list = await Cart.getBasket(db, order, partner)
+		order.list = await Cart.basket.get(db, order, partner)
 		for (const pos of order.list) {
 			const {brendart_nick, quantity, item} = pos
 			const order = orders[order_id]

@@ -37,8 +37,7 @@ export const TABLE = (data, env) => err(data, env) || `
 			type: 'text', 
 			action: '/-sources/set-prop-create', 
 			args: {entity_id: data.entity_id},
-			reloaddiv: env.layer.div,
-			goid: 'prop_id'
+			global: 'check'
 		})}
 	</div>
 	<div class="revscroll" style="margin: 2em 0">
@@ -72,7 +71,7 @@ export const TABLE = (data, env) => err(data, env) || `
 						const data = await represent.set(btn, name, {prop_id})
 						if (!data.result) return
 						const Client = await window.getClient()
-						Client.reloaddiv('${env.layer.div}')
+						Client.global('check')
 					})
 				}
 			})(document.currentScript.parentElement)
@@ -95,7 +94,8 @@ const showTr = (data, env, prop) => `
 				descr: '<b>more</b> означает, что у свойства нет специальной обработки и оно покажется вместе со всеми такими свойствами в общем списке. Свойство со специальной обработкой <b>column</b> покажется только там, где его покажет программист, по умолчанию в интерфейсе нигде не покажется, но придёт с данными. Свойство <b>system</b> даже с данными не придёт и может быть использовано для технических обработок, например быть критерием групп.',
 				action: '/-sources/set-known', 
 				values: {"system":"🛡️ system", "more":"🟡 more", "column":"✅ column"},
-				args: {prop_id: prop.prop_id}
+				args: {prop_id: prop.prop_id},
+				global: 'check'
 			})}
 		</td>
 		<td>
@@ -113,7 +113,7 @@ const showTr = (data, env, prop) => `
 				action: '/-sources/set-prop-type', 
 				values: {"number":"number", "date":"date", "value":"value", "text":"text"},
 				args: {prop_id: prop.prop_id},
-				reloaddiv: env.layer.div
+				global: 'check'
 			})}
 		</td>
 		<td>
@@ -127,7 +127,7 @@ const showTr = (data, env, prop) => `
 				action: '/-sources/set-prop-prop', 
 				values: {"":"Одно", "1":"Несколько"},
 				args: {prop_id: prop.prop_id, propprop: 'multi'},
-				reloaddiv: env.layer.div
+				global: 'check'
 			})}
 		</td>		
 		<td class="ellipsis">
@@ -145,9 +145,8 @@ const showTr = (data, env, prop) => `
 				label: svg.cross(), 
 				confirm: 'Удалить свойство если нет данных с ним?',
 				action: '/-sources/set-prop-delete',
-				reloaddiv: env.layer.div,
 				args: {prop_id: prop.prop_id},
-				reloaddiv: env.layer.div
+				global: 'check'
 			})}
 		</td>
 	</tr>

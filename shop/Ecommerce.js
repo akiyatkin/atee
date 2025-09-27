@@ -43,7 +43,7 @@ Ecommerce.getProduct = (data, {coupon, item, listname, position, group_nick, qua
 	if (group?.category) 	product.category = group.category //Поддерживается иерархия категорий до 5 уровней вложенности. Разделителем уровней является символ /. Например, "Одежда / Мужская одежда / Футболки"
 	if (quantity !== null) 	product.quantity = quantity
 	if (cena) 				product.price = cena
-	if (oldcost && cena) 	product.discount = oldcost - cena //В валюте цены, сумма скидки
+	if (oldcost && cena && oldcost > cena) 	product.discount = oldcost - cena //В валюте цены, сумма скидки
 	if (coupon) 			product.coupon = coupon //coupon:env.theme.partner
 	return product
 }

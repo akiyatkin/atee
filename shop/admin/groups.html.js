@@ -45,7 +45,7 @@ export const ROOT = (data, env) => err(data, env, []) || `
 		}
 	
 		${env.scope} .red {
-			color: red;
+			color: FireBrick ;
 			
 		}
 		${env.scope} table thead td {
@@ -66,7 +66,7 @@ export const ROOT = (data, env) => err(data, env, []) || `
 	${data.group ? showGroupPositions(data, env) : ''}
 	${data.group ? showGroupActions(data, env) : ''}
 	${data.group ? showGroupOptions(data, env) : ''}
-	${data.group ? showGroupStats(data, env) : ''}
+	${showGroupStats(data, env)}
 	${data.group?.group_title ? '' : showHelp(data, env)}
 	<script>
 		(div => {
@@ -87,7 +87,7 @@ export const ROOT = (data, env) => err(data, env, []) || `
 `
 const showHelp = (data, env) => `
 	<p>
-		Из <a href="/@atee/sources">источников</a> попадают все позиции, у которых указаны БрендАрт и БрендМодель попадают в нераспределённые позиции.
+		Из <a href="/@atee/sources">источников</a> все позиции, у которых указаны БрендАрт и БрендМодель, попадают в нераспределённые позиции Магазина. В группах магазина надо указать выборки согласно, которым нераспределённые позиции будут попадать в эти группы.
 	</p>
 `
 const showGroupStats = (data, env) => `
@@ -301,7 +301,7 @@ const showRed = (nick) => `
 `
 const showValue = (data, env, mark) => !mark.value_nick ? '' : `
 	<div>
-		${mark.value_title || mark.number || showRed(mark.value_nick)}
+		${mark.value_title || (mark.number / 10 ** mark.scale) || showRed(mark.value_nick)}
 		${field.button({
 			cls: 'transparent mute',
 			label: svg.cross(), 
@@ -376,8 +376,8 @@ const showProp = (data, env, sample_id, props, prop = props[0]) => !prop.prop_ni
 					descr: descrPropValue(data, env, props[0]),
 					label: 'Выберите значение', 
 					type: 'text',
-					name: 'value_nick',
-					find: 'value_nick',
+					name: 'nick',
+					find: 'nick',
 					action: '/-shop/admin/set-sample-prop-value-create',
 					args: { sample_id, prop_nick: props[0].prop_nick},
 					global: 'check'
@@ -638,8 +638,8 @@ const showTableGroups = (data, env, group) => `
 	</div>
 `
 
-const percentTd = (stat, sum = stat.positions ? Math.round(stat.withall / stat.positions * 100) : 0) => `
-	<td class="${sum == 100 ? 'green' : 'red'}" title="${stat.withall}">${sum}%</td>
+const percentTd = (stat, sum = stat.poscount ? Math.round(stat.withall / stat.poscount * 100) : 0) => `
+	<td class="${sum == 100 ? 'green' : 'red'}" title="${stat.poscount - stat.withall}">${sum}%</td>
 `
 
 const showGroup = (data, env, group, stat = group.stat) => `
@@ -663,8 +663,7 @@ const showGroup = (data, env, group, stat = group.stat) => `
 const showStatHead = (data, env) => `
 	<td>Позиций</td>
 	<td>Моделей</td>
-	<td>Групп</td>
-	<td>Подгрупп</td>
+	<td>Группы</td>
 	<td>Бренды</td>
 	<td>Фильтры</td>
 	<td>Источники</td>
@@ -674,28 +673,32 @@ const showStatHead = (data, env) => `
 	<td title="Позиций без цен">БЦ</td>
 	<td title="Позиций без описаний">БО</td>
 	<td title="Позиций без наименований">БН</td>
+	<td title="Позиций без бренда">ББ</td>
 	<td title="Позиций без картинок">БК</td>
 `
 const showStatTds = (data, env, group, stat = {}) => `
-	<td>${stat.positions}</td>
-	<td>${stat.models}</td>
-	<td>${stat.groups}</td>
-	<td>${stat.subgroups}</td>
-	<td>${stat.brands}</th>
-	<td>${stat.filters}</td>
-	<td>${stat.sources}</td>
-	<td>${ddd.ai(stat.date_content)}</td>
+	<td>${stat.poscount ?? '&mdash;'}</td>
+	<td>${stat.modcount ?? '&mdash;'}</td>
+	<td>${stat.groupcount ?? '&mdash;'}</td>
+	<td>${stat.brandcount ?? '&mdash;'}</th>
+	<td>${stat.filtercount ?? '&mdash;'}</td>
+	<td>${stat.sourcecount ?? '&mdash;'}</td>
+	<td>${ddd.ai(stat.date_cost)}</td>
 	${percentTd(stat)}
 	${redTd(data, group, stat, 'withfilters')}
 	${redTd(data, group, stat, 'withcost', 'cena')}
-	${redTd(data, group, stat, 'withdescription', 'opisanie')}
+	${redTd(data, group, stat, 'withdescr', 'opisanie')}
 	${redTd(data, group, stat, 'withname', 'naimenovanie')}
-	${redTd(data, group, stat, 'withimage', 'images')}
+	${redTd(data, group, stat, 'withbrands', 'brend')}
+	${redTd(data, group, stat, 'withimg', 'images')}
 `
 
-const redTd = (data, group, stat, name, filter_prop_nick, sum = stat.positions - stat[name]) => filter_prop_nick ? `
+const redTd = (data, group, stat, name, filter_prop_nick, sum = stat.poscount - stat[name]) => filter_prop_nick ? (
+	group ? `
 	<td><a target="about:blank" style="opacity:0.5" class="${sum ? 'red' : 'green'}" href="${data.conf.root_path}/group/${group.group_nick}?m=:${filter_prop_nick}=empty">${sum || '✓'}</a></td>
-` : `
+	` : `
+		<td><span style="opacity:0.5" class="${sum ? 'red' : 'green'}">${sum || '✓'}</span></td>
+	`) : `
 	<td style="opacity:0.5" class="${sum ? 'red' : 'green'}">${sum || '✓'}</td>
 `
 const MONTH = {

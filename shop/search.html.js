@@ -30,7 +30,7 @@ tpl.ROOT = (data, env) => `
 	</div>
 	<div id="page"><div id="SHOP_PAG"></div></div>
 	<div id="SHOP_LIST"></div>
-	<article style="margin-top:4em; margin-bottom: 4em" id="SHOP_PAGE">${data.text}</article>
+	<article style="margin-top:4em; margin-bottom: 4em" id="SHOP_PAGE">${data.text || ''}</article>
 `
 
 
@@ -54,10 +54,10 @@ tpl.pag = (data, env, scroll) => `
 			${env.scope} .pagination {
 				user-select: none;
 				margin: 2rem 0; 
-				margin-left: auto; 
 				width: max-content;
 				align-items: center; display: grid; 
-				grid-template-columns: repeat(5, max-content); 
+				grid-template-columns: 1fr repeat(5, max-content); 
+				width:100%;
 				gap:1rem
 			}
 			${env.scope} .pagination .page {
@@ -68,63 +68,95 @@ tpl.pag = (data, env, scroll) => `
 				min-width:4.2ch;
 				text-align: center;
 			}
+			${env.scope} .sort {
+				text-align:right;
+			}
 			${env.scope} .pagination .disabled {
 				opacity: 0.5;
 			}
-			@media (max-width: 380px) {
+			/*@media (max-width: 380px) {
+				${env.scope} .pagination .disabled {
+					display: none;
+				}
+			}*/
+			@media (max-width: 360px) {
 				${env.scope} .pagination {
-					grid-template-columns: repeat(4, max-content); 
+					gap:0.5rem
+				}
+			}
+			@media (max-width: 330px) {
+				${env.scope} .pagination {
+					font-size:10px;
+				}
+			}
+			@media (max-width: 600px) {
+				${env.scope} .pagination {
+					grid-template-columns: 1fr repeat(4, max-content); 
 				}
 				${env.scope} .pagination .paglong {
 					display: none;
 				}
 			}
 		</style>
-		<div class="begin">${tpl.pagt[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'В начало', 1)}</div>
-		<div class="backward">${tpl.pagt[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'Назад', data.pagination.page - 1)}</div>
-		<div class="page" title="" style="${data.pagination.last == 1 ? 'opacity:0.5' : ''}">${data.pagination.page}</div>
+		<div class="sort" style="white-space: nowrap;">${!scroll ? '' : sortIcon(data, env)}</div>
+		<div class="begin ${data.pagination.page != 1 ? '' : 'disabled'}">${tpl.pagt[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'В начало', 1)}</div>
+		<div class="backward ${data.pagination.page != 1 ? '' : 'disabled'}">${tpl.pagt[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'Назад', data.pagination.page - 1)}</div>
+		<div class="page ${data.pagination.last == 1 ? 'disabled' : ''}" title="">${data.pagination.page}</div>
 		<script>
 			(async page => {
 				//Передаём с кликом количество нужных карточек
 				const words = await import('/-words/words.js').then(r => r.words)
 				const Card = await import('/-shop/Card.js').then(r => r.default)
-				const count = Card.numberOfCards(${data.limit})
+				const count = Card.numberOfCards(${data.conf.limit})
 				page.title = "По "	+ count + ' ' + words(count, 'модели','модели','моделей') + ' на странице'
 				
 			})(document.currentScript.previousElementSibling)
 		</script>
-		<div class="forward">${tpl.pagt[data.pagination.last > data.pagination.page ? 'link' : 'disabled'](data, env, scroll, 'Дальше', data.pagination.page + 1)}</div>
-		<div class="paglong">${data.count} ${words(data.count,'модель','модели','моделей')}</div>
+		<div class="forward ${data.pagination.last > data.pagination.page ? '' : 'disabled'}">${tpl.pagt[data.pagination.last > data.pagination.page ? 'link' : 'disabled'](data, env, scroll, 'Дальше', data.pagination.page + 1)}</div>
+		<div class="paglong">${data.modcount} ${words(data.modcount,'модель','модели','моделей')}</div>
 	</div>
 `
-
+const sortIcon = (data, env) => {
+	//if (data.modcount == 1) return ''
+	if (!~data.group.filter_nicks.indexOf('cena') && !data.md.mget.cena) return ''
+	let href, title
+	
+	if (data.md.mget.cena?.upto != null) {
+		title = 'дороже'
+		const number = data.md.mget.cena.upto
+		href = cards.addget(env.bread.get, {m:data.md.m + ':cena::.from='+(number >= data.filtercost.max ? data.filtercost.min : number), p:null})
+	} else if (data.md.mget.cena?.from != null) {
+		title = 'дешевле'
+		const number = data.md.mget.cena.from
+		href = cards.addget(env.bread.get, {m:data.md.m + ':cena::.upto='+ (number <= data.filtercost.min ? data.filtercost.max : number), p:null})
+	} else {
+		title = ''
+		href = cards.addget(env.bread.get, {m:data.md.m + ':cena::.from='+data.filtercost.min, p:null})
+	}
+	
+	return `
+		<a data-scroll="none" href="${href}">⇅ ${title}</a>
+	`
+}
 tpl.pagt = {}
 tpl.pagt.link = (data, env, scroll = '', title, page) => `
-	<a data-scroll="${scroll}">${title}</a>
+	<a href="${cards.addget(env.bread.get, {p:page, count: env.bread.get.count || data.conf.limit})}" data-scroll="${scroll}">${title}</a>
 	<script>
 		(async a => {
 			//Передаём с кликом количество нужных карточек
 			const Card = await import('/-shop/Card.js').then(r => r.default)
 			const onload = await import('/-words/onload.js').then(r => r.default)
-			const getreq = (m, page) => {
-				const reqs = []
-				if (m) reqs.push('m=' + m)
-				if (page > 1) {
-					reqs.push('p=' + page)
-					const count = Card.numberOfCards(${data.limit})
-					if (count) reqs.push('count=' + count)
-				}
-				if (!reqs.length) return ''
-				return '?' + reqs.join('&')
-			}
-			onload(() => {
-				a.href = "${cards.getGroupPath(data, data.group)}" + getreq('${data.m || ''}', '${page}') + "${!scroll?'#page':''}"	
+			const cards = await import('/-shop/cards.html.js').then(r => r.default)
+			onload(async () => {
+				const count = Card.numberOfCards(${data.conf.limit})
+				const Client = await window.getClient()
+				a.href = cards.addget(Client.bread.get, {p:${page}, count}) + "${!scroll?'#page':''}"
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
 tpl.pagt.disabled = (data, env, scroll, title) => `
-	<span style="opacity: 0.5">${title}</span>
+	<span>${title}</span>
 `
 
 
@@ -156,7 +188,7 @@ tpl.listcards = (data, env) => {
 			import Ecommerce from "/-shop/Ecommerce.js"
 			import Card from "/-shop/Card.js"
 
-			const limit = Card.numberOfCards(${data.limit})
+			const limit = Card.numberOfCards(${data.conf.limit})
 			const count = Math.min(limit, ${data.list.length})
 			const products = ${JSON.stringify(products)}.filter(product => product.position <= count)
 			Ecommerce.impressions(products)
@@ -178,14 +210,14 @@ tpl.showGroups = (data, env) => `
 			opacity: 0.9;
 		}
 	</style>
-	${data.childs.map(g => tpl.showGroupItem(data, env, g)).join('')}
+	${data.childs.map(group_nick => tpl.showGroupItem(data, env, group_nick)).join('')}
 `
 
-tpl.showGroupItem = (data, env, group) => `
+tpl.showGroupItem = (data, env, group_nick) => `
 	<div>
-		<a class="${data.group.group_nick == group.group_nick ? 'selected' :''} ${group.modcount ? '' :'mute'}"
+		<a class="${data.group.group_nick == group_nick ? 'selected' :''} ${data.modcounts[group_nick] ? '' :'mute'}"
 			data-scroll="none"
-			href="${cards.getGroupPath(data, group)}${cards.addget(env.bread, {m:data.md.m})}">${group.group_title}</a>
+			href="${cards.getGroupPath(data, group_nick)}${cards.addget(env.bread.get, {m:data.md.m})}">${data.groups[group_nick].group_title}</a>
 	</div>
 `
 
@@ -277,13 +309,13 @@ tpl.showSelected = (data, bread) => {
 
 
 
-tpl.showPart = (data, bread, title, get) => !title ? '' : `
+tpl.showPart = (data, bread, title, params) => !title ? '' : `
 	<a data-scroll="none" class="clearlink"
-		href="${cards.getGroupPath(data, data.group)}${cards.addget(bread, get)}">
+		href="${cards.getGroupPath(data, data.group.group_nick)}${cards.addget(bread.get, params)}">
 		<span class="value">${title}</span>
 		<span class="krest" style="font-size:1rem; line-height: 2rem;">✕</span>
 	</a>
 `
 tpl.showParentLink = (data, env) => data.group.group_nick == data.conf.root_nick ? '' : `
-	<a data-scroll="none" href="${cards.getParentPath(data, data.group)}${cards.addget(env.bread, {m:data.md.m, page: null})}">${data.group.parent_title}</a>
+	<a data-scroll="none" href="${cards.getParentPath(data, data.group)}${cards.addget(env.bread.get, {m:data.md.m, page: null})}">${data.group.parent_title}</a>
 `

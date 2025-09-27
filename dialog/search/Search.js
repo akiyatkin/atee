@@ -176,7 +176,6 @@ export const Search = {
 
 			// const ans = await Search.fetch_promise
 			// const need = await Search.getNeed(input)
-			// console.log('asdf', ans, need)
 			// if (ans && need.hash) {
 			// 	const r = await state.click(ans.list[0], need)
 			// 	if (r === null || r) Dialog.hide()

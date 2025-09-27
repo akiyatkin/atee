@@ -71,103 +71,60 @@ Shop.getGainHead = async (item, gain) => {
 	if (opisanie) head.description = opisanie
 	return head
 }
-Shop.getAllGroupIds = Access.poke(async (db) => {
-	const group_ids = await db.colAll(`select group_id from shop_groups order by ordain`)
-	return group_ids
+Shop.reduce = (keys, props) => { //Минимизируем выдачу, какие свойства оставить в объектах массива через создание нового объекта. Настройка rest под front
+	for (const nick in keys) {
+		const obj = keys[nick]
+		const nobj = {}
+	 	for (const name of props) nobj[name] = obj[name]
+	 	keys[nick] = nobj
+	}
+}
+Shop.getAllGroupIds = Access.poke(async (db, group_id) => { //От корня, доступные для просмотра группы
+	const conf = await config('shop')
+	const root_id = group_id || await Shop.getGroupIdByNick(db, conf.root_nick)
+	// if (group_id) {
+	// 	const group_ids = []
+	// 	const r = await Shop.runGroupUp(db, group_id, ({group_id}) => {
+	// 		if (group_id == root_id) return true
+	// 	})
+	// 	if (!r) return group_ids
+	// 	await Shop.runGroupDown(db, group_id, ({group_id}) => {
+	// 		group_ids.push(group_id)
+	// 	})
+	// 	return group_ids
+	// } else {
+		const group_ids = await db.colAll(`
+			WITH RECURSIVE group_tree AS (
+				SELECT :group_id as group_id
+				UNION ALL
+				SELECT sg.group_id
+				FROM shop_groups sg, group_tree gt 
+				WHERE sg.parent_id = gt.group_id
+			)
+			SELECT group_id FROM group_tree
+		`, {group_id: root_id})
+		return group_ids
+	//}
 })
-Shop.getLastGroupNicksByItem = async (db, item) => { //depricated
-	const allgroupids = await Shop.getGroupIdsByItem(db, item)
-
-	let groupnicks = []
-	for (const group_id of allgroupids) {
-		if (!await Shop.isInRoot(db, group_id)) continue
-		if (!await Shop.runGroupDown(db, group_id, (child) => {
-			if (group_id == child.group_id) return
-			if (~allgroupids.indexOf(child.group_id)) return true //Есть какая-то более вложенная группа
-		})) {
-			const group = await Shop.getGroupById(db, group_id)
-			groupnicks.push(group.group_nick) //Если внутри группы не нашли других
-		}
-	}
-	return groupnicks
-}
-Shop.getGroupIdsByItem = async (db, item) => { //depricated
-	/*
-		item = {
-			'cena':[nick, nick]
-		}
-	*/
-	const group_ids = await Shop.getAllGroupIds(db)
-
-	const list = []
-	for (const group_id of group_ids) {
-		const samples = await Shop.getSamplesUpByGroupId(db, group_id)
-
-		if (!Shop.isItemSamples(item, samples)) continue;
-
-		list.push(group_id)
-	}
-	return list
-}
-Shop.isItemSamples = (item, samples) => {
-	
-	for (const sample of samples) {
-		let r = false
-		for (const prop_nick in sample) {
-			if (typeof(sample[prop_nick]) == 'object') {
-				if (!item[prop_nick]) {
-					r = false
-					break
-				}
-				if (item[prop_nick].some(nick => sample[prop_nick][nick])) {
-					r = true
-					continue
-				} else {
-					r = false
-					break
-				}
-			} else if (sample[prop_nick] == 'any'){
-
-				if (item[prop_nick]) {
-					r = true
-					continue
-				} else {
-					r = false
-					break
-				}
-			} else if (sample[prop_nick] == 'empty'){
-				if (item[prop_nick]) {
-					r = false
-					break
-				} else {
-					r = true
-					continue
-				}
-			}
-
-		}
-		if (r) return true
-	}
-}
 
 
 
-Shop.getGroupIdsBySnap = async (db, snap) => {
-	/*
-		snap = {
-			'cena':[{value_nick, number},{value_nick, number}],
-			'naimenovanie':[{value_nick, number},{value_nick, number}]
-		}
-	*/
-	const group_ids = await Shop.getAllGroupIds(db)
-	const list = []
-	for (const group_id of group_ids) {
-		const samples = await Shop.getSamplesUpByGroupId(db, group_id)
-		if (!Shop.isSnapSamples(snap, samples)) continue
-		list.push(group_id)
-	}
-	return list
-}
+// Shop.getGroupIdsBySnap = async (db, snap) => {
+// 	/*
+// 		snap = {
+// 			'cena':[{value_nick, number},{value_nick, number}],
+// 			'naimenovanie':[{value_nick, number},{value_nick, number}]
+// 		}
+// 	*/
+// 	const group_ids = await Shop.getAllGroupIds(db)
+// 	const list = []
+// 	for (const group_id of group_ids) {
+// 		const samples = await Shop.getSamplesUpByGroupId(db, group_id)
+// 		if (!Shop.isSnapSamples(snap, samples)) continue
+// 		list.push(group_id)
+// 	}
+// 	return list
+// }
 Shop.isSnapSamples = (snap, samples) => {
 	for (const sample of samples) {
 		let r = false
@@ -187,7 +144,7 @@ Shop.isSnapSamples = (snap, samples) => {
 		if (r) return true
 	}
 }
-Shop.getValueByNick = Access.poke(async (db, value_nick) => {
+Shop.getValueByNick = Access.blink(async (db, value_nick) => {
 	const value = await db.fetch(`
 		SELECT 
 			va.value_nick,
@@ -204,7 +161,7 @@ Shop.getPropByNick = Access.poke(async (db, prop_nick = false) => {
 		SELECT 
 			pr.prop_nick,
 			pr.prop_title,
-			spr.multichoice + 0 as multichoice,
+			spr.singlechoice + 0 as singlechoice,
 			pr.prop_id,
 			pr.name,
 			pr.type,
@@ -242,6 +199,13 @@ Shop.isNest = async (db, child_id, parent_id) => { //canI
 	const child = await Shop.getGroupById(db, child_id)
 	return Shop.isNest(db, child.parent_id, parent_id)
 }
+Shop.isInRoot = async (db, group_id) => {
+	const conf = await config('shop')
+	return await Shop.runGroupUp(db, group_id, (group) => {
+		if (group.group_nick == conf.root_nick) return true //Группа вложена или сама является корнем
+	})
+}
+
 
 Shop.getGroupById = Access.poke(async (db, group_id = false) => {
 	if (!group_id) return false
@@ -264,21 +228,32 @@ Shop.getGroupById = Access.poke(async (db, group_id = false) => {
 	`, {group_id})
 	if (!group) return false
 
-	group.childs = await db.colAll(`select group_id from shop_groups where parent_id = :group_id`, {group_id})
+	
+	const childs = await db.all(`select group_id, group_nick from shop_groups where parent_id = :group_id`, {group_id})
+	group.child_ids = []
+	group.child_nicks = []
+	for (const child of childs) {
+		group.child_ids.push(child.group_id)
+		group.child_nicks.push(child.group_nick)
+	}
+	group.childs = group.child_nicks //depricated
 
 	if (group.self_filters) {
-		group.filters = await db.colAll(`select prop_nick from shop_filters where group_id = :group_id order by ordain`, {group_id})
+		group.filter_nicks = await db.colAll(`select prop_nick from shop_filters where group_id = :group_id order by ordain`, {group_id})
 	} else {
 		const parent = await Shop.getGroupById(db, group.parent_id)
-		group.filters = parent.filters || []
+		group.filter_nicks = parent.filter_nicks || []
 	}
+	group.filters = group.filter_nicks //depricated
+
 
 	if (group.self_cards) {
-		group.cards = await db.colAll(`select prop_nick from shop_cards where group_id = :group_id order by ordain`, {group_id})
+		group.card_nicks = await db.colAll(`select prop_nick from shop_cards where group_id = :group_id order by ordain`, {group_id})
 	} else {
 		const parent = await Shop.getGroupById(db, group.parent_id)
-		group.cards = parent.cards || []
+		group.card_nicks = parent.card_nicks || []
 	}
+	group.cards = group.card_nicks //depricated
 
 	group.category = await db.col(`
 		WITH RECURSIVE tree AS (
@@ -535,10 +510,11 @@ Shop.getBind = Access.wait(async db => {
 		
 		art: 'Арт', //Навигация														 - Арт
 		"skryt-filtry": "Скрыть фильтры",//Необязательно для страницы
-		brend: 'Бренд', //Необязательно для карточки, Статистика в админке, Быстрый поиск
+		
 		model: 'Модель', //Навигация, Быстрый поиск
 	}
 	const list = {
+		brend: 'Бренд', //Необязательно для карточки, Статистика в админке, Быстрый поиск
 		brendart : 'БрендАрт', //Забираемая сущность								 
 		brendmodel : 'БрендМодель', //Групировка
 	}
@@ -554,342 +530,6 @@ Shop.getBind = Access.wait(async db => {
 
 
 
-Shop.getWhereBySamples = async (db, samples, hashs = [], partner = '', fulldef = false) => { //depricated use ShopAdmin
-	//fulldef false значит без выборки ничего не показываем, partner нужен чтобы выборка по цене была по нужному ключу
-	//win.key_id - позиция, wva.value_id - модель
-	const from = ['sources_wvalues wva, sources_wcells win']
-	const join = []
-	const where = [`
-		win.entity_id = :brendart_prop_id and win.prop_id = :brendmodel_prop_id 
-		and wva.entity_id = win.entity_id and wva.prop_id = win.prop_id and wva.key_id = win.key_id and wva.multi_index = 0
-	`]
-	if (hashs.length) {
-		from.unshift('sources_items wit')
-		where.push('wit.entity_id = win.entity_id and wit.key_id = win.key_id')
-		where.push('(' + hashs.map(hash => 'wit.search like "%' + hash.join('%" and wit.search like "%') + '%"').join(' or ')+')' || '1 = 1')
-	}
-
-	let sort = ['win.source_id, win.sheet_index, win.row_index, win.col_index, wva.multi_index']
-
-	const whereor = []
-	let i = 0
-
-	for (const sample of samples) { //OR
-
-		const whereand = []
-		for (const prop_nick in sample) { //Находим позиции группы
-			const prop = await Shop.getPropByNick(db, prop_nick)
-			
-
-			i++
-			if (prop.type == 'value') {
-				join.push(`
-					LEFT JOIN sources_wvalues da${i} ON (
-						da${i}.entity_id = win.entity_id 
-						and da${i}.key_id = win.key_id 
-						and da${i}.prop_id = ${prop.prop_id || 0}
-					)
-				`)
-			} else if (prop.type == 'number') {
-				if (prop_nick == 'cena') {
-					const {prop_id} = partner?.cost_nick ? await Shop.getPropByNick(db, partner?.cost_nick) : prop  //Подмена цены
-					join.push(`
-						LEFT JOIN sources_wnumbers da${i} ON (
-							da${i}.entity_id = win.entity_id 
-							and da${i}.key_id = win.key_id 
-							and da${i}.prop_id = ${prop_id || 0}
-						)
-					`)
-				} else {
-					join.push(`
-						LEFT JOIN sources_wnumbers da${i} ON (
-							da${i}.entity_id = win.entity_id 
-							and da${i}.key_id = win.key_id 
-							and da${i}.prop_id = ${prop.prop_id || 0}
-						)
-					`)
-				}
-			} else if (prop.type == 'text') {
-				join.push(`
-					LEFT JOIN sources_wtexts da${i} ON (
-						da${i}.entity_id = win.entity_id 
-						and da${i}.key_id = win.key_id 
-						and da${i}.prop_id = ${prop.prop_id || 0}
-					)
-				`)
-			} else {
-				
-			}
-			if (typeof(sample[prop_nick]) == 'object') { //Значение не объект
-				if (prop.type == 'value') {
-					
-					const value_ids = []
-					for (const value_nick in sample[prop_nick]) {
-						const value = await Shop.getValueByNick(db, value_nick)
-						value_ids.push(value?.value_id || 0)
-					}
-					if (value_ids.length) { //У позиции с мульти значениями может совпать два значения и будет дубль
-						whereand.push(`
-							da${i}.value_id in (${value_ids.join(', ')})
-						`)
-					} else {
-						whereand.push(`1=0`)
-					}
-				} else if (prop.type == 'number') {
-
-					const isdiscost = partner?.discount && prop_nick == 'cena'
-					const disCost = isdiscost ? number => Math.round(number * (100 + partner.discount) / 100) : number => number
-						
-					if (sample[prop_nick]['upto'] || sample[prop_nick]['from']) {
-						sort = []
-						if (sample[prop_nick]['upto']) {
-							const number = disCost(sample[prop_nick]['upto'])
-							whereand.push(`da${i}.number <= ${number}`)
-							sort.push(`da${i}.number DESC`)
-						}
-						if (sample[prop_nick]['from']) {
-							const number = disCost(sample[prop_nick]['from'])
-							whereand.push(`da${i}.number >= ${number}`)
-							sort.push(`da${i}.number ASC`)
-						}
-					} else {
-						const numbers = Object.keys(sample[prop_nick]).map(number => disCost(number))
-						if (numbers.length) {
-							whereand.push(`
-								da${i}.number in (${numbers.join(', ')})
-							`)
-						} else {
-							whereand.push(`1=0`)
-						}
-					}	
-				} else { //Неизвестный prop.type
-					where.push(`1=0`) //что делать если в sample не существующее свойство, должно быть найдено 0
-				}
-			} else { //Значение не объект
-				if (prop.type == 'value') {
-					
-					if (sample[prop_nick] == 'any') {
-						// whereand.push(`
-						// 	da${i}.value_id is not null
-						// `)
-						whereand.push(`
-							da${i}.multi_index = 0
-						`)
-					} else if (sample[prop_nick] == 'empty') {
-
-						whereand.push(`
-							da${i}.value_id is null
-						`)
-					}
-				} else if (prop.type == 'number') {
-
-					if (sample[prop_nick] == 'any') {
-						// whereand.push(`
-						// 	da${i}.number is not null
-						// `)
-						whereand.push(`
-							da${i}.multi_index = 0
-						`)
-					} else if (sample[prop_nick] == 'empty') {
-						whereand.push(`
-							da${i}.number is null
-						`)
-					} else {
-						where.push(`1=0`)
-					}
-				} else if (prop.type == 'text') {
-
-					if (sample[prop_nick] == 'any') {
-						// whereand.push(`
-						// 	da${i}.text is not null
-						// `)
-						whereand.push(`
-							da${i}.multi_index = 0
-						`)
-					} else if (sample[prop_nick] == 'empty') {
-						whereand.push(`
-							da${i}.text is null
-						`)
-					} else {
-						where.push(`1=0`)
-					}
-				} else {
-					where.push(`1=0`)
-				}
-			}
-		}
-		if (whereand.length) whereor.push(whereand.join(` and `))
-	}
-	if (whereor.length)	where.push(`((${whereor.join(') or (')}))`)
-	else if (!fulldef) where.push(`1=0`)
-	return {from, join, where, sort}
-}
-// Shop.getWhereItemsBySamples = async (db, samples, hashs = [], partner = '', fulldef = false) => { //fulldef false значит без выборки ничего не показываем, partner нужен чтобы выборка по цене была по нужному ключу
-// 	//win.key_id - позиция, wva.value_id - модель
-// 	const from = ['sources_wcells win']
-// 	const join = []
-// 	const where = [`
-// 		win.entity_id = :brendart_prop_id
-// 	`]
-// 	if (hashs.length) {
-// 		from.unshift('sources_items wit')
-// 		where.push('wit.entity_id = win.entity_id and wit.key_id = win.key_id')
-// 		where.push('(' + hashs.map(hash => 'wit.search like "%' + hash.join('%" and wit.search like "%') + '%"').join(' or ')+')' || '1 = 1')
-// 	}
-
-// 	let sort = ['win.source_id, win.sheet_index, win.row_index, win.col_index']
-
-// 	const whereor = []
-// 	let i = 0
-
-// 	for (const sample of samples) { //OR
-
-// 		const whereand = []
-// 		for (const prop_nick in sample) { //Находим позиции группы
-// 			const prop = await Shop.getPropByNick(db, prop_nick)
-			
-
-// 			i++
-			
-// 			if (prop.type == 'value') {
-// 				join.push(`
-// 					LEFT JOIN sources_wvalues da${i} ON (
-// 						da${i}.entity_id = win.entity_id 
-// 						and da${i}.key_id = win.key_id 
-// 						and da${i}.prop_id = ${prop.prop_id || 0}
-// 					)
-// 				`)
-// 				if (typeof(sample[prop_nick]) == 'object') {
-// 					const value_ids = []
-// 					for (const value_nick in sample[prop_nick]) {
-// 						const value = await Shop.getValueByNick(db, value_nick)
-// 						value_ids.push(value?.value_id || 0)
-// 					}
-// 					if (value_ids.length) {
-// 						whereand.push(`
-// 							da${i}.value_id in (${value_ids.join(', ')})
-// 						`)
-// 					} else {
-// 						whereand.push(`1 = 0`)
-// 					}
-// 				} else if (sample[prop_nick] == 'any') {
-// 					whereand.push(`
-// 						da${i}.value_id is not null
-// 					`)
-// 				} else if (sample[prop_nick] == 'empty') {
-
-// 					whereand.push(`
-// 						da${i}.value_id is null
-// 					`)
-// 				}
-// 			} else if (prop.type == 'number') {
-				
-// 				if (typeof(sample[prop_nick]) == 'object') {
-// 					if (prop_nick == 'cena') {
-						
-						
-// 						const {prop_id} = partner?.cost_nick ? await Shop.getPropByNick(db, partner?.cost_nick) : prop  //Подмена цены
-// 						join.push(`
-// 							LEFT JOIN sources_wnumbers da${i} ON (
-// 								da${i}.entity_id = win.entity_id 
-// 								and da${i}.key_id = win.key_id 
-// 								and da${i}.prop_id = ${prop_id || 0}
-// 							)
-// 						`)
-						
-// 						const isdiscost = partner?.discount && prop_nick == 'cena'
-// 						const disCost = isdiscost ? number => Math.round(number * (100 + partner.discount) / 100) : number => number
-							
-// 						if (sample[prop_nick]['upto'] || sample[prop_nick]['from']) {
-// 							sort = []
-// 							if (sample[prop_nick]['upto']) {
-// 								const number = disCost(sample[prop_nick]['upto'])
-// 								whereand.push(`da${i}.number <= ${number}`)
-// 								sort.push(`da${i}.number DESC`)
-// 							}
-// 							if (sample[prop_nick]['from']) {
-// 								const number = disCost(sample[prop_nick]['from'])
-// 								whereand.push(`da${i}.number >= ${number}`)
-// 								sort.push(`da${i}.number ASC`)
-// 							}
-// 						} else {
-// 							const numbers = Object.keys(sample[prop_nick]).map(number => disCost(number))
-// 							if (numbers.length) {
-// 								whereand.push(`
-// 									da${i}.number in (${numbers.join(', ')})
-// 								`)
-// 							} else {
-// 								whereand.push(`1 = 0`)
-// 							}
-// 						}
-// 					} else { //number object не цена
-// 						join.push(`
-// 							LEFT JOIN sources_wnumbers da${i} ON (
-// 								da${i}.entity_id = win.entity_id 
-// 								and da${i}.key_id = win.key_id 
-// 								and da${i}.prop_id = ${prop.prop_id || 0}
-// 							)
-// 						`)
-// 						if (sample[prop_nick]['upto'] || sample[prop_nick]['from']) {
-// 							sort = []
-// 							if (sample[prop_nick]['upto']) {
-// 								const number = sample[prop_nick]['upto']
-// 								whereand.push(`da${i}.number <= ${number}`)
-// 								sort.push(`da${i}.number DESC`)
-// 							}
-// 							if (sample[prop_nick]['from']) {
-// 								const number = sample[prop_nick]['from']
-// 								whereand.push(`da${i}.number >= ${number}`)
-// 								sort.push(`da${i}.number ASC`)
-// 							}
-// 						} else {
-// 							const numbers = Object.keys(sample[prop_nick])
-// 							if (numbers.length) {
-// 								whereand.push(`
-// 									da${i}.number in (${numbers.join(', ')})
-// 								`)
-// 							} else {
-// 								whereand.push(`1 = 0`)
-// 							}
-// 						}
-// 					}
-// 				} else { //number не object
-// 					join.push(`
-// 						LEFT JOIN sources_wnumbers da${i} ON (
-// 							da${i}.entity_id = win.entity_id 
-// 							and da${i}.key_id = win.key_id 
-// 							and da${i}.prop_id = ${prop.prop_id || 0}
-// 						)
-// 					`)
-// 					if (sample[prop_nick] == 'any') {
-// 						whereand.push(`
-// 							da${i}.number is not null
-// 						`)
-// 					} else if (sample[prop_nick] == 'empty') {
-// 						whereand.push(`
-// 							da${i}.number is null
-// 						`)
-// 					} else {
-// 						where.push(`1=0`)
-// 					}
-// 				}
-// 			} else { //Неизвестный prop.type
-// 				where.push(`1=0`) //что делать если в sample не существующее свойство, должно быть найдено 0
-// 			}
-// 		}
-// 		if (whereand.length) whereor.push(whereand.join(` and `))
-// 	}
-// 	if (whereor.length)	where.push(`((${whereor.join(') or (')}))`)
-// 	else if (!fulldef) where.push(`1=0`)
-// 	return {from, join, where, sort}
-// }
-Shop.getWhereByGroupId = async (db, group_id = false, hashs = [], partner = false, fulldef = false) => { //depricated
-	const bind = await Shop.getBind(db)
-	const samples = await Shop.getSamplesUpByGroupId(db, group_id)
-
-	const {from, join, where, sort} = await Shop.getWhereBySamples(db, samples, hashs, partner, fulldef)
-	return {from, join, where, sort, bind}
-}
 
 
 
@@ -1054,11 +694,12 @@ Shop.prepareModelsPropsValuesGroups = async (db, data, models) => { //basket.lis
 		data.groups[model.groups[0]] = await Shop.getGroupByNick(db, model.groups[0])
 	}
 }
+
 Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //moditems_ids = [{value_id, key_ids}] props = ['brendart']
 	if (!moditems_ids.length) return []
 	const bind = await Shop.getBind(db)
 	const modbypos = {}
-	const groupsbymod = {}
+	//const groupsbymod = {}
 
 
 	for (const row of moditems_ids) {
@@ -1066,13 +707,13 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 			modbypos[key_id] = row.value_id
 		})
 
-		if (!row.group_ids) continue
-		const group_ids = row.group_ids.split(',')
-		groupsbymod[row.value_id] ??= []
-		for (const group_id of group_ids) {
-			const group = await Shop.getGroupById(db, group_id)
-			groupsbymod[row.value_id].push(group.group_nick)
-		}	
+		// if (!row.group_ids) continue
+		// const group_ids = row.group_ids.split(',')
+		// groupsbymod[row.value_id] ??= []
+		// for (const group_id of group_ids) {
+		// 	const group = await Shop.getGroupById(db, group_id)
+		// 	groupsbymod[row.value_id].push(group.group_nick)
+		// }	
 	}
 	// const conf = await config('shop')
 
@@ -1124,6 +765,8 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 	`, bind))	
 
 	const models = Object.groupBy(itemprops, row => modbypos[row.key_id])
+
+	
 	
 	//const props = {}
 	for (const model_id in models) {
@@ -1146,7 +789,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 		}
 		//Если проверяется доступ по группам, то и группы можно сразу взять
 		models[model_id] = {
-			groups: groupsbymod[model_id] || [],
+			//groups: groupsbymod[model_id] || [],
 			items: Object.values(items)
 		}
 	}
@@ -1175,7 +818,13 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 			}
 		]
 	*/
-	const list = Object.values(models)
+
+	
+	const list = []
+	for (const {value_id} of moditems_ids) {
+		list.push(models[value_id])
+	}
+	//const list = Object.values(models)
 
 	//Навели порядок в ценах
 	for (const model of list) {
@@ -1231,10 +880,10 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 			const value = await Shop.getValueByNick(db, key_nick)
 			keys.push(value.value_id)
 		}
-		const groupsids = await db.colAll(`SELECT distinct group_id from shop_itemgroups where key_id in (${keys.join(',')})`)
+		const group_ids = await db.colAll(`SELECT distinct group_id from shop_itemgroups where key_id in (${keys.join(',')})`)
 		const groups = []
-		for (const group_id of groupsids) {
-			if (!await Shop.isInRoot(db, group_id)) continue
+		for (const group_id of group_ids) {
+			//if (!await Shop.isInRoot(db, group_id)) continue
 			const group = await Shop.getGroupById(db, group_id)
 			groups.push(group.group_nick)
 		}
@@ -1305,17 +954,19 @@ Shop.getModelByBrendmodel = Access.poke(async (db, brendmodel_nick, partner) => 
 	const bind = await Shop.getBind(db)
 	const value = await Shop.getValueByNick(db, brendmodel_nick)
 	if (!value) return false
-	const group_ids = await Shop.getAllGroupIds(db)	
+
+	const conf = await config('shop')
+	const group_id = await Shop.getGroupIdByNick(db, conf.root_nick) //Проверка доступа
+	//const group_ids = await Shop.getAllGroupIds(db)
 	let moditem_ids = await db.all(`
 		SELECT 
 			wva.value_id, 
-			GROUP_CONCAT(distinct wva.key_id separator ',') as key_ids,
-			GROUP_CONCAT(ig.group_id separator ',') as group_ids 
-		FROM sources_wvalues wva, shop_itemgroups ig
+			GROUP_CONCAT(distinct wva.key_id separator ',') as key_ids
+		FROM sources_wvalues wva, shop_allitemgroups ig
 		WHERE wva.value_id = :value_id and wva.entity_id = :brendart_prop_id and wva.prop_id = :brendmodel_prop_id
-		and ig.key_id = wva.key_id and ig.group_id in (${group_ids.join(',')})
+		and ig.key_id = wva.key_id and ig.group_id = :group_id
 		GROUP BY wva.value_id 
-	`, {...bind, ...value})	
+	`, {...bind, ...value, group_id})	
 	if (!moditem_ids.length) return false
 
 
@@ -1335,7 +986,7 @@ Shop.getModelByBrendmodel = Access.poke(async (db, brendmodel_nick, partner) => 
 	// moditem_ids = moditem_ids.filter(pos => pos.nest)
 
 
-	// const {from, join, where, sort} = await Shop.getWhereBySamples(db, [{brendmodel:{[brendmodel_nick]:1}}], [], partner)
+	// const {from, join, where, sort} = await Shop.getWhereBySamplesWinMod(db, [{brendmodel:{[brendmodel_nick]:1}}], [], partner)
 	
 	// const moditem_ids = await db.all(`
 	// 	SELECT wva.value_id, GROUP_CONCAT(win.key_id separator ',') as key_ids 
@@ -1493,9 +1144,12 @@ Shop.prepareCost = (model, partner) => {
 // 	bind.cena_prop_id = prop.prop_id || null
 // 	return bind
 // })
+
 Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, md, partner, {rand = false, limit = false, nicks = [], titles = []}) => {
-	const marked_samples = await Shop.getSamplesUpByGroupId(db, group_id, [md.mget])
-	const {from, join, where, sort} = await Shop.getWhereBySamples(db, marked_samples, md.hashs, partner, group_id ? false : true)
+	// const marked_samples = await Shop.getSamplesUpByGroupId(db, group_id, [md.mget])
+	// const {from, join, where, sort} = await Shop.getWhereBySamplesWinMod(db, marked_samples, md.hashs, partner, group_id ? false : true)
+
+	const {from, join, where, sort} = await Shop.getWhereByGroupIndexWinMod(db, group_id, [md.mget], md.hashs, partner)
 	
 	const bind = await Shop.getBind(db)
 	
@@ -1508,7 +1162,7 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, md, partner, {rand = fa
 	const addJoin2 = (prop, propc) => {
 		i++
 		propids[prop.prop_id] = prop.prop_id
-		const prop_id = prop.prop_nick == 'cena' ? propc.prop_id : prop.prop_id
+		const prop_id = prop.prop_nick == 'cena' ? propc.prop_id : prop.prop_id //Подмена цены если есть купон
 
 
 
@@ -1591,16 +1245,16 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, md, partner, {rand = fa
 			${cols2.join(',')}
 		FROM (${from.join(', ')} ${join.join(' ')})
 			LEFT JOIN sources_values vakey on (vakey.value_id = win.key_id)
-			LEFT JOIN sources_values vamod on (vamod.value_id = wva.value_id)
+			LEFT JOIN sources_values vamod on (vamod.value_id = win.value_id)
 			${join2.join(' ')}
 		WHERE ${where.join(' and ')}		
-		ORDER BY ${rand ? 'RAND()' : sort.join(", ")}
+		${rand ? 'ORDER BY RAND()' : ''}
 		${limit ? 'LIMIT ' + limit : ''}
-	`, {...bind})
+	`, {group_id, ...bind})
 
 
 	const count = limit ? await db.col(`
-		SELECT count(distinct wva.value_id)
+		SELECT count(distinct win.value_id)
 		FROM (${from.join(', ')} ${join.join(' ')})
 		WHERE ${where.join(' and ')}
 	`, bind) : list.length
@@ -1614,44 +1268,40 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, md, partner, {rand = fa
 	}
 	return {list, count}
 }
-Shop.getGroupIdsBymd = async (db, group_id, md, partner) => {
-	const bind = await Shop.getBind(db)
+// Shop.getGroupIdsBymd = async (db, group_id, md, partner) => {
+// 	const bind = await Shop.getBind(db)
 
-	const samples = await Shop.getSamplesUpByGroupId(db, group_id)
-	const marked_samples = Shop.addSamples(samples, [md.mget])
-	const {from, join, where} = await Shop.getWhereBySamples(db, marked_samples, md.hashs, false, group_id ? false : true) //Если корень и нет samples то вязть всё, если группа и нет samples то пусто
+// 	const samples = await Shop.getSamplesUpByGroupId(db, group_id)
+// 	const marked_samples = Shop.addSamples(samples, [md.mget])
+// 	const {from, join, where} = await Shop.getWhereBySamplesWinMod(db, marked_samples, md.hashs, partner)
 	
 	
-	const res_ids = await db.colAll(`
-		SELECT distinct g.group_id 
-		FROM 
-			(${from.join(', ')}, shop_itemgroups gi, shop_groups g)
-			${join.join(' ')}		
-		WHERE ${where.join(' and ')}
-		and win.key_id = gi.key_id
-		and g.group_id = gi.group_id
-		ORDER BY g.ordain
-	`, bind)
+// 	const res_ids = await db.colAll(`
+// 		SELECT distinct g.group_id 
+// 		FROM 
+// 			(${from.join(', ')}, shop_itemgroups gi, shop_groups g)
+// 			${join.join(' ')}		
+// 		WHERE ${where.join(' and ')}
+// 		and win.key_id = gi.key_id
+// 		and g.group_id = gi.group_id
+// 		ORDER BY g.ordain
+// 	`, bind)
 
-	//Позиция может быть в закрытой группе, тоже и всплывёт закрытая группа
-	const list = []
-	for (const group_id of res_ids) {
-		if (await Shop.isInRoot(db, group_id)) list.push(group_id)
-	}
-	return list
-}
+// 	//Позиция может быть в закрытой группе, тоже и всплывёт закрытая группа
+// 	const list = []
+// 	for (const group_id of res_ids) {
+// 		if (await Shop.isInRoot(db, group_id)) list.push(group_id)
+// 	}
+// 	return list
+// }
 
-Shop.isInRoot = async (db, group_id) => { //depricated isNest
-	const conf = await config('shop')
-	return await Shop.runGroupUp(db, group_id, (group) => {
-		if (group.group_nick == conf.root_nick) return true //Группа вложена или сама является корнем
-	})
-}
+
 Shop.runGroupDown = async (db, group_id, func) => {
 	const group = await Shop.getGroupById(db, group_id)
 	const r = await func(group)
 	if (r != null) return r
-	for (const child_id of group.childs) {
+	for (const child_nick of group.childs) {
+		const child_id = await Shop.getGroupIdByNick(db, child_nick)
 		const r = await Shop.runGroupDown(db, child_id, func)
 		if (r != null) return r
 	}
@@ -1681,98 +1331,6 @@ Shop.runGroupUp = async (db, group_id, func) => {
 
 
 
-// Shop.getmdids = async (db, samples) => {
-// 	const props = {}
-// 	const values = {}
-	
-// 	for (const sample of samples) { //or
-// 		for (const prop_nick in sample) {//and
-// 			props[prop_nick] = await Shop.getPropByNick(db, prop_nick)
-// 			const val = sample[prop_nick]
-// 			if (typeof val == 'object') {
-// 				for (const value_nick in val) { //or
-// 					values[value_nick] = await Shop.getValueByNick(db, value_nick)
-// 				}
-// 			}	
-// 		}
-// 	}
-	
-	
-	
-// 	// const props = await db.allto('prop_nick', `
-// 	// 	SELECT prop_id, prop_nick, prop_title, type, name, unit
-// 	// 	FROM sources_wprops
-// 	// 	WHERE prop_nick in ("${unique(prop_nicks).join('","')}")
-// 	// `)
-// 	// const values = await db.allto('value_nick', `
-// 	// 	SELECT value_id, value_nick, value_title
-// 	// 	FROM sources_values
-// 	// 	WHERE value_nick in ("${unique(value_nicks).join('","')}")
-// 	// `)
-// 	return {values: Object.values(values), props: Object.values(props)}
-// }
-
-// Shop.getmdids = async (db, samples) => {
-// 	const prop_nicks = []
-// 	const value_nicks = []
-	
-// 	for (const mall of samples) { //or
-// 		for (const prop_nick in mall) {//and
-// 			prop_nicks.push(prop_nick)
-// 			const val = mall[prop_nick]
-// 			if (typeof val == 'object') {
-// 				for (const value_nick in val) { //or
-// 					value_nicks.push(value_nick)
-// 				}
-// 			}	
-// 		}
-// 	}
-	
-	
-	
-// 	const props = await db.allto('prop_nick', `
-// 		SELECT prop_id, prop_nick, prop_title, type, name, unit
-// 		FROM sources_wprops
-// 		WHERE prop_nick in ("${unique(prop_nicks).join('","')}")
-// 	`)
-// 	const values = await db.allto('value_nick', `
-// 		SELECT value_id, value_nick, value_title
-// 		FROM sources_values
-// 		WHERE value_nick in ("${unique(value_nicks).join('","')}")
-// 	`)
-// 	return {values, props}
-// }
-// Shop.getOldSamples = async (db, group_id) => { //depricated
-// 	const values = await db.all(`
-// 		SELECT 
-// 			sv.sample_id, 
-// 			sv.prop_nick, 
-// 			sv.value_nick
-// 		FROM 
-// 			shop_samples gs, 
-// 			shop_samplevalues sv
-// 		WHERE 
-// 			gs.group_id = :group_id 
-// 			and gs.sample_id = sv.sample_id
-// 			and sv.value_nick is not null
-// 	`, {group_id})
-// 	const samples = {}
-// 	for (const {prop_nick, sample_id, value_nick} of values) {
-// 		samples[sample_id] ??= {}
-// 		samples[sample_id][prop_nick] ??= {}
-// 		samples[sample_id][prop_nick][value_nick] ??= 1
-// 	}
-// 	return Object.values(samples)
-// }
-// Shop.getSgroup = async (db, group_id, csgroup = []) => { //depricated lgroup поднимаемся наверх от lgroup, уточняем lgroup
-// 	if (!group_id) return csgroup
-// 	const samples = await Shop.getOldSamples(db, group_id)
-	
-// 	const list = Shop.mutliSMD(samples, csgroup)
-// 	const parent_id = await db.col(`select parent_id from shop_groups where group_id = :group_id`, {group_id})
-// 	return Shop.getSgroup(db, parent_id, list)
-// }
-
 
 Shop.getGroupFilterChilds = async (db, group_id = null) => {
 	const conf = await config('shop')
@@ -1780,41 +1338,25 @@ Shop.getGroupFilterChilds = async (db, group_id = null) => {
 		if (group.group_nick == conf.root_nick) return [...group.childs] //Выше подниматься нельзя
 		if (group.childs.length) return [...group.childs]
 	})
-	for (const i in childs) {
-		childs[i] = await Shop.getGroupById(db, childs[i])
-	}
+	// for (const i in childs) {
+	// 	childs[i] = await Shop.getGroupById(db, childs[i])
+	// }
 	return childs
 }
-Shop.getModcount = Access.poke(async (db, md, partner, group_id = null) => { 
-	const bind = await Shop.getBind(db)
+// Shop.getModcount = async (db, samples, hashs, group_nick = null, partner) => { 
+// 	const bind = await Shop.getBind(db)
+// 	const group_id = await Shop.getGroupIdByNick(db, group_nick)
 	
-	const {from, join, where, sort} = await Shop.getWhereBySamples(db, [md.mget], md.hashs, partner, true)
-	const groupids = []
-	await Shop.runGroupDown(db, group_id, (child) => {
-		groupids.push(child.group_id)
-	})
-	const modcount = await db.col(`
-		SELECT count(distinct wva.value_id)
-		FROM shop_itemgroups ig, ${from.join(', ')} ${join.join(' ')}
-		WHERE ${where.join(' and ')}
-		and ig.key_id = win.key_id
-		and ig.group_id in (${groupids.join(',')})
-	`, bind)
-	return modcount
-})
-Shop.getModcount2 = Access.poke(async (db, md, partner, group_id = null) => { 
-	const bind = await Shop.getBind(db)
-	const samples = await Shop.getSamplesUpByGroupId(db, group_id)
-	const marked_samples = Shop.addSamples(samples, [md.mget])
-	const {from, join, where, sort} = await Shop.getWhereBySamples(db, marked_samples, md.hashs, partner)
+// 	const {from, join, where, sort} = await Shop.getWhereByGroupIndexWinMod(db, group_id, samples, hashs, partner)
+	
+// 	const modcount = await db.col(`
+// 		SELECT count(distinct win.value_id)
+// 		FROM ${from.join(', ')} ${join.join(' ')}
+// 		WHERE ${where.join(' and ')}
+// 	`, bind)
+// 	return modcount
+// }
 
-	const modcount = await db.col(`
-		SELECT count(distinct wva.value_id)
-		FROM ${from.join(', ')} ${join.join(' ')}
-		WHERE ${where.join(' and ')}
-	`, bind)
-	return modcount
-})
 Shop.getmd = async (db, origm, query = '', hashs = []) => {
 	
 
@@ -1824,359 +1366,10 @@ Shop.getmd = async (db, origm, query = '', hashs = []) => {
 	const m = Shop.makemark(mget).join(':')
 	
 	const md = {m, mget, query, hashs}
-	md.toString = () => [md.m, md.query].join(':')
+	//md.toString = () => [md.m, md.query].join(':')
 	return md
 }
 
-/*
-	lgroup = [
-		{
-			prop_nick:[
-				{value_nick}, 
-				{value_nick}
-			]
-		}
-	]
-*/
-// Shop.mutliSMD = (psgroup, csgroup) => {
-// 	let list = []
-// 	if (!csgroup.length) list = psgroup
-// 	else if (!psgroup.length) list = csgroup
-// 	else for (const pmgroup of psgroup) {
-// 		for (const cmgroup of csgroup) {
-// 			const nmgroup = {...cmgroup}
-// 			for (const prop_nick in pmgroup) {
-// 				nmgroup[prop_nick] ??= {}
-// 				Object.assign(nmgroup[prop_nick], pmgroup[prop_nick])
-// 			}
-// 			list.push(nmgroup)
-// 		}
-// 	}
-// 	return list
-// }
-
-
-// Shop.getFilterConf2 = async (db, prop_nick, group, md, partner) => {
-
-// 	const prop = await Shop.getPropByNick(db, prop_nick)
-// 	const bind = await Shop.getBind(db)
-// 	const prop_id = prop.prop_id
-// 	if (!~['value','number'].indexOf(prop.type)) return false
-// 	if (!~['more','column'].indexOf(prop.known)) return false
-	
-// 	const samples = await Shop.getSamplesUpByGroupId(db, group.group_id)
-// 	const group_where = await Shop.getWhereBySamples(db, samples, md.hashs, partner)
-
-// 	// const marked_samples = Shop.dakdSamples(samples, [md.mget])
-// 	// const marked_where = await Shop.getWhereBySamples(db, marked_samples, md.hashs, partner)
-
-
-// 	const filter_tpl = prop.filter_tpl || 'default'
-// 	const filter = {prop_nick, tpl:filter_tpl, descr: ''}
-// 	filter.scale = prop.scale
-// 	if (filter.tpl == 'slider') {
-// 		if (prop.type != 'number') return false
-// 		const row = await db.fetch(`
-// 			SELECT min(wn.number) as min, max(wn.number) as max
-// 			FROM 
-// 				${group_where.from.join(', ')} 
-// 				${group_where.join.join(' ')}
-// 				LEFT JOIN sources_wnumbers wn on wn.key_id = win.key_id
-// 			WHERE ${group_where.where.join(' and ')}
-// 			and wn.prop_id = :prop_id
-// 			ORDER BY wn.number
-// 		`, {...bind, ...prop})
-// 		if (row.min === row.max) return false
-// 		filter.min = Number(row.min)
-// 		filter.max = Number(row.max)
-// 		const spread = filter.max - filter.min
-// 		const makefilter = (step) => {
-// 			filter.step = step
-// 			filter.min = Math.floor(filter.min / step) * step
-// 			filter.max = Math.ceil(filter.max / step) * step
-// 		}
-// 		if (spread > 1000000) {
-// 			makefilter(50000)
-// 		} else if (spread > 100000) {
-// 			makefilter(5000)
-// 		} else if (spread > 10000) {
-// 			makefilter(500)
-// 		} else if (spread > 1000) {
-// 			makefilter(50)
-// 		} else if (spread > 100) {
-// 			makefilter(5)
-// 		} else {
-// 			makefilter(1)
-// 		}
-// 		return filter
-// 	}
-
-	
-// 	const limit = 10
-// 	if (prop.type == 'value') {
-// 		filter.values = await db.colAll(`
-// 			SELECT distinct va.value_nick
-// 			FROM 
-// 				${group_where.from.join(', ')} 
-// 				${group_where.join.join(' ')}
-// 				LEFT JOIN sources_wvalues wv on wv.key_id = win.key_id
-// 				LEFT JOIN sources_values va on va.value_id = wv.value_id
-// 			WHERE ${group_where.where.join(' and ')}
-// 			and wv.prop_id = :prop_id
-// 			ORDER BY va.value_title
-// 			LIMIT ${limit}
-// 		`, {...bind, ...prop})
-		
-// 	} else if (prop.type == 'number') {
-// 		filter.values = await db.colAll(`
-// 			SELECT distinct wn.number
-// 			FROM 
-// 				${group_where.from.join(', ')} 
-// 				${group_where.join.join(' ')}
-// 				LEFT JOIN sources_wnumbers wn on wn.key_id = win.key_id
-// 			WHERE ${group_where.where.join(' and ')}
-// 			and wn.prop_id = :prop_id
-// 			ORDER BY wn.number
-// 			LIMIT ${limit}
-// 		`, {...bind, ...prop})
-		
-// 	}
-// 	filter.havemore = filter.values.length >= limit
-
-
-// 	const selected = typeof(md.mget[prop_nick]) == 'object' ? md.mget[prop_nick] : false
-// 	const values_nicks = Object.keys(selected || {})	
-// 	for (const value_nick of values_nicks) {
-// 		if (filter.values.some(v => v == value_nick)) continue
-// 		filter.values.push(value_nick)
-// 	}
-// 	if (!selected && filter.values.length < 1) return false
-
-	
-// 	const mget = {...md.mget}
-// 	delete mget[prop_nick]
-// 	const nmd = {m: Shop.makemark(mget).join(':'), mget, query: md.query, hashs: md.hashs}
-// 	nmd.toString = () => [md.m, md.query].join(':')
-	
-// 	const except_samples = Shop.addSamples(samples, [nmd.mget])
-// 	const except_where = await Shop.getWhereBySamples(db, except_samples, md.hashs, partner)
-
-// 	if (prop.type == 'value') {
-// 		filter.remains = await db.colAll(`
-// 			SELECT distinct va.value_nick
-// 			FROM 
-// 				${except_where.from.join(', ')} 
-// 				${except_where.join.join(' ')}
-// 				LEFT JOIN sources_wvalues wv on wv.key_id = win.key_id
-// 				LEFT JOIN sources_values va on va.value_id = wv.value_id
-// 			WHERE ${except_where.where.join(' and ')}
-// 			and wv.prop_id = :prop_id
-// 			ORDER BY va.value_title
-// 			LIMIT ${limit}
-// 		`, {...bind, ...prop})
-// 	} else if (prop.type == 'number') {
-// 		filter.remains = await db.colAll(`
-// 			SELECT distinct wn.number
-// 			FROM 
-// 				${except_where.from.join(', ')} 
-// 				${except_where.join.join(' ')}
-// 				LEFT JOIN sources_wnumbers wn on wn.key_id = win.key_id
-// 			WHERE ${except_where.where.join(' and ')}
-// 			and wn.prop_id = :prop_id
-// 			ORDER BY wn.number
-// 			LIMIT ${limit}
-// 		`, {...bind, ...prop})
-// 	}
-// 	// filter.mutes = []
-// 	// filter.values.forEach(value_nick => {
-// 	// 	if (!filter.remains.some(v => v == value_nick)) filter.mutes.push(value_nick)
-// 	// })
-// 	return filter
-// }
-// Shop.getFilterConf3 = async (db, prop_nick, group, md, partner) => {
-
-// 	const prop = await Shop.getPropByNick(db, prop_nick)
-// 	const bind = await Shop.getBind(db)
-// 	const prop_id = prop.prop_id
-// 	const group_id = group.group_id
-// 	if (!~['value','number'].indexOf(prop.type)) return false
-// 	if (!~['more','column'].indexOf(prop.known)) return false
-	
-
-// 	// const samples = await Shop.getSamplesUpByGroupId(db, group.group_id)
-// 	// const group_where = await Shop.getWhereBySamples(db, samples, md.hashs, partner)
-
-// 	// const marked_samples = Shop.dakdSamples(samples, [md.mget])
-// 	// const marked_where = await Shop.getWhereBySamples(db, marked_samples, md.hashs, partner)
-
-
-	
-// 	const filter = {
-// 		prop_nick, 
-// 		tpl: prop.filter_tpl || 'default', 
-// 		scale: prop.scale,
-// 		descr: ''
-// 	}
-// 	const groupids = []
-// 	await Shop.runGroupDown(db, group_id, (child) => {
-// 		groupids.push(child.group_id)
-// 	})
-
-
-// 	if (filter.tpl == 'slider') {
-// 		if (prop.type != 'number') return false
-// 		const row = await db.fetch(`
-// 			SELECT min(wn.number) as min, max(wn.number) as max
-// 			FROM shop_itemgroups ig, sources_wnumbers wn 
-// 			WHERE wn.key_id = ig.key_id
-// 			and wn.prop_id = :prop_id
-// 			and ig.group_id in (${groupids.join(',')})
-// 			ORDER BY wn.number
-// 		`, {...bind, ...prop})
-// 		if (row.min === row.max) return false
-// 		filter.min = Number(row.min)
-// 		filter.max = Number(row.max)
-// 		const spread = filter.max - filter.min
-// 		const makefilter = (step) => {
-// 			filter.step = step
-// 			filter.min = Math.floor(filter.min / step) * step
-// 			filter.max = Math.ceil(filter.max / step) * step
-// 		}
-// 		if (spread > 1000000) {
-// 			makefilter(50000)
-// 		} else if (spread > 100000) {
-// 			makefilter(5000)
-// 		} else if (spread > 10000) {
-// 			makefilter(500)
-// 		} else if (spread > 1000) {
-// 			makefilter(50)
-// 		} else if (spread > 100) {
-// 			makefilter(5)
-// 		} else {
-// 			makefilter(1)
-// 		}
-// 		return filter
-// 	}
-	
-	
-// 	const limit = 10
-// 	if (prop.type == 'value') {
-// 		filter.values = await db.colAll(`
-// 			SELECT distinct va.value_nick
-// 			FROM 
-// 				shop_itemgroups ig, 
-// 				sources_wvalues wv, 
-// 				sources_values va
-// 			WHERE 
-// 				wv.key_id = ig.key_id 
-// 				and wv.prop_id = :prop_id
-// 				and va.value_id = wv.value_id
-// 				and ig.group_id in (${groupids.join(',')})
-// 			ORDER BY va.value_title
-// 			LIMIT ${limit}
-// 		`, {...bind, prop_id})
-// 	} else if (prop.type == 'number') {
-// 		filter.values = await db.colAll(`
-// 			SELECT distinct wn.number
-// 			FROM 
-// 				shop_itemgroups ig, 
-// 				sources_wnumbers wn
-// 			WHERE 
-// 				wn.key_id = ig.key_id 
-// 				and wn.prop_id = :prop_id
-// 				and ig.group_id in (${groupids.join(',')})
-// 			ORDER BY wn.number
-// 			LIMIT ${limit}
-// 		`, {...bind, prop_id})
-// 	}
-// 	filter.remains = filter.values
-// 	filter.havemore = filter.values.length >= limit
-	
-
-// 	const selected = typeof(md.mget[prop_nick]) == 'object' ? md.mget[prop_nick] : false
-// 	const values_nicks = Object.keys(selected || {})	
-// 	for (const value_nick of values_nicks) {
-// 		if (filter.values.some(v => v == value_nick)) continue
-// 		filter.values.push(value_nick)
-// 	}
-// 	if (!selected && filter.values.length < 1) return false
-
-	
-// 	const mget = {...md.mget}
-// 	delete mget[prop_nick]
-// 	const nmd = {m: Shop.makemark(mget).join(':'), mget, query: md.query, hashs: md.hashs}
-// 	nmd.toString = () => [md.m, md.query].join(':')
-	
-// 	if (!Object.keys(mget).length) return filter
-// 	const except_samples = [mget]
-// 	const except_where = await Shop.getWhereBySamples(db, except_samples, md.hashs, partner)
-
-// 	if (prop.type == 'value') {
-// 		filter.remains = await db.colAll(`
-// 			SELECT distinct va.value_nick
-// 			FROM 
-// 				shop_itemgroups ig, 
-// 				sources_wvalues wv, 
-// 				sources_values va,
-// 				${except_where.from.join(', ')} 
-// 				${except_where.join.join(' ')}
-// 			WHERE 
-// 				${except_where.where.join(' and ')}
-// 				and win.key_id = wv.key_id
-// 				and wv.key_id = ig.key_id 
-// 				and wv.prop_id = :prop_id
-// 				and va.value_id = wv.value_id
-// 				and ig.group_id in (${groupids.join(',')})
-// 			ORDER BY va.value_title
-// 			LIMIT ${limit}
-// 		`, {...bind, prop_id})
-// 		// filter.remains = await db.colAll(`
-// 		// 	SELECT distinct va.value_nick
-// 		// 	FROM 
-// 		// 		${except_where.from.join(', ')} 
-// 		// 		${except_where.join.join(' ')}
-// 		// 		LEFT JOIN sources_wvalues wv on wv.key_id = win.key_id
-// 		// 		LEFT JOIN sources_values va on va.value_id = wv.value_id
-// 		// 	WHERE ${except_where.where.join(' and ')}
-// 		// 	and wv.prop_id = :prop_id
-// 		// 	ORDER BY va.value_title
-// 		// 	LIMIT ${limit}
-// 		// `, {...bind, ...prop})
-// 	} else if (prop.type == 'number') {
-// 		filter.remains = await db.colAll(`
-// 			SELECT distinct wn.number
-// 			FROM 
-// 				shop_itemgroups ig, 
-// 				sources_wnumbers wn,
-// 				${except_where.from.join(', ')} 
-// 				${except_where.join.join(' ')}
-// 			WHERE 
-// 				${except_where.where.join(' and ')}
-// 				and win.key_id = wn.key_id
-// 				and wn.key_id = ig.key_id 
-// 				and wn.prop_id = :prop_id
-// 				and ig.group_id in (${groupids.join(',')})
-// 			ORDER BY wn.number
-// 			LIMIT ${limit}
-// 		`, {...bind, prop_id})
-// 		// filter.remains = await db.colAll(`
-// 		// 	SELECT distinct wn.number
-// 		// 	FROM 
-// 		// 		${except_where.from.join(', ')} 
-// 		// 		${except_where.join.join(' ')}
-// 		// 		LEFT JOIN sources_wnumbers wn on wn.key_id = win.key_id
-// 		// 	WHERE ${except_where.where.join(' and ')}
-// 		// 	and wn.prop_id = :prop_id
-// 		// 	ORDER BY wn.number
-// 		// 	LIMIT ${limit}
-// 		// `, {...bind, ...prop})
-// 	}
-// 	// filter.mutes = []
-// 	// filter.values.forEach(value_nick => {
-// 	// 	if (!filter.remains.some(v => v == value_nick)) filter.mutes.push(value_nick)
-// 	// })
-// 	return filter
-// }
 Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 
 	const prop = await Shop.getPropByNick(db, prop_nick)
@@ -2191,60 +1384,31 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 	const mget = {...md.mget}
 	delete mget[prop_nick]
 	const nmd = {m: Shop.makemark(mget).join(':'), mget, query: md.query, hashs: md.hashs}
-	nmd.toString = () => [md.m, md.query].join(':')
 	
-	//if (!Object.keys(mget).length) return filter
-	const except_samples = [mget]
-	const except_where = await Shop.getWhereBySamples(db, except_samples, md.hashs, partner, true)
+	const wnumbers_where = await Shop.getWhereByGroupIndexWin(db, group_id, [mget], md.hashs, partner, 'sources_wnumbers')
+	const wvalues_where = await Shop.getWhereByGroupIndexWin(db, group_id, [mget], md.hashs, partner, 'sources_wvalues')
 
 	const filter = {
-		multichoice: prop.multichoice,
+		singlechoice: prop.singlechoice,
 		prop_nick, 
 		tpl: prop.filter_tpl || 'default', 
 		scale: prop.scale,
 		descr: ''
 	}
-	const groupids = []
-	await Shop.runGroupDown(db, group_id, (child) => {
-		groupids.push(child.group_id)
-	})
-
+	
 
 	if (filter.tpl == 'slider') {
 		if (prop.type != 'number') return false
-
-		// filter.values = await db.colAll(`
-		// 	SELECT distinct wn.number
-		// 	FROM 
-		// 		shop_itemgroups ig, 
-		// 		sources_wnumbers wn,
-		// 		${except_where.from.join(', ')} 
-		// 		${except_where.join.join(' ')}
-		// 	WHERE 
-		// 		${except_where.where.join(' and ')}
-		// 		and win.key_id = wn.key_id
-		// 		and wn.key_id = ig.key_id 
-		// 		and wn.prop_id = :prop_id
-		// 		and ig.group_id in (${groupids.join(',')})
-		// 	ORDER BY wn.number
-		// 	LIMIT ${limit}
-		// `, {...bind, prop_id})
-
 		const row = await db.fetch(`
-			SELECT min(wn.number) as min, max(wn.number) as max
+			SELECT min(win.number) as min, max(win.number) as max
 			FROM 
-				shop_itemgroups ig, 
-				sources_wnumbers wn,
-				${except_where.from.join(', ')} 
-				${except_where.join.join(' ')}
+				${wnumbers_where.from.join(', ')}
+				${wnumbers_where.join.join(' ')}
 			WHERE 
-				${except_where.where.join(' and ')}
-				and win.key_id = wn.key_id
-				and wn.key_id = ig.key_id
-				and wn.prop_id = :prop_id
-				and ig.group_id in (${groupids.join(',')})
-			ORDER BY wn.number
-		`, {...bind, ...prop})
+				${wnumbers_where.where.join(' and ')}
+				and win.prop_id = :prop_id
+			ORDER BY win.number
+		`, {...bind, ...prop, group_id})
 		if (row.min === row.max) return false
 		filter.min = Number(row.min)
 		filter.max = Number(row.max)
@@ -2270,8 +1434,6 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 		return filter
 	}
 	
-
-
 	
 	
 
@@ -2279,39 +1441,29 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 		filter.values = await db.colAll(`
 			SELECT distinct va.value_nick
 			FROM 
-				shop_itemgroups ig, 
-				sources_wvalues wv, 
 				sources_values va,
-				${except_where.from.join(', ')} 
-				${except_where.join.join(' ')}
+				${wvalues_where.from.join(', ')} 
+				${wvalues_where.join.join(' ')}
 			WHERE 
-				${except_where.where.join(' and ')}
-				and win.key_id = wv.key_id
-				and wv.key_id = ig.key_id 
-				and wv.prop_id = :prop_id
-				and va.value_id = wv.value_id
-				and ig.group_id in (${groupids.join(',')})
+				${wvalues_where.where.join(' and ')}				
+				and win.prop_id = :prop_id
+				and va.value_id = win.value_id
 			ORDER BY va.value_title
 			LIMIT ${limit}
-		`, {...bind, prop_id})
+		`, {...bind, prop_id, group_id})
 
 	} else if (prop.type == 'number') {
 		filter.values = await db.colAll(`
-			SELECT distinct wn.number
+			SELECT distinct win.number
 			FROM 
-				shop_itemgroups ig, 
-				sources_wnumbers wn,
-				${except_where.from.join(', ')} 
-				${except_where.join.join(' ')}
+				${wnumbers_where.from.join(', ')} 
+				${wnumbers_where.join.join(' ')}
 			WHERE 
-				${except_where.where.join(' and ')}
-				and win.key_id = wn.key_id
-				and wn.key_id = ig.key_id 
-				and wn.prop_id = :prop_id
-				and ig.group_id in (${groupids.join(',')})
-			ORDER BY wn.number
+				${wnumbers_where.where.join(' and ')}
+				and win.prop_id = :prop_id				
+			ORDER BY win.number
 			LIMIT ${limit}
-		`, {...bind, prop_id})
+		`, {...bind, prop_id, group_id})
 	}
 	filter.havemore = filter.values.length >= limit
 	
@@ -2324,4 +1476,719 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 	if (!selected && filter.values.length < 1) return false
 	//if (!selected && filter.havemore) return false
 	return filter
+}
+
+
+
+
+
+
+
+// Shop.getWhereByGroupIndex = async (db, group_id, partner, samples = [], hashs = []) => {
+// 	//win.key_id - позиция, wva.value_id - модель
+// 	const from = ['sources_wvalues wva, sources_wcells win']
+// 	const join = []
+// 	const where = [`
+// 		win.entity_id = :brendart_prop_id and win.prop_id = :brendmodel_prop_id 
+// 		and wva.entity_id = win.entity_id and wva.prop_id = win.prop_id and wva.key_id = win.key_id
+// 	`]
+// 	if (hashs.length) {
+// 		from.unshift('sources_items wit')
+// 		where.push('wit.entity_id = win.entity_id and wit.key_id = win.key_id')
+// 		where.push('(' + hashs.map(hash => 'wit.search like "%' + hash.join('%" and wit.search like "%') + '%"').join(' or ')+')' || '1 = 1')
+// 	}
+
+// 	let sort = ['win.source_id, win.sheet_index, win.row_index, win.col_index, wva.multi_index']
+
+// 	//Находим позиции группы
+// 	const group_ids = []
+// 	await Shop.runGroupDown(db, group_id, (child) => {
+// 		group_ids.push(child.group_id)
+// 	})
+// 	if (group_ids.length) {
+// 		from.push('shop_itemgroups ig')
+// 		where.push('ig.key_id = win.key_id')	
+// 		where.push(`ig.group_id in (${group_ids.join(',')})`)
+// 	}
+
+
+// 	const whereor = []
+// 	let i = 0
+
+// 	for (const sample of samples) { //OR
+
+// 		const whereand = []
+// 		for (const prop_nick in sample) {
+// 			const prop = await Shop.getPropByNick(db, prop_nick)
+			
+
+// 			i++
+// 			if (prop.type == 'value') {
+// 				join.push(`
+// 					LEFT JOIN sources_wvalues da${i} ON (
+// 						da${i}.entity_id = win.entity_id 
+// 						and da${i}.key_id = win.key_id 
+// 						and da${i}.prop_id = ${prop.prop_id || 0}
+// 					)
+// 				`)
+// 			} else if (prop.type == 'number') {
+// 				if (prop_nick == 'cena') {
+// 					const {prop_id} = partner?.cost_nick ? await Shop.getPropByNick(db, partner?.cost_nick) : prop  //Подмена цены
+// 					join.push(`
+// 						LEFT JOIN sources_wnumbers da${i} ON (
+// 							da${i}.entity_id = win.entity_id 
+// 							and da${i}.key_id = win.key_id 
+// 							and da${i}.prop_id = ${prop_id || 0}
+// 						)
+// 					`)
+// 				} else {
+// 					join.push(`
+// 						LEFT JOIN sources_wnumbers da${i} ON (
+// 							da${i}.entity_id = win.entity_id 
+// 							and da${i}.key_id = win.key_id 
+// 							and da${i}.prop_id = ${prop.prop_id || 0}
+// 						)
+// 					`)
+// 				}
+// 			} else if (prop.type == 'text') {
+// 				join.push(`
+// 					LEFT JOIN sources_wtexts da${i} ON (
+// 						da${i}.entity_id = win.entity_id 
+// 						and da${i}.key_id = win.key_id 
+// 						and da${i}.prop_id = ${prop.prop_id || 0}
+// 					)
+// 				`)
+// 			} else {
+				
+// 			}
+// 			if (typeof(sample[prop_nick]) == 'object') { //Значение не объект
+// 				if (prop.type == 'value') {
+					
+// 					const value_ids = []
+// 					for (const value_nick in sample[prop_nick]) {
+// 						const value = await Shop.getValueByNick(db, value_nick)
+// 						value_ids.push(value?.value_id || 0)
+// 					}
+// 					if (value_ids.length) { //У позиции с мульти значениями может совпать два значения и будет дубль
+// 						whereand.push(`
+// 							da${i}.value_id in (${value_ids.join(', ')})
+// 						`)
+// 					} else {
+// 						whereand.push(`1=0`)
+// 					}
+// 				} else if (prop.type == 'number') {
+
+// 					const isdiscost = partner?.discount && prop_nick == 'cena'
+// 					const disCost = isdiscost ? number => Math.round(number * (100 + partner.discount) / 100) : number => number
+						
+// 					if (sample[prop_nick]['upto'] || sample[prop_nick]['from']) {
+// 						sort = []
+// 						if (sample[prop_nick]['upto']) {
+// 							const number = disCost(sample[prop_nick]['upto'])
+// 							whereand.push(`da${i}.number <= ${number}`)
+// 							sort.push(`da${i}.number DESC`)
+// 						}
+// 						if (sample[prop_nick]['from']) {
+// 							const number = disCost(sample[prop_nick]['from'])
+// 							whereand.push(`da${i}.number >= ${number}`)
+// 							sort.push(`da${i}.number ASC`)
+// 						}
+// 					} else {
+// 						const numbers = Object.keys(sample[prop_nick]).map(number => disCost(number))
+// 						if (numbers.length) {
+// 							whereand.push(`
+// 								da${i}.number in (${numbers.join(', ')})
+// 							`)
+// 						} else {
+// 							whereand.push(`1=0`)
+// 						}
+// 					}	
+// 				} else { //Неизвестный prop.type
+// 					where.push(`1=0`) //что делать если в sample не существующее свойство, должно быть найдено 0
+// 				}
+// 			} else { //Значение не объект
+// 				if (prop.type == 'value') {
+					
+// 					if (sample[prop_nick] == 'any') {
+// 						// whereand.push(`
+// 						// 	da${i}.value_id is not null
+// 						// `)
+// 						whereand.push(`
+// 							da${i}.multi_index = 0
+// 						`)
+// 					} else if (sample[prop_nick] == 'empty') {
+
+// 						whereand.push(`
+// 							da${i}.value_id is null
+// 						`)
+// 					}
+// 				} else if (prop.type == 'number') {
+
+// 					if (sample[prop_nick] == 'any') {
+// 						// whereand.push(`
+// 						// 	da${i}.number is not null
+// 						// `)
+// 						whereand.push(`
+// 							da${i}.multi_index = 0
+// 						`)
+// 					} else if (sample[prop_nick] == 'empty') {
+// 						whereand.push(`
+// 							da${i}.number is null
+// 						`)
+// 					} else {
+// 						where.push(`1=0`)
+// 					}
+// 				} else if (prop.type == 'text') {
+
+// 					if (sample[prop_nick] == 'any') {
+// 						// whereand.push(`
+// 						// 	da${i}.text is not null
+// 						// `)
+// 						whereand.push(`
+// 							da${i}.multi_index = 0
+// 						`)
+// 					} else if (sample[prop_nick] == 'empty') {
+// 						whereand.push(`
+// 							da${i}.text is null
+// 						`)
+// 					} else {
+// 						where.push(`1=0`)
+// 					}
+// 				} else {
+// 					where.push(`1=0`)
+// 				}
+// 			}
+// 		}
+// 		if (whereand.length) whereor.push(whereand.join(` and `))
+// 	}
+// 	if (whereor.length)	where.push(`((${whereor.join(') or (')}))`)
+	
+// 	return {from, join, where, sort}
+// }
+Shop.addWhereSamples = async (db, from, join, where, sort, samples, hashs, partner) => {
+	if (hashs.length) {
+		from.unshift('sources_items wit')
+		where.push('wit.entity_id = win.entity_id and wit.key_id = win.key_id')
+		where.push('(' + hashs.map(hash => 'wit.search like "%' + hash.join('%" and wit.search like "%') + '%"').join(' or ')+')' || '1 = 1')
+	}
+	const whereor = []
+	let i = 0
+
+	for (const sample of samples) { //OR
+
+		const whereand = []
+		for (const prop_nick in sample) {
+			const prop = await Shop.getPropByNick(db, prop_nick)
+			
+
+			i++
+			if (prop.type == 'value') {
+				join.push(`
+					LEFT JOIN sources_wvalues da${i} ON (
+						da${i}.entity_id = win.entity_id 
+						and da${i}.key_id = win.key_id 
+						and da${i}.prop_id = ${prop.prop_id || 0}
+					)
+				`)
+			} else if (prop.type == 'number') {
+				if (prop_nick == 'cena') {
+					const {prop_id} = partner?.cost_nick ? await Shop.getPropByNick(db, partner?.cost_nick) : prop  //Подмена цены
+					join.push(`
+						LEFT JOIN sources_wnumbers da${i} ON (
+							da${i}.entity_id = win.entity_id 
+							and da${i}.key_id = win.key_id 
+							and da${i}.prop_id = ${prop_id || 0}
+						)
+					`)
+				} else {
+					join.push(`
+						LEFT JOIN sources_wnumbers da${i} ON (
+							da${i}.entity_id = win.entity_id 
+							and da${i}.key_id = win.key_id 
+							and da${i}.prop_id = ${prop.prop_id || 0}
+						)
+					`)
+				}
+			} else if (prop.type == 'text') {
+				join.push(`
+					LEFT JOIN sources_wtexts da${i} ON (
+						da${i}.entity_id = win.entity_id 
+						and da${i}.key_id = win.key_id 
+						and da${i}.prop_id = ${prop.prop_id || 0}
+					)
+				`)
+			} else {
+				
+			}
+			if (typeof(sample[prop_nick]) == 'object') { //Значение не объект
+				if (prop.type == 'value') {
+					
+					const value_ids = []
+					for (const value_nick in sample[prop_nick]) {
+						const value = await Shop.getValueByNick(db, value_nick)
+						value_ids.push(value?.value_id || 0)
+					}
+					if (value_ids.length) { //У позиции с мульти значениями может совпать два значения и будет дубль
+						whereand.push(`
+							da${i}.value_id in (${value_ids.join(', ')})
+						`)
+					} else {
+						whereand.push(`1=0`)
+					}
+				} else if (prop.type == 'number') {
+
+					const isdiscost = partner?.discount && prop_nick == 'cena'
+					const disCost = isdiscost ? number => Math.round(number * (100 + partner.discount) / 100) : number => number
+						
+					if (sample[prop_nick]['upto'] || sample[prop_nick]['from']) {
+						sort.length = 0
+						if (sample[prop_nick]['upto']) {
+							const number = disCost(sample[prop_nick]['upto'])
+							whereand.push(`da${i}.number <= ${number}`)
+							sort.push(`da${i}.number DESC`)
+						}
+						if (sample[prop_nick]['from']) {
+							const number = disCost(sample[prop_nick]['from'])
+							whereand.push(`da${i}.number >= ${number}`)
+							sort.push(`da${i}.number ASC`)
+						}
+					} else {
+						const numbers = Object.keys(sample[prop_nick]).map(number => disCost(number))
+						if (numbers.length) {
+							whereand.push(`
+								da${i}.number in (${numbers.join(', ')})
+							`)
+						} else {
+							whereand.push(`1=0`)
+						}
+					}	
+				} else { //Неизвестный prop.type
+					where.push(`1=0`) //что делать если в sample не существующее свойство, должно быть найдено 0
+				}
+			} else { //Значение не объект
+				if (prop.type == 'value') {
+					
+					if (sample[prop_nick] == 'any') {
+						// whereand.push(`
+						// 	da${i}.value_id is not null
+						// `)
+						whereand.push(`
+							da${i}.multi_index = 0
+						`)
+					} else if (sample[prop_nick] == 'empty') {
+
+						whereand.push(`
+							da${i}.value_id is null
+						`)
+					}
+				} else if (prop.type == 'number') {
+
+					if (sample[prop_nick] == 'any') {
+						// whereand.push(`
+						// 	da${i}.number is not null
+						// `)
+						whereand.push(`
+							da${i}.multi_index = 0
+						`)
+					} else if (sample[prop_nick] == 'empty') {
+						whereand.push(`
+							da${i}.number is null
+						`)
+					} else {
+						where.push(`1=0`)
+					}
+				} else if (prop.type == 'text') {
+
+					if (sample[prop_nick] == 'any') {
+						// whereand.push(`
+						// 	da${i}.text is not null
+						// `)
+						whereand.push(`
+							da${i}.multi_index = 0
+						`)
+					} else if (sample[prop_nick] == 'empty') {
+						whereand.push(`
+							da${i}.text is null
+						`)
+					} else {
+						where.push(`1=0`)
+					}
+				} else {
+					where.push(`1=0`)
+				}
+			}
+		}
+		if (whereand.length) whereor.push(whereand.join(` and `))
+	}
+	if (whereor.length)	where.push(`((${whereor.join(') or (')}))`)
+}
+// Shop.getWhereBySamplesWin = async (db, samples, hashs = [], partner = '', wintable) => {
+// 	//win.key_id - позиция
+// 	//const from = ['sources_wvalues win']
+// 	const from = [wintable + ' win']
+// 	const join = []
+// 	const where = [`win.entity_id = :brendart_prop_id`]
+// 	if (hashs.length) {
+// 		from.unshift('sources_items wit')
+// 		where.push('wit.entity_id = win.entity_id and wit.key_id = win.key_id')
+// 		where.push('(' + hashs.map(hash => 'wit.search like "%' + hash.join('%" and wit.search like "%') + '%"').join(' or ')+')' || '1 = 1')
+// 	}
+
+// 	let sort = []
+
+// 	await Shop.addWhereSamples(db, from, join, where, sort, samples, hashs, partner)
+	
+// 	return {from, join, where, sort}
+// }
+
+Shop.getWhereByGroupIndexWin = async (db, group_id, samples = [], hashs = [], partner, wintable) => {
+	//win.key_id - позиция, wva.value_id - модель
+	const from = [`shop_allitemgroups ig, ${wintable} win`]
+	const join = []
+	const where = [`win.entity_id = :brendart_prop_id`]
+	
+
+	let sort = []
+
+	//Находим позиции группы
+	where.push('ig.key_id = win.key_id')	
+
+	// const group_ids = await Shop.getAllGroupIds(db, group_id)
+	// where.push(`ig.group_id in (${group_ids.join(',')})`)
+	where.push(`ig.group_id = :group_id`)
+
+	await Shop.addWhereSamples(db, from, join, where, sort, samples, hashs, partner)
+
+	return {from, join, where, sort}
+}
+
+
+Shop.getWhereByGroupIndexWinMod = async (db, group_id, samples = [], hashs = [], partner) => {
+	//win.key_id - позиция, wva.value_id - модель
+	const from = ['shop_allitemgroups ig, sources_wvalues win']
+	//const from = ['shop_itemgroups ig, sources_wvalues win']
+	const join = []
+	const where = [`win.entity_id = :brendart_prop_id and win.prop_id = :brendmodel_prop_id `]
+	
+
+
+	//Находим позиции группы
+	where.push('ig.key_id = win.key_id')	
+	
+	//const group_ids = await Shop.getAllGroupIds(db, group_id)
+	//where.push(`ig.group_id in (${group_ids.join(',')})`)
+
+	where.push(`ig.group_id = :group_id`)
+	
+	const sort = []
+	await Shop.addWhereSamples(db, from, join, where, sort, samples, hashs, partner)
+
+	return {from, join, where, sort}
+}
+Shop.getWhereByGroupIndexSort = async (db, group_id, samples = [], hashs = [], partner) => {
+	//win.key_id - позиция, wva.value_id - модель
+	const from = ['sources_sources so, sources_wcells wce, shop_allitemgroups ig, sources_wvalues win']
+	const join = []
+	const where = [`
+		wce.source_id = so.source_id
+		
+		and wce.entity_id = :brendart_prop_id 
+		and wce.prop_id = :brendmodel_prop_id
+		
+
+		and win.entity_id = wce.entity_id 
+		and win.key_id = wce.key_id
+		and win.prop_id = wce.prop_id 
+
+		and wce.key_id = ig.key_id
+		and ig.group_id = :group_id
+	`]
+	
+
+	let sort = ['so.ordain, wce.sheet_index, wce.row_index, wce.col_index']
+
+	//Находим позиции группы
+	
+	
+	
+	// const group_ids = await Shop.getAllGroupIds(db, group_id)
+	// where.push(`ig.group_id in (${group_ids.join(',')})`)
+	//where.push(`ig.group_id = :group_id`)
+	
+	await Shop.addWhereSamples(db, from, join, where, sort, samples, hashs, partner)
+
+	return {from, join, where, sort}
+}
+// Shop.getWhereBySamplesSort = async (db, samples, hashs = [], partner = '') => {
+// 	//fulldef false значит без выборки ничего не показываем, partner нужен чтобы выборка по цене была по нужному ключу
+// 	//win.key_id - позиция, wva.value_id - модель
+// 	const from = ['sources_wvalues wva, sources_sources so, sources_wcells win']
+// 	const join = []
+// 	const where = [`
+// 		win.entity_id = :brendart_prop_id and win.prop_id = :brendmodel_prop_id 
+// 		and win.source_id = so.source_id
+// 		and wva.entity_id = win.entity_id and wva.prop_id = win.prop_id and wva.key_id = win.key_id
+// 	`]
+// 	let sort = ['so.ordain, win.sheet_index, win.row_index, win.col_index, wva.multi_index']
+// 	await Shop.addWhereSamples(db, from, join, where, sort, samples, hashs, partner)
+// 	return {from, join, where, sort}
+// }
+// Shop.getWhereBySamplesWinMod = async (db, samples, hashs = [], partner = '') => {
+// 	//win.key_id - позиция, win.value_id - модель
+// 	const from = ['sources_wvalues win']
+// 	const join = []
+// 	const where = [`
+// 		win.entity_id = :brendart_prop_id and win.prop_id = :brendmodel_prop_id and win.multi_index = 0
+// 	`]
+
+// 	let sort = [] //'win.source_id, win.sheet_index, win.row_index, win.col_index'
+
+// 	await Shop.addWhereSamples(db, from, join, where, sort, samples, hashs, partner)
+// 	return {from, join, where, sort}
+// }
+
+// Shop.getWhereItemsBySamples = async (db, samples, hashs = [], partner = '', fulldef = false) => { //fulldef false значит без выборки ничего не показываем, partner нужен чтобы выборка по цене была по нужному ключу
+// 	//win.key_id - позиция, wva.value_id - модель
+// 	const from = ['sources_wcells win']
+// 	const join = []
+// 	const where = [`
+// 		win.entity_id = :brendart_prop_id
+// 	`]
+// 	if (hashs.length) {
+// 		from.unshift('sources_items wit')
+// 		where.push('wit.entity_id = win.entity_id and wit.key_id = win.key_id')
+// 		where.push('(' + hashs.map(hash => 'wit.search like "%' + hash.join('%" and wit.search like "%') + '%"').join(' or ')+')' || '1 = 1')
+// 	}
+
+// 	let sort = ['win.source_id, win.sheet_index, win.row_index, win.col_index']
+
+// 	const whereor = []
+// 	let i = 0
+
+// 	for (const sample of samples) { //OR
+
+// 		const whereand = []
+// 		for (const prop_nick in sample) { //Находим позиции группы
+// 			const prop = await Shop.getPropByNick(db, prop_nick)
+			
+
+// 			i++
+			
+// 			if (prop.type == 'value') {
+// 				join.push(`
+// 					LEFT JOIN sources_wvalues da${i} ON (
+// 						da${i}.entity_id = win.entity_id 
+// 						and da${i}.key_id = win.key_id 
+// 						and da${i}.prop_id = ${prop.prop_id || 0}
+// 					)
+// 				`)
+// 				if (typeof(sample[prop_nick]) == 'object') {
+// 					const value_ids = []
+// 					for (const value_nick in sample[prop_nick]) {
+// 						const value = await Shop.getValueByNick(db, value_nick)
+// 						value_ids.push(value?.value_id || 0)
+// 					}
+// 					if (value_ids.length) {
+// 						whereand.push(`
+// 							da${i}.value_id in (${value_ids.join(', ')})
+// 						`)
+// 					} else {
+// 						whereand.push(`1 = 0`)
+// 					}
+// 				} else if (sample[prop_nick] == 'any') {
+// 					whereand.push(`
+// 						da${i}.value_id is not null
+// 					`)
+// 				} else if (sample[prop_nick] == 'empty') {
+
+// 					whereand.push(`
+// 						da${i}.value_id is null
+// 					`)
+// 				}
+// 			} else if (prop.type == 'number') {
+				
+// 				if (typeof(sample[prop_nick]) == 'object') {
+// 					if (prop_nick == 'cena') {
+						
+						
+// 						const {prop_id} = partner?.cost_nick ? await Shop.getPropByNick(db, partner?.cost_nick) : prop  //Подмена цены
+// 						join.push(`
+// 							LEFT JOIN sources_wnumbers da${i} ON (
+// 								da${i}.entity_id = win.entity_id 
+// 								and da${i}.key_id = win.key_id 
+// 								and da${i}.prop_id = ${prop_id || 0}
+// 							)
+// 						`)
+						
+// 						const isdiscost = partner?.discount && prop_nick == 'cena'
+// 						const disCost = isdiscost ? number => Math.round(number * (100 + partner.discount) / 100) : number => number
+							
+// 						if (sample[prop_nick]['upto'] || sample[prop_nick]['from']) {
+// 							sort = []
+// 							if (sample[prop_nick]['upto']) {
+// 								const number = disCost(sample[prop_nick]['upto'])
+// 								whereand.push(`da${i}.number <= ${number}`)
+// 								sort.push(`da${i}.number DESC`)
+// 							}
+// 							if (sample[prop_nick]['from']) {
+// 								const number = disCost(sample[prop_nick]['from'])
+// 								whereand.push(`da${i}.number >= ${number}`)
+// 								sort.push(`da${i}.number ASC`)
+// 							}
+// 						} else {
+// 							const numbers = Object.keys(sample[prop_nick]).map(number => disCost(number))
+// 							if (numbers.length) {
+// 								whereand.push(`
+// 									da${i}.number in (${numbers.join(', ')})
+// 								`)
+// 							} else {
+// 								whereand.push(`1 = 0`)
+// 							}
+// 						}
+// 					} else { //number object не цена
+// 						join.push(`
+// 							LEFT JOIN sources_wnumbers da${i} ON (
+// 								da${i}.entity_id = win.entity_id 
+// 								and da${i}.key_id = win.key_id 
+// 								and da${i}.prop_id = ${prop.prop_id || 0}
+// 							)
+// 						`)
+// 						if (sample[prop_nick]['upto'] || sample[prop_nick]['from']) {
+// 							sort = []
+// 							if (sample[prop_nick]['upto']) {
+// 								const number = sample[prop_nick]['upto']
+// 								whereand.push(`da${i}.number <= ${number}`)
+// 								sort.push(`da${i}.number DESC`)
+// 							}
+// 							if (sample[prop_nick]['from']) {
+// 								const number = sample[prop_nick]['from']
+// 								whereand.push(`da${i}.number >= ${number}`)
+// 								sort.push(`da${i}.number ASC`)
+// 							}
+// 						} else {
+// 							const numbers = Object.keys(sample[prop_nick])
+// 							if (numbers.length) {
+// 								whereand.push(`
+// 									da${i}.number in (${numbers.join(', ')})
+// 								`)
+// 							} else {
+// 								whereand.push(`1 = 0`)
+// 							}
+// 						}
+// 					}
+// 				} else { //number не object
+// 					join.push(`
+// 						LEFT JOIN sources_wnumbers da${i} ON (
+// 							da${i}.entity_id = win.entity_id 
+// 							and da${i}.key_id = win.key_id 
+// 							and da${i}.prop_id = ${prop.prop_id || 0}
+// 						)
+// 					`)
+// 					if (sample[prop_nick] == 'any') {
+// 						whereand.push(`
+// 							da${i}.number is not null
+// 						`)
+// 					} else if (sample[prop_nick] == 'empty') {
+// 						whereand.push(`
+// 							da${i}.number is null
+// 						`)
+// 					} else {
+// 						where.push(`1=0`)
+// 					}
+// 				}
+// 			} else { //Неизвестный prop.type
+// 				where.push(`1=0`) //что делать если в sample не существующее свойство, должно быть найдено 0
+// 			}
+// 		}
+// 		if (whereand.length) whereor.push(whereand.join(` and `))
+// 	}
+// 	if (whereor.length)	where.push(`((${whereor.join(') or (')}))`)
+// 	else if (!fulldef) where.push(`1=0`)
+// 	return {from, join, where, sort}
+// }
+// Shop.getWhereByGroupId = async (db, group_id = false, hashs = [], partner = false, fulldef = false) => { //depricated
+// 	const bind = await Shop.getBind(db)
+// 	const samples = await Shop.getSamplesUpByGroupId(db, group_id)
+
+// 	const {from, join, where, sort} = await Shop.getWhereBySamplesWinMod(db, samples, hashs, partner, fulldef)
+// 	return {from, join, where, sort, bind}
+// }
+
+
+
+
+Shop.samples = {}
+Shop.samples.getFreeGroupNicksByItem = async (db, item) => { //depricated last значит группы где этот товар является нераспределённым
+	//const group_ids = await db.colAll(`SELECT distinct group_id from shop_itemgroups where key_id = item.key_id`)
+	const group_ids = await Shop.samples.getGroupIdsByItem(db, item)
+
+
+	let group_nicks = []
+	for (const group_id of group_ids) {
+		if (!await Shop.isInRoot(db, group_id)) continue
+		if (!await Shop.runGroupDown(db, group_id, (child) => {
+			if (group_id == child.group_id) return
+			if (~group_ids.indexOf(child.group_id)) return true //Есть какая-то более вложенная группа
+		})) {
+			const group = await Shop.getGroupById(db, group_id)
+			group_nicks.push(group.group_nick) //Если внутри группы не нашли других
+		}
+	}
+	return group_nicks
+}
+Shop.samples.getGroupIdsByItem = async (db, item) => { //depricated
+	/*
+		item = {
+			'cena':[nick, nick]
+		}
+	*/
+	const all_group_ids = await Shop.getAllGroupIds(db)
+	const group_ids = []
+	for (const group_id of all_group_ids) {
+		const samples = await Shop.getSamplesUpByGroupId(db, group_id)
+		if (!Shop.samples.isItemSamples(item, samples)) continue;
+
+		group_ids.push(group_id)
+	}
+	return group_ids
+}
+Shop.samples.isItemSamples = (item, samples) => {
+	
+	for (const sample of samples) {
+		let r = false
+		for (const prop_nick in sample) {
+			if (typeof(sample[prop_nick]) == 'object') {
+				if (!item[prop_nick]) {
+					r = false
+					break
+				}
+				if (item[prop_nick].some(nick => sample[prop_nick][nick])) {
+					r = true
+					continue
+				} else {
+					r = false
+					break
+				}
+			} else if (sample[prop_nick] == 'any'){
+
+				if (item[prop_nick]) {
+					r = true
+					continue
+				} else {
+					r = false
+					break
+				}
+			} else if (sample[prop_nick] == 'empty'){
+				if (item[prop_nick]) {
+					r = false
+					break
+				} else {
+					r = true
+					continue
+				}
+			}
+
+		}
+		if (r) return true
+	}
 }

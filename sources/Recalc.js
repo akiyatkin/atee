@@ -1,8 +1,8 @@
 import Access from "/-controller/Access.js"
 const Recalc = {}
 //funchange могут различаться, выполняются сразу. Нужны чтобы интерфейс иллюстрировал изменения, но вот публикация и индексация уже необязательна и откладывается
-//funindex должен быть один, так как откладывается каждый раз и остаётся тот что был передан последним, и значит каждый должен быть равнозначным
-Recalc.checkShutdown = async (db, funchange, funindex) => {
+//funpub должен быть один, так как откладывается каждый раз и остаётся тот что был передан последним, и значит каждый должен быть равнозначным
+Recalc.checkShutdown = async (db, funchange) => {
 	console.log('Recalc.checkShutdown')
 	//После создания структуры бд и перезапуска, должна быть первая запись в sources_settings
 	await db.exec(`INSERT IGNORE INTO sources_settings (singleton, comment) VALUES ('X','Общий комментарий')`)
@@ -13,7 +13,7 @@ Recalc.checkShutdown = async (db, funchange, funindex) => {
 	} else if (!dates.date_recalc_finish) {
 		await Recalc.recalc(db, funchange)
 	} else if (!dates.date_recalc_index) {
-		Recalc.deferredIndex(db)
+		Recalc.deferredPublicate(db)
 	}
 }
 
@@ -30,35 +30,35 @@ Recalc.getDates = async (db) => {
 }
 
 
-Recalc.deferredIndex = (db) => {
-	console.log('deferredIndex')
-	clearTimeout(Recalc.deferredIndex.timer)
-	Recalc.deferredIndex.timer = setTimeout(() => Recalc.index(db), 1000 * 60 * 30)
+Recalc.deferredPublicate = (db) => {
+	console.log('deferredPublicate')
+	clearTimeout(Recalc.deferredPublicate.timer)
+	Recalc.deferredPublicate.timer = setTimeout(() => Recalc.publicate(db), 1000 * 60 * 30)
 }
 
-Recalc.funcindexes = []
-Recalc.addIndex = (funcindex) => {
-	Recalc.funcindexes.push(funcindex)
+Recalc.pub_funcs = []
+Recalc.addPublicate = (funcindex) => {
+	Recalc.pub_funcs.push(funcindex)
 }
 Recalc.reset = async (db) => {
-	clearTimeout(Recalc.deferredIndex.timer)
+	clearTimeout(Recalc.deferredPublicate.timer)
 	await db.exec(`UPDATE sources_settings SET date_recalc_start = now(),  date_recalc_finish = now(),  date_recalc_index = now()`)	
 }
-Recalc.index = async (db) => {
-	clearTimeout(Recalc.deferredIndex.timer)
+Recalc.publicate = async (db) => {
+	clearTimeout(Recalc.deferredPublicate.timer)
 	await db.exec(`UPDATE sources_settings SET date_recalc_index = now()`) //Если после этого будет date_recalc_index = null то индексировать надо заного
-	for (const funcindex of Recalc.funcindexes) {
-		await funcindex(db)
+	for (const func of Recalc.pub_funcs) {
+		await func(db)
 	}
 	
 	Access.setAccessTime()
 }
 
-Recalc.recalc = async (db, funchange, andindex) => {
+Recalc.recalc = async (db, funchange, publicate_required) => {
 	const dates = await Recalc.getDates(db)
 	Recalc.recalc.counter++
 	if (dates.date_recalc_finish)	{
-		if (andindex) {
+		if (publicate_required) {
 			await db.exec(`UPDATE sources_settings SET date_recalc_start = now(), date_recalc_finish = null, date_recalc_index = null`)
 		} else {
 			await db.exec(`UPDATE sources_settings SET date_recalc_start = now(), date_recalc_finish = null`)
@@ -77,8 +77,8 @@ Recalc.recalc = async (db, funchange, andindex) => {
 
 	if (!Recalc.recalc.counter)	await db.exec(`UPDATE sources_settings SET date_recalc_finish = now()`)
 	
-	if (andindex) {
-		Recalc.deferredIndex(db)
+	if (publicate_required) {
+		Recalc.deferredPublicate(db)
 	}
 }
 Recalc.recalc.counter = 0

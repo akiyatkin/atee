@@ -30,6 +30,7 @@ main.head.col = (data, env, col = data.col, entity = data.entity, prop = data.pr
 	<div>
 		${showType(data, env, prop)}
 	</div>
+	<div style="margin: 1em 0; white-space: pre; font-style: italic;">${prop.comment}</div>
 	<!-- <script>
 		(div => {
 			const fields = div.getElementsByClassName('field')

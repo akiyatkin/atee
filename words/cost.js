@@ -20,7 +20,9 @@ export const cost = (cost, inp = '&nbsp;') => {
 			cost = start + inp + last
 		}	
 	}
-	if (l < 3 && ar[1]) cost += '.' + Math.round(('0.'+ar[1]) * 100)
+	//if (l < 3 && ar[1]) cost += '.' + Math.round(('0.'+ar[1]) * 100)
+	//if (ar[1]) cost += '.' + Math.round(('0.'+ar[1]) * 100)
+	//if (ar[1]) cost += '.' + ar[1]
 	return sign + cost;
 
 }

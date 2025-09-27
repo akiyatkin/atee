@@ -85,13 +85,13 @@ const changelink = (data, env, filter) => {
 			val = filter.min
 		}
 	}
-	return `${cards.getGroupPath(data, data.group)}${cards.addget(env.bread, {m:data.md.m + ':' + filter.prop_nick + '::.' + direction + '=' + val})}`
+	return `${cards.getGroupPath(data, data.group.group_nick)}${cards.addget(env.bread.get, {m:data.md.m + ':' + filter.prop_nick + '::.' + direction + '=' + val})}`
 }
 const showkrest = (data, env, filter) => `
 	<a class="clearlink" title="Отменить выбор" style="
 		position: absolute; margin-top: 1px;
 		display: inline-block; border-color: 
-		transparent; color:inherit;" class="a" data-scroll="none" rel="nofollow" href="${cards.getGroupPath(data, data.group)}${cards.addget(env.bread, {m:data.md.m + ':' + filter.prop_nick})}">
+		transparent; color:inherit;" class="a" data-scroll="none" rel="nofollow" href="${cards.getGroupPath(data, data.group.group_nick)}${cards.addget(env.bread.get, {m:data.md.m + ':' + filter.prop_nick})}">
 		<span class="krest">&nbsp;✕</span>
 	</a>
 `
@@ -124,13 +124,13 @@ filters.prop = {
 						margin-left: 4px;
 						border-radius: var(--radius);
 						min-width: 6ch;
-						width: ${String(filter.max).length + 2.2}ch;
+						width: ${String(filter.max).length + 4}ch;
 						padding:0 1ch;
-					" class="valueplace" type="number" value="${fromORupto(data, filter) ? fromORupto(data, filter) / 10 ** filter.scale: ''}">
+					" class="valueplace" step="${filter.step}" type="number" value="${fromORupto(data, filter) ? fromORupto(data, filter) / 10 ** filter.scale: ''}">
 					<script>
 						(input => {
 							import('/-shop/range.js').then(o => o.default).then(range => {
-								const getValue = () => range.getValue(input, ${filter.min}, ${filter.max}, ${data.md.more?.[filter.prop_nick]?.from ? '"from"' : '"upto"'}, ${fromORupto(data, filter) || false}, ${filter.scale})
+								const getValue = () => range.getValue(input, ${filter.min}, ${filter.max}, ${data.md.mget?.[filter.prop_nick]?.from ? '"from"' : '"upto"'}, ${fromORupto(data, filter) || false}, ${filter.scale})
 								const div = input.closest('.bodyslider')
 								const inputrange = div.querySelector('input[type=range]')
 								input.addEventListener('change', async () => {
@@ -139,7 +139,7 @@ filters.prop = {
 									const Client = await window.getClient()
 									//const addget = await import('/-sources/addget.js').then(r => r.default)
 									const cards = await import('/-shop/cards.html.js').then(r => r.default)
-									Client.pushState('${cards.getGroupPath(data, data.group)}' + cards.addget(Client.bread, {m:"${data.md.m}" + ':${filter.prop_nick}' + set }), false)
+									Client.go('${cards.getGroupPath(data, data.group.group_nick)}' + cards.addget(Client.bread.get, {m:"${data.md.m}" + ':${filter.prop_nick}' + set }), false)
 								})
 								input.addEventListener('input', () => {
 									console.log('input')
@@ -223,7 +223,7 @@ filters.prop = {
 					<script>
 						(input => {
 							import('/-shop/range.js').then(o => o.default).then(range => {
-								const getValue = () => range.getValue(input, ${filter.min}, ${filter.max}, ${data.md.more?.[filter.prop_nick]?.from ? '"from"' : '"upto"'}, ${fromORupto(data, filter) || false}, ${filter.scale})
+								const getValue = () => range.getValue(input, ${filter.min}, ${filter.max}, ${data.md.mget?.[filter.prop_nick]?.from ? '"from"' : '"upto"'}, ${fromORupto(data, filter) || false}, ${filter.scale})
 								input.addEventListener('click', async () => {									
 									let { value_nick, direction, click } = getValue()
 									if (click) direction = direction == 'upto' ? 'from' : 'upto'
@@ -232,7 +232,7 @@ filters.prop = {
 									const Client = await window.getClient()
 									//const addget = await import('/-sources/addget.js').then(r => r.default)
 									const cards = await import('/-shop/cards.html.js').then(r => r.default)
-									Client.pushState('${cards.getGroupPath(data, data.group)}' + cards.addget(Client.bread, {m:"${data.md.m}" + ':${filter.prop_nick}' + set }), false)
+									Client.pushState('${cards.getGroupPath(data, data.group.group_nick)}' + cards.addget(Client.bread.get, {m:"${data.md.m}" + ':${filter.prop_nick}' + set }), false)
 								})
 								input.addEventListener('change', input.click)
 								const div = input.closest('.bodyslider')
@@ -266,7 +266,7 @@ filters.prop = {
 					//const addget = await import('/-sources/addget.js').then(r => r.default)
 					const cards = await import('/-shop/cards.html.js').then(r => r.default)
 					const get = new URLSearchParams(window.location.search)
-					Client.pushState('${cards.getGroupPath(data, data.group)}' + cards.addget(Client.bread, {m:get.get('m') + ':${filter.prop_nick}' + set }), false)
+					Client.pushState('${cards.getGroupPath(data, data.group.group_nick)}' + cards.addget(Client.bread.get, {m:get.get('m') + ':${filter.prop_nick}' + set }), false)
 				})
 			})(document.currentScript.previousElementSibling)
 		</script>
@@ -305,11 +305,11 @@ const showHaveMore = (data, env, filter, title = 'выбрать…') => `<span 
 					click: async (row, need) => {
 						const cards = await import('/-shop/cards.html.js').then(r => r.default)
 						const Client = await window.getClient()
-						let src = '${cards.getGroupPath(data, data.group)}'
+						let src = '${cards.getGroupPath(data, data.group.group_nick)}'
 						if (row.spec) {
-							src += cards.addget(Client.bread, {m:"${data.md.m}" + ':${filter.prop_nick}=' + row.spec })
+							src += cards.addget(Client.bread.get, {m:"${data.md.m}" + ':${filter.prop_nick}=' + row.spec })
 						} else {
-							src += cards.addget(Client.bread, {m:"${data.md.m}" + ':${filter.prop_nick}::.' + (row.value_nick || row.number)+'=1' })
+							src += cards.addget(Client.bread.get, {m:"${data.md.m}" + ':${filter.prop_nick}${filter.singlechoice ? "::." : "."}' + row.nick+'=1' })
 						}
 						Client.go(src, false)
 						return true
@@ -338,14 +338,14 @@ filters.item = (data, env, filter, value_nick) => {
 filters.itemChoiced = (data, env, filter, value_nick) => `<a class="clearlink"
 	style="display: inline-block; margin-top:0; border-color: transparent; color:inherit;" 
 	class="a" data-scroll="none" rel="nofollow" 
-	href="${cards.getGroupPath(data, data.group)}${cards.addget(env.bread, {m:data.md.m + ':' + filter.prop_nick + '.' + value_nick})}">
-	<span class="value">${data.props[filter.prop_nick].type == 'value' ? (data.values[value_nick]?.value_title || ('<i>' + value_nick + '</i>')) : value_nick}</span><sup style="position: absolute; margin-left:-2px; margin-top:-2px" class="krest">&nbsp;✕</sup></a>`
+	href="${cards.getGroupPath(data, data.group.group_nick)}${cards.addget(env.bread.get, {m:data.md.m + ':' + filter.prop_nick + '.' + value_nick})}">
+	<span class="value">${data.props[filter.prop_nick].type == 'value' ? (data.values[value_nick]?.value_title || ('<i>' + value_nick + '</i>')) : value_nick  / 10 ** filter.scale}</span><sup style="position: absolute; margin-left:-2px; margin-top:-2px" class="krest">&nbsp;✕</sup></a>`
 
 filters.itemChoice = (data, env, filter, value_nick) => `<a
 	style="display: inline-block; " 
 	class="a" data-scroll="none" rel="nofollow" 
-	href="${cards.getGroupPath(data, data.group)}${cards.addget(env.bread, {m:data.md.m + ':' + filter.prop_nick + (filter.multichoice ? '.' : '::.') + value_nick + '=1'})}"
-	>${data.props[filter.prop_nick].type == 'value' ? (data.values[value_nick]?.value_title || value_nick) : value_nick}</a>`
+	href="${cards.getGroupPath(data, data.group.group_nick)}${cards.addget(env.bread.get, {m:data.md.m + ':' + filter.prop_nick + (filter.singlechoice ? '::.' : '.') + value_nick + '=1'})}"
+	>${data.props[filter.prop_nick].type == 'value' ? (data.values[value_nick]?.value_title || value_nick) : value_nick  / 10 ** filter.scale}</a>`
 //opacity: ${~filter.remains.indexOf(value_nick) ? '1' : '0.3'}
 
 

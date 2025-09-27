@@ -14,19 +14,18 @@ cards.unit = (prop) => {
 	if (prop.prop_nick == 'cena') return cards.unit()
 	return ''
 }
-//cards.getGroupPath = (data, env, group) => data.conf.root_path + (group.group_nick == data.conf.root_nick ? '' : '/group/' + group.group_nick)
-//cards.getParentPath = (data, env, group) => data.conf.root_path + (group.parent_nick == data.conf.root_nick ? '' : '/group/' + group.parent_nick)
-cards.getGroupPath = (data, group) => [data.conf.root_path, 'group', group.group_nick].join('/')
+
+cards.getGroupPath = (data, group_nick) => [data.conf.root_path, 'group', group_nick].join('/')
 cards.getParentPath = (data, group) => data.conf.root_path + (group.group_nick == data.conf.root_nick ? '' : '/group/' + group.parent_nick)
 cards.getItemPath = (data, item) => [data.conf.root_path, 'item', item.brendmodel[0], item.art?.[0] || item.brendart[0]].join('/')
 
-cards.getItemName = (data, selitem) => { //ecommerce.name
+cards.getItemName = (data, selitem) => { //ecommerce.name (в паре с getVariant)
 	const gain = (name) => cards.getSomeTitle(data, selitem, name)
 	if (selitem.naimenovanie) return gain('naimenovanie')
 	return gain('brendmodel')
 }
 
-cards.getVariant = (data, env, model, item) => { //ecommerce.variant
+cards.getVariant = (data, model, item) => { //ecommerce.variant
 	if (model.items.length == 1) return '' //variant не будет указан
 	const list = model.iprops.filter(prop_nick => {
 		const prop = data.props[prop_nick]
@@ -42,7 +41,7 @@ cards.getVariant = (data, env, model, item) => { //ecommerce.variant
 		return titles
 	})
 	const title = unique(list.flat()).join(', ') 
-	//if (!title) cards.getSomeTitles(data, item, 'art') //Несколько art и отличие не найдено - но sku будет отличаться
+
 	return title
 }
 
@@ -76,16 +75,14 @@ cards.LIST = (data, env) => `
 	<div class="listcards" style="display: grid;">	
 		${data.list.map((model, i) => cards.card(data, env, model, i)).join('')}
 	</div>
-	${(data.pagination?.page == 1 && data.pagination?.last > 1) ? cards.scriptRemoveSuperfluous(data) : ''}
+	${(data.pagination?.page == 1 && data.pagination?.last > 1) ? cards.scriptRemoveSuperfluous(data, data.conf.limit) : ''}
 `
-
-cards.scriptRemoveSuperfluous = (data) => `
+cards.scriptRemoveSuperfluous = (data, limit = 12) => `
 	<script>
 		(async listcards => {
 			listcards.style.opacity = '0'
-			const numberOfCards = await import('/-catalog/numberOfCards.js').then(r => r.default)
-			//Надо чтобы всегда было 2 ряда, не больше
-			const count = numberOfCards(${data.limit})
+			const Card = await import('/-shop/Card.js').then(r => r.default)
+			const count = Card.numberOfCards(${limit})
 			while (listcards.children.length > count) listcards.children[count].remove()
 			listcards.style.opacity = '1'
 		})(document.currentScript.previousElementSibling)
@@ -162,7 +159,7 @@ cards.card = (data, env, model, i) => {
 cards.data = (data, env, model) => `
 	<div style="margin: 1rem 1rem 0.5rem 1rem;; flex-grow:1; display:flex; flex-direction: column; justify-content: space-between">
 		${cards.nalichie(data, env, model)}
-		<a href="${cards.getItemPath(data, model.items[0])}"
+		<a href="${cards.getItemPath(data, model.items[0])}#page"
 			style="
 				padding: 0; color: inherit; border: none; 
 				white-space: normal; display: block; flex-grow:1
@@ -254,7 +251,7 @@ cards.prop = {
 			const val = data.values[nick]?.value_title || nick
 			if (data.md.mget[pr.prop_nick]?.[nick]) return `<b>${gainTitles()}</b>`
 			return `
-				<a rel="nofollow" href="${cards.getGroupPath(data, data.group)}/${cards.addget(env.bread, {m:data.md.m + ':' + pr.prop_nick + '::.' + nicks[0] + '=1'})}#page">${gainTitles()}</a>
+				<a rel="nofollow" href="${cards.getGroupPath(data, data.group.group_nick)}/${cards.addget(env.bread.get, {m:data.md.m + ':' + pr.prop_nick + '::.' + nicks[0] + '=1'})}#page">${gainTitles()}</a>
 			`
 		}).join(', '))
 	},
@@ -273,7 +270,7 @@ cards.prop = {
 			const val = data.values[nick]?.value_title || nick
 			if (data.md.mget[pr.prop_nick]?.[nick]) return `<b>${gainTitles()}</b>`
 			return `
-				<a rel="nofollow" href="${cards.getGroupPath(data, data.group)}/${cards.addget(env.bread, {m:data.md.m + ':' + pr.prop_nick + '::.' + nicks[0] + '=1'})}#page">${gainTitles()}</a>
+				<a rel="nofollow" href="${cards.getGroupPath(data, data.group.group_nick)}/${cards.addget(env.bread.get, {m:data.md.m + ':' + pr.prop_nick + '::.' + nicks[0] + '=1'})}#page">${gainTitles()}</a>
 			`
 		}).join(', '))
 	},
@@ -289,7 +286,7 @@ cards.prop = {
 	
 	empty: () => ''
 }
-cards.addget = (bread, get) => addget(get, bread.get, ['m', 'query', 'sort', 'count'])
+cards.addget = (get, params) => addget(get, params, ['m', 'query', 'count'])
 
 cards.cost = (item) => item.cena ? cost(item.cena[0]) + cards.unit() : ''
 
@@ -298,7 +295,7 @@ cards.price = (item) => {
 	const staraya = item['staraya-cena']
 	const cena = item.cena
 	if (!cena) return html
-	if (staraya) {
+	if (staraya && staraya.at(0) > cena.at(0)) {
 		html += `<s style="opacity: .5;">${cost(staraya.at(0))}${cards.unit()}</s>`
 	}
 
@@ -344,21 +341,21 @@ cards.getDiscounts = (mod) => {
 cards.getItemDiscount = (item) => {
 	const cost = item['cena']?.[0]
 	const oldcost = item['staraya-cena']?.[0]
-	const discount = oldcost && cost ? Math.round((1 - oldcost / cost) * 100) : ''
+	const discount = oldcost && cost && oldcost > cost ? Math.round((1 - cost / oldcost) * 100) : ''	
 	return discount	
 }
 cards.getModelDiscount = (model) => {
 	const discounts = cards.getDiscounts(model)
 	if (!discounts[0]) return ''
-	if (!discounts[1]) return `${discounts[0]}%`
-	return `До ${discounts.at(-1)}%`
+	if (!discounts[1]) return `-${discounts[0]}%`
+	return `До -${discounts.at(-1)}%`
 }
 
 cards.badgenalichie = (data, env, mod) => {
 	const gain = (name) => cards.getSomeTitle(data, mod.recap, name)
 	const discount = cards.getModelDiscount(mod)
 	return mod.recap.nalichie ? `
-		<a rel="nofollow" href="${cards.getGroupPath(data, data.groups[mod.groups[0]])}${cards.addget(env.bread, {m:(data.md?.m || '') + ':nalichie::.' + mod.recap.nalichie?.[0] + '=1'})}" 
+		<a rel="nofollow" href="${cards.getGroupPath(data, mod.groups[0])}${cards.addget(env.bread.get, {m:(data.md?.m || '') + ':nalichie::.' + mod.recap.nalichie?.[0] + '=1'})}" 
 			class="badge badge_${mod.recap.nalichie?.[0]}">
 			${gain('nalichie')}
 		</a>

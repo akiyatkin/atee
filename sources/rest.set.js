@@ -24,10 +24,10 @@ import rest_search from "/-dialog/search/rest.search.js" //аргументы ha
 rest.extra(rest_search)
 export default rest
 
-rest.addAction('set-recalc-index', ['admin','checkrecalc'], async view => {
+rest.addAction('set-recalc-publicate', ['admin','checkrecalc'], async view => {
 	const db = await view.get('db')
 	Recalc.recalc(db, async () => {
-		await Recalc.index(db)
+		await Recalc.publicate(db) //Запустятся зарегистрированные функции в /rest.js
 	})
 	return view.ret()
 })
@@ -39,28 +39,30 @@ rest.addAction('set-reset-start', ['admin'], async (view) => {
 })
 rest.addAction('set-recalc', ['admin','checkrecalc'], async view => {
 	const db = await view.get('db')
-	const monitor = new PerformanceMonitor()
+	//const monitor = new PerformanceMonitor()
 	Recalc.recalc(db, async () => {
+		await Sources.recalcAllChangesWithoutRowSearch(db)
+		await Consciousness.recalcRowSearch(db)
+		// monitor.start('recalcEntitiesPropId')
+		// await Consciousness.recalcEntitiesPropId(db) //11.14ms
+		// monitor.start('recalcMulti')
+		// await Consciousness.recalcMulti(db) //1 646.26ms // 1 494.82ms
+		// monitor.start('recalcTexts')
+		// await Consciousness.recalcTexts(db) //2 875.27ms
+		// monitor.start('recalcKeyIndex')
+		// await Consciousness.recalcKeyIndex(db) // 3.24ms
+		// monitor.start('insertItems') 
+		// await Consciousness.insertItems(db) // 408.64ms
 
-		monitor.start('recalcEntitiesPropId')
-		await Consciousness.recalcEntitiesPropId(db) //11.14ms
-		monitor.start('recalcMulti')
-		await Consciousness.recalcMulti(db) //1 646.26ms // 1 494.82ms
-		monitor.start('recalcTexts')
-		await Consciousness.recalcTexts(db) //2 875.27ms
-		monitor.start('recalcKeyIndex')
-		await Consciousness.recalcKeyIndex(db) // 3.24ms
-		monitor.start('insertItems') 
-		await Consciousness.insertItems(db) // 408.64ms
 
-
-		monitor.start('recalcRepresentSheet')
-		await Consciousness.recalcRepresentSheet(db) // 0.90ms
-		monitor.start('recalcRepresentCol')
-		await Consciousness.recalcRepresentCol(db) // 3.63ms
+		// monitor.start('recalcRepresentSheet')
+		// await Consciousness.recalcRepresentSheet(db) // 0.90ms
+		// monitor.start('recalcRepresentCol')
+		// await Consciousness.recalcRepresentCol(db) // 3.63ms
 			
-		monitor.start('recalcMaster')
-		await Consciousness.recalcMaster(db) // 236.70ms
+		// monitor.start('recalcMaster')
+		
+		//await Consciousness.recalcMaster(db) // 236.70ms
 		// monitor.start('recalcWinner')
 		// await Consciousness.recalcWinner(db) //1 165.87ms
 		
@@ -72,9 +74,9 @@ rest.addAction('set-recalc', ['admin','checkrecalc'], async view => {
 		// monitor.start('recalcItemSearch')
 		// await Consciousness.recalcItemSearch(db)
 
-		monitor.stop()
-		console.log(monitor.getReport())
-	}, true)
+		//monitor.stop()
+		//console.log(monitor.getReport())
+	})
 	
 	return view.ret()
 })
@@ -114,11 +116,11 @@ rest.addAction('set-source-prop', ['admin','checkrecalc'], async view => {
 			await Consciousness.recalcMaster_bySource(db, source_id)
 			return
 
-			await Consciousness.recalcWinner_bySource(db, source_id)
+			// await Consciousness.recalcWinner_bySource(db, source_id)
 
-			//await Consciousness.recalcAppear(db)
-			//await Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-			await Consciousness.recalcItemSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
+			// //await Consciousness.recalcAppear(db)
+			// //await Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
+			// await Consciousness.recalcItemSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
 		}, true)
 	}
 	
@@ -160,11 +162,11 @@ rest.addAction('set-prop-prop', ['admin','checkrecalc'], async view => {
 			return
 			
 			
-			await Consciousness.recalcWinner(db)
+			// await Consciousness.recalcWinner(db)
 
-			//await Consciousness.recalcAppear(db)
-			//await Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-			//await Consciousness.recalcItemSearch(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
+			// //await Consciousness.recalcAppear(db)
+			// //await Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
+			// //await Consciousness.recalcItemSearch(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
 		}, true)
 	}
 
@@ -208,11 +210,11 @@ rest.addAction('set-sheet-custom-delete', ['admin','checkrecalc'], async view =>
 			return
 			
 			
-			await Consciousness.recalcWinner_bySheet(db, sheet.source_id, sheet.sheet_index)
+			// await Consciousness.recalcWinner_bySheet(db, sheet.source_id, sheet.sheet_index)
 
-			//await Consciousness.recalcAppear(db)
-			//await Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-			await Consciousness.recalcItemSearch(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
+			// //await Consciousness.recalcAppear(db)
+			// //await Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
+			// await Consciousness.recalcItemSearch(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
 		}, true)
 	}
 
@@ -254,11 +256,11 @@ rest.addAction('set-prop-type', ['admin','checkrecalc'], async view => {
 		return
 		
 		
-		await Consciousness.recalcWinner(db)//await Consciousness.recalcWinner(db)
+		// await Consciousness.recalcWinner(db)//await Consciousness.recalcWinner(db)
 
-		//await Consciousness.recalcAppear(db)
-		//await Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-		//await Consciousness.recalcItemSearch_bySheet(db, sheet.source_id, sheet.sheet_index) //Асинхронно расчитывается, не зависит от расчёта represent
+		// //await Consciousness.recalcAppear(db)
+		// //await Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
+		// //await Consciousness.recalcItemSearch_bySheet(db, sheet.source_id, sheet.sheet_index) //Асинхронно расчитывается, не зависит от расчёта represent
 	}, true)
 	
 	return view.ret()
@@ -495,8 +497,8 @@ rest.addAction('set-sources-renovate', ['checkrecalc'], async view => { //Нет
 	
 	const promise = Recalc.recalc(db, async () => {
 		await renovateSourcesAll(db, view.visitor)
+		await Sources.recalcAllChangesWithoutRowSearch(db)
 		await Consciousness.recalcRowSearch(db)
-		await Sources.recalcAllChange(db)
 	}, true)
 
 	const go = await view.get('go')
@@ -504,7 +506,7 @@ rest.addAction('set-sources-renovate', ['checkrecalc'], async view => { //Нет
 
 	await promise
 
-	await Recalc.index()
+	await Recalc.publicate()
 	
 	view.headers.Location = encodeURI(go)
 	return view.ret('', 301)
@@ -535,7 +537,7 @@ rest.addAction('set-sources-load', ['checkrecalc'], async view => { //Нет adm
 	if (!go) return view.ret()
 	
 	await promise
-	await Recalc.index()
+	await Recalc.publicate()
 
 	view.headers.Location = encodeURI(go)
 	return view.ret('', 301)
@@ -570,11 +572,11 @@ rest.addAction('set-source-ordain', ['admin','checkrecalc'], async view => {
 		return
 		
 		
-		await Consciousness.recalcWinner(db)
+		// await Consciousness.recalcWinner(db)
 
-		// Consciousness.recalcAppear(db)
-		// Consciousness.recalcRowSearch(db)
-		await Consciousness.recalcItemSearch(db)
+		// // Consciousness.recalcAppear(db)
+		// // Consciousness.recalcRowSearch(db)
+		// await Consciousness.recalcItemSearch(db)
 	}, true)
 
 	return view.ret()
@@ -632,11 +634,11 @@ rest.addAction('set-prop-synonym-create', ['admin','checkrecalc'], async view =>
 		return
 		
 		
-		await Consciousness.recalcWinner(db)
+		// await Consciousness.recalcWinner(db)
 
-		await Consciousness.recalcAppear(db)
-		await Consciousness.recalcRowSearch(db)
-		await Consciousness.recalcItemSearch(db)
+		// await Consciousness.recalcAppear(db)
+		// await Consciousness.recalcRowSearch(db)
+		// await Consciousness.recalcItemSearch(db)
 	}, true)
 
 
@@ -665,11 +667,11 @@ rest.addAction('set-prop-synonym-delete', ['admin','checkrecalc'], async view =>
 		return
 		
 		
-		await Consciousness.recalcWinner(db)
+		// await Consciousness.recalcWinner(db)
 
-		await Consciousness.recalcAppear(db)
-		await Consciousness.recalcRowSearch(db)
-		await Consciousness.recalcItemSearch(db)
+		// await Consciousness.recalcAppear(db)
+		// await Consciousness.recalcRowSearch(db)
+		// await Consciousness.recalcItemSearch(db)
 	}, true)
 
 
@@ -742,12 +744,12 @@ rest.addAction('set-reset-values', ['admin','checkrecalc'], async (view) => {
 		await Consciousness.recalcMaster(db)
 
 		//return если очищена таблица sources_values надо сразу перепубликовать
+		await Recalc.publicate()
+		// await Consciousness.recalcWinner(db)
 
-		await Consciousness.recalcWinner(db)
-
-		await Consciousness.recalcAppear(db)
-		await Consciousness.recalcRowSearch(db)
-		await Consciousness.recalcItemSearch(db)
+		// await Consciousness.recalcAppear(db)
+		// await Consciousness.recalcRowSearch(db)
+		// await Consciousness.recalcItemSearch(db)
 	})
 	
 	return view.ret('Данные очищены')
@@ -811,8 +813,8 @@ rest.addAction('set-source-load', ['admin','checkrecalc'], async view => {
 		await Consciousness.recalcRepresentSheet_bySource(db, source_id) //0 1.68ms
 		await Consciousness.recalcRepresentCol_bySource(db, source_id) //0 6.08ms		
 		
-
 		await Consciousness.recalcMaster_bySource(db, source_id) //0 224.85ms
+
 		// await Consciousness.recalcWinner_bySource(db, source_id) //40 946.25ms		
 		// await Consciousness.recalcAppear_bySource(db, source_id) //0 371.52ms		
 		await Consciousness.recalcRowSearch_bySource(db, source_id)
@@ -976,11 +978,11 @@ rest.addAction('set-prop-delete', ['admin','checkrecalc'], async view => {
 		return
 		
 		
-		await Consciousness.recalcWinner(db)
+		// await Consciousness.recalcWinner(db)
 
-		await Consciousness.recalcAppear(db)
-		await Consciousness.recalcRowSearch(db)
-		await Consciousness.recalcItemSearch(db)
+		// await Consciousness.recalcAppear(db)
+		// await Consciousness.recalcRowSearch(db)
+		// await Consciousness.recalcItemSearch(db)
 	}, true)
 	return view.ret()
 
@@ -1007,11 +1009,11 @@ rest.addAction('set-source-delete', ['admin','checkrecalc'], async view => {
 		return
 		
 		
-		await Consciousness.recalcWinner(db)
+		// await Consciousness.recalcWinner(db)
 
-		// await Consciousness.recalcAppear(db)
-		await Consciousness.recalcRowSearch(db)
-		await Consciousness.recalcItemSearch(db)
+		// // await Consciousness.recalcAppear(db)
+		// await Consciousness.recalcRowSearch(db)
+		// await Consciousness.recalcItemSearch(db)
 	}, true)
 	
 	return view.ret('Источник удалён')
@@ -1041,11 +1043,11 @@ rest.addAction('set-source-entity-reset', ['admin','checkrecalc'], async view =>
 		return
 		
 		
-		await Consciousness.recalcWinner_bySource(db, source_id)
+		//await Consciousness.recalcWinner_bySource(db, source_id)
 
 		//await Consciousness.recalcAppear(db)
 		//await Consciousness.recalcRowSearch(db)
-		await Consciousness.recalcItemSearch_bySource(db, source_id)
+		//await Consciousness.recalcItemSearch_bySource(db, source_id)
 	}, true)
 	return view.ret()
 })
@@ -1073,11 +1075,11 @@ rest.addAction('set-sheet-entity-reset', ['admin','checkrecalc'], async view => 
 		return
 		
 		
-		await Consciousness.recalcWinner_bySource(db, source_id)
+		// await Consciousness.recalcWinner_bySource(db, source_id)
 
 		//await Consciousness.recalcAppear(db)
 		//await Consciousness.recalcRowSearch(db)
-		await Consciousness.recalcItemSearch_bySource(db, source_id)
+		// await Consciousness.recalcItemSearch_bySource(db, source_id)
 	}, true)
 	return view.ret()
 })
@@ -1113,11 +1115,11 @@ rest.addAction('set-sheet-title', ['admin','checkrecalc'], async view => { //П�
 		return
 		
 		
-		await Consciousness.recalcWinner_bySource(db, source_id)
+		// await Consciousness.recalcWinner_bySource(db, source_id)
 
-		await Consciousness.recalcAppear(db)
-		await Consciousness.recalcRowSearch(db)
-		await Consciousness.recalcItemSearch_bySource(db, source_id)
+		// await Consciousness.recalcAppear(db)
+		// await Consciousness.recalcRowSearch(db)
+		// await Consciousness.recalcItemSearch_bySource(db, source_id)
 	}, true)
 	return view.ret()
 })
@@ -1163,11 +1165,11 @@ rest.addAction('set-sheet-entity', ['admin','checkrecalc'], async view => {
 		return
 		
 		
-		await Consciousness.recalcWinner_bySheet(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcWinner_bySheet(db, sheet.source_id, sheet.sheet_index)
 
-		await Consciousness.recalcAppear_bySheet(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcRowSearch_bySheet(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcItemSearch_bySheet(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcAppear_bySheet(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcRowSearch_bySheet(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcItemSearch_bySheet(db, sheet.source_id, sheet.sheet_index)
 	}, true)
 
 	return view.ret()
@@ -1197,11 +1199,11 @@ rest.addAction('set-source-entity', ['admin','checkrecalc'], async view => {
 		return
 		
 		
-		await Consciousness.recalcWinner_bySource(db, source_id)
+		// await Consciousness.recalcWinner_bySource(db, source_id)
 
-		await Consciousness.recalcAppear_bySource(db, source_id)
-		await Consciousness.recalcRowSearch_bySource(db, source_id)
-		await Consciousness.recalcItemSearch_bySource(db, source_id)
+		// await Consciousness.recalcAppear_bySource(db, source_id)
+		// await Consciousness.recalcRowSearch_bySource(db, source_id)
+		// await Consciousness.recalcItemSearch_bySource(db, source_id)
 	}, true)
 	return view.ret()
 })
@@ -1251,11 +1253,11 @@ rest.addAction('set-col-prop-create', ['admin','checkrecalc'], async view => {
 		return
 				
 		
-		await Consciousness.recalcWinner_bySource(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcWinner_bySource(db, sheet.source_id, sheet.sheet_index)
 
-		await Consciousness.recalcAppear_bySource(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcRowSearch_bySource(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcItemSearch_bySource(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcAppear_bySource(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcRowSearch_bySource(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcItemSearch_bySource(db, sheet.source_id, sheet.sheet_index)
 	}, true)
 
 	return view.ret()
@@ -1313,11 +1315,11 @@ rest.addAction('set-col-prop', ['admin','checkrecalc'], async view => {
 		return
 
 		
-		await Consciousness.recalcWinner_bySource(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcWinner_bySource(db, sheet.source_id, sheet.sheet_index)
 
-		await Consciousness.recalcAppear_bySource(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcRowSearch_bySource(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcItemSearch_bySource(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcAppear_bySource(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcRowSearch_bySource(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcItemSearch_bySource(db, sheet.source_id, sheet.sheet_index)
 	}, true)
 	
 	return view.ret()
@@ -1358,11 +1360,11 @@ rest.addAction('set-col-prop-reset', ['admin','checkrecalc'], async view => {
 		return
 		
 		
-		await Consciousness.recalcWinner_bySource(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcWinner_bySource(db, sheet.source_id, sheet.sheet_index)
 
-		await Consciousness.recalcAppear_bySource(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcRowSearch_bySource(db, sheet.source_id, sheet.sheet_index)
-		await Consciousness.recalcItemSearch_bySource(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcAppear_bySource(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcRowSearch_bySource(db, sheet.source_id, sheet.sheet_index)
+		// await Consciousness.recalcItemSearch_bySource(db, sheet.source_id, sheet.sheet_index)
 	}, true)
 	
 	return view.ret()
@@ -1393,11 +1395,11 @@ rest.addAction('set-prop-create', ['admin','checkrecalc'], async view => {
 		await Consciousness.recalcMaster(db)
 		return
 		
-		await Consciousness.recalcWinner(db)
+		// await Consciousness.recalcWinner(db)
 
-		await Consciousness.recalcAppear(db)
-		await Consciousness.recalcRowSearch(db)
-		await Consciousness.recalcItemSearch(db)
+		// await Consciousness.recalcAppear(db)
+		// await Consciousness.recalcRowSearch(db)
+		// await Consciousness.recalcItemSearch(db)
 	}, true)
 	return view.ret()
 })

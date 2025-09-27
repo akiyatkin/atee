@@ -13,7 +13,7 @@ export const ROOT = (data, env) => `
 			</div>
 		</div>
 		<div style="display: grid; gap: 0.25em">
-			<div>${field.button({
+			<!-- <div>${field.button({
 				label:'Пересчитать',
 				cls: 'mute a',
 				action:'/-sources/set-recalc',
@@ -23,10 +23,10 @@ export const ROOT = (data, env) => `
 				${field.button({
 					cls: 'mute a',
 					label:'Опубликовать',
-					action:'/-sources/set-recalc-index',
+					action:'/-sources/set-recalc-publicate',
 					global: 'check'
 				})}
-			</div>
+			</div> -->
 			<div><a href="memory">Память</a></div>
 			<div><a href="settings">Настройки</a></div>
 		</div>

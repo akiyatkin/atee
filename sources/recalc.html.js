@@ -105,7 +105,7 @@ const showIndexTimer = (data, env) => `
 		${field.button({
 			cls: 'a',
 			label:'Опубликовать',
-			action:'/-sources/set-recalc-index',
+			action:'/-sources/set-recalc-publicate',
 			global:'check'
 		})}
 	</div>

@@ -61,7 +61,7 @@ rest.addResponse('get-panel', async view => {
 	const user = view.data.user = await view.get('user')
 
 	const order = view.data.order = await Cart.getOrder(db, order_id)
-	const list = await Cart.getBasket(db, order)
+	const list = await Cart.basket.get(db, order)
 	if (!order.freeze && (!user.email || user.email == order.email)) { //Только тот на кого заявка обновляет партнёрский ключ при просмотре		
 		await Cart.recalcOrder(db, order_id, list, partner)
 	}

@@ -124,11 +124,10 @@ rest.addResponse('get-layers', async view => {
 	
 
 
-	const theme = Theme.harvest(bread.get, cookie)
+	const theme = Theme.harvest(bread.get, cookie)	
 	if (bread.get.theme != null) {
 		Theme.set(view, theme)
-	}
-
+	}	
 
 	const interpolate = (val, timings, layer, bread, crumb, theme) => {
 		const look = { bread, timings, theme }

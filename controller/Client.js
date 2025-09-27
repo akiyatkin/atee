@@ -310,7 +310,11 @@ Client.makeabs = search => {
 		search = '/' + newahref.replace(/\/+$/,'')
 	} else {
 		if (search[0] != '/') { //относительный путь
-			const base = '/' + document.baseURI.slice(8).split('/').slice(1).filter(r => r).join('/').split('?')[0] //  /some/path или '/'
+			const r = '/' + document.baseURI.slice(8).split('/').slice(1).filter(r => r).join('/').split('?')[0] //  /some/path или '/'
+			const base = r.split('#').shift()
+			// let anchor = r.join('#') Надо ли сохранять якрь?
+			// if (anchor) anchor = "#" + anchor 
+
 			if (search == '?' ) search = base
 			else if (search == '?#' ) search = base
 			else if (search == '#' ) search = base + location.search

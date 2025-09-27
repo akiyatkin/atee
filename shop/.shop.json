@@ -1,9 +1,9 @@
 {
 	"pub":["root_nick", "root_path", "limit", "cart"],
 	"cart":true,
-	"root_nick":"katalog",
+	"root_nick":"catalog",
 	"root_path":"/shop",
-	"limit":10,
+	"limit":12,
 
 	"group_pages":"data/catalog/pages/",
 	"partners":{

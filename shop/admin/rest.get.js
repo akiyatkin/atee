@@ -22,7 +22,7 @@ rest.extra(rest_shopadmin)
 
 rest.addResponse('get-prop-value-search', ['admin'], async view => {
 	const db = await view.get('db')
-	const type = await view.get('type')
+	const type = await view.get('type') //samplevalue
 	
 	const hashs = await view.get('hashs')
 	const query_nick = await view.get('query_nick')
@@ -31,33 +31,83 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 	const prop_id = prop?.prop_id
 	
 	const group_id = await view.get('group_id#required')
-	const group = await Shop.getGroupById(db, group_id)
-	
-	const {from, join, where, sort, bind} = await Shop.getWhereByGroupId(db, group?.parent_id || false,[], false, true)
-	
-	//Проблемы с производительностью 
-	const list = await db.all(`
-		SELECT distinct da.value_id, va.value_title, va.value_nick
-		FROM ${from.join(', ')} ${join.join(' ')}, sources_wvalues da
-			LEFT JOIN sources_values as va on (da.value_id = va.value_id)
-		WHERE ${where.join(' and ')}
-		and da.key_id = win.key_id and da.prop_id = :prop_id
-		and (${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'})
-		ORDER BY RAND()
-		LIMIT 12
-	`, {...bind, prop_id: prop_id || null})
+	const parent_id = group_id ? await db.col(`select parent_id from shop_groups where group_id = :group_id`, {group_id}) : false
 
-	view.ans.count = await db.col(`
-		SELECT count(distinct da.value_id)
-		FROM ${from.join(', ')} ${join.join(' ')}, sources_wvalues da
-			LEFT JOIN sources_values as va on (da.value_id = va.value_id)
-		WHERE ${where.join(' and ')}
-		and da.key_id = win.key_id and da.prop_id = :prop_id
-		and (${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'})
-	`, {...bind, prop_id: prop_id || null})
+	const bind = await Shop.getBind(db)
+	let list = []
+	
+	if (prop.type == 'value') {
+		if (parent_id) {
+			list = await db.all(`
+				WITH RECURSIVE group_tree AS (
+					SELECT :parent_id as group_id
+					UNION ALL
+					SELECT sg.group_id
+					FROM shop_groups sg, group_tree gt 
+					WHERE sg.parent_id = gt.group_id
+				)
+				SELECT distinct va.value_title, va.value_nick as nick
+				FROM group_tree gt, shop_itemgroups ig, sources_wvalues wva, sources_values va
+				WHERE 
+					ig.group_id = gt.group_id
+					and wva.key_id = ig.key_id
+					and wva.entity_id = :brendart_prop_id
+					and wva.prop_id = :prop_id
+					and va.value_id = wva.value_id
+					and (${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'})
+				ORDER BY RAND()
+				LIMIT 12
+			`, {...bind, prop_id, parent_id})
+		} else {
+			list = await db.all(`
+				SELECT distinct va.value_title, va.value_nick as nick
+				FROM sources_wvalues wva, sources_values va
+				WHERE 
+					wva.entity_id = :brendart_prop_id
+					and wva.prop_id = :prop_id
+					and va.value_id = wva.value_id
+					and (${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'})
+				ORDER BY RAND()
+				LIMIT 12
+			`, {...bind, prop_id})
+		}
+	} else if (prop.type == 'number') {
+		// if (parent_id) {
+		// 	list = await db.all(`
+		// 		WITH RECURSIVE group_tree AS (
+		// 			SELECT :parent_id as group_id
+		// 			UNION ALL
+		// 			SELECT sg.group_id
+		// 			FROM shop_groups sg, group_tree gt 
+		// 			WHERE sg.parent_id = gt.group_id
+		// 		)
+		// 		SELECT distinct wn.number as nick
+		// 		FROM group_tree gt, shop_itemgroups ig, sources_wnumbers wn
+		// 		WHERE 
+		// 			ig.group_id = gt.group_id
+		// 			and wn.key_id = ig.key_id
+		// 			and wn.entity_id = :brendart_prop_id
+		// 			and wn.prop_id = :prop_id
+		// 			and (${hashs.map(hash => 'wn.number like "%' + hash.join('%" and wn.number like "%') + '%"').join(' or ') || '1 = 1'})
+		// 		ORDER BY RAND()
+		// 		LIMIT 12
+		// 	`, {...bind, prop_id, parent_id})
+		// } else {
+		// 	list = await db.all(`
+		// 		SELECT distinct wn.number as nick
+		// 		FROM sources_wnumbers wn
+		// 		WHERE 
+		// 			wn.entity_id = :brendart_prop_id
+		// 			and wn.prop_id = :prop_id
+		// 			and (${hashs.map(hash => 'wn.number like "%' + hash.join('%" and wn.number like "%') + '%"').join(' or ') || '1 = 1'})
+		// 		ORDER BY RAND()
+		// 		LIMIT 12
+		// 	`, {...bind, prop_id})
+		// }
+	}
 
 	view.ans.list = list.map(row => {
-		row['left'] = row.value_title
+		row['left'] = row.value_title || row.nick
 		row['right'] = ''
 		return row
 	})
@@ -67,7 +117,6 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 			const prop = await Shop.getValueByNick(db, query_nick)
 			if (!prop) {
 				view.ans.list.push({
-					action:'/-shop/admin/set-sample-prop-value-create',
 					left: '<i>Создать <b>' + query_nick + '</b></i>',
 					right: ''
 				})

@@ -20,6 +20,8 @@ import rest_search from "/-dialog/search/rest.search.js" //аргументы ha
 rest.extra(rest_search)
 
 
+rest.addArgument('nick', ['nicked'])
+
 rest.addArgument('prop_nick', ['nicked'], async (view, prop_nick) => {
 	if (!prop_nick) return null
 	const db = await view.get('db')

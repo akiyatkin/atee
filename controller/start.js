@@ -4,7 +4,7 @@ import config from '/-config'
 
 
 
-import('/rest.js').then(r => r.default).catch(e => console.log('/rest.js в корне не найден или в нём есть ошибка'))
+import('/rest.js').then(r => r.default).catch(e => console.log('/rest.js в корне не найден или в нём есть ошибка', e))
 
 const conf = await config('controller')
 const PORT = process.env[conf.port.env] || conf.port.def

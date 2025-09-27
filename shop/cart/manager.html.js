@@ -178,9 +178,9 @@ tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
 					})
 					const Client = await window.getClient()
 					Client.reloadts('${env.layer.ts}')
-					if (ans.active_id == order_id) {
-						Client.global('shop')
-					}
+					//if (ans.active_id == order_id) {
+						Client.global('shop') //в панеле есть список моих активных заявок
+					//}
 				})
 			}
 		})(document.currentScript.previousElementSibling)

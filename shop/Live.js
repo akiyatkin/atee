@@ -159,7 +159,7 @@ export const Live = {
 			const src = form.dataset.path + (need.query ? '?query=' + need.query : '')
 			console.log(src)
 			//const addget = await import('/-sources/addget.js').then(r => r.default)
-			//let src = form.dataset.path + addget({query:need.query})
+
 
 
 			// const url = new URL(location)
@@ -177,7 +177,7 @@ export const Live = {
 			// }
 
 			const Client = await window.getClient()
-			Client.pushState(src)
+			Client.go(src, false)
 			// if (m) {
 			// 	Client.pushState(need.hash ? `/catalog/${need.query}?m=${m}` : `/catalog?m=${m}`)	
 			// } else {

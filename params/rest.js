@@ -229,20 +229,28 @@ rest.addResponse('get-sitemap', async view => {
 
 	return view.ret()
 })
-rest.addResponse('get-sitemap-root', async view => {
+
+
+const getSitemapGroup = async ({view}, group_name = '') => {
 	const headings = await view.get('headings')
-	view.data.all = headings
-	view.data.heading = headings[''] || {title: '', items:[]}
-	view.data.headings = Object.entries(headings).filter(([nick, heading]) => nick).map(([nick, heading]) => ({title: heading.title, nick}))
-	return view.ret()
+	return {
+		heading: headings[group_name] || {title: group_name, items:{}, empty: true},
+		headings: Object.entries(headings).filter(([nick, heading]) => nick).map(([nick, heading]) => ({title: heading.title, nick}))
+	}
+}
+rest.addResponse('get-sitemap-root', async view => {
+	const res = await getSitemapGroup({view, toString: () => 'view'}, '')
+	view.data.heading = res.heading
+	view.data.headings = res.headings
+	return view.ret()	
 })
 
-
 rest.addResponse('get-sitemap-group', async view => {
-	const headings = {...await view.get('headings')}
-	const group = await view.get('group')
-	if (!headings[group]) return view.err('Группа страниц не найдена', 404)
-	Object.assign(view.data, headings[group])
+	const group_name = await view.get('group')
+	const res = await getSitemapGroup({view, toString: () => 'view'}, group_name)	
+	if (res.heading.empty) return view.err('Группа страниц не найдена', 404)
+	view.data.heading = res.heading
+	view.data.headings = res.headings
 	return view.ret()
 })
 

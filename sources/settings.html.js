@@ -20,7 +20,7 @@ export const ROOT = (data, env) => err(data, env) || `
 				${field.button({
 					confirm: 'Опубликовать?',
 					label:'Опубликовать',
-					action:'/-sources/set-recalc-index',
+					action:'/-sources/set-recalc-publicate',
 					global: 'check'
 				})}
 			</p>
@@ -71,6 +71,7 @@ export const ROOT = (data, env) => err(data, env) || `
 			<p>
 				${field.button({
 					label:'Сбросить старты',
+					confirm: 'Сбросить старты?',
 					action:'/-sources/set-reset-start',
 					reloaddiv: env.layer.div
 				})} 
