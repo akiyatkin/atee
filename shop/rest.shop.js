@@ -46,7 +46,7 @@ rest.addArgument('group_nick', ['nicked'], async (view, group_nick) => {
 	const group_id = await Shop.getGroupIdByNick(db, group_nick)
 	if (!group_id) return view.err('Группа не найдена', 404)
 	
-	if (!await Shop.isInRoot(db, group_id)) return view.err('Нет доступа к группе', 403)
+	if (!await Shop.isInRootById(db, group_id)) return view.err('Нет доступа к группе', 403)
 	
 	return group_nick
 

@@ -3,9 +3,7 @@
 	"animate":{
 		
 	},
-	"frame":{
-		
-	},
+	
 	"head":{
 		"title":"Источники данных"
 	},
@@ -13,24 +11,31 @@
 		"recalc:ROOT":"/-sources/get-recalc",
 		"props:ROOT":"/-shop/admin/props",
 		"main:ROOT":"/-shop/admin/main",
-		"settings:ROOT":"/-shop/admin/settings",
-		"brief:ROOT":"/-shop/admin/brief"
+		"settings:ROOT":"/-shop/admin/settings"
 	},
 	"global":{
+		"shop-manager:ORDERS":["recalc"],
 		"groups:ROOT":["recalc"],
 		"recalc:ROOT":["check"]
 	},
 	"parsedtpl":{
+		"brief:PLOP":"${env.bread.get.preset ?? ''}",
 		"recalc:ROOT":"${env.timings.view_time}"
 	},
 	"onlyclient":["recalc:ROOT"],
 	"jsontpl":{
-		"groups:ROOT":"/-shop/admin/groups?group_id=${env.crumb.child?.name ?? ''}&query=${env.bread.get.search ?? ''}",
-		"poss:ROOT":"/-shop/admin/poss?query=${env.bread.get.search ?? ''}",
-		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
+		"brief:TABLE":"/-shop/admin/brief?detail=${env.bread.get.detail ?? ''}&source_id=${env.bread.get.source_id ?? ''}&brand_nick=${env.bread.get.brand_nick ?? ''}&group_id=${env.crumb.child?.name ?? ''}",
+		"brief:PLOP":"/-shop/admin/brief-plop?detail=${env.bread.get.detail ?? ''}&source_id=${env.bread.get.source_id ?? ''}&brand_nick=${env.bread.get.brand_nick ?? ''}&group_id=${env.crumb.child?.name ?? ''}",
+		"shop-manager:YEARS":"/-shop/cart/get-manager-years?status=${env.bread.get.status ?? ''}",
+		"shop-manager:MONTHS":"/-shop/cart/get-manager-months?year=${env.crumb.name}&status=${env.bread.get.status ?? ''}",
+		"shop-manager:ORDERS":"/-shop/cart/get-manager-orders?year=${env.crumb.parent.name}&month=${env.crumb.name}&status=${env.bread.get.status ?? ''}",
+		"groups:ROOT":"/-shop/admin/groups?group_id=${env.crumb.child?.name ?? ''}&query=${env.bread.get.query ?? ''}",
+		"poss:ROOT":"/-shop/admin/poss?source_id=${env.bread.get.source_id ?? ''}&group_id=${env.bread.get.group_id ?? ''}&query=${env.bread.get.query ?? ''}&m=${env.bread.get.m ?? ''}",
+		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}"
 	},
 	"tpl":{
 		"recalc":"/-sources/recalc.html.js",
+		"shop-manager":"/-shop/cart/manager.html.js",
 		"frame":"/-controller/frame.html.js",
 		"controller":"/-controller/layout.html.js",
 		"settings":"/-shop/admin/settings.html.js",
@@ -52,12 +57,44 @@
 		}
 	},
 	"childs":{
+		"manager":{
+			"head":{ "hidden":true, "title":"Заказы по годам" },
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"shop-manager:YEARS"
+				}
+			},
+			"child":{
+				"headtpl":{ "hidden":true, "title":"Заказы по месяцам" },
+				"layout":{
+					"index:ROOT":{
+						"MAIN":"shop-manager:MONTHS"
+					}
+				},
+				"child":{
+					"headtpl":{ "hidden":true, "title":"Заказы за месяц" },
+					"layout":{
+						"index:ROOT":{
+							"MAIN":"shop-manager:ORDERS"
+						}
+					}
+				}
+			}
+		},
 		"brief":{
 			"head":{"title":"Сводка"},
 			"layout":{
 				"index:ROOT":{
 					"MAIN":"brief:ROOT"
+				},
+				"brief:ROOT":{
+					"PLOP":"brief:PLOP",
+					"TABLE":"brief:TABLE"
 				}
+				
+			},
+			"child":{
+				"layout":{}
 			}
 		},
 		"poss":{

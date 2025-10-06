@@ -15,14 +15,14 @@ const conf = await config('sources')
 
 Sources.load = async (db, source, visitor) => {
 	if (source.date_start) return false
-	
+	console.time('Sources.load ' + source.source_title)
 	const timer_rest = Date.now()
 	await Sources.setSource(db, `
 		date_start = now()
 	`, source)
 
 	const res = {}
-	source.error = await Sources.execRestFunc(source.file, 'get-load', visitor, res, {source_id: source.source_id})
+	source.error = await Sources.execRestFunc(source.file, 'get-load', visitor, res, source)
 	source.msg_load = res.data?.msg || ''
 	source.duration_rest = Date.now() - timer_rest
 
@@ -33,6 +33,7 @@ Sources.load = async (db, source, visitor) => {
 	`, source)
 
 	if (source.error) {
+		console.timeEnd('Sources.load ' + source.source_title)
 		await Sources.setSource(db, `
 			date_start = null
 		`, source)
@@ -67,7 +68,7 @@ Sources.load = async (db, source, visitor) => {
 		duration_insert = :duration_insert,
 		date_start = null
 	`, source)
-
+	console.timeEnd('Sources.load ' + source.source_title)
 	return true
 }
 // Sources.getDates = async db => {
@@ -77,9 +78,39 @@ Sources.load = async (db, source, visitor) => {
 // 			UNIX_TIMESTAMP(date_recalc) as date_recalc 
 // 		FROM sources_settings
 // 	`)	
-// 	dates.indexneed = dates.date_recalc > dates.date_index
+// 	dates.publicateneed = dates.date_recalc > dates.date_index
 // 	return dates
 // }
+Sources.getTable = async (db, rows) => {
+	const table = {
+		head: [],
+		rows: rows
+	}
+
+	const col_indexes = {}
+	let index = 0
+	for (const i in rows) {
+		for (const col_title in rows[i].cols){
+			col_indexes[col_title] ??= index++
+		}
+	}
+	table.head = Object.keys(col_indexes)
+
+	
+	
+	for (const row of rows) {
+		const cells = []
+		cells.length = index
+		cells.fill('')
+
+		for (const col_title in row.cols){
+			cells[col_indexes[col_title]] = row.cols[col_title]
+		}
+		row.cells = cells
+		delete row.cols
+	}
+	return table
+}
 Sources.recalcAllChanges = async (db) => {
 	await Sources.recalcAllChangesWithoutRowSearch(db)
 	await Consciousness.recalcRowSearch(db)
@@ -126,7 +157,7 @@ Sources.scheduleDailyRenovate = (db, time = '01:09') => {
 }
 
 // Sources.recalcAll = async (db, func) => {
-// 	await Recalc.recalc(db, async () => {
+// 	await Recalc.recalc(async (db) => {
 // 		await func()
 
 // 		await Sources.recalcAllChangesWithoutRowSearch(db)
@@ -203,7 +234,21 @@ Sources.scheduleDailyRenovate = (db, time = '01:09') => {
 
 
 
-Sources.execRestFunc = async (file, fnname, visitor, res, req = {}) => {
+Sources.execRestFunc = async (file, fnname, visitor, res, source) => {
+	let params
+	try {
+		params = source.params ? JSON.parse(source.params) : {}
+	} catch (e) {
+		params = {}
+		console.log('Ошибка в params', file, fnname, e)
+	}
+
+	const req = {
+		params, 
+		source_id: source.source_id
+	}
+	//, (view, params) => params ? JSON.parse(params) : {}
+
 	const stat = await fs.stat(file).catch(r => console.log('Ошибка execRestFunc','<==========>', r,'</==========>'))
 	if (!stat) return 'Не найден файл'
 	res.modified = new Date(stat.mtime).getTime()
@@ -382,7 +427,7 @@ Sources.check = async (db, source, visitor) => {
 	if (source.date_start) return
 	const res = {}
 	const timer = Date.now()
-	source.error = await Sources.execRestFunc(source.file, 'get-check', visitor, res, {source_id: source.source_id})
+	source.error = await Sources.execRestFunc(source.file, 'get-check', visitor, res, source)
 	//date_content может быть больше чем date_mtime из обработки
 	source.date_mtime = Math.round(Math.max(source.date_content || 0, Number(res.data?.date_mtime || 0) || 0, res.modified || 0) / 1000)
 	source.msg_check = res.data?.msg || ''
@@ -478,6 +523,7 @@ const SELECT_SOURCE = `
 	so.source_id, 
 	so.ordain, 
 	so.source_title,
+	so.params,
 	UNIX_TIMESTAMP(so.date_check) as date_check, 
 	UNIX_TIMESTAMP(so.date_content) as date_content, 
 	UNIX_TIMESTAMP(so.date_load) as date_load, 
@@ -898,17 +944,15 @@ Sources.getRow = async (db, source_id, sheet_title, key_id, repeat_index) => {
 	`, {source_id, sheet_title, key_id, repeat_index})
 	return row
 }
-Sources.getValue = async (db, prop_id, value_id) => {
+Sources.getValueById = async (db, value_id) => {
 	const value = await db.fetch(`
 		SELECT 
 			va.value_id,
 			va.value_nick,
-			va.value_title
-			-- cva.represent_custom_value + 0 as represent_custom_value
+			va.value_title			
 		FROM sources_values va
-			-- LEFT JOIN sources_custom_values cva on (cva.value_nick = va.value_nick and cva.prop_id = :prop_id)
 		WHERE va.value_id = :value_id
-	`, {value_id, prop_id})
+	`, {value_id})
 	return value
 }
 Sources.getItem = async (db, entity_id, key_id) => {
@@ -1134,7 +1178,43 @@ Sources.getEntities = async (db) => {
 
 
 
+Sources.sheet = {}
+Sources.sheet.getCost = (text) => {
+	if (typeof text != 'string') return text
+	let textnumber = text.replace(/\s/g, '')
+	textnumber = textnumber.replace(',','.')
+	textnumber = textnumber.replace('&comma;','.')
+	return Math.round(Number(textnumber))
+}
+Sources.sheet.getCostDiscount = (text, dis) => {
+	if (text == null) return null
+	const cena = Sources.sheet.getCost(text)
+	const discount = (100 - (dis || 0)) / 100
+	return Math.round(cena * discount)
+}
 
+
+Sources.sheet.addСol = (sheet, index = null, title, fnget) => {
+	const rows = sheet.rows
+	const nick = nicked(title)
+	if (index === null) index = rows.length
+	sheet.head.splice(index, 0, title)
+
+	const indexes = {}
+	const names = {}
+	for (const i in sheet.head) {
+		const nick = nicked(sheet.head[i])
+		indexes[nick] = i
+		names[i] = nick
+	}
+	for (const row of rows) {
+		row.splice(index, 0, '')
+		const obj = {}
+		for (const i in row) obj[names[i]] = row[i]
+		const text = fnget(row, obj)
+		row.splice(index, 1, String(text))
+	}
+}
 
 
 export default Sources

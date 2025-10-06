@@ -19,8 +19,9 @@ rest.extra(rest_get_manager)
 
 rest.addResponse('get-tocheck', async view => {
 	const order_id = await view.get('active_id#required')
+	const partner = await view.get('partner')
 	const db = await view.get('db')
-	const data = await Cart.getMailData(db, 'tocheck', order_id, view.visitor)
+	const data = await Cart.getMailData(db, 'tocheck', order_id, view.visitor, partner)
 	Object.assign(view.data, data)
 	await Shop.prepareModelsPropsValuesGroups(db, view.data, data.list)
 	return view.ret()
@@ -61,7 +62,8 @@ rest.addResponse('get-panel', async view => {
 	const user = view.data.user = await view.get('user')
 
 	const order = view.data.order = await Cart.getOrder(db, order_id)
-	const list = await Cart.basket.get(db, order)
+	const list = await Cart.basket.get(db, order, partner)
+
 	if (!order.freeze && (!user.email || user.email == order.email)) { //Только тот на кого заявка обновляет партнёрский ключ при просмотре		
 		await Cart.recalcOrder(db, order_id, list, partner)
 	}

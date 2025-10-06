@@ -216,7 +216,21 @@ const showComment = (data, env, source) => `
 			input: source.comment
 		})}
 	</div>
-	<pre style="font-style: italic;">${source.comment}</pre>
+	<div style="white-space: pre; font-style: italic;">${source.comment}</div>
+	<div style="float:right; position: relative">
+		${field.prompt({
+			cls: 'a mute',
+			type: 'area',
+			name: 'comment', 
+			label: 'Параметры источника json',
+			value: svg.edit(), 
+			action: '/-sources/set-source-params', 
+			args: {source_id: source.source_id},
+			reloaddiv: env.layer.div,
+			input: source.params
+		})}
+	</div>
+	<div style="font-size:12px; font-family: monospace; white-space: pre;">${source.params || ''}</div>
 `
 // <!-- <script>
 // 		(div => {

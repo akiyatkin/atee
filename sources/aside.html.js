@@ -8,6 +8,7 @@ export const ROOT = (data, env) => `
 					<div><a href="/@atee/sources">Источники</a></div>
 					<div><a href="props">Свойства</a></div>
 					<div><a href="disappear">Исчезли</a></div>
+					<div><a href="rows">Строки</a></div>
 				</div>
 				<div id="RECALC"></div>
 			</div>

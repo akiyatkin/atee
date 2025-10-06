@@ -43,7 +43,7 @@ rest.addResponse('get-entity-export', ['admin'], async view => {
 
 	if (!entity.comment) delete entity.comment
 	if (entity.represent_prop == 1) delete entity.represent_prop
-	if (entity.represent_values == 1) delete entity.represent_values
+//	if (entity.represent_values == 1) delete entity.represent_values
 
 	entity.props = await db.all(`
 		SELECT 

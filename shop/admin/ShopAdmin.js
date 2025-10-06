@@ -5,6 +5,8 @@ import unique from '/-nicked/unique.js'
 import PerformanceMonitor from "/-sources/PerformanceMonitor.js"
 import BulkInserter from "/-sources/BulkInserter.js"
 import scheduleDailyTask from "/-sources/scheduleDailyTask.js"
+import cproc from "/-cproc"
+import Recalc from "/-sources/Recalc.js"
 const ShopAdmin = {}
 export default ShopAdmin
 
@@ -19,7 +21,7 @@ export default ShopAdmin
 // 	dates.date_index = new Date(dates.date_index * 1000)
 // 	dates.date_recalc = new Date(dates.date_recalc * 1000)
 
-// 	dates.indexneed = dates.date_recalc > dates.date_index
+// 	dates.publicateneed = dates.date_recalc > dates.date_index
 // 	return dates
 // }
 // ShopAdmin.checkActivities = async (db) => {
@@ -101,6 +103,7 @@ ShopAdmin.getSamplesByGroupId = async (db, group_id = null) => {
 	*/
 	return Object.values(sampleids)
 }
+
 ShopAdmin.getSamplesUpByGroupId = async (db, group_id = null, childsamples = [{}]) => {
 	const groupsamples = await ShopAdmin.getSamplesByGroupId(db, group_id)
 	//if (!groupsamples.length) return []
@@ -119,167 +122,172 @@ ShopAdmin.getWhereBySamples = async (db, samples, hashs = [], partner = '', full
 	const where = [`
 		win.entity_id = :brendart_prop_id and win.prop_id = :brendmodel_prop_id 
 	`]
-	//and wca.entity_id = win.entity_id and wca.key_id = win.key_id and wca.prop_id = win.prop_id
-	if (hashs.length) {
-		from.unshift('sources_items wit')
-		where.push('wit.entity_id = win.entity_id and wit.key_id = win.key_id')
-		where.push('(' + hashs.map(hash => 'wit.search like "%' + hash.join('%" and wit.search like "%') + '%"').join(' or ')+')' || '1 = 1')
-	}
+	const sort = []
+	await Shop.addWhereSamples(db, from, join, where, sort, samples, hashs, partner, !fulldef)
+	return {from, join, where, sort}
 
-	//let sort = ['wca.source_id, wca.sheet_index, wca.row_index, wca.col_index']
 
-	const whereor = []
-	let i = 0
+	// //and wca.entity_id = win.entity_id and wca.key_id = win.key_id and wca.prop_id = win.prop_id
+	// if (hashs.length) {
+	// 	from.unshift('sources_items wit')
+	// 	where.push('wit.entity_id = win.entity_id and wit.key_id = win.key_id')
+	// 	where.push('(' + hashs.map(hash => 'wit.search like "% ' + hash.join('%" and wit.search like "% ') + '%"').join(' or ')+')' || '1 = 1')
+	// }
 
-	for (const sample of samples) { //OR
+	// //let sort = ['wca.source_id, wca.sheet_index, wca.row_index, wca.col_index']
 
-		const whereand = []
-		for (const prop_nick in sample) { //Находим позиции группы
-			const prop = await Shop.getPropByNick(db, prop_nick)
+	// const whereor = []
+	// let i = 0
+
+	// for (const sample of samples) { //OR
+
+	// 	const whereand = []
+	// 	for (const prop_nick in sample) { //Находим позиции группы
+	// 		const prop = await Shop.getPropByNick(db, prop_nick)
 			
 
-			i++
-			if (prop.type == 'value') {
-				join.push(`
-					LEFT JOIN sources_wvalues da${i} ON (
-						da${i}.entity_id = win.entity_id 
-						and da${i}.key_id = win.key_id 
-						and da${i}.prop_id = ${prop.prop_id || 0}
-					)
-				`)
-			} else if (prop.type == 'number') {
-				if (prop_nick == 'cena') {
-					const {prop_id} = partner?.cost_nick ? await Shop.getPropByNick(db, partner?.cost_nick) : prop  //Подмена цены
-					join.push(`
-						LEFT JOIN sources_wnumbers da${i} ON (
-							da${i}.entity_id = win.entity_id 
-							and da${i}.key_id = win.key_id 
-							and da${i}.prop_id = ${prop_id || 0}
-						)
-					`)
-				} else {
-					join.push(`
-						LEFT JOIN sources_wnumbers da${i} ON (
-							da${i}.entity_id = win.entity_id 
-							and da${i}.key_id = win.key_id 
-							and da${i}.prop_id = ${prop.prop_id || 0}
-						)
-					`)
-				}
-			} else if (prop.type == 'text') {
-				join.push(`
-					LEFT JOIN sources_wtexts da${i} ON (
-						da${i}.entity_id = win.entity_id 
-						and da${i}.key_id = win.key_id 
-						and da${i}.prop_id = ${prop.prop_id || 0}
-					)
-				`)
-			} else {
+	// 		i++
+	// 		if (prop.type == 'value') {
+	// 			join.push(`
+	// 				LEFT JOIN sources_wvalues da${i} ON (
+	// 					da${i}.entity_id = win.entity_id 
+	// 					and da${i}.key_id = win.key_id 
+	// 					and da${i}.prop_id = ${prop.prop_id || 0}
+	// 				)
+	// 			`)
+	// 		} else if (prop.type == 'number') {
+	// 			if (prop_nick == 'cena') {
+	// 				const {prop_id} = partner?.cost_nick ? await Shop.getPropByNick(db, partner?.cost_nick) : prop  //Подмена цены
+	// 				join.push(`
+	// 					LEFT JOIN sources_wnumbers da${i} ON (
+	// 						da${i}.entity_id = win.entity_id 
+	// 						and da${i}.key_id = win.key_id 
+	// 						and da${i}.prop_id = ${prop_id || 0}
+	// 					)
+	// 				`)
+	// 			} else {
+	// 				join.push(`
+	// 					LEFT JOIN sources_wnumbers da${i} ON (
+	// 						da${i}.entity_id = win.entity_id 
+	// 						and da${i}.key_id = win.key_id 
+	// 						and da${i}.prop_id = ${prop.prop_id || 0}
+	// 					)
+	// 				`)
+	// 			}
+	// 		} else if (prop.type == 'text') {
+	// 			join.push(`
+	// 				LEFT JOIN sources_wtexts da${i} ON (
+	// 					da${i}.entity_id = win.entity_id 
+	// 					and da${i}.key_id = win.key_id 
+	// 					and da${i}.prop_id = ${prop.prop_id || 0}
+	// 				)
+	// 			`)
+	// 		} else {
 				
-			}
-			if (typeof(sample[prop_nick]) == 'object') { //Значение не объект
-				if (prop.type == 'value') {
+	// 		}
+	// 		if (typeof(sample[prop_nick]) == 'object') { //Значение не объект
+	// 			if (prop.type == 'value') {
 					
-					const value_ids = []
-					for (const value_nick in sample[prop_nick]) {
-						const value = await Shop.getValueByNick(db, value_nick)
-						value_ids.push(value?.value_id || 0)
-					}
-					if (value_ids.length) { //У позиции с мульти значениями может совпать два значения и будет дубль
-						whereand.push(`
-							da${i}.value_id in (${value_ids.join(', ')})
-						`)
-					} else {
-						whereand.push(`1=0`)
-					}
-				} else if (prop.type == 'number') {
+	// 				const value_ids = []
+	// 				for (const value_nick in sample[prop_nick]) {
+	// 					const value = await Shop.getValueByNick(db, value_nick)
+	// 					value_ids.push(value?.value_id || 0)
+	// 				}
+	// 				if (value_ids.length) { //У позиции с мульти значениями может совпать два значения и будет дубль
+	// 					whereand.push(`
+	// 						da${i}.value_id in (${value_ids.join(', ')})
+	// 					`)
+	// 				} else {
+	// 					whereand.push(`1=0`)
+	// 				}
+	// 			} else if (prop.type == 'number') {
 
-					const isdiscost = partner?.discount && prop_nick == 'cena'
-					const disCost = isdiscost ? number => Math.round(number * (100 + partner.discount) / 100) : number => number
+	// 				const isdiscost = partner?.discount && prop_nick == 'cena'
+	// 				const disCost = isdiscost ? number => Math.round(number * (100 + partner.discount) / 100) : number => number
 						
-					if (sample[prop_nick]['upto'] || sample[prop_nick]['from']) {
-						//sort = []
-						if (sample[prop_nick]['upto']) {
-							const number = disCost(sample[prop_nick]['upto'])
-							whereand.push(`da${i}.number <= ${number}`)
-							//sort.push(`da${i}.number DESC`)
-						}
-						if (sample[prop_nick]['from']) {
-							const number = disCost(sample[prop_nick]['from'])
-							whereand.push(`da${i}.number >= ${number}`)
-							//sort.push(`da${i}.number ASC`)
-						}
-					} else {
-						const numbers = Object.keys(sample[prop_nick]).map(number => disCost(number))
-						if (numbers.length) {
-							whereand.push(`
-								da${i}.number in (${numbers.join(', ')})
-							`)
-						} else {
-							whereand.push(`1=0`)
-						}
-					}	
-				} else { //Неизвестный prop.type
-					where.push(`1=0`) //что делать если в sample не существующее свойство, должно быть найдено 0
-				}
-			} else { //Значение не объект
-				if (prop.type == 'value') {
+	// 				if (sample[prop_nick]['upto'] || sample[prop_nick]['from']) {
+	// 					//sort = []
+	// 					if (sample[prop_nick]['upto']) {
+	// 						const number = disCost(sample[prop_nick]['upto'])
+	// 						whereand.push(`da${i}.number <= ${number}`)
+	// 						//sort.push(`da${i}.number DESC`)
+	// 					}
+	// 					if (sample[prop_nick]['from']) {
+	// 						const number = disCost(sample[prop_nick]['from'])
+	// 						whereand.push(`da${i}.number >= ${number}`)
+	// 						//sort.push(`da${i}.number ASC`)
+	// 					}
+	// 				} else {
+	// 					const numbers = Object.keys(sample[prop_nick]).map(number => disCost(number))
+	// 					if (numbers.length) {
+	// 						whereand.push(`
+	// 							da${i}.number in (${numbers.join(', ')})
+	// 						`)
+	// 					} else {
+	// 						whereand.push(`1=0`)
+	// 					}
+	// 				}	
+	// 			} else { //Неизвестный prop.type
+	// 				where.push(`1=0`) //что делать если в sample не существующее свойство, должно быть найдено 0
+	// 			}
+	// 		} else { //Значение не объект
+	// 			if (prop.type == 'value') {
 					
-					if (sample[prop_nick] == 'any') {
-						// whereand.push(`
-						// 	da${i}.value_id is not null
-						// `)
-						whereand.push(`
-							da${i}.multi_index = 0
-						`)
-					} else if (sample[prop_nick] == 'empty') {
+	// 				if (sample[prop_nick] == 'any') {
+	// 					// whereand.push(`
+	// 					// 	da${i}.value_id is not null
+	// 					// `)
+	// 					whereand.push(`
+	// 						da${i}.multi_index = 0
+	// 					`)
+	// 				} else if (sample[prop_nick] == 'empty') {
 
-						whereand.push(`
-							da${i}.value_id is null
-						`)
-					}
-				} else if (prop.type == 'number') {
+	// 					whereand.push(`
+	// 						da${i}.value_id is null
+	// 					`)
+	// 				}
+	// 			} else if (prop.type == 'number') {
 
-					if (sample[prop_nick] == 'any') {
-						// whereand.push(`
-						// 	da${i}.number is not null
-						// `)
-						whereand.push(`
-							da${i}.multi_index = 0
-						`)
-					} else if (sample[prop_nick] == 'empty') {
-						whereand.push(`
-							da${i}.number is null
-						`)
-					} else {
-						where.push(`1=0`)
-					}
-				} else if (prop.type == 'text') {
+	// 				if (sample[prop_nick] == 'any') {
+	// 					// whereand.push(`
+	// 					// 	da${i}.number is not null
+	// 					// `)
+	// 					whereand.push(`
+	// 						da${i}.multi_index = 0
+	// 					`)
+	// 				} else if (sample[prop_nick] == 'empty') {
+	// 					whereand.push(`
+	// 						da${i}.number is null
+	// 					`)
+	// 				} else {
+	// 					where.push(`1=0`)
+	// 				}
+	// 			} else if (prop.type == 'text') {
 
-					if (sample[prop_nick] == 'any') {
-						// whereand.push(`
-						// 	da${i}.text is not null
-						// `)
-						whereand.push(`
-							da${i}.multi_index = 0
-						`)
-					} else if (sample[prop_nick] == 'empty') {
-						whereand.push(`
-							da${i}.text is null
-						`)
-					} else {
-						where.push(`1=0`)
-					}
-				} else {
-					where.push(`1=0`)
-				}
-			}
-		}
-		if (whereand.length) whereor.push(whereand.join(` and `))
-	}
-	if (whereor.length)	where.push(`((${whereor.join(') or (')}))`)
-	else if (!fulldef) where.push(`1=0`)
-	return {from, join, where}
+	// 				if (sample[prop_nick] == 'any') {
+	// 					// whereand.push(`
+	// 					// 	da${i}.text is not null
+	// 					// `)
+	// 					whereand.push(`
+	// 						da${i}.multi_index = 0
+	// 					`)
+	// 				} else if (sample[prop_nick] == 'empty') {
+	// 					whereand.push(`
+	// 						da${i}.text is null
+	// 					`)
+	// 				} else {
+	// 					where.push(`1=0`)
+	// 				}
+	// 			} else {
+	// 				where.push(`1=0`)
+	// 			}
+	// 		}
+	// 	}
+	// 	if (whereand.length) whereor.push(whereand.join(` and `))
+	// }
+	// if (whereor.length)	where.push(`((${whereor.join(') or (')}))`)
+	// else if (!fulldef) where.push(`1=0`)
+	// return {from, join, where}
 }
 
 
@@ -440,6 +448,8 @@ const calcGroupWith = async (db, group_id, prop_nicks = []) => {
 	return count
 }
 ShopAdmin.calcBrandWithoutFilters = async (db, prop_nicks = []) => {
+	const bind = await Shop.getBind(db)
+	const {prop_id: brend_prop_id = null} = await Shop.getPropByNick(db, 'brend')
 	const brandsnofilters = await db.allto('value_nick', `
 		SELECT bva.value_nick, COUNT(DISTINCT t.key_id) AS nofilters
 		FROM
@@ -473,20 +483,62 @@ ShopAdmin.calcBrandWithoutFilters = async (db, prop_nicks = []) => {
 					
 					sources_wvalues wva, shop_allitemgroups ig
 			WHERE			
-						wva.entity_id = 1
-						AND wva.prop_id = 2
+						wva.entity_id = :brendart_prop_id
+						AND wva.prop_id = :brend_prop_id
 						AND wva.key_id = ig.key_id
 						AND p.group_id = ig.group_id
 		) t
-		LEFT JOIN sources_wcells wce ON wce.key_id = t.key_id AND wce.entity_id = 1 AND wce.prop_id = t.prop_id
+		LEFT JOIN sources_wcells wce ON wce.key_id = t.key_id AND wce.entity_id = :brendart_prop_id AND wce.prop_id = t.prop_id
 		WHERE wce.prop_id IS NULL
 		and bva.value_id = t.value_id
 		GROUP BY t.value_id
-	`)
+	`, {...bind, brend_prop_id})
 	return brandsnofilters
 }
+ShopAdmin.calcSourceWithoutFilters = async (db, prop_nicks = []) => {	
+	const bind = await Shop.getBind(db)
+	const sourcesnofilters = await db.allto('source_id', `
+		SELECT t.source_id, COUNT(DISTINCT t.key_id) AS nofilters
+		FROM
+			(
+				SELECT win.source_id, win.key_id, p.prop_id
+				FROM		
+					(
+						SELECT 
+							distinct gr.group_id, pr.prop_nick, pr.prop_id
+						FROM 
+							shop_groups gr, shop_filters fi, sources_props pr  
+						
+						WHERE 
+							gr.self_filters = 1
+							AND fi.group_id = gr.group_id
+							AND (pr.prop_nick = fi.prop_nick)
+						
+							${prop_nicks.length ? `
+								UNION ALL
+							
+								SELECT 
+									gr.group_id, pr.prop_nick, pr.prop_id
+								FROM 
+									shop_groups gr, sources_props pr
+								WHERE 
+									pr.prop_nick IN ("${prop_nicks.join('","')}")
+							` : ''}
+					) p, 
+					win, 
+					shop_allitemgroups ig
+				WHERE			
+					win.key_id = ig.key_id
+					AND p.group_id = ig.group_id
+			) t
+		LEFT JOIN sources_wcells wce ON wce.key_id = t.key_id AND wce.entity_id = :brendart_prop_id AND wce.prop_id = t.prop_id
+		WHERE wce.prop_id IS NULL
+		GROUP BY t.source_id
+	`, bind)
+	return sourcesnofilters
+}
 ShopAdmin.calcAllWithoutFilters = async (db, prop_nicks = []) => {
-
+	const bind = await Shop.getBind(db)
 	const count = await db.col(`
 		SELECT COUNT(distinct t.key_id) 
 		FROM (
@@ -502,8 +554,6 @@ ShopAdmin.calcAllWithoutFilters = async (db, prop_nicks = []) => {
 						gr.self_filters = 1
 						AND fi.group_id = gr.group_id
 						AND pr.prop_nick = fi.prop_nick
-					
-					
 					${prop_nicks.length ? `
 						UNION ALL
 						SELECT 
@@ -516,9 +566,9 @@ ShopAdmin.calcAllWithoutFilters = async (db, prop_nicks = []) => {
 				) gp 
 			WHERE gp.group_id = ig.group_id
 		) t
-		LEFT JOIN sources_wcells wce ON (wce.entity_id = 1 AND wce.key_id = t.key_id AND wce.prop_id = t.prop_id)
+		LEFT JOIN sources_wcells wce ON (wce.entity_id = :brendart_prop_id AND wce.key_id = t.key_id AND wce.prop_id = t.prop_id)
 		WHERE wce.prop_id IS null
-	`)
+	`, bind)
 	return count
 
 	// rowgroup.withall = rowgroup.poscount - await db.col(`
@@ -531,11 +581,11 @@ ShopAdmin.calcAllWithoutFilters = async (db, prop_nicks = []) => {
 	// 			gr.group_id = ig.group_id
 	// 			AND gr.self_filters = 1
 	// 			AND fi.group_id = ig.group_id
-	// 			AND (pr.prop_nick = fi.prop_nick OR pr.prop_id IN (:brand_prop_id, :cena_prop_id, :name_prop_id, :img_prop_id, :descr_prop_id))
+	// 			AND (pr.prop_nick = fi.prop_nick OR pr.prop_id IN (:brend_prop_id, :cena_prop_id, :name_prop_id, :img_prop_id, :descr_prop_id))
 	// 		) t
 	// 	LEFT JOIN sources_wcells wce ON (wce.entity_id = 1 AND wce.key_id = t.key_id AND wce.prop_id = t.prop_id)
 	// 	WHERE wce.prop_id IS null
-	// `, {...bind, brand_prop_id, cena_prop_id, name_prop_id, img_prop_id, descr_prop_id})
+	// `, {...bind, brend_prop_id, cena_prop_id, name_prop_id, img_prop_id, descr_prop_id})
 	// const count = await db.col(`
 	// 	SELECT COUNT(distinct t.key_id) 
 	// 	FROM (SELECT 
@@ -680,18 +730,284 @@ const STAT = {
 	poscount: 0, 
 	modcount: 0, 
 	sourcecount: 0, 
-	brandcount: 0, 
+	groupcount: 0,
+	brandcount: 0,
+	filtercount: 0,
+	basketcount: 0,
+	ordercount: 0,
 	withbrands: 0, 
 	withcost: 0, 
 	withname: 0, 
-	withimg: 0, 
+	withimg: 0,  
 	withdescr: 0,
+	withall: 0,
+	withfilters: 0,
 	date_cost: null
 }
-ShopAdmin.getAllStat = async (db) => {
-	console.time('rowgroups')
+ShopAdmin.getCommonStat = async (db) => {
+	const bind = await Shop.getBind(db)
+	const {prop_id: brend_prop_id = null} = await Shop.getPropByNick(db, 'brend')
+	const {prop_id: cena_prop_id = null} = await Shop.getPropByNick(db, 'cena')
+	const {prop_id: name_prop_id = null} = await Shop.getPropByNick(db, 'naimenovanie')
+	const {prop_id: img_prop_id = null} = await Shop.getPropByNick(db, 'images')
+	const {prop_id: descr_prop_id = null} = await Shop.getPropByNick(db, 'opisanie')
+
+	const from = []	//key_id может повторться по группам
+	const where = []
+
+	from.push(`sources_wcells wce`) //Нужно посчитать источники
+	where.push(`wce.key_id = win.key_id`)
+	where.push(`wce.entity_id = win.entity_id`)
+	where.push(`wce.prop_id = win.prop_id`)
+
+	from.push(`sources_wvalues win`)
+	where.push(`win.entity_id = :brendart_prop_id`)
+	where.push(`win.prop_id = :brendmodel_prop_id`)  //Нужно посчитать модели
+	console.time('getCommonStat')
+	//ordercount, basketcount
+	const rowgroup = await db.fetch(`
+		SELECT 
+			count(distinct win.key_id) as poscount, 
+			count(distinct win.value_id) as modcount, 
+			count(distinct br.value_id) as brandcount,
+			count(distinct wce.source_id) as sourcecount,
+			count(distinct br.key_id) as withbrands,
+			count(distinct cena.key_id) as withcost,
+			count(distinct name.key_id) as withname,
+			count(distinct img.key_id) as withimg,
+			count(distinct descr.key_id) as withdescr,
+			UNIX_TIMESTAMP(min(cenaso.date_content)) as date_cost
+		FROM ${from.join(', ')}
+			left join sources_wvalues br on (br.entity_id = win.entity_id and br.key_id = win.key_id and br.prop_id = :brend_prop_id)
+			left join sources_wcells cena on (cena.entity_id = win.entity_id and cena.key_id = win.key_id and cena.prop_id = :cena_prop_id)
+				left join sources_sources cenaso on (cenaso.source_id = cena.source_id)
+			left join sources_wcells name on (name.entity_id = win.entity_id and name.key_id = win.key_id and name.prop_id = :name_prop_id)
+			left join sources_wcells img on (img.entity_id = win.entity_id and img.key_id = win.key_id and img.prop_id = :img_prop_id)
+			left join sources_wcells descr on (descr.entity_id = win.entity_id and descr.key_id = win.key_id and descr.prop_id = :descr_prop_id)
+		WHERE ${where.join(' and ')}
+	`, {...bind, brend_prop_id, cena_prop_id, name_prop_id, img_prop_id, descr_prop_id})
+
+	
+
+	const filters = []
+	const group_ids = await Shop.getAllGroupIds(db)
+	rowgroup.groupcount = group_ids.length
+	for (const group_id of group_ids) {
+		const group = await Shop.getGroupById(db, group_id)
+		filters.push(...group.filters)
+	}
+	rowgroup.filtercount = unique(filters).length
+
+	console.time('getCommonStat.withfilters')
+	rowgroup.withfilters = rowgroup.poscount - await ShopAdmin.calcAllWithoutFilters(db)
+	console.timeEnd('getCommonStat.withfilters')
+	console.time('getCommonStat.withall')
+	
+	rowgroup.withall = rowgroup.poscount - await ShopAdmin.calcAllWithoutFilters(db, ['brend', 'cena', 'naimenovanie', 'images', 'opisanie'])
+
+	
+	console.timeEnd('getCommonStat.withall')
+	
+	
+
+	const orders = await db.allto('status', `
+		SELECT o.status, count(*) as count
+		FROM shop_orders o
+		WHERE YEAR(o.dateedit) = YEAR(NOW()) AND MONTH(o.dateedit) = MONTH(NOW())
+		GROUP BY o.status
+	`)
+	rowgroup.basketcount = Object.values(orders).reduce((ak, row) => ak + row.count, 0)
+	rowgroup.ordercount = rowgroup.basketcount - (orders.wait?.count || 0)
+
+
+	console.timeEnd('getCommonStat')
+	return rowgroup
+
+}
+ShopAdmin.getGroupStat = async (db) => {
+	console.time('getGroupStat')
+
+	const rowgroups = await db.allto('group_id', `
+		WITH RECURSIVE group_hierarchy AS (
+		    -- Якорная часть: начальная группа
+		    SELECT 
+		        group_id,
+		        self_filters,
+		        parent_id,
+		        0 as level,
+		        group_name as path,
+		        group_id as child_id
+		    FROM shop_groups 
+		    
+		    UNION ALL
+		    
+		    -- Рекурсивная часть: идем вверх по иерархии
+		    SELECT 
+		        g.group_id,
+		        g.self_filters,
+		        g.parent_id,
+		        gh.level + 1,
+		        CONCAT(g.group_name, ' -> ', gh.path),
+		        gh.child_id
+		    FROM shop_groups g
+		    INNER JOIN group_hierarchy gh ON g.group_id = gh.parent_id
+		), orders AS (
+			SELECT ig.group_id, t.brand_id, t.source_id, o.order_id, va.value_id AS key_id, o.status
+			FROM shop_orders o, shop_basket b, sources_values va, shop_stat_temp_keys t, shop_allitemgroups ig
+			WHERE YEAR(o.dateedit) = YEAR(NOW()) AND MONTH(o.dateedit) = MONTH(NOW())
+			AND b.order_id = o.order_id
+			AND va.value_nick = b.brendart_nick
+			AND t.key_id = va.value_id
+			AND ig.key_id = t.key_id
+		), sources AS (
+			SELECT DISTINCT key_id, source_id FROM sources_wcells
+		)
+
+
+
+		SELECT nvl(t.group_id,0) as group_id,
+			if(t.group_id IS NULL, (SELECT COUNT(*) FROM shop_groups), (SELECT COUNT(*) FROM group_hierarchy WHERE group_id = t.group_id)) AS groupcount,
+			0 as filtercount,
+		 	COUNT(DISTINCT t.key_id) AS poscount,
+		 	COUNT(DISTINCT t.model_id) AS modcount,
+			COUNT(
+				DISTINCT 
+				CASE WHEN t.cena_source_id
+			      AND t.isbrand
+		 			AND t.isimg
+		         AND t.isdescr 
+		         AND t.withfiltercount = t.filtercount
+				THEN t.key_id END
+			) AS withall,
+			COUNT(DISTINCT CASE WHEN t.withfiltercount = t.filtercount THEN t.key_id END) as withfilters,	
+			COUNT(DISTINCT CASE WHEN t.cena_source_id THEN t.key_id END) as withcost,	
+			COUNT(DISTINCT CASE WHEN t.isbrand THEN t.key_id END) as withbrands,	
+			COUNT(DISTINCT CASE WHEN t.isimg THEN t.key_id END) as withimg,
+			COUNT(DISTINCT CASE WHEN t.isdescr THEN t.key_id END) as withdescr,
+			COUNT(DISTINCT CASE WHEN t.isname THEN t.key_id END) as withname,
+			COUNT(DISTINCT t.source_id) AS sourcecount,
+			COUNT(DISTINCT t.brand_id) AS brandcount,
+			UNIX_TIMESTAMP(min(cenaso.date_content)) as date_cost,
+		 	COUNT(DISTINCT CASE WHEN o.status = 'check' THEN o.order_id END) as ordercount,
+		 	COUNT(DISTINCT o.order_id) AS basketcount
+		FROM shop_stat_temp_keys t
+			LEFT join sources_sources cenaso ON (cenaso.source_id = t.cena_source_id)
+			left join shop_stat_temp_orders o ON (o.key_id = t.key_id)
+		GROUP BY t.group_id
+
+	`)
+	
+	console.timeEnd('getGroupStat')
+	return rowgroups
+}
+ShopAdmin.getGroupStat2 = async (db) => {
+	console.time('getGroupStat')
 	const bind = await Shop.getBind(db)
 
+	// const samples = await ShopAdmin.getSamplesUpByGroupId(db, group_id)
+	// const {from, join, where} = await ShopAdmin.getWhereBySamples(db, samples)
+
+	const {prop_id: brend_prop_id = null} = await Shop.getPropByNick(db, 'brend')
+	const {prop_id: cena_prop_id = null} = await Shop.getPropByNick(db, 'cena')
+	const {prop_id: name_prop_id = null} = await Shop.getPropByNick(db, 'naimenovanie')
+	const {prop_id: img_prop_id = null} = await Shop.getPropByNick(db, 'images')
+	const {prop_id: descr_prop_id = null} = await Shop.getPropByNick(db, 'opisanie')
+
+	
+	
+
+	const rowgroups = await db.allto('group_id', `
+		SELECT 
+			ig.group_id, 
+			count(distinct win.key_id) as poscount, 
+			count(distinct win.value_id) as modcount, 
+			0 as basketcount,
+			0 as ordercount,
+			count(distinct wce.source_id) as sourcecount,
+			count(distinct br.value_id) as brandcount,
+			count(distinct br.key_id) as withbrands,
+			count(distinct cena.key_id) as withcost,
+			count(distinct name.key_id) as withname,
+			count(distinct img.key_id) as withimg,
+			count(distinct descr.key_id) as withdescr,
+			UNIX_TIMESTAMP(min(cenaso.date_content)) as date_cost
+		FROM shop_allitemgroups ig, sources_wcells wce, sources_wvalues win
+			left join sources_wvalues br on (br.entity_id = win.entity_id and br.key_id = win.key_id and br.prop_id = :brend_prop_id)
+			left join sources_wcells cena on (cena.entity_id = win.entity_id and cena.key_id = win.key_id and cena.prop_id = :cena_prop_id)
+				left join sources_sources cenaso on (cenaso.source_id = cena.source_id)
+			left join sources_wcells name on (name.entity_id = win.entity_id and name.key_id = win.key_id and name.prop_id = :name_prop_id)
+			left join sources_wcells img on (img.entity_id = win.entity_id and img.key_id = win.key_id and img.prop_id = :img_prop_id)
+			left join sources_wcells descr on (descr.entity_id = win.entity_id and descr.key_id = win.key_id and descr.prop_id = :descr_prop_id)
+			
+		WHERE win.key_id = ig.key_id
+		and wce.key_id = win.key_id
+		and wce.entity_id = win.entity_id
+		and wce.prop_id = win.prop_id
+		and win.entity_id = :brendart_prop_id
+		and win.prop_id = :brendmodel_prop_id
+		GROUP BY ig.group_id
+	`, {...bind, brend_prop_id, cena_prop_id, name_prop_id, img_prop_id, descr_prop_id})
+	
+	const group_ids = await db.colAll(`select group_id from shop_groups`)
+	for (const group_id of group_ids) {
+		if (rowgroups[group_id]) continue
+		rowgroups[group_id]	= {...STAT}
+		rowgroups[group_id].group_id = group_id
+	}
+	for (const group_id in rowgroups) {
+		const row = rowgroups[group_id]
+		const group = await Shop.getGroupById(db, group_id)
+		row.groupcount = -1
+		await Shop.runGroupDown(db, group_id, () => {
+			row.groupcount++
+		})
+		row.filtercount = group.filters.length
+		
+		row.withfilters = await calcGroupWith(db, group_id, group.filters)
+		row.withall = await calcGroupWith(db, group_id, unique([...group.filters, 'brend', 'cena', 'naimenovanie', 'images', 'opisanie']))
+	}
+
+	
+	const orders = await db.all(`
+	 	SELECT ig.group_id, o.status, count(DISTINCT ba.order_id) as count
+		FROM shop_orders o, shop_basket ba, sources_values va, sources_wvalues wva, shop_allitemgroups ig
+		WHERE YEAR(o.dateedit) = YEAR(NOW()) AND MONTH(o.dateedit) = MONTH(NOW())
+		AND ba.order_id = o.order_id
+		AND va.value_nick = ba.brendart_nick
+		AND wva.value_id = va.value_id AND wva.prop_id = :brendart_prop_id AND wva.entity_id = wva.prop_id
+		AND ig.key_id = wva.key_id
+		GROUP BY ig.group_id, o.status
+	`, {...bind})
+
+	console.time('getGroupStat.order')
+	const store = {}
+	for (const row of orders) {
+		store[row.group_id] ??= {status:{}}
+		store[row.group_id].status[row.status] = row
+	}
+	for (const group_id in store) {
+		rowgroups[group_id].basketcount = Object.values(store[group_id].status).reduce((ak, row) => ak + row.count, 0)
+		rowgroups[group_id].ordercount = rowgroups[group_id].basketcount - (store[group_id].status.wait?.count || 0)
+	}
+	console.timeEnd('getGroupStat.order')
+	
+	console.timeEnd('getGroupStat')
+	/****************/
+	return rowgroups
+}
+ShopAdmin.getSourceStat = async (db) => {
+	console.time('getSourceStat')
+	const bind = await Shop.getBind(db)
+	await db.db.query(`
+		CREATE TEMPORARY TABLE IF NOT EXISTS win AS (
+			SELECT DISTINCT wce.source_id, wce.key_id
+			FROM sources_wcells wce
+			WHERE wce.entity_id = :brendart_prop_id
+		);
+	`, bind)
+
+	
+	// const {prop_id: brend_prop_id = null} = await Shop.getPropByNick(db, 'brend')
 	// const samples = await ShopAdmin.getSamplesUpByGroupId(db, group_id)
 	// const {from, join, where} = await ShopAdmin.getWhereBySamples(db, samples)
 
@@ -707,7 +1023,7 @@ ShopAdmin.getAllStat = async (db) => {
 	where.push(`win.entity_id = :brendart_prop_id`)
 	where.push(`win.prop_id = :brendmodel_prop_id`)  //Нужно посчитать модели
 
-	const {prop_id: brand_prop_id = null} = await Shop.getPropByNick(db, 'brend')
+	const {prop_id: brend_prop_id = null} = await Shop.getPropByNick(db, 'brend')
 	const {prop_id: cena_prop_id = null} = await Shop.getPropByNick(db, 'cena')
 	const {prop_id: name_prop_id = null} = await Shop.getPropByNick(db, 'naimenovanie')
 	const {prop_id: img_prop_id = null} = await Shop.getPropByNick(db, 'images')
@@ -716,99 +1032,117 @@ ShopAdmin.getAllStat = async (db) => {
 	
 	
 
-	const rowgroups = await db.allto('group_id', `
+	const rowsources = await db.allto('source_id', `
 		SELECT 
-			ig.group_id, 
-			count(distinct win.key_id) as poscount, 
-			count(distinct win.value_id) as modcount, 
-
-			count(distinct wce.source_id) as sourcecount,
+			win.source_id, 
+			0 as basketcount,
+			0 as ordercount,
+			0 as sourcecount,
+			0 as withall,
+			0 as withfilters,
+			COUNT(distinct win.key_id) AS poscount,
+			count(distinct m.value_id) as modcount,
 			count(distinct br.value_id) as brandcount,
 			count(distinct br.key_id) as withbrands,
-			count(distinct cena.key_id) as withcost,
-			count(distinct name.key_id) as withname,
-			count(distinct img.key_id) as withimg,
-			count(distinct descr.key_id) as withdescr,
-			UNIX_TIMESTAMP(min(cenaso.date_content)) as date_cost
-		FROM shop_allitemgroups ig, ${from.join(', ')}
-			left join sources_wvalues br on (br.entity_id = win.entity_id and br.key_id = win.key_id and br.prop_id = :brand_prop_id)
-			left join sources_wcells cena on (cena.entity_id = win.entity_id and cena.key_id = win.key_id and cena.prop_id = :cena_prop_id)
-				left join sources_sources cenaso on (cenaso.source_id = cena.source_id)
-			left join sources_wcells name on (name.entity_id = win.entity_id and name.key_id = win.key_id and name.prop_id = :name_prop_id)
-			left join sources_wcells img on (img.entity_id = win.entity_id and img.key_id = win.key_id and img.prop_id = :img_prop_id)
-			left join sources_wcells descr on (descr.entity_id = win.entity_id and descr.key_id = win.key_id and descr.prop_id = :descr_prop_id)
 			
-		WHERE win.key_id = ig.key_id and ${where.join(' and ')}
-		GROUP BY ig.group_id
-	`, {...bind, brand_prop_id, cena_prop_id, name_prop_id, img_prop_id, descr_prop_id})
-	
-	const group_ids = await db.colAll(`select group_id from shop_groups`)
-	for (const group_id of group_ids) {
-		if (rowgroups[group_id]) continue
-		rowgroups[group_id]	= {...STAT}
-		rowgroups[group_id].group_id = group_id
-	}
-
-	for (const group_id in rowgroups) {
-		const row = rowgroups[group_id]
-		const group = await Shop.getGroupById(db, group_id)
-		row.groupcount = -1
-		await Shop.runGroupDown(db, group_id, () => {
-			row.groupcount++
-		})
-		row.filtercount = group.filters.length
-		
-		row.withfilters = await calcGroupWith(db, group_id, group.filters)
-		row.withall = await calcGroupWith(db, group_id, unique([...group.filters, 'brend', 'cena', 'naimenovanie', 'images', 'opisanie']))
-	}
-
-	
-	console.timeEnd('rowgroups')
-	/****************/
-	console.time('rowgroup')
-	const rowgroup = await db.fetch(`
-		SELECT 
-			count(distinct win.key_id) as poscount, 
-			count(distinct win.value_id) as modcount, 
-			count(distinct br.value_id) as brandcount,
-			count(distinct wce.source_id) as sourcecount,
-			count(distinct br.key_id) as withbrands,
 			count(distinct cena.key_id) as withcost,
 			count(distinct name.key_id) as withname,
 			count(distinct img.key_id) as withimg,
 			count(distinct descr.key_id) as withdescr,
-			UNIX_TIMESTAMP(min(cenaso.date_content)) as date_cost
-		FROM ${from.join(', ')}
-			left join sources_wvalues br on (br.entity_id = win.entity_id and br.key_id = win.key_id and br.prop_id = :brand_prop_id)
-			left join sources_wcells cena on (cena.entity_id = win.entity_id and cena.key_id = win.key_id and cena.prop_id = :cena_prop_id)
-				left join sources_sources cenaso on (cenaso.source_id = cena.source_id)
-			left join sources_wcells name on (name.entity_id = win.entity_id and name.key_id = win.key_id and name.prop_id = :name_prop_id)
-			left join sources_wcells img on (img.entity_id = win.entity_id and img.key_id = win.key_id and img.prop_id = :img_prop_id)
-			left join sources_wcells descr on (descr.entity_id = win.entity_id and descr.key_id = win.key_id and descr.prop_id = :descr_prop_id)
-		WHERE ${where.join(' and ')}
-	`, {...bind, brand_prop_id, cena_prop_id, name_prop_id, img_prop_id, descr_prop_id})
+					
+			UNIX_TIMESTAMP(so.date_content) as date_cost,
+				
+			count(distinct ig.group_id) as groupcount,
+			count(distinct fi.prop_nick) as filtercount
+		FROM win 
+			left join sources_wvalues br on (br.entity_id = :brendart_prop_id and br.key_id = win.key_id and br.prop_id = :brend_prop_id)
+			left join sources_wvalues m ON (m.entity_id = :brendart_prop_id AND m.key_id = win.key_id AND m.prop_id = :brendmodel_prop_id)
+			left join sources_wcells cena on (cena.entity_id = :brendart_prop_id and cena.key_id = win.key_id and cena.prop_id = :cena_prop_id)
+			left join sources_wcells name on (name.entity_id = :brendart_prop_id and name.key_id = win.key_id and name.prop_id = :name_prop_id)
+			left join sources_wcells img on (img.entity_id = :brendart_prop_id and img.key_id = win.key_id and img.prop_id = :img_prop_id)
+			left join sources_wcells descr on (descr.entity_id = :brendart_prop_id and descr.key_id = win.key_id and descr.prop_id = :descr_prop_id)
+			LEFT JOIN sources_sources so ON (win.source_id = so.source_id)
+			LEFT JOIN shop_allitemgroups ig ON (ig.key_id = win.key_id)
+				LEFT JOIN shop_filters fi ON (fi.group_id = ig.group_id)
+		GROUP BY win.source_id
+	`, {...bind, brend_prop_id, cena_prop_id, name_prop_id, img_prop_id, descr_prop_id})
 
-	rowgroup.groupcount = 0
-	const filters = []
-	for (const group_id in rowgroups) {
-		rowgroup.groupcount++
-		const group = await Shop.getGroupById(db, group_id)
-		filters.push(...group.filters)
+	
+	
+	const source_ids = await db.colAll(`select source_id from sources_sources`)
+	for (const source_id of source_ids) {
+		if (rowsources[source_id]) continue
+		rowsources[source_id] = {...STAT}
+		rowsources[source_id].source_id = source_id
 	}
-	rowgroup.filtercount = unique(filters).length
 
-	console.time('rowgroup.withfilters')
-	rowgroup.withfilters = rowgroup.poscount - await ShopAdmin.calcAllWithoutFilters(db)
-	console.timeEnd('rowgroup.withfilters')
-	console.time('rowgroup.withall')
-	
-	rowgroup.withall = rowgroup.poscount - await ShopAdmin.calcAllWithoutFilters(db, ['brend', 'cena', 'naimenovanie', 'images', 'opisanie'])
+	console.time('getSourceStat.sourcecount')
+	const source_sources = await db.allto('source_id', `
+		SELECT 
+			win.source_id, 
+			COUNT(distinct s.source_id) AS sourcecount
+		FROM win
+			left join sources_wcells s ON (s.entity_id = :brendart_prop_id and s.key_id = win.key_id)
+				
+		GROUP BY win.source_id
+	`, {...bind, brend_prop_id, cena_prop_id, name_prop_id, img_prop_id, descr_prop_id})
+	for (const source_id in source_sources) {
+		rowsources[source_id].sourcecount = source_sources[source_id].sourcecount
+	}
+	console.timeEnd('getSourceStat.sourcecount')
 
+	console.time('getSourceStat.withfilters')
+	const sourcesnofilters = await ShopAdmin.calcSourceWithoutFilters(db)
+	for (const source_id in rowsources) {
+		const row = rowsources[source_id]
+		row.withfilters = row.poscount - (sourcesnofilters[source_id]?.nofilters || 0)
+	}
+	console.timeEnd('getSourceStat.withfilters')
+	console.time('getSourceStat.withall')
+	const sourcesnoallfilters = await ShopAdmin.calcSourceWithoutFilters(db)
+	for (const source_id in rowsources) {
+		const row = rowsources[source_id]
+		row.withall = row.poscount - (sourcesnoallfilters[source_id]?.nofilters || 0)
+	}
+	console.timeEnd('getSourceStat.withall')
+
+
+	console.time('getSourceStat.order')
+	const orders = await db.all(`
+	 	SELECT so.source_id as brand_nick, o.status, count(DISTINCT ba.order_id) as count
+		FROM shop_orders o, shop_basket ba, sources_values va, sources_wvalues wva, sources_wcells wce, sources_sources so
+		WHERE YEAR(o.dateedit) = YEAR(NOW()) AND MONTH(o.dateedit) = MONTH(NOW())
+		AND ba.order_id = o.order_id
+		AND va.value_nick = ba.brendart_nick
+		AND wva.value_id = va.value_id AND wva.prop_id = :brendart_prop_id AND wva.entity_id = wva.prop_id
+		AND wce.key_id = wva.key_id AND wce.entity_id = wva.entity_id AND wce.prop_id = :brend_prop_id
+		AND so.source_id = wce.source_id
+		GROUP BY so.source_id, o.status
+	`, {...bind, brend_prop_id})
 	
-	console.timeEnd('rowgroup.withall')
-	console.timeEnd('rowgroup')
+	const store = {}
+	for (const row of orders) {
+		store[row.brand_nick] ??= {status:{}}
+		store[row.brand_nick].status[row.status] = row
+	}
+	for (const brand_nick in store) {
+		rowsources[brand_nick].basketcount = Object.values(store[brand_nick].status).reduce((ak, row) => ak + row.count, 0)
+		rowsources[brand_nick].ordercount = rowsources[brand_nick].basketcount - (store[brand_nick].status.wait?.count || 0)
+	}
+	console.timeEnd('getSourceStat.order')
+
+	console.timeEnd('getSourceStat')
 	
-	console.time('rowbrands')
+	return rowsources
+}
+ShopAdmin.getBrandStat = async (db) => {
+	const bind = await Shop.getBind(db)
+	const {prop_id: brend_prop_id = null} = await Shop.getPropByNick(db, 'brend')
+	const {prop_id: cena_prop_id = null} = await Shop.getPropByNick(db, 'cena')
+	const {prop_id: name_prop_id = null} = await Shop.getPropByNick(db, 'naimenovanie')
+	const {prop_id: img_prop_id = null} = await Shop.getPropByNick(db, 'images')
+	const {prop_id: descr_prop_id = null} = await Shop.getPropByNick(db, 'opisanie')
+	console.time('getBrandStat')
 	/*****************/
 	const rowbrands = await db.allto('brand_nick', `
 		SELECT 
@@ -816,7 +1150,8 @@ ShopAdmin.getAllStat = async (db) => {
 			COUNT(DISTINCT win.key_id) AS poscount, 
 			COUNT(DISTINCT m.value_id) AS modcount,
 			count(distinct br.value_id) as brandcount,
-			
+			0 as basketcount,
+			0 as ordercount,
 			count(distinct ig.group_id) as groupcount,
 			count(distinct fi.prop_nick) as filtercount,
 			count(distinct wce.source_id) as sourcecount,
@@ -829,14 +1164,14 @@ ShopAdmin.getAllStat = async (db) => {
 		FROM sources_wcells wce, sources_values va, sources_wvalues m, sources_wvalues win
 			LEFT JOIN shop_allitemgroups ig ON (ig.key_id = win.key_id)
 				LEFT JOIN shop_filters fi ON (fi.group_id = ig.group_id)
-			left join sources_wvalues br on (br.entity_id = win.entity_id and br.key_id = win.key_id and br.prop_id = :brand_prop_id)
+			left join sources_wvalues br on (br.entity_id = win.entity_id and br.key_id = win.key_id and br.prop_id = :brend_prop_id)
 			left join sources_wcells cena on (cena.entity_id = win.entity_id and cena.key_id = win.key_id and cena.prop_id = :cena_prop_id)
 					left join sources_sources cenaso on (cenaso.source_id = cena.source_id)
 				left join sources_wcells name on (name.entity_id = win.entity_id and name.key_id = win.key_id and name.prop_id = :name_prop_id)
 				left join sources_wcells img on (img.entity_id = win.entity_id and img.key_id = win.key_id and img.prop_id = :img_prop_id)
 				left join sources_wcells descr on (descr.entity_id = win.entity_id and descr.key_id = win.key_id and descr.prop_id = :descr_prop_id)
 
-		WHERE win.prop_id = :brand_prop_id
+		WHERE win.prop_id = :brend_prop_id
 		AND win.entity_id = :brendart_prop_id
 		AND m.entity_id = win.entity_id
 		AND m.prop_id = :brendmodel_prop_id
@@ -846,158 +1181,58 @@ ShopAdmin.getAllStat = async (db) => {
 		and wce.entity_id = win.entity_id
 		and wce.prop_id = win.prop_id
 		group by win.value_id
-	`, {...bind, brand_prop_id, cena_prop_id, name_prop_id, img_prop_id, descr_prop_id})
-	
+	`, {...bind, brend_prop_id, cena_prop_id, name_prop_id, img_prop_id, descr_prop_id})
 	const ym = ShopAdmin.getNowYM()
 	const brand_nicks = await db.colAll(`select brand_nick from shop_stat_brands where year = :year and month = :month`, ym) //brand этого месяца
 	for (const brand_nick of brand_nicks) {
 		if (rowbrands[brand_nick]) continue
-		rowbrands[brand_nick]	= {...STAT}
+		rowbrands[brand_nick] = {...STAT}
 		rowbrands[brand_nick].brand_nick = brand_nick
 	}
 
-	console.time('rowbrands.withfilters')
+	console.time('getBrandStat.withfilters')
 	const brandsnofilters = await ShopAdmin.calcBrandWithoutFilters(db)
 	for (const brand_nick in rowbrands) {
 		const row = rowbrands[brand_nick]
 		row.withfilters = row.poscount - (brandsnofilters[brand_nick]?.nofilters || 0)
 	}
-	console.timeEnd('rowbrands.withfilters')
-	console.time('rowbrands.withall')
+	console.timeEnd('getBrandStat.withfilters')
+	console.time('getBrandStat.withall')
 	const brandsnoallfilters = await ShopAdmin.calcBrandWithoutFilters(db)
 	for (const brand_nick in rowbrands) {
 		const row = rowbrands[brand_nick]
 		row.withall = row.poscount - (brandsnoallfilters[brand_nick]?.nofilters || 0)
 	}
-	console.timeEnd('rowbrands.withall')
-	console.timeEnd('rowbrands')
-	// for (const group_id in gcounts) {
-	// 	const row = rowgroups[group_id] = {}
-	// 	row.modcount = 0
-	// 	row.poscount = 0
-	// 	row.brandcount = 0
-	// 	row.groups = -1
-	// 	await Shop.runGroupDown(db, group_id, (child_id) => {
-	// 		//Бренды и позиции могут повторяться нельзя складывать. Если позиция повторилась, значит группы не вложенные а соседние
-	// 		const child = gcounts[child_id]
-	// 		row.groups++
-	// 		row.modcount += child.modcount
-	// 		row.poscount += child.poscount
-	// 		row.brandcount += child.brandcount
-	// 	})
-	// }
+	console.timeEnd('getBrandStat.withall')
 
-	// 	const calcDateContent = async (db, group_id) => {
-	// 	const group_ids = await Shop.getAllGroupIds(db, group_id)
-	// 	if (!group_ids.length) return null
-	// 	const bind = await Shop.getBind(db)
-	// 	const {prop_id} = await Shop.getPropByNick(db, 'cena')
-	// 	const date_content = await db.col(`
-	// 		SELECT UNIX_TIMESTAMP(min(so.date_content))
-	// 		FROM shop_itemgroups ig, sources_wcells wce, sources_sources so
-	// 		WHERE 
-	// 			wce.entity_id = :brendart_prop_id
-	// 			and wce.prop_id = :prop_id
-	// 			and ig.group_id in (${group_ids.join(",")})
-	// 			and ig.key_id = wce.key_id 
-	// 			and so.source_id = wce.source_id
-	// 	`, {...bind, prop_id})
-	// 	return date_content
-	// }
 
+	console.time('getBrandStat.order')
+	const orders = await db.all(`
+	 	SELECT brv.value_nick as brand_nick, o.status, count(*) as count
+		FROM shop_orders o, shop_basket ba, sources_values va, sources_wvalues wva, sources_wvalues br, sources_values brv
+		WHERE YEAR(o.dateedit) = YEAR(NOW()) AND MONTH(o.dateedit) = MONTH(NOW())
+		AND ba.order_id = o.order_id
+		AND va.value_nick = ba.brendart_nick
+		AND wva.value_id = va.value_id AND wva.prop_id = :brendart_prop_id AND wva.entity_id = wva.prop_id
+		AND br.key_id = wva.key_id AND br.entity_id = wva.entity_id AND br.prop_id = :brend_prop_id
+		AND brv.value_id = br.value_id
+		GROUP BY br.value_id, o.status
+	`, {...bind, brend_prop_id})
 	
-	return {rowgroups, rowgroup, rowbrands}
-
+	const store = {}
+	for (const row of orders) {
+		store[row.brand_nick] ??= {status:{}}
+		store[row.brand_nick].status[row.status] = row
+	}
+	for (const brand_nick in store) {
+		rowbrands[brand_nick].basketcount = Object.values(store[brand_nick].status).reduce((ak, row) => ak + row.count, 0)
+		rowbrands[brand_nick].ordercount = rowbrands[brand_nick].basketcount - (store[brand_nick].status.wait?.count || 0)
+	}
+	console.timeEnd('getBrandStat.order')
+	console.timeEnd('getBrandStat')
+	return rowbrands
 }
-// ShopAdmin.getGroupStat = async (db, group_id) => {
-// 	const bind = await Shop.getBind(db)
 
-// 	const row = {}	
-	
-// 	//const monitor = new PerformanceMonitor()
-
-// 	//monitor.start('calcCounts')
-// 	const counts = await calcCounts(db, group_id)
-// 	row.poscount = counts.poscount //await calcPositions(db, group_id)
-// 	row.modcount = counts.modcount //await calcModels(db, group_id)
-	
-// 	//monitor.start('calcGroups')
-// 	row.groups = await calcGroups(db, group_id)
-
-// 	//monitor.start('calcBrands')
-// 	row.brands = await calcBrands(db, group_id)
-	
-
-// 	//monitor.start('calcSources')
-// 	row.sources = await calcSources(db, group_id)
-	
-// 	//monitor.start('calcDateContent')
-// 	row.date_content = await calcDateContent(db, group_id)
-
-	
-// 	row.withbrands = await calcGroupWith(db, group_id, ['Бренд'])
-
-// 	row.withcost = await calcGroupWith(db, group_id, ['Цена'])
-	
-// 	row.withimg = await calcGroupWith(db, group_id, ['images'])
-	
-// 	row.withdescr = await calcGroupWith(db, group_id, ['Описание'])
-	
-// 	row.withname = await calcGroupWith(db, group_id, ['Наименование'])
-
-
-// 	//monitor.start('calcFilters')
-// 	row.filters = await calcFilters(db, group_id)	
-
-// 	const filters = await ShopAdmin.getFiltersByGroupId(db, group_id)
-// 	//monitor.start('calcWithFilters '+ group_id)
-// 	row.withfilters = await calcWithFilters(db, group_id, filters)
-
-// 	//monitor.start('calcWithFiltersAll '+ group_id)	
-// 	row.withall = await calcWithFilters(db, group_id, [...filters, 'Бренд', 'Цена', 'images', 'Описание', 'Наименование'])
-	
-	
-	
-	
-// 	return row
-// }
-
-
-
-
-// ShopAdmin.recalcIndexGroups2 = async (db) => {
-// 	const d = new Date()
-// 	const topids = await db.colAll(`SELECT group_id from shop_groups where parent_id is null`)
-// 	await db.affectedRows(`TRUNCATE shop_itemgroups`)
-	
-// 	const shop_itemgroups = new BulkInserter(db, 'shop_itemgroups', ['group_id', 'key_id']);
-// 	//let count = 0
-// 	for (const top_id of topids) {
-// 		await Shop.runGroupDown(db, top_id, async ({group_id}) => {
-// 			const { key_ids } = await ShopAdmin.getFreeKeyIds(db, group_id) //Свободные позиции, которые не попадают во внутрение группы, те будут уже к своим группам преписаны
-// 			// const data = list.map(key_id => [group_id, key_id])
-// 			// if (!list.length) return
-// 			for (const key_id of list) {
-// 				await shop_itemgroups.insert([group_id, key_id])
-// 			}
-// 			// count += await db.affectedRows(`
-// 			// 	INSERT INTO shop_itemgroups (group_id, key_id)
-// 			// 	VALUES ${data.map(() => '(?, ?)').join(', ')}
-// 			// `, data.flat())
-// 		})
-// 	}
-// 	await shop_itemgroups.flush()
-// 	console.log('recalcIndexGroups', new Date() - d)
-// 	//console.log('Сохранены группы позиций indexGroups', count)
-// 	//return count
-// }
-// ShopAdmin.scheduleDailyGroupStatCheck = async (db, time = '02:09') => {
-// 	console.log('ShopAdmin.scheduleDailyGroupStatCheck', time)
-// 	scheduleDailyTask(time, async () => {
-// 		await ShopAdmin.setGroupStats(db)
-// 		return 'ок'
-// 	})
-// }
 ShopAdmin.getAllGroupIds = async (db, group_id = null) => {
 	const group_ids = group_id ? await db.colAll(`
 		WITH RECURSIVE group_tree AS (
@@ -1014,6 +1249,8 @@ ShopAdmin.getAllGroupIds = async (db, group_id = null) => {
 ShopAdmin.recalcIndexGroups = async (db, group_id) => {
 	
 	console.time('recalcIndexGroups')
+	
+
 	const group_ids = await ShopAdmin.getAllGroupIds(db, group_id)
 	if (!group_id) {
 		await db.affectedRows(`TRUNCATE shop_itemgroups`)
@@ -1040,6 +1277,8 @@ ShopAdmin.recalcIndexGroups = async (db, group_id) => {
 	}
 	await shop_itemgroups.flush()
 	await shop_allitemgroups.flush()
+
+	
 	console.timeEnd('recalcIndexGroups')
 }
 ShopAdmin.runGroupUp = async (db, group_id, func) => {
@@ -1088,7 +1327,7 @@ ShopAdmin.runGroupUp = async (db, group_id, func) => {
 // }
 ShopAdmin.recalcChangeGroups = async (db, group_id) => { //Нужно добавить в /rest.js
 	await ShopAdmin.recalcIndexGroups(db, group_id)
-	await ShopAdmin.recalcAllStat(db, group_id)
+	// await ShopAdmin.recalcAllStat(db)
 }
 
 // ShopAdmin.recalcAllStat = async (db, group_id) => { //Нужно добавить в /rest.js	
@@ -1122,78 +1361,208 @@ ShopAdmin.recalcChangeGroups = async (db, group_id) => { //Нужно добав
 // 	}
 // 	console.timeEnd('recalcChangeGroups')
 // }
-ShopAdmin.recalcAllStat = async (db, group_id) => { //Нужно добавить в /rest.js	
-	console.time('recalcAllStat')
-	
+// ShopAdmin.createShopStatTemp = async (db) => {
+// 	console.time('createShopStatTemp')
+// 	await db.affectedRows(`CALL shop_recalcStat()`)
+// 	console.timeEnd('createShopStatTemp')
+// 	console.log('createShopStatTemp', rows)
+// 	// const bind = await Shop.getBind(db)
+// 	// const {prop_id: brend_prop_id = null} = await Shop.getPropByNick(db, 'brend')
+// 	// const {prop_id: cena_prop_id = null} = await Shop.getPropByNick(db, 'cena')
+// 	// const {prop_id: name_prop_id = null} = await Shop.getPropByNick(db, 'naimenovanie')
+// 	// const {prop_id: img_prop_id = null} = await Shop.getPropByNick(db, 'images')
+// 	// const {prop_id: descr_prop_id = null} = await Shop.getPropByNick(db, 'opisanie')
 
-	const {rowgroups, rowgroup, rowbrands} = await ShopAdmin.getAllStat(db)
-	
-	const ym = ShopAdmin.getNowYM()
-	const pym = ShopAdmin.getPrevYM() //Записывает для прошлого месяца если записи такой не было
-	const pymgroups = await db.colAll(`select group_id from shop_stat_groups where year = :year and month = :month`, pym)
+// 	// await db.db.query(`
+// 	// 	DROP TEMPORARY TABLE IF EXISTS shop_stat_temp_keys;
+// 	// 	CREATE TEMPORARY TABLE shop_stat_temp_keys AS
+// 	// 	WITH RECURSIVE group_hierarchy AS (
+// 	// 	    SELECT 
+// 	// 	        group_id,
+// 	// 	        self_filters,
+// 	// 	        parent_id,
+// 	// 	        0 as level,
+// 	// 	        group_name as path,
+// 	// 	        group_id as child_id
+// 	// 	    FROM shop_groups 
+		    
+// 	// 	    UNION ALL
+		    
+// 	// 	    -- Рекурсивная часть: идем вверх по иерархии
+// 	// 	    SELECT 
+// 	// 	        g.group_id,
+// 	// 	        g.self_filters,
+// 	// 	        g.parent_id,
+// 	// 	        gh.level + 1,
+// 	// 	        CONCAT(g.group_name, ' -> ', gh.path),
+// 	// 	        gh.child_id
+// 	// 	    FROM shop_groups g
+// 	// 	    INNER JOIN group_hierarchy gh ON g.group_id = gh.parent_id
+// 	// 	), filters AS ( -- child-id дай ближайшие фильтры filter_group_id, prop_id
+// 	// 		SELECT p.prop_id, h.child_id, h.group_id AS filter_group_id 
+// 	// 		FROM group_hierarchy h, shop_filters f, sources_wprops p
+// 	// 		WHERE level = (
+// 	// 		    SELECT MIN(h2.level)
+// 	// 		    FROM group_hierarchy h2
+// 	// 		    WHERE h2.child_id = h.child_id AND h2.self_filters = 1
+// 	// 		)
+// 	// 		AND f.group_id = h.group_id
+// 	// 		AND p.prop_nick = f.prop_nick
+// 	// 	), key_ids AS (
+// 	// 	 	SELECT DISTINCT wce.source_id, wce.key_id, wce.entity_id
+// 	// 	 	FROM sources_wcells wce
+// 	// 	 	WHERE entity_id = :brendart_prop_id
+// 	// 	), 
+// 	// 	props AS (
+// 	// 		SELECT  
+// 	// 			k.source_id,
+// 	// 			k.key_id,
+// 	// 	 		bm.value_id AS model_id,
+// 	// 	 		br.value_id AS brand_id,
+// 	// 			if(cena.key_id IS null, false, cena.source_id) AS cena_source_id,
+// 	// 	 		if(n.key_id IS null, FALSE, true) AS isname,
+// 	// 	 		if(br.key_id IS null, FALSE, true) AS isbrand,
+// 	// 	 		if(img.key_id IS null, FALSE, true) AS isimg,
+// 	// 	 		if(descr.key_id IS null, FALSE, true) AS isdescr
+// 	// 		FROM 
+// 	// 			key_ids k
+// 	// 			LEFT JOIN sources_wvalues bm ON (k.key_id = bm.key_id AND k.entity_id = bm.entity_id AND bm.prop_id = :brendmodel_prop_id)			
+// 	// 			LEFT JOIN sources_wvalues br ON (k.key_id = br.key_id AND k.entity_id = br.entity_id AND br.prop_id = :brend_prop_id)	
+// 	// 			LEFT JOIN sources_wcells cena on (k.entity_id = cena.entity_id and k.key_id = cena.key_id and cena.prop_id = :cena_prop_id)
+// 	// 			left join sources_wcells n on (n.entity_id = k.entity_id and n.key_id = k.key_id and n.prop_id = :name_prop_id)
+// 	// 			left join sources_wcells img on (img.entity_id = k.entity_id and img.key_id = k.key_id and img.prop_id = :img_prop_id)
+// 	// 			left join sources_wcells descr on (descr.entity_id = k.entity_id and descr.key_id = k.key_id and descr.prop_id = :descr_prop_id)
+// 	// 	), 
+// 	// 	justkeys AS (
+// 	// 		SELECT distinct k.key_id FROM key_ids k
+// 	// 	),
+// 	// 	keyfilters AS (
+// 	// 		SELECT 
+// 	// 			ig.group_id, 
+// 	// 			jk.key_id,
+// 	// 			(
+// 	// 		 		SELECT COUNT(*) from filters f WHERE f.child_id = ig.group_id
+// 	// 	 		) AS filtercount,
+// 	// 	 		(	
+// 	// 	 		SELECT COUNT(*) 
+// 	// 		 		FROM filters f
+// 	// 		 			LEFT JOIN sources_wcells wce ON (wce.prop_id = f.prop_id)
+// 	// 		 		WHERE f.child_id = ig.group_id AND wce.key_id = jk.key_id AND wce.entity_id = :brendart_prop_id 		
+// 	// 	 		) AS withfiltercount
+// 	// 		FROM justkeys jk
+// 	// 			left join shop_allitemgroups ig ON (ig.key_id = jk.key_id)
+// 	// 	)
 
-	for (const group_id in rowgroups) {	
+
+// 	// 	SELECT kf.group_id, kf.filtercount, kf.withfiltercount, p.* FROM props p, keyfilters kf
+// 	// 	WHERE p.key_id = kf.key_id;
+
+// 	// 	CREATE INDEX key_group_source_brand ON shop_stat_temp_keys (key_id, group_id, model_id, source_id, brand_id);
+
+
+// 	// 	DROP TEMPORARY TABLE IF EXISTS shop_stat_temp_orders;
+// 	// 	CREATE TEMPORARY TABLE shop_stat_temp_orders AS
+// 	// 	SELECT o.order_id, va.value_id AS key_id, o.status
+// 	// 	FROM shop_orders o, shop_basket b, sources_values va
+// 	// 	WHERE YEAR(o.dateedit) = YEAR(NOW()) AND MONTH(o.dateedit) = MONTH(NOW())
+// 	// 	AND b.order_id = o.order_id
+// 	// 	AND va.value_nick = b.brendart_nick
+// 	// `, {...bind, brend_prop_id, cena_prop_id, name_prop_id, img_prop_id, descr_prop_id})
+// }
+// ShopAdmin.recalcAllStat = async (db) => { //Нужно добавить в /rest.js	
+// 	console.time('recalcAllStat')
+// 	await db.affectedRows(`CALL shop_recalcStat()`)
+// 	// const ym = ShopAdmin.getNowYM()
+// 	// const pym = ShopAdmin.getPrevYM() //Записывает для прошлого месяца если записи такой не было
+
+// 	// await ShopAdmin.createShopStatTemp(db)
+	
+// 	// return
+// 	// const rowgroups = await ShopAdmin.getGroupStat(db) 
+// 	// const pymgroups = await db.colAll(`select group_id from shop_stat_groups where year = :year and month = :month`, pym)
+// 	// for (const group_id in rowgroups) {	
 		
-		const row = rowgroups[group_id]
+// 	// 	const row = rowgroups[group_id]
 		
-		const keys = Object.keys(row).filter(name => !~['date_cost'].indexOf(name))
+// 	// 	const keys = Object.keys(row).filter(name => !~['date_cost'].indexOf(name))
 
-		await db.exec(`
-			REPLACE INTO shop_stat_groups (date_cost, ${Object.keys(ym).join(',')}, ${keys.join(',')})
-			VALUES (FROM_UNIXTIME(:date_cost), :${Object.keys(ym).join(',:')}, :${keys.join(',:')})
-		`, { ...ym, ...row})		
+// 	// 	await db.exec(`
+// 	// 		REPLACE INTO shop_stat_groups (date_cost, ${Object.keys(ym).join(',')}, ${keys.join(',')})
+// 	// 		VALUES (FROM_UNIXTIME(:date_cost), :${Object.keys(ym).join(',:')}, :${keys.join(',:')})
+// 	// 	`, { ...ym, ...row})		
 
-		if (~pymgroups.indexOf(Number(group_id))) continue //Запись о группе в прошлом месяце есть
+// 	// 	if (~pymgroups.indexOf(Number(group_id))) continue //Запись о группе в прошлом месяце есть
 
-		await db.exec(`
-			INSERT INTO shop_stat_groups (date_cost, ${Object.keys(pym).join(',')}, ${keys.join(',')})
-			VALUES (FROM_UNIXTIME(:date_cost), :${Object.keys(pym).join(',:')}, :${keys.join(',:')})
-		`, {...pym, ...row})
-	}
+// 	// 	await db.exec(`
+// 	// 		INSERT INTO shop_stat_groups (date_cost, ${Object.keys(pym).join(',')}, ${keys.join(',')})
+// 	// 		VALUES (FROM_UNIXTIME(:date_cost), :${Object.keys(pym).join(',:')}, :${keys.join(',:')})
+// 	// 	`, {...pym, ...row})
+// 	// }
 
-	const pymbrands = await db.colAll(`select brand_nick from shop_stat_brands where year = :year and month = :month`, pym)
-	for (const brand_nick in rowbrands) {	
+
+// 	// const rowbrands = await ShopAdmin.getBrandStat(db)
+// 	// const pymbrands = await db.colAll(`select brand_nick from shop_stat_brands where year = :year and month = :month`, pym)
+// 	// for (const brand_nick in rowbrands) {	
 		
-		const row = rowbrands[brand_nick]
+// 	// 	const row = rowbrands[brand_nick]
 		
-		const keys = Object.keys(row).filter(name => !~['date_cost'].indexOf(name))
+// 	// 	const keys = Object.keys(row).filter(name => !~['date_cost'].indexOf(name))
 
-		await db.exec(`
-			REPLACE INTO shop_stat_brands (date_cost, ${Object.keys(ym).join(',')}, ${keys.join(',')})
-			VALUES (FROM_UNIXTIME(:date_cost), :${Object.keys(ym).join(',:')}, :${keys.join(',:')})
-		`, { ...ym, ...row})
+// 	// 	await db.exec(`
+// 	// 		REPLACE INTO shop_stat_brands (date_cost, ${Object.keys(ym).join(',')}, ${keys.join(',')})
+// 	// 		VALUES (FROM_UNIXTIME(:date_cost), :${Object.keys(ym).join(',:')}, :${keys.join(',:')})
+// 	// 	`, { ...ym, ...row})
 
-		if (~pymbrands.indexOf(brand_nick)) continue //Запись в прошлом месяце есть
+// 	// 	if (~pymbrands.indexOf(brand_nick)) continue //Запись в прошлом месяце есть
 
-		await db.exec(`
-			INSERT INTO shop_stat_brands (date_cost, ${Object.keys(pym).join(',')}, ${keys.join(',')})
-			VALUES (FROM_UNIXTIME(:date_cost), :${Object.keys(pym).join(',:')}, :${keys.join(',:')})
-		`, {...pym, ...row})
-	}
-
-
+// 	// 	await db.exec(`
+// 	// 		INSERT INTO shop_stat_brands (date_cost, ${Object.keys(pym).join(',')}, ${keys.join(',')})
+// 	// 		VALUES (FROM_UNIXTIME(:date_cost), :${Object.keys(pym).join(',:')}, :${keys.join(',:')})
+// 	// 	`, {...pym, ...row})
+// 	// }
 
 
-	const pymstat = await db.col(`select year from shop_stat where year = :year and month = :month`, pym)
+
+// 	// const rowgroup = await ShopAdmin.getCommonStat(db)
+// 	// const pymstat = await db.col(`select year from shop_stat where year = :year and month = :month`, pym)
+// 	// const row = rowgroup
+// 	// const keys = Object.keys(row).filter(name => !~['date_cost'].indexOf(name))
+// 	// await db.exec(`
+// 	// 	REPLACE INTO shop_stat (date_cost, ${Object.keys(ym).join(',')}, ${keys.join(',')})
+// 	// 	VALUES (FROM_UNIXTIME(:date_cost), :${Object.keys(ym).join(',:')}, :${keys.join(',:')})
+// 	// `, { ...ym, ...row})
+
+// 	// if (!pymstat) {
+// 	// 	await db.exec(`
+// 	// 		INSERT INTO shop_stat (date_cost, ${Object.keys(pym).join(',')}, ${keys.join(',')})
+// 	// 		VALUES (FROM_UNIXTIME(:date_cost), :${Object.keys(pym).join(',:')}, :${keys.join(',:')})
+// 	// 	`, {...pym, ...row})
+// 	// }
 	
-	const row = rowgroup
-	
-	const keys = Object.keys(row).filter(name => !~['date_cost'].indexOf(name))
 
-	await db.exec(`
-		REPLACE INTO shop_stat (date_cost, ${Object.keys(ym).join(',')}, ${keys.join(',')})
-		VALUES (FROM_UNIXTIME(:date_cost), :${Object.keys(ym).join(',:')}, :${keys.join(',:')})
-	`, { ...ym, ...row})
 
-	if (!pymstat) {
-		await db.exec(`
-			INSERT INTO shop_stat (date_cost, ${Object.keys(pym).join(',')}, ${keys.join(',')})
-			VALUES (FROM_UNIXTIME(:date_cost), :${Object.keys(pym).join(',:')}, :${keys.join(',:')})
-		`, {...pym, ...row})
-	}
-	
-	console.timeEnd('recalcAllStat')
-}
+// 	// const rowsources = await ShopAdmin.getSourceStat(db)
+// 	// const pymsources = await db.colAll(`select source_id from shop_stat_sources where year = :year and month = :month`, pym)
+// 	// for (const source_id in rowsources) {	
+		
+// 	// 	const row = rowsources[source_id]
+		
+// 	// 	const keys = Object.keys(row).filter(name => !~['date_cost'].indexOf(name))
+
+// 	// 	await db.exec(`
+// 	// 		REPLACE INTO shop_stat_sources (date_cost, ${Object.keys(ym).join(',')}, ${keys.join(',')})
+// 	// 		VALUES (FROM_UNIXTIME(:date_cost), :${Object.keys(ym).join(',:')}, :${keys.join(',:')})
+// 	// 	`, { ...ym, ...row})
+
+// 	// 	if (~pymsources.indexOf(Number(source_id))) continue //Запись в прошлом месяце есть		
+// 	// 	await db.exec(`
+// 	// 		INSERT INTO shop_stat_sources (date_cost, ${Object.keys(pym).join(',')}, ${keys.join(',')})
+// 	// 		VALUES (FROM_UNIXTIME(:date_cost), :${Object.keys(pym).join(',:')}, :${keys.join(',:')})
+// 	// 	`, {...pym, ...row})
+// 	// }
+
+// 	console.timeEnd('recalcAllStat')
+// }
 
 ShopAdmin.getHistory = async (db) => {
 	//const row = await ShopAdmin.getGroupStat(db, group_id)
@@ -1271,7 +1640,7 @@ ShopAdmin.reorderGroups = async (db) => {
 // 			${child_ids.map(child_id => `LEFT JOIN shop_allitemgroups ig${child_id} ON (ig${child_id}.key_id = wce.key_id AND ig${child_id}.group_id = ${child_id})`).join(' ')}
 // 			WHERE ig.group_id = :parent_id
 // 			and it.key_id = ig.key_id and it.entity_id = :brendart_prop_id
-// 			and (${hashs.map(hash => 'it.search like "%' + hash.join('%" and it.search like "%') + '%"').join(' or ') || '1 = 1'}) 
+// 			and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || '1 = 1'}) 
 // 			${child_ids.map(child_id => `AND ig${child_id}.key_id IS NULL`).join(' ')}	
 // 			${limit ? 'LIMIT ' + limit : ''}
 // 		`, {...bind, parent_id})
@@ -1281,7 +1650,7 @@ ShopAdmin.reorderGroups = async (db) => {
 // 			${child_ids.map(child_id => `LEFT JOIN shop_allitemgroups ig${child_id} ON (ig${child_id}.key_id = wce.key_id AND ig${child_id}.group_id = ${child_id})`).join(' ')}
 // 			WHERE ig.group_id = :parent_id
 // 			and it.key_id = ig.key_id and it.entity_id = :brendart_prop_id
-// 			and (${hashs.map(hash => 'it.search like "%' + hash.join('%" and it.search like "%') + '%"').join(' or ') || '1 = 1'}) 
+// 			and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || '1 = 1'}) 
 // 			${child_ids.map(child_id => `AND ig${child_id}.key_id IS NULL`).join(' ')}
 // 		`, bind)
 // 		return {key_ids, poscount}
@@ -1293,7 +1662,7 @@ ShopAdmin.reorderGroups = async (db) => {
 // 			${child_ids.map(child_id => `LEFT JOIN shop_allitemgroups ig${child_id} ON (ig${child_id}.key_id = it.key_id AND ig${child_id}.group_id = ${child_id})`).join(' ')}
 // 			WHERE it.entity_id = 1 
 // 			and it.search != ''
-// 			and (${hashs.map(hash => 'it.search like "%' + hash.join('%" and it.search like "%') + '%"').join(' or ') || '1 = 1'}) 
+// 			and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || '1 = 1'}) 
 // 			${child_ids.map(child_id => `AND ig${child_id}.key_id IS NULL`).join(' ')}	
 // 			${limit ? 'LIMIT ' + limit : ''}
 // 		`)
@@ -1303,7 +1672,7 @@ ShopAdmin.reorderGroups = async (db) => {
 // 			${child_ids.map(child_id => `LEFT JOIN shop_allitemgroups ig${child_id} ON (ig${child_id}.key_id = it.key_id AND ig${child_id}.group_id = ${child_id})`).join(' ')}
 // 			WHERE it.entity_id = 1 
 // 			and it.search != ''
-// 			and (${hashs.map(hash => 'it.search like "%' + hash.join('%" and it.search like "%') + '%"').join(' or ') || '1 = 1'}) 
+// 			and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || '1 = 1'}) 
 // 			${child_ids.map(child_id => `AND ig${child_id}.key_id IS NULL`).join(' ')}	
 // 		`)
 // 		return {key_ids, poscount}
@@ -1317,21 +1686,21 @@ ShopAdmin.getFreeKeyIdsByGroupIndex = async (db, group_id = null, hashs = [], li
 			SELECT it.key_id 
 			FROM sources_items it
 			${child_ids.map(child_id => `LEFT JOIN shop_allitemgroups ig${child_id} ON (ig${child_id}.key_id = it.key_id AND ig${child_id}.group_id = ${child_id})`).join(' ')}
-			WHERE it.entity_id = 1 
+			WHERE it.entity_id = :brendart_prop_id
 			and it.search != ''
-			and (${hashs.map(hash => 'it.search like "%' + hash.join('%" and it.search like "%') + '%"').join(' or ') || '1 = 1'}) 
+			and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || '1 = 1'}) 
 			${child_ids.map(child_id => `AND ig${child_id}.key_id IS NULL`).join(' ')}	
 			${limit ? 'LIMIT ' + limit : ''}
-		`)
+		`, bind)
 		const poscount = await db.colAll(`
 			SELECT count(*)
 			FROM sources_items it
 			${child_ids.map(child_id => `LEFT JOIN shop_allitemgroups ig${child_id} ON (ig${child_id}.key_id = it.key_id AND ig${child_id}.group_id = ${child_id})`).join(' ')}
-			WHERE it.entity_id = 1 
+			WHERE it.entity_id = :brendart_prop_id
 			and it.search != ''
-			and (${hashs.map(hash => 'it.search like "%' + hash.join('%" and it.search like "%') + '%"').join(' or ') || '1 = 1'}) 
+			and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || '1 = 1'}) 
 			${child_ids.map(child_id => `AND ig${child_id}.key_id IS NULL`).join(' ')}	
-		`)
+		`, bind)
 		return {key_ids, poscount}
 	} else {
 		const key_ids = await db.colAll(`
@@ -1340,7 +1709,7 @@ ShopAdmin.getFreeKeyIdsByGroupIndex = async (db, group_id = null, hashs = [], li
 			WHERE ig.group_id = :group_id
 			and it.key_id = ig.key_id 
 			and it.entity_id = :brendart_prop_id
-			and (${hashs.map(hash => 'it.search like "%' + hash.join('%" and it.search like "%') + '%"').join(' or ') || '1 = 1'}) 
+			and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || '1 = 1'}) 
 			${limit ? 'LIMIT ' + limit : ''}
 		`, {...bind, group_id})
 
@@ -1355,7 +1724,7 @@ ShopAdmin.getFreeKeyIdsByGroupIndex = async (db, group_id = null, hashs = [], li
 			and wva.entity_id = it.entity_id 
 			and wva.prop_id = :brendmodel_prop_id
 			and wva.key_id = ig.key_id
-			and (${hashs.map(hash => 'it.search like "%' + hash.join('%" and it.search like "%') + '%"').join(' or ') || '1 = 1'}) 
+			and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || '1 = 1'}) 
 		`, {...bind, group_id})
 		return {poscount, key_ids}
 	}
@@ -1409,6 +1778,34 @@ ShopAdmin.getTable = async (db, items) => {
 	table.rows = rows
 	
 	return table
+}
+
+ShopAdmin.checkRestat = async (db) => {
+	const dates = await Recalc.getDates(db)
+	//shop работает с опубликованными материалами date_recalc_publicate, после публикации запускается пересчёт магазина date_recalc_finish
+	await cproc(ShopAdmin, 'checkRestat', async () => {
+		const date_restat = await db.col(`select UNIX_TIMESTAMP(max(date_restat)) from shop_stat`)
+		if (dates.date_recalc_finish > date_restat) {
+			console.log('shop_recalcStat')
+			await db.affectedRows(`CALL shop_recalcStat()`)
+		}
+	})
+}
+ShopAdmin.scheduleDailyRestat = async (db, time = '01:09') => {	
+	console.log('Sources.scheduleDailyRestat', time)
+	scheduleDailyTask(time, async () => {
+		const dates = await Recalc.getDates(db)
+		//shop работает с опубликованными материалами date_recalc_publicate, после публикации запускается пересчёт магазина date_recalc_finish
+		const date_restat = await db.col(`select UNIX_TIMESTAMP(max(date_restat)) from shop_stat`)
+		if (dates.date_recalc_finish > date_restat) {
+			console.log('shop_recalcStat')
+			await db.affectedRows(`CALL shop_recalcStat()`)
+		} else {
+			console.log('shop_recalcPrev')
+			await db.affectedRows(`CALL shop_recalcPrev()`)
+		}
+		return 'ok'
+	})
 }
 ShopAdmin.getFreeTableByGroupIndex = async (db, group_id = null, hashs = []) => {
 	const ans = {poscount:0, modcount:0, head: [], rows:[]}
@@ -1557,7 +1954,7 @@ ShopAdmin.getItems = async (db, key_ids) => {
 			wd.date,
 			
 			CASE
-			 	WHEN LENGTH(wt.text) <= 21 THEN wt.text
+			 	WHEN LENGTH(wt.text) <= 31 THEN REGEXP_REPLACE(wt.text, '<[^>]+>', ' ')
 			 	ELSE CONCAT(TRIM(LEFT(REGEXP_REPLACE(wt.text, '<[^>]+>', ' '), 30)), '…')
 			END as text
 
@@ -1673,4 +2070,82 @@ ShopAdmin.reorderCards = async (db) => {
 		promises.push(r)
 	}
 	return Promise.all(promises)
+}
+
+
+
+ShopAdmin.samples = {} //depricated расчёт интересный по выборке без использования кэша групп
+ShopAdmin.samples.getFreeGroupNicksByItem = async (db, item) => { //depricated last значит группы где этот товар является нераспределённым
+	//const group_ids = await db.colAll(`SELECT distinct group_id from shop_itemgroups where key_id = item.key_id`)
+	const group_ids = await ShopAdmin.samples.getGroupIdsByItem(db, item)
+
+
+	let group_nicks = []
+	for (const group_id of group_ids) {
+		if (!await Shop.isInRootById(db, group_id)) continue
+		if (!await Shop.runGroupDown(db, group_id, (child) => {
+			if (group_id == child.group_id) return
+			if (~group_ids.indexOf(child.group_id)) return true //Есть какая-то более вложенная группа
+		})) {
+			const group = await Shop.getGroupById(db, group_id)
+			group_nicks.push(group.group_nick) //Если внутри группы не нашли других
+		}
+	}
+	return group_nicks
+}
+ShopAdmin.samples.getGroupIdsByItem = async (db, item) => {
+	/*
+		item = {
+			'cena':[nick, nick]
+		}
+	*/
+	const all_group_ids = await Shop.getAllGroupIds(db)
+	const group_ids = []
+	for (const group_id of all_group_ids) {
+		const samples = await ShopAdmin.getSamplesUpByGroupId(db, group_id)
+		if (!ShopAdmin.samples.isItemSamples(item, samples)) continue;
+
+		group_ids.push(group_id)
+	}
+	return group_ids
+}
+ShopAdmin.samples.isItemSamples = (item, samples) => {
+	
+	for (const sample of samples) {
+		let r = false
+		for (const prop_nick in sample) {
+			if (typeof(sample[prop_nick]) == 'object') {
+				if (!item[prop_nick]) {
+					r = false
+					break
+				}
+				if (item[prop_nick].some(nick => sample[prop_nick][nick])) {
+					r = true
+					continue
+				} else {
+					r = false
+					break
+				}
+			} else if (sample[prop_nick] == 'any'){
+
+				if (item[prop_nick]) {
+					r = true
+					continue
+				} else {
+					r = false
+					break
+				}
+			} else if (sample[prop_nick] == 'empty'){
+				if (item[prop_nick]) {
+					r = false
+					break
+				} else {
+					r = true
+					continue
+				}
+			}
+
+		}
+		if (r) return true
+	}
 }

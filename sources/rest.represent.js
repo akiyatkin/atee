@@ -178,12 +178,12 @@ rest.addResponse('get-represent', ['admin'], async view => {
 
 	const item = view.data.item = key_id ? await Sources.getItem(db, entity_id, key_id) : false
 	if (item) {
-		item.cls = represent.calcCls(
-			entity.represent_prop, 
-			item.represent_custom_value, 
-			entity.represent_values
-		)
-		// item.value = key_id ? await Sources.getValue(db, entity_id, entity.prop_id, 0) : false	
+		// item.cls = represent.calcCls(
+		// 	entity.represent_prop, 
+		// 	item.represent_custom_value, 
+		// 	entity.represent_values
+		// )
+		// item.value = key_id ? await Sources.getValueById(db, entity.prop_id) : false	
 		// if (item.key) {
 		// item.keycls = represent.calcCls(
 		// 	entity.represent_prop && item.represent_value, 
@@ -211,14 +211,15 @@ rest.addResponse('get-represent', ['admin'], async view => {
 	// 	// 	source.represent_cells
 	// 	// )
 	// }
-	const value = view.data.value = cell?.value_id ? await Sources.getValue(db, prop_id, cell.value_id) : false
-	if (value) {
-		value.cls = represent.calcCls(
-			entity.represent_entity && prop.represent_prop && item.represent_value, 
-			value.represent_custom_value, 
-			entity.represent_values
-		)
-	}
+	const value = view.data.value = cell?.value_id ? await Sources.getValueById(db, cell.value_id) : false
+	
+	// if (value) {
+	// 	value.cls = represent.calcCls(
+	// 		entity.represent_entity && prop.represent_prop && item.represent_value, 
+	// 		true, 
+	// 		true
+	// 	)
+	// }
 
 
 	if (col && row) {
@@ -358,7 +359,7 @@ rest.addAction('set-represent_sheets', ['admin','checkrecalc'], async view => {
 
 	view.data.cls = {main: `represent-${source.represent_source}`, custom: defcustom(newvalue)}
 
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		//await Consciousness.recalcEntitiesPropId(db)
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
@@ -390,7 +391,7 @@ rest.addAction('set-represent_sheets', ['admin','checkrecalc'], async view => {
 //    		WHERE source_id = :source_id
 // 	`, {source_id, newvalue})
 	
-// 	Recalc.recalc(db, async () => {
+// 	Recalc.recalc(async (db) => {
 // 		//await Consciousness.recalcEntitiesPropId(db)
 // 		//await Consciousness.recalcMulti(db)
 // 		//await Consciousness.recalcTexts(db)
@@ -421,7 +422,7 @@ rest.addAction('set-represent_cols', ['admin'], async view => {
 		SET represent_cols = :newvalue
    		WHERE source_id = :source_id
 	`, {source_id, newvalue})
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		//await Consciousness.recalcEntitiesPropId(db)
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
@@ -451,7 +452,7 @@ rest.addAction('set-represent_cells', ['admin'], async view => {
 		SET represent_cells = :newvalue
    		WHERE source_id = :source_id
 	`, {source_id, newvalue})
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		//await Consciousness.recalcEntitiesPropId(db)
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
@@ -472,36 +473,36 @@ rest.addAction('set-represent_cells', ['admin'], async view => {
 	return view.ret()
 })
 
-rest.addAction('set-represent_values', ['admin','checkrecalc'], async view => {
-	const db = await view.get('db')
-	const entity_id = await view.get('entity_id#required')
-	const entity = await Sources.getEntity(db, entity_id)
-	const newvalue = !entity.represent_values + 0
-	await db.exec(`
-		UPDATE sources_props 
-		SET represent_values = :newvalue
-   		WHERE prop_id = :entity_id
-	`, {entity_id, newvalue})
-	Recalc.recalc(db, async () => {
-		//await Consciousness.recalcEntitiesPropId(db)
-		//await Consciousness.recalcMulti(db)
-		//await Consciousness.recalcTexts(db)
-		//await Consciousness.recalcKeyIndex(db)
-		//await Consciousness.insertItems(db) //insert items		
+// rest.addAction('set-represent_values', ['admin','checkrecalc'], async view => {
+// 	const db = await view.get('db')
+// 	const entity_id = await view.get('entity_id#required')
+// 	const entity = await Sources.getEntity(db, entity_id)
+// 	const newvalue = !entity.represent_values + 0
+// 	await db.exec(`
+// 		UPDATE sources_props 
+// 		SET represent_values = :newvalue
+//    		WHERE prop_id = :entity_id
+// 	`, {entity_id, newvalue})
+// 	Recalc.recalc(async (db) => {
+// 		//await Consciousness.recalcEntitiesPropId(db)
+// 		//await Consciousness.recalcMulti(db)
+// 		//await Consciousness.recalcTexts(db)
+// 		//await Consciousness.recalcKeyIndex(db)
+// 		//await Consciousness.insertItems(db) //insert items		
 
-		//await Consciousness.recalcRepresentSheet(db)
-		//await Consciousness.recalcRepresentCol_bySource(db, source_id)
-		await Consciousness.recalcMaster(db)
-		return
+// 		//await Consciousness.recalcRepresentSheet(db)
+// 		//await Consciousness.recalcRepresentCol_bySource(db, source_id)
+// 		await Consciousness.recalcMaster(db)
+// 		return
 
-		await Consciousness.recalcWinner_bySource(db, source_id)//await Consciousness.recalcWinner(db)
-		//await Consciousness.recalcAppear(db)
-		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-		await Consciousness.recalcItemSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
-	}, true)
-	view.data.cls = represent.calcCls(entity.represent_entity, newvalue)
-	return view.ret()
-})
+// 		await Consciousness.recalcWinner_bySource(db, source_id)//await Consciousness.recalcWinner(db)
+// 		//await Consciousness.recalcAppear(db)
+// 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
+// 		await Consciousness.recalcItemSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
+// 	}, true)
+// 	view.data.cls = represent.calcCls(entity.represent_entity, newvalue)
+// 	return view.ret()
+// })
 
 rest.addAction('set-represent_sheet', ['admin','checkrecalc','setaccess'], async view => {
 	const db = await view.get('db')
@@ -520,7 +521,7 @@ rest.addAction('set-represent_sheet', ['admin','checkrecalc','setaccess'], async
 	
 	view.data.cls = represent.calcCls(source.represent_source, newvalue, source.represent_sheets)
 	
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		//await Consciousness.recalcEntitiesPropId(db)
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
@@ -558,7 +559,7 @@ rest.addAction('set-represent_source', ['admin'], async view => {
    		WHERE source_id = :source_id
 	`, {source_id, newvalue})
 
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		//await Consciousness.recalcEntitiesPropId(db)
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
@@ -597,7 +598,7 @@ rest.addAction('set-represent_entity', ['admin'], async view => {
    		WHERE prop_id = :entity_id
 	`, {entity_id, newvalue})
 
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		//await Consciousness.recalcEntitiesPropId(db)
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
@@ -643,7 +644,7 @@ rest.addAction('set-represent_prop', ['admin'], async view => {
 	`, {prop_id, newvalue})
 
 
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		//await Consciousness.recalcEntitiesPropId(db)
 		//await Consciousness.recalcMulti(db)
 		//await Consciousness.recalcTexts(db)
@@ -687,7 +688,7 @@ rest.addAction('set-represent_prop', ['admin'], async view => {
 //    		ON DUPLICATE KEY UPDATE represent_custom_value = VALUES(represent_custom_value)
 // 	`, {prop_id, value_nick, newvalue})
 
-// 	Recalc.recalc(db, async () => {
+// 	Recalc.recalc(async (db) => {
 // 		// await Consciousness.recalcEntitiesPropId(db)
 // 		// await Consciousness.recalcMulti(db)
 // 		// await Consciousness.recalcTexts(db)
@@ -732,7 +733,7 @@ rest.addAction('set-represent_prop', ['admin'], async view => {
 // 	`, {...item, newvalue})
 	
 
-// 	Recalc.recalc(db, async () => {
+// 	Recalc.recalc(async (db) => {
 // 		// await Consciousness.recalcEntitiesPropId(db)
 // 		// await Consciousness.recalcMulti(db)
 // 		// await Consciousness.recalcTexts(db)
@@ -778,7 +779,7 @@ rest.addAction('set-represent_col', ['admin'], async view => {
    		ON DUPLICATE KEY UPDATE represent_custom_col = VALUES(represent_custom_col)
 	`, {...col, newvalue})
 
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		// await Consciousness.recalcEntitiesPropId(db)
 		// await Consciousness.recalcMulti(db)
 		// await Consciousness.recalcTexts(db)
@@ -829,7 +830,7 @@ rest.addAction('set-represent_col', ['admin'], async view => {
 //    		ON DUPLICATE KEY UPDATE represent_custom_cell = VALUES(represent_custom_cell)
 // 	`, {...row.key, newvalue})
 
-// 	Recalc.recalc(db, async () => {
+// 	Recalc.recalc(async (db) => {
 // 		// await Consciousness.recalcEntitiesPropId(db)
 // 		// await Consciousness.recalcMulti(db)
 // 		// await Consciousness.recalcTexts(db)
@@ -877,7 +878,7 @@ rest.addAction('set-represent_col', ['admin'], async view => {
 // 	`, {...row, newvalue})
 
 	
-// 	Recalc.recalc(db, async () => {
+// 	Recalc.recalc(async (db) => {
 // 		// await Consciousness.recalcEntitiesPropId(db)
 // 		// await Consciousness.recalcMulti(db)
 // 		// await Consciousness.recalcTexts(db)
@@ -928,7 +929,7 @@ rest.addAction('set-represent_col', ['admin'], async view => {
 //    		ON DUPLICATE KEY UPDATE represent_custom_cell = VALUES(represent_custom_cell)
 // 	`, {...cell, newvalue})
 
-// 	Recalc.recalc(db, async () => {
+// 	Recalc.recalc(async (db) => {
 // 		// await Consciousness.recalcEntitiesPropId(db)
 // 		// await Consciousness.recalcMulti(db)
 // 		// await Consciousness.recalcTexts(db)

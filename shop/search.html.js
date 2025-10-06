@@ -46,7 +46,7 @@ tpl.PAGINATION = (data, env) => !data.result ? '' : `
 tpl.LIST = (data, env) => data.result ? `
 	${data.list.length ? tpl.listcards(data, env) : '<div style="margin: 2rem 0; ">К сожалению, ничего не найдено.</div>'}
 	${data.countonpage == data.list.length ? tpl.pag(data, env) : ''}
-` : '<div style="margin: 2rem 0; ">Данные не найдены</div>'
+` : `<div style="margin: 2rem 0; ">${data.msg || 'Данные не найдены'}</div>`
 
 tpl.pag = (data, env, scroll) => `
 	<div class="pagination">
@@ -98,7 +98,7 @@ tpl.pag = (data, env, scroll) => `
 				}
 			}
 		</style>
-		<div class="sort" style="white-space: nowrap;">${!scroll ? '' : sortIcon(data, env)}</div>
+		<div class="sort" style="white-space: nowrap;">${!scroll || !data.list.length ? '' : sortIcon(data, env)}</div>
 		<div class="begin ${data.pagination.page != 1 ? '' : 'disabled'}">${tpl.pagt[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'В начало', 1)}</div>
 		<div class="backward ${data.pagination.page != 1 ? '' : 'disabled'}">${tpl.pagt[data.pagination.page != 1 ? 'link' : 'disabled'](data, env, scroll, 'Назад', data.pagination.page - 1)}</div>
 		<div class="page ${data.pagination.last == 1 ? 'disabled' : ''}" title="">${data.pagination.page}</div>
@@ -150,6 +150,7 @@ tpl.pagt.link = (data, env, scroll = '', title, page) => `
 			onload(async () => {
 				const count = Card.numberOfCards(${data.conf.limit})
 				const Client = await window.getClient()
+				console.log(Client.bread.get)
 				a.href = cards.addget(Client.bread.get, {p:${page}, count}) + "${!scroll?'#page':''}"
 			})
 		})(document.currentScript.previousElementSibling)
@@ -277,7 +278,7 @@ tpl.showSelected = (data, bread) => {
 		} else if (typeof(values) == 'object') {
 			if (prop.type == 'value') {
 				return Object.keys(values).map(value_nick => {
-					const title = data.values[value_nick]?.value_title || value_nick
+					const title = cards.getValueTitleByNick(data, value_nick)
 					const m = data.md.m + ':' + prop_nick + '.' + value_nick
 					return tpl.showPart(data, bread, title, {m})
 				}).join(' ')

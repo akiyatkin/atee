@@ -9,216 +9,334 @@ let conf = false
 const CONF = await config('db')
 
 const createPool = async () => {
-	let pool = false
-	if (!CONF.config) return false
-	// multipleStatements: true,
-	const DEF = {
-		namedPlaceholders: true,
-		//enableKeepAlive: true,
-		//keepAliveInitialDelay: 10000,
-		//waitForConnections: true,
-		host: 'localhost',
-		user: 'xxxxx',
-		password: 'yyyyy',
-		database: 'zzzzz',
-		debug: false
-	}
-	const db = await mysql.createConnection({
-		...DEF,
-		...CONF.config
-	}).catch(e => console.log('db connect - ', e))
-	if (db) {
-		//const [rows, fields] = await db.query("show variables like 'max_connections'")
-		//let connectionLimit = rows[0].Value - 1
-		// connectionLimit = Math.round(connectionLimit / 2)
-		//const limit = 120
-		//connectionLimit = connectionLimit < limit ? connectionLimit : limit
-		const connectionLimit = 5
-		
-		console.log('db ready - connectionLimit: ' + connectionLimit)
-		conf = {
-			...DEF, 
-			connectionLimit,
-			...CONF.config
-		}
-		pool = mysql.createPool(conf)
-	}
-	return pool
-}
+    if (!CONF?.config) {
+        console.error('Configuration is missing');
+        return false;
+    }
+
+    // Разделяем конфигурацию полностью
+    const connectionConfig = {
+        namedPlaceholders: true,
+        host: 'localhost',
+        user: 'xxxxx',
+        password: 'yyyyy',
+        database: 'zzzzz',
+        debug: false,
+        charset: 'utf8mb4',
+        timezone: 'local',
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 30000
+    };
+
+    const poolConfig = {
+        waitForConnections: true,
+        connectionLimit: 20,
+        queueLimit: 100,
+        // acquireTimeout и timeout убраны полностью
+    };
+
+    try {
+        // Создаем пул с безопасной конфигурацией
+        const finalConfig = {
+            ...connectionConfig,
+            ...poolConfig,
+            ...CONF.config
+        };
+
+        const pool = mysql.createPool(finalConfig);
+
+        // Проверяем работоспособность через получение соединения
+        const connection = await pool.getConnection();
+        try {
+            await connection.execute('SELECT 1');
+            console.log('Database pool ready');
+        } finally {
+            connection.release();
+        }
+        
+        return pool;
+
+    } catch (error) {
+        console.error('Failed to create database pool:', error);
+        return false;
+    }
+};
 let pool = await createPool()
 export class Db {
-	toString () {
-		return 'Db'
-	}
-	constructor () {
-		this.transdeep = 0
-		this.conf = conf
-	}
-	release () {
-		return this.db.release()
-	}
-	async connect () {
-		if (!pool) return false
-		this.db = await pool.getConnection().catch(e => false)
-		if (this.db) {
-			const r = await this.db.ping().catch(r => {
-				console.log('ping с ошибкой createPool')
-				return false
-			})
-			if (!r) {
-				pool = await createPool() //reconnect
-				this.db = await pool.getConnection().catch(e => false)
-			}
-			// const r = await this.db.ping().then(r => this.db).catch(async e => {
-			// 	console.log('new direct connection')
-			// 	const db = await new Db().connect()
-			// 	if (!db) {
-			// 		console.log('Нет соединения с базой данных при повторном соединении')
-			// 		return false
-			// 	}
-			// 	this.db = db
-			// 	return true
-			// })
-			//if (!r) this.db = false
-		} else {
-			console.log('pool вернул false')
-		}
-		if (!this.db) return false
-		return this
-	}
-	
-	async start() {
-		this.transdeep++
-		if (this.transdeep === 1) {
-			const is = await this.col('SELECT @@in_transaction')
-			if (!is) await this.db.query('START TRANSACTION')
-			//При перезапуске процесса старая транзакция может быть в работе? 
-			//Или пул соединений вернуло соединение с транзакцией, может ли быть такое?
-			//Исключаем ошибку что скрипт не владеет информацией о транзакциях
-		}
-	}
-	async commit() {
-		this.transdeep--
-		if (this.transdeep === 0) await this.db.query('COMMIT')
-	}
-	async back() {
-		if (!this.transdeep) return true
-		this.transdeep = 0
-		await this.db.query('ROLLBACK')
-		return true
-	}
+    constructor() {
+        this.transdeep = 0;
+        this.conf = conf;
+        this.db = null;
+        this.reconnectAttempts = 0;
+        this.maxReconnectAttempts = 3;
+    }
 
-	//select
-	async fetch(sql, values) {
-		if (values && Object.keys(values).length) {
-			const [rows, fields] = await this.db.execute({ sql, values })
-			return rows[0]
-		} else {
-			const [rows, fields] = await this.db.query(sql)
-			return rows[0]
-		}
-	}
-	async col(sql, values) {
-		if (values && Object.keys(values).length) {
-			const [rows, fields] = await this.db.execute({ sql, values })
-			if (!rows.length) return null
-			return rows[0][fields[0].name]
-		} else {
-			const [rows, fields] = await this.db.query(sql)
-			if (!rows.length) return null
-			return rows[0][fields[0].name]
-		}
-	}
-	async colAll(sql, values) {
-		let r, f
-		if (values && Object.keys(values).length) {
-			const [rows, fields] = await this.db.execute({ sql, values })
-			r = rows
-			f = fields
-		} else {
-			const [rows, fields] = await this.db.query(sql)
-			r = rows
-			f = fields
+    toString() {
+        return 'Db';
+    }
 
-		}
-		return r.reduce((ak, row) => {
-			ak.push(row[f[0].name])
-			return ak
-		}, [])
-	}
-	async all(sql, values) {
-		if (values && Object.keys(values).length) {
-			return this.db.execute({ sql, values }).then(([rows]) => rows)	
-		} else {
-			return this.db.query(sql).then(([rows]) => rows)	
-		}
-	}
-	async allto(name, sql, values) {
-		return this.all(sql, values).then(rows => {
-			return rows.reduce((ak, r) => {
-				ak[r[name]] = r
-				return ak
-			}, {})
-		})
-	}
-	async alltoint(name, sql, values, ints) {
-		return this.all(sql, values).then(rows => {
-			const ak = {}
-			for (const row of rows) {
-				ints.forEach(n => {
-					row[n] = Number(row[n]) || 0
-				})
-				ak[row[name]] = row
-			}
-			return ak
-		})
-	}
+    release() {
+        if (this.db) {
+            this.db.release();
+            this.db = null;
+        }
+    }
 
-	
-	async insertId(sql, values) { //insert
-		if (values && Object.keys(values).length) {
-			const [rows, fields] = await this.db.execute({ sql, values })
-			return rows.insertId
-		} else {
-			const [rows, fields] = await this.db.query(sql)
-			return rows.insertId	
-		}
-		
-	}
-	async affectedRows(sql, values) { //insert, delete
-		if (values && Object.keys(values).length) {
-			const [rows, fields] = await this.db.execute({ sql, values })
-			return rows.affectedRows
-		} else {
-			const [rows, fields] = await this.db.query(sql)
-			return rows.affectedRows
-		}
-	}
+    async connect() {
+        if (!pool) {
+            console.log('Pool not initialized, creating new pool...');
+            pool = await createPool();
+            if (!pool) {
+                console.error('Failed to create database pool');
+                return false;
+            }
+        }
 
-	
-	async changedRows(sql, values) { //update
-		if (values && Object.keys(values).length) {
-			const [rows, fields] = await this.db.execute({ sql, values })
-			return rows.changedRows
-		} else {
-			const [rows, fields] = await this.db.execute(sql)
-			return rows.changedRows
-		}
-	}
+        try {
+            this.db = await pool.getConnection();
+            
+            // Проверяем соединение
+            await this.db.ping();
+            
+            this.reconnectAttempts = 0;
+            //console.log('Database connection established successfully');
+            return this;
 
-	async exec(sql, values) { //for mysql
-		if (values && Object.keys(values).length) {
-			const [rows, fields] = await this.db.execute({ sql, values })
-			return rows.changedRows
-		} else {
-			const [rows, fields] = await this.db.query(sql)
-			return rows.changedRows
-		}
-	}
-	async query(sql, values) { //for client
-		const [rows, fields] = await this.db.query({ sql, values })
-		return rows.changedRows
-	}	
+        } catch (error) {
+            console.error('Failed to get database connection:', error.message);
+            return await this.handleReconnection();
+        }
+    }
+
+    async handleReconnection() {
+        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+            console.error(`Max reconnection attempts (${this.maxReconnectAttempts}) exceeded`);
+            return false;
+        }
+
+        this.reconnectAttempts++;
+        console.log(`Reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+
+        // Задержка между попытками
+        const delay = 1000 * this.reconnectAttempts;
+        await new Promise(resolve => setTimeout(resolve, delay));
+
+        try {
+            // Пересоздаем пул при необходимости
+            if (this.shouldRecreatePool()) {
+                console.log('Recreating database pool...');
+                pool = await createPool();
+            }
+
+            if (!pool) {
+                console.error('Pool recreation failed');
+                return false;
+            }
+
+            this.db = await pool.getConnection();
+            await this.db.ping();
+            
+            console.log('Reconnection successful');
+            this.reconnectAttempts = 0;
+            return this;
+
+        } catch (reconnectError) {
+            console.error(`Reconnection attempt ${this.reconnectAttempts} failed:`, reconnectError.message);
+            return await this.handleReconnection();
+        }
+    }
+
+    shouldRecreatePool() {
+        // Пересоздаем пул при первой попытке или после серьезных ошибок
+        return this.reconnectAttempts === 1;
+    }
+
+    // Транзакции
+    async start() {
+        this.transdeep++;
+        if (this.transdeep === 1) {
+            await this.ensureConnection();
+            
+            // Проверяем, не находимся ли мы уже в транзакции
+            const inTransaction = await this.col('SELECT @@autocommit');
+            if (inTransaction === 1) { // autocommit = 1 значит не в транзакции
+                await this.db.query('START TRANSACTION');
+            } else {
+                console.warn('Already in transaction, nesting level:', this.transdeep);
+            }
+        }
+        return this.transdeep;
+    }
+
+    async commit() {
+        if (this.transdeep <= 0) {
+            console.warn('Commit called without active transaction');
+            return;
+        }
+
+        this.transdeep--;
+        if (this.transdeep === 0) {
+            await this.db.query('COMMIT');
+        }
+    }
+
+    async back() {
+        if (this.transdeep <= 0) {
+            console.warn('Rollback called without active transaction');
+            return true;
+        }
+
+        const deep = this.transdeep;
+        this.transdeep = 0;
+        await this.db.query('ROLLBACK');
+        console.log(`Rollback completed, was at nesting level: ${deep}`);
+        return true;
+    }
+
+    // Вспомогательный метод для проверки соединения
+    async ensureConnection() {
+        if (!this.db) {
+            const connected = await this.connect();
+            if (!connected) {
+                throw new Error('No database connection available');
+            }
+        }
+
+        try {
+            await this.db.ping();
+        } catch (error) {
+            console.log('Connection lost, reconnecting...');
+            const reconnected = await this.connect();
+            if (!reconnected) {
+                throw new Error('Failed to reconnect to database');
+            }
+        }
+    }
+
+    // Универсальный метод выполнения запросов
+    async executeQuery(sql, values = null) {
+        
+        await this.ensureConnection();
+        
+        try {
+            if (values && Object.keys(values).length) {
+                return await this.db.execute({ sql, values });
+            } else {
+                return await this.db.query(sql);
+            }
+        } catch (error) {
+            console.error('Нет соединения:', {
+                sql: sql.substring(0, 200) + (sql.length > 200 ? '...' : ''),
+                values: values,
+                error: error.message
+            });
+            
+            // Повторяем запрос при ошибках соединения
+            if (this.isConnectionError(error)) {
+                console.log('Connection error, retrying query...');
+                await this.connect();
+                return await this.executeQuery(sql, values);
+            }
+            
+            throw error;
+        }
+    }
+
+    isConnectionError(error) {
+        const connectionErrors = [
+            'PROTOCOL_CONNECTION_LOST',
+            'ER_CON_COUNT_ERROR',
+            'ECONNRESET',
+            'EPIPE'
+        ];
+        return connectionErrors.includes(error?.code);
+    }
+
+    // SELECT методы
+    async fetch(sql, values = null) {
+        const [rows] = await this.executeQuery(sql, values);
+        return rows[0] || null;
+    }
+
+    async col(sql, values = null) {
+        const [rows, fields] = await this.executeQuery(sql, values);
+        if (!rows.length || !fields.length) return null;
+        return rows[0][fields[0].name];
+    }
+
+    async colAll(sql, values = null) {
+        const [rows, fields] = await this.executeQuery(sql, values);
+        if (!fields.length) return [];
+        
+        const fieldName = fields[0].name;
+        return rows.map(row => row[fieldName]);
+    }
+
+    async all(sql, values = null) {
+        const [rows] = await this.executeQuery(sql, values);
+        return rows;
+    }
+
+    async allto(name, sql, values = null) {
+        const rows = await this.all(sql, values);
+        return rows.reduce((acc, row) => {
+            acc[row[name]] = row;
+            return acc;
+        }, {});
+    }
+
+    async alltoint(name, sql, values = null, ints = []) {
+        const rows = await this.all(sql, values);
+        const result = {};
+        
+        for (const row of rows) {
+            // Конвертируем указанные поля в числа
+            ints.forEach(field => {
+                if (row[field] !== undefined && row[field] !== null) {
+                    row[field] = Number(row[field]);
+                    if (isNaN(row[field])) row[field] = 0;
+                }
+            });
+            result[row[name]] = row;
+        }
+        
+        return result;
+    }
+
+    // INSERT/UPDATE/DELETE методы
+    async insertId(sql, values = null) {
+        const [result] = await this.executeQuery(sql, values);
+        return result.insertId;
+    }
+
+    async affectedRows(sql, values = null) {
+        const [result] = await this.executeQuery(sql, values);
+        return result.affectedRows;
+    }
+
+    async changedRows(sql, values = null) {
+        const [result] = await this.executeQuery(sql, values);
+        return result.changedRows;
+    }
+
+    async exec(sql, values = null) {
+        const [result] = await this.executeQuery(sql, values);
+        return result.changedRows || result.affectedRows;
+    }
+
+    async query(sql, values = null) {
+        const [result] = await this.executeQuery(sql, values);
+        return result.changedRows || result.affectedRows;
+    }
+
+    // Метод для безопасного завершения
+    async destroy() {
+        if (this.transdeep > 0) {
+            console.warn(`Destroying Db instance with active transaction (level: ${this.transdeep})`);
+            await this.back();
+        }
+        this.release();
+    }
 }
 
 export default Db

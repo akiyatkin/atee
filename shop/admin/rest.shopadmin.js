@@ -21,6 +21,7 @@ rest.extra(rest_search)
 
 
 rest.addArgument('nick', ['nicked'])
+rest.addArgument('detail', ['nicked'])
 
 rest.addArgument('prop_nick', ['nicked'], async (view, prop_nick) => {
 	if (!prop_nick) return null
@@ -39,8 +40,15 @@ rest.addVariable('prop', async (view) => {
 rest.addVariable('prop_nick#required', ['prop_nick', 'required'])
 rest.addVariable('prop#required', ['prop', 'required'])
 
-
-
+rest.addArgument('partner', async (view, key) => {
+	if (!key) return false
+	const partner = await Shop.getPartnerByKey(key)
+	return partner
+})
+rest.addArgument('m', (view, m) => {
+	if (m) view.nostore = true //безчисленное количество комбинаций, браузеру не нужно запоминать	
+	return m || ''
+})
 
 rest.addArgument('group_nick', ['nicked'], async (view, group_nick) => {
 	if (!group_nick) return null
@@ -60,7 +68,31 @@ rest.addVariable('group', async (view) => {
 	return group
 })
 
-rest.addArgument('group_id', ['mint'])
+rest.addArgument('brand_nick', ['string'], async (view, brand_nick) => {	
+	if (!brand_nick) return null
+	const db = await view.get('db')
+	const value = Shop.getValueByNick(db, brand_nick)
+	if (!value) return view.err('Не найден бренд')
+	return brand_nick
+})
+rest.addVariable('brand_nick#required', ['brand_nick','required'])
+
+rest.addArgument('source_id', ['mint'], async (view, source_id) => {
+	if (!source_id) return null
+	const db = await view.get('db')
+	source_id = await db.col(`select source_id from sources_sources where source_id = :source_id`, {source_id})
+	if (!source_id) return view.err('Не найден источник')
+	return source_id
+})
+rest.addVariable('source_id#required', ['source_id','required'])
+
+rest.addArgument('group_id', ['mint'], async (view, group_id) => {
+	if (!group_id) return null
+	const db = await view.get('db')
+	const group = await Shop.getGroupById(db, group_id)
+	if (!group) return view.err('Не найдена группа')
+	return group_id
+})
 rest.addVariable('group_id#required', ['group_id','required'])
 
 rest.addArgument('json', ['string'])

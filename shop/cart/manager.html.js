@@ -8,9 +8,9 @@ tpl.iserr = (data, env) => data?.result ? '' : `
 	${data?.msg || 'Нет данных'}
 `
 
-tpl.YEARS = (data, env) => tpl.iserr(data, env) || `
+tpl.YEARS = (data, env, root = env.crumb) => tpl.iserr(data, env) || `
 	<h1>Заказы</h1>
-	${showStatuses(data, env)}
+	${showStatuses(data, env, root)}
 	<table>
 		<thead>
 			<tr>
@@ -24,7 +24,7 @@ tpl.YEARS = (data, env) => tpl.iserr(data, env) || `
 tpl.showYear = (data, env, row) => `
 	<tr>
 		<td>
-			<a href="${tpl.manager(data)}/${row.year}${prefixif('?status=', data.status)}">${row.year}</a>
+			<a href="${env.crumb}/${row.year}${prefixif('?status=', data.status)}">${row.year}</a>
 		</td>
 		<td>
 			${row.count}
@@ -38,9 +38,9 @@ tpl.showYear = (data, env, row) => `
 	</tr>
 `
 
-tpl.MONTHS = (data, env) => tpl.iserr(data, env) || `
-	<h1><a href="${tpl.manager(data)}${prefixif('?status=', data.status)}">Заказы</a> ${data.year}</h1>
-	${showStatuses(data, env)}
+tpl.MONTHS = (data, env, root = env.crumb.parent) => tpl.iserr(data, env) || `
+	<h1><a href="${root}${prefixif('?status=', data.status)}">Заказы</a> ${data.year}</h1>
+	${showStatuses(data, env, root)}
 	<table>
 		<thead>
 			<tr>
@@ -63,7 +63,7 @@ tpl.STATUSES = {
 tpl.showMonth = (data, env, row) => `
 	<tr>
 		<td>
-			<a href="${tpl.manager(data)}/${row.year}/${row.month}${prefixif('?status=', data.status)}">${MONTHS[row.month - 1]}</a>
+			<a data-scroll="none" href="${env.crumb.parent}/${row.year}/${row.month}${prefixif('?status=', data.status)}">${MONTHS[row.month - 1]}</a>
 		</td>
 		<td>
 			${row.count}
@@ -76,21 +76,21 @@ tpl.showMonth = (data, env, row) => `
 		</td>
 	</tr>
 `
-tpl.manager = (data) => `${data.conf.root_path}/manager`
+
 const prefixif = (prefix, val) => val ? prefix + '' + val : ''
-const showStatuses = (data, env) => `
+const showStatuses = (data, env, root) => `
 	<p>
-		<a style="${data.status ? '': 'font-weight:bold'}" href="${tpl.manager(data)}${prefixif('/', data.year)}${prefixif('/', data.month)}">Все</a>
-		<a style="${data.status == 'wait' ? 'font-weight:bold' : ''}" href="${tpl.manager(data)}${prefixif('/', data.year)}${prefixif('/', data.month)}?status=wait">Ожидает</a>
-		<a style="${data.status == 'check' ? 'font-weight:bold' : ''}" href="${tpl.manager(data)}${prefixif('/', data.year)}${prefixif('/', data.month)}?status=check">Оформлен</a>
-		<a style="${data.status == 'complete' ? 'font-weight:bold' : ''}" href="${tpl.manager(data)}${prefixif('/', data.year)}${prefixif('/', data.month)}?status=complete">Выполнен</a>
-		<a style="${data.status == 'cancel' ? 'font-weight:bold' : ''}" href="${tpl.manager(data)}${prefixif('/', data.year)}${prefixif('/', data.month)}?status=cancel">Отменён</a>
+		<a data-scroll="none" style="${data.status ? '': 'font-weight:bold'}" href="${root}${prefixif('/', data.year)}${prefixif('/', data.month)}">Все</a>
+		<a data-scroll="none" style="${data.status == 'wait' ? 'font-weight:bold' : ''}" href="${root}${prefixif('/', data.year)}${prefixif('/', data.month)}?status=wait">Ожидает</a>
+		<a data-scroll="none" style="${data.status == 'check' ? 'font-weight:bold' : ''}" href="${root}${prefixif('/', data.year)}${prefixif('/', data.month)}?status=check">Оформлен</a>
+		<a data-scroll="none" style="${data.status == 'complete' ? 'font-weight:bold' : ''}" href="${root}${prefixif('/', data.year)}${prefixif('/', data.month)}?status=complete">Выполнен</a>
+		<a data-scroll="none" style="${data.status == 'cancel' ? 'font-weight:bold' : ''}" href="${root}${prefixif('/', data.year)}${prefixif('/', data.month)}?status=cancel">Отменён</a>
 	</p>
 `
-tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
-	<h1><a href="${tpl.manager(data)}${prefixif('?status=', data.status)}">Заказы</a> 
-		<a href="${tpl.manager(data)}/${data.year}${prefixif('?status=', data.status)}">${data.year}</a> ${MONTHS[data.month - 1]}</h1>
-	${showStatuses(data, env)}
+tpl.ORDERS = (data, env, root = env.crumb.parent.parent) => tpl.iserr(data, env) || `
+	<h1><a href="${root}${prefixif('?status=', data.status)}">Заказы</a> 
+		<a href="${root}/${data.year}${prefixif('?status=', data.status)}">${data.year}</a> ${MONTHS[data.month - 1]}</h1>
+	${showStatuses(data, env, root)}
 	<style>
 		${env.scope} .status-check {
 			background-color: #fff7ed;
@@ -145,11 +145,11 @@ tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
 					button.dataset.status = status
 					button.innerHTML = tpl.STATUSES[status]
 
-					if (ans.active_id == order_id) {
+					//if (ans.active_id == order_id) {
 						const Client = await window.getClient()
-						Client.global('shop')
+						Client.global('shop') //в панеле есть список моих активных заявок
 						//Client.reloadts('${env.layer.ts}')
-					}
+					//}
 				})
 			}
 			for (const button of div.getElementsByClassName('order')) {
@@ -161,8 +161,11 @@ tpl.ORDERS = (data, env) => tpl.iserr(data, env) || `
 					const Client = await window.getClient()
 					Client.global('shop')
 					Client.reloadts('${env.layer.ts}')
-					const Panel = await import('/-shop/cart/Panel.js').then(r => r.default)
+					
 					const panel = document.querySelector('#PANEL .panel')
+					if (!panel) Client.go('/shop/${root.name}/${root.child.name}/${root.child.child.name}')
+
+					const Panel = await import('/-shop/cart/Panel.js').then(r => r.default)
 					Panel.up(panel)
 				})
 			}

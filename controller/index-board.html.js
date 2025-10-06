@@ -49,7 +49,7 @@ export const ROOT = (data, env) => `<!DOCTYPE html>
 			}
 			.column {
 /*				border-radius: 5px;*/
-				min-width: 20ch;
+				min-width: 10ch;
 				background: #00aaff11;
 				background-size: 100% 100%;
 				border: solid 1px #00000044;

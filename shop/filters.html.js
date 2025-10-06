@@ -324,7 +324,7 @@ filters.option = (data, filter, value_nick) => `
 			style="opacity: ${~filter.remains.indexOf(value_nick) ? '1':'0.3'}" 
 			${data.md.mget[filter.prop_nick]?.[value_nick] ? 'selected' : ''} 
 			value="${value_nick}">
-				${data.props[filter.prop_nick].type == 'value' ? data.values[value_nick]?.value_title || value_nick : value_nick}
+				${data.props[filter.prop_nick].type == 'value' ? cards.getValueTitleByNick(data, value_nick) : value_nick}
 		</option>
 `
 filters.item = (data, env, filter, value_nick) => {
@@ -339,13 +339,13 @@ filters.itemChoiced = (data, env, filter, value_nick) => `<a class="clearlink"
 	style="display: inline-block; margin-top:0; border-color: transparent; color:inherit;" 
 	class="a" data-scroll="none" rel="nofollow" 
 	href="${cards.getGroupPath(data, data.group.group_nick)}${cards.addget(env.bread.get, {m:data.md.m + ':' + filter.prop_nick + '.' + value_nick})}">
-	<span class="value">${data.props[filter.prop_nick].type == 'value' ? (data.values[value_nick]?.value_title || ('<i>' + value_nick + '</i>')) : value_nick  / 10 ** filter.scale}</span><sup style="position: absolute; margin-left:-2px; margin-top:-2px" class="krest">&nbsp;✕</sup></a>`
+	<span class="value">${data.props[filter.prop_nick].type == 'value' ? cards.getValueTitleByNick(data, value_nick) : value_nick  / 10 ** filter.scale}</span><sup style="position: absolute; margin-left:-2px; margin-top:-2px" class="krest">&nbsp;✕</sup></a>`
 
 filters.itemChoice = (data, env, filter, value_nick) => `<a
 	style="display: inline-block; " 
 	class="a" data-scroll="none" rel="nofollow" 
 	href="${cards.getGroupPath(data, data.group.group_nick)}${cards.addget(env.bread.get, {m:data.md.m + ':' + filter.prop_nick + (filter.singlechoice ? '::.' : '.') + value_nick + '=1'})}"
-	>${data.props[filter.prop_nick].type == 'value' ? (data.values[value_nick]?.value_title || value_nick) : value_nick  / 10 ** filter.scale}</a>`
+	>${data.props[filter.prop_nick].type == 'value' ? cards.getValueTitleByNick(data, value_nick) : value_nick  / 10 ** filter.scale}</a>`
 //opacity: ${~filter.remains.indexOf(value_nick) ? '1' : '0.3'}
 
 

@@ -40,7 +40,7 @@ cards.getVariant = (data, model, item) => { //ecommerce.variant
 		if (prop.unit) return titles.map(title => title + ' ' + prop.unit)
 		return titles
 	})
-	const title = unique(list.flat()).join(', ') 
+	const title = unique(list.flat()).sort().join(', ') 
 
 	return title
 }
@@ -174,14 +174,14 @@ cards.data = (data, env, model) => `
 	<div style="text-align:right; margin: 0rem 0.9rem 1rem 0.9rem">${cards.price(model.recap)}</div>
 `
 
-
+cards.getValueTitleByNick = (data, value_nick) => `${data.values[value_nick]?.value_title || '<span style="color: crimson">' + value_nick + '</span>'}`
 
 cards.getSomeTitle = (data, item, prop_nick) => {
 	if (!item[prop_nick]) return ''
 	const prop = data.props[prop_nick]
 	const first = item[prop_nick][0]
 	if (prop.type == 'value') {
-		return data.values[first]?.value_title || first
+		return cards.getValueTitleByNick(data, first)
 	} else if (prop.type == 'date') {
 		return ddd.ai(first)
 	} else if (prop.type == 'number') {
@@ -194,10 +194,10 @@ cards.getSomeTitle = (data, item, prop_nick) => {
 cards.getSomeTitles = (data, item, prop_nick) => {
 	if (!item[prop_nick]) return []
 	const prop = data.props[prop_nick]
-	return item[prop_nick].map(nick => {
+	const titles = item[prop_nick].map(nick => {
 		if (prop.type == 'value') {
 			//console.log(nick, prop, item)
-			return data.values[nick]?.value_title || first
+			return cards.getValueTitleByNick(data, nick)
 		} else if (prop.type == 'date') {
 			return ddd.ai(nick)
 		} else if (prop.type == 'number') {
@@ -206,6 +206,8 @@ cards.getSomeTitles = (data, item, prop_nick) => {
 			return nick
 		}
 	})
+	if (prop.type == 'value') titles.sort()
+	return titles
 }
 //cards.gain Titles = (data, env, item, prop_nick) => cards.getSomeTitles(data, item, prop_nick).join(', ')
 cards.props = (data, env, model) => `
@@ -248,7 +250,7 @@ cards.prop = {
 	linefilter: (data, env, model, pr, nicks, gainTitle, gainTitles) => {
 		if (!~['number','value'].indexOf(pr.type)) return ''
 		return cards.line(pr.prop_title, nicks.map(nick => {
-			const val = data.values[nick]?.value_title || nick
+			const val = cards.getValueTitleByNick(data, nick)
 			if (data.md.mget[pr.prop_nick]?.[nick]) return `<b>${gainTitles()}</b>`
 			return `
 				<a rel="nofollow" href="${cards.getGroupPath(data, data.group.group_nick)}/${cards.addget(env.bread.get, {m:data.md.m + ':' + pr.prop_nick + '::.' + nicks[0] + '=1'})}#page">${gainTitles()}</a>
@@ -267,7 +269,7 @@ cards.prop = {
 	justfilter: (data, env, model, pr, nicks, gainTitle, gainTitles) => {
 		if (!~['number','value'].indexOf(pr.type)) return ''
 		return cards.just(nicks.map(nick => {
-			const val = data.values[nick]?.value_title || nick
+			const val = cards.getValueTitleByNick(data, nick)
 			if (data.md.mget[pr.prop_nick]?.[nick]) return `<b>${gainTitles()}</b>`
 			return `
 				<a rel="nofollow" href="${cards.getGroupPath(data, data.group.group_nick)}/${cards.addget(env.bread.get, {m:data.md.m + ':' + pr.prop_nick + '::.' + nicks[0] + '=1'})}#page">${gainTitles()}</a>
@@ -296,7 +298,7 @@ cards.price = (item) => {
 	const cena = item.cena
 	if (!cena) return html
 	if (staraya && staraya.at(0) > cena.at(0)) {
-		html += `<s style="opacity: .5;">${cost(staraya.at(0))}${cards.unit()}</s>`
+		html += `<s style="opacity: .5;">${cost(staraya.at(-1))}${cards.unit()}</s>`
 	}
 
 	if (cena.length > 1) {
@@ -335,7 +337,7 @@ cards.nalichie = (data, env, mod) => {
 	`
 }
 cards.getDiscounts = (mod) => {
-	const discounts = mod.items.map(item => cards.getItemDiscount(item)).filter(discount => discount).sort()
+	const discounts = mod.items.map(item => cards.getItemDiscount(item)).filter(discount => discount).sort((a, b) => a - b)
 	return discounts
 }
 cards.getItemDiscount = (item) => {

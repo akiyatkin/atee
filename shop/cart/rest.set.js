@@ -32,7 +32,7 @@ rest.addResponse('set-submit', ['terms#required'], async view => {
 		//await Cart.setPartner(db, order_id, partner)
 		const list = await Cart.basket.get(db, order, partner)
 		await Cart.recalcOrder(db, order_id, list, partner)
-		await Cart.freeze(db, order_id, partner)
+		await Cart.basket.freeze(db, order_id, partner)
 
 
 		
@@ -43,7 +43,7 @@ rest.addResponse('set-submit', ['terms#required'], async view => {
 				item: pos.item, 
 				listname:'Корзина', 
 				position: i + 1, 
-				group_nick: pos.groups[0], 
+				group_nick: pos.group_nicks[0], 
 				quantity: null
 			})
 			// const product = {
@@ -64,10 +64,10 @@ rest.addResponse('set-submit', ['terms#required'], async view => {
 		await Cart.setStatus(db, order_id, 'check')
 		await Cart.setDate(db, order_id, 'check')
 
-		const r1 = await Cart.sendToAdmin(db, 'tocheck', order_id, view.visitor)
+		const r1 = await Cart.sendToAdmin(db, 'tocheck', order_id, view.visitor, partner)
 		if (!r1) return view.err('Не удалось отправить письмо менеджеру, позвоните, пожалуйста, по нашим <a href="/contacts">контактам</a>.')
 
-		const r2 = await Cart.sendToUser(db, 'tocheck', order_id, view.visitor)
+		const r2 = await Cart.sendToUser(db, 'tocheck', order_id, view.visitor, partner)
 		if (!r2) return view.err('Не удалось отправить письмо клиенту, позвоните, пожалуйста, по нашим <a href="/contacts">контактам</a>.')
 
 		return view.ret('Спасибо за заказ. Менеджер оповещён, ответит в течение 24 часов, как можно скорее.')

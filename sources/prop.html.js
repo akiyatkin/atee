@@ -182,8 +182,9 @@ export const ROOT = (data, env, prop = data.prop, entity = data.entity) => err(d
 
 	${showComment(data, env, prop)}
 	<p>
-		Всего: <b>${data.count}</b>, показано <b>${data.count > 1000 ? 1000 : data.count}</b>.
-	</p>	
+		Всего: <b>${data.count}</b>.
+	</p>
+	${~['number','value'].indexOf(prop.type) ? showSearch(data, env, prop) : ''}
 	
 	<div class="revscroll">
 		<table style="table-layout: fixed">
@@ -219,8 +220,28 @@ export const ROOT = (data, env, prop = data.prop, entity = data.entity) => err(d
 				}
 			})(document.currentScript.parentElement)
 		</script>
-	</div>
-	
+	</div>	
+`
+const showSearch = (data, env, prop) => `
+	<form style="display: flex; margin: 1em 0; gap: 1em">
+		<div class="float-label">
+			<input id="freeinp" name="search" type="search" placeholder="Поиск" value="${env.bread.get.search ?? ''}">
+			<label for="freeinp">Поиск</label>
+		</div>
+		<button type="submit">Найти</button>
+		<script>
+			(form => {
+				const btn = form.querySelector('button')
+				const input = form.querySelector('input')
+				form.addEventListener('submit', async (e) => {
+					e.preventDefault()
+					const Client = await window.getClient()
+					Client.go('prop/${prop.prop_id}?search=' + input.value, false)
+					Client.reloaddiv("${env.layer.div}")
+				})
+			})(document.currentScript.parentElement)
+		</script>
+	</form>
 `
 // <td></td>
 const showSynonym = (data, env, syn) => `
@@ -244,10 +265,24 @@ const showValueTr = (data, env, row) => `
 		<td>${row.number != null ? row.number / 10 ** data.prop.scale : ''}</td>
 		<td><nobr>${date.sdmyhi(row.date)}</nobr></td>
 		<td>${row.value_id ?? ''}</td>
-		<td>${row.value_title ?? ''}</td>
+		<td>${row.value_title ? showValueTitle(data, env, row) : ''}</td>
 		<td>${row.value_nick ?? ''}</td>
 		
 	</tr>
+`
+const showValueTitle = (data, env, row) => `
+	
+	${field.prompt({
+		label:'Изменить регистр значения',
+		cls: 'a',
+		type: 'text',
+		value: row.value_title,
+		input: row.value_title,
+		name: 'title',
+		descr: '',
+		action: '/-sources/set-value-title', 		
+		args: {value_id: row.value_id}
+	})}
 `
 const showComment = (data, env, prop) => `
 	<div style="float:right;position: relative">

@@ -6,8 +6,7 @@
 		"sheet:TABLE":"none",
 		"sheet:SOURCE":"none",
 		"sheet:DATES":"none",
-		"positions:TABLE":"none",
-		"position:TABLE":"none",
+		
 		"disappear:TABLE":"none",
 		"source:TABLE":"none",
 		"props:TABLE":"none",
@@ -18,6 +17,7 @@
 		"main:ROOT":["recalc"],
 		
 		"sheet:ROOT":["recalc"],
+		"rows:ROOT":["recalc"],
 		"sheet:TABLE":["recalc"],
 		"sheet:SOURCE":["recalc"],
 		"sheet:DATES":["recalc"],
@@ -25,8 +25,7 @@
 		"recalc:ROOT":["check"],
 
 		
-		"positions:TABLE":["recalc"],
-		"position:TABLE":["recalc"],
+		
 		"disappear:TABLE":["recalc"],
 		
 		"source:TABLE":["recalc"],
@@ -35,8 +34,7 @@
 		"source:TOP":["recalc"],
 
 		
-		"positions:TABLE":["recalc"],
-		"position:TABLE":["recalc"],
+		
 		"disappear:TABLE":["recalc"]
 	},
 	"frame":{
@@ -57,14 +55,12 @@
 		"memory:ROOT":"/-sources/memory"
 	},
 	"jsontpl":{
+		"rows:ROOT":"/-sources/rows?query=${env.bread.get.search ?? ''}",
 		"sheet:ROOT":"/-sources/sheet?source_id=${env.bread.get.source_id ?? ''}",
 		"sheet:DATES":"/-sources/sheet-dates?source_id=${env.bread.get.source_id ?? ''}&appear=${env.bread.get.appear ?? ''}&hashs=${env.bread.get.search ?? ''}",
 		"sheet:TABLE":"/-sources/sheet-table?source_id=${env.bread.get.source_id ?? ''}&sheet_index=${env.bread.get.sheet_index ?? ''}&keyfilter=${env.bread.get.keyfilter ?? ''}&appear=${env.bread.get.appear ?? ''}&hashs=${env.bread.get.search ?? ''}&limit=${env.bread.get.limit ?? ''}",
 		"sheet:SOURCE":"/-sources/sheet-source?source_id=${env.bread.get.source_id ?? ''}",
-		"positions:ROOT":"/-sources/positions?entity_id=${env.crumb.name}",
-		"positions:TABLE":"/-sources/positions-table?entity_id=${env.crumb.name}&hashs=${env.crumb.child?.name ?? ''}",
-		"position:ROOT":"/-sources/position?entity_id=${env.crumb.parent.name}&key_id=${env.crumb.name}",
-		"position:TABLE":"/-sources/position-table?entity_id=${env.crumb.parent.name}&key_id=${env.crumb.name}",
+		
 		"disappear:ROOT":"/-sources/disappear",
 		"disappear:TABLE":"/-sources/disappear-table?source_id=${env.bread.get.source_id ?? ''}&entity_id=${env.bread.get.entity_id ?? ''}",
 		"source:ROOT":"/-sources/source?source_id=${env.crumb.name}",
@@ -74,12 +70,13 @@
 		"2entity:ROOT":"/-sources/entity?entity_id=${env.crumb.name}",
 		"2entity:ENTITY":"/-sources/entity?entity_id=${env.crumb.name}",
 		
-		"prop:ROOT":"/-sources/prop?prop_id=${env.crumb.name}",
+		"prop:ROOT":"/-sources/prop?prop_id=${env.crumb.name}&hashs=${env.bread.get.search ?? ''}",
 		
 
 		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"
 	},
 	"tpl":{
+		"rows":"/-sources/rows.html.js",
 		"recalc":"/-sources/recalc.html.js",
 		"frame":"/-controller/frame.html.js",
 		"controller":"/-controller/layout.html.js",
@@ -92,8 +89,6 @@
 		"props":"/-sources/props.html.js",
 		"prop":"/-sources/prop.html.js",
 		"settings":"/-sources/settings.html.js",
-		"positions":"/-sources/positions.html.js",
-		"position":"/-sources/position.html.js",
 		"memory":"/-sources/memory.html.js"
 	},
 	"layout":{
@@ -119,43 +114,6 @@
 			"layout":{
 				"index:ROOT":{
 					"MAIN":"settings:ROOT"
-				}
-			}
-		},
-		"position":{
-			"child":{
-				"child":{
-					"head":{"title":"Позиция"},
-					"layout":{
-						"index:ROOT":{
-							"MAIN":"position:ROOT"
-						},
-						"position:ROOT":{
-							"TABLE":"position:TABLE"
-						}
-					},
-					"child":{
-						"head":{"title":"Поиск позиций"},
-						"layout":{}
-					}
-				}
-			}
-		},
-		"positions":{
-			"layout":{},
-			"child":{
-				"head":{"title":"Позиции"},
-				"layout":{
-					"index:ROOT":{
-						"MAIN":"positions:ROOT"
-					},
-					"positions:ROOT":{
-						"TABLE":"positions:TABLE"
-					}
-				},
-				"child":{
-					"head":{"title":"Поиск позиций"},
-					"layout":{}
 				}
 			}
 		},
@@ -196,7 +154,14 @@
 				}
 			}
 		},
-		
+		"rows":{
+			"head":{"title":"Строки"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"rows:ROOT"
+				}
+			}
+		},
 		"props":{
 			"head":{"title":"Свойства"},
 			"layout":{

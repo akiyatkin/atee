@@ -620,7 +620,7 @@ const showSubmit = (data, env) => `
 							listname: 'Корзина', 
 							position: i + 1, 
 							quantity: 0,
-							group_nick: pos.groups[0]
+							group_nick: pos.group_nicks[0]
 						})
 					})
 					Ecommerce.remove(products)
@@ -743,7 +743,7 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 			item: pos.item, 
 			listname: 'Корзина', 
 			position: i + 1, 
-			group_nick: pos.groups[0]
+			group_nick: pos.group_nicks[0]
 		})))}
 
 		const blocks = panel.querySelectorAll('.blocksum')
@@ -839,7 +839,7 @@ tpl.showPos = (data, env, pos, item) => {
 		<div class="info">
 			<div>
 				${naimenovanie ? naimenovanie + '.' : ''}
-				<div><a href="${cards.getItemPath(data, item)}">${gain('brendart')}</a></div>
+				<div><a href="${cards.getItemPath(data, item)}">${gain('brendart')}</a> ${pos.changed ? '<span title="Есть изменения">*</span>' : ''}</div>
 			</div>
 			${item.modifikaciya ? tpl.showModification(data, env, item) : ''}
 			<div style="margin: 0.5em 0;"><b>${cards.cost(item)}</b></div>

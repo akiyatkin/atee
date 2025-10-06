@@ -17,10 +17,10 @@ rest.extra(rest_shopadmin)
 import rest_recalc from '/-sources/rest.recalc.js'
 rest.extra(rest_recalc)
 
-rest.addAction('set-recalc', async view => { //Пересчитать в aside меню
+rest.addAction('set-recalc', ['admin','checkrecalc'], async view => { //Пересчитать в aside меню
 	const db = await view.get('db')
 
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		//await ShopAdmin.recalcIndexGroups(db)
 		//await ShopAdmin.recalcAllStat(db)
 		await ShopAdmin.recalcChangeGroups(db) 
@@ -30,13 +30,13 @@ rest.addAction('set-recalc', async view => { //Пересчитать в aside �
 // rest.addAction('set-recalc-publicate', async view => { //Пересчитать в aside меню
 // 	const db = await view.get('db')
 
-// 	Recalc.recalc(db, async () => {
+// 	Recalc.recalc(async (db) => {
 // 		await ShopAdmin.recalcIndexGroups(db) //статистика
 // 	}, true)
 // 	return view.ret()
 // })
 
-rest.addAction('set-tpl-sub', ['admin','setaccess'], async view => {
+rest.addAction('set-tpl-sub', ['admin','checkrecalc','setaccess'], async view => {
 	const type = await view.get('type#required') //card, filter
 	const sub = await view.get('sub#required')
 	const db = await view.get('db')
@@ -71,7 +71,7 @@ rest.addAction('set-sample-prop-value-delete', ['admin','checkrecalc'], async vi
 		group_id: group.group_id, 
 		prop_nick, value_nick
 	})
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		await ShopAdmin.recalcChangeGroups(db, group.group_id) //статистика
 	})
 
@@ -90,7 +90,7 @@ rest.addAction('set-sample-delete', ['admin','checkrecalc'], async view => {
 	`, {
 		sample_id
 	})	
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		await ShopAdmin.recalcChangeGroups(db, group_id) //статистика
 	})
 	
@@ -113,7 +113,7 @@ rest.addAction('set-sample-prop-delete', ['admin','checkrecalc'], async view => 
 		prop_nick
 	})
 
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		await ShopAdmin.recalcChangeGroups(db, group_id) //статистика
 	})
 
@@ -138,12 +138,13 @@ rest.addAction('set-sample-prop-spec', ['admin','checkrecalc'], async view => {
 	await db.exec(`
 		DELETE FROM shop_samplevalues WHERE sample_id = :sample_id and prop_nick = :prop_nick
 	`, {sample_id, prop_nick})
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		await ShopAdmin.recalcChangeGroups(db, group_id) //статистика
 	})
 
 	return view.ret()
 })
+
 
 rest.addAction('set-sample-prop-value-create', ['admin','checkrecalc'], async view => {
 	const prop_nick = await view.get('prop_nick#required')
@@ -176,7 +177,7 @@ rest.addAction('set-sample-prop-value-create', ['admin','checkrecalc'], async vi
 		sample_id, 
 		prop_nick, value_nick, number
 	})
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		await ShopAdmin.recalcChangeGroups(db, group_id) //статистика
 	})
 	
@@ -200,7 +201,7 @@ rest.addAction('set-prop-create', ['admin','setaccess'], async view => {
 		prop_nick = query_nick
 	}	
 	const db = await view.get('db')
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		await db.exec(`
 			INSERT IGNORE INTO shop_props (prop_nick)
 			VALUES (:prop_nick)
@@ -222,7 +223,7 @@ rest.addAction('set-sample-prop-create', ['admin','checkrecalc'], async view => 
 	const group_id = await db.col(`select group_id from shop_samples where sample_id = :sample_id`, {sample_id})
 	if (!group_id) return view.err('Не найдена группа')
 	
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		await db.exec(`
 			INSERT IGNORE INTO shop_sampleprops (sample_id, prop_nick)
 			VALUES (:sample_id, :prop_nick)
@@ -328,7 +329,7 @@ rest.addAction('set-group-self_filters', ['admin','setaccess'], async view => {
 		SET ${name} = :bit
 		WHERE group_id = :group_id
 	`, {group_id, bit})
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		await ShopAdmin.recalcChangeGroups(db, group_id) //статистика
 	})
 
@@ -354,7 +355,7 @@ rest.addAction('set-group-filter', ['admin','setaccess'], async view => {
 		VALUES (:prop_nick)
 	`, { prop_nick: prop.prop_nick })
 
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		await ShopAdmin.recalcChangeGroups(db, group_id)
 	})
 	return view.ret()
@@ -389,7 +390,7 @@ rest.addAction('set-group-create', ['admin','setaccess'], async view => {
 
 	await ShopAdmin.reorderGroups(db)
 
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		await ShopAdmin.recalcChangeGroups(db, group_id)
 	})
 
@@ -427,7 +428,7 @@ rest.addAction('set-group-copy', ['admin','setaccess'], async view => {
 	//what_id подгруппы скопировать в group_id
 
 	await ShopAdmin.reorderGroups(db)
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		await ShopAdmin.recalcChangeGroups(db, group_id)
 	})
 
@@ -445,7 +446,7 @@ rest.addAction('set-filter-delete', ['admin','setaccess'], async view => {
 
 	await ShopAdmin.reorderFilters(db)
 
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		await ShopAdmin.recalcChangeGroups(db) //статистика
 	})
 	
@@ -474,7 +475,7 @@ rest.addAction('set-group-move', ['admin','setaccess'], async view => {
 		WHERE group_id = :what_id
 	`, {parent_id, what_id})
 
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		await ShopAdmin.recalcChangeGroups(db)
 	})
 	return view.ret()
@@ -504,7 +505,7 @@ rest.addAction('set-group-delete', ['admin','setaccess'], async view => {
 	`, group)
 	view.data.parent_id = group.parent_id
 	await ShopAdmin.reorderGroups(db)
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		await ShopAdmin.recalcChangeGroups(db)
 	})
 	return view.ret()
@@ -628,7 +629,7 @@ rest.addResponse('set-import', ['admin'], async view => {
 	const msg = await ImpExp.import(db, json, rest_shopadmin.exporttables)
 	if (msg) return view.err(msg)
 
-	Recalc.recalc(db, async () => {
+	Recalc.recalc(async (db) => {
 		await ShopAdmin.recalcChangeGroups(db)
 	})
 	return view.ret()

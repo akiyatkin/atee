@@ -3,7 +3,6 @@ import nicked from "/-nicked"
 import Access from "/-controller/Access.js"
 import Shop from "/-shop/Shop.js"
 import ShopAdmin from "/-shop/admin/ShopAdmin.js"
-
 import Rest from "/-rest"
 const rest = new Rest()
 export default rest
@@ -15,17 +14,208 @@ rest.extra(rest_get)
 import rest_shopadmin from '/-shop/admin/rest.shopadmin.js'
 rest.extra(rest_shopadmin)
 
-
-rest.addResponse('brief', ['admin'], async view => {
+const MONTHS = {
+	1: 'Янв', 2: 'Фев', 3: 'Мар', 4: 'Апр', 
+	5: 'Май', 6: 'Июн', 7: 'Июл', 8: 'Авг', 
+	9: 'Сен', 10: 'Окт', 11: 'Ноя', 12: 'Дек'
+};
+const STATCOLS = `
+	year,
+	month,
+	poscount,
+	modcount,
+	groupcount,
+	brandcount,
+	filtercount,
+	sourcecount,
+	basketcount,
+	ordercount,
+	UNIX_TIMESTAMP(date_cost) as date_cost,
+	withfilters,
+	withbrands,
+	withcost,
+	withimg,
+	withdescr,
+	withname,
+	withall
+`
+rest.addResponse('brief-plop', ['admin','recalcStat'], async view => {
 	const db = await view.get('db')
+	const detail = await view.get('detail') || 'groups'
+	
+	const brand_nick = await view.get('brand_nick')
+	const source_id = await view.get('source_id')
+	
+
+	
+	
+	
+	const plot = view.data.plot = {}
+	
+	const conf = await config('shop')
+	view.data.conf = await config('shop', true)
+	const root = view.data.root = await Shop.getGroupByNick(db, conf.root_nick)
+	const group_id = await view.get('group_id')
+	const group = view.data.group = group_id ? await Shop.getGroupById(db, group_id) : false
+
+	let rows
+	if (detail == 'brand') {
+		//const brand = view.data.brand = brand_nick ? await db.fetch(`select value_title as brand_title, value_id as brand_id from sources_values where value_nick = :brand_nick`, {brand_nick}) : false	
+		rows = group_id ? await db.all(`
+			select ${STATCOLS}
+			from shop_stat_groups_brands sg
+			WHERE sg.group_id = :group_id and sg.brand_nick = :brand_nick
+			order by year, month
+		`, {brand_nick, group_id}): await db.all(`
+			select ${STATCOLS}
+			from shop_stat_brands sg
+			where sg.brand_nick = :brand_nick
+			order by year, month
+		`, {brand_nick})
+	} else if (detail == 'source') {		
+		
+		//const source = view.data.source = source_id ? await db.fetch(`select source_id, source_title from sources_sources where source_id = :source_id`, {source_id}) : false
+		rows = group_id ? await db.all(`
+			select ${STATCOLS}
+			from shop_stat_groups_sources sg
+			WHERE sg.group_id = :group_id and sg.source_id = :source_id
+			order by year, month
+		`, {source_id, group_id}): await db.all(`
+			select ${STATCOLS}
+			from shop_stat_sources sg
+			where sg.source_id = :source_id
+			order by year, month
+		`, {source_id})
+	} else {
+		rows = group_id ? await db.all(`
+			select ${STATCOLS}
+			from shop_stat_groups sg
+			WHERE sg.group_id = :group_id
+			order by year, month
+		`, {group_id}): await db.all(`
+			select ${STATCOLS}
+			from shop_stat sg
+			order by year, month
+		`, {group_id})
+	}
+
+	plot.label = []
+	plot.data = {}
+
+	for (const row of rows) {
+		plot.label.push(MONTHS[row.month] + ' ' + row.year)
+		delete row.month
+		delete row.year
+
+		for (const name in row) {
+			plot.data[name] ??= []
+			plot.data[name].push(row[name])
+		}
+	}
+	return view.ret()
+})
+rest.addVariable('recalcStat', async view => {
+	const db = await view.get('db')
+
+	await ShopAdmin.checkRestat(db)
+	
+})
+rest.addResponse('brief', ['admin','recalcStat'], async view => {
+	const db = await view.get('db')
+
+	
+
+
+
+	const detail = await view.get('detail')
+	
+	const brand_nick = await view.get('brand_nick')
+
+	const source_id = await view.get('source_id')
+
+	
+	view.data.source = source_id ? await db.fetch(`select source_id, source_title from sources_sources where source_id = :source_id`, {source_id}) : false
+	view.data.brand = brand_nick ? await db.fetch(`select value_title as brand_title, value_id as brand_id from sources_values where value_nick = :brand_nick`, {brand_nick}) : false	
+
+	const conf = await config('shop')
+	view.data.conf = await config('shop', true)
+	const root = view.data.root = await Shop.getGroupByNick(db, conf.root_nick)
+	const group_id = await view.get('group_id')
+	const group = view.data.group = group_id ? await Shop.getGroupById(db, group_id) : false
+
 	const ym = ShopAdmin.getNowYM()
-	const brands = view.data.brands = await db.all(`
-			select va.value_title as brand_title, sb.*, UNIX_TIMESTAMP(date_cost) as date_cost 
-			from shop_stat_brands sb, sources_values va
+	
+	const rootsql = group_id && !group.parent_id ? `
+			select -1 as ordain, "<b><i>.. Корень</i></b>" as group_title, null as group_id, ${STATCOLS}
+			from shop_stat st
 			WHERE year = :year and month = :month
-			and va.value_nick = sb.brand_nick
+			
+			UNION ALL
+	` : ''
+	const groups = view.data.groups = await db.all(`
+
+			${rootsql}
+
+			select 0 as ordain, CONCAT('<b>.. ', gr.group_title ,'</b>') as group_title, gr.group_id, ${STATCOLS}
+			from shop_stat_groups st, shop_groups gr
+			WHERE year = :year and month = :month and gr.group_id <=> :parent_id
+			and gr.group_id = st.group_id
+
+			UNION ALL
+
+			select gr.ordain, gr.group_title, st.group_id, ${STATCOLS}
+			from shop_stat_groups st, shop_groups gr
+			WHERE year = :year and month = :month and gr.parent_id <=> :group_id
+			and gr.group_id = st.group_id
+
+			ORDER by ordain
+	`, { group_id, parent_id: group?.parent_id || null, ...ym})
+
+	for (const group of groups) {
+		if (!group.group_id) continue
+		group.group = await Shop.getGroupById(db, group.group_id)
+	}
+
+
+
+	if (group_id) {
+		view.data.sources = await db.all(`
+			select so.source_title, so.source_id, ${STATCOLS}
+			from shop_stat_groups_sources st, sources_sources so
+			WHERE year = :year and month = :month
+			and so.source_id = st.source_id and st.group_id = :group_id
 			ORDER by year DESC, month DESC
-	`, { ...ym})
+		`, {group_id, ...ym})
+	
+	} else {
+		view.data.sources = await db.all(`
+			select so.source_title, so.source_id, ${STATCOLS}
+			from shop_stat_sources st, sources_sources so
+			WHERE year = :year and month = :month
+			and so.source_id = st.source_id
+			ORDER by year DESC, month DESC
+		`, { ...ym})
+	}
+	
+
+	if (group_id) {
+		view.data.brands = await db.all(`
+			select va.value_nick as brand_nick, va.value_title as brand_title, ${STATCOLS}
+			from shop_stat_groups_brands st, sources_values va
+			WHERE year = :year and month = :month
+			and va.value_nick = st.brand_nick and st.group_id = :group_id
+			ORDER by year DESC, month DESC
+		`, {group_id, ...ym})
+	} else {
+		view.data.brands = await db.all(`
+			select va.value_nick as brand_nick, va.value_title as brand_title, ${STATCOLS}
+			from shop_stat_brands st, sources_values va
+			WHERE year = :year and month = :month
+			and va.value_nick = st.brand_nick
+			ORDER by year DESC, month DESC
+		`, { ...ym})
+	}
+
 
 	return view.ret()
 })
@@ -33,16 +223,109 @@ rest.addResponse('poss', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	const bind = await Shop.getBind(db)
+	const group_id = await view.get('group_id')
 
+	const source_id = await view.get('source_id')
+	if (source_id) {
+		view.data.source = await db.fetch(`select source_id, source_title from sources_sources where source_id = :source_id`, {source_id})
+	}
+	
+	
+	
+	
+	const origm = await view.get('m')
 
-	const key_ids = await db.colAll(`
-		SELECT it.key_id
-		FROM sources_items it
-		WHERE it.entity_id = :brendart_prop_id
-		and (${hashs.map(hash => 'it.search like "%' + hash.join('%" and it.search like "%') + '%"').join(' or ') || 'it.search != ""'}) 
-		ORDER BY RAND()
-		LIMIT 25
-	`, {...bind})
+	const query = await view.get('query')
+
+	const md = view.data.md = await Shop.getmd(db, origm, query, hashs)
+	
+
+	await Shop.prepareMgetPropsValues(db, view.data, md.mget)
+
+	
+
+	let key_ids
+	if (!origm) {
+		if (group_id) {
+			view.data.group = await Shop.getGroupById(db, group_id)
+			key_ids = await db.colAll(`
+				SELECT it.key_id
+				FROM sources_items it, shop_allitemgroups ig
+				WHERE it.entity_id = :brendart_prop_id
+				and ig.group_id = :group_id
+				and it.key_id = ig.key_id
+				and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || 'it.search != ""'}) 
+				ORDER BY RAND()
+				LIMIT 25
+			`, {group_id, ...bind})		
+			view.data.count = await db.col(`
+				SELECT count(distinct it.key_id)
+				FROM sources_items it, shop_allitemgroups ig
+				WHERE it.entity_id = :brendart_prop_id
+				and ig.group_id = :group_id
+				and it.key_id = ig.key_id
+				and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || 'it.search != ""'}) 
+			`, {group_id, ...bind})
+		} else {
+			key_ids = await db.colAll(`
+				SELECT it.key_id
+				FROM sources_items it
+				WHERE it.entity_id = :brendart_prop_id
+				and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || 'it.search != ""'}) 
+				ORDER BY RAND()
+				LIMIT 25
+			`, {...bind})
+			view.data.count = await db.col(`
+				SELECT count(*)
+				FROM sources_items it
+				WHERE it.entity_id = :brendart_prop_id
+				and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || 'it.search != ""'}) 
+			`, {...bind})
+		}
+	} else {
+		let from = []
+		let where = [] 
+		let join = []
+		
+		if (group_id) {
+			from = ['shop_allitemgroups ig, sources_wvalues win']
+			where = [`
+				win.entity_id = :brendart_prop_id 
+				and win.prop_id = :brendmodel_prop_id 
+				and ig.key_id = win.key_id
+				and group_id = :group_id
+			`]
+		} else {
+			from = ['sources_wvalues win']
+			where = [`
+				win.entity_id = :brendart_prop_id 
+				and win.prop_id = :brendmodel_prop_id
+			`]
+		}
+		if (source_id) {
+			from.unshift('sources_wcells wce')
+			where.push(`
+				wce.source_id = :source_id
+				and wce.key_id = win.key_id and wce.entity_id = win.entity_id
+			`)
+		}
+		const sort = []
+		await Shop.addWhereSamples(db, from, join, where, sort, [md.mget], hashs)
+
+		key_ids = await db.colAll(`
+			SELECT distinct win.key_id
+			FROM ${from.join(', ')} ${join.join(' ')}
+			WHERE ${where.join(' and ')}
+			ORDER BY RAND()
+			LIMIT 25
+		`, {source_id, group_id, ...bind})
+		view.data.count = await db.col(`
+			SELECT count(distinct win.key_id)
+			FROM ${from.join(', ')} ${join.join(' ')}
+			WHERE ${where.join(' and ')}
+		`, {source_id, group_id, ...bind})
+	}
+	
 
 	const items = await ShopAdmin.getItems(db, key_ids) //{key_id: {prop_id: text}}
 	const table = await ShopAdmin.getTable(db, items) //items => {head: [prop_title], rows:[[text]], prop_ids, key_ids}
@@ -229,7 +512,7 @@ rest.addResponse('groups', ['admin'], async view => {
 
 	if (group) {
 		view.data.freetable = await ShopAdmin.getFreeTableByGroupIndex(db, group?.parent_id, hashs)
-		//view.data.myfreetable = await ShopAdmin.getFreeTableByGroupIndex(db, group?.group_id, hashs)
+		view.data.myfreetable = await ShopAdmin.getFreeTableByGroupIndex(db, group?.group_id, hashs)
 	}
 	
 	

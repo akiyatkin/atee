@@ -289,7 +289,6 @@ export const Client = {
 			layer.sys.div.style.minHeight = layer.sys.div.offsetHeight + 'px'
 			layer.sys.div.replaceChildren(elements)
 			layer.sys.div.style.minHeight = old
-
 			window.waitClient.stack.push(evalScripts(layer.sys.div))
 			const promise = Promise.all(window.waitClient.stack)
 			window.waitClient.stack = []
@@ -433,19 +432,21 @@ const applyCrossing = async () => {
 		const {path, get} = userpathparse(usersearch) //Останется ведущий слэш
 		const bread = new Bread(path, get, search, json.root) //root+path+get = search
 		bread.status = json.status
+
+		Client.bread = bread
+		Client.theme = json.theme
+		Client.timings = timings
+
 		const r = await Client.commonshow(json, bread, promise, timings)
 		if (!r) return
 
-		const event = new CustomEvent('crossing', {detail: {timings, bread, theme: json.theme}})
-		window.dispatchEvent(event)
-		
-		Client.timings = timings
-		Client.theme = json.theme
-		Client.bread = bread
 		Client.search = search
 		Client.next = false
 
+		const event = new CustomEvent('crossing', {detail: {timings, bread, theme: json.theme}})
+		window.dispatchEvent(event)
 		promise.resolve(search)
+
 
 		if (req.ut && req.ut < timings.update_time) {
 			location.reload()

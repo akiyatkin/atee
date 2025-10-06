@@ -150,7 +150,7 @@ const showSourceTr = (data, env, source) => `
 		</td>
 		
 		<td>
-			<div style="float:right;position: relative">
+			<div style="float:right; position: relative">
 				${field.prompt({
 					cls: 'a mute',
 					type: 'area',
@@ -164,6 +164,20 @@ const showSourceTr = (data, env, source) => `
 				})}
 			</div>
 			<div style="white-space: pre; font-style: italic;">${source.comment}</div>
+			<div style="float:right; position: relative">
+				${field.prompt({
+					cls: 'a mute',
+					type: 'area',
+					name: 'comment', 
+					label: 'Параметры источника json',
+					value: svg.edit(), 
+					action: '/-sources/set-source-params', 
+					args: {source_id: source.source_id},
+					reloaddiv: env.layer.div,
+					input: source.params
+				})}
+			</div>
+			<div style="font-size:12px; font-family: monospace; white-space: pre;">${source.params || ''}</div>
 		</td>
 
 		
@@ -189,9 +203,9 @@ const showSourceTr = (data, env, source) => `
 		
 		<td>
 			
-			<span title="Дата загрузки ${date.dmyhi(source.date_load)}">${date.dm(source.date_load)}</span>, <span class="mute" title="Длительность загрузки">${ago.pass(source.duration_rest + source.duration_insert + source.duration_recalc)}</span>
+			<span title="Дата загрузки ${date.dmyhi(source.date_load)}">${date.dm(source.date_load)}</span>${source.date_load ? ', ' : ''}<span class="mute" title="Длительность загрузки">${ago.pass(source.duration_rest + source.duration_insert + source.duration_recalc)}</span>
 			<div class="mute">
-				<span title="Дата актуальности в загруженных данных ${date.dmyhi(source.date_content)}">${date.dm(source.date_content)}</span>, ${source.rows} ${words(source.rows, 'строка', 'строки', 'строк')}
+				<span title="Дата актуальности в загруженных данных ${date.dmyhi(source.date_content)}">${date.dm(source.date_content)}</span>${source.date_content ? ', ': ''}${source.rows} ${words(source.rows, 'строка', 'строки', 'строк')}
 			</div>
 			<div>
 				${field.button({

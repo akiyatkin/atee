@@ -38,7 +38,7 @@ function scheduleDailyTask(taskTime, taskCallback) {
                 
                 // Выполняем асинхронную задачу
                 const result = await taskCallback();
-                console.log('✅ Задача успешно выполнена', result ? '- результат:' : '', result);
+                console.log('✅ Задача успешно выполнена:', result);
                 
             } catch (error) {
                 console.error('❌ Ошибка при выполнении задачи:', error.message);

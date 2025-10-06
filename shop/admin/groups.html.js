@@ -413,7 +413,7 @@ const showScriptDragCards = (data, env) => `
 const showCard = (data, env, card) => `
 	<tr data-id="${card.prop_nick}" style="white-space: nowrap;" class="item">
 		<td>
-			<a href="${data.conf.root_path}/group/${data.group.group_nick}?m=:${card.prop_nick}=empty">${card.prop_title || showRed(card.prop_nick)}</a>
+			<a href="poss?group_id=${data.group.group_id}&m=:${card.prop_nick}=empty">${card.prop_title || showRed(card.prop_nick)}</a>
 			
 		</td>
 		<td>
@@ -434,7 +434,7 @@ const showCard = (data, env, card) => `
 const showFilter = (data, env, filter) => `
 	<tr data-id="${filter.prop_nick}" style="white-space: nowrap;" class="item">
 		<td>
-			<a href="${data.conf.root_path}/group/${data.group.group_nick}?m=:${filter.prop_nick}=empty">${filter.prop_title || showRed(filter.prop_nick)}</a>
+			<a href="poss?group_id=${data.group.group_id}&m=:${filter.prop_nick}=empty">${filter.prop_title || showRed(filter.prop_nick)}</a>
 		</td>
 		<td>
 			${field.button({
@@ -545,7 +545,7 @@ const showFree = (data, env, freetable) => `
 	
 	<form style="display: flex; margin: 1em 0; gap: 1em">
 		<div class="float-label">
-			<input id="freeinp" name="search" type="search" placeholder="Поиск" value="${env.bread.get.search ?? ''}">
+			<input id="freeinp" name="search" type="search" placeholder="Поиск" value="${env.bread.get.query ?? ''}">
 			<label for="freeinp">Поиск</label>
 		</div>
 		<button type="submit">Найти</button>
@@ -556,7 +556,7 @@ const showFree = (data, env, freetable) => `
 				form.addEventListener('submit', async (e) => {
 					e.preventDefault()
 					const Client = await window.getClient()
-					Client.go('groups${data.group ? '/' + data.group.group_id : ''}?search=' + input.value, false)
+					Client.go('groups${data.group ? '/' + data.group.group_id : ''}?query=' + input.value, false)
 				})
 			})(document.currentScript.parentElement)
 		</script>
@@ -695,7 +695,7 @@ const showStatTds = (data, env, group, stat = {}) => `
 
 const redTd = (data, group, stat, name, filter_prop_nick, sum = stat.poscount - stat[name]) => filter_prop_nick ? (
 	group ? `
-	<td><a target="about:blank" style="opacity:0.5" class="${sum ? 'red' : 'green'}" href="${data.conf.root_path}/group/${group.group_nick}?m=:${filter_prop_nick}=empty">${sum || '✓'}</a></td>
+	<td><a target="about:blank" style="opacity:0.5" class="${sum ? 'red' : 'green'}" href="poss?group_id=${group.group_id}&m=:${filter_prop_nick}=empty">${sum || '✓'}</a></td>
 	` : `
 		<td><span style="opacity:0.5" class="${sum ? 'red' : 'green'}">${sum || '✓'}</span></td>
 	`) : `

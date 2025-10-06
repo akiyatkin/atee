@@ -138,6 +138,12 @@ export class Rest {
 		const list = this.getRestStore(visitor).views
 		list.push(view)
 	}
+	// delView (view) {
+	// 	const visitor = view.visitor
+	// 	const list = this.getRestStore(visitor).views
+	// 	const index = list.indexOf(view)
+	// 	list.splice(index, 1);
+	// }
 	static makeReans (view) {
 		return {
 			data: view.data ?? 'Internal Server Error', 
@@ -163,10 +169,23 @@ export class Rest {
 			if (res != null) view.data = res
 			return Rest.makeReans(view)
 		})
-		reans = await Rest.catchReans(view, async () => {
-			for (const callback of view.afterlisteners) await callback(view) //выход из базы
-			return reans
-		})
+		
+		view.executed = true
+		const list = view.rest.getViews(view.visitor)
+		const not_executed_view = list.find(view => !view.executed)
+		if (not_executed_view) {
+			not_executed_view.after(async () => {
+				reans = await Rest.catchReans(view, async () => {
+					for (const callback of view.afterlisteners) await callback(view) //выход из базы
+					return reans
+				})
+			})
+		} else {
+			reans = await Rest.catchReans(view, async () => {
+				for (const callback of view.afterlisteners) await callback(view) //выход из базы
+				return reans
+			})
+		}
 		return reans
 	}
 	async req (action, req = {}, visitor) { //reans request и action 

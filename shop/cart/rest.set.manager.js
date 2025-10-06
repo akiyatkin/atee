@@ -45,7 +45,7 @@ rest.addResponse('set-status', ['manager#required'], async view => {
 		const item = json ? JSON.parse(json) : false
 		if (!item) { //Замораживаем если там там нет данных. Иначе, заморозка сохраняется оригинальная (туда-сюда действия менеджера не должны изменить заявку).
 			const order = await Cart.getOrder(db, order_id)
-			await Cart.freeze(db, order_id, order.partner)
+			await Cart.basket.freeze(db, order_id, order.partner)
 		} else {
 			await db.exec(`
 				UPDATE 

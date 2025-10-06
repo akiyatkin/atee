@@ -4,8 +4,9 @@
 	"root_nick":"catalog",
 	"root_path":"/shop",
 	"limit":12,
-
+	"checkShutdown": true,
 	"group_pages":"data/catalog/pages/",
+	
 	"partners":{
 		"1998":{
 			"title":"1998",

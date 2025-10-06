@@ -108,7 +108,7 @@ export const DATES = (data, env) => !data.result ? `` : `
 	<div id="date" style="align-items: center; flex-grow: 1; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
 		
 		<div style="background: linear-gradient(-30deg, #00aaff55, #4466ff22); padding: 0.5em; flex-grow: 1; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
-			${data.dates.map(dateup => showDate(data, env, dateup)).join('')} ${data.indexneed ? showIndex(data, env) : ''}
+			${data.dates.map(dateup => showDate(data, env, dateup)).join('')} ${data.publicateneed ? showIndex(data, env) : ''}
 		</div>
 		<div style="background: linear-gradient(-30deg, #00aaff55, #4466ff22); padding: 0.5em; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
 			<div><a class="${env.bread.get.keyfilter == 'yes' ? 'active' : ''}" data-keyfilter="yes" data-limit="" href="sheet${addget(env.bread.get, {keyfilter: 'yes', limit: ''})}#date">С&nbsp;ключом<sup>${data.quantity_of_keys}</sup></a></div>
@@ -237,6 +237,20 @@ const showComment = (data, env, source) => `
 		})}		
 	</div>
 	<div style="white-space: pre; font-style: italic;">${source.comment}</div>
+	<div style="float:right; position: relative">
+		${field.prompt({
+			cls: 'a mute',
+			type: 'area',
+			name: 'comment', 
+			label: 'Параметры источника json',
+			value: svg.edit(), 
+			action: '/-sources/set-source-params', 
+			args: {source_id: source.source_id},
+			reloaddiv: env.layer.div,
+			input: source.params
+		})}
+	</div>
+	<div style="font-size:12px; font-family: monospace; white-space: pre;">${source.params || ''}</div>
 `
 
 export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !data.result ? '' : `

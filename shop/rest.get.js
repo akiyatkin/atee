@@ -350,11 +350,6 @@ rest.addResponse('get-search-list', async (view) => {
 	
 	const {from, join, where, sort} = await Shop.getWhereByGroupIndexSort(db, group.group_id, [md.mget], md.hashs, partner)
 	
-	
-	
-	
-	
-
 
 	const modcount = await db.col(`
 		SELECT count(distinct win.value_id)
@@ -410,6 +405,7 @@ rest.addResponse('get-search-list', async (view) => {
 		'cena',
 		...group.card_nicks
 	])
+
 	const list = await Shop.getModelsByItems(db, moditem_ids, partner, props)
 
 	const res = { list, pagination, modcount, countonpage }
@@ -428,6 +424,7 @@ rest.addResponse('get-search-list', async (view) => {
 		delete withoutcostget.cena
 		const {from, join, where, sort} = await Shop.getWhereByGroupIndexWin(db, group.group_id, [withoutcostget], md.hashs, partner, 'sources_wnumbers')
 		const prop = await Shop.getPropByNick(db, 'cena')
+		if (!prop) return {max:0, min:0}
 		const row = await db.fetch(`
 			SELECT max(win.number) as max, min(win.number) as min
 			FROM ${from.join(', ')} ${join.join(' ')}
@@ -456,6 +453,7 @@ rest.addResponse('get-livemodels', async (view) => {
 	const conf = view.data.conf = await config('shop', true)
 	
 	const partner = await view.get('partner')
+
 	const root = await view.get('root#required')
 	
 
@@ -494,13 +492,11 @@ rest.addResponse('get-livemodels', async (view) => {
 		// 'images',
 		// 'nalichie',
 		// 'staraya-cena',
-
 		'art', //ссылка на позицию
 		'brendmodel', //если нет наименования
 		'naimenovanie', //главная строка в списке поиска
 		'brendart', //если нет art то используется в ссылке
 		'cena'
-
 	]
 		
 	const list = await Shop.getModelsByItems(db, moditem_ids, partner, props)

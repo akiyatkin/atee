@@ -32,6 +32,97 @@ rest.extra(rest_db)
 export default rest
 
 
+rest.addResponse('rows', ['admin'], async view => {
+	const db = await view.get('db')
+	const hashs = await view.get('hashs')
+	
+	/*
+			
+			*/
+	
+	const rows = await db.all(`
+		SELECT
+			ro.key_id,
+			sh.key_index,
+			so.source_title, 
+			so.source_id,
+			sh.sheet_title, 
+			sh.sheet_index, 
+			ro.source_id, 
+			ro.sheet_index, 
+			ro.row_index
+		FROM 
+			sources_rows ro, 
+			sources_sheets sh,
+			sources_sources so
+		WHERE 
+			sh.source_id = ro.source_id
+			and sh.sheet_index = ro.sheet_index
+			and so.source_id = ro.source_id
+			
+			and (${hashs.map(hash => 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"').join(' or ') || 'ro.search != ""'}) 
+		ORDER BY RAND()
+		LIMIT 25
+	`)
+	//and (${hashs.map(hash => 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"').join(' or ') || 'ro.search != ""'}) 
+	//const sql = 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"'
+	view.data.count = await db.col(`
+		SELECT count(*)
+		FROM 
+			sources_rows ro, 
+			sources_sheets sh,
+			sources_sources so
+		WHERE 
+			sh.source_id = ro.source_id
+			and sh.sheet_index = ro.sheet_index
+			and so.source_id = ro.source_id
+			and (${hashs.map(hash => 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"').join(' or ') || 'ro.search != ""'}) 
+	`)
+	
+	for (const row of rows) {
+		const props = await db.all(`
+			SELECT 
+				co.col_title,
+				co.col_index,
+				ce.pruning + 0 as pruning, 
+				GROUP_CONCAT(ce.text SEPARATOR ", ") AS text, 
+				COUNT(*) AS cnt, 
+				nvl(wce.entity_id, "") as winner
+			FROM 
+				sources_cols co,
+				sources_cells ce
+					left join sources_wcells wce on (wce.source_id = ce.source_id and wce.sheet_index = ce.sheet_index and wce.row_index = ce.row_index and wce.col_index = ce.col_index)
+			WHERE 
+			ce.source_id = :source_id
+			and ce.sheet_index = :sheet_index
+			and ce.row_index = :row_index
+
+			
+
+			and co.source_id = ce.source_id
+			and co.sheet_index = ce.sheet_index
+			and co.col_index = ce.col_index
+
+			
+			
+			GROUP BY ce.source_id, ce.sheet_index, ce.row_index, ce.col_index
+		`, row)
+
+		row.cols = {}
+		for (const prop of props) {
+			prop.text = prop.text.replaceAll(/<[^>]+>/g, ' ')
+			if (prop.text.length > 31) prop.text = prop.text.slice(0,30) + '…'
+			row.cols[prop.col_title] = prop
+		}
+	}
+	
+
+	//rows = [row, row]
+
+	const table = view.data.table = await Sources.getTable(db, rows) //table = {head: [prop_title], rows:{..., cols: [cell]}
+	
+	return view.ret()
+})
 
 rest.addResponse('settings', ['admin'], async view => {
 
@@ -71,40 +162,71 @@ rest.addResponse('main', async view => {
 	if (!view.data.admin || !view.data.isdb) return view.err()
 
 	const db = await view.get('db')
+	
 	const list = view.data.list = await Sources.getSources(db)
-	for (const source of list) {
-		source.rows = await db.col(`
-			SELECT count(*) 
-			FROM sources_rows 
-			WHERE source_id = :source_id
-		`, source)
-
-		// source.news = await db.col(`
-		// 	SELECT count(*)
-		// 	FROM sources_cols co 
-		// 	WHERE co.source_id = :source_id AND co.prop_id is null AND co.represent_col = 1 
-		// `, source)
-
-		source.news = await db.col(`
-			SELECT count(distinct co.col_title)
-			FROM 
-				sources_rows ro, 
-				sources_cols co 
-			WHERE co.source_id = :source_id 
-			and ro.source_id = co.source_id and ro.sheet_index = co.sheet_index
-			AND co.prop_id is null AND co.represent_col = 1 
-		`, source)
-
-
-		source.prunings = await db.col(`
-			SELECT count(DISTINCT co.prop_id)
-			FROM sources_cells ce, sources_cols co
-			WHERE
-			ce.source_id = :source_id
+	
+	
+	const rows = await db.allto('source_id', `
+		SELECT source_id, count(*) as count
+		FROM sources_rows 
+		GROUP BY source_id
+	`)
+	
+	const news = await db.allto('source_id', `
+		SELECT ro.source_id, count(distinct co.col_title) as count
+		FROM 
+			sources_rows ro, 
+			sources_cols co 
+		WHERE ro.source_id = co.source_id and ro.sheet_index = co.sheet_index
+		AND co.prop_id is null AND co.represent_col = 1 
+		GROUP BY ro.source_id
+	`)
+	
+	const prunings = await db.allto('source_id', `
+		SELECT ce.source_id, count(distinct co.prop_id) as count
+		FROM sources_cells ce, sources_cols co
+		WHERE 
+			ce.pruning = 1	
 			and co.source_id = ce.source_id and co.sheet_index = ce.sheet_index and co.col_index = ce.col_index
-			and ce.pruning = 1	
-		`, source)
+		
+		GROUP BY co.source_id
+	`)
+	
+	for (const source of list) {
+		source.rows = rows[source.source_id]?.count || 0
+		source.news = news[source.source_id]?.count || 0
+		source.prunings = prunings[source.source_id]?.count || 0
 	}
+	// for (const source of list) {
+		
+	// 	// source.rows = await db.col(`
+	// 	// 	SELECT count(*) 
+	// 	// 	FROM sources_rows 
+	// 	// 	WHERE source_id = :source_id
+	// 	// `, source)
+		
+		
+	// 	// source.news = await db.col(`
+	// 	// 	SELECT count(distinct co.col_title)
+	// 	// 	FROM 
+	// 	// 		sources_rows ro, 
+	// 	// 		sources_cols co 
+	// 	// 	WHERE co.source_id = :source_id 
+	// 	// 	and ro.source_id = co.source_id and ro.sheet_index = co.sheet_index
+	// 	// 	AND co.prop_id is null AND co.represent_col = 1 
+	// 	// `, source)
+		
+	// 	source.prunings = await db.col(`
+	// 		SELECT count(DISTINCT co.prop_id)
+	// 		FROM sources_cells ce, sources_cols co
+	// 		WHERE
+	// 		co.source_id = :source_id
+	// 		and co.source_id = ce.source_id and co.sheet_index = ce.sheet_index and co.col_index = ce.col_index
+	// 		and ce.pruning = 1	
+	// 	`, source)
+		
+	// }
+	
 	view.data.comment = await db.col(`select comment from sources_settings`)
 
 	// for (const source of list) {
@@ -118,6 +240,7 @@ rest.addResponse('main', async view => {
 
 	const conf = await config('sources')
 	view.data.dir = conf.dir
+	
 	return view.ret()
 })
 rest.addResponse('props', ['admin'], async view => {
@@ -143,12 +266,22 @@ rest.addResponse('prop', ['admin'], async view => {
 	const db = await view.get('db')
 	const prop_id = await view.get('prop_id#required')
 	const prop = view.data.prop = await Sources.getProp(db, prop_id)
-	
+	const hashs = await view.get('hashs')
 	view.data.synonyms = await db.all(`
 		SELECT col_title, col_nick
 		FROM sources_synonyms
 		WHERE prop_id = :prop_id
 	`, {prop_id})
+
+	let search
+	if (prop.type == 'value') {
+		search = hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || 'ce.text != ""'
+	} else if (prop.type == 'number') {
+		search = hashs.map(hash => 'ce.number like "%' + hash.join('%" and ce.number like "%') + '%"').join(' or ') || 'ce.text != ""'
+	} else {
+		search = 'ce.text != ""'
+	}
+
 
 	const list = await db.all(`
 		SELECT co.prop_id, ce.text, count(ce.text) as count, 
@@ -162,7 +295,7 @@ rest.addResponse('prop', ['admin'], async view => {
 			and co.sheet_index = ce.sheet_index 
 			and co.col_index = ce.col_index
 			and co.prop_id = :prop_id
-			and ce.text != ''
+			and (${search}) 
 		GROUP BY ce.text
 		ORDER BY ce.pruning DESC, count(ce.text) DESC
 		LIMIT 100
@@ -181,7 +314,16 @@ rest.addResponse('prop', ['admin'], async view => {
 	// 	)
 
 	// }
-	view.data.count = list.length
+	view.data.count = await db.col(`
+		SELECT count(distinct ce.text)
+		FROM sources_cols co, sources_cells ce
+			LEFT JOIN sources_values va on va.value_id = ce.value_id
+		WHERE co.source_id = ce.source_id 
+			and co.sheet_index = ce.sheet_index 
+			and co.col_index = ce.col_index
+			and co.prop_id = :prop_id
+			and ce.text != ''
+	`, {prop_id})
 	view.data.list = list
 	//view.data.list = list.slice(0, 1000)
 	return view.ret()
@@ -500,16 +642,16 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 	const appear = await view.get('appear') //null - последняя дата, 0 - выбрать всё, date - конкретная дата	
 
 	const rdates = await Recalc.getDates(db)
-	view.data.indexneed = !rdates.date_recalc_index
+	view.data.publicateneed = !rdates.date_recalc_publicate
 	//.issearch = !!await db.col(`select search from sources_rows where source_id = :source_id limit 1`, {source_id})
 	const hashs = await view.get('hashs')
 
-	const where_search = []
-	if (!hashs.length) where_search.push('1=1')
-	for (const hash of hashs) {
-		const sql = 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"'
-		where_search.push(sql)
-	}
+	// const where_search = []
+	// if (!hashs.length) where_search.push('1=1')
+	// for (const hash of hashs) {
+	// 	const sql = 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"'
+	// 	where_search.push(sql)
+	// }
 	
 	
 	view.data.quantity_with_active = await db.col(`
@@ -518,9 +660,9 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 		WHERE
 			ro.source_id = :source_id
 			and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
-			and (${where_search.join(' or ')})
+			and (${hashs.map(hash => 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"').join(' or ') || 'ro.search != ""'}) 
 	`, {source_id})
-
+	
 	view.data.quantity_with_passive = await db.col(`
 		SELECT count(DISTINCT ro.sheet_index, ro.row_index)
 		FROM sources_rows ro
@@ -528,21 +670,22 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 		WHERE
 			ro.source_id = :source_id
 			and ce.col_index is null
-			and (${where_search.join(' or ')})
+			and (${hashs.map(hash => 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"').join(' or ') || 'ro.search != ""'}) 
 	`, {source_id})
-
+	
+	
 	//Колонок с обрезанными значениями
 	view.data.quantity_with_pruning = await db.col(`
 		SELECT count(DISTINCT co.prop_id)
-		FROM sources_rows ro, sources_cells ce, sources_cols co
+		FROM sources_cells ce, sources_cols co, sources_rows ro
 		WHERE
-			ce.source_id = :source_id
-			and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
+			ce.source_id = :source_id and ce.pruning = 1
 			and co.source_id = ce.source_id and co.sheet_index = ce.sheet_index and co.col_index = ce.col_index
-			and (${where_search.join(' or ')})
-			and ce.pruning = 1
+			and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
+			and (${hashs.map(hash => 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"').join(' or ') || 'ro.search != ""'}) 
+			
 	`, {source_id})
-
+	
 	//Колонок с неопределёнными свойствами
 	view.data.quantity_with_unknown = await db.col(`
 		SELECT count(distinct co.col_title)
@@ -553,9 +696,9 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 		and ro.source_id = co.source_id and ro.sheet_index = co.sheet_index
 
 		AND co.prop_id is null AND co.represent_col = 1 
-		and (${where_search.join(' or ')})
+		and (${hashs.map(hash => 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"').join(' or ') || 'ro.search != ""'}) 
 	`, {source_id})
-
+	
 	//Строк с ключами
 	view.data.quantity_of_keys = await db.col(`
 		SELECT count(*)
@@ -564,8 +707,9 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 		and ro.sheet_index = sh.sheet_index 
 		and ro.source_id = sh.source_id
 		and ro.key_id is not null
-		and (${where_search.join(' or ')})
+		and (${hashs.map(hash => 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"').join(' or ') || 'ro.search != ""'}) 
 	`, {source_id})
+	
 	view.data.quantity_without_keys = await db.col(`
 		SELECT count(*)
 		FROM sources_rows ro, sources_sheets sh
@@ -573,7 +717,7 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 		and ro.sheet_index = sh.sheet_index 
 		and ro.source_id = sh.source_id
 		and ro.key_id is null
-		and (${where_search.join(' or ')})
+		and (${hashs.map(hash => 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"').join(' or ') || 'ro.search != ""'}) 
 	`, {source_id})
 	
 	//make dates
@@ -595,7 +739,7 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 			and ro.sheet_index = sh.sheet_index 
 			and ro.source_id = sh.source_id
 			and ro.key_id = va.value_id
-			and (${where_search.join(' or ')})
+			and (${hashs.map(hash => 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"').join(' or ') || 'ro.search != ""'}) 
 		`, {date: choice_date, source_id}), 
 		active: true
 	}
@@ -612,7 +756,7 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 		and ro.source_id = sh.source_id
 		and va.value_nick = ap.key_nick
 		and ro.key_id = va.value_id
-		and (${where_search.join(' or ')})
+		and (${hashs.map(hash => 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"').join(' or ') || 'ro.search != ""'}) 
 
 		GROUP BY ap.date_appear
 		ORDER BY ap.date_appear		
@@ -812,7 +956,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 
 	
 	
-
+	
 	const where_search = []
 	if (!hashs.length) where_search.push('1=1')
 	for (const hash of hashs) {
@@ -825,7 +969,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	const appear = await view.get('appear') //null - последняя дата, 0 - выбрать всё, date - конкретная дата
 
 
-
+	
 	const date_appear = appear || await db.col(`
 		SELECT UNIX_TIMESTAMP(max(ap.date_appear))
 		FROM sources_appears ap
@@ -834,7 +978,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	
 	//===================
 	let sheets = []
-
+	
 	if (keyfilter == 'appear') {
 		sheets = view.data.sheets = await db.all(`
 			SELECT 
@@ -985,6 +1129,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 			ORDER by sh.sheet_index
 		`, {source_id})
 	}
+	
 	let last_index = null
 	for (const s of sheets) {	
 		//s.represent = s.represent_sheet// && source.represent_sheets
@@ -1140,7 +1285,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 			ORDER BY co.col_index
 		`, {source_id, sheet_index, sheet_title}) 
 	}
-
+	
 	view.data.cols = cols
 
 	for (const col of cols) {
@@ -1215,8 +1360,8 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 			LIMIT ${limit}
 		`, {source_id, sheet_index, date_appear})
 	}
-
-
+	
+	
 	let max_row_index = 0
 	rows.forEach(row => max_row_index = Math.max(max_row_index, row.row_index))
 
@@ -1245,6 +1390,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	const getCols = () => cols.length ? `and ce.col_index in (${cols.map(col => col.col_index)})` : `and 1 = 0`
 	let cells = []
 	//if (keyfilter == 'active') {
+
 		cells = await db.all(`
 			SELECT 
 				ce.row_index, 
@@ -1267,6 +1413,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 			ORDER BY ce.row_index, ce.col_index
 
 		`, {source_id, sheet_index}) 
+
 	// } else if (keyfilter == 'passive') {
 	// 	cells = await db.all(`
 	// 		SELECT 
@@ -1346,7 +1493,10 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 		
 	// 	ORDER BY ce.row_index, ce.col_index
 	// `)
-
+	
+	
+	
+	
 	const texts = view.data.texts = []
 	const winners = view.data.winners = []
 	const prunings = view.data.prunings = []
@@ -1405,6 +1555,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 		// 	winners[text_index][pos_index] ??= [0]
 		// }
 	}
+	
 	return view.ret()
 })
 rest.addResponse('source', ['admin'], async view => {

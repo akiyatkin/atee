@@ -26,11 +26,8 @@ main.head.col = (data, env, col = data.col, entity = data.entity, prop = data.pr
 		args: {source_id: source.source_id, sheet_index: col.sheet_index, col_index: col.col_index},
 		global: 'check'
 	})}</b>
-	${prop ? '' : showFastProp(data, env)}
-	<div>
-		${showType(data, env, prop)}
-	</div>
-	<div style="margin: 1em 0; white-space: pre; font-style: italic;">${prop.comment}</div>
+	${prop ? showReadyProp(data, env, prop) : showFastProp(data, env)}
+	
 	<!-- <script>
 		(div => {
 			const fields = div.getElementsByClassName('field')
@@ -42,6 +39,12 @@ main.head.col = (data, env, col = data.col, entity = data.entity, prop = data.pr
 			}
 		})(document.currentScript.parentElement)
 	</script> -->
+`
+const showReadyProp = (data, env, prop) => `
+	<div>
+		${showType(data, env, prop)}
+	</div>
+	<div style="margin: 1em 0; white-space: pre; font-style: italic;">${prop.comment}</div>
 `
 const showFastProp = (data, env) => `
 	<div style="margin-top:0.5em">

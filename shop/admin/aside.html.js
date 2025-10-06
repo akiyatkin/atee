@@ -5,22 +5,22 @@ export const ROOT = (data, env) => `
 		<div>
 			<div style="position: sticky; top:1em">
 				<div style="display: grid; gap: 0.25em; margin-bottom: 1em">
+					<div><a href="brief">Сводка</a></div>
 					<div><a href="groups">Группы</a></div>
 					<div><a href="props">Свойства</a></div>
 					<div><a href="poss">Позиции</a></div>
-					<div><a href="brief">Сводка</a></div>
-					
+					<div><a href="manager">Заказы</a></div>
 				</div>
 				<div id="RECALC"></div>
 			</div>
 		</div>
 		<div style="display: grid; gap: 0.25em">
-			<div title="Индекс групп и статистика">${field.button({
+			<!-- <div title="Индекс групп и статистика">${field.button({
 				label:'Переиндексировать',
 				cls: 'mute a',
 				action:'/-shop/admin/set-recalc',
 				global:'check'
-			})}</div>
+			})}</div> -->
 			<!-- <div>${field.button({
 				label:'Опубликовать группы',
 				cls: 'mute a',

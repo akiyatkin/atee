@@ -26,7 +26,7 @@ export const ROOT = (data, env) => {
 		
 		
 		
-		${!data.dates.date_recalc_index ? showIndexTimer(data, env) : ''}
+		${!data.dates.date_recalc_publicate ? showIndexTimer(data, env) : ''}
 
 		<script type="module">
 			const div = document.getElementById("${env.layer.div}")
@@ -90,7 +90,7 @@ export const ROOT = (data, env) => {
 
 // const showStat = (data, env) => `
 // 	<div>
-// 		${!data.dates.date_recalc_index ? showIndexTimer(data, env) : ''}
+// 		${!data.dates.date_recalc_publicate ? showIndexTimer(data, env) : ''}
 // 	</div>
 // `
 const showIndexTimer = (data, env) => `

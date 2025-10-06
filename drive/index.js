@@ -97,6 +97,11 @@ const Drive = {
 			return 'Ошибка: ' + error
 		}
 	},
+	getSheet: async (gid, range, title, eternal = false) => {
+		const table = await Drive.getTable(gid, range, title, eternal)
+		if (!table.head_titles?.length) return false
+		return {title, head: table.head_titles, rows: table.rows_body}
+	},
 	getTable: async (gid, range, sheet, eternal = false) => {
 		const rows_source = await Drive.getRows(gid, range, sheet, eternal)
 		if (!rows_source) return false

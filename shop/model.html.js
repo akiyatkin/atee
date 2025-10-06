@@ -83,7 +83,7 @@ tpl.showTrProp = (data, env, item, prop_nick) => {
 	const val = cards.getSomeTitles(data, item, prop_nick).join(', ')
 	if (!val) return ''
 	return `
-		<tr><th>${prop.prop_title}</th><td>${val}</td></tr>
+		<tr><th>${prop.name}</th><td>${val}${cards.unit(prop)}</td></tr>
 	`
 }
 tpl.isItemPropNotTable = (data, env, prop_nick) => {
@@ -124,7 +124,7 @@ tpl.showItemsTableBodyTr = (data, env, model, item, i) => {
 	`
 }
 tpl.showItemDescription = (data, env, item, model) => {
-	const gain = prop_nick => cards.getSomeTitles(data, item, prop_nick)
+	const gain = prop_nick => cards.getSomeTitles(data, item, prop_nick).join(', ')
 	return `
 		<h2>${model.recap.naimenovanie?.length > 1 ? gain('naimenovanie') : gain('art')}</h2>
 		${model.recap.naimenovanie?.length > 1 ? '<p>' + cards.line('Арт', gain('art')) + '</p>' : ''}
@@ -285,7 +285,9 @@ tpl.showMainData = (data, env, model, selitem) => `
 			
 
 			${model.recap.cena?.length > 1 ? cards.block(cards.price(model.recap)) : ''}
+			
 			${(model.items.length > 1 || !selitem) ? cards.block(tpl.showItemButtons(data, env, model)) : ''}
+			
 			${selitem ? cards.block(tpl.showTableItem(data, env, model, selitem)) : ''}
 			<div style="text-align: right;">
 				${selitem ? cards.block(selitem.cena ? tpl.buyButton(data, env, model, selitem) : tpl.orderButton(data, env, model, selitem)) : ''}
@@ -356,15 +358,15 @@ const showItemIfCost = (mod, item, oldcost = item['Старая цена'] || mo
 tpl.getItemButton = (data, env, model, item, i) => {
 	const selected = item.art?.[0] == env.crumb.name || item.brendart[0] == env.crumb.name
 	const title = cards.getVariant(data, model, item)
-
+	
 	return selected ? 
 	`<span style="display: inline-block; border-radius:var(--radius);
-			padding:0 1ch; line-height: 2;
+			padding:0.6ch 1ch;
 			border:solid rgba(0,0,0,0.7) 3px;">
 		${title}
 	</span>` : 
 	`<a style="text-decoration:none; display:inline-block; border-radius:var(--radius);
-		padding:0 1ch; line-height: 2;
+		padding:0 1ch;
 		border:solid rgba(0,0,0,0.15) 3px;" 
 		class="a" data-scroll="none" rel="nofollow" 
 		href="${cards.getItemPath(data, item)}">
@@ -488,7 +490,7 @@ tpl.buyButton = (data, env, model, selitem) => {
 
 tpl.filters = (data, env, model, item, prop_nick) => (item[prop_nick] || []).map(nick => `
 	<a rel="nofollow" href="${cards.getGroupPath(data, model.groups[0])}${cards.addget(env.bread.get, {m: prop_nick + '::.' + nick + '=1'})}">
-		${data.values[nick].value_title || nick}
+		${cards.getValueTitleByNick(data, nick)}
 	</a>
 `).join(', ')
 tpl.orderButton = (data, env, model, item) =>  `

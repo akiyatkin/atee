@@ -680,7 +680,7 @@ Consciousness.recalcMulti_list = async (db, list) => {
 
 	const insert_sources_cells = new BulkInserter(db, 'sources_cells', ['source_id', 'sheet_index', 'row_index', 'col_index', 'multi_index', 'text'])
 	for (const {source_id, sheet_index, row_index, col_index, text, cnt, multi} of list) {
-		const texts = multi ? text.split(', ') : [text]
+		const texts = multi ? text.split(', ').map(v => v.trim()) : [text]
 		for (const multi_index in texts) {
 			const text = texts[multi_index]
 			await insert_sources_cells.insert([source_id, sheet_index, row_index, col_index, multi_index, text])
@@ -2788,17 +2788,15 @@ Consciousness.recalcWinner_byKey = async (db, entity_id, key_id) => { //depricat
 }
 
 Consciousness.recalcWinner = async (db) => {
+	await db.exec(`TRUNCATE TABLE sources_wprops`)
 	await db.exec(`TRUNCATE TABLE sources_wcells`)
 	await db.exec(`TRUNCATE TABLE sources_wdates`)
 	await db.exec(`TRUNCATE TABLE sources_wtexts`)
 	await db.exec(`TRUNCATE TABLE sources_wvalues`)
 	await db.exec(`TRUNCATE TABLE sources_wnumbers`)
-	await db.exec(`TRUNCATE TABLE sources_wprops`)
 
 	await db.start()
 	await db.exec(`INSERT INTO sources_wprops SELECT * FROM sources_props`)
-
-	
 	await db.exec(`
 		INSERT INTO sources_wcells (
 			entity_id, key_id, 

@@ -6,6 +6,9 @@
 	max-width:fit-content;
 	font-size: 12px;
 }
+.revscrollfont {
+	font-size: 12px;
+}
 .revscroll table {
 	display: table;
 	--color: #eee;

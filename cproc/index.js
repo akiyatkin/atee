@@ -20,6 +20,7 @@ const map = new Map()
 	cproc(Obj, key, func, 3) //в одном key выполняется только один, остальные забываются, нет кэша
 */
 
+//dpricated use kcproc
 const cproc = (obj, key, fn, group = '') => {
 	if (!map.has(obj)) map.set(obj, {})
 	const glob = map.get(obj)
