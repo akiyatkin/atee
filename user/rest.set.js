@@ -176,7 +176,7 @@ rest.addAction('set-signup-email', async (view) => {
 		User.setCookie(view, user)
 	}
 	//email свободен можно записать	
-	User.sendup(db, user_id, view.visitor.client.host, email)
+	await User.sendup(db, user_id, view.visitor.client.host, email)
 	
 	return view.ret('Вы зарегистрированы. Вам отправлено письмо для подтверждения адреса.')
 })
