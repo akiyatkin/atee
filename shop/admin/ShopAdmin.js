@@ -122,8 +122,8 @@ ShopAdmin.getWhereBySamples = async (db, samples, hashs = [], partner = '', full
 	const where = [`
 		win.entity_id = :brendart_prop_id and win.prop_id = :brendmodel_prop_id 
 	`]
-	const sort = []
-	await Shop.addWhereSamples(db, from, join, where, sort, samples, hashs, partner, !fulldef)
+	
+	const sort = await Shop.addWhereSamples(db, from, join, where, samples, hashs, partner, !fulldef)
 	return {from, join, where, sort}
 
 
@@ -1253,8 +1253,8 @@ ShopAdmin.recalcIndexGroups = async (db, group_id) => {
 
 	const group_ids = await ShopAdmin.getAllGroupIds(db, group_id)
 	if (!group_id) {
-		await db.affectedRows(`TRUNCATE shop_itemgroups`)
-		await db.affectedRows(`TRUNCATE shop_allitemgroups`)
+		await db.affectedRows(`DELETE FROM shop_itemgroups`)
+		await db.affectedRows(`DELETE FROM shop_allitemgroups`)
 	} else {
 		await db.db.query(`DELETE FROM shop_itemgroups WHERE group_id in (?)`, [group_ids])
 		await db.db.query(`DELETE FROM shop_allitemgroups WHERE group_id in (?)`, [group_ids])

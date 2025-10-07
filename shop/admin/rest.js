@@ -309,8 +309,8 @@ rest.addResponse('poss', ['admin'], async view => {
 				and wce.key_id = win.key_id and wce.entity_id = win.entity_id
 			`)
 		}
-		const sort = []
-		await Shop.addWhereSamples(db, from, join, where, sort, [md.mget], hashs)
+		
+		const sort = await Shop.addWhereSamples(db, from, join, where, [md.mget], hashs)
 
 		key_ids = await db.colAll(`
 			SELECT distinct win.key_id

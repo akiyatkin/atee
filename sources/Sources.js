@@ -1179,18 +1179,30 @@ Sources.getEntities = async (db) => {
 
 
 Sources.sheet = {}
-Sources.sheet.getCost = (text) => {
+Sources.sheet.getCostWithZero = (text) => {
 	if (typeof text != 'string') return text
 	let textnumber = text.replace(/\s/g, '')
 	textnumber = textnumber.replace(',','.')
 	textnumber = textnumber.replace('&comma;','.')
 	return Math.round(Number(textnumber))
 }
-Sources.sheet.getCostDiscount = (text, dis) => {
+Sources.sheet.getCostDiscountWithZero = (text, dis) => {
 	if (text == null) return null
-	const cena = Sources.sheet.getCost(text)
+	const cena = Sources.sheet.getCostWithZero(text)
 	const discount = (100 - (dis || 0)) / 100
-	return Math.round(cena * discount)
+	const cost = Math.round(cena * discount)
+	if (!cost && cena) return 1
+	return cost
+}
+Sources.sheet.getCost = (text) => {
+	const cost = Sources.sheet.getCostWithZero(text)
+	if (!cost) return null
+	return cost
+}
+Sources.sheet.getCostDiscount = (text, dis) => {
+	const cost = Sources.sheet.getCostDiscountWithZero(text, dis)
+	if (!cost) return null
+	return cost
 }
 
 

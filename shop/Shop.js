@@ -1696,12 +1696,13 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 	
 // 	return {from, join, where, sort}
 // }
-Shop.addWhereSamples = async (db, from, join, where, sort, samples, hashs, partner, emptydef = false) => {
+Shop.addWhereSamples = async (db, from, join, where, samples, hashs, partner, emptydef = false) => {
 	if (hashs.length) {
 		from.unshift('sources_items wit')
 		where.push('wit.entity_id = win.entity_id and wit.key_id = win.key_id')
 		where.push('(' + hashs.map(hash => 'wit.search like "% ' + hash.join('%" and wit.search like "% ') + '%"').join(' or ')+')' || '1 = 1')
 	}
+	let sort = []
 	const whereor = []
 	let i = 0
 
@@ -1772,7 +1773,7 @@ Shop.addWhereSamples = async (db, from, join, where, sort, samples, hashs, partn
 					const disCost = isdiscost ? number => Math.round(number * (100 + partner.discount) / 100) : number => number
 						
 					if (sample[prop_nick]['upto'] || sample[prop_nick]['from']) {
-						sort.length = 0
+						sort = []
 						if (sample[prop_nick]['upto']) {
 							const number = disCost(sample[prop_nick]['upto'])
 							whereand.push(`da${i}.number <= ${number}`)
@@ -1853,6 +1854,8 @@ Shop.addWhereSamples = async (db, from, join, where, sort, samples, hashs, partn
 	}
 	if (whereor.length)	where.push(`((${whereor.join(') or (')}))`)
 	else if (emptydef) where.push(`1=0`)
+
+	return sort
 }
 // Shop.getWhereBySamplesWin = async (db, samples, hashs = [], partner = '', wintable) => {
 // 	//win.key_id - позиция
@@ -1880,7 +1883,6 @@ Shop.getWhereByGroupIndexWin = async (db, group_id, samples = [], hashs = [], pa
 	const where = [`win.entity_id = :brendart_prop_id`]
 	
 
-	let sort = []
 
 	//Находим позиции группы
 	where.push('ig.key_id = win.key_id')	
@@ -1889,7 +1891,7 @@ Shop.getWhereByGroupIndexWin = async (db, group_id, samples = [], hashs = [], pa
 	// where.push(`ig.group_id in (${group_ids.join(',')})`)
 	where.push(`ig.group_id = :group_id`)
 
-	await Shop.addWhereSamples(db, from, join, where, sort, samples, hashs, partner)
+	const sort = await Shop.addWhereSamples(db, from, join, where, samples, hashs, partner)
 
 	return {from, join, where, sort}
 }
@@ -1912,8 +1914,8 @@ Shop.getWhereByGroupIndexWinMod = async (db, group_id, samples = [], hashs = [],
 
 	where.push(`ig.group_id = :group_id`)
 	
-	const sort = []
-	await Shop.addWhereSamples(db, from, join, where, sort, samples, hashs, partner)
+	
+	const sort = await Shop.addWhereSamples(db, from, join, where, samples, hashs, partner)
 
 	return {from, join, where, sort}
 }
@@ -1937,7 +1939,8 @@ Shop.getWhereByGroupIndexSort = async (db, group_id, samples = [], hashs = [], p
 	`]
 	
 
-	let sort = ['so.ordain, wce.sheet_index, wce.row_index, wce.col_index']
+	//Сортируем по месту нахождения модели
+	
 
 	//Находим позиции группы
 	
@@ -1947,9 +1950,15 @@ Shop.getWhereByGroupIndexSort = async (db, group_id, samples = [], hashs = [], p
 	// where.push(`ig.group_id in (${group_ids.join(',')})`)
 	//where.push(`ig.group_id = :group_id`)
 	
-	await Shop.addWhereSamples(db, from, join, where, sort, samples, hashs, partner)
+	const sort = await Shop.addWhereSamples(db, from, join, where, samples, hashs, partner)
 
-	return {from, join, where, sort}
+	let sortsel = []
+	if (!sort.length) {
+		sortsel.push('min(CONCAT((so.ordain + 99), (wce.sheet_index + 99), (wce.row_index + 999))) as sortkey')
+		sort.push('sortkey')
+	}
+
+	return {from, join, where, sort, sortsel}
 }
 // Shop.getWhereBySamplesSort = async (db, samples, hashs = [], partner = '') => {
 // 	//fulldef false значит без выборки ничего не показываем, partner нужен чтобы выборка по цене была по нужному ключу

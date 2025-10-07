@@ -323,7 +323,7 @@ rest.addAction('set-props-clearempty', ['setaccess'], async view => {
 
 rest.addAction('set-models-reorder', async view => {
 	await view.gets(['admin','start'])
-	const { upload } = await view.gets(['upload'])
+	const upload = await view.get('upload')
 	const r = await upload.reorderModels()
 	return view.fin(r)
 })

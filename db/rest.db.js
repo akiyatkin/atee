@@ -5,8 +5,14 @@ const rest = new Rest()
 rest.addVariable('isdb', async view => {
 	const db = await new Db().connect()
 	if (!db) return false
-	view.after(() => {
+	view.after(async () => {
 		//if (!view.ans.result) db.back()
+
+		if (view.ans.result) {
+		 	await db.commit()
+		} else {
+		 	await db.back()
+		}
 		db.release()
 	})
 	return db
@@ -20,13 +26,13 @@ rest.addVariable('db', async view => {
 rest.addVariable('start', async view => { //depricated
 	const db = await view.get('db')
 	await db.start()
-	view.after(async () => {
-		if (view.ans.result) {
-			await db.commit()
-		} else {
-			await db.back()
-		}
-	})
+	// view.after(async () => {
+	// 	if (view.ans.result) {
+	// 		await db.commit()
+	// 	} else {
+	// 		await db.back()
+	// 	}
+	// })
 })
 
 

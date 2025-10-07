@@ -170,7 +170,7 @@ export class Db {
 
     async commit() {
         if (this.transdeep <= 0) {
-            console.warn('Commit called without active transaction');
+            //console.warn('Commit called without active transaction');
             return;
         }
 
@@ -182,7 +182,7 @@ export class Db {
 
     async back() {
         if (this.transdeep <= 0) {
-            console.warn('Rollback called without active transaction');
+            //console.warn('Rollback called without active transaction');
             return true;
         }
 

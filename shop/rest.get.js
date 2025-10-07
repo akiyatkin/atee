@@ -348,7 +348,7 @@ rest.addResponse('get-search-list', async (view) => {
 	
 	//const group_ids = await Shop.getAllGroupIds(db, group.group_id)
 	
-	const {from, join, where, sort} = await Shop.getWhereByGroupIndexSort(db, group.group_id, [md.mget], md.hashs, partner)
+	const {from, join, where, sort, sortsel} = await Shop.getWhereByGroupIndexSort(db, group.group_id, [md.mget], md.hashs, partner)
 	
 
 	const modcount = await db.col(`
@@ -363,6 +363,7 @@ rest.addResponse('get-search-list', async (view) => {
 	const countonpage = count || conf.limit
 	
 
+
 	let last = modcount <= countonpage ? 1 : Math.ceil(modcount / countonpage)
 	if (p > last) p = last
 	const pagination = {
@@ -374,13 +375,15 @@ rest.addResponse('get-search-list', async (view) => {
 	const moditem_ids = await db.all(`
 		SELECT 
 			win.value_id, 
-			GROUP_CONCAT(win.key_id separator ',') as key_ids 
+			GROUP_CONCAT(win.key_id separator ',') as key_ids
+			${sortsel.length ? ',' + sortsel.join(', ') : ''}
 		FROM ${from.join(', ')} ${join.join(' ')}
 		WHERE ${where.join(' and ')}
 		GROUP BY win.value_id 
 		ORDER BY ${sort.join(',')}
 		LIMIT ${start}, ${countonpage}
 	`, {group_id: group.group_id, ...bind})
+
 	// console.log({group_id: group.group_id, ...bind}, `
 	// 	SELECT 
 	// 		win.value_id, 
@@ -458,7 +461,7 @@ rest.addResponse('get-livemodels', async (view) => {
 	
 
 	const bind = await Shop.getBind(db)
-	const {from, join, where, sort} = await Shop.getWhereByGroupIndexWinMod(db, root.group_id, [md.mget], md.hashs, partner)
+	const {from, join, where} = await Shop.getWhereByGroupIndexWinMod(db, root.group_id, [md.mget], md.hashs, partner)
 
 	const countonpage = 12
 	

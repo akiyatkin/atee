@@ -2639,9 +2639,9 @@ Consciousness.recalcSearchByEntityIdAndSourceId = async (db, entity_id, source_i
 
 
 Consciousness.recalcWinner_byKey = async (db, entity_id, key_id) => { //depricated
-	await db.exec(`TRUNCATE TABLE sources_wprops`)
-
 	await db.start()
+	
+	await db.exec(`DELETE FROM sources_wprops`)
 	await db.exec(`INSERT INTO sources_wprops SELECT * FROM sources_props`)
 
 	await db.exec(`
@@ -2788,14 +2788,20 @@ Consciousness.recalcWinner_byKey = async (db, entity_id, key_id) => { //depricat
 }
 
 Consciousness.recalcWinner = async (db) => {
-	await db.exec(`TRUNCATE TABLE sources_wprops`)
-	await db.exec(`TRUNCATE TABLE sources_wcells`)
-	await db.exec(`TRUNCATE TABLE sources_wdates`)
-	await db.exec(`TRUNCATE TABLE sources_wtexts`)
-	await db.exec(`TRUNCATE TABLE sources_wvalues`)
-	await db.exec(`TRUNCATE TABLE sources_wnumbers`)
-
+	console.time('recalcWinner')
 	await db.start()
+	
+	await db.exec(`DELETE FROM sources_wcells`)
+	await db.exec(`DELETE FROM sources_wdates`)
+	await db.exec(`DELETE FROM sources_wtexts`)
+	await db.exec(`DELETE FROM sources_wvalues`)
+	await db.exec(`DELETE FROM sources_wnumbers`)
+
+	await db.exec(`DELETE FROM sources_wprops`)
+
+	// await db.exec(`
+	// 	CREATE TABLE sources_wprops_temp AS SELECT * FROM sources_props;
+	// `)
 	await db.exec(`INSERT INTO sources_wprops SELECT * FROM sources_props`)
 	await db.exec(`
 		INSERT INTO sources_wcells (
@@ -2941,6 +2947,7 @@ Consciousness.recalcWinner = async (db) => {
 	// 		or 
 	// `)
 	await db.commit()
+	console.timeEnd('recalcWinner')
 }
 
 Consciousness.recalcWinner_bySheet = async (db, source_id, sheet_index) => {
