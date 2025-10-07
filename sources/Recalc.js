@@ -10,9 +10,9 @@ Recalc.checkShutdown = async (db, funchange) => {
 	const dates = await Recalc.getDates(db)
 	//Если были действия с источниками, надо чтобы даже если сервер падал, запустилась публикация
 	if (!dates.date_recalc_finish && !dates.date_recalc_publicate) {
-		await Recalc.recalc(db, funchange, true)
+		await Recalc.recalc(funchange, true)
 	} else if (!dates.date_recalc_finish) {
-		await Recalc.recalc(db, funchange)
+		await Recalc.recalc(funchange)
 	} else if (!dates.date_recalc_publicate) {
 		Recalc.deferredPublicate(db)
 	}
@@ -55,7 +55,7 @@ Recalc.publicate = async (db) => {
 	Access.setAccessTime()
 }
 // Recalc.recalcAccess = async (db, funchange, publicate_required) => {
-// 	await Recalc.recalc(db, funchange, publicate_required)
+// 	await Recalc.recalc(funchange, publicate_required)
 // 	Access.setAccessTime()
 // }
 Recalc.recalc = async (funchange, publicate_required) => {	

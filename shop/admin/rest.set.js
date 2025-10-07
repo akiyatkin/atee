@@ -50,7 +50,7 @@ rest.addAction('set-tpl-sub', ['admin','checkrecalc','setaccess'], async view =>
 		SET ${type}_tpl = :sub
 		WHERE prop_nick = :prop_nick
 	`, { sub, prop_nick })
-	Recalc.recalc(db)
+	Recalc.recalc()
 	
 	return view.ret()
 })
@@ -189,7 +189,7 @@ rest.addAction('set-prop-delete', ['admin','setaccess'], async view => {
 	await db.exec(`
 		delete from shop_props where prop_nick = :prop_nick
 	`, {prop_nick})
-	Recalc.recalc(db)
+	Recalc.recalc()
 
 	return view.ret()
 })
@@ -262,7 +262,7 @@ rest.addAction('set-sample-create', ['admin','checkrecalc'], async view => {
 		INSERT IGNORE INTO shop_props (prop_nick)
 		VALUES (:prop_nick)
 	`, { prop_nick })
-	Recalc.recalc(db)
+	Recalc.recalc()
 
 
 	return view.ret()
@@ -282,7 +282,7 @@ rest.addAction('set-prop-singlechoice', ['admin','setaccess'], async view => {
 		WHERE prop_nick = :prop_nick
 	`, {prop_nick, bit})
 
-	Recalc.recalc(db)
+	Recalc.recalc()
 	return view.ret()
 })
 rest.addAction('set-group-self_cards', ['admin','setaccess'], async view => {
@@ -296,7 +296,7 @@ rest.addAction('set-group-self_cards', ['admin','setaccess'], async view => {
 		WHERE group_id = :group_id
 	`, {group_id, bit})
 
-	Recalc.recalc(db)
+	Recalc.recalc()
 	return view.ret()
 })
 rest.addAction('set-group-card', ['admin','setaccess'], async view => {
@@ -316,7 +316,7 @@ rest.addAction('set-group-card', ['admin','setaccess'], async view => {
 		INSERT IGNORE INTO shop_props (prop_nick)
 		VALUES (:prop_nick)
 	`, { prop_nick: prop.prop_nick })
-	Recalc.recalc(db)
+	Recalc.recalc()
 	return view.ret()
 })
 rest.addAction('set-group-self_filters', ['admin','setaccess'], async view => {
@@ -492,7 +492,7 @@ rest.addAction('set-card-delete', ['admin','setaccess'], async view => {
 	`, {group_id, prop_nick})
 
 	await ShopAdmin.reorderCards(db)
-	Recalc.recalc(db)
+	Recalc.recalc()
 	return view.ret()
 })
 rest.addAction('set-group-delete', ['admin','setaccess'], async view => {
@@ -530,7 +530,7 @@ rest.addAction('set-group-title', ['admin','setaccess'], async view => {
 		WHERE group_id = :group_id
 	`, {group_id, group_title})
 	view.data.group_title = group_title
-	Recalc.recalc(db)
+	Recalc.recalc()
 	return view.ret()
 })
 
@@ -553,7 +553,7 @@ rest.addAction('set-group-nick', ['admin','setaccess'], async view => {
 		WHERE group_id = :group_id
 	`, {group_id, group_nick})
 	view.data.next_nick = group_nick
-	Recalc.recalc(db)
+	Recalc.recalc()
 	return view.ret()
 })
 rest.addAction('set-group-ordain', ['admin','setaccess'], async view => {
@@ -572,7 +572,7 @@ rest.addAction('set-group-ordain', ['admin','setaccess'], async view => {
 	`, {ordain, id})
 
 	await ShopAdmin.reorderGroups(db)	
-	Recalc.recalc(db)
+	Recalc.recalc()
 	return view.ret()
 })
 rest.addAction('set-filter-ordain', ['admin','setaccess'], async view => {
@@ -592,7 +592,7 @@ rest.addAction('set-filter-ordain', ['admin','setaccess'], async view => {
 	`, {ordain, group_id, prop_nick})
 
 	await ShopAdmin.reorderFilters(db)	
-	Recalc.recalc(db)
+	Recalc.recalc()
 	return view.ret()
 })
 rest.addAction('set-card-ordain', ['admin','setaccess'], async view => {
@@ -614,7 +614,7 @@ rest.addAction('set-card-ordain', ['admin','setaccess'], async view => {
 	await ShopAdmin.reorderCards(db)
 	
 	
-	Recalc.recalc(db)
+	Recalc.recalc()
 	
 
 	return view.ret()
