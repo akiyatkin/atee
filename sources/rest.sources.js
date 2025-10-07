@@ -28,7 +28,28 @@ rest.exporttables = [
 	'sources_props',
 	'sources_synonyms'
 ]
-
+rest.TABLES = [
+	'sources_appears',
+	'sources_cells',
+	'sources_cols',
+	'sources_custom_cols',
+	'sources_custom_sheets',
+	'sources_items',
+	'sources_props',
+	'sources_recalc',
+	'sources_rows',
+	'sources_settings',
+	'sources_sheets',
+	'sources_sources',
+	'sources_synonyms',
+	'sources_values',
+	'sources_wcells',
+	'sources_wdates',
+	'sources_wnumbers',
+	'sources_wprops',
+	'sources_wtexts',
+	'sources_wvalues'
+]
 
 rest.addArgument('go', (view, e) => e || false) //Ссылка куда перейти. Как есть попадает в заголовок Location 301
 rest.addArgument('multi', ['sint'], (view, multi) => {

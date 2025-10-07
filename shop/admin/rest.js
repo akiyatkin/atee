@@ -371,7 +371,7 @@ rest.addResponse('settings', ['admin'], async view => {
 
 	view.data.date_access = Math.round(Access.getAccessTime() / 1000)
 	view.data.date_update = Math.round(Access.getUpdateTime() / 1000)
-
+	view.data.tables = await db.estimate(rest_shopadmin.TABLES)
 	return view.ret()
 })
 rest.addResponse('brands', ['admin'], async view => {

@@ -1,7 +1,11 @@
+import fs from "fs/promises"
 import ShopAdmin from "/-shop/admin/ShopAdmin.js"
 import Shop from "/-shop/Shop.js"
 import nicked from "/-nicked"
 import Recalc from "/-sources/Recalc.js"
+
+import { whereisit } from '/-controller/whereisit.js'
+const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
 import Rest from '/-rest'
 const rest = new Rest()
@@ -16,6 +20,27 @@ rest.extra(rest_shopadmin)
 
 import rest_recalc from '/-sources/rest.recalc.js'
 rest.extra(rest_recalc)
+
+// rest.addResponse('set-reset', ['admin'], async view => {	
+// 	const db = await view.get('db')
+
+// 	// const res = await db.exec(`DROP TABLE IF EXISTS 
+// 	// 	${rest_shopadmin.TABLES.join(',')}
+// 	// `)
+	
+// 	const src = FILE_MOD_ROOT + '/update.sql'
+// 	const sql = await fs.readFile(src, 'utf8');  //.then(buffer => buffer.toString())
+// 	//const sqls = sql.split(';')
+	
+// 	await db.db.query(sql);
+// 	// await Promise.all(sqls.map((sql,i) => {
+// 	// 	sql = sql.trim()
+// 	// 	if (!sql) return Promise.resolve()
+// 	// 	return db.exec(sql)
+// 	// }))
+	
+// 	return view.ret('База обновлена')
+// })
 
 rest.addAction('set-recalc', ['admin','checkrecalc'], async view => { //Пересчитать в aside меню
 	const db = await view.get('db')

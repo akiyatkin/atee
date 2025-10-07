@@ -106,6 +106,28 @@ rest.exporttables = [
 	'shop_samples', 
 	'shop_samplevalues'
 ]
+rest.TABLES = [
+	'shop_actives',
+	'shop_allitemgroups',
+	'shop_basket',
+	'shop_cards',
+	'shop_filters',
+	'shop_groups',
+	'shop_itemgroups',
+	'shop_orders',
+	'shop_props',
+	'shop_sampleprops',
+	'shop_samples',
+	'shop_samplevalues',
+	'shop_stat',
+	'shop_stat_brands',
+	'shop_stat_groups',
+	'shop_stat_groups_brands',
+	'shop_stat_groups_sources',
+	'shop_stat_sources',
+	'shop_transports',
+	'shop_userorders'
+]
 
 
 rest.addArgument('group_title', ['string'])

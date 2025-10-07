@@ -152,6 +152,10 @@ rest.addResponse('settings', ['admin'], async view => {
 	view.data.date_access = Math.round(Access.getAccessTime() / 1000)
 	view.data.date_update = Math.round(Access.getUpdateTime() / 1000)
 
+		
+	view.data.tables = await db.estimate(rest_sources.TABLES)
+	
+
 	return view.ret()
 })
 

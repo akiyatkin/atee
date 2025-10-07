@@ -11,6 +11,9 @@ import Sources from "/-sources/Sources.js"
 import Recalc from "/-sources/Recalc.js"
 import Consciousness from "/-sources/Consciousness.js"
 
+import { whereisit } from '/-controller/whereisit.js'
+const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
+
 import Rest from "/-rest"
 const rest = new Rest()
 
@@ -31,6 +34,26 @@ rest.addAction('set-recalc-publicate', ['admin','checkrecalc'], async view => {
 	})
 	return view.ret()
 })
+// rest.addResponse('set-reset', ['admin'], async view => {	
+// 	const db = await view.get('db')
+
+// 	const res = await db.exec(`DROP TABLE IF EXISTS 
+// 		${rest_sources.TABLES.join(',')}
+// 	`)
+	
+// 	const src = FILE_MOD_ROOT + '/update.sql'
+// 	const sql = await fs.readFile(src).then(buffer => buffer.toString())
+// 	const sqls = sql.split(';')
+	
+
+// 	await Promise.all(sqls.map((sql,i) => {
+// 		sql = sql.trim()
+// 		if (!sql) return Promise.resolve()
+// 		return db.exec(sql)
+// 	}))
+	
+// 	return view.ret('База обновлена')
+// })
 rest.addAction('set-reset-start', ['admin'], async (view) => {
 	const db = await rest.data('db') //База данных могла не перезапуститься и процесс загрузки ещё идёт
 	await Recalc.reset(db)

@@ -139,6 +139,23 @@ export const ROOT = (data, env) => err(data, env) || `
 				${data.exporttables.map(table => '<li>' + table + '</li>').join('')}
 			</ul>
 		</div>
+		<div>
+			
+			<table>
+				<tr><td></td><td>Строк</td></tr>
+				${data.tables.map(row => showDbRow(row)).join('')}
+			</table>
+		</div>
 	</div>
-	
+`
+// <p>
+// 				${field.button({
+// 					label:'Пересоздать базу данных',
+// 					confirm: 'Пересоздать базу данных?',
+// 					action:'/-sources/set-reset',
+// 					reloaddiv: env.layer.div
+// 				})} 
+// 			</p>
+const showDbRow = ({name, count}) => `
+	<tr><td>${name}</td><td>${count}</td></tr>
 `

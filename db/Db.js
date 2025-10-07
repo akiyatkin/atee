@@ -19,10 +19,12 @@ const createPool = async () => {
         namedPlaceholders: true,
         host: 'localhost',
         user: 'xxxxx',
+        // multipleStatements: true,
         password: 'yyyyy',
         database: 'zzzzz',
         debug: false,
-        charset: 'utf8mb4',
+        //charset: 'utf8mb4',
+        charset: 'utf8',
         timezone: 'local',
         enableKeepAlive: true,
         keepAliveInitialDelay: 30000
@@ -336,6 +338,25 @@ export class Db {
             await this.back();
         }
         this.release();
+    }
+
+
+
+    async estimate(tables) {
+        // const tables = [
+        //     'user_users',   
+        //     'user_uemails'
+        // ]
+        const objs = [...tables]
+        const db = this
+        for (const i in objs) {
+            const table = objs[i]
+            const obj = {}
+            obj.count = await db.col('select count(*) from ' + table).catch(e => '-')
+            obj.name = table
+            objs[i] = obj
+        }
+        return objs
     }
 }
 
