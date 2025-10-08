@@ -3,8 +3,9 @@ import Db from "/-db/Db.js"
 const Recalc = {}
 //funchange могут различаться, выполняются сразу. Нужны чтобы интерфейс иллюстрировал изменения, но вот публикация и индексация уже необязательна и откладывается
 //funpub должен быть один, так как откладывается каждый раз и остаётся тот что был передан последним, и значит каждый должен быть равнозначным
-Recalc.checkShutdown = async (db, funchange) => {
+Recalc.checkShutdown = async (funchange) => {
 	console.log('Recalc.checkShutdown')
+	const db = await new Db().connect()
 	//После создания структуры бд и перезапуска, должна быть первая запись в sources_settings
 	//await db.exec(`INSERT IGNORE INTO sources_settings (singleton, comment) VALUES ('X','Общий комментарий')`)
 	const dates = await Recalc.getDates(db)
@@ -16,6 +17,7 @@ Recalc.checkShutdown = async (db, funchange) => {
 	} else if (!dates.date_recalc_publicate) {
 		Recalc.deferredPublicate(db)
 	}
+	db.release()
 }
 
 
