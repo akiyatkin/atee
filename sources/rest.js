@@ -399,7 +399,7 @@ const convertBytes = bytes => {
 	return (bytes / Math.pow(1024, i)).toFixed(1) + " " + sizes[i]
 }
 
-const getTotalSize = async directoryPath => {
+const getTotalSize = Access.wait(async directoryPath => {
 	const arrayOfFiles = await getAllFiles(directoryPath)
 
 	let totalSize = 0
@@ -409,7 +409,7 @@ const getTotalSize = async directoryPath => {
 	}
 
 	return convertBytes(totalSize)
-}
+})
 rest.addResponse('memory', ['admin'], async view => {
 	const db = await view.get('db')
 	view.data.os = {}

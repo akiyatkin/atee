@@ -388,17 +388,40 @@ cards.imgs = (data, env, item) => `
 	</script>
 
 `
+//MEMORYTEST
 cards.img = (data, env, item, src) => `
+	
 	<img 
 		loading="lazy"
 		alt="${cards.getSomeTitle(data, item, 'model')}" 
-		style="max-width: 100%; margin: 0 auto; height:auto" 
-		${cards.imager(src, 400, 400)}
+		width="400" 
+		height="400" 
+		style="
+			width: 100%;
+			height:auto;
+			aspect-ratio: 1 / 1; /* Соотношение сторон */
+			object-fit: cover;
+			vertical-align: middle; 
+		" 
+		src="${~src.indexOf(':') ? src : '/' + src}"
 	>	
+	
 `
+// cards.img = (data, env, item, src) => `
+// 	<img 
+// 		loading="lazy"
+// 		alt="${cards.getSomeTitle(data, item, 'model')}" 
+// 		style="max-width: 100%; margin: 0 auto; height:auto" 
+// 		${cards.imager(src, 400, 400)}
+// 	>	
+// `
 cards.imager = (src, w, h) => {
 	const imager = '/-imager/webp?cache&fit=contain'
 	const esrc = encodeURIComponent(src)
+
+	//MEMORYTEST
+	return `width="${w}" height="${h}" src="${~src.indexOf(':') ? src : '/' + src}"`
+
 	return `
 		width="${w}" 
 		height="${h}" 

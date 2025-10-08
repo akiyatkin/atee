@@ -27,6 +27,7 @@ const Access = {
 		console.log('new access time', Date())
 		Access.poke.list.forEach(poked => poked.storage = {})
 		Access.wait.list.forEach(waited => waited.storage = {})
+		Access.blink.list.forEach(blinked => blinked.storage = {})
 	},
 	getAccessTime: () => times.ACCESS_TIME,
 	getUpdateTime: () => times.UPDATE_TIME,

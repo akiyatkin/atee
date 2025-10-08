@@ -203,7 +203,9 @@ tpl.showGallery = (data, env, item) => `
 						div.querySelector('.selected').classList.remove('selected')
 						imgmin.classList.add('selected')
 						const file = encodeURIComponent(imgmin.dataset.file)
-						bigimg.srcset = '/-imager/webp?h=500&src='+file+' 1x,/-imager/webp?h=1000&src='+file+' 2x,/-imager/webp?h=1500&src='+file+' 3x,/-imager/webp?h=2000&src='+file+' 4x'
+						//MEMORYTEST
+						bigimg.src = imgmin.src
+						//bigimg.srcset = '/-imager/webp?h=500&src='+file+' 1x,/-imager/webp?h=1000&src='+file+' 2x,/-imager/webp?h=1500&src='+file+' 3x,/-imager/webp?h=2000&src='+file+' 4x'
 					})
 				}
 				if (imgmins.length) bigimg.addEventListener('click', () => {
