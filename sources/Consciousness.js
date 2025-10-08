@@ -2803,6 +2803,7 @@ Consciousness.recalcWinner = async (db) => {
 	// 	CREATE TABLE sources_wprops_temp AS SELECT * FROM sources_props;
 	// `)
 	await db.exec(`INSERT INTO sources_wprops SELECT * FROM sources_props`)
+	console.log('asdf')
 	await db.exec(`
 		INSERT INTO sources_wcells (
 			entity_id, key_id, 

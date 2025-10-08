@@ -274,6 +274,7 @@ rest.addResponse('get-menu', async view => {
 	} else {
 		return view.err('Некорректный конфиг', 500)
 	}
+	
 	const base = new Base(view)
 	const {descr, rows_table} = Dabudi.splitDescr(list.data)
 	const {heads, rows_body} = Dabudi.splitHead(rows_table, base)

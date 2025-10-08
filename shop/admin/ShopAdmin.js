@@ -1791,9 +1791,12 @@ ShopAdmin.checkRestat = async (db) => {
 		}
 	})
 }
-ShopAdmin.scheduleDailyRestat = async (db, time = '01:09') => {	
+ShopAdmin.scheduleDailyRestat = async (time = '01:09') => {	
 	console.log('Sources.scheduleDailyRestat', time)
+
 	scheduleDailyTask(time, async () => {
+		const db = await new Db().connect()
+		
 		const dates = await Recalc.getDates(db)
 		//shop работает с опубликованными материалами date_recalc_publicate, после публикации запускается пересчёт магазина date_recalc_finish
 		const date_restat = await db.col(`select UNIX_TIMESTAMP(max(date_restat)) from shop_stat`)
@@ -1804,6 +1807,8 @@ ShopAdmin.scheduleDailyRestat = async (db, time = '01:09') => {
 			console.log('shop_recalcPrev')
 			await db.affectedRows(`CALL shop_recalcPrev()`)
 		}
+		
+		await db.release()
 		return 'ok'
 	})
 }

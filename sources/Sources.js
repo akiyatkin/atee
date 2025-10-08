@@ -146,7 +146,7 @@ Sources.recalcWinnerAppearSearch = async db => {
 }
 
 
-Sources.scheduleDailyRenovate = (db, time = '01:09') => {	
+Sources.scheduleDailyRenovate = (time = '01:09') => {	
 	console.log('Sources.scheduleDailyRenovate', time)
 	scheduleDailyTask(time, async () => {
 		const rest_sources = await import("/-sources/rest.js").then(r => r.default)
