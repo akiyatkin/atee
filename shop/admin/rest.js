@@ -394,24 +394,24 @@ rest.addResponse('props', ['admin'], async view => {
 			pr.prop_title, 
 			pr.prop_id
 		FROM shop_props bp
-			LEFT JOIN sources_wprops pr on pr.prop_nick = bp.prop_nick
+			LEFT JOIN sources_props pr on pr.prop_nick = bp.prop_nick
 		WHERE pr.prop_id is null
 		order by pr.ordain
 	`)
 
 	view.data.props = await db.all(`
 		SELECT 
-			bp.prop_nick, 
 			bp.singlechoice + 0 as singlechoice,
 			bp.card_tpl, 
 			bp.filter_tpl, 
+			pr.prop_nick, 
 			pr.known,
 			pr.comment,
 			pr.type,
 			pr.multi + 0 as multi,
 			pr.prop_title, 
 			pr.prop_id
-		FROM sources_wprops pr
+		FROM sources_props pr
 			LEFT JOIN shop_props bp on pr.prop_nick = bp.prop_nick
 		order by pr.ordain
 	`)
