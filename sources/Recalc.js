@@ -6,7 +6,7 @@ const Recalc = {}
 Recalc.checkShutdown = async (db, funchange) => {
 	console.log('Recalc.checkShutdown')
 	//После создания структуры бд и перезапуска, должна быть первая запись в sources_settings
-	await db.exec(`INSERT IGNORE INTO sources_settings (singleton, comment) VALUES ('X','Общий комментарий')`)
+	//await db.exec(`INSERT IGNORE INTO sources_settings (singleton, comment) VALUES ('X','Общий комментарий')`)
 	const dates = await Recalc.getDates(db)
 	//Если были действия с источниками, надо чтобы даже если сервер падал, запустилась публикация
 	if (!dates.date_recalc_finish && !dates.date_recalc_publicate) {

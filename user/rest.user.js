@@ -3,8 +3,9 @@ import User from '/-user/User.js'
 import crypto from 'crypto'
 import config from '/-config'
 import rest_funcs from '/-rest/rest.funcs.js'
+import rest_admin from '/-controller/rest.admin.js'
 import rest_db from '/-db/rest.db.js'
-const rest = new Rest(rest_db, rest_funcs)
+const rest = new Rest(rest_db, rest_funcs, rest_admin)
 export default rest
 
 
@@ -75,4 +76,16 @@ rest.addVariable('manager#required', async (view) => {
 	const manager = await view.get('manager')
 	if (!manager) return view.err('Требуются права менеджера', 401)
 	return manager
+})
+
+rest.addVariable('managerOrAdmin', async (view) => {
+	const manager = await view.get('manager')
+	if (manager) return true
+	const admin = await view.get('admin')
+	if (admin) return true
+	return false
+})
+rest.addVariable('managerOrAdmin#required', ['managerOrAdmin'], async (view, managerOrAdmin) => {
+	if (managerOrAdmin) return true
+	return view.err('Требуется права администратора или менеджера', 401)
 })

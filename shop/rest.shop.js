@@ -25,7 +25,7 @@ rest.addVariable('root#required', async view => {
 	const db = await view.get('db')
 	const group_id = await Shop.getGroupIdByNick(db, conf.root_nick)
 	const root = await Shop.getGroupById(db, group_id)
-	if (!root) return view.err('Группа верхнего уровня не найдена', conf.root_nick)
+	if (!root) return view.err('Группа верхнего уровня не найдена ' + conf.root_nick)
 	return root
 })
 

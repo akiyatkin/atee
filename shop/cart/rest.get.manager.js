@@ -15,7 +15,7 @@ rest.extra(rest_cart)
 
 
 
-rest.addResponse('get-manager-years', ['manager#required'], async view => {
+rest.addResponse('get-manager-years', ['managerOrAdmin#required'], async view => {
 	const { db, status } = await view.gets(['db', 'status'])
 	view.data.conf = await config('shop', true)
 	view.ans.status = status
@@ -32,7 +32,7 @@ rest.addResponse('get-manager-years', ['manager#required'], async view => {
 	return view.ret()
 })
 
-rest.addResponse('get-manager-months', ['manager#required'], async view => {
+rest.addResponse('get-manager-months', ['managerOrAdmin#required'], async view => {
 	const { db, year, status } = await view.gets(['db', 'year', 'status'])
 	view.data.conf = await config('shop', true)
 	view.ans.year = year
@@ -54,7 +54,7 @@ rest.addResponse('get-manager-months', ['manager#required'], async view => {
 	return view.ret()
 })
 
-rest.addResponse('get-manager-orders', ['manager#required'], async view => {
+rest.addResponse('get-manager-orders', ['managerOrAdmin#required'], async view => {
 	
 	const { db, year, month, active_id, status } = await view.gets(['db', 'status', 'year','month','active_id'])
 	

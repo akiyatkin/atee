@@ -9,7 +9,7 @@ export default rest
 import rest_cart from '/-shop/cart/rest.cart.js'
 rest.extra(rest_cart)
 
-rest.addResponse('set-status', ['manager#required'], async view => {
+rest.addResponse('set-status', ['managerOrAdmin#required'], async view => {
 	const {db, status, order_id, user_id} = await view.gets(['status#required','db', 'order_id#required', 'user_id#required'])
 	view.ans.active_id = await db.col(`
 		SELECT order_id 
@@ -60,7 +60,7 @@ rest.addResponse('set-status', ['manager#required'], async view => {
 	view.ans.status = status
 	return view.ret()
 })
-rest.addResponse('set-delete', ['manager#required'], async view => {
+rest.addResponse('set-delete', ['managerOrAdmin#required'], async view => {
 	const { db, order_id, active_id } = await view.gets(['db', 'order_id#required', 'active_id'])
 	view.ans.active_id = active_id
 	const user_ids = await db.colAll(`
@@ -97,7 +97,7 @@ rest.addResponse('set-delete', ['manager#required'], async view => {
 	// `, { order_id })
 })
 
-rest.addResponse('set-manager-refresh', ['manager#required'], async view => { //depricated зачем?
+rest.addResponse('set-manager-refresh', ['managerOrAdmin#required'], async view => { //depricated зачем?
 	const db = await view.get('db')
 
 	const orders = await db.allto('order_id', `

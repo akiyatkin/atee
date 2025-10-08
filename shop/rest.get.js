@@ -18,7 +18,12 @@ import rest_shop from '/-shop/rest.shop.js'
 rest.extra(rest_shop)
 
 
-
+rest.addResponse('get-partner', async view => {
+	const partner = view.data.partner = await view.get('partner')
+	const conf = view.data.conf = await config('shop', true)
+	if (!partner) return view.err()
+	return view.ret()
+})
 rest.addResponse('get-conf', async view => {
 	const conf = view.data.conf = await config('shop', true)
 	return view.ret()
@@ -449,12 +454,13 @@ rest.addResponse('get-search-list', async (view) => {
 
 rest.addResponse('get-livemodels', async (view) => {
 	const db = await view.get('db')
+
 	const query = await view.get('query')
 	const hashs = await view.get('hashs')
 	const md = await Shop.getmd(db, '', query, hashs)
 
 	const conf = view.data.conf = await config('shop', true)
-	
+
 	const partner = await view.get('partner')
 
 	const root = await view.get('root#required')
