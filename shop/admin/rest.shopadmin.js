@@ -25,9 +25,9 @@ rest.addArgument('detail', ['nicked'])
 
 rest.addArgument('prop_nick', ['nicked'], async (view, prop_nick) => {
 	if (!prop_nick) return null
-	const db = await view.get('db')
-	const prop = await Shop.getPropByNick(db, prop_nick)
-	if (!prop) return view.err('Свойство не найдено', 404)	
+	// const db = await view.get('db')
+	// const prop = await Shop.getPropByNick(db, prop_nick)
+	// if (!prop) return view.err('Свойство не найдено', 404)	
 	return prop_nick
 
 })

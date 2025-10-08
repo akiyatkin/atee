@@ -1707,11 +1707,10 @@ Shop.addWhereSamples = async (db, from, join, where, samples, hashs, partner, em
 	let i = 0
 
 	for (const sample of samples) { //OR
-
+		
 		const whereand = []
 		for (const prop_nick in sample) {
 			const prop = await Shop.getPropByNick(db, prop_nick)
-			
 
 			i++
 			if (prop.type == 'value') {
@@ -1752,7 +1751,7 @@ Shop.addWhereSamples = async (db, from, join, where, samples, hashs, partner, em
 			} else {
 				
 			}
-			if (typeof(sample[prop_nick]) == 'object') { //Значение не объект
+			if (typeof(sample[prop_nick]) == 'object') {
 				if (prop.type == 'value') {
 					
 					const value_ids = []
@@ -1795,6 +1794,7 @@ Shop.addWhereSamples = async (db, from, join, where, samples, hashs, partner, em
 						}
 					}	
 				} else { //Неизвестный prop.type
+
 					where.push(`1=0`) //что делать если в sample не существующее свойство, должно быть найдено 0
 				}
 			} else { //Значение не объект
@@ -1846,6 +1846,7 @@ Shop.addWhereSamples = async (db, from, join, where, samples, hashs, partner, em
 						where.push(`1=0`)
 					}
 				} else {
+
 					where.push(`1=0`)
 				}
 			}

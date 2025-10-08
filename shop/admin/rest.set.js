@@ -44,11 +44,9 @@ rest.extra(rest_recalc)
 
 rest.addAction('set-recalc', ['admin','checkrecalc'], async view => { //Пересчитать в aside меню
 	const db = await view.get('db')
-
 	Recalc.recalc(async (db) => {
-		//await ShopAdmin.recalcIndexGroups(db)
-		//await ShopAdmin.recalcAllStat(db)
-		await ShopAdmin.recalcChangeGroups(db) 
+		await ShopAdmin.recalcIndexGroups(db) 
+		await ShopAdmin.checkRestat(db)
 	})
 	return view.ret()
 })
@@ -143,6 +141,32 @@ rest.addAction('set-sample-prop-delete', ['admin','checkrecalc'], async view => 
 
 	return view.ret()
 })
+rest.addAction('set-sample-prop-create', ['admin','checkrecalc'], async view => {
+	let prop_nick = await view.get('prop_nick')
+	const query_nick = await view.get('query_nick')
+	if (!prop_nick) {
+		if (!query_nick) return view.err('Недостаточно данных')
+		prop_nick = query_nick
+	}
+	const sample_id = await view.get('sample_id#required')
+	const db = await view.get('db')
+	const group_id = await db.col(`select group_id from shop_samples where sample_id = :sample_id`, {sample_id})
+	if (!group_id) return view.err('Не найдена группа')
+	await db.exec(`
+		INSERT IGNORE INTO shop_sampleprops (sample_id, prop_nick)
+		VALUES (:sample_id, :prop_nick)
+	`, { sample_id, prop_nick })
+	await db.exec(`
+		INSERT IGNORE INTO shop_props (prop_nick)
+		VALUES (:prop_nick)
+	`, { prop_nick })
+
+	Recalc.recalc(async (db) => {	
+		await ShopAdmin.recalcChangeGroups(db, group_id) //статистика
+	})
+	
+	return view.ret()
+})
 rest.addAction('set-sample-prop-spec', ['admin','checkrecalc'], async view => {
 	const spec = await view.get('spec#required') //any, empty
 	const prop_nick = await view.get('prop_nick#required')
@@ -235,32 +259,7 @@ rest.addAction('set-prop-create', ['admin','setaccess'], async view => {
 	
 	return view.ret()
 })
-rest.addAction('set-sample-prop-create', ['admin','checkrecalc'], async view => {
-	let prop_nick = await view.get('prop_nick')
-	const query_nick = await view.get('query_nick')
-	if (!prop_nick) {
-		if (!query_nick) return view.err('Недостаточно данных')
-		prop_nick = query_nick
-	}
-	const sample_id = await view.get('sample_id#required')
-	const db = await view.get('db')
-	const group_id = await db.col(`select group_id from shop_samples where sample_id = :sample_id`, {sample_id})
-	if (!group_id) return view.err('Не найдена группа')
-	
-	Recalc.recalc(async (db) => {
-		await db.exec(`
-			INSERT IGNORE INTO shop_sampleprops (sample_id, prop_nick)
-			VALUES (:sample_id, :prop_nick)
-		`, { sample_id, prop_nick })
-		await db.exec(`
-			INSERT IGNORE INTO shop_props (prop_nick)
-			VALUES (:prop_nick)
-		`, { prop_nick })
-		//await ShopAdmin.recalcChangeGroups(db, group_id) //статистика
-	})
-	
-	return view.ret()
-})
+
 rest.addAction('set-sample-create', ['admin','checkrecalc'], async view => {
 	let prop_nick = await view.get('prop_nick')
 	const query_nick = await view.get('query_nick')

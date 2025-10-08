@@ -59,7 +59,7 @@ ShopAdmin.getSamplesByGroupId = async (db, group_id = null) => {
 			LEFT JOIN shop_sampleprops sp on sp.sample_id = sa.sample_id
 			LEFT JOIN shop_samplevalues spv on (spv.sample_id = sa.sample_id and spv.prop_nick = sp.prop_nick)
 			LEFT JOIN sources_wprops pr on pr.prop_nick = sp.prop_nick
-		WHERE sa.group_id = :group_id and pr.prop_id is not null
+		WHERE sa.group_id = :group_id 		
 		ORDER BY sa.date_create, sp.date_create, spv.date_create
 	`, {group_id}) : [] 
 	/*await db.all(`
@@ -72,15 +72,14 @@ ShopAdmin.getSamplesByGroupId = async (db, group_id = null) => {
 	`)*/
 
 
-
 	const sampleids = {}
 	for (const {sample_id, prop_nick, value_nick, spec} of list) {
-		if (!prop_nick) continue
-		if (!value_nick && spec == 'exactly') continue
+		//if (!prop_nick) continue
+		//if (!value_nick && spec == 'exactly') continue
 		sampleids[sample_id] ??= {}
 		if (spec == 'exactly') {
 			sampleids[sample_id][prop_nick] ??= {}
-			sampleids[sample_id][prop_nick][value_nick] = 1
+			if (value_nick)	sampleids[sample_id][prop_nick][value_nick] = 1
 		} else {
 			sampleids[sample_id][prop_nick] = spec
 		}
@@ -1248,8 +1247,10 @@ ShopAdmin.getAllGroupIds = async (db, group_id = null) => {
 }
 ShopAdmin.recalcIndexGroups = async (db, group_id) => {
 	
+
 	console.time('recalcIndexGroups')
 	
+	group_id = await db.col(`select parent_id from shop_groups where group_id = :group_id`, {group_id})
 
 	const group_ids = await ShopAdmin.getAllGroupIds(db, group_id)
 	if (!group_id) {
@@ -1264,6 +1265,8 @@ ShopAdmin.recalcIndexGroups = async (db, group_id) => {
 	//Если изменился родитель, изменились и вложенные группы
 	for (const group_id of group_ids) {
 		const key_ids = await ShopAdmin.getFreeKeyIdsBySamples(db, group_id) //Свободные позиции, которые не попадают во внутрение группы, те будут уже к своим группам преписаны
+
+
 		for (const key_id of key_ids) {
 			await shop_itemgroups.insert([group_id, key_id])
 		}
@@ -1714,6 +1717,7 @@ ShopAdmin.getFreeKeyIdsByGroupIndex = async (db, group_id = null, hashs = [], li
 		`, {...bind, group_id})
 
 
+
 		const poscount = await db.col(`
 			SELECT 
 				COUNT(*)
@@ -1840,6 +1844,7 @@ ShopAdmin.getFreeKeyIdsBySamples = async (db, group_id = null, hashs = [], limit
 	const bind = await Shop.getBind(db)
 
 	const samples = await ShopAdmin.getSamplesUpByGroupId(db, group_id)
+	
 	const gw = await ShopAdmin.getWhereBySamples(db, samples, hashs, false, group_id ? false : true) 
 	//Если корень и нет samples то вязть всё, если группа и нет samples то пусто
 	const childs = await db.colAll(`select group_id from shop_groups where parent_id <=> :group_id`, {group_id})

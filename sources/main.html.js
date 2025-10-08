@@ -34,7 +34,7 @@ const showScriptDrag = (data, env) => `
 	</script>
 `
 const showMain = (data, env) => `
-	<div style="float:right;position: relative;">
+	<div style="float:right; position: relative;">
 		${field.prompt({
 			cls: 'a mute',
 			type: 'area',
@@ -46,7 +46,7 @@ const showMain = (data, env) => `
 			input: data.comment
 		})}
 	</div>
-	<div style="white-space: pre; font-style: italic;">${data.comment}</div>
+	<div style="white-space: pre; font-style: italic; margin-right: 2em;">${data.comment}</div>
 	<div style="margin: 1em 0; display: flex; flex-wrap: wrap; gap: 1em; justify-content: space-between;">
 		${field.button({
 			async: true,
@@ -67,17 +67,9 @@ const showMain = (data, env) => `
 				<tr>
 					<td>Источник</td>
 					<td>Статус</td>
-					
-					<td>Комментарий</td>
-
-					
-					
-					
 					<td>Проверка</td>
-					
 					<td>Загрузка</td>
-					<td>Ревизия</td>
-					
+					<td>Комментарий</td>
 				</tr>
 			</thead>
 			<tbody draggable="false">
@@ -111,9 +103,8 @@ const showMain = (data, env) => `
 		})}
 	</div>
 	<div style="max-width: 600px;">
-		<p>Чтобы позиция попала в итоговую выгрузку, должне быть хотя бы один истончик мастер c этой позицией.</p>
-		<p>Повтор свойства у одной позиции в колонке, листе или в разных истончиках перезаписывает предыдущее значение. 
-		Источники применяются сверху вниз. Чем ниже, тем приоритетнее.</p>
+		<p>Чтобы позиция попала в итоговую выгрузку, должен быть хотя бы один источник мастер c этой позицией.</p>
+		<p>Каждый повтор свойства позиции перезаписывает предыдущее значение. Источники применяются сверху вниз. Чем ниже, тем приоритетнее, чем дальше лист или чем дальше колнка, тем приоритетней значение.</p>
 	</div>
 	
 	
@@ -134,8 +125,9 @@ const showScriptReload = (data, env) => `
 const showSourceTr = (data, env, source) => `
 	<tr data-id="${source.source_id}" style="white-space: nowrap;" class="item status_${source.class}">
 		<td>
-			<a href="sheet?source_id=${source.source_id}">${source.source_title}</a>
+			<b><a title="Содержание источника" href="sheet?source_id=${source.source_id}">${source.source_title}</a></b>
 			<div class="mute">${source.master ? 'Мастер' : 'Прайс'}</div>
+			<a title="Ревизия источника" href="source/${source.source_id}">${date.dm(source.date_exam)}</a>
 		</td>
 		<td>
 			${source.status} 
@@ -149,36 +141,7 @@ const showSourceTr = (data, env, source) => `
 			</div>
 		</td>
 		
-		<td>
-			<div style="float:right; position: relative">
-				${field.prompt({
-					cls: 'a mute',
-					type: 'area',
-					name: 'comment', 
-					label: 'Комментарий источника',
-					value: svg.edit(), 
-					action: '/-sources/set-source-comment', 
-					args: {source_id: source.source_id},
-					reloaddiv: env.layer.div,
-					input: source.comment
-				})}
-			</div>
-			<div style="white-space: pre; font-style: italic;">${source.comment}</div>
-			<div style="float:right; position: relative">
-				${field.prompt({
-					cls: 'a mute',
-					type: 'area',
-					name: 'comment', 
-					label: 'Параметры источника json',
-					value: svg.edit(), 
-					action: '/-sources/set-source-params', 
-					args: {source_id: source.source_id},
-					reloaddiv: env.layer.div,
-					input: source.params
-				})}
-			</div>
-			<div style="font-size:12px; font-family: monospace; white-space: pre;">${source.params || ''}</div>
-		</td>
+		
 
 		
 
@@ -202,11 +165,8 @@ const showSourceTr = (data, env, source) => `
 		</td>
 		
 		<td>
+			${source.date_load ? showLoadStat(data, env, source) : 'не&nbsp;загрузался'}
 			
-			<span title="Дата загрузки ${date.dmyhi(source.date_load)}">${date.dm(source.date_load)}</span>${source.date_load ? ', ' : ''}<span class="mute" title="Длительность загрузки">${ago.pass(source.duration_rest + source.duration_insert + source.duration_recalc)}</span>
-			<div class="mute">
-				<span title="Дата актуальности в загруженных данных ${date.dmyhi(source.date_content)}">${date.dm(source.date_content)}</span>${source.date_content ? ', ': ''}${source.rows} ${words(source.rows, 'строка', 'строки', 'строк')}
-			</div>
 			<div>
 				${field.button({
 					cls: 'a',
@@ -218,13 +178,43 @@ const showSourceTr = (data, env, source) => `
 			</div>
 		</td>
 		
-		
 		<td>
-			<a href="source/${source.source_id}">${date.dm(source.date_exam)}</a>
-			
+			<div style="float:right; position: relative; clear:both;">
+				${field.prompt({
+					cls: 'a mute',
+					type: 'area',
+					name: 'comment', 
+					label: 'Комментарий источника',
+					value: svg.edit(), 
+					action: '/-sources/set-source-comment', 
+					args: {source_id: source.source_id},
+					reloaddiv: env.layer.div,
+					input: source.comment
+				})}
+			</div>
+			<div style="margin-right: 2em; white-space: pre; font-style: italic;">${source.comment}</div>
+			<div style="float:right; position: relative; clear:both;">
+				${field.prompt({
+					cls: 'a mute',
+					type: 'area',
+					name: 'comment', 
+					label: 'Параметры источника json',
+					value: svg.edit(), 
+					action: '/-sources/set-source-params', 
+					args: {source_id: source.source_id},
+					reloaddiv: env.layer.div,
+					input: source.params
+				})}
+			</div>
+			<div style="margin-right: 2em; font-size:12px; font-family: monospace; white-space: pre;">${source.params || ''}</div>
 		</td>
-		
 	</tr>
+`
+const showLoadStat = (data, env, source) => `
+	<span title="Дата загрузки ${date.dmyhi(source.date_load)}">${date.dm(source.date_load)}</span>${source.date_load ? ', ' : 'не&nbsp;загружался, '}<span class="mute" title="Длительность загрузки">${ago.pass(source.duration_rest + source.duration_insert + source.duration_recalc)}</span>
+	<div class="mute">
+		<span title="Дата актуальности в загруженных данных ${date.dmyhi(source.date_content)}">${date.dm(source.date_content)}</span>${source.date_content ? ', ': ''}${source.rows} ${words(source.rows, 'строка', 'строки', 'строк')}
+	</div>
 `
 // ${field.prompt({
 // 				value: date.dm(source.date_exam), 

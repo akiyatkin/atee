@@ -99,10 +99,12 @@ export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
 		}
 		${source.error ? showError(data, env, source) : ''}
 	</div>
-	
-	<div title="${date.dmyhi(data.source.date_load)}">Загрузка <b>${date.ai(data.source.date_load)}</b> за ${date.pass(data.source.duration_rest + data.source.duration_insert + data.source.duration_check)}</div>
-	<div title="${date.dmyhi(data.source.date_content)}">Актуальность <b>${date.ai(data.source.date_content) || 'неизвестно'}</b></div>
+	${data.source.date_load ? showLoadTime(data, env) : 'Не&nbsp;загружался'}
 	<div title="${date.dmyhi(data.source.date_exam)}">Ревизия <a href="source/${data.source.source_id}">${date.dmy(data.source.date_exam)}</a></div>
+`
+const showLoadTime = (data, env) => `
+	<div title="${date.dmyhi(data.source.date_load)}">Загрузка <b>${date.ai(data.source.date_load)}</b> за ${date.pass(data.source.duration_rest + data.source.duration_insert + data.source.duration_check)}</div>
+	<div title="${date.dmyhi(data.source.date_content)}">Актуальность <b>${date.ai(data.source.date_content) || 'не&nbsp;указана'}</b></div>
 `
 export const DATES = (data, env) => !data.result ? `` : `
 	<div id="date" style="align-items: center; flex-grow: 1; display: flex; gap:0.5em 1em; flex-wrap: wrap; font-size: 12px">
@@ -183,7 +185,7 @@ const showEntity = (data, env, entity) => {
 
 
 const showSearch = (data, env) => `
-	<form style="margin: 1em 0; display: flex; gap: 1em">
+	<form style="margin: 1em 0; display: flex; gap: 1em; clear:both">
 		
 		<input name="search" type="search" style="flex-grow:1" value="${env.bread.get.search ?? ''}"><button type="submit">Найти</button>
 		<script>
@@ -223,7 +225,7 @@ const showIndex = (data, env) => `
 	</div>
 `
 const showComment = (data, env, source) => `
-	<div style="float:right; position: relative">
+	<div style="float:right; position: relative; clear:both">
 		${field.prompt({
 			cls: 'a',
 			type: 'area',
@@ -236,8 +238,8 @@ const showComment = (data, env, source) => `
 			input: source.comment
 		})}		
 	</div>
-	<div style="white-space: pre; font-style: italic;">${source.comment}</div>
-	<div style="float:right; position: relative">
+	<div style="white-space: pre; font-style: italic; margin-right: 2em">${source.comment}</div>
+	<div style="float:right; position: relative; clear:both; margin-bottom:0.5em">
 		${field.prompt({
 			cls: 'a mute',
 			type: 'area',
@@ -250,7 +252,7 @@ const showComment = (data, env, source) => `
 			input: source.params
 		})}
 	</div>
-	<div style="font-size:12px; font-family: monospace; white-space: pre;">${source.params || ''}</div>
+	<div style="font-size:12px; font-family: monospace; white-space: pre; margin-right: 2em;">${source.params || ''}</div>
 `
 
 export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !data.result ? '' : `
