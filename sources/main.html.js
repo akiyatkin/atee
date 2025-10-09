@@ -34,7 +34,7 @@ const showScriptDrag = (data, env) => `
 	</script>
 `
 const showMain = (data, env) => `
-	<div style="float:right; position: relative;">
+	<div style="float:right; position: relative; margin-bottom: 1em;">
 		${field.prompt({
 			cls: 'a mute',
 			type: 'area',
@@ -47,7 +47,7 @@ const showMain = (data, env) => `
 		})}
 	</div>
 	<div style="white-space: pre; font-style: italic; margin-right: 2em;">${data.comment}</div>
-	<div style="margin: 1em 0; display: flex; flex-wrap: wrap; gap: 1em; justify-content: space-between;">
+	<div style="clear: both; margin: 1em 0; display: flex; flex-wrap: wrap; gap: 1em; justify-content: space-between;">
 		${field.button({
 			async: true,
 			label: 'Актуализировать все', 

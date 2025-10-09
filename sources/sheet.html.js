@@ -227,7 +227,7 @@ const showIndex = (data, env) => `
 const showComment = (data, env, source) => `
 	<div style="float:right; position: relative; clear:both">
 		${field.prompt({
-			cls: 'a',
+			cls: 'a mute',
 			type: 'area',
 			name: 'comment', 
 			label: 'Комментарий источника',
