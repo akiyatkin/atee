@@ -7,6 +7,7 @@ import BulkInserter from "/-sources/BulkInserter.js"
 import scheduleDailyTask from "/-sources/scheduleDailyTask.js"
 import cproc from "/-cproc"
 import Recalc from "/-sources/Recalc.js"
+import Db from "/-db/Db.js"
 const ShopAdmin = {}
 export default ShopAdmin
 
@@ -1245,12 +1246,12 @@ ShopAdmin.getAllGroupIds = async (db, group_id = null) => {
 	`, {group_id}) : await db.colAll(`SELECT group_id FROM shop_groups`)
 	return group_ids
 }
-ShopAdmin.recalcIndexGroups = async (db, group_id) => {
+ShopAdmin.recalcIndexGroups = async (db, group_id = null) => {
 	
 
 	console.time('recalcIndexGroups')
 	
-	group_id = await db.col(`select parent_id from shop_groups where group_id = :group_id`, {group_id})
+	group_id = await db.col(`select parent_id from shop_groups where group_id = :group_id`, {group_id}) || null
 
 	const group_ids = await ShopAdmin.getAllGroupIds(db, group_id)
 	if (!group_id) {
@@ -1796,7 +1797,7 @@ ShopAdmin.checkRestat = async (db) => {
 	})
 }
 ShopAdmin.scheduleDailyRestat = async (time = '01:09') => {	
-	console.log('Sources.scheduleDailyRestat', time)
+	console.log('ShopAdmin.scheduleDailyRestat', time)
 
 	scheduleDailyTask(time, async () => {
 		const db = await new Db().connect()
