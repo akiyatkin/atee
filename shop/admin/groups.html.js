@@ -69,7 +69,7 @@ export const ROOT = (data, env) => err(data, env, []) || `
 	${data.group ? showGroupActions(data, env) : ''}
 	<a href="brief${data.group?.group_id ? '/' + data.group.group_id : ''}">Статистика</a>
 
-		<a href="poss?count=1000${data.group?.group_id ? '&group_id=' + data.group.group_id : ''}">Позиции</a>
+		<a href="poss?count=25${data.group?.group_id ? '&group_id=' + data.group.group_id : ''}">Позиции</a>
 
 	${data.group?.group_title ? '' : showHelp(data, env)}
 	<script>
