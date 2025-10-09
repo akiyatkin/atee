@@ -28,7 +28,8 @@ const percentTd = (stat, sum = stat.poscount ? Math.round(stat.withall / stat.po
 
 export const ROOT = (data, env) => `
 	
-	<h1>Сводка по содержанию</h1>
+	<h1>Статистика по содержанию<br><span id="subtitle"></span></h1>
+	
 	<div id="PLOP"></div>
 	
 	<div style="max-width:820px; aspect-ratio: 3 / 1;">
@@ -124,8 +125,9 @@ const preset = (data, env, title, name) => {
 		return `${title}
 		`
 	} else {
+		const gid = data.group?.group_id ? '/' + data.group?.group_id : ''
 		return `
-			<a href="brief${addget(env.bread.get, {preset: name || null})}">${title}</a> 
+			<a href="brief${gid}${addget(env.bread.get, {preset: name || null})}">${title}</a> 
 		`
 	}
 }
@@ -279,6 +281,7 @@ export const PLOP = (data, env) => `
 		}
 	</script>
 `
+const getTitle = (data, env) => `${data.group?.group_title||'<i>Корень</i>'} ${env.bread.get.detail == 'source' ? data.source?.source_title || '' : ''} ${env.bread.get.detail == 'brand' ? data.brand?.brand_title || '': ''}`
 export const TABLE = (data, env) => err(data, env) || `
 	<style>
 		${env.scope} .red {
@@ -293,12 +296,10 @@ export const TABLE = (data, env) => err(data, env) || `
 			
 		}
 	</style>
-	<h2>
-		${data.group?.group_title||'<i>Корень</i>'}
-		${env.bread.get.detail == 'source' ? data.source?.source_title || '' : ''}
-		${env.bread.get.detail == 'brand' ? data.brand?.brand_title || '': ''}
-	</h2>
-	
+	<script type="module">
+		const subtitle = document.getElementById('subtitle')
+		subtitle.innerHTML = "${getTitle(data, env)}"
+	</script>	
 	<div class="revscroll" style="margin: 2em 0;">
 		<table style="width:800px; max-width:none">
 			

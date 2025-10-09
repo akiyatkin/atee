@@ -66,7 +66,7 @@ export const ROOT = (data, env) => err(data, env, []) || `
 	${data.group ? showGroupPositions(data, env) : ''}
 	${data.group ? showGroupActions(data, env) : ''}
 	${data.group ? showGroupOptions(data, env) : ''}
-	${showGroupStats(data, env)}
+	<a href="brief${data.group?.group_id ? '/' + data.group.group_id : ''}">Статистика</a>
 	${data.group?.group_title ? '' : showHelp(data, env)}
 	<script>
 		(div => {
@@ -86,40 +86,43 @@ export const ROOT = (data, env) => err(data, env, []) || `
 	</script>
 `
 const showHelp = (data, env) => `
-	<p>
-		Из <a href="/@atee/sources">источников</a> все позиции, у которых указаны БрендАрт и БрендМодель, попадают в нераспределённые позиции Магазина. В группах магазина надо указать выборки согласно, которым нераспределённые позиции будут попадать в эти группы.
+	<p style="max-width:700px">
+		Из <a href="/@atee/sources">источников</a> все позиции, у которых указаны БрендАрт и БрендМодель, попадают в нераспределённые позиции в Корень. В группах надо указать выборки согласно, которым нераспределённые позиции будут выбираться в эти группы.
 	</p>
 `
-const showGroupStats = (data, env) => `
-	<div class="block${globalThis.sessionStorage?.getItem('shop_blocks_Статистика') ? ' show' : ''}">
-		<div class="title">Статистика</div>
-		<div class="body">
+// const showGroupStats = (data, env) => `
+// 	<a href="brief${data.group?.group_id ? '/' + data.group.group_id : ''}">Статистика</a>
+// `
+// const showGroupStats2 = (data, env) => `
+// 	<div class="block${globalThis.sessionStorage?.getItem('shop_blocks_Статистика') ? ' show' : ''}">
+// 		<div class="title">Статистика</div>
+// 		<div class="body">
 
-			<div class="revscroll" style="margin:1em 0">
-				<table>
-					<thead>
-						<tr>
-							<th>Год</th>
-							<th>Месяц</th>
-							${showStatHead(data,env)}
-						</tr>
-					</thead>
-					<tbody>
-						${(data.stats || []).map(row => showRow(data, env, data.group, row)).join('')}
-					</tbody>
-				</table>
-			</div>
+// 			<div class="revscroll" style="margin:1em 0">
+// 				<table>
+// 					<thead>
+// 						<tr>
+// 							<th>Год</th>
+// 							<th>Месяц</th>
+// 							${showStatHead(data,env)}
+// 						</tr>
+// 					</thead>
+// 					<tbody>
+// 						${(data.stats || []).map(row => showRow(data, env, data.group, row)).join('')}
+// 					</tbody>
+// 				</table>
+// 			</div>
 
-		</div>
-	</div>
-`
-const showRow = (data, env, group, stat) => `
-	<tr>
-		<th>${stat.year}</th>
-		<th>${MONTH[stat.month]}</th>
-		${showStatTds(data, env, group, stat)}
-	</tr>
-`
+// 		</div>
+// 	</div>
+// `
+// const showRow = (data, env, group, stat) => `
+// 	<tr>
+// 		<th>${stat.year}</th>
+// 		<th>${MONTH[stat.month]}</th>
+// 		${showStatTds(data, env, group, stat)}
+// 	</tr>
+// `
 const showGroupPositions = (data, env) => `
 	<div class="block${globalThis.sessionStorage?.getItem('shop_blocks_Позиции') ? ' show' : ''}">
 		<div class="title">Позиции</div>
@@ -611,7 +614,7 @@ const showScriptDragFilters = (data, env) => `
 `
 const showTableGroups = (data, env, group) => `
 	
-	<div class="revscroll">
+	<!-- <div class="revscroll"> -->
 		<table draggable="false" class="list">
 			<thead>
 				<tr>
@@ -635,62 +638,50 @@ const showTableGroups = (data, env, group) => `
 
 			})(document.currentScript.parentElement)
 		</script>
-	</div>
+	<!-- </div> -->
 `
 
 const percentTd = (stat, sum = stat.poscount ? Math.round(stat.withall / stat.poscount * 100) : 0) => `
 	<td class="${sum == 100 ? 'green' : 'red'}" title="${stat.poscount - stat.withall}">${sum}%</td>
 `
 
-const showGroup = (data, env, group, stat = group.stat) => `
-	<tr data-id="${group.group_id}" style="white-space: nowrap;" class="item">
+const showGroup = (data, env, row) => `
+	<tr data-id="${row.group.group_id}" style="white-space: nowrap;" class="item">
 		<td>
-			<a href="groups/${group.group_id}">${group.group_title}</a>
+			<a href="groups/${row.group.group_id}">${row.group.group_title}</a>
 		</td>
-		${showStatTds(data, env, group, stat)}
+		${showStatTds(data, env, row, row.group)}
 		<td>
 			${field.button({
 				cls: 'transparent mute',
 				label: svg.cross(), 
 				confirm: 'Удалить группу?',
 				action: '/-shop/admin/set-group-delete',
-				args: {group_nick: group.group_nick},
+				args: {group_nick: row.group.group_nick},
 				global: 'check'
 			})}
 		</td>
 	</tr>
 `
 const showStatHead = (data, env) => `
+	<td>Подгрупп</td>
+	<td title="Не распределённых по группам">Нерасп</td>
+	<td title="Распределённых по группам">Распред</td>
 	<td>Позиций</td>
-	<td>Моделей</td>
-	<td>Группы</td>
-	<td>Бренды</td>
-	<td>Фильтры</td>
-	<td>Источники</td>
-	<td>Актуальность</td>
-	<td title="Позиций со всеми важными свойствами и фильтрами">ОК</td>
-	<td title="Позиций без фильтров">БФ</td>
-	<td title="Позиций без цен">БЦ</td>
-	<td title="Позиций без описаний">БО</td>
-	<td title="Позиций без наименований">БН</td>
-	<td title="Позиций без бренда">ББ</td>
-	<td title="Позиций без картинок">БК</td>
+	<td>Фильтров</td>
+	<td>На карточке</td>
+	<td></td>
 `
-const showStatTds = (data, env, group, stat = {}) => `
-	<td>${stat.poscount ?? '&mdash;'}</td>
-	<td>${stat.modcount ?? '&mdash;'}</td>
-	<td>${stat.groupcount ?? '&mdash;'}</td>
-	<td>${stat.brandcount ?? '&mdash;'}</th>
-	<td>${stat.filtercount ?? '&mdash;'}</td>
-	<td>${stat.sourcecount ?? '&mdash;'}</td>
-	<td>${ddd.ai(stat.date_cost)}</td>
-	${percentTd(stat)}
-	${redTd(data, group, stat, 'withfilters')}
-	${redTd(data, group, stat, 'withcost', 'cena')}
-	${redTd(data, group, stat, 'withdescr', 'opisanie')}
-	${redTd(data, group, stat, 'withname', 'naimenovanie')}
-	${redTd(data, group, stat, 'withbrands', 'brend')}
-	${redTd(data, group, stat, 'withimg', 'images')}
+const showStatTds = (data, env, row, group) => `
+	<td>${group.child_ids.length ?? '&mdash;'}</td>
+	<td class="${group.child_ids.length && row.freeposcount ? 'red' : ''}">${row.freeposcount ?? '&mdash;'}</td>
+	<td>${row.busyposcount ?? '&mdash;'}</td>
+	<td>${row.poscount ?? '&mdash;'}</td>
+	
+	<td>${group.filter_nicks.length ?? '&mdash;'}</td>
+	<td>${group.card_nicks.length ?? '&mdash;'}</td>
+	<td><a class="mute" href="brief/${group.group_id}">Статистика</a></th>
+	
 `
 
 const redTd = (data, group, stat, name, filter_prop_nick, sum = stat.poscount - stat[name]) => filter_prop_nick ? (

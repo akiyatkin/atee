@@ -26,8 +26,10 @@ const checkbox = (name, title, checked) => `
 `
 const getSelItem = (data, env) => {
 	const model = data.model
-	const art = env.crumb.name || ''
-	return model.items.find(item => item.art?.[0] == art || item.brendart[0] == art) || false
+	const name = env.crumb.name
+	// const single = model.recap.brendart[0] == model.recap.brendmodel[0]
+	// return model.items.find(item => item.art?.[0] == name || item.brendart[0] == name || single) || false
+	return model.items.find(item => item.art?.[0] == name || item.brendart[0] == name) || false
 }
 export const ROOT = (data, env) => `${showBody(data, env, data.model, getSelItem(data, env))}`
 export const showBody = (data, env, model, item) => {

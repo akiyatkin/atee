@@ -17,7 +17,13 @@ cards.unit = (prop) => {
 
 cards.getGroupPath = (data, group_nick) => [data.conf.root_path, 'group', group_nick].join('/')
 cards.getParentPath = (data, group) => data.conf.root_path + (group.group_nick == data.conf.root_nick ? '' : '/group/' + group.parent_nick)
-cards.getItemPath = (data, item) => [data.conf.root_path, 'item', item.brendmodel[0], item.art?.[0] || item.brendart[0]].join('/')
+cards.getItemPath = (data, item) => {
+	const path = [data.conf.root_path, 'item', item.brendmodel[0]]
+	//const single = item.brendart[0] == item.brendmodel[0]
+	//if (!single) path.push(item.art?.[0] || item.brendart[0])
+	path.push(item.art?.[0] || item.brendart[0])
+	return path.join('/')
+}
 
 cards.getItemName = (data, selitem) => { //ecommerce.name (в паре с getVariant)
 	const gain = (name) => cards.getSomeTitle(data, selitem, name)

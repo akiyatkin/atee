@@ -7,8 +7,10 @@ const tpl = {}
 export default tpl
 tpl.getSelItem = (data, env) => {
 	const model = data.model
-	const art = env.crumb.name || ''
-	return model.items.find(item => item.art?.[0] == art || item.brendart[0] == art) || false
+	const name = env.crumb.name || ''
+	// const single = model.recap.brendart[0] == model.recap.brendmodel[0]
+	// if (single && !name) return model.items[0]
+	return model.items.find(item => item.art?.[0] == name || item.brendart[0] == name) || false
 }
 tpl.ROOT = (data, env) => data.result ? tpl.showModel(data, env, data.model) : tpl.showError(data, env)
 
@@ -113,7 +115,9 @@ tpl.showItemsTable = (data, env, model) => `
 	</table>
 `
 tpl.showItemsTableBodyTr = (data, env, model, item, i) => {
-	const selected = item.art?.[0] == env.crumb.name || item.brendart[0] == env.crumb.name
+	const name = env.crumb.name
+	//const single = item.brendart[0] == item.brendmodel[0]
+	const selected = item.art?.[0] == name || item.brendart[0] == name // || single
 	const art_td = tpl.showArtlink(data, env, model, item, i)
 	return `
 		<tr style="${selected ? 'font-weight:bold;' : ''}">
@@ -136,8 +140,10 @@ tpl.showItemDescription = (data, env, item, model) => {
 }
 tpl.showArtlink = (data, env, model, item, i) => {
 	const path = cards.getItemPath(data, item)
+	const name = env.crumb.name
+	// const single = item.brendart[0] == item.brendmodel[0]
 	const art_title = cards.getSomeTitle(data, item, 'art')
-	const selected = item.art?.[0] == env.crumb.name || item.brendart[0] == env.crumb.name
+	const selected = item.art?.[0] == name || item.brendart[0] == name // || single
 	const art_td = selected ? `<b>${art_title}</b>` : `
 		<a href="${path}#page">${art_title}</a>
 		<script>
@@ -358,7 +364,10 @@ const showItemIfCost = (mod, item, oldcost = item['Старая цена'] || mo
 
 
 tpl.getItemButton = (data, env, model, item, i) => {
-	const selected = item.art?.[0] == env.crumb.name || item.brendart[0] == env.crumb.name
+	// const single = item.brendart[0] == item.brendmodel[0]
+	const name = env.crumb.name
+	const selected = item.art?.[0] == name || item.brendart[0] == name // || single
+
 	const title = cards.getVariant(data, model, item)
 	
 	return selected ? 
@@ -410,10 +419,15 @@ tpl.showItemButtons = (data, env, model) => `
 					a.addEventListener('contextmenu', e => reachGoal('position'))
 					a.addEventListener('auxclick', e => reachGoal('position'))
 				}
+				
+				
 
 				const products = ${JSON.stringify(
 					model.items.map((item, i) => {
-						if (item.art?.[0] == env.crumb.name || item.brendart[0] == env.crumb.name) return ''
+						// const single = item.brendart[0] == item.brendmodel[0]
+						const name = env.crumb.name
+						//if (item.art?.[0] == name || item.brendart[0] == name || single) return ''
+						if (item.art?.[0] == name || item.brendart[0] == name) return ''
 						
 						return Ecommerce.getProduct(data, {
 							coupon:env.theme.partner,

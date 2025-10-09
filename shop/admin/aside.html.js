@@ -5,7 +5,7 @@ export const ROOT = (data, env) => `
 		<div>
 			<div style="position: sticky; top:1em">
 				<div style="display: grid; gap: 0.25em; margin-bottom: 1em">
-					<div><a href="brief">Сводка</a></div>
+					<div><a href="brief">Статистика</a></div>
 					<div><a href="groups">Группы</a></div>
 					<div><a href="props">Свойства</a></div>
 					<div><a href="poss">Позиции</a></div>

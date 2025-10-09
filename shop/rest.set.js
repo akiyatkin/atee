@@ -19,7 +19,7 @@ rest.addResponse('set-order', async (view) => {
 	
 
     const params = await view.gets(['text', 'email#required', 'phone#required', 'brendmodel','art', 'utms', 'partner'])
-    params.conf = config('shop', true)
+    params.conf = await config('shop', true)
     params.host = view.visitor.client.host
     params.ip = view.visitor.client.ip
     params.model = await Shop.getModelByBrendmodel(db, params.brendmodel, params.partner)

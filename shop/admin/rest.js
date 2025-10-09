@@ -448,7 +448,7 @@ rest.addResponse('groups', ['admin'], async view => {
 			WHERE ca.group_id = :group_id
 			order by ca.ordain
 		`, group)
-		view.data.stats = await ShopAdmin.getGroupHistory(db, group_id)
+		
 		
 		
 		const samples = await db.all(`
@@ -479,8 +479,6 @@ rest.addResponse('groups', ['admin'], async view => {
 		}
 		
 		
-		view.data.poscount = view.data.stats[0]?.poscount
-		view.data.modcount = view.data.stats[0]?.modcount
 
 		// const s = await ShopAdmin.getSamplesUpByGroupId(db, group_id)
 		// const { from, join, where, sort } = await Shop.getWhereBySamplesWinMod(db, s)
@@ -496,19 +494,32 @@ rest.addResponse('groups', ['admin'], async view => {
 		// 	FROM ${from.join(', ')} ${join.join(' ')}
 		// 	WHERE ${where.join(' and ')}
 		// `, bind)
+		//view.data.stats = await ShopAdmin.getGroupHistory(db, group_id)
 	} else {
-
-		const {poscount, modcount} = await db.fetch(`
-			SELECT 
-				COUNT(DISTINCT value_id) AS modcount,
-				COUNT(*) AS poscount  
-			FROM sources_wvalues
-			WHERE entity_id = :brendart_prop_id and prop_id = :brendmodel_prop_id
-		`, bind)
-		view.data.modcount = modcount
-		view.data.poscount = poscount
-		view.data.stats = await ShopAdmin.getHistory(db)
+		//view.data.stats = await ShopAdmin.getHistory(db)
 	}
+
+
+
+	if (group) {
+		const {poscount, modcount} = await db.fetch(`
+		 	SELECT count(distinct win.key_id) as poscount, count(distinct win.value_id) as modcount
+		 	FROM sources_wvalues win, shop_allitemgroups ig
+		 	WHERE win.entity_id = :brendart_prop_id and win.prop_id = :brendmodel_prop_id
+		 	and ig.key_id = win.key_id and ig.group_id = :group_id
+		`, {...bind, group_id})
+		view.data.poscount = poscount
+		view.data.modcount = modcount
+	} else {
+		const {poscount, modcount} = await db.fetch(`
+		 	SELECT count(distinct win.key_id) as poscount, count(distinct win.value_id) as modcount
+		 	FROM sources_wvalues win
+		 	WHERE win.entity_id = :brendart_prop_id and win.prop_id = :brendmodel_prop_id
+		`, {...bind})
+		view.data.poscount = poscount
+		view.data.modcount = modcount
+	}
+
 
 	if (group) {
 		view.data.freetable = await ShopAdmin.getFreeTableByGroupIndex(db, group?.parent_id, hashs)
@@ -528,34 +539,36 @@ rest.addResponse('groups', ['admin'], async view => {
 	//return view.ret()
 
 
+
 	const childs = view.data.childs = await db.all(`
-		SELECT 
-			gr.group_id, 
-			gr.group_nick, 
-			gr.group_title,
-			pr.group_title as parent_title,
-			pr.group_nick as parent_nick,
-			pr.group_name as parent_name,
-			(select count(*) from shop_groups ch where ch.parent_id = gr.group_id) as childs
+		SELECT gr.group_id, 
+			(select count(*) from shop_allitemgroups ig where ig.group_id = gr.group_id) as poscount,
+			(select count(*) from shop_itemgroups ig where ig.group_id = gr.group_id) as freeposcount
 		FROM shop_groups gr
-			LEFT JOIN shop_groups pr on (pr.group_id = gr.parent_id)
 		WHERE gr.parent_id <=> :group_id
 		ORDER BY gr.ordain
 	`, { group_id: group?.group_id || null })
 
-	if (childs.length) {
-		const ym = ShopAdmin.getNowYM()
-		const rows = await db.all(`select *, UNIX_TIMESTAMP(date_cost) as date_cost
-			FROM shop_stat_groups 
-			WHERE year = :year and month = :month
-			and group_id in (${childs.map(g => g.group_id).join(',')})
-			ORDER BY year DESC, month DESC
-		`, { ...ym})
-
-		for (const group of childs) {
-			group.stat = rows.find(row => row.group_id == group.group_id)
-		}
+	for (const i in childs) {
+		const row = childs[i]
+		row.busyposcount = row.poscount - row.freeposcount
+		const group_id = row.group_id
+		childs[i].group = await Shop.getGroupById(db, group_id)
 	}
+
+	// if (childs.length) {
+	// 	const ym = ShopAdmin.getNowYM()
+	// 	const rows = await db.all(`select *, UNIX_TIMESTAMP(date_cost) as date_cost
+	// 		FROM shop_stat_groups 
+	// 		WHERE year = :year and month = :month
+	// 		and group_id in (${childs.map(g => g.group_id).join(',')})
+	// 		ORDER BY year DESC, month DESC
+	// 	`, { ...ym})
+
+	// 	for (const group of childs) {
+	// 		group.stat = rows.find(row => row.group_id == group.group_id)
+	// 	}
+	// }
 
 	return view.ret()
 })

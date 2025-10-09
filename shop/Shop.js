@@ -57,18 +57,32 @@ Shop.getItemHead = async (db, item) => {
 	return Shop.getGainHead(item, gain)
 }
 Shop.getGainHead = async (item, gain) => {
+	
+	//Доступно из-за sitemap plop titles:['brednart','brendmodel', 'opisanie','brend','art','model','naimenovanie', 'images']
+
 	const opisanie = await gain('opisanie')
 	const brend = await gain('brend')
+	const brendart = await gain('brendart')
+	const brendmodel = await gain('brendmodel')
 	const art = await gain('art')
 	const model = await gain('model')
 	const naimenovanie = await gain('naimenovanie')
 	const image_src = await gain('images')
 	
 	const head = {}
-	head.title = [brend, model, art].join(' ')
+
+	if (art && model && brend) head.title = [brend, model, art].join(' ')
+	else if (brendmodel != brendart && art) head.title = [brendmodel, art].join(' ')
+	
+
+	head.title = [brendart].join(' ')
 	if (image_src) head.image_src = image_src
 	if (naimenovanie) head.description = naimenovanie
-	if (opisanie) head.description = opisanie
+	else if (opisanie) head.description = opisanie
+	
+
+	if (!head.title) head.title = brendart
+	if (!head.description) head.description = 'Купить ' + brendart
 	return head
 }
 Shop.reduce = (keys, props) => { //Минимизируем выдачу, какие свойства оставить в объектах массива через создание нового объекта. Настройка rest под front

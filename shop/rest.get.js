@@ -228,8 +228,8 @@ rest.addResponse('get-item-sitemap', async view => {
 	const {count, list} = await Shop.getPlopsWithPropsNoMultiByMd(db, root.group_id, md, false, {
 		limit: false,
 		rand: false,
-		nicks:['art','brendmodel'],
-		titles:['opisanie','brend','art','model','naimenovanie', 'images']
+		nicks:['art'], //brendmodel_nick, brendart_nick есть всегда
+		titles:['brendart','brendmodel', 'opisanie','brend','art','model','naimenovanie', 'images']
 	})
 	console.timeEnd('Shop.getPlopsWithPropsNoMultiByMd')
 
@@ -284,13 +284,28 @@ const getItem = (data, env) => {
 }
 rest.addResponse('get-item-check', async (view) => {
 	const art = await view.get('art')
+	const search = await view.get('search')	
 	const conf = await config('shop', true)
 	const model = view.data.model = await view.get('model#required')
+
 	const item = model.items.find(item => item.art?.[0] == art || item.brendart[0] == art)
+	
 	if (!item) {
 		const item = model.items[0]
-		view.data.redirect = `${conf.root_path}/item/${item.brendmodel[0]}/${item.art?.[0] || item.brendart[0]}`
+		view.data.redirect = `${conf.root_path}/item/${item.brendmodel[0]}/${item.art?.[0] || item.brendart[0]}${search ? '?' + search : ''}`
+		console.log('redirect', view.data.redirect)
 	}
+
+	// const single = model.recap.brendmodel[0] == model.recap.brendart[0]
+	// if ((!item && !single) || (single && art)) {
+	// 	const item = model.items[0]
+	// 	if (single) { //Распространённая ситуация
+	// 		view.data.redirect = `${conf.root_path}/item/${item.brendmodel[0]}${search ? '?' + search : ''}`
+	// 	} else {
+	// 		view.data.redirect = `${conf.root_path}/item/${item.brendmodel[0]}/${item.art?.[0] || item.brendart[0]}${search ? '?' + search : ''}`
+	// 	}
+	// 	console.log('redirect', view.data.redirect)
+	// }
 	return view.ret()
 })
 

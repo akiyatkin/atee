@@ -13,7 +13,7 @@ tpl.MAIL = (params) => {
 			Телефон: ${params.phone || ''}
 			<br>Email: ${params.email || ''}
 			${params.partner ? tpl.showPartner(params) : ''}
-			<br>Модель: <a href="https://${params.host}${params.conf.root_path}/item/${params.item.brendmodel[0]}/${params.item.art?.[0] || params.item.brendart[0]}">${gain('brendmodel')}</a>
+			<br>Модель: <a href="https://${params.host}${cards.getItemPath(params, params.item)}">${gain('brendmodel')}</a>
 			${params.item.cena ? tpl.showCost(params) : ''}
 		</p>
 		<pre>${params.text}</pre>
