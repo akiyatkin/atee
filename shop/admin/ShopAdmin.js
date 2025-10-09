@@ -75,7 +75,7 @@ ShopAdmin.getSamplesByGroupId = async (db, group_id = null) => {
 
 	const sampleids = {}
 	for (const {sample_id, prop_nick, value_nick, spec} of list) {
-		//if (!prop_nick) continue
+		if (!prop_nick) continue
 		//if (!value_nick && spec == 'exactly') continue
 		sampleids[sample_id] ??= {}
 		if (spec == 'exactly') {
@@ -108,6 +108,7 @@ ShopAdmin.getSamplesUpByGroupId = async (db, group_id = null, childsamples = [{}
 	const groupsamples = await ShopAdmin.getSamplesByGroupId(db, group_id)
 	//if (!groupsamples.length) return []
 	const samples = Shop.addSamples(groupsamples, childsamples)
+
 	const group = await ShopAdmin.getGroupById(db, group_id)
 	if (group_id && group.parent_id) return ShopAdmin.getSamplesUpByGroupId(db, group.parent_id, samples) //childsamples
 	return samples
@@ -1251,7 +1252,7 @@ ShopAdmin.recalcIndexGroups = async (db, group_id = null) => {
 
 	console.time('recalcIndexGroups')
 	
-	group_id = await db.col(`select parent_id from shop_groups where group_id = :group_id`, {group_id}) || null
+	group_id = group_id ? await db.col(`select parent_id from shop_groups where group_id = :group_id`, {group_id}) || null : null
 
 	const group_ids = await ShopAdmin.getAllGroupIds(db, group_id)
 	if (!group_id) {
@@ -1817,11 +1818,11 @@ ShopAdmin.scheduleDailyRestat = async (time = '01:09') => {
 		return 'ok'
 	})
 }
-ShopAdmin.getFreeTableByGroupIndex = async (db, group_id = null, hashs = []) => {
-	const ans = {poscount:0, modcount:0, head: [], rows:[]}
+ShopAdmin.getFreeTableByGroupIndex = async (db, group_id = null, hashs = [], count = 20) => {
+	const ans = {poscount:0, modcount:0, head: [], rows:[], indexes:{}}
 
 	
-	const {key_ids, poscount, modcount} = await ShopAdmin.getFreeKeyIdsByGroupIndex(db, group_id, hashs, 20)
+	const {key_ids, poscount, modcount} = await ShopAdmin.getFreeKeyIdsByGroupIndex(db, group_id, hashs, count)
 
 	
 	ans.poscount = poscount
@@ -1834,6 +1835,8 @@ ShopAdmin.getFreeTableByGroupIndex = async (db, group_id = null, hashs = []) => 
 	
 	ans.head = table.head
 	ans.rows = table.rows
+	ans.indexes = Object.fromEntries(ans.head.map((value,i) => [nicked(value), i]))
+
 	return ans
 }
 
@@ -1845,6 +1848,7 @@ ShopAdmin.getFreeKeyIdsBySamples = async (db, group_id = null, hashs = [], limit
 	const bind = await Shop.getBind(db)
 
 	const samples = await ShopAdmin.getSamplesUpByGroupId(db, group_id)
+
 	
 	const gw = await ShopAdmin.getWhereBySamples(db, samples, hashs, false, group_id ? false : true) 
 	//Если корень и нет samples то вязть всё, если группа и нет samples то пусто

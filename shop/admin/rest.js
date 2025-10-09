@@ -224,6 +224,8 @@ rest.addResponse('poss', ['admin'], async view => {
 	const hashs = await view.get('hashs')
 	const bind = await Shop.getBind(db)
 	const group_id = await view.get('group_id')
+	const count = await view.get('count') || 25
+	if (group_id) view.data.group = await Shop.getGroupById(db, group_id)
 
 	const source_id = await view.get('source_id')
 	if (source_id) {
@@ -234,7 +236,6 @@ rest.addResponse('poss', ['admin'], async view => {
 	
 	
 	const origm = await view.get('m')
-
 	const query = await view.get('query')
 
 	const md = view.data.md = await Shop.getmd(db, origm, query, hashs)
@@ -247,7 +248,6 @@ rest.addResponse('poss', ['admin'], async view => {
 	let key_ids
 	if (!origm) {
 		if (group_id) {
-			view.data.group = await Shop.getGroupById(db, group_id)
 			key_ids = await db.colAll(`
 				SELECT it.key_id
 				FROM sources_items it, shop_allitemgroups ig
@@ -256,7 +256,7 @@ rest.addResponse('poss', ['admin'], async view => {
 				and it.key_id = ig.key_id
 				and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || 'it.search != ""'}) 
 				ORDER BY RAND()
-				LIMIT 25
+				LIMIT ${count}
 			`, {group_id, ...bind})		
 			view.data.count = await db.col(`
 				SELECT count(distinct it.key_id)
@@ -273,7 +273,7 @@ rest.addResponse('poss', ['admin'], async view => {
 				WHERE it.entity_id = :brendart_prop_id
 				and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || 'it.search != ""'}) 
 				ORDER BY RAND()
-				LIMIT 25
+				LIMIT ${count}
 			`, {...bind})
 			view.data.count = await db.col(`
 				SELECT count(*)
@@ -317,7 +317,7 @@ rest.addResponse('poss', ['admin'], async view => {
 			FROM ${from.join(', ')} ${join.join(' ')}
 			WHERE ${where.join(' and ')}
 			ORDER BY RAND()
-			LIMIT 25
+			LIMIT ${count}
 		`, {source_id, group_id, ...bind})
 		view.data.count = await db.col(`
 			SELECT count(distinct win.key_id)
@@ -428,8 +428,7 @@ rest.addResponse('groups', ['admin'], async view => {
 	const hashs = await view.get('hashs')
 	const bind = await Shop.getBind(db)
 	view.data.conf = await config('shop', true)
-	
-	
+	const count = await view.get('count') || 25	
 
 
 	if (group) {
@@ -522,8 +521,8 @@ rest.addResponse('groups', ['admin'], async view => {
 
 
 	if (group) {
-		view.data.freetable = await ShopAdmin.getFreeTableByGroupIndex(db, group?.parent_id, hashs)
-		view.data.myfreetable = await ShopAdmin.getFreeTableByGroupIndex(db, group?.group_id, hashs)
+		view.data.freetable = await ShopAdmin.getFreeTableByGroupIndex(db, group?.parent_id, hashs, count)
+		view.data.myfreetable = await ShopAdmin.getFreeTableByGroupIndex(db, group?.group_id, hashs, count)
 	}
 	
 	

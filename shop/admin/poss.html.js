@@ -31,7 +31,7 @@ const showFree = (data, env, table) => `
 					const Client = await window.getClient()
 					const addget = await import('/-sources/addget.js').then(r => r.default)
 
-					Client.go('poss' + addget(Client.bread.get, {query : input.value}, ['source_id', 'group_id', 'query', 'm']), false)
+					Client.go('poss' + addget(Client.bread.get, {query : input.value}, ['source_id', 'group_id', 'query', 'm','count']), false)
 					Client.reloaddiv("${env.layer.div}")
 				})
 			})(document.currentScript.parentElement)
@@ -112,7 +112,7 @@ tpl.TITLE = (data, env) => err(data, env) || `
 	<h1 style="margin-top:0">${tpl.getTitleH1(data, env.bread)}</h1>
 `
 tpl.getTitleH1 = (data, bread) => `
-	${data.group?.group_title || '<i>Корень</i>'}
+	${data.group?.group_title ? tpl.showPart(data, bread, data.group?.group_title, {group_id: data.group?.parent_id}) : '<i>Корень</i>'}
 	
 	${tpl.showPart(data, bread, data.source?.source_title, {source_id: null})}
 	${tpl.showPart(data, bread, data.md.query, {query: null})}
@@ -155,7 +155,7 @@ tpl.showSelected = (data, bread) => {
 
 tpl.showPart = (data, bread, title, params) => !title ? '' : `
 	<a data-scroll="none" class="clearlink"
-		href="poss${addget(bread.get, params, ['source_id', 'group_id', 'query', 'm'])}">
+		href="poss${addget(bread.get, params, ['source_id', 'group_id', 'query', 'm', 'count'])}">
 		<span class="value">${title}</span>
 		<span class="krest" style="font-size:1rem; line-height: 2rem;">✕</span>
 	</a>

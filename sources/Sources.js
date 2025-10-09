@@ -1090,6 +1090,7 @@ Sources.createProp = async (db, prop_title, type = 'text') => {
 	
 	const ordain = await db.col('SELECT max(ordain) FROM sources_props') + 1
 	const {name, unit} = Sources.getNameUnit(prop_title)
+	if (unit.lenght > 10) return false
 	const prop_id = await db.insertId(`
 		INSERT INTO sources_props (prop_title, prop_nick, type, ordain, name, unit)
 		VALUES (:prop_title, :prop_nick, :type, :ordain, :name, :unit)

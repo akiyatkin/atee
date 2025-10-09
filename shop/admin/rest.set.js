@@ -3,7 +3,7 @@ import ShopAdmin from "/-shop/admin/ShopAdmin.js"
 import Shop from "/-shop/Shop.js"
 import nicked from "/-nicked"
 import Recalc from "/-sources/Recalc.js"
-
+import BulkInserter from "/-sources/BulkInserter.js"
 import { whereisit } from '/-controller/whereisit.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
@@ -259,7 +259,47 @@ rest.addAction('set-prop-create', ['admin','setaccess'], async view => {
 	
 	return view.ret()
 })
+rest.addAction('set-sample-boxes', ['admin','checkrecalc'], async view => {
+	const group_id = await view.get('group_id#required')
+	const nicks = await view.get('nicks#required')
+	const db = await view.get('db')
+	const group = await Shop.getGroupById(db, group_id)
+	
+	const prop_nick = 'brendmodel'
+	let sample_id = await db.col(`
+		SELECT sa.sample_id
+		FROM shop_samples sa, shop_sampleprops sp
+		WHERE sa.group_id = :group_id and sp.prop_nick = :prop_nick
+		and sp.sample_id = sa.sample_id
+	`, {group_id, prop_nick})
 
+	if (!sample_id) {
+		sample_id = await db.insertId(`
+			INSERT INTO shop_samples (group_id)
+			VALUES (:group_id)
+		`, {group_id})
+		await db.exec(`
+			INSERT INTO shop_sampleprops (sample_id, prop_nick, spec)
+			VALUES (:sample_id, :prop_nick, 'exactly')
+		`, {sample_id, prop_nick})
+	}
+
+	const shop_samplevalues = new BulkInserter(db, 'shop_samplevalues', ['sample_id', 'prop_nick', 'value_nick'], 100, true)
+	for (const value_nick of nicks) {
+		await shop_samplevalues.insert([sample_id, prop_nick, value_nick])
+	}
+	await shop_samplevalues.flush()
+	// await db.exec(`
+	// 	INSERT IGNORE INTO shop_samplevalues (sample_id, prop_nick, value_nick)
+	// 	VALUES (:sample_id, :prop_nick, :value_nick)
+	// `, {
+	// 	sample_id, prop_nick, value_nick
+	// })	
+	Recalc.recalc(async (db) => {
+		await ShopAdmin.recalcChangeGroups(db, group_id)
+	})
+	return view.ret()
+})
 rest.addAction('set-sample-create', ['admin','checkrecalc'], async view => {
 	let prop_nick = await view.get('prop_nick')
 	const query_nick = await view.get('query_nick')
@@ -285,7 +325,9 @@ rest.addAction('set-sample-create', ['admin','checkrecalc'], async view => {
 		INSERT IGNORE INTO shop_props (prop_nick)
 		VALUES (:prop_nick)
 	`, { prop_nick })
-	Recalc.recalc()
+	Recalc.recalc(async (db) => {
+		await ShopAdmin.recalcChangeGroups(db, group_id)
+	})
 
 
 	return view.ret()
@@ -353,7 +395,7 @@ rest.addAction('set-group-self_filters', ['admin','setaccess'], async view => {
 		WHERE group_id = :group_id
 	`, {group_id, bit})
 	Recalc.recalc(async (db) => {
-		await ShopAdmin.recalcChangeGroups(db, group_id) //статистика
+		await ShopAdmin.recalcChangeGroups(db, group_id)
 	})
 
 	return view.ret()

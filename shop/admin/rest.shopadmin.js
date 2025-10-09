@@ -20,6 +20,13 @@ import rest_search from "/-dialog/search/rest.search.js" //аргументы ha
 rest.extra(rest_search)
 
 
+rest.addArgument('nicks', ['array'])
+rest.addVariable('nicks#required', ['nicks'], (view, nicks) => {
+	if (!nicks.length) return view.err('Требуется указать nicks')
+	return nicks
+})
+
+rest.addArgument('count', ['int'])
 rest.addArgument('nick', ['nicked'])
 rest.addArgument('detail', ['nicked'])
 

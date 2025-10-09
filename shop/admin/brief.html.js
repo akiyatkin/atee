@@ -305,7 +305,7 @@ export const TABLE = (data, env) => err(data, env) || `
 			
 			
 			<thead>
-				<tr>
+				<tr style="opacity: 0.3;">
 					<!-- <th>Год</th>
 					<th>Месяц</th> -->
 					<th>Группы</th>
@@ -317,7 +317,7 @@ export const TABLE = (data, env) => err(data, env) || `
 			</tbody>
 			
 			<thead>
-				<tr>
+				<tr style="opacity: 0.3;">
 					<!-- <th>Год</th>
 					<th>Месяц</th> -->
 					<th>Источники</th>
@@ -329,7 +329,7 @@ export const TABLE = (data, env) => err(data, env) || `
 			</tbody>
 
 			<thead style="font-weight: bold;">
-				<tr>
+				<tr style="opacity: 0.3;">
 					<!-- <th>Год</th>
 					<th>Месяц</th> -->
 					<th>Бренды</th>
@@ -374,7 +374,7 @@ const showRow = (data, env, group, stat) => `
 
 const showStatTds = (data, env, group, stat = {}) => `
 	<td>${ddd.dm(stat.date_cost)}</td>
-	<td>${stat.poscount ?? '&mdash;'}</td>
+	<td><a href="poss?source_id=${stat?.source_id || ''}&group_id=${group?.group_id || ''}&m=${stat.brand_nick?'brend='+stat.brand_nick:''}">${stat.poscount ?? '&mdash;'}</a></td>
 	<td>${stat.modcount ?? '&mdash;'}</td>
 	<td>${stat.groupcount ?? '&mdash;'}</td>
 	<td>${stat.brandcount ?? '&mdash;'}</th>

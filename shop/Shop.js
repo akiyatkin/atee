@@ -465,10 +465,12 @@ Shop.getPartnerByKey = async key => {
 Shop.mdfilter = async (db, mgroup) => {
 	//Удалить фильтры свойства и значения, которых не существуют
 	const newmgroup = {}
+
 	for (const prop_nick in mgroup) {
 		const prop = await Shop.getPropByNick(db, prop_nick)
 		if (!prop) continue
 		if (!~['more','column'].indexOf(prop.known)) continue
+
 		if (typeof mgroup[prop_nick] == 'object') {
 			newmgroup[prop_nick] = {}
 
@@ -491,10 +493,11 @@ Shop.mdfilter = async (db, mgroup) => {
 						if (value_nick != Number(value_nick)) continue
 						newmgroup[prop_nick][value_nick] = mgroup[prop_nick][value_nick] //1
 					}
-				}
+				}				
 			}
 			if (!Object.keys(newmgroup[prop_nick]).length) delete newmgroup[prop_nick]
 		} else if (~['empty','any'].indexOf(mgroup[prop_nick])) {
+
 			newmgroup[prop_nick] = mgroup[prop_nick]
 		}
 	}
@@ -1408,6 +1411,7 @@ Shop.getmd = async (db, origm, query = '', hashs = []) => {
 	const mgetorig = Shop.makemd(origm)
 	
 	const mget = await Shop.mdfilter(db, mgetorig) //Удалить фильтры свойства и значения, которых не существуют
+
 	const m = Shop.makemark(mget).join(':')
 	
 	const md = {m, mget, query, hashs}

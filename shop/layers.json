@@ -7,12 +7,6 @@
 	"head":{
 		"title":"Источники данных"
 	},
-	"json":{
-		"recalc:ROOT":"/-sources/get-recalc",
-		"props:ROOT":"/-shop/admin/props",
-		"main:ROOT":"/-shop/admin/main",
-		"settings:ROOT":"/-shop/admin/settings"
-	},
 	"global":{
 		"shop-manager:ORDERS":["recalc"],
 		"groups:ROOT":["recalc"],
@@ -24,13 +18,17 @@
 	},
 	"onlyclient":["recalc:ROOT"],
 	"jsontpl":{
-		"brief:TABLE":"/-shop/admin/brief?detail=${env.bread.get.detail ?? ''}&source_id=${env.bread.get.source_id ?? ''}&brand_nick=${env.bread.get.brand_nick ?? ''}&group_id=${env.crumb.child?.name ?? ''}",
-		"brief:PLOP":"/-shop/admin/brief-plop?detail=${env.bread.get.detail ?? ''}&source_id=${env.bread.get.source_id ?? ''}&brand_nick=${env.bread.get.brand_nick ?? ''}&group_id=${env.crumb.child?.name ?? ''}",
-		"shop-manager:YEARS":"/-shop/cart/get-manager-years?status=${env.bread.get.status ?? ''}",
-		"shop-manager:MONTHS":"/-shop/cart/get-manager-months?year=${env.crumb.name}&status=${env.bread.get.status ?? ''}",
-		"shop-manager:ORDERS":"/-shop/cart/get-manager-orders?year=${env.crumb.parent.name}&month=${env.crumb.name}&status=${env.bread.get.status ?? ''}",
-		"groups:ROOT":"/-shop/admin/groups?group_id=${env.crumb.child?.name ?? ''}&query=${env.bread.get.query ?? ''}",
-		"poss:ROOT":"/-shop/admin/poss?source_id=${env.bread.get.source_id ?? ''}&group_id=${env.bread.get.group_id ?? ''}&query=${env.bread.get.query ?? ''}&m=${env.bread.get.m ?? ''}",
+		"recalc:ROOT":"/-sources/get-recalc?admin=${env.bread.get.admin ?? ''}",
+		"props:ROOT":"/-shop/admin/props?admin=${env.bread.get.admin ?? ''}",
+		"main:ROOT":"/-shop/admin/main?admin=${env.bread.get.admin ?? ''}",
+		"settings:ROOT":"/-shop/admin/settings?admin=${env.bread.get.admin ?? ''}",
+		"brief:TABLE":"/-shop/admin/brief?detail=${env.bread.get.detail ?? ''}&source_id=${env.bread.get.source_id ?? ''}&brand_nick=${env.bread.get.brand_nick ?? ''}&group_id=${env.crumb.child?.name ?? ''}&admin=${env.bread.get.admin ?? ''}",
+		"brief:PLOP":"/-shop/admin/brief-plop?detail=${env.bread.get.detail ?? ''}&source_id=${env.bread.get.source_id ?? ''}&brand_nick=${env.bread.get.brand_nick ?? ''}&group_id=${env.crumb.child?.name ?? ''}&admin=${env.bread.get.admin ?? ''}",
+		"shop-manager:YEARS":"/-shop/cart/get-manager-years?status=${env.bread.get.status ?? ''}&admin=${env.bread.get.admin ?? ''}",
+		"shop-manager:MONTHS":"/-shop/cart/get-manager-months?year=${env.crumb.name}&status=${env.bread.get.status ?? ''}&admin=${env.bread.get.admin ?? ''}",
+		"shop-manager:ORDERS":"/-shop/cart/get-manager-orders?year=${env.crumb.parent.name}&month=${env.crumb.name}&status=${env.bread.get.status ?? ''}&admin=${env.bread.get.admin ?? ''}",
+		"groups:ROOT":"/-shop/admin/groups?group_id=${env.crumb.child?.name ?? ''}&query=${env.bread.get.query ?? ''}&count=${env.bread.get.count ?? ''}&admin=${env.bread.get.admin ?? ''}",
+		"poss:ROOT":"/-shop/admin/poss?source_id=${env.bread.get.source_id ?? ''}&group_id=${env.bread.get.group_id ?? ''}&query=${env.bread.get.query ?? ''}&m=${env.bread.get.m ?? ''}&count=${env.bread.get.count ?? ''}&admin=${env.bread.get.admin ?? ''}",
 		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}"
 	},
 	"tpl":{

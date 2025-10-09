@@ -19,7 +19,14 @@ rest.addVariable('isadmin', view => {
 	view.nostore = true
 	return isadmin
 })
-rest.addVariable('admin', async view => { //depricated
+rest.addArgument('admin', async (view, password) => {
+	if (password) {
+		const result = await Access.isAdmin(password)
+		if (result) {
+			view.headers['Set-Cookie'] = '-controller=' + encodeURIComponent(password ?? '') + '; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT'
+			return true
+		}
+	}
 	const isadmin = await view.get('isadmin')
 	if (!isadmin) return view.err('Access denied', 403)
 	return isadmin

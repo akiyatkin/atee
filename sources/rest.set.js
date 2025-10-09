@@ -1261,6 +1261,7 @@ rest.addAction('set-col-prop-create', ['admin','checkrecalc'], async view => {
 	const type = await view.get('type')	|| 'text'
 
 	col.prop_id = view.ans.prop_id = await Sources.createProp(db, prop_title, type)
+	if (!col.prop_id) return view.err('Не бывает таких длинных единиц измерений ' + prop_title)
 	await db.exec(`
 		INSERT INTO sources_custom_cols (source_id, sheet_title, col_title, prop_id)
    		VALUES (:source_id, :sheet_title, :col_title, :prop_id)
@@ -1412,7 +1413,7 @@ rest.addAction('set-prop-create', ['admin','checkrecalc'], async view => {
 	
 	
 	const prop_id = view.ans.prop_id = await Sources.createProp(db, prop_title, 'text')
-
+	if (!prop_id) return view.err('Не бывает таких длинных единиц измерений ' + prop_title)
 	
 
 	
@@ -1508,6 +1509,7 @@ rest.addAction('set-prop-title', ['admin'], async view => {
 	if (prop.prop_nick != prop_nick) return view.err('Изменить можно только регистр')
 
 	const {name, unit} = Sources.getNameUnit(prop_title)
+	if (unit.lenght > 10) return view.err('Не бывает таких длинных единиц измерений ' + unit)
 	await db.exec(`
 		UPDATE sources_props
    		SET 

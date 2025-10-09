@@ -5,6 +5,7 @@ import print from "/-words/print.html.js"
 import words from "/-words/words.html.js"
 import svg from "/-sources/svg.html.js"
 import ddd from "/-words/date.html.js"
+import addget from "/-sources/addget.js"
 
 const spancount = (data = {}) => `
 	<span title="Моделей ${data.modcount || 0}, позиций ${data.poscount || 0}, ">${data.poscount || 0}</span>
@@ -64,9 +65,12 @@ export const ROOT = (data, env) => err(data, env, []) || `
 	
 	${showGroups(data, env)}
 	${data.group ? showGroupPositions(data, env) : ''}
-	${data.group ? showGroupActions(data, env) : ''}
 	${data.group ? showGroupOptions(data, env) : ''}
+	${data.group ? showGroupActions(data, env) : ''}
 	<a href="brief${data.group?.group_id ? '/' + data.group.group_id : ''}">Статистика</a>
+
+		<a href="poss?count=1000${data.group?.group_id ? '&group_id=' + data.group.group_id : ''}">Позиции</a>
+
 	${data.group?.group_title ? '' : showHelp(data, env)}
 	<script>
 		(div => {
@@ -515,7 +519,7 @@ const showGroupSamples = (data, env) => `
 			})}
 			<!-- <p>В группу выбрано <span title="Моделей ${data.modcount}, позиций ${data.poscount}">${data.poscount}</span> ${words(data.poscount, 'позиция', 'позиции', 'позиций')}</p> -->
 			<p>Нераспределённые позиции в родительской группе: ${spancount(data.freetable)}</p>
-			${showFree(data, env, data.freetable)}
+			${showFree(data, env, data.freetable, true)}
 		</div>
 	</div>
 `
@@ -543,44 +547,104 @@ const showGroups = (data, env) => `
 	
 	
 `
-const showFree = (data, env, freetable) => `
+const showFree = (data, env, freetable, addcheckbox = false) => !freetable.rows.length ? '' : `
 	
-	
-	<form style="display: flex; margin: 1em 0; gap: 1em">
-		<div class="float-label">
-			<input id="freeinp" name="search" type="search" placeholder="Поиск" value="${env.bread.get.query ?? ''}">
-			<label for="freeinp">Поиск</label>
-		</div>
-		<button type="submit">Найти</button>
-		<script>
-			(form => {
-				const btn = form.querySelector('button')
-				const input = form.querySelector('input')
-				form.addEventListener('submit', async (e) => {
-					e.preventDefault()
-					const Client = await window.getClient()
-					Client.go('groups${data.group ? '/' + data.group.group_id : ''}?query=' + input.value, false)
-				})
-			})(document.currentScript.parentElement)
-		</script>
-	</form>
+	<div>
+		<form style="display: flex; margin: 1em 0; gap: 1em">
+			<div class="float-label">
+				<input id="freeinp" name="search" type="search" placeholder="Поиск" value="${env.bread.get.query ?? ''}">
+				<label for="freeinp">Поиск</label>
+			</div>
+			<button type="submit">Найти</button>
+			<script>
+				(form => {
+					const btn = form.querySelector('button')
+					const input = form.querySelector('input')
+					form.addEventListener('submit', async (e) => {
+						e.preventDefault()
+						const Client = await window.getClient()
+						const addget = await import('/-sources/addget.js').then(r => r.default)
+						const search = addget(Client.bread.get, {query: input.value},['count', 'query'])
+						Client.go('groups${data.group ? '/' + data.group.group_id : ''}'+search, false)
+					})
+				})(document.currentScript.parentElement)
+			</script>
+		</form>
 
-	
-	<div class="revscroll">
-		<table>
-			<thead>
-				${showTr(data, env, freetable?.head || [])}
-			</thead>
-			<tbody>
-				${(freetable?.rows || []).map(row => showTr(data, env, row)).join('')}
-			</tbody>
-		</table>
+		
+		<div class="revscroll">
+			<table>
+				<thead>
+					${showTr(data, env, freetable?.head || [], freetable?.indexes, addcheckbox)}
+				</thead>
+				<tbody>
+					${(freetable?.rows || []).map(row => showTr(data, env, row, freetable?.indexes, addcheckbox)).join('')}
+				</tbody>
+			</table>
+		</div>
+		${addcheckbox ? resumeCheckBox(data, env) : ''}
+		${!env.bread.get.count && freetable.poscount > freetable?.rows.length ? linkMore(data, env) : ''}
+		${env.bread.get.count ? linkLess(data, env) : ''}
 	</div>
 `
-const showTr = (data, env, row) => `
+const resumeCheckBox = (data, env) => `
+	
+	<button class="resume" style="margin:1em 0; display: none;">Добавить выбранные</button>
+		
+	<script>
+		(div => {
+
+			const resume = div.querySelector('.resume')
+			const thead = div.querySelector('thead')
+			const tbody = div.querySelector('tbody')
+			const boxes = tbody.querySelectorAll('input')
+			const bos = thead.querySelector('input')
+			const check = () => {
+				let isany = false
+				for (const box of boxes) {
+					isany = isany || box.checked
+					if (isany) break
+				}
+				resume.style.display = isany ? 'block' : 'none'
+			}
+
+			bos.addEventListener('click', () => {
+				for (const box of boxes) box.checked = bos.checked
+				check()
+			})
+			for (const box of boxes) {
+				box.addEventListener('click', () => {
+					bos.checked = false
+					let isall = true
+					for (const box of boxes) isall = isall && box.checked
+					bos.checked = isall
+					check()
+				})
+			}
+			resume.addEventListener('click', async () => {
+				const Client = await window.getClient()
+				const nicks = []
+				const nicked = await import('/-nicked').then(r => r.default)
+				for (const box of boxes) if (box.checked) nicks.push(nicked(box.value))
+				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
+				const group_id = ${data.group.group_id || null}
+				const ans = await senditmsg(resume, '/-shop/admin/set-sample-boxes', {group_id, nicks})
+				Client.global('check')
+			})
+
+		})(document.currentScript.parentElement)
+	</script>
+`
+const linkMore = (data, env) => `<a href="groups${data.group ? '/' + data.group.group_id : ''}${addget(env.bread,{count:10000},['count','query'])}">Показать всё</a>`
+const linkLess = (data, env) => `<a href="groups${data.group ? '/' + data.group.group_id : ''}${addget(env.bread,{count:null},['count','query'])}">Скрыть всё</a>`
+const showTr = (data, env, row, indexes, addcheckbox) => `
 	<tr>
+		${addcheckbox ? showCheckTd(data, env, row, indexes) : ''}
 		${row.map(title => showTd(data, env, title)).join('')}
 	</tr>
+`
+const showCheckTd = (data, env, row, indexes) => `
+	<td><input value="${row[indexes.brendmodel]}" type="checkbox"></td>
 `
 const showTd = (data, env, title) => `
 	<td>${title}</td>
@@ -669,14 +733,14 @@ const showStatHead = (data, env) => `
 	<td title="Распределённых по группам">Распред</td>
 	<td>Позиций</td>
 	<td>Фильтров</td>
-	<td>На карточке</td>
+	<td>На&nbsp;карточке</td>
 	<td></td>
 `
 const showStatTds = (data, env, row, group) => `
 	<td>${group.child_ids.length ?? '&mdash;'}</td>
 	<td class="${group.child_ids.length && row.freeposcount ? 'red' : ''}">${row.freeposcount ?? '&mdash;'}</td>
 	<td>${row.busyposcount ?? '&mdash;'}</td>
-	<td>${row.poscount ?? '&mdash;'}</td>
+	<td><a href="poss?group_id=${group.group_id}">${row.poscount ?? '&mdash;'}</a></td>
 	
 	<td>${group.filter_nicks.length ?? '&mdash;'}</td>
 	<td>${group.card_nicks.length ?? '&mdash;'}</td>

@@ -203,7 +203,7 @@ const showNoLoad = (data, env, source) => `
 	<p>Загрузки ещё не было. Выполните загрузку источника.</p>
 `
 const showComment = (data, env, source) => `
-	<div style="float:right;position: relative">
+	<div style="float:right;position: relative; clear:both">
 		${field.prompt({
 			cls: 'a mute',
 			type: 'area',
@@ -216,8 +216,8 @@ const showComment = (data, env, source) => `
 			input: source.comment
 		})}
 	</div>
-	<div style="white-space: pre; font-style: italic;">${source.comment}</div>
-	<div style="float:right; position: relative">
+	<div style="white-space: pre; font-style: italic; margin-right:2em">${source.comment}</div>
+	<div style="float:right; position: relative; clear:both">
 		${field.prompt({
 			cls: 'a mute',
 			type: 'area',
@@ -230,7 +230,7 @@ const showComment = (data, env, source) => `
 			input: source.params
 		})}
 	</div>
-	<div style="font-size:12px; font-family: monospace; white-space: pre;">${source.params || ''}</div>
+	<div style="font-size:12px; font-family: monospace; white-space: pre; margin-right:2em">${source.params || ''}</div>
 `
 // <!-- <script>
 // 		(div => {
