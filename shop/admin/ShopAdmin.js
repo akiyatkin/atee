@@ -113,7 +113,7 @@ ShopAdmin.getSamplesUpByGroupId = async (db, group_id = null, childsamples = [{}
 	if (group_id && group.parent_id) return ShopAdmin.getSamplesUpByGroupId(db, group.parent_id, samples) //childsamples
 	return samples
 }
-ShopAdmin.getWhereBySamples = async (db, samples, hashs = [], partner = '', fulldef = false) => {
+ShopAdmin.getWhereBySamples = async (db, samples, hashs = [], partner = false, fulldef = false) => {
 	//fulldef false значит без выборки ничего не показываем, partner нужен чтобы выборка по цене была по нужному ключу
 	//win.key_id - позиция, wva.value_id - модель
 
@@ -1247,44 +1247,16 @@ ShopAdmin.getAllGroupIds = async (db, group_id = null) => {
 	`, {group_id}) : await db.colAll(`SELECT group_id FROM shop_groups`)
 	return group_ids
 }
-ShopAdmin.recalcIndexGroups = async (db, group_id = null) => {
-	
-
-	console.time('recalcIndexGroups')
-	
-	group_id = group_id ? await db.col(`select parent_id from shop_groups where group_id = :group_id`, {group_id}) || null : null
-
-	const group_ids = await ShopAdmin.getAllGroupIds(db, group_id)
-	if (!group_id) {
-		await db.affectedRows(`DELETE FROM shop_itemgroups`)
-		await db.affectedRows(`DELETE FROM shop_allitemgroups`)
-	} else {
-		await db.db.query(`DELETE FROM shop_itemgroups WHERE group_id in (?)`, [group_ids])
-		await db.db.query(`DELETE FROM shop_allitemgroups WHERE group_id in (?)`, [group_ids])
+ShopAdmin.runGroupDown = async (db, group_id, func) => {
+	const child_ids = await db.colAll(`select group_id from shop_groups where parent_id <=> :group_id`, {group_id})
+	if (group_id) {
+		const r = await func(group_id)
+		if (r != null) return r
 	}
-	const shop_itemgroups = new BulkInserter(db, 'shop_itemgroups', ['group_id', 'key_id']);
-	const shop_allitemgroups = new BulkInserter(db, 'shop_allitemgroups', ['group_id', 'key_id'], 1000, true);
-	//Если изменился родитель, изменились и вложенные группы
-	for (const group_id of group_ids) {
-		const key_ids = await ShopAdmin.getFreeKeyIdsBySamples(db, group_id) //Свободные позиции, которые не попадают во внутрение группы, те будут уже к своим группам преписаны
-
-
-		for (const key_id of key_ids) {
-			await shop_itemgroups.insert([group_id, key_id])
-		}
-
-		await ShopAdmin.runGroupUp(db, group_id, async (group_id) => {
-			if (!~group_ids.indexOf(group_id)) return false //Выше заданных групп подниматься не надо
-			for (const key_id of key_ids) {
-				await shop_allitemgroups.insert([group_id, key_id])
-			}
-		})
+	for (const child_id of child_ids) {
+		const r = await ShopAdmin.runGroupDown(db, child_id, func)
+		if (r != null) return r
 	}
-	await shop_itemgroups.flush()
-	await shop_allitemgroups.flush()
-
-	
-	console.timeEnd('recalcIndexGroups')
 }
 ShopAdmin.runGroupUp = async (db, group_id, func) => {
 	if (!group_id) return
@@ -1293,6 +1265,100 @@ ShopAdmin.runGroupUp = async (db, group_id, func) => {
 	const parent_id = await db.col(`select parent_id from shop_groups where group_id = :group_id`, {group_id})
 	return ShopAdmin.runGroupUp(db, parent_id, func)
 }
+ShopAdmin.recalcIndexGroups = async (db, group_id = null) => {
+	console.time('recalcIndexGroups')
+	group_id = group_id ? await db.col(`select parent_id from shop_groups where group_id = :group_id`, {group_id}) || null : null
+	//const shop_allitemgroups = new BulkInserter(db, 'shop_allitemgroups', ['group_id', 'key_id'], 1000, true);
+	await ShopAdmin.runGroupDown(db, group_id, async (group_id) => {
+		//await db.exec(`DELETE FROM shop_itemgroups WHERE group_id = :group_id`, {group_id})
+		await db.exec(`DELETE FROM shop_allitemgroups WHERE group_id = :group_id`, {group_id})
+		const parent_id = await db.col(`select parent_id from shop_groups where group_id = :group_id`, {group_id})
+		const samples = await ShopAdmin.getSamplesByGroupId(db, group_id)
+		const gw = await ShopAdmin.getWhereBySamples(db, samples) //win prop_id, key_id; hashs=[], partner = false и fulldef = false - без выборки ничего не показываем. У корня нет выборки и показываем true. Но для корня мы сюда не попадаем.
+		const bind = await Shop.getBind(db)
+		const key_ids = parent_id ? await db.exec(`
+			INSERT INTO shop_allitemgroups (key_id, group_id)
+			select key_id, :group_id
+			from (
+				SELECT distinct win.key_id
+				FROM 
+					shop_allitemgroups ig, ${gw.from.join(', ')}
+					${gw.join.join(' ')}
+				WHERE 
+					ig.group_id = :parent_id
+					and ig.key_id = win.key_id
+					and ${gw.where.join(' and ')}
+			) t
+		`, {group_id, parent_id, ...bind}) : await db.exec(`
+			INSERT INTO shop_allitemgroups (key_id, group_id)
+			select key_id, :group_id 
+			from (SELECT distinct win.key_id
+				FROM 
+					${gw.from.join(', ')}
+					${gw.join.join(' ')}
+				WHERE 
+					${gw.where.join(' and ')}
+			) t
+		`, {group_id, ...bind})
+	})
+	await ShopAdmin.runGroupDown(db, group_id, async (group_id) => {
+		//Чтобы рассчитать нераспределённые позиции надо знать что вложенно в дочерние группы по этому следующая интерация
+		await db.exec(`DELETE FROM shop_itemgroups WHERE group_id = :group_id`, {group_id})
+		const key_ids = await db.exec(`
+			insert into shop_itemgroups (key_id, group_id)
+			SELECT igt.key_id, :group_id
+			FROM shop_allitemgroups igt
+				LEFT JOIN (
+					SELECT ig.key_id -- распределённые позиции
+					FROM shop_allitemgroups ig, shop_groups g
+					WHERE ig.group_id = g.group_id
+					AND g.parent_id = :group_id
+				) c ON c.key_id = igt.key_id
+			WHERE igt.group_id = :group_id AND c.key_id IS null -- нераспределённые позиции
+		`, {group_id})
+	})	
+	console.timeEnd('recalcIndexGroups')
+}
+// ShopAdmin.recalcIndexGroups = async (db, group_id = null) => {
+	
+
+// 	console.time('recalcIndexGroups')
+	
+// 	group_id = group_id ? await db.col(`select parent_id from shop_groups where group_id = :group_id`, {group_id}) || null : null
+
+// 	const group_ids = await ShopAdmin.getAllGroupIds(db, group_id)
+// 	if (!group_id) {
+// 		await db.affectedRows(`DELETE FROM shop_itemgroups`)
+// 		await db.affectedRows(`DELETE FROM shop_allitemgroups`)
+// 	} else {
+// 		await db.db.query(`DELETE FROM shop_itemgroups WHERE group_id in (?)`, [group_ids])
+// 		await db.db.query(`DELETE FROM shop_allitemgroups WHERE group_id in (?)`, [group_ids])
+// 	}
+// 	const shop_itemgroups = new BulkInserter(db, 'shop_itemgroups', ['group_id', 'key_id']);
+// 	const shop_allitemgroups = new BulkInserter(db, 'shop_allitemgroups', ['group_id', 'key_id'], 1000, true);
+// 	//Если изменился родитель, изменились и вложенные группы
+// 	for (const group_id of group_ids) {
+// 		const key_ids = await ShopAdmin.getFreeKeyIdsBySamples(db, group_id) //Свободные позиции, которые не попадают во внутрение группы, те будут уже к своим группам преписаны
+
+
+// 		for (const key_id of key_ids) {
+// 			await shop_itemgroups.insert([group_id, key_id])
+// 		}
+
+// 		await ShopAdmin.runGroupUp(db, group_id, async (group_id) => {
+// 			if (!~group_ids.indexOf(group_id)) return false //Выше заданных групп подниматься не надо
+// 			for (const key_id of key_ids) {
+// 				await shop_allitemgroups.insert([group_id, key_id])
+// 			}
+// 		})
+// 	}
+// 	await shop_itemgroups.flush()
+// 	await shop_allitemgroups.flush()
+
+	
+// 	console.timeEnd('recalcIndexGroups')
+// }
+
 // ShopAdmin.recalcIndexGroups = async (db, group_id) => {
 	
 // 	console.time('recalcIndexGroups')
