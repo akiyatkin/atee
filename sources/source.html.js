@@ -53,7 +53,7 @@ const defcustom = (value) => {
 }
 const showDatas = (data, env, source) => `
 	${source.date_load ? '' : showNoLoad(data, env, source)}
-	<div style="margin:0.5em 0">
+	<div style="margin:0.5em 0; clear:both">
 		Ключевое свойство по умолчанию: ${field.search({
 			cls: 'a',
 			heading: 'Ключ по умолчанию',
@@ -65,6 +65,7 @@ const showDatas = (data, env, source) => `
 			name: 'entity_id',
 			find: 'entity_id',
 			action: '/-sources/set-source-entity',
+			global: 'check',
 			args: {source_id: source.source_id}
 		})}
 	</div>

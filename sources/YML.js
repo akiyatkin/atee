@@ -2,73 +2,54 @@
 import { createRequire } from "module"
 const require = createRequire(import.meta.url)
 const { XMLParser } = require("fast-xml-parser");
-
+import readChars from "/-sources/readChars.js"
 const YML = {}
-YML.getModified = async url => {
-	const lines = await YML.getFirstLines(url, 2)
-	let line = lines[0] || ''
-	let dateMatch = line.match(/date="([^"]+)"/);
-	let dateString = dateMatch ? dateMatch[1] : null;
-	if (!dateString) {
-		line = lines[1] || ''
-		dateMatch = line.match(/date="([^"]+)"/);
-		dateString = dateMatch ? dateMatch[1] : null;
+
+YML.safeDateParse = (dateString) => {
+	if (!dateString || typeof dateString !== 'string') return null;
+	try {
+		// Удаляем лишние пробелы
+		const cleanString = dateString.trim()
+		if (!cleanString) return null
+		
+		// Пытаемся распарсить как ISO строку
+		let timestamp = Date.parse(cleanString)
+		
+		// Если не удалось, пробуем дополнительные форматы
+		if (isNaN(timestamp)) {
+			// Заменяем пробел на 'T' для ISO-подобных форматов
+			const isoLikeString = cleanString.replace(' ', 'T');
+			timestamp = Date.parse(isoLikeString);
+		}
+		
+		// Если все еще не удалось, пробуем ручной парсинг для распространенных форматов
+		if (isNaN(timestamp)) {
+			timestamp = parseCustomFormats(cleanString);
+		}
+
+		if (isNaN(timestamp)) return null;
+
+
+		const date = new Date(timestamp);
+		// Проверяем, что дата валидна
+		if (!(date instanceof Date && !isNaN(date.getTime()))) return null
+
+		return date
+	} catch (error) {
+		// В production-коде здесь можно добавить логирование
+		console.warn('Ошибка парсинга даты:', error.message);
+		return null;
 	}
-	if (!dateString) return false
-	const isoString = dateString.replace(' ', 'T') + ':00'
-	const date = new Date(isoString)
+}
+
+YML.getModified = async url => {
+	const line = await readChars(url, 1000)
+	const dateMatch = line.match(/date="([^"]+)"/);
+	const dateString = dateMatch ? dateMatch[1] : null;
+	if (!dateString) return false	
+	const date = YML.safeDateParse(dateString)
 	return date
 }
-YML.getFirstLines = async (url, n = 1) => {
-	const response = await fetch(url)
-	if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
-	return new Promise(async (resolve, reject) => {
-        try {
-            let buffer = '';
-            const lines = [];
-            const reader = response.body.getReader();
-            
-            while (true) {
-                const { done, value } = await reader.read();
-                
-                if (done) {
-                    // Добавляем последнюю строку если есть
-                    if (buffer.trim()) {
-                        lines.push(buffer.trim());
-                    }
-                    resolve(lines);
-                    break;
-                }
-                
-                buffer += new TextDecoder().decode(value);
-                
-                // Обрабатываем все найденные строки
-                while (lines.length < n) {
-                    const newlineIndex = buffer.indexOf('\n');
-                    
-                    if (newlineIndex === -1) break;
-                    
-                    const line = buffer.substring(0, newlineIndex).trim();
-                    if (line) {
-                        lines.push(line);
-                    }
-                    
-                    buffer = buffer.substring(newlineIndex + 1);
-                    
-                    // Если набрали нужное количество строк
-                    if (lines.length >= n) {
-                        reader.cancel();
-                        resolve(lines);
-                        return;
-                    }
-                }
-            }
-        } catch (error) {
-            reject(error)
-        }
-    })
-}
-
 YML.getDateLastWeekDay = (weekDay) => { //0 вс
 	const date = new Date()
 	date.setMilliseconds(0)
@@ -111,7 +92,9 @@ YML.getpicture = picture => {
 
 YML.parse = async (SRC, headers) => {
 	const parser = new XMLParser({ignoreAttributes: false})
-	const xmldata = await fetch(SRC, {headers}).then(r => r.text()).catch(e => console.log('Error parse yml', src, e))
+	
+	const xmldata = await readChars(SRC, 10 ** 10, headers)
+	//const xmldata = await fetch(SRC, {headers}).then(r => r.text()).catch(e => console.log('Error parse yml', src, e))
 	if (!xmldata) return {msg: 'Не удалось скачать прайс ' + src, result: 0}
 
 	const ymldata = parser.parse(xmldata)
@@ -149,6 +132,8 @@ YML.getName = (param, synonyms, renameCol) => {
 	}
 	return name 
 }
+
+
 YML.load = async (SRC, {headers = {}, renameCol = col_title => col_title, getHead, getRow, synonyms}) => {
 	//
 	const {offers, date_content, categories} = await YML.parse(SRC, headers)
