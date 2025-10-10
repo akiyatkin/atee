@@ -7,7 +7,7 @@ const tpl = {}
 export default tpl
 tpl.getSelItem = (data, env) => {
 	const model = data.model
-	const name = env.crumb.name || ''
+	const name = env.crumb.child.name || ''
 	// const single = model.recap.brendart[0] == model.recap.brendmodel[0]
 	// if (single && !name) return model.items[0]
 	return model.items.find(item => item.art?.[0] == name || item.brendart[0] == name) || false
