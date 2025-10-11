@@ -34,6 +34,14 @@ Shop.getGroupPage = async (group_nick, visitor) => {
 	const reans = await rest_docx.get('get-html', { src }, visitor)
 	return reans.status == 200 ? reans.data : ''
 }
+Shop.getGroupIcon = async (group_nick, visitor) => {
+	const conf = await config('shop')
+	const src = conf.group_pages + group_nick + '.webp'
+	const isfile = await fs.lstat(src).catch(e => false)
+	if (!isfile) return false
+	if (!isfile.isFile()) return false
+	return src
+}
 Shop.getGroupHead = async (group, visitor, image_src) => {
 	const group_nick = group.group_nick
 	const head = {
@@ -688,49 +696,55 @@ Shop.prepareMgetPropsValues = async (db, data, mget) => {
 		}	
 	}
 }
-Shop.prepareModelsPropsValuesGroups = async (db, data, models) => { //basket.list, models.list
-	data.props ??= {}
-	data.values ??= {}
-	data.groups ??= {}
 
+Shop.prepareModelsPropsValues = async (db, data, models) => { //basket.list, models.list
+	data.props ??= {}
+	data.values ??= {}	
 	for (const model of models) {
 		const item = model.item || model.recap
 		for (const prop_nick in item) {
-			const prop = data.props[prop_nick] = await Shop.getPropByNick(db, prop_nick)
+			const prop = data.props[prop_nick] ??= await Shop.getPropByNick(db, prop_nick)
 			if (prop.type != 'value') continue
 			for (const value_nick of item[prop_nick]) {
-				data.values[value_nick] = await Shop.getValueByNick(db, value_nick)
+				data.values[value_nick] ??= await Shop.getValueByNick(db, value_nick)
 				
 			}
 		}
 	}	
+}
+Shop.prepareModelsPropsValuesGroups = async (db, data, models) => { //basket.list, models.list
+	await Shop.prepareModelsPropsValues(db, data, models)
+	data.groups ??= {}
+	if (models[0]?.group_nicks) return
 	for (const model of models) {
-		if (!model.groups?.length) continue
-		data.groups[model.groups[0]] = await Shop.getGroupByNick(db, model.groups[0])
+		const item = model.item || model.recap //pos из корзины или model из каталога
+		if (!model.group_nicks) continue
+		for (const group_nick of model.group_nicks) {
+			data.groups[group_nick] = await Shopt.getGroupByNick(db, group_nick)
+		}
 	}
 }
 
 Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //moditems_ids = [{value_id, key_ids}] props = ['brendart']
 	if (!moditems_ids.length) return []
 	const bind = await Shop.getBind(db)
-	const modbypos = {}
-	//const groupsbymod = {}
-	if (props.length) {
-		if (partner.cost_nick) props.push(partner.cost_nick)
-	}
+	const key_id_to_model_id = {}
+	const model_id_to_group_nicks = {}
+	if (props.length && partner.cost_nick) props.push(partner.cost_nick)
+	
 
 	for (const row of moditems_ids) {
 		row.key_ids.split(',').forEach((key_id) => {
-			modbypos[key_id] = row.value_id
+			key_id_to_model_id[key_id] = row.value_id
 		})
 
-		// if (!row.group_ids) continue
-		// const group_ids = row.group_ids.split(',')
-		// groupsbymod[row.value_id] ??= []
-		// for (const group_id of group_ids) {
-		// 	const group = await Shop.getGroupById(db, group_id)
-		// 	groupsbymod[row.value_id].push(group.group_nick)
-		// }	
+		if (!row.group_ids) continue
+		const group_ids = row.group_ids.split(',')
+		model_id_to_group_nicks[row.value_id] ??= []
+		for (const group_id of group_ids) {
+			const group = await Shop.getGroupById(db, group_id)
+			model_id_to_group_nicks[row.value_id].push(group.group_nick)
+		}
 	}
 	// const conf = await config('shop')
 
@@ -781,7 +795,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 		${props.length ? 'and pr.prop_nick in ("' + props.join('","') + '")' : ''}
 	`, bind))	
 
-	const models = Object.groupBy(itemprops, row => modbypos[row.key_id])
+	const models = Object.groupBy(itemprops, row => key_id_to_model_id[row.key_id])
 
 	
 	
@@ -806,7 +820,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 		}
 		//Если проверяется доступ по группам, то и группы можно сразу взять
 		models[model_id] = {
-			//groups: groupsbymod[model_id] || [],
+			group_nicks: model_id_to_group_nicks[model_id] || [],
 			items: Object.values(items)
 		}
 	}
@@ -850,9 +864,9 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 	for (const model of list) {
 	 	Shop.prepareFiles(model)
 	}
-	for (const model of list) {
-		//model.groups = groupsbymod[row.value_id]
-	}
+	// for (const model of list) {
+	// 	//model.groups = model_id_to_group_nicks[row.value_id]
+	// }
 	//Сделали recap
 
 	for (const model of list) {
@@ -900,21 +914,27 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 			model.item_props
 	*/
 
-	for (const model of list) {
-		const keys = []
-		for (const key_nick of model.recap.brendart) {
-			const value = await Shop.getValueByNick(db, key_nick)
-			keys.push(value.value_id)
-		}
-		const group_ids = await db.colAll(`SELECT distinct group_id from shop_itemgroups where key_id in (${keys.join(',')})`)
-		const groups = []
-		for (const group_id of group_ids) {
-			//if (!await Shop.isInRootById(db, group_id)) continue
-			const group = await Shop.getGroupById(db, group_id)
-			groups.push(group.group_nick)
-		}
-		model.groups = groups
-	}
+	// for (const model of list) {
+	// 	// if (model.group_ids) {
+	// 	// 	//const group_ids = model.group_ids.split(',')
+	// 	// 	//model.group_nicks = model.group_nicks.split(',')
+	// 	// } else {
+	// 	// 	const keys = []
+	// 	// 	for (const key_nick of model.recap.brendart) {
+	// 	// 		const value = await Shop.getValueByNick(db, key_nick)
+	// 	// 		keys.push(value.value_id)
+	// 	// 	}
+	// 	// 	const group_ids = await db.colAll(`SELECT distinct group_id from shop_itemgroups where key_id in (${keys.join(',')})`)
+	// 	// 	const group_nicks = []
+	// 	// 	for (const group_id of group_ids) {
+	// 	// 		//if (!await Shop.isInRootById(db, group_id)) continue
+	// 	// 		const group = await Shop.getGroupById(db, group_id)
+	// 	// 		group_nicks.push(group.group_nick)
+	// 	// 	}
+	// 	// 	model.group_nicks = group_nicks
+	// 	// }
+	// 	//model.groups = model.group_nicks  //depricated
+	// }
 	
 
 	for (const model of list) {  //Для таблицы в карточке товара
@@ -937,8 +957,8 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 				}
 			}
 		}
-		//Эти свойства хоть и различаются не должны выводится в таблице
-		model.iprops = Object.keys(item_props)
+		//Эти свойства хоть и различаются не должны выводиться в таблице
+		model.iprops = Object.keys(item_props) //Различия позиций в модели
 		//model.model_props = Object.keys(model_props)
 		//console.log(model)
 		
@@ -1006,9 +1026,10 @@ Shop.getModelByBrendmodel = Access.poke(async (db, brendmodel_nick, partner) => 
 	let moditem_ids = await db.all(`
 		SELECT 
 			wva.value_id, 
-			GROUP_CONCAT(distinct wva.key_id separator ',') as key_ids
-		FROM sources_wvalues wva, shop_allitemgroups ig
-		WHERE wva.value_id = :value_id and wva.entity_id = :brendart_prop_id and wva.prop_id = :brendmodel_prop_id
+			GROUP_CONCAT(distinct wva.key_id separator ',') as key_ids,
+			GROUP_CONCAT(distinct mig.group_id separator ',') as group_ids
+		FROM shop_itemgroups mig, sources_wvalues wva, shop_allitemgroups ig
+		WHERE mig.key_id = wva.key_id and wva.value_id = :value_id and wva.entity_id = :brendart_prop_id and wva.prop_id = :brendmodel_prop_id
 		and ig.key_id = wva.key_id and ig.group_id = :group_id
 		GROUP BY wva.value_id 
 	`, {...bind, ...value, group_id})	
@@ -1101,12 +1122,12 @@ Shop.prepareCost = (model, partner) => {
 			change(item)
 		}
 	}
-	if (partner.discount) { //Может быть и свойство и скидка от свойства, типа от "Оптовой цены" партнёру ещё и скидка к ней
-		for (const item of model.items) {
-			item['staraya-cena'] ??= item['cena']
-			item['cena'] = item['cena'].map(number => Math.round(number * (100 - partner.discount) / 100))
-		}
-	}
+	// if (partner.discount) { //Может быть и свойство и скидка от свойства, типа от "Оптовой цены" партнёру ещё и скидка к ней
+	// 	for (const item of model.items) {
+	// 		item['staraya-cena'] ??= item['cena']
+	// 		item['cena'] = item['cena'].map(number => Math.round(number * (100 - partner.discount) / 100))
+	// 	}
+	// }
 	for (const item of model.items) {
 		if (!item['cena'] || item['staraya-cena'] == item['cena']) delete item['staraya-cena']
 	}
@@ -1193,24 +1214,35 @@ Shop.prepareCost = (model, partner) => {
 // 	return bind
 // })
 
-Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, md, partner, {rand = false, limit = false, nicks = [], titles = []}) => {
+Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, samples = [{}], hashs = [], partner = false, {
+		rand = false, 
+		add_group_nicks = false, 
+		add_group_titles = false, 
+		add_group_ids = false, 
+		limit = false, nicks = [], titles = []
+	}) => {
 	// const marked_samples = await Shop.getSamplesUpByGroupId(db, group_id, [md.mget])
 	// const {from, join, where, sort} = await Shop.getWhereBySamplesWinMod(db, marked_samples, md.hashs, partner, group_id ? false : true)
 
-	const {from, join, where, sort} = await Shop.getWhereByGroupIndexWinMod(db, group_id, [md.mget], md.hashs, partner)
+	//[md.mget] md.hashs
+	titles.push('staraya-cena')
+	if (partner.cost_nick) titles.push(partner.cost_nick)
+	titles = unique(titles)
+
+	const {from, join, where, sort} = await Shop.getWhereByGroupIndexWinMod(db, group_id, samples, hashs, partner)
 	
 	const bind = await Shop.getBind(db)
 	
-	const propids = {}
+	//const propids = {}
 	
 	const cols2 = []
 	const join2 = []
 	let i = 0
 
-	const addJoin2 = (prop, propc) => {
+	const addJoin2 = (prop) => {
 		i++
-		propids[prop.prop_id] = prop.prop_id
-		const prop_id = prop.prop_nick == 'cena' ? propc.prop_id : prop.prop_id //Подмена цены если есть купон
+		//propids[prop.prop_id] = prop.prop_id
+		const prop_id = prop.prop_id /// == 'cena' ? propc.prop_id : prop.prop_id //Подмена цены если есть купон. ЦЕНА пропадёт если нет Цены
 
 
 
@@ -1219,7 +1251,7 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, md, partner, {rand = fa
 				LEFT JOIN sources_wtexts opa${i} on (
 					opa${i}.key_id = win.key_id 
 					and opa${i}.entity_id = win.entity_id 
-					and opa${i}.prop_id = ${prop.prop_id}
+					and opa${i}.prop_id = ${prop_id}
 					and opa${i}.multi_index = 0
 				)
 			`)
@@ -1228,7 +1260,7 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, md, partner, {rand = fa
 				LEFT JOIN sources_wnumbers opa${i} on (
 					opa${i}.key_id = win.key_id 
 					and opa${i}.entity_id = win.entity_id 
-					and opa${i}.prop_id = ${prop.prop_id}
+					and opa${i}.prop_id = ${prop_id}
 					and opa${i}.multi_index = 0
 				)
 			`)
@@ -1237,7 +1269,7 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, md, partner, {rand = fa
 				LEFT JOIN sources_wvalues opa${i} on (
 					opa${i}.key_id = win.key_id 
 					and opa${i}.entity_id = win.entity_id 
-					and opa${i}.prop_id = ${prop.prop_id} 
+					and opa${i}.prop_id = ${prop_id} 
 					and opa${i}.multi_index = 0
 				)
 				LEFT JOIN sources_values valopa${i} on (valopa${i}.value_id = opa${i}.value_id)
@@ -1247,19 +1279,20 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, md, partner, {rand = fa
 				LEFT JOIN sources_wdates opa${i} on (
 					opa${i}.key_id = win.key_id 
 					and opa${i}.entity_id = win.entity_id 
-					and opa${i}.prop_id = ${prop.prop_id}
+					and opa${i}.prop_id = ${prop_id}
 					and opa${i}.multi_index = 0
 				)
 			`)
 		}
 	}
-	const propc = await Shop.getPropByNick(db, nicked(partner.cost || 'Цена'))
+	const propc = await Shop.getPropByNick(db, partner.cost_nick || 'cena')
+
 	for (const prop_nick of nicks) {
 		const prop = await Shop.getPropByNick(db, prop_nick)
 		if (!prop) continue
 		//if (prop.multi) continue
 		if (prop.type == 'text') continue
-		addJoin2(prop, propc)
+		addJoin2(prop)
 		if (prop.type == 'value') {
 			cols2.push(`valopa${i}.value_nick as '${prop_nick}_nick'`)
 		} else if (prop.type == 'number') {
@@ -1272,7 +1305,7 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, md, partner, {rand = fa
 		const prop = await Shop.getPropByNick(db, prop_nick)
 		if (!prop) continue
 		//if (prop.multi) continue
-		addJoin2(prop, propc)
+		addJoin2(prop)
 		if (prop.type == 'value') {
 			cols2.push(`valopa${i}.value_title as '${prop_nick}_title'`)
 		} else if (prop.type == 'number') {
@@ -1284,22 +1317,65 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, md, partner, {rand = fa
 		}
 	}
 	
-
-	const list = await db.all(`
-		SELECT 
-			distinct win.key_id,
-			vakey.value_nick as brendart_nick, 
-			vamod.value_nick as brendmodel_nick, 
-			${cols2.join(',')}
-		FROM (${from.join(', ')} ${join.join(' ')})
-			LEFT JOIN sources_values vakey on (vakey.value_id = win.key_id)
-			LEFT JOIN sources_values vamod on (vamod.value_id = win.value_id)
-			${join2.join(' ')}
-		WHERE ${where.join(' and ')}		
-		${rand ? 'ORDER BY RAND()' : ''}
-		${limit ? 'LIMIT ' + limit : ''}
-	`, {group_id, ...bind})
-
+	let list
+	if (add_group_nicks || add_group_nicks || add_group_ids) {
+		list = await db.all(`
+			SELECT 
+				-- win.key_id,
+				vakey.value_nick as brendart_nick, 
+				vamod.value_nick as brendmodel_nick, 
+				GROUP_CONCAT(distinct mig.group_id separator ',') as group_ids,
+				${cols2.join(',')}
+			FROM shop_itemgroups mig, (${from.join(', ')} ${join.join(' ')})
+				LEFT JOIN sources_values vakey on (vakey.value_id = win.key_id)
+				LEFT JOIN sources_values vamod on (vamod.value_id = win.value_id)
+				${join2.join(' ')}
+			WHERE ${where.join(' and ')}		
+			and mig.key_id = win.key_id
+			GROUP BY win.key_id
+			${rand ? 'ORDER BY RAND()' : ''}
+			${limit ? 'LIMIT ' + limit : ''}
+		`, {group_id, ...bind})		
+		for (const row of list) {
+			const group_ids = row.group_ids.split(',')
+			
+			if (add_group_nicks) {
+				row.group_nicks = []
+				for (const group_id of group_ids) {
+					const group = await Shop.getGroupById(db, group_id)
+					row.group_nicks.push(group.group_nick)
+				}
+			}
+			if (add_group_titles) {
+				row.group_titles = []
+				for (const group_id of group_ids) {
+					const group = await Shop.getGroupById(db, group_id)
+					row.group_titles.push(group.group_title)
+				}
+			}
+			if (add_group_ids) {
+				row.group_ids = group_ids
+			} else {
+				delete row.group_ids
+			}
+		}
+		
+	} else {
+		list = await db.all(`
+			SELECT 
+				win.key_id,
+				vakey.value_nick as brendart_nick, 
+				vamod.value_nick as brendmodel_nick, 
+				${cols2.join(',')}
+			FROM (${from.join(', ')} ${join.join(' ')})
+				LEFT JOIN sources_values vakey on (vakey.value_id = win.key_id)
+				LEFT JOIN sources_values vamod on (vamod.value_id = win.value_id)
+				${join2.join(' ')}
+			WHERE ${where.join(' and ')}		
+			${rand ? 'ORDER BY RAND()' : ''}
+			${limit ? 'LIMIT ' + limit : ''}
+		`, {group_id, ...bind})
+	}
 
 	const count = limit ? await db.col(`
 		SELECT count(distinct win.value_id)
@@ -1307,11 +1383,20 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, md, partner, {rand = fa
 		WHERE ${where.join(' and ')}
 	`, bind) : list.length
 	
-	if (~nicks.indexOf('cena') || ~titles.indexOf('cena')) {
+	for (const prop_nick of titles) {
+		const prop = await Shop.getPropByNick(db, prop_nick)
+		if (prop.type == 'number' && prop.scale) {
+			for (const item of list) {
+				const number = item[prop_nick + '_title']
+				if (!number) continue
+				item[prop_nick + '_title'] = number / 10 ** prop.scale
+			}
+		}
+	}
+	if (partner.cost_nick) {
 		for (const item of list) {
-			if (!partner?.discount) continue
-			if (!model.cena) continue
-			model.cena = Math.round(model.cena * (100 - partner.discount) / 100)
+			if (!item['staraya-cena_title']) item['staraya-cena_title'] = item['cena_title']
+			item['cena_title'] = item[partner.cost_nick + '_title']
 		}
 	}
 	return {list, count}
@@ -1786,8 +1871,9 @@ Shop.addWhereSamples = async (db, from, join, where, samples, hashs, partner, em
 					}
 				} else if (prop.type == 'number') {
 
-					const isdiscost = partner?.discount && prop_nick == 'cena'
-					const disCost = isdiscost ? number => Math.round(number * (100 + partner.discount) / 100) : number => number
+					// const isdiscost = partner?.discount && prop_nick == 'cena'
+					// const disCost = isdiscost ? number => Math.round(number * (100 + partner.discount) / 100) : number => number
+					const disCost = number => number
 						
 					if (sample[prop_nick]['upto'] || sample[prop_nick]['from']) {
 						sort = []
@@ -1917,7 +2003,7 @@ Shop.getWhereByGroupIndexWin = async (db, group_id, samples = [], hashs = [], pa
 
 
 Shop.getWhereByGroupIndexWinMod = async (db, group_id, samples = [], hashs = [], partner) => {
-	//win.key_id - позиция, wva.value_id - модель
+	//win.key_id - позиция, win.value_id - модель
 	const from = ['shop_allitemgroups ig, sources_wvalues win']
 	//const from = ['shop_itemgroups ig, sources_wvalues win']
 	const join = []

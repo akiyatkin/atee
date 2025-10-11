@@ -225,7 +225,7 @@ rest.addResponse('get-item-sitemap', async view => {
 	const md = await Shop.getmd(db, '', '', [])
 	
 	console.time('Shop.getPlopsWithPropsNoMultiByMd')
-	const {count, list} = await Shop.getPlopsWithPropsNoMultiByMd(db, root.group_id, md, false, {
+	const {count, list} = await Shop.getPlopsWithPropsNoMultiByMd(db, root.group_id, [md.mget], md.hashs, false, {
 		limit: false,
 		rand: false,
 		nicks:['art'], //brendmodel_nick, brendart_nick есть всегда
@@ -327,7 +327,7 @@ rest.addResponse('get-model', async (view) => {
 
 	
 	const groups = view.data.groups = {}
-	for (const group_nick of model.groups) {
+	for (const group_nick of model.group_nicks) {
 		groups[group_nick] = await Shop.getGroupByNick(db, group_nick)
 	}
 	
@@ -438,6 +438,8 @@ rest.addResponse('get-search-list', async (view) => {
 
 
 	await Shop.prepareModelsPropsValuesGroups(db, view.data, list)
+	
+	view.data.groups = {}
 	view.data.groups[group_nick] = await Shop.getGroupByNick(db, group_nick)
 
 
@@ -526,6 +528,8 @@ rest.addResponse('get-livemodels', async (view) => {
 	const list = await Shop.getModelsByItems(db, moditem_ids, partner, props)
 
 	await Shop.prepareModelsPropsValuesGroups(db, view.data, list)
+
+	view.data.groups = {}
 	view.data.groups[root.group_nick] = root
 	
 	view.data.count = count

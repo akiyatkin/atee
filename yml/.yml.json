@@ -3,11 +3,16 @@
 	"company":"",
 	"feeds":{
 		"main":{
-			"more": {
+			"group_nick":"catalog",
+			"hashs":[],
+			"samples": [{
+				"naimenovanie":"any",
+				"opisanie":"any",
+				"images":"any",
 				"cena": {
-					"from": 1
+					"from": 1000
 				}
-			}
+			}]
 		}
 	}
 }

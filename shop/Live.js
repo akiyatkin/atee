@@ -112,7 +112,7 @@ export const Live = {
 		// 		item: model.items[0], 
 		// 		listname: 'Быстрый поиск', 
 		// 		position: i + 1,
-		// 		group_nick: model.groups[0]
+		// 		group_nick: model.group_nicks[0]
 		// 	})
 		// })
 		// Ecommerce.impressions(products)

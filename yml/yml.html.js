@@ -4,79 +4,79 @@ export default yml
 yml.ROOT = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
 <yml_catalog date="${new Date().toISOString()}">
 <shop>
-	<name>${env.name||env.host}</name>
-	<company>${env.company||env.host}</company>
+	<name>${env.conf.name || env.host}</name>
+	<company>${env.conf.company || env.host}</company>
 	<url>https://${env.host}</url>
 	<email>${env.email || ''}</email>
 	<currencies>
 		<currency id="RUR" rate="1"/>
 	</currencies>
 	<categories>
-		${data.groups.map(group => yml.category(data, env, group)).join('')}
+		${data.group_nicks.map(group_nick => yml.category(data, env, group_nick)).join('')}
 	</categories>
 	<offers>
-		${data.poss.map(mod => yml.mod(data, mod, env)).join('')}
+		${data.list.map(plop => yml.showOffer(data, env, plop)).join('')}
 	</offers>
 	<collections>
-		${data.groups.map(group => yml.collection(data, env, group)).join('')}
+		${data.group_nicks.map(group_nick => yml.collection(data, env, group_nick)).join('')}
 	</collections>
  </shop>
  </yml_catalog>
 `
 
 const showParentId = (parent_id) => parent_id ? ` parentId="${parent_id}"` : ''
-yml.category = (data, env, group) => `
+yml.category = (data, env, group_nick, group = data.groups[group_nick]) => `
 	<category id="${group.group_id}" ${showParentId(group.parent_id)}>${group.group_title}</category>
 `
-yml.collection = (data, env, group) => `
+yml.collection = (data, env, group_nick, group = data.groups[group_nick]) => `
 	<collection id="${group.group_nick}">
 		<name>${group.group_title}</name>
-		${yml.description(data, env, group)}
-		${yml.picture(data, env, group)}
-		<url>https://${env.host}/catalog/${group.group_nick}${data.partner ? '?theme=partner=' + data.partner.title : ''}</url>
+		${yml.description(data, env, data.group_descriptions[group.group_nick])}
+		${yml.picture(data, env, data.group_icons[group.group_nick])}
+		<url>https://${env.host}${env.shop.root_path}/group/${group.group_nick}${data.partner ? '?theme=partner=' + data.partner.title : ''}</url>
 	</collection>
 `
-yml.description = (data, env, group) => !group.description ? '' : `
+yml.description = (data, env, description) => !description ? '' : `
 	<description><![CDATA[
-		${group.description}
+		${description}
 	]]></description>
 `
-yml.picture = (data, env, group) => !group.icon ? '' : `
-	<picture>${group.description}</picture>
+yml.picture = (data, env, icon) => !icon ? '' : `
+	<picture>${icon}</picture>
 `
-yml.collectionid = (data, env, pos) => `
-	<collectionId>${pos.group_nick}</collectionId>
+yml.collectionid = (data, env, group_nick) => `
+	<collectionId>${group_nick}</collectionId>
 `
-yml.url = (data, env, pos) => data.partner ? `
-	<url>https://${env.host}/catalog/${pos.brand_nick}/${pos.model_nick}?theme=partner=${data.partner.title}</url>
+yml.url = (data, env, plop) => data.partner ? `
+	<url>https://${env.host}${env.shop.root_path}/item/${plop.brendmodel_nick}/${plop.art_nick || plop.brendart_nick}?theme=partner=${data.partner.title}</url>
 ` : `
-	<url>https://${env.host}/catalog/${pos.brand_nick}/${pos.model_nick}</url>
+	<url>https://${env.host}${env.shop.root_path}/item/${plop.brendmodel_nick}/${plop.art_nick || plop.brendart_nick}</url>
 `
 
-yml.price = (data, env, pos) => `
-	<price>${pos.Цена || pos.items[0]?.Цена}</price>
+yml.price = (data, env, plop) => `
+	<price>${plop.cena_title}</price>
 `
-yml.oldprice = (data, env, pos) => !(pos['Старая цена'] || pos.items[0]?.['Старая цена']) ? '' : `
-	<oldprice>${pos['Старая цена'] || pos.items[0]?.['Старая цена']}</oldprice>
+yml.oldprice = (data, env, plop) => !plop['staraya-cena_title'] ? '' : `
+	<oldprice>${plop['staraya-cena_title']}</oldprice>
 `
 
-yml.mod = (data, mod, env) => `
- 	<offer type="vendor.model" id="${mod.model_nick}" available="true">
-		${yml.url(data, env, mod)}
-		<model>${mod.Наименование || mod.model_title}</model>
-		${yml.price(data, env, mod)}
-		${yml.collectionid(data, env, mod)}
-		${yml.oldprice(data, env, mod)}
+yml.showOffer = (data, env, plop) => `
+ 	<offer type="vendor.model" id="${plop.brendart_nick}" available="true">
+		${yml.url(data, env, plop)}
+		<model>${plop.naimenovanie_title || plop.model_title || plop.brendmodel_title}</model>
+		${yml.price(data, env, plop)}
+		${plop.group_nicks.map(group_nick => yml.collectionid(data, env, group_nick)).join('')}
+		${yml.oldprice(data, env, plop)}
 		<currencyId>RUB</currencyId>
-		<categoryId>${mod.group_id}</categoryId>
-		${mod.images?.map(yml.image).join('') || ''}
-		<vendor>${mod.brand_title}</vendor>
-		${yml.des(mod.Описание)}
-		<param name="article">${mod.model_title}</param>
-		${Object.entries(mod.more).map(yml.param).join('')}
-		${Object.entries(mod.items[0]?.more || {}).map(yml.param).join('')}
+		<categoryId>${plop.group_ids[0]}</categoryId>
+		${plop.images_title ? yml.image(plop.images_title) : ''}
+		${yml.brand(data, env, plop)}
+		${yml.des(plop.opisanie_title)}
+		${yml.article(data, env, plop)}
 	</offer>
 `
+yml.article = (data, env, plop) => !plop.model_title ? '' : `<param name="article">${plop.model_title}</param>`
+yml.brand = (data, env, plop) => !plop.brend_title ? '' : `<vendor>${plop.brend_title}</vendor>`
 yml.des = (des) => des ? `
 	<description><![CDATA[
 		${des}

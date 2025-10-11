@@ -26,7 +26,7 @@ tpl.showGroupLink = (data, env, group) => `
 tpl.showBreadcrumbs = (data, env, model) => `
 	<div style="margin: 1em 0 0.5em; display: flex; justify-content: space-between;">
 		${cards.badgecss(data, env)}
-		<div>${model.groups.map(group_nick => tpl.showGroupLink(data, env, data.groups[group_nick])).join(', ')}</div>
+		<div>${model.group_nicks.map(group_nick => tpl.showGroupLink(data, env, data.groups[group_nick])).join(', ')}</div>
 		<div>${cards.badgenalichie(data, env, model)}</div>
 	</div>
 `
@@ -154,7 +154,7 @@ tpl.showArtlink = (data, env, model, item, i) => {
 						item: item, 
 						listname: 'Модель', 
 						position: i + 1, //Позиции одной модели на одном месте получается находятся
-						group_nick: model.groups[0]
+						group_nick: model.group_nicks[0]
 					})
 				)}]
 				const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
@@ -317,7 +317,7 @@ tpl.ecomDetail = (data, env, model, selitem) => `
 		const products = [${JSON.stringify(Ecommerce.getProduct(data, {
 			coupon:env.theme.partner,
 			item: selitem, 
-			group_nick: model.groups[0],
+			group_nick: model.group_nicks[0],
 			listname: 'Модель', 
 			position: 1
 		}))}]
@@ -390,7 +390,7 @@ tpl.getItemButton = (data, env, model, item, i) => {
 					item: item, 
 					listname: 'Модель', 
 					position: i + 1, //Позиции одной модели на одном месте получается находятся
-					group_nick: model.groups[0]
+					group_nick: model.group_nicks[0]
 				})
 			)}]
 			const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
@@ -434,7 +434,7 @@ tpl.showItemButtons = (data, env, model) => `
 							item: item, 
 							listname: 'Модель', 
 							position: i + 1,
-							group_nick: model.groups[0]
+							group_nick: model.group_nicks[0]
 						})
 					}).filter(val => val)
 				)}
@@ -460,7 +460,7 @@ tpl.buyButton = (data, env, model, selitem) => {
 				const product = ${JSON.stringify(Ecommerce.getProduct(data, {
 					coupon:env.theme.partner,
 					item: selitem, 
-					group_nick: model.groups[0],
+					group_nick: model.group_nicks[0],
 					listname: 'Модель', 
 					position: 1,
 					quantity: 1
@@ -505,7 +505,7 @@ tpl.buyButton = (data, env, model, selitem) => {
 
 
 tpl.filters = (data, env, model, item, prop_nick) => (item[prop_nick] || []).map(nick => `
-	<a rel="nofollow" href="${cards.getGroupPath(data, model.groups[0])}${cards.addget(env.bread.get, {m: prop_nick + '::.' + nick + '=1'})}">
+	<a rel="nofollow" href="${cards.getGroupPath(data, model.group_nicks[0])}${cards.addget(env.bread.get, {m: prop_nick + '::.' + nick + '=1'})}">
 		${cards.getValueTitleByNick(data, nick)}
 	</a>
 `).join(', ')
@@ -517,7 +517,7 @@ tpl.orderButton = (data, env, model, item) =>  `
 			const product = ${JSON.stringify(Ecommerce.getProduct(data, {
 				coupon:env.theme.partner,
 				item: item, 
-				group_nick: model.groups[0],
+				group_nick: model.group_nicks[0],
 				listname: 'Модель', 
 				position: 1,
 				quantity: 1

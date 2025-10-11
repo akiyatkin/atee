@@ -175,7 +175,7 @@ tpl.listcards = (data, env) => {
 			coupon:env.theme.partner,
 			item: model.items[0], 
 			listname: 'Каталог', 
-			group_nick: model.groups[0],
+			group_nick: model.group_nicks[0],
 			position: i + 1
 		})
 	})

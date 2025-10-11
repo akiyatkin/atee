@@ -149,7 +149,7 @@ cards.card = (data, env, model, i) => {
 							item: model.items[0], 
 							listname: 'Каталог', 
 							position: i + 1, //Позиции одной модели на одном месте получается находятся
-							group_nick: model.groups[0]
+							group_nick: model.group_nicks[0]
 						})
 					)}]
 					const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
@@ -342,8 +342,8 @@ cards.nalichie = (data, env, mod) => {
 		<div style="position:absolute; right: 0px; z-index:1; margin: 1rem; top:0">${cards.badgenalichie(data, env, mod)}</div>
 	`
 }
-cards.getDiscounts = (mod) => {
-	const discounts = mod.items.map(item => cards.getItemDiscount(item)).filter(discount => discount).sort((a, b) => a - b)
+cards.getDiscounts = (model) => {
+	const discounts = model.items.map(item => cards.getItemDiscount(item)).filter(discount => discount).sort((a, b) => a - b)
 	return discounts
 }
 cards.getItemDiscount = (item) => {
@@ -359,12 +359,12 @@ cards.getModelDiscount = (model) => {
 	return `До -${discounts.at(-1)}%`
 }
 
-cards.badgenalichie = (data, env, mod) => {
-	const gain = (name) => cards.getSomeTitle(data, mod.recap, name)
-	const discount = cards.getModelDiscount(mod)
-	return mod.recap.nalichie ? `
-		<a rel="nofollow" href="${cards.getGroupPath(data, mod.groups[0])}${cards.addget(env.bread.get, {m:(data.md?.m || '') + ':nalichie::.' + mod.recap.nalichie?.[0] + '=1'})}" 
-			class="badge badge_${mod.recap.nalichie?.[0]}">
+cards.badgenalichie = (data, env, model) => {
+	const gain = (name) => cards.getSomeTitle(data, model.recap, name)
+	const discount = cards.getModelDiscount(model)
+	return model.recap.nalichie ? `
+		<a rel="nofollow" href="${cards.getGroupPath(data, data.group?.group_nick || model.groups?.[0])}${cards.addget(env.bread.get, {m:(data.md?.m || '') + ':nalichie::.' + model.recap.nalichie?.[0] + '=1'})}" 
+			class="badge badge_${model.recap.nalichie?.[0]}">
 			${gain('nalichie')}
 		</a>
 	` : (discount ? `

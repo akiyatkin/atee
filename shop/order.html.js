@@ -93,7 +93,7 @@ export const showBody = (data, env, model, item) => {
 							listname: 'Корзина', 
 							position: 1,
 							quantity: 1,
-							group_nick: model.groups[0]
+							group_nick: model.group_nicks[0]
 						})
 					)}]
 					const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)

@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import cproc from '/-cproc'
 import config from '/-config'
-import Catalog from "/-catalog/Catalog.js"
+import Shop from "/-shop/Shop.js"
 
 await fs.mkdir('cache/yml/', { recursive: true }).catch(e => null)
 
@@ -9,45 +9,68 @@ import rest_docx from '/-docx/rest.js'
 
 
 const yml = {
-	groups: async (view) => {
-		const db = await view.get('db')
-		const tree = await Catalog.getTree(db, view.visitor)
-		const groups = []
+	// groups: (...args) => yml.getGroups(...args), //depricated
+	// data: (...args) => yml.getFeedList(...args), //depricated
 
-		const conf = await config('showcase')
+	// getGroups: async (db, group_id, visitor) => {
+	// 	const groups = []
+
+	// 	await Shop.runGroupDown(db, group_id, async group => {
+	// 		const {parent_id, group_title, group_nick, icon} = tree[group_id]
+
+	// 		const src = conf.pages + group_nick
+	// 		const reans = await rest_docx.get('get-html', { src }, visitor)
+	// 		const description = reans.status == 404 ? '' : reans.data
+			
+	// 		groups.push({group_id, parent_id, group_title, group_nick, icon, description})
+	// 	})
 		
 
-		for (const group_id in tree) {
-			const {parent_id, group_title, group_nick, icon} = tree[group_id]
+	// 	const conf = await config('showcase')
+		
 
-			const src = conf.pages + group_nick
-			const reans = await rest_docx.get('get-html', { src }, view.visitor)
-			const description = reans.status == 404 ? '' : reans.data
+	// 	for (const group_id in tree) {
 			
-			groups.push({group_id, parent_id, group_title, group_nick, icon, description})
-		}
-		return groups
-	},
-	data: (view, feed, partner = false) => cproc(yml, '', async () => {
-		console.log('yml.data()')
-		const { db, base } = await view.gets(['db','base'])
-		const conf = await config('yml')
-		const md = conf.feeds[feed]
-		if (!md) return []
-		const group = await Catalog.getMainGroup(view, md)
-		if (!group) return []
-		const {from, where} = await Catalog.getmdwhere(view, md)
-		const moditem_ids = await db.all(`
-			SELECT m.model_id, GROUP_CONCAT(distinct i.item_num separator ',') as item_nums 
-			FROM ${from.join(', ')}
-			WHERE ${where.join(' and ')}
-			GROUP BY m.model_id 
-		`)
-		const list = await Catalog.getModelsByItems(db, base, moditem_ids, partner)
-		// const pos = list.find(pos => pos['model_title'] == 'TSi-Pe25FPN')
-		// console.log(pos)
-		return list
-	})
+	// 	}
+	// 	return groups
+	// },
+	
+
+	// getFeedList: (db, feed, partner = false, props = []) => cproc(yml, '', async () => {
+	// 	const group_id = await Shop.getGroupIdByNick(db, feed.group_nick)
+	// 	if (!group_id) return []
+	// 	const bind = await Shop.getBind(db)
+		
+	// 	console.time('yml.data')
+	// 	// const {from, join, where, sort, sortsel} = await Shop.getWhereByGroupIndexSort(db, group_id, feed.samples, feed.hashs, partner)
+	// 	// const moditem_ids = await db.all(`
+	// 	// 	SELECT 
+	// 	// 		win.value_id, 
+	// 	// 		GROUP_CONCAT(win.key_id separator ',') as key_ids
+	// 	// 		${sortsel.length ? ',' + sortsel.join(', ') : ''}
+	// 	// 	FROM ${from.join(', ')} ${join.join(' ')}
+	// 	// 	WHERE ${where.join(' and ')}
+	// 	// 	GROUP BY win.value_id 
+	// 	// 	ORDER BY ${sort.join(',')}
+	// 	// `, {group_id, ...bind})
+
+
+	// 	const {from, join, where} = await Shop.getWhereByGroupIndexWinMod(db, group_id, feed.samples, feed.hashs, partner)
+	// 	const moditem_ids = await db.all(`
+	// 		SELECT 
+	// 			win.value_id, 
+	// 			GROUP_CONCAT(win.key_id separator ',') as key_ids
+	// 		FROM ${from.join(', ')} ${join.join(' ')}
+	// 		WHERE ${where.join(' and ')}
+	// 		GROUP BY win.value_id 
+	// 	`, {group_id, ...bind})
+
+	// 	const list = await Shop.getModelsByItems(db, moditem_ids, partner, props)
+
+		
+	// 	console.timeEnd('yml.data')
+	// 	return list
+	// })
 }
 
 

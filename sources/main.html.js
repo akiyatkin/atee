@@ -165,7 +165,7 @@ const showSourceTr = (data, env, source) => `
 		</td>
 		
 		<td>
-			${source.date_load ? showLoadStat(data, env, source) : 'не&nbsp;загрузался'}
+			${source.date_load ? showLoadStat(data, env, source) : 'не&nbsp;загружался'}
 			
 			<div>
 				${field.button({
