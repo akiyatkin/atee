@@ -314,25 +314,50 @@ cards.imgs = (data, mod) => `
 	</script>
 
 `
+
+
+
+//MEMORYTEST
 cards.img = (data, mod, src) => `
 	<img 
 		loading="lazy"
 		alt="${mod.model_title}" 
 		style="max-width: 100%; margin: 0 auto; height:auto" 
-		${cards.imager(src, 330, 220)}
+		width="330" 
+		height="220" 
+		style="
+			width: 100%;
+			height:auto;
+			aspect-ratio: 1 / 1; /* Соотношение сторон */
+			object-fit: cover;
+			vertical-align: middle; 
+		" 
+		src="${~src.indexOf(':') ? src : '/' + src}"
 	>	
 `
+// cards.img = (data, mod, src) => `
+// 	<img 
+// 		loading="lazy"
+// 		alt="${mod.model_title}" 
+// 		style="max-width: 100%; margin: 0 auto; height:auto" 
+// 		${cards.imager(src, 330, 220)}
+// 	>	
+// `
+// cards.imager = (src, w, h) => {
+// 	const imager = '/-imager/webp?cache&fit=contain'
+// 	const esrc = encodeURIComponent(src)
+// 	return `
+// 		width="${w}" 
+// 		height="${h}" 
+// 		srcset="
+// 			${imager}&w=${w}&h=${h}&src=${esrc} 1x,
+// 			${imager}&w=${w*2}&h=${h*2}&src=${esrc} 1.5x,
+// 			${imager}&w=${w*3}&h=${h*3}&src=${esrc} 3x,
+// 			${imager}&w=${w*4}&h=${h*4}&src=${esrc} 4x
+// 		"
+// 	`
+// }
 cards.imager = (src, w, h) => {
-	const imager = '/-imager/webp?cache&fit=contain'
-	const esrc = encodeURIComponent(src)
-	return `
-		width="${w}" 
-		height="${h}" 
-		srcset="
-			${imager}&w=${w}&h=${h}&src=${esrc} 1x,
-			${imager}&w=${w*2}&h=${h*2}&src=${esrc} 1.5x,
-			${imager}&w=${w*3}&h=${h*3}&src=${esrc} 3x,
-			${imager}&w=${w*4}&h=${h*4}&src=${esrc} 4x
-		"
-	`
+	//MEMORYTEST
+	return `width="${w}" height="${h}" src="${~src.indexOf(':') ? src : '/' + src}"`
 }

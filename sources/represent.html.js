@@ -406,7 +406,10 @@ const showColRepresentTr = (data, env) => `
 			<button title="Изменить видимость колонки" 
 			data-name="represent_col" class="eye transparent ${data.col.cls.main} ${data.col.cls.custom}">${svg.eye()}</button>
 		</td>
-		<td>Колонка</td><td>${data.col.col_title}${!data.col.prop_title || data.col.col_title == data.col.prop_title ? '' : '(' + data.col.prop_title +')'}</a></td>
+		<td>Колонка</td><td>
+			${data.col.col_title}${!data.col.prop_title || data.col.col_title == data.col.prop_title ? '' : '(' + data.col.prop_title +')'}
+			<div><code>${data.col.col_nick}</code></div>
+		</td>
 		
 		<td>represent_col</td>
 	</tr>

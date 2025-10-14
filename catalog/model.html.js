@@ -88,14 +88,7 @@ tpl.showGallery = (data, env, mod) => `
 			}
 		</style>
 		<div class="imagemax_gallery ${mod.images.length>1?'pointer':''}" style="">
-
-			<img alt="" style="max-width: 100%; max-height: 100%" 
-				srcset="
-					/-imager/webp?cache&h=500&fit=inside&src=${encodeURIComponent(mod.images[0])} 1x,
-					/-imager/webp?cache&h=1000&fit=inside&src=${encodeURIComponent(mod.images[0])} 1.5x,
-					/-imager/webp?cache&h=1500&fit=inside&src=${encodeURIComponent(mod.images[0])} 3x
-				"
-			>
+			<img alt="" style="max-width: 100%; height:auto" ${cards.imager(mod.images[0], 500, 500)}>
 		</div>
 		<div class="imagemin_showgallery">
 			<div class="imagemin_gallery">
@@ -112,7 +105,8 @@ tpl.showGallery = (data, env, mod) => `
 					div.querySelector('.selected').classList.remove('selected')
 					imgmin.classList.add('selected')
 					const file = encodeURIComponent(imgmin.dataset.file)
-					bigimg.srcset = '/-imager/webp?h=500&src='+file+' 1x,/-imager/webp?h=750&src='+file+' 1.5x,/-imager/webp?h=1000&src='+file+' 2x,/-imager/webp?h=1500&src='+file+' 3x,/-imager/webp?h=2000&src='+file+' 4x'
+					bigimg.src = imgmin.src
+					//bigimg.srcset = '/-imager/webp?h=500&src='+file+' 1x,/-imager/webp?h=750&src='+file+' 1.5x,/-imager/webp?h=1000&src='+file+' 2x,/-imager/webp?h=1500&src='+file+' 3x,/-imager/webp?h=2000&src='+file+' 4x'
 				})
 			}
 			if (imgmins.length) bigimg.addEventListener('click', () => {
@@ -126,8 +120,8 @@ tpl.showGallery = (data, env, mod) => `
 `
 tpl.showimage = (src, i) => `	
 	<div data-file="${src}" class="imagemin ${i === 0 ? 'selected' : ''}">
-		<img width="150" height="150" loading="lazy" alt="" style="max-width: 100%; height:auto" 
-		src="/-imager/webp?cache&w=150&h=150&src=${encodeURIComponent(src)}">
+		<img loading="lazy" alt="" style="max-width: 100%; height:auto" 
+		${cards.imager(mod.images[0], 150, 150)}>
 	</div>
 `
 tpl.maindata = (data, env, mod) => `

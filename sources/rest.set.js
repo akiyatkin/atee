@@ -753,7 +753,7 @@ rest.addAction('set-reset-values', ['admin','checkrecalc'], async (view) => {
 
 	await db.exec(`
 		UPDATE sources_sources
-		SET date_check = null, date_content = null, date_load = null, date_mtime = null
+		SET date_check = null, date_content = null, date_load = null, date_mtime = null, date_msource = null, date_mrest = null
 	`)
 	await checkSourcesAll(db, view.visitor)
 	Recalc.recalc(async (db) => {
@@ -844,10 +844,13 @@ rest.addAction('set-source-load', ['admin','checkrecalc'], async view => {
 		await Consciousness.recalcRowSearch_bySource(db, source_id)
 		// await Consciousness.recalcItemSearch_bySource(db, source_id)
 
-		const duration_recalc = Date.now() - timer_recalc
+		source.duration_recalc = Date.now() - timer_recalc
+
+		source.duration_load = source.duration_insert + source.duration_rest + source.duration_recalc
 		await Sources.setSource(db, `
-			duration_recalc = :duration_recalc
-		`, {source_id, duration_recalc})
+			duration_recalc = :duration_recalc,
+			duration_load = :duration_load
+		`, source)
 	}, true)
 	
 	

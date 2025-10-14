@@ -362,90 +362,98 @@ const showError = (data, env, source) => `
 const showStat = (data, env, source) => `
 	<table style="margin:1em 0">
 		<tr>
-			<td>Проверка</td>
-			<td>get-check</td>
-			<!-- <td title="Вызов get-check ${date.dmyhi(source.date_check)} (Проверка)"><nobr>${date.dmyhi(source.date_check)}</nobr></td> -->
-			<!-- <td>date_mtime</td>
-			<td title="Когда стоит загрузить: ${date.dmyhi(source.date_mtime)} (Изменения)"><nobr>${date.dmyhi(source.date_mtime)}</nobr></td> -->
+			<td><code>get-check</code></td>
 			<td>${source.msg_check ? '<i>' + source.msg_check + '</i>' : 'Нет сообщения'}</td>
+			<td>Метод обработчика, который проверяет дату изменений источника <code>date_msource</code>.</td>
 		</tr>
 		<tr>
-			<td>
-				Загрузка
-			</td>
-			<td>get-load</td>
-			<!-- <td title="Вызов get-load ${date.dmyhi(source.date_load)} (Загрузка)"><nobr>${date.dmyhi(source.date_load)}</nobr></td>
-			<td>date_content</td> -->
-			<!-- <td title="Дата полученных данных: ${date.dmyhi(source.date_content)} (Актуальность) "><nobr>${date.dmyhi(source.date_content)}</nobr></td> -->
-			<td>
-				 ${source.msg_load ? '<i>' + source.msg_load + '</i>' : 'Нет сообщения'}
-			</td>
-			
+			<td><code>get-load</code></td>
+			<td>${source.msg_load ? '<i>' + source.msg_load + '</i>' : 'Нет сообщения'}</td>
+			<td>Метод обработчика, который загружает данные из источника и определяет <code>date_content</code>.</td>
 		</tr>
-	
+		<tr style="background-color:#00aaff11">
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		
 		<tr>
-			<td>Дата проверки</td>
-			<td>date_check</td>
-			<td>${date.dmyhi(source.date_check) || 'нет даты'}</td>
+			<td><code>date_mrest</code></td>
+			<td>${date.dmyhi(source.date_mrest) || 'нет даты'}</td>
+			<td>Дата изменений обработчика</td>
 		</tr>
 		<tr>
-			<td>Дата изменений</td>
-			<td>date_mtime</td>
+			<td><code>date_msource</code></td>
+			<td>${date.dmyhi(source.date_msource) || 'нет даты'}</td>
+			<td>Дата изменений источника может определяться по косвенным признакам и быть особенной, может доставаться из частично или полностью скачанных 
+				данных источника, может складываться из даты изменений файлов. В идеале <code>date_msource</code> равен <code>date_content</code>. Определяется в обработчике <code>get-check</code>.</td>
+		</tr>
+		<tr>			
+			<td><code>date_mtime</code></td>
 			<td>${date.dmyhi(source.date_mtime) || 'нет даты'}</td>
+			<td>Дата последних изменений источника и обработчика <code>max(date_mrest, date_msource)</code>. 
+				Дату изменений можно узнать без внесения данных и по ней уже определять надо вносить или нет при актуализации.
+				Если <code>date_mtime > date_load</code> требуется загрузка, иначе загрузка не требуется.</td>
+		</tr>
+		<tr style="background-color:#00aaff11">
+			<td></td>
+			<td></td>
+			<td></td>
 		</tr>
 		<tr>
-			<td>Дата загрузки</td>
-			<td>date_load</td>
+			<td><code>date_check</code></td>
+			<td>${date.dmyhi(source.date_check) || 'нет даты'}</td>
+			<td>Дата проверки, когда запускался <code>get-check</code></td>
+		</tr>
+		<tr>			
+			<td><code>date_load</code></td>
 			<td>${date.dmyhi(source.date_load) || 'нет даты'}</td>
+			<td>Дата внесения данных, когда запускался <code>get-load</code> и когда рассчитывался <code>duration_load</code></td>
 		</tr>
 		<tr>
-			<td>Дата актуальности</td>
-			<td>date_content</td>
+			<td><code>date_content</code></td>
 			<td>${date.dmyhi(source.date_content) || 'нет даты'}</td>
+			<td>Дата актуальности из внесённых данных. Определяется в обработчике <code>get-load</code>.</td>
 		</tr>
-	
+		<tr style="background-color:#00aaff11">
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
 		<tr>
-			<td>Время проверки</td>
-			<td>duration_check</td>
+			<td><code>duration_check</code></td>
 			<td>
 				${ago.pass(source.duration_check)}
 			</td>
+			<td>Время проверки. Иногда для проверки требуется частично или полностью скачать данные из источника, но не вносить.</td>
 		</tr>
 		<tr>
-			<td>
-				Время обработчика
-			</td>
-			<td>duration_rest</td>
+			<td><code>duration_rest</code></td>
 			<td>
 				${ago.pass(source.duration_rest)}
 			</td>
+			<td>Время обработчика источника данных, время загрузки.</td>
 		</tr>
 		<tr>
-			<td>
-				Время внесения
-			</td>
-			<td>duration_insert</td>
+			<td><code>duration_insert</code></td>
 			<td>
 				${ago.pass(source.duration_insert)}
 			</td>
+			<td>Время внесения данных из источника в базу данных.</td>
 		</tr>
 		<tr>
-			<td>
-				Время пересчёта
-			</td>
-			<td>duration_recalc</td>
+			<td><code>duration_recalc</code></td>
 			<td>
 				${ago.pass(source.duration_recalc)}
 			</td>
+			<td>Время пересчёта. После внесения данные надо обработать, свойства, типы, ключи.</td>
 		</tr>
 		<tr>
-			<th>
-				Время загрузки
-			</th>
-			<td>rest + insert + recalc</td>
-			<th>
+			<td><code>duration_load</code></td>
+			<td>
 				${ago.pass(source.duration_rest + source.duration_insert + source.duration_recalc)}
-			</th>
+			</td>
+			<td>Общее время загрузка + внесение + пересчёт. Без времени на публикацию. <code>duration_rest + duration_insert + duration_recalc</code>.</td>
 		</tr>
 		
 	</table>

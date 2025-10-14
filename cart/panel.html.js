@@ -894,6 +894,13 @@ tpl.showPos = (mod, env) => `
 		</div>
 	</div>
 `
-tpl.showImage = mod => `
-	<img alt="" width="80" height="70" src="/-imager/webp?fit=contain&h=100&w=100&src=${encodeURIComponent(mod.images[0])}">
+
+//MEMORYTEST
+tpl.showImage = (mod) => `
+	<img alt="" width="80"	
+	src="${~mod.images[0].indexOf(':') ? mod.images[0] : '/' + mod.images[0]}">
 `
+
+// tpl.showImage = mod => `
+// 	<img alt="" width="80" height="70" src="/-imager/webp?fit=contain&h=100&w=100&src=${encodeURIComponent(mod.images[0])}">
+// `

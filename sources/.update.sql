@@ -70,6 +70,21 @@ CREATE TABLE IF NOT EXISTS `sources_cols` (
 
 -- Data exporting was unselected.
 
+-- Dumping structure for table ladasvet.ru.sources_custom_cells
+CREATE TABLE IF NOT EXISTS `sources_custom_cells` (
+  `source_id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
+  `sheet_title` varchar(63) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `key_nick` varchar(63) NOT NULL,
+  `repeat_index` smallint(6) NOT NULL,
+  `col_title` varchar(63) NOT NULL DEFAULT '',
+  `represent_custom_cell` bit(1) DEFAULT NULL,
+  PRIMARY KEY (`source_id`,`sheet_title`,`key_nick`,`repeat_index`,`col_title`) USING BTREE,
+  KEY `FK_sources_custom_cells_sources_values` (`key_nick`) USING BTREE,
+  CONSTRAINT `FK_sources_custom_cells_sources_sources` FOREIGN KEY (`source_id`) REFERENCES `sources_sources` (`source_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
+
+-- Data exporting was unselected.
+
 -- Dumping structure for table ladasvet.ru.sources_custom_cols
 CREATE TABLE IF NOT EXISTS `sources_custom_cols` (
   `source_id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
@@ -86,6 +101,19 @@ CREATE TABLE IF NOT EXISTS `sources_custom_cols` (
 
 -- Data exporting was unselected.
 
+-- Dumping structure for table ladasvet.ru.sources_custom_rows
+CREATE TABLE IF NOT EXISTS `sources_custom_rows` (
+  `source_id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
+  `sheet_title` varchar(63) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `key_nick` varchar(63) NOT NULL,
+  `repeat_index` smallint(6) NOT NULL,
+  `represent_custom_row` bit(1) DEFAULT NULL,
+  PRIMARY KEY (`source_id`,`sheet_title`,`key_nick`,`repeat_index`) USING BTREE,
+  CONSTRAINT `FK_sources_custom_rows_sources_sources` FOREIGN KEY (`source_id`) REFERENCES `sources_sources` (`source_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
+
+-- Data exporting was unselected.
+
 -- Dumping structure for table ladasvet.ru.sources_custom_sheets
 CREATE TABLE IF NOT EXISTS `sources_custom_sheets` (
   `source_id` smallint(5) unsigned NOT NULL,
@@ -96,6 +124,18 @@ CREATE TABLE IF NOT EXISTS `sources_custom_sheets` (
   KEY `FK_sources_custom_sheets_sources_props` (`entity_id`) USING BTREE,
   CONSTRAINT `FK_sources_custom_sheets_sources_props` FOREIGN KEY (`entity_id`) REFERENCES `sources_props` (`prop_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `FK_sources_custom_sheets_sources_sources` FOREIGN KEY (`source_id`) REFERENCES `sources_sources` (`source_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table ladasvet.ru.sources_custom_values
+CREATE TABLE IF NOT EXISTS `sources_custom_values` (
+  `prop_id` smallint(5) unsigned NOT NULL,
+  `value_nick` varchar(63) NOT NULL,
+  `represent_custom_value` bit(1) DEFAULT NULL,
+  PRIMARY KEY (`value_nick`,`prop_id`) USING BTREE,
+  KEY `FK_sources_custom_values_sources_props` (`prop_id`),
+  CONSTRAINT `FK_sources_custom_values_sources_props` FOREIGN KEY (`prop_id`) REFERENCES `sources_props` (`prop_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 -- Data exporting was unselected.
@@ -198,14 +238,17 @@ CREATE TABLE IF NOT EXISTS `sources_sources` (
   `source_title` varchar(127) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
   `source_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
   `date_check` datetime DEFAULT NULL,
-  `date_content` datetime DEFAULT NULL,
   `date_load` datetime DEFAULT NULL,
+  `date_content` datetime DEFAULT NULL,
   `date_mtime` datetime DEFAULT NULL,
+  `date_mrest` datetime DEFAULT NULL,
+  `date_msource` datetime DEFAULT NULL,
   `date_exam` datetime NOT NULL DEFAULT current_timestamp(),
   `duration_rest` mediumint(9) DEFAULT NULL,
   `duration_insert` mediumint(9) DEFAULT NULL,
   `duration_check` mediumint(9) DEFAULT NULL,
   `duration_recalc` mediumint(9) DEFAULT NULL,
+  `duration_load` mediumint(9) DEFAULT NULL,
   `entity_id` smallint(5) unsigned DEFAULT NULL,
   `master` bit(1) NOT NULL DEFAULT b'1',
   `comment` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT '',
@@ -356,6 +399,3 @@ CREATE TABLE IF NOT EXISTS `sources_wvalues` (
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
-
-
-INSERT IGNORE INTO sources_settings (singleton, comment) VALUES ('X','Общий комментарий')

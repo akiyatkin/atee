@@ -860,7 +860,7 @@ tpl.showPos = (data, env, pos, item) => {
 
 //MEMORYTEST
 tpl.showImage = (data, env, pos, item) => `
-	<img alt="${pos.brendart_nick}" width="80" height="70" src="${~item.images[0].indexOf(':') ? item.images[0] : '/' + item.images[0]}">
+	<img alt="${pos.brendart_nick}" width="80" src="${~item.images[0].indexOf(':') ? item.images[0] : '/' + item.images[0]}">
 `
 // tpl.showImage = (data, env, pos, item) => `
 // 	<img alt="${pos.brendart_nick}" width="80" height="70" src="/-imager/webp?fit=contain&h=100&w=100&src=${encodeURIComponent(item.images[0])}">

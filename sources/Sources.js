@@ -60,6 +60,7 @@ Sources.load = async (db, source, visitor) => {
 	source.date_load = Math.round(Date.now() / 1000)
 	source.duration_insert = Date.now() - timer_insert
 
+
 	await Sources.setSource(db, `
 		date_load = FROM_UNIXTIME(:date_load), 
 		error = :error,
@@ -251,7 +252,7 @@ Sources.execRestFunc = async (file, fnname, visitor, res, source) => {
 
 	const stat = await fs.stat(file).catch(r => console.log('Ошибка execRestFunc','<==========>', r,'</==========>'))
 	if (!stat) return 'Не найден файл'
-	res.modified = new Date(stat.mtime).getTime()
+	res.date_mtime = new Date(stat.mtime)
 	const rest = await import('/' + file).then(r => r.default).catch(r => console.log(r))
 	if (!rest || !rest.get) return `Исключение в коде ` + file
 	const reans = await rest.get(fnname, req, visitor).catch(r => console.log(r))
@@ -428,8 +429,13 @@ Sources.check = async (db, source, visitor) => {
 	const res = {}
 	const timer = Date.now()
 	source.error = await Sources.execRestFunc(source.file, 'get-check', visitor, res, source)
-	//date_content может быть больше чем date_mtime из обработки
-	source.date_mtime = Math.round(Math.max(source.date_content || 0, Number(res.data?.date_mtime || 0) || 0, res.modified || 0) / 1000)
+	//date_content может быть больше чем date_mtime из предыдущей обработки
+
+
+	source.date_mrest = (res.date_mtime || 0) / 1000
+	source.date_msource = (res.data.date_msource || 0) / 1000
+
+	source.date_mtime = Math.round(Math.max(source.date_msource, source.date_mrest, 0))
 	source.msg_check = res.data?.msg || ''
 	Sources.calcSource(source)
 	source.duration_check = Date.now() - timer
@@ -437,6 +443,8 @@ Sources.check = async (db, source, visitor) => {
 		UPDATE sources_sources
 		SET 
 			date_mtime = FROM_UNIXTIME(:date_mtime), 
+			date_mrest = FROM_UNIXTIME(:date_mrest), 
+			date_msource = FROM_UNIXTIME(:date_msource), 
 			msg_check = :msg_check,
 			error = :error, 
 			duration_check = :duration_check,
@@ -528,6 +536,8 @@ const SELECT_SOURCE = `
 	UNIX_TIMESTAMP(so.date_content) as date_content, 
 	UNIX_TIMESTAMP(so.date_load) as date_load, 
 	UNIX_TIMESTAMP(so.date_exam) as date_exam,
+	UNIX_TIMESTAMP(so.date_msource) as date_msource,
+	UNIX_TIMESTAMP(so.date_mrest) as date_mrest,
 	UNIX_TIMESTAMP(so.date_mtime) as date_mtime,
 	UNIX_TIMESTAMP(so.date_start) as date_start,
 	so.duration_rest,
@@ -1206,26 +1216,39 @@ Sources.sheet.getCostDiscount = (text, dis) => {
 	return cost
 }
 
-
+Sources.sheet.delСol = (sheet, title) => {
+	const rows = sheet.rows
+	const index = sheet.head.indexOf(title)
+	if (!~index) return
+	sheet.head.splice(index, 1)
+	for (const row of rows) {
+		row.splice(index, 1)
+	}
+}
 Sources.sheet.addСol = (sheet, index = null, title, fnget) => {
 	const rows = sheet.rows
 	const nick = nicked(title)
 	if (index === null) index = rows.length
 	sheet.head.splice(index, 0, title)
 
-	const indexes = {}
-	const names = {}
-	for (const i in sheet.head) {
-		const nick = nicked(sheet.head[i])
-		indexes[nick] = i
-		names[i] = nick
-	}
+	
+	// const indexes = Object.fromEntries(sheet.head.map((name, i) => [nicked(name), i]))
+	// const names = Object.fromEntries(sheet.head.map((name, i) => [i, nicked(name)]))
+
+	// const names = {}
+	// for (const i in sheet.head) {
+	// 	const nick = nicked(sheet.head[i])
+	// 	indexes[nick] = i
+	// 	names[i] = nick
+	// }
 	for (const row of rows) {
 		row.splice(index, 0, '')
 		const obj = {}
-		for (const i in row) obj[names[i]] = row[i]
-		const text = fnget(row, obj)
-		row.splice(index, 1, String(text))
+		for (const i in row) obj[sheet.head[i]] = row[i]
+		//for (const i in row) obj[names[i]] = row[i]
+
+		const text = fnget(obj)
+		row.splice(index, 1, text === null ? null : String(text))
 	}
 }
 
