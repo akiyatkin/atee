@@ -433,7 +433,7 @@ Sources.check = async (db, source, visitor) => {
 
 
 	source.date_mrest = (res.date_mtime || 0) / 1000
-	source.date_msource = (res.data.date_msource || 0) / 1000
+	source.date_msource = (res.data?.date_msource || 0) / 1000
 
 	source.date_mtime = Math.round(Math.max(source.date_msource, source.date_mrest, 0))
 	source.msg_check = res.data?.msg || ''
