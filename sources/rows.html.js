@@ -72,7 +72,7 @@ const showRowTr = (data, env, row) => `
 	</tr>
 `
 const showRowTdSource = (data, env, row) => `
-	<td class="${row.key_id ? '' : 'mute'}"><a href="source?source_id=${row.source_id}&search=${env.bread.get.search || ''}">${row.source_title}</a></td>
+	<td class="${row.key_id ? '' : 'mute'}"><a href="sheet?source_id=${row.source_id}&search=${env.bread.get.search || ''}">${row.source_title}</a></td>
 `
 const showRowTdSheet = (data, env, row) => `
 	<td class="${row.key_id ? '' : 'mute'}"><a href="sheet?keyfilter=all&source_id=${row.source_id}&sheet_index=${row.sheet_index}&search=${env.bread.get.search || ''}">${row.sheet_title}</a></td>
