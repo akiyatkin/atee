@@ -29,7 +29,8 @@ export const Files = {
 			const stats = await fs.stat(path)
 			return stats.mtime //ctime надо смотреть mtime папки, Math.max(stats.ctime, stats.mtime)
 		} catch (error) {
-			throw new Error(`Не удалось получить информацию о ${path}: ${error.message}`);
+			return false
+			//throw new Error(`Не удалось получить информацию о ${path}: ${error.message}`);
 		}
 	},
 	readdirDeep: async (dir) => {

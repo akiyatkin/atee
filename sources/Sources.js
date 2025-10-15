@@ -258,11 +258,12 @@ Sources.execRestFunc = async (file, fnname, visitor, res, source) => {
 	const reans = await rest.get(fnname, req, visitor).catch(r => console.log(r))
 	if (!reans || !reans.data) return `Исключение в ${fnname}`
 	const data = reans.data
+	res.data = data
 	if (!data.result) {		
 		if (data.msg) return `${fnname} ${data.msg}`
 		else return `Нет результата ${fnname}`
 	}
-	res.data = data
+	
 	return ''
 }
 Sources.setSource = async (db, set, source) => {
@@ -430,7 +431,6 @@ Sources.check = async (db, source, visitor) => {
 	const timer = Date.now()
 	source.error = await Sources.execRestFunc(source.file, 'get-check', visitor, res, source)
 	//date_content может быть больше чем date_mtime из предыдущей обработки
-
 
 	source.date_mrest = (res.date_mtime || 0) / 1000
 	source.date_msource = (res.data?.date_msource || 0) / 1000

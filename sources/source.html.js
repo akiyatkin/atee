@@ -379,18 +379,18 @@ const showStat = (data, env, source) => `
 		
 		<tr>
 			<td><code>date_mrest</code></td>
-			<td>${date.dmyhi(source.date_mrest) || 'нет даты'}</td>
+			<td><nobr>${date.dmyhi(source.date_mrest) || 'нет даты'}</nobr></td>
 			<td>Дата изменений обработчика</td>
 		</tr>
 		<tr>
 			<td><code>date_msource</code></td>
-			<td>${date.dmyhi(source.date_msource) || 'нет даты'}</td>
+			<td><nobr>${date.dmyhi(source.date_msource) || 'нет даты'}</nobr></td>
 			<td>Дата изменений источника может определяться по косвенным признакам и быть особенной, может доставаться из частично или полностью скачанных 
 				данных источника, может складываться из даты изменений файлов. В идеале <code>date_msource</code> равен <code>date_content</code>. Определяется в обработчике <code>get-check</code>.</td>
 		</tr>
 		<tr>			
 			<td><code>date_mtime</code></td>
-			<td>${date.dmyhi(source.date_mtime) || 'нет даты'}</td>
+			<td><nobr>${date.dmyhi(source.date_mtime) || 'нет даты'}</nobr></td>
 			<td>Дата последних изменений источника и обработчика <code>max(date_mrest, date_msource)</code>. 
 				Дату изменений можно узнать без внесения данных и по ней уже определять надо вносить или нет при актуализации.
 				Если <code>date_mtime > date_load</code> требуется загрузка, иначе загрузка не требуется.</td>
@@ -402,17 +402,17 @@ const showStat = (data, env, source) => `
 		</tr>
 		<tr>
 			<td><code>date_check</code></td>
-			<td>${date.dmyhi(source.date_check) || 'нет даты'}</td>
+			<td><nobr>${date.dmyhi(source.date_check) || 'нет даты'}</nobr></td>
 			<td>Дата проверки, когда запускался <code>get-check</code></td>
 		</tr>
 		<tr>			
 			<td><code>date_load</code></td>
-			<td>${date.dmyhi(source.date_load) || 'нет даты'}</td>
+			<td><nobr>${date.dmyhi(source.date_load) || 'нет даты'}</nobr></td>
 			<td>Дата внесения данных, когда запускался <code>get-load</code> и когда рассчитывался <code>duration_load</code></td>
 		</tr>
 		<tr>
 			<td><code>date_content</code></td>
-			<td>${date.dmyhi(source.date_content) || 'нет даты'}</td>
+			<td><nobr>${date.dmyhi(source.date_content) || 'нет даты'}</nobr></td>
 			<td>Дата актуальности из внесённых данных. Определяется в обработчике <code>get-load</code>.</td>
 		</tr>
 		<tr style="background-color:#00aaff11">
