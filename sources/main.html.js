@@ -125,9 +125,10 @@ const showScriptReload = (data, env) => `
 const showSourceTr = (data, env, source) => `
 	<tr data-id="${source.source_id}" style="white-space: nowrap;" class="item status_${source.class}">
 		<td>
-			<a title="Содержание источника" href="sheet?source_id=${source.source_id}">${source.source_title}</a>
-			<div class="mute">${source.master ? 'Мастер' : 'Прайс'}</div>
-			<a style="font-family: monospace;" title="Ревизия источника" href="source/${source.source_id}">${date.dm(source.date_exam)}</a>
+			<a class="${source.master ? '' : 'mute'}" title="Содержание ${source.master ? 'мастера' : 'прайса'}" href="sheet?source_id=${source.source_id}">${source.source_title}</a>
+			<div>
+				<a class="${source.master ? '' : 'mute'}" title="Ревизия ${source.master ? 'мастера' : 'прайса'}" href="source/${source.source_id}">${date.dm(source.date_exam)}</a>
+			</div>
 		</td>
 		<td>
 			${source.status} 

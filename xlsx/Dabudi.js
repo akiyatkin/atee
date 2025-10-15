@@ -87,7 +87,7 @@ export const Dabudi = {
 
 		return {head: head_titles, rows_body}
 	},
-	splitGroups: (rows_body, heads, root_title, index_group, groups) => {
+	splitGroups: (rows_body, heads, root_title, index_group, index_category, groups) => {
 		const root_nick = nicked(root_title)
 		let group_title = root_title.split('#')[0].trim()
 		let group_nick = root_nick
@@ -108,7 +108,8 @@ export const Dabudi = {
 			const group_orig = group_title
 			if (!group_title) {
 				wasitems = true
-				row[index_group] = group_nick
+				row[index_group] = groups[group_nick].group_title
+				row[index_category] = groups[groups[group_nick].parent_nick]?.group_title || null
 				let group = groups[group_nick]
 				do {
 					group.indepth++

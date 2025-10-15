@@ -732,7 +732,6 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 	const model_id_to_group_nicks = {}
 	if (props.length && partner.cost_nick) props.push(partner.cost_nick)
 	
-
 	for (const row of moditems_ids) {
 		row.key_ids.split(',').forEach((key_id) => {
 			key_id_to_model_id[key_id] = row.value_id
@@ -791,9 +790,9 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 		WHERE win.entity_id = :brendart_prop_id and win.key_id in (${moditems_ids.map(row => row.key_ids).join(',')})
 		-- and (val.value_id is null or val.value_nick != '')
 		-- and (pr.type != 'value' or (val.value_id is not null and val.value_nick != ''))
-		and pr.known != 'system'
-		${props.length ? 'and pr.prop_nick in ("' + props.join('","') + '")' : ''}
-	`, bind))	
+		
+		${props.length ? 'and pr.prop_nick in ("' + props.join('","') + '")' : 'and (pr.known != "system" or pr.prop_nick = :cost_nick)'}
+	`, {...bind, cost_nick: partner.cost_nick || null}))	
 
 	const models = Object.groupBy(itemprops, row => key_id_to_model_id[row.key_id])
 

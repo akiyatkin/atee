@@ -63,6 +63,46 @@ export const xlsx = {
 			sheets.push({ title: sheet.name, descr, head, rows})
 		}
 		return sheets
+	},
+	groups: async (visitor, src, params = {}) => {
+		const {ignore = [], start = 0, starts = {}, root_title = 'Каталог', col_group = 'Группа', col_category = 'Категория'} = params
+		const listsheets = await xlsx.read(visitor, src)
+		const sheets = []
+
+
+		const root_nick = nicked(root_title)
+		const groups = {}
+		groups[root_nick] = {
+			group_nick: root_nick,
+			group_orig: root_title,
+			group_title: root_title,
+			indepth:0,
+			parent_nick: false
+		}
+
+
+		
+
+		for (const sheet of listsheets) {
+			if (sheet.name[0] == '.') continue
+			if (~ignore.indexOf(sheet.name)) continue
+			let rows_source = sheet.data
+			rows_source = rows_source.slice(((starts[sheet.name] ?? start) || 1) - 1)
+			const {descr, rows_table} = Dabudi.splitDescr(rows_source)
+			const {head, rows_body} = Dabudi.splitHead(rows_table)
+
+			const group_index = head.length
+			head[group_index] = col_group
+			const category_index = head.length
+			head[category_index] = col_category
+
+			let {rows_items} = Dabudi.splitGroups(rows_body, head, root_title, group_index, category_index, groups)			
+
+			const rows = rows_items.filter(row => row.filter(cel => cel).length > 1)
+			//const indexes = Object.fromEntries(head.map((name, i) => [nicked(name), i]))
+			sheets.push({ title: sheet.name, descr, head, rows})
+		}
+		return sheets
 	}
 }
 export default xlsx

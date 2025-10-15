@@ -19,7 +19,8 @@ Drag.make = (div, actionsave, callback) => {
 		if (thead) {
 			const tr = thead.children[0]
 			const td = tr.children[0]
-
+			const isempty = !td.innerHTML.trim()
+			
 			const moveon = document.createElement('span')
 			moveon.innerHTML = '⇵'
 			moveon.style.display = 'none'
@@ -30,7 +31,7 @@ Drag.make = (div, actionsave, callback) => {
 
 			const move = document.createElement('span')
 			move.style.userSelect = 'none'
-			move.style.paddingRight = '1ch'
+			if (!isempty) move.style.paddingRight = '1ch'
 			move.style.cursor = "pointer"
 			move.append(moveon)
 			move.append(moveoff)
