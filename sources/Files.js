@@ -34,7 +34,7 @@ export const Files = {
 		}
 	},
 	readdirDeep: async (dir) => {
-		const dirents = await fs.readdir(dir, {withFileTypes: true}).catch(() => [])	
+		const dirents = await fs.readdir(dir, {withFileTypes: true}).catch(() => [])
 
 		const root = {
 			dir,

@@ -59,6 +59,8 @@ export const xlsx = {
 			const {head, rows_body} = Dabudi.splitHead(rows_table)
 
 			const rows = rows_body.filter(row => row.filter(cel => cel).length > 1)
+			
+			
 			//const indexes = Object.fromEntries(head.map((name, i) => [nicked(name), i]))
 			sheets.push({ title: sheet.name, descr, head, rows})
 		}

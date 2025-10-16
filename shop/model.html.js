@@ -48,6 +48,7 @@ tpl.showModel = (data, env, model, selitem = tpl.getSelItem(data, env)) =>`
 				height: auto;
 			}
 		</style>
+		${selitem.text || ''}
 		${(selitem.texts || []).join(' ')}
 	</div>
 	<div class="modfiles" style="margin-bottom:2rem">

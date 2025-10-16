@@ -1228,8 +1228,8 @@ Sources.sheet.delСol = (sheet, title) => {
 Sources.sheet.addСol = (sheet, index = null, title, fnget) => {
 	const rows = sheet.rows
 	const nick = nicked(title)
-	if (index === null) index = rows.length
-	sheet.head.splice(index, 0, title)
+	if (index === null) index = sheet.head.length
+	
 
 	
 	// const indexes = Object.fromEntries(sheet.head.map((name, i) => [nicked(name), i]))
@@ -1242,14 +1242,15 @@ Sources.sheet.addСol = (sheet, index = null, title, fnget) => {
 	// 	names[i] = nick
 	// }
 	for (const row of rows) {
-		row.splice(index, 0, '')
-		const obj = {}
-		for (const i in row) obj[sheet.head[i]] = row[i]
+		//row.splice(index, 0, '')
+		const rowobj = {}
+		for (const i in row) rowobj[sheet.head[i]] = row[i]
 		//for (const i in row) obj[names[i]] = row[i]
 
-		const text = fnget(obj)
-		row.splice(index, 1, text === null ? null : String(text))
+		const text = fnget(rowobj)
+		row.splice(index, 0, text === null ? null : String(text))
 	}
+	sheet.head.splice(index, 0, title)
 }
 
 

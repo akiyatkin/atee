@@ -84,7 +84,7 @@ export const Dabudi = {
 			}
 			return row
 		})
-
+		rows_body.forEach(row => row.length = head_titles.length)
 		return {head: head_titles, rows_body}
 	},
 	splitGroups: (rows_body, heads, root_title, index_group, index_category, groups) => {
