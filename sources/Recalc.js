@@ -45,7 +45,7 @@ Recalc.addPublicate = (funcindex) => {
 }
 Recalc.reset = async (db) => {
 	clearTimeout(Recalc.deferredPublicate.timer)
-	await db.exec(`UPDATE sources_settings SET date_recalc_start = now(),  date_recalc_finish = now(),  date_recalc_publicate = now()`)	
+	await db.exec(`UPDATE sources_settings SET date_recalc_start = now(),  date_recalc_finish = now(),  date_recalc_publicate = now()`)
 }
 Recalc.publicate = async (db) => {
 	clearTimeout(Recalc.deferredPublicate.timer)

@@ -97,7 +97,7 @@ const Drive = {
 			return 'Ошибка: ' + error
 		}
 	},
-	getSheet: async (gid, range, title, eternal = false) => {
+	getSheet: async (gid, range, title, eternal = 'nocache') => {
 		const table = await Drive.getTable(gid, range, title, eternal)
 		if (!table.head_titles?.length) return false
 		return {title, head: table.head_titles, rows: table.rows_body}

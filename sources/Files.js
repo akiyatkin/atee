@@ -60,6 +60,65 @@ export const Files = {
 		
 		return root
 	},
+	indexFileDeep: async (dir) => { //Например images/что угодно/RVI-D2342, RVI-342.jpg
+		const mindex = {}
+		const root = await Files.readdirDeep(dir)
+		await Files.runRootFiles(root, async (root, finfo, level) => {
+			//if (!~Files.destinies.images.indexOf(finfo.ext)) return
+			const way = Files.getWayByExt(finfo.ext)
+			const src = root.dir + finfo.file.replaceAll(',','&#44;')
+			const keys_nick = unique(finfo.name.split(',').map(r => nicked(r)).filter(n => n))
+			if (!keys_nick) return			
+			for (const key_nick of keys_nick) {
+				mindex[key_nick] ??= {}
+				mindex[key_nick][way] ??= []
+				mindex[key_nick][way].push(src)
+			}
+
+		})
+		return mindex
+	},
+	indexDirFiles: async (dir) => { //Например images/RVI-D2342/что угодно
+		const dindex = {}
+		const dirs = (await Files.readdir(dir)).filter(dinfo => dinfo.ext === null)
+		for (const dinfo of dirs) {
+			const nick = nicked(dinfo.name)
+			dindex[nick] ??= {}
+			const path = dir + dinfo.name + '/'
+			const files = (await Files.readdir(path)).filter(dinfo => dinfo.ext !== null)
+			for (const finfo of files) {
+				const way = Files.getWayByExt(finfo.ext)
+				const src = path + finfo.file.replaceAll(',','&#44;') //Когда достаём данные надо менять обратно в Shop.prepareFiles(model) в getModels
+				dindex[nick][way] ??= []
+				dindex[nick][way].push(src)
+			}
+		}
+		return dindex
+	},
+	indexDirFileDeep: async (dir) => { //Например models/RVI-D2342/photo.jpg
+		const findex = {}
+		const root = await Files.readdirDeep(dir)
+		for (const droot of root.dirs) {
+			const nick = nicked(droot.name)
+			findex[nick] ??= {}
+			await Files.runRootFiles(droot, async (root, finfo, level) => {
+				//if (!~Files.destinies.images.indexOf(finfo.ext)) return
+				const way = Files.getWayByExt(finfo.ext)
+				const src = root.dir + finfo.file.replaceAll(',','&#44;')
+				const keys_nick = unique(finfo.name.split(',').map(r => nicked(r)).filter(n => n))
+				if (!keys_nick) return
+
+				findex[nick] ??= {}
+				for (const key_nick of keys_nick) {
+					findex[nick][key_nick] ??= {}
+					findex[nick][key_nick][way] ??= []
+					findex[nick][key_nick][way].push(src)
+				}
+
+			})
+		}
+		return findex
+	},
 	runRootFiles: (root, callback, level = 0) => {
 		const p1 = Promise.all(root.files.map((info, i) => callback(root, info, level, i)))
 		const p2 = Promise.all(root.dirs.map(root => Files.runRootFiles(root, callback, level + 1)))
@@ -136,7 +195,7 @@ export const Files = {
 			ext = nicked((~i ? file.slice(i + 1) : '')).slice(0,4)
 		} else {
 			name = file
-			ext = ''
+			ext = null
 		}
 		secure = file[0] == '.' || file[0] == '~'
 		if (file == 'Thumbs.db') secure = true
@@ -183,8 +242,10 @@ export const Files = {
 		return 0
 	},
 	readdir: async (dir, exts) => {
-		let files = await fs.readdir(dir).catch(() => [])
-		files = files.map((file) => Files.nameInfo(file))
+		//let files = await fs.readdir(dir).catch(() => [])
+		const dirents = await fs.readdir(dir, {withFileTypes: true}).catch(() => [])
+
+		let files = dirents.map((dirent) => Files.nameInfo(dirent.name, dirent.isFile()))
 		files = files.filter(({secure}) => !secure)
 		files.sort(Files.sort)
 		//let order = 1

@@ -1216,6 +1216,10 @@ Sources.sheet.getCostDiscount = (text, dis) => {
 	return cost
 }
 
+Sources.resetStarts = async (db) => {
+	await db.exec(`UPDATE sources_settings SET date_recalc_start = now(),  date_recalc_finish = now()`)
+	await db.exec(`UPDATE sources_sources SET date_start = null`)
+}
 Sources.sheet.delСol = (sheet, title) => {
 	const rows = sheet.rows
 	const index = sheet.head.indexOf(title)
