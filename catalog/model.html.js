@@ -104,8 +104,8 @@ tpl.showGallery = (data, env, mod) => `
 				imgmin.addEventListener('click', () => {
 					div.querySelector('.selected').classList.remove('selected')
 					imgmin.classList.add('selected')
-					const file = encodeURIComponent(imgmin.dataset.file)
-					bigimg.src = imgmin.src
+					//const file = encodeURIComponent(imgmin.dataset.file)
+					bigimg.src = imgmin.dataset.file
 					//bigimg.srcset = '/-imager/webp?h=500&src='+file+' 1x,/-imager/webp?h=750&src='+file+' 1.5x,/-imager/webp?h=1000&src='+file+' 2x,/-imager/webp?h=1500&src='+file+' 3x,/-imager/webp?h=2000&src='+file+' 4x'
 				})
 			}
