@@ -42,17 +42,18 @@ Shop.getGroupIcon = async (group_nick, visitor) => {
 	if (!isfile.isFile()) return false
 	return src
 }
-Shop.getGroupHead = async (group, visitor, image_src) => {
+Shop.getGroupHead = async (group, visitor) => {
 	const group_nick = group.group_nick
 	const head = {
 		title: group.group_title, //Имя в списке
-		description: group.category //Заголовок на странице
+		description: group.description || group.category, //Заголовок на странице
+		image_src:group.image_src
 	}
-	if (image_src) head.image_src = image_src
-
-	const page = await Shop.getGroupPage(group_nick, visitor)
-	const description = Shop.cleanDescription(page)
-	if (description) head.description = description
+	if (!group.description) {
+		const page = await Shop.getGroupPage(group_nick, visitor)
+		const description = Shop.cleanDescription(page)
+		if (description) head.description = description
+	}
 
 	return head
 }
@@ -242,6 +243,8 @@ Shop.getGroupById = Access.poke(async (db, group_id = false) => {
 			gr.group_nick,
 			gr.group_title,
 			gr.group_id,
+			gr.description,
+			gr.image_src,
 			gr.ordain,
 			gr.parent_id,
 			pr.group_title as parent_title,

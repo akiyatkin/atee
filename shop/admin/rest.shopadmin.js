@@ -20,6 +20,9 @@ import rest_search from "/-dialog/search/rest.search.js" //аргументы ha
 rest.extra(rest_search)
 
 
+rest.addArgument('description', ['string'])
+rest.addArgument('image_src', ['string'])
+
 rest.addArgument('nicks', ['array'])
 rest.addVariable('nicks#required', ['nicks'], (view, nicks) => {
 	if (!nicks.length) return view.err('Требуется указать nicks')

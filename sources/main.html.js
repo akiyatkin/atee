@@ -126,6 +126,9 @@ const showSourceTr = (data, env, source) => `
 	<tr data-id="${source.source_id}" style="white-space: nowrap;" class="item status_${source.class}">
 		<td>
 			<a class="${source.master ? '' : 'mute'}" title="Содержание ${source.master ? 'мастера' : 'прайса'}" href="sheet?source_id=${source.source_id}">${source.source_title}</a>
+			<!-- <div class="${source.master ? '' : 'mute'}">
+				${source.master ? 'Мастер' : 'Прайс'}
+			</div> -->
 			<div>
 				<a class="${source.master ? '' : 'mute'}" title="Ревизия ${source.master ? 'мастера' : 'прайса'}" href="source/${source.source_id}">${date.dm(source.date_exam)}</a>
 			</div>

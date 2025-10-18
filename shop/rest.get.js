@@ -185,21 +185,18 @@ rest.addResponse('get-search-root', async view => {
 
 rest.addResponse('get-group-head', async view => {
 	const group = await view.get('group#required')
-	const image_src = await view.get('image_src')
-	const head = await Shop.getGroupHead(group, view.vistor, image_src)
+	const head = await Shop.getGroupHead(group, view.vistor)
 	return head
 })
 rest.addResponse('get-group-sitemap', async view => {
 	const db = await view.get('db')
 	const root = await view.get('root#required')
-	const image_src = await view.get('image_src')
 	const conf = await config('shop')
 	const childs = {}
 	const root_path = conf.root_path.slice(1)
-	
 	await Shop.runGroupDown(db, root.group_id, async group => {
 		const path = [root_path, 'group', group.group_nick].join('/')
-		childs[path] = await Shop.getGroupHead(group, view.vistor, image_src)
+		childs[path] = await Shop.getGroupHead(group, view.vistor)
 	})
 	
 	const title = 'Группы';

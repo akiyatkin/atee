@@ -165,8 +165,6 @@ rest.addResponse('get-group-search', ['admin'], async view => {
 	})
 
 
-	view.ans.count = list.length
-
 	return view.ret()
 })
 
@@ -227,7 +225,6 @@ rest.addResponse('get-group-filter-prop-search', ['admin'], async view => {
 	})
 	
 	
-	view.ans.count = list.length
 	return view.ret()
 })
 rest.addResponse('get-prop-search', ['admin'], async view => {
@@ -264,8 +261,7 @@ rest.addResponse('get-prop-search', ['admin'], async view => {
 			})
 		}
 	}
-	
-	view.ans.count = list.length
+
 	return view.ret()
 })
 rest.addResponse('get-group-card-prop-search', ['admin'], async view => {
@@ -302,9 +298,6 @@ rest.addResponse('get-group-card-prop-search', ['admin'], async view => {
 		left: '<i>Наследовать</i>',
 		right: ''
 	})
-	
-	
-	view.ans.count = list.length
 	return view.ret()
 })
 rest.addResponse('get-sample-prop-search', ['admin'], async view => {
@@ -335,8 +328,6 @@ rest.addResponse('get-sample-prop-search', ['admin'], async view => {
 		row['right'] = ''
 		return row
 	})	
-
-	view.ans.count = list.length
 	
 	if (type == 'sample') {
 		if (query_nick) {

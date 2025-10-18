@@ -217,8 +217,47 @@ const showGroupActions = (data, env) => `
 						})}
 					</td>
 				</tr>
-			</table>
+				<tr>
+					<td>SEO image_src</td>
+					<td>
+						${field.prompt({
+							value: data.group.image_src || 'указать путь', 
+							name: 'image_src',
+							input: data.group.image_src,
+							ok: 'ОК', 
+							label: 'Путь до картинки с http', 
+							descr: '',
+							cls: 'a',
+							type: 'text', 
+							action: '/-shop/admin/set-group-image_src', 
+							args: {group_id: data.group.group_id}
+						})}
+					</td>
+				</tr>
+				<tr>
+					<td>SEO description</td>
+					<td>
+						<div style="float:right; position: relative; clear:both">
+							${field.prompt({
+								cls: 'a mute',
+								type: 'area',
+								name: 'description', 
+								label: 'Описание (description)',
+								value: svg.edit(), 
+								action: '/-shop/admin/set-group-description', 
+								args: {group_id: data.group.group_id},
+								reloaddiv: env.layer.div,
+								input: data.group.description
+							})}
+						</div>
+						<div style="font-style: italic; margin-right:2em">${data.group.description}</div>
+						
+					</td>
+				</tr>
+			</table>				
 			
+			
+
 		</div>
 	</div>
 `

@@ -259,6 +259,30 @@ rest.addAction('set-prop-create', ['admin','setaccess'], async view => {
 	
 	return view.ret()
 })
+rest.addAction('set-group-description', ['admin'], async view => {
+	const db = await view.get('db')
+	const description = await view.get('description')
+	const group_id = await view.get('group_id#required')
+	//view.ans.description = description
+	await db.exec(`
+		UPDATE shop_groups
+		SET description = :description
+		WHERE group_id = :group_id
+	`, {description, group_id})
+	return view.ret()
+})
+rest.addAction('set-group-image_src', ['admin'], async view => {
+	const db = await view.get('db')
+	const image_src = await view.get('image_src')
+	const group_id = await view.get('group_id#required')
+	view.ans.image_src = image_src
+	await db.exec(`
+		UPDATE shop_groups
+		SET image_src = :image_src
+		WHERE group_id = :group_id
+	`, {image_src, group_id})
+	return view.ret()
+})
 rest.addAction('set-sample-boxes', ['admin','checkrecalc'], async view => {
 	const group_id = await view.get('group_id#required')
 	const nicks = await view.get('nicks#required')

@@ -269,16 +269,18 @@ rest.addResponse('poss', ['admin'], async view => {
 		} else {
 			key_ids = await db.colAll(`
 				SELECT it.key_id
-				FROM sources_items it
-				WHERE it.entity_id = :brendart_prop_id
+				FROM sources_items it, sources_wvalues wva
+				WHERE it.entity_id = :brendart_prop_id and wva.key_id = it.key_id and it.entity_id = wva.entity_id 
+				and wva.prop_id = :brendmodel_prop_id
 				and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || 'it.search != ""'}) 
 				ORDER BY RAND()
 				LIMIT ${count}
 			`, {...bind})
 			view.data.count = await db.col(`
 				SELECT count(*)
-				FROM sources_items it
-				WHERE it.entity_id = :brendart_prop_id
+				FROM sources_items it, sources_wvalues wva
+				WHERE it.entity_id = :brendart_prop_id and wva.key_id = it.key_id and it.entity_id = wva.entity_id
+				and wva.prop_id = :brendmodel_prop_id
 				and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || 'it.search != ""'}) 
 			`, {...bind})
 		}
