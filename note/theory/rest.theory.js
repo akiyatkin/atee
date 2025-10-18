@@ -10,10 +10,10 @@ import NoteDB from "/-note/NoteDB.js"
 
 
 
-rest.addArgument('search', ['nicked'], (view, search) => {
-	//if (search) view.nostore = true
-	return search
-})
+// rest.addArgument('search', ['nicked'], (view, search) => {
+// 	//if (search) view.nostore = true
+// 	return search
+// })
 rest.addArgument('note_id', ['int#required'])
 
 

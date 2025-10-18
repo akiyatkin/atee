@@ -121,7 +121,7 @@ tpl.showGallery = (data, env, mod) => `
 tpl.showimage = (src, i) => `	
 	<div data-file="${src}" class="imagemin ${i === 0 ? 'selected' : ''}">
 		<img loading="lazy" alt="" style="max-width: 100%; height:auto" 
-		${cards.imager(mod.images[0], 150, 150)}>
+		${cards.imager(src, 150, 150)}>
 	</div>
 `
 tpl.maindata = (data, env, mod) => `

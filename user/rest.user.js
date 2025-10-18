@@ -14,7 +14,7 @@ rest.addVariable('user', async (view, src) => {
 	view.nostore = true
 	const user = await User.harvest(view)
 	if (user && user.date_active + 60 < Date.now() / 1000) {
-		db.changedRows(`UPDATE user_users
+		await db.changedRows(`UPDATE user_users
 			SET date_active = now()
 			WHERE user_id = :user_id
 		`, user)

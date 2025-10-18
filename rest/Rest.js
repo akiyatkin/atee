@@ -26,13 +26,19 @@ export class Rest {
 	}
 	extra (rest) {
 		if (this.findextra(rest)) return
-		const allready = rest.runRests(rest => {
+		const allreadyopt = rest.runRests(rest => {
 		 	for (const pname in rest.list) {
+		 		//if (rest.list[pname].replaced) continue
 		 		const oldrest = this.findrest(pname)
-		 		if (oldrest && oldrest !== rest) return pname
+		 		if (!oldrest) continue
+		 		if (oldrest.list[pname].replaced) continue
+		 		if (oldrest !== rest) return oldrest.list[pname]
 		 	}
 		})
-		if (allready) console.log('При добавлении свойства найдено уже используемое имя ' + allready)
+		if (allreadyopt) {
+			//console.log('При добавлении свойства найдено уже используемое имя ' + allready)
+			throw 'При добавлении свойства найдено уже используемое имя ' + allreadyopt.name
+		}
 		this.extras.push(rest)
 	}
 	findextra (m) {
