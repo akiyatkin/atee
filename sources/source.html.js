@@ -13,7 +13,6 @@ export const ROOT = (data, env, source = data.source) => err(data, env,['SOURCE'
 export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
 	<div id="TABLE"></div>
 	<div id="TOP"></div>
-	${showButtons(data, env, source)}
 `
 export const TOP = (data, env, source = data.source) => !data.result ? '' : `
 	
@@ -29,8 +28,6 @@ export const TABLE = (data, env, source = data.source) => !data.result ? '' : `
 	<h1>Ревизия ${source.source_title}</h1>
 	${showComment(data, env, source)}
 	${showDatas(data, env, source)}
-	
-
 `
 
 
@@ -317,7 +314,7 @@ const showControll = (data, env, source) => `
 				})(document.currentScript.previousElementSibling)
 			</script>
 		</div>
-		
+		${showButtons(data, env, source)}
 	</div>
 `
 // <div>

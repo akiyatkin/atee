@@ -175,12 +175,13 @@ rest.addResponse('get-entity-export', ['admin'], async view => {
 // })
 rest.addResponse('get-source-entity-search', ['admin'], async view => {
 	const db = await view.get('db')
-	const hash = await view.get('hash')
+	const hashs = await view.get('hashs')
 	
 	const list = await db.all(`
 		SELECT prop_id as entity_id, prop_title
-		FROM sources_props
-		WHERE prop_nick like "%${hash.join('%" and prop_nick like "%')}%"
+		FROM sources_props p
+		WHERE 
+		(${hashs.map(hash => 'p.prop_nick like "%' + hash.join('%" and p.prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
 	`)
 
 	view.ans.list = list.map(row => {
@@ -188,7 +189,7 @@ rest.addResponse('get-source-entity-search', ['admin'], async view => {
 		row['right'] = ''
 		return row
 	})
-	if (hash.length) {
+	if (hashs.length) {
 		view.ans.list.push({
 			confirm:'Cоздать новую сущность?',
 			action:`/-sources/set-source-entity-create`,

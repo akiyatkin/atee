@@ -219,7 +219,7 @@ export class Rest {
 		
 		const orest = rest.findrest(action) //before и after только для addAction
 		
-		if (!orest) return Rest.makeReans({data: {msg: 'Not Found', result: 0}, status: 404, ext: 'json',})
+		if (!orest) return Promise.resolve(Rest.makeReans({data: {msg: 'Not Found', result: 0}, status: 404, ext: 'json',}))
 		const opt = orest.list[action]
 		const view = new View(orest, opt, req, visitor) //Создаётся у родительского реста
 		orest.addView(view)
