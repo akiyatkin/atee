@@ -1194,13 +1194,17 @@ Sources.getEntities = async (db) => {
 	return list
 }
 
-
+Sources.resetStarts = async (db) => {
+	await db.exec(`UPDATE sources_settings SET date_recalc_start = now(),  date_recalc_finish = now()`)
+	await db.exec(`UPDATE sources_sources SET date_start = null`)
+}
 
 
 
 
 Sources.sheet = {}
 Sources.sheet.getCostWithZero = (text) => {
+	if (typeof text == 'number') return Math.round(text)
 	if (typeof text != 'string') return text
 	let textnumber = text.replace(/\s/g, '')
 	textnumber = textnumber.replace(',','.')
@@ -1226,10 +1230,7 @@ Sources.sheet.getCostDiscount = (text, dis) => {
 	return cost
 }
 
-Sources.resetStarts = async (db) => {
-	await db.exec(`UPDATE sources_settings SET date_recalc_start = now(),  date_recalc_finish = now()`)
-	await db.exec(`UPDATE sources_sources SET date_start = null`)
-}
+
 Sources.sheet.delСol = (sheet, title) => {
 	const rows = sheet.rows
 	const index = sheet.head.indexOf(title)
@@ -1268,7 +1269,7 @@ Sources.sheet.addСol = (sheet, index = null, title, fnget) => {
 }
 
 
-Sources.sheet.createRow = (sheet) => {
+Sources.sheet.addRow = (sheet) => {
 	const row = Array(sheet.head.length).fill(null)
 	const row_index = sheet.rows.push(row) - 1	
 	return row_index
