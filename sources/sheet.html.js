@@ -216,12 +216,7 @@ const showDate = (data, env, dateup, active = dateup.active && (!env.bread.get.k
 `
 const showIndex = (data, env) => `
 	<div>
-		${field.button({
-			label:'Опубликовать',
-			cls: 'a',
-			action:'/-sources/set-recalc-publicate',
-			global:'check'
-		})}<sup>&nbsp;</sup>
+		Требуется публикация 😛<sup>&nbsp;</sup>
 	</div>
 `
 const showComment = (data, env, source) => `

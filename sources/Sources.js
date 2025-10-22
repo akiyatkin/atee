@@ -379,11 +379,21 @@ Sources.insertSheets = async (db, source, sheets) => {
 	const sources_cols = new BulkInserter(db, 'sources_cols', ['source_id', 'sheet_index', 'col_index', 'col_nick', 'col_title']);
 	for (const sheet_index in sheets) {
 		const {title: sheet_title, rows, head} = sheets[sheet_index]
+		const colsunique = {}
 		for (const col_index in head) {
 
-			const col_title = head[col_index].slice(-Sources.COL_LENGTH).trim()
+			let col_title = head[col_index].slice(-Sources.COL_LENGTH).trim()
 			let col_nick = nicked(col_title)
 			if (col_nick.length > Sources.COL_LENGTH) col_nick = nicked(col_nick.slice(-Sources.COL_LENGTH))
+			if (colsunique[col_nick]) {
+				colsunique[col_nick]++
+				col_title = (col_title + ' ' + colsunique[col_nick]).slice(-Sources.COL_LENGTH).trim()
+				col_nick = nicked(col_title)
+				if (col_nick.length > Sources.COL_LENGTH) col_nick = nicked(col_nick.slice(-Sources.COL_LENGTH))
+			} else {
+				colsunique[col_nick] = 1
+			}
+
 			await sources_cols.insert([source_id, sheet_index, col_index, col_nick, col_title])
 			// await db.exec(`
 			// 	INSERT INTO sources_cols (source_id, sheet_index, col_index, col_nick, col_title)
@@ -1257,5 +1267,20 @@ Sources.sheet.addСol = (sheet, index = null, title, fnget) => {
 	sheet.head.splice(index, 0, title)
 }
 
+
+Sources.sheet.createRow = (sheet) => {
+	const row = Array(sheet.head.length).fill(null)
+	const row_index = sheet.rows.push(row) - 1	
+	return row_index
+}
+
+Sources.sheet.addCell = (sheet, row_index, col_title, value) => {
+	let col_index = sheet.head.indexOf(col_title)
+	if (col_index === -1) {
+		col_index = sheet.head.push(col_title) - 1
+		sheet.rows.forEach(row => row.push(null))
+	}
+	sheet.rows[row_index][col_index] = value
+}
 
 export default Sources

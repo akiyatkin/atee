@@ -893,7 +893,6 @@ rest.addAction('set-source-params', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const comment = await view.get('comment')
-	console.log(comment)
 	await Sources.setSource(db, `params = :comment`, {source_id, comment})
 	return view.ret()
 })
