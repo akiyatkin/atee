@@ -209,12 +209,13 @@ rest.addResponse('get-source-entity-search', ['admin'], async view => {
 })
 rest.addResponse('get-sheet-entity-search', ['admin'], async view => {
 	const db = await view.get('db')
-	const hash = await view.get('hash')
+	const hashs = await view.get('hashs')
 	
 	const list = await db.all(`
 		SELECT prop_id as entity_id, prop_title
-		FROM sources_props
-		WHERE prop_nick like "%${hash.join('%" and prop_nick like "%')}%"
+		FROM sources_props p
+		WHERE
+		(${hashs.map(hash => 'p.prop_nick like "%' + hash.join('%" and p.prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
 	`)
 
 	view.ans.list = list.map(row => {
@@ -222,7 +223,7 @@ rest.addResponse('get-sheet-entity-search', ['admin'], async view => {
 		row['right'] = ''
 		return row
 	})
-	if (hash.length) {
+	if (hashs.length) {
 		view.ans.list.push({
 			confirm:'Cоздать новую сущность?',
 			action:`/-sources/set-sheet-entity-create`,
@@ -242,12 +243,13 @@ rest.addResponse('get-sheet-entity-search', ['admin'], async view => {
 })
 rest.addResponse('get-entity-search', ['admin'], async view => {
 	const db = await view.get('db')
-	const hash = await view.get('hash')
+	const hashs = await view.get('hashs')
 	
 	const list = await db.all(`
 		SELECT entity_id, entity_title
-		FROM sources_entities
-		WHERE entity_nick like "%${hash.join('%" and entity_nick like "%')}%"
+		FROM sources_entities e
+		WHERE
+		(${hashs.map(hash => 'e.entity_nick like "%' + hash.join('%" and e.entity_nick like "%') + '%"').join(' or ') || '1 = 1'})
 	`)
 
 	view.ans.list = list.map(row => {
@@ -262,12 +264,13 @@ rest.addResponse('get-entity-search', ['admin'], async view => {
 
 rest.addResponse('get-entity-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
-	const hash = await view.get('hash')
+	const hashs = await view.get('hashs')
 	const entity_id = await view.get('entity_id#required')
 	const list = await db.all(`
 		SELECT prop_id, prop_title, type
 		FROM sources_props
-		WHERE prop_nick like "%${hash.join('%" and prop_nick like "%')}%"
+		WHERE
+		(${hashs.map(hash => 'p.prop_nick like "%' + hash.join('%" and p.prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
 		and entity_id = :entity_id
 	`, {entity_id})
 
@@ -276,7 +279,7 @@ rest.addResponse('get-entity-prop-search', ['admin'], async view => {
 		row['right'] = row.type
 		return row
 	})
-	if (hash.length) {
+	if (hashs.length) {
 		view.ans.list.push({
 			confirm:'Cоздать новое свойство?',
 			action:`/-sources/set-entity-prop-create`,
@@ -296,11 +299,12 @@ rest.addResponse('get-entity-prop-search', ['admin'], async view => {
 })
 rest.addResponse('get-col-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
-	const hash = await view.get('hash')
+	const hashs = await view.get('hashs')
 	const list = await db.all(`
 		SELECT prop_id, prop_title, type
-		FROM sources_props
-		WHERE prop_nick like "%${hash.join('%" and prop_nick like "%')}%"
+		FROM sources_props p
+		WHERE 
+		(${hashs.map(hash => 'p.prop_nick like "%' + hash.join('%" and p.prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
 	`)
 
 	view.ans.list = list.map(row => {
@@ -308,7 +312,7 @@ rest.addResponse('get-col-prop-search', ['admin'], async view => {
 		row['right'] = row.type
 		return row
 	})
-	if (hash.length) {
+	if (hashs.length) {
 		view.ans.list.push({
 			confirm:'Cоздать новое свойство?',
 			action:`/-sources/set-col-prop-create`,
@@ -354,12 +358,13 @@ rest.addResponse('get-prop-type-search', ['admin'], async view => {
 })
 rest.addResponse('get-inter-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
-	const hash = await view.get('hash')
+	const hashs = await view.get('hashs')
 	const entity_id = await view.get('entity_id#required')
 	const list = await db.all(`
 		SELECT prop_id, prop_title, type
-		FROM sources_props
-		WHERE prop_nick like "%${hash.join('%" and prop_nick like "%')}%"
+		FROM sources_props p
+		WHERE 
+		(${hashs.map(hash => 'p.prop_nick like "%' + hash.join('%" and p.prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
 		and entity_id = :entity_id
 	`, {entity_id})
 
@@ -368,7 +373,7 @@ rest.addResponse('get-inter-prop-search', ['admin'], async view => {
 		row['right'] = row.type
 		return row
 	})
-	if (hash.length) {
+	if (hashs.length) {
 		view.ans.list.push({
 			confirm:'Cоздать новое свойство?',
 			action:`/-sources/set-entity-prop-create`,
