@@ -1227,11 +1227,11 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, samples = [{}], hashs =
 	// const {from, join, where, sort} = await Shop.getWhereBySamplesWinMod(db, marked_samples, md.hashs, partner, group_id ? false : true)
 
 	//[md.mget] md.hashs
-	titles.push('staraya-cena')
+	titles.push('staraya-cena') //Нужна старая цена зачем?
 	if (partner.cost_nick) titles.push(partner.cost_nick)
 	titles = unique(titles)
 
-	const {from, join, where, sort} = await Shop.getWhereByGroupIndexWinMod(db, group_id, samples, hashs, partner)
+	const {from, join, where, sort} = await Shop.getWhereByGroupIndexWinMod(db, group_id, samples, hashs, partner)	
 	
 	const bind = await Shop.getBind(db)
 	
@@ -1378,12 +1378,11 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, samples = [{}], hashs =
 			${limit ? 'LIMIT ' + limit : ''}
 		`, {group_id, ...bind})
 	}
-
 	const count = limit ? await db.col(`
 		SELECT count(distinct win.value_id)
 		FROM (${from.join(', ')} ${join.join(' ')})
 		WHERE ${where.join(' and ')}
-	`, bind) : list.length
+	`, {group_id, ...bind}) : list.length
 	
 	for (const prop_nick of titles) {
 		const prop = await Shop.getPropByNick(db, prop_nick)

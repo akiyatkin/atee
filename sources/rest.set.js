@@ -29,7 +29,7 @@ export default rest
 
 rest.addAction('set-recalc-publicate', ['admin','checkrecalc'], async view => {
 	const db = await view.get('db')
-	Recalc.recalc(async (db) => {
+	Recalc.recalc(async (db) => { //Чтобы подсветился процесс
 		await Recalc.publicate(db) //Запустятся зарегистрированные функции в /rest.js
 	})
 	return view.ret()
@@ -1253,7 +1253,7 @@ rest.addAction('set-col-prop-create', ['admin','checkrecalc'], async view => {
 	const sheet = await Sources.getSheetByIndex(db, source_id, sheet_index)
 	if (!sheet) return view.err('Лист не найден')
 	
-	const prop_title = await view.get('search')
+	const prop_title = await view.get('query')
 	const prop_nick = nicked(prop_title)
 	if (!prop_nick) return view.err('Требуется название')
 	

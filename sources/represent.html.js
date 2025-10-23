@@ -63,7 +63,7 @@ const showFastProp = (data, env) => `
 						sheet_index: ${data.sheet.sheet_index},
 						col_index: ${data.col.col_index},
 						type: btn.innerText,
-						search: "${data.col.col_title}"
+						query: "${data.col.col_title}"
 					})
 					if (ans.result && !ans.msg) {
 						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)

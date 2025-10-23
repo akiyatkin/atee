@@ -193,7 +193,7 @@ rest.addResponse('get-source-entity-search', ['admin'], async view => {
 		view.ans.list.push({
 			confirm:'Cоздать новую сущность?',
 			action:`/-sources/set-source-entity-create`,
-			search_value: true, 
+			query_value: true, 
 			left: '<span class="a">Новая сущность</span>',
 			right: ''
 		})
@@ -226,7 +226,7 @@ rest.addResponse('get-sheet-entity-search', ['admin'], async view => {
 		view.ans.list.push({
 			confirm:'Cоздать новую сущность?',
 			action:`/-sources/set-sheet-entity-create`,
-			search_value: true, 
+			query_value: true, 
 			left: '<span class="a">Новая сущность</span>',
 			right: ''
 		})
@@ -280,7 +280,7 @@ rest.addResponse('get-entity-prop-search', ['admin'], async view => {
 		view.ans.list.push({
 			confirm:'Cоздать новое свойство?',
 			action:`/-sources/set-entity-prop-create`,
-			search_value: true, 
+			query_value: true, 
 			left: '<span class="a">Создать свойство</span>',
 			right: 'text'
 		})
@@ -312,7 +312,7 @@ rest.addResponse('get-col-prop-search', ['admin'], async view => {
 		view.ans.list.push({
 			confirm:'Cоздать новое свойство?',
 			action:`/-sources/set-col-prop-create`,
-			search_value: true, 
+			query_value: true, 
 			left: '<span class="a">Создать свойство</span>',
 			right: 'text'
 		})
@@ -372,7 +372,7 @@ rest.addResponse('get-inter-prop-search', ['admin'], async view => {
 		view.ans.list.push({
 			confirm:'Cоздать новое свойство?',
 			action:`/-sources/set-entity-prop-create`,
-			search_value: true, 
+			query_value: true, 
 			left: '<span class="a">Создать свойство</span>',
 			right: ''
 		})

@@ -91,7 +91,8 @@ Recalc.recalc = async (funchange, publicate_required) => {
 	
 	if (publicate_required) {
 		Recalc.deferredPublicate(db)
-	} else {
+	} else {		
+		//Нужно при публикации сбрасывать? а если это работа с группами?
 		Access.setAccessTime() //Когда это не нужно? оставил коммент - но там и пересчёт не требуется
 	}
 	db.release()

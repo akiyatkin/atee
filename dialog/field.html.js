@@ -531,7 +531,7 @@ field.search = ({heading = '', cls = '', edit = true, label = 'Поиск', link
 								const goid = "${goid ? goid : ''}"
 								let action = '${action}'								
 								const ask = row.confirm || "${confirm || ''}"
-								if (ask && !window.confirm((row.search_value ? need.value : row.left) + "\\n" + ask)) return
+								if (ask && !window.confirm((row.query_value ? need.value : row.left) + "\\n" + ask)) return
 								if (!descr && ask) descr = ask
 
 								if (row.action) {
