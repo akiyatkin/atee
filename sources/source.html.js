@@ -258,7 +258,7 @@ const showControll = (data, env, source) => `
 				value: source.master,
 				name: 'bit',
 				action: '/-sources/set-source-prop', 
-				values: {"":"только обновляются (прайс)", "1":"создаются и обновляются (мастер)"},
+				values: {"":"только обновляются (слуга)", "1":"создаются и обновляются (мастер)"},
 				args: {source_id: source.source_id, sourceprop: 'master'}
 			})}
 		</div>
