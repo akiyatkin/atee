@@ -56,7 +56,8 @@ const readChars = async (url, count = 100, headers = {}) => {
 		}
 		return content
 	} catch (error) {
-		throw new Error(`Failed to read from ${url}: ${error.message}`);
+		return ''
+		//throw new Error(`Failed to read from ${url}: ${error.message}`);
 	}
 }
 

@@ -100,7 +100,7 @@ export const SOURCE = (data, env, source = data.source) => !data.result ? '' : `
 		${source.error ? showError(data, env, source) : ''}
 	</div>
 	${data.source.date_load ? showLoadTime(data, env) : 'Не&nbsp;загружался'}
-	<div title="${date.dmyhi(data.source.date_exam)}">Ревизия <a href="source/${data.source.source_id}">${date.dmy(data.source.date_exam)}</a></div>
+	<div title="${date.dmyhi(data.source.date_exam)}">Ревизия <a href="source/${data.source.source_id}">${date.dm(data.source.date_exam)}</a></div>
 `
 const showLoadTime = (data, env) => `
 	<div title="${date.dmyhi(data.source.date_load)}">Загрузка <b>${date.ai(data.source.date_load)}</b> за ${date.pass(data.source.duration_rest + data.source.duration_insert + data.source.duration_check)}</div>

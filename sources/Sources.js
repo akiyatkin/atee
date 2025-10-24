@@ -1230,24 +1230,26 @@ Sources.sheet.getCostDiscount = (text, dis) => {
 	return cost
 }
 
-
-Sources.sheet.delСol = (sheet, title) => {
-	const rows = sheet.rows
+Sources.sheet.delRows = (sheet, title, values) => { //Удаляем строку в котрой колонка title равна значению value
+	if (!values || !Array.isArray(values)) return
+	const index = sheet.head.indexOf(title)
+	if (!~index) return	
+	sheet.rows = sheet.rows.filter(row => !~values.indexOf(row[index]))	
+}
+Sources.sheet.delCol = (sheet, title) => {
 	const index = sheet.head.indexOf(title)
 	if (!~index) return
 	sheet.head.splice(index, 1)
-	for (const row of rows) {
+	for (const row of sheet.rows) {
 		row.splice(index, 1)
 	}
 }
 Sources.sheet.addCol = (sheet, index = null, title, fnget) => {
-
-	const old_index = sheet.head.indexOf(title)
-	let replace = false
-	if (index === true) { //Замена
+	let replace = index === true
+	if (replace) {
+		const old_index = sheet.head.indexOf(title)
 		if (!~old_index) return false
-		index = old_index
-		replace = true
+		index = old_index		
 	}
 
 	const rows = sheet.rows

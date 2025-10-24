@@ -129,10 +129,14 @@ YML.parse = async (SRC, headers) => {
 		}
 	}
 
-	const date_content = YML.safeDateParse(ymldata.yml_catalog['@_date'])
+	const date = YML.safeDateParse(ymldata.yml_catalog['@_date'])
 	
 
-	return {offers, date_content, categories, groups}
+	return {
+		offers, date, 
+		date_content:date, //depricated
+
+		 categories, groups}
 }
 
 
@@ -203,7 +207,10 @@ YML.getFileSrc = f => f['#text'].replaceAll(',','&#44;') + '#' + (f['@_name']||'
 YML.getPictureSrc = src => src.replaceAll(',','&#44;')
 
 YML.loadSheets = async (SRC, callback, headers) => {
-	const {offers, date_content, groups} = await YML.parse(SRC, headers)	
+	const {
+		offers, 
+		date_content, //depricated
+		date, groups} = await YML.parse(SRC, headers)	
 	const sheets = {}
 	for (const offer of offers) {
 		const categories = groups[offer.categoryId] || []
@@ -219,11 +226,11 @@ YML.loadSheets = async (SRC, callback, headers) => {
 
 		offer.picture ??= []
 		if (!Array.isArray(offer.picture)) offer.picture = [offer.picture]		
-		Sources.sheet.addCell(sheet, row_index, 'images', offer.picture.map(YML.getPictureSrc).join(','))
+		Sources.sheet.addCell(sheet, row_index, 'images', offer.picture.map(YML.getPictureSrc).join(', '))
 
 		offer.file ??= []
 		if (!Array.isArray(offer.file)) offer.file = [offer.file]
-		Sources.sheet.addCell(sheet, row_index, 'files', offer.file.map(YML.getFileSrc).join(','))
+		Sources.sheet.addCell(sheet, row_index, 'files', offer.file.map(YML.getFileSrc).join(', '))
 		
 		offer.param ??= []
 		if (!Array.isArray(offer.param)) offer.param = [offer.param]
@@ -236,7 +243,9 @@ YML.loadSheets = async (SRC, callback, headers) => {
 		}
 		
 	}
-	return {sheets:Object.values(sheets), date_content, result: 1}
+	return {sheets:Object.values(sheets), 
+		date_content, //depricated
+		date, result: 1}
 }
 
 

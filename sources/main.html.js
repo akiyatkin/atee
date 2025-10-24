@@ -28,7 +28,7 @@ const showScriptDrag = (data, env) => `
 				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 				const ans = await senditmsg(list, '/-sources/set-source-ordain', {id, next_id})
 				const Client = await window.getClient()
-				Client.global('recalc')
+				//Client.global('recalc')
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>
@@ -54,11 +54,24 @@ const showMain = (data, env) => `
 			action: '/-sources/set-sources-renovate',
 			reloaddiv: env.layer.div,
 		})}
-		${field.button({
-			label: 'Проверить все', 
-			action: '/-sources/set-sources-check',
-			reloaddiv: env.layer.div,
-		})}
+		<div>
+			${field.button({
+				label: 'Проверить все', 
+				action: '/-sources/set-sources-check',
+				reloaddiv: env.layer.div,
+			})}
+			${field.prompt({
+				value: 'Добавить источник', 
+				name: 'title',
+				input: '',
+				label: 'Имя файла', 
+				descr: 'Укажите, соответсвующее источнику, имя файла в папке с обработками ' + data.dir + '. Расширение файла обязательно .js, можно не указывать.',
+				type: 'text', 
+				action: '/-sources/set-source-add', 
+				go: 'source/',
+				goid: 'source_id'
+			})}			
+		</div>
 	</div>
 	
 	<!-- <div class="revscroll"> -->
@@ -89,19 +102,7 @@ const showMain = (data, env) => `
 			})(document.currentScript.parentElement)
 		</script>
 	<!-- </div> -->
-	<div style="margin:2em 0; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
-		${field.prompt({
-			value: 'Добавить источник', 
-			name: 'title',
-			input: '',
-			label: 'Имя файла', 
-			descr: 'Укажите, соответсвующее источнику, имя файла в папке с обработками ' + data.dir + '. Расширение файла обязательно .js, можно не указывать.',
-			type: 'text', 
-			action: '/-sources/set-source-add', 
-			go: 'source/',
-			goid: 'source_id'
-		})}
-	</div>
+	
 	<div style="max-width: 600px;">
 		<p>Чтобы позиция попала в итоговую выгрузку, должен быть хотя бы один источник мастер c этой позицией.</p>
 		<p>Каждый повтор свойства позиции перезаписывает предыдущее значение. Источники применяются сверху вниз. Чем ниже, тем приоритетнее, чем дальше лист или чем дальше колнка, тем приоритетней значение.</p>
