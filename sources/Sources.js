@@ -1240,32 +1240,29 @@ Sources.sheet.delСol = (sheet, title) => {
 		row.splice(index, 1)
 	}
 }
-Sources.sheet.addСol = (sheet, index = null, title, fnget) => {
+Sources.sheet.addCol = (sheet, index = null, title, fnget) => {
+
+	const old_index = sheet.head.indexOf(title)
+	let replace = false
+	if (index === true) { //Замена
+		if (!~old_index) return false
+		index = old_index
+		replace = true
+	}
+
 	const rows = sheet.rows
 	const nick = nicked(title)
 	if (index === null) index = sheet.head.length
 	
-
-	
-	// const indexes = Object.fromEntries(sheet.head.map((name, i) => [nicked(name), i]))
-	// const names = Object.fromEntries(sheet.head.map((name, i) => [i, nicked(name)]))
-
-	// const names = {}
-	// for (const i in sheet.head) {
-	// 	const nick = nicked(sheet.head[i])
-	// 	indexes[nick] = i
-	// 	names[i] = nick
-	// }
 	for (const row of rows) {
-		//row.splice(index, 0, '')
 		const rowobj = {}
-		for (const i in row) rowobj[sheet.head[i]] = row[i]
-		//for (const i in row) obj[names[i]] = row[i]
+		for (const i in row) rowobj[sheet.head[i]] = row[i]		
 
 		const text = fnget(rowobj)
-		row.splice(index, 0, text === null ? null : String(text))
+		row.splice(index, replace ? 1 : 0, text)
 	}
-	sheet.head.splice(index, 0, title)
+	sheet.head.splice(index, replace ? 1 : 0, title)
+	return true
 }
 
 

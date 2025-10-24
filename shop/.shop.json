@@ -5,7 +5,7 @@
 	"root_path":"/shop",
 	"limit":12,
 	"checkShutdown": true,
-	"group_pages":"data/catalog/pages/",
+	"group_pages":"data/shop/.pages/",
 	
 	"partners":{
 		"1998":{

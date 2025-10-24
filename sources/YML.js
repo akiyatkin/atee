@@ -1,5 +1,5 @@
-
 import { createRequire } from "module"
+import Sources from "/-sources/Sources.js"
 const require = createRequire(import.meta.url)
 const { XMLParser } = require("fast-xml-parser");
 import readChars from "/-sources/readChars.js"
@@ -42,8 +42,8 @@ YML.safeDateParse = (dateString) => {
 	}
 }
 
-YML.getModified = async url => {
-	const line = await readChars(url, 1000)
+YML.getModified = async (url, headers = {}) => {
+	const line = await readChars(url, 1000, headers)
 	const dateMatch = line.match(/date="([^"]+)"/);
 	const dateString = dateMatch ? dateMatch[1] : null;
 	if (!dateString) return false	
@@ -79,6 +79,8 @@ YML.getdoc = doc => {
 YML.getsrc = src => {
 	return String(src).replaceAll(',','&comma;')
 }
+
+
 YML.getpicture = picture => {
 	if (Array.isArray(picture)) {
 		picture = picture.map(p => YML.getsrc(p))
@@ -104,34 +106,36 @@ YML.parse = async (SRC, headers) => {
 	if (!offers) return {msg: 'В прайсе нет данных offers', result: 0}
 	if (!ymldata.yml_catalog?.shop?.categories?.category?.length) return {msg: 'В прайсе нет групп', result: 0}
 
-	const categories = {}
+	const tree = {}
 	for (const category of ymldata.yml_catalog?.shop?.categories?.category) {
-		categories[category['@_id']] = category.name || category['#text']
+		const parent_id = category['@_parentId'] || false
+		const id = category['@_id']
+		const name = category.name || category['#text']
+		tree[id] = {parent_id, name, id}
 	}
-	const date_content = new Date(ymldata.yml_catalog['@_date'])
 
-	return {offers, date_content, categories}
-}
-YML.getSheet = (sheets, title, head = []) => {
-	title ||= 'Неизвестная группа'
-	let sheet = sheets.find(sheet => sheet.title == title)
-	if (sheet) return sheet
-	sheet = {
-		head: [...head],
-		i: sheets.length,
-		title,
-		rows:[]
+	const categories = {}
+	for (const id in tree) {
+		categories[id] = tree[id].name
 	}
-	sheets.push(sheet)
-	return sheet
-}
-YML.getName = (param, synonyms, renameCol) => {
-	const name = renameCol(param['@_name'] + (param['@_unit'] ?  ', ' + param['@_unit'] : ''))
-	for (const rname in synonyms) {
-		if (~synonyms[rname].indexOf(name)) return rname
+
+	const groups = {}
+	for (const id in tree){
+		let group = tree[id]
+		groups[id] = []
+		while (group) {
+			groups[id].unshift(group.name)
+			group = tree[group.parent_id]
+		}
 	}
-	return name 
+
+	const date_content = YML.safeDateParse(ymldata.yml_catalog['@_date'])
+	
+
+	return {offers, date_content, categories, groups}
 }
+
+
 
 
 YML.load = async (SRC, {headers = {}, renameCol = col_title => col_title, getHead, getRow, synonyms}) => {
@@ -174,5 +178,66 @@ YML.load = async (SRC, {headers = {}, renameCol = col_title => col_title, getHea
 	}
 	return {sheets, date_content, result: 1}
 }
+YML.getSheet = (sheets, title, head = []) => {
+	title ||= 'Неизвестная группа'
+	let sheet = sheets.find(sheet => sheet.title == title)
+	if (sheet) return sheet
+	sheet = {
+		head: [...head],
+		i: sheets.length,
+		title,
+		rows:[]
+	}
+	sheets.push(sheet)
+	return sheet
+}
+YML.getName = (param, synonyms, renameCol) => {
+	const name = renameCol(param['@_name'] + (param['@_unit'] ?  ', ' + param['@_unit'] : ''))
+	for (const rname in synonyms) {
+		if (~synonyms[rname].indexOf(name)) return rname
+	}
+	return name 
+}
+
+YML.getFileSrc = f => f['#text'].replaceAll(',','&#44;') + '#' + (f['@_name']||'').replaceAll(',',' ').replaceAll('#',' ')
+YML.getPictureSrc = src => src.replaceAll(',','&#44;')
+
+YML.loadSheets = async (SRC, callback, headers) => {
+	const {offers, date_content, groups} = await YML.parse(SRC, headers)	
+	const sheets = {}
+	for (const offer of offers) {
+		const categories = groups[offer.categoryId] || []
+		const sheet_title = categories.at(-1) || 'Без группы'
+		const sheet = sheets[sheet_title] ??= {title:sheet_title, head: [], rows: []}
+		const row_index = Sources.sheet.addRow(sheet)
+		
+		await callback(sheet, row_index, offer)
+
+		Sources.sheet.addCell(sheet, row_index, 'Группы', categories.join(', '))
+
+		
+
+		offer.picture ??= []
+		if (!Array.isArray(offer.picture)) offer.picture = [offer.picture]		
+		Sources.sheet.addCell(sheet, row_index, 'images', offer.picture.map(YML.getPictureSrc).join(','))
+
+		offer.file ??= []
+		if (!Array.isArray(offer.file)) offer.file = [offer.file]
+		Sources.sheet.addCell(sheet, row_index, 'files', offer.file.map(YML.getFileSrc).join(','))
+		
+		offer.param ??= []
+		if (!Array.isArray(offer.param)) offer.param = [offer.param]
+		for (const param of offer.param) {
+			const text = String(param['#text'] || '').trim()
+			if (!text) continue
+			const name = param['@_name'] + (param['@_unit'] ?  ', ' + param['@_unit'] : '')
+			if (!name) continue
+			Sources.sheet.addCell(sheet, row_index, name, text)
+		}
+		
+	}
+	return {sheets:Object.values(sheets), date_content, result: 1}
+}
+
 
 export default YML
