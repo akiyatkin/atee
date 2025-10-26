@@ -135,7 +135,10 @@ rest.addResponse('settings', ['admin'], async view => {
 		SELECT count(*) FROM sources_sources
 		WHERE date_start is not null
 	`)
+	
 
+	
+    view.data.prepared_count = (await db.fetch(`SHOW GLOBAL STATUS LIKE "Prepared_stmt_count"`)).Value
 	view.data.connections_count = (await db.fetch(`SHOW STATUS WHERE variable_name = "Threads_connected"`)).Value
 	view.data.values = await db.col(`SELECT count(*) FROM sources_values`)
 	view.data.sources = await db.col(`SELECT count(*) FROM sources_sources`)

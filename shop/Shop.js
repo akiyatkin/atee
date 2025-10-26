@@ -118,7 +118,7 @@ Shop.getAllGroupIds = Access.poke(async (db, group_id) => { //От корня, �
 	// } else {
 		const group_ids = await db.colAll(`
 			WITH RECURSIVE group_tree AS (
-				SELECT :group_id as group_id
+				SELECT ${group_id} as group_id
 				UNION ALL
 				SELECT sg.group_id
 				FROM shop_groups sg, group_tree gt 
@@ -254,12 +254,12 @@ Shop.getGroupById = Access.poke(async (db, group_id = false) => {
 			gr.self_cards + 0 as self_cards
 		FROM shop_groups gr
 			LEFT JOIN shop_groups pr on (pr.group_id = gr.parent_id)
-		WHERE gr.group_id = :group_id
-	`, {group_id})
+		WHERE gr.group_id = ${group_id}
+	`)
 	if (!group) return false
 
 	
-	const childs = await db.all(`select group_id, group_nick from shop_groups where parent_id = :group_id`, {group_id})
+	const childs = await db.all(`select group_id, group_nick from shop_groups where parent_id = ${group_id}`)
 	group.child_ids = []
 	group.child_nicks = []
 	for (const child of childs) {
@@ -269,7 +269,7 @@ Shop.getGroupById = Access.poke(async (db, group_id = false) => {
 	group.childs = group.child_nicks //depricated
 
 	if (group.self_filters) {
-		group.filter_nicks = await db.colAll(`select prop_nick from shop_filters where group_id = :group_id order by ordain`, {group_id})
+		group.filter_nicks = await db.colAll(`select prop_nick from shop_filters where group_id = ${group_id} order by ordain`)
 	} else {
 		const parent = await Shop.getGroupById(db, group.parent_id)
 		group.filter_nicks = parent.filter_nicks || []
@@ -278,7 +278,7 @@ Shop.getGroupById = Access.poke(async (db, group_id = false) => {
 
 
 	if (group.self_cards) {
-		group.card_nicks = await db.colAll(`select prop_nick from shop_cards where group_id = :group_id order by ordain`, {group_id})
+		group.card_nicks = await db.colAll(`select prop_nick from shop_cards where group_id = ${group_id} order by ordain`)
 	} else {
 		const parent = await Shop.getGroupById(db, group.parent_id)
 		group.card_nicks = parent.card_nicks || []
@@ -308,8 +308,8 @@ Shop.getGroupById = Access.poke(async (db, group_id = false) => {
 		    JOIN tree t ON c.parent_id = t.group_id
 		)
 		SELECT category FROM tree
-		WHERE group_id = :group_id
-	`, {group_id})
+		WHERE group_id = ${group_id}
+	`)
 
 	group.toString = () => group_id
 	return group
@@ -547,6 +547,7 @@ Shop.getBind = Access.wait(async db => {
 	const bind = {}
 	for (const name in list) {
 		const prop = await Shop.getPropByNick(db, name)
+		if (!prop) throw 'Требуется обязательное свойство ' + name
 		bind[`${name}_prop_id`] = prop.prop_id || null
 	}
 	return bind
@@ -769,7 +770,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 	// 		and key_id in (${moditems_ids.map(row => row.key_ids).join(',')})
 	// 	ORDER BY pos.source_ordain, pos.sheet_index, pos.row_index, prop_ordain, pos.multi_index
 	// `, bind)
-
+	const checkcost = partner.cost_nick ? ` or pr.prop_nick = "${partner.cost_nick}"` : ''
 	const itemprops = (await db.all(`
 		SELECT 
 			win.key_id, 
@@ -790,12 +791,12 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 			LEFT JOIN sources_wtexts wtxt on (wtxt.entity_id = win.entity_id and wtxt.key_id = win.key_id and wtxt.prop_id = win.prop_id)
 			LEFT JOIN sources_wdates wdate on (wdate.entity_id = win.entity_id and wdate.key_id = win.key_id and wdate.prop_id = win.prop_id)
 			LEFT JOIN sources_values val on (val.value_id = wval.value_id)
-		WHERE win.entity_id = :brendart_prop_id and win.key_id in (${moditems_ids.map(row => row.key_ids).join(',')})
+		WHERE win.entity_id = ${bind.brendart_prop_id} and win.key_id in (${moditems_ids.map(row => row.key_ids).join(',')})
 		-- and (val.value_id is null or val.value_nick != '')
 		-- and (pr.type != 'value' or (val.value_id is not null and val.value_nick != ''))
 		
-		${props.length ? 'and pr.prop_nick in ("' + props.join('","') + '")' : 'and (pr.known != "system" or pr.prop_nick = :cost_nick)'}
-	`, {...bind, cost_nick: partner.cost_nick || null}))	
+		${props.length ? 'and pr.prop_nick in ("' + props.join('","') + '")' : 'and (pr.known != "system"${checkcost})'}
+	`))
 
 	const models = Object.groupBy(itemprops, row => key_id_to_model_id[row.key_id])
 
@@ -1031,10 +1032,10 @@ Shop.getModelByBrendmodel = Access.poke(async (db, brendmodel_nick, partner) => 
 			GROUP_CONCAT(distinct wva.key_id separator ',') as key_ids,
 			GROUP_CONCAT(distinct mig.group_id separator ',') as group_ids
 		FROM shop_itemgroups mig, sources_wvalues wva, shop_allitemgroups ig
-		WHERE mig.key_id = wva.key_id and wva.value_id = :value_id and wva.entity_id = :brendart_prop_id and wva.prop_id = :brendmodel_prop_id
-		and ig.key_id = wva.key_id and ig.group_id = :group_id
+		WHERE mig.key_id = wva.key_id and wva.value_id = ${value.value_id} and wva.entity_id = ${bind.brendart_prop_id} and wva.prop_id = ${bind.brendmodel_prop_id}
+		and ig.key_id = wva.key_id and ig.group_id = ${group_id}
 		GROUP BY wva.value_id 
-	`, {...bind, ...value, group_id})	
+	`)	
 	if (!moditem_ids.length) return false
 
 
@@ -1984,9 +1985,10 @@ Shop.addWhereSamples = async (db, from, join, where, samples, hashs, partner, em
 
 Shop.getWhereByGroupIndexWin = async (db, group_id, samples = [], hashs = [], partner, wintable) => {
 	//win.key_id - позиция, wva.value_id - модель
+	const bind = await Shop.getBind(db)
 	const from = [`shop_allitemgroups ig, ${wintable} win`]
 	const join = []
-	const where = [`win.entity_id = :brendart_prop_id`]
+	const where = [`win.entity_id = ${bind.brendart_prop_id}`]
 	
 
 
@@ -1995,7 +1997,7 @@ Shop.getWhereByGroupIndexWin = async (db, group_id, samples = [], hashs = [], pa
 
 	// const group_ids = await Shop.getAllGroupIds(db, group_id)
 	// where.push(`ig.group_id in (${group_ids.join(',')})`)
-	where.push(`ig.group_id = :group_id`)
+	where.push(`ig.group_id = ${group_id}`)
 
 	const sort = await Shop.addWhereSamples(db, from, join, where, samples, hashs, partner)
 
@@ -2005,10 +2007,11 @@ Shop.getWhereByGroupIndexWin = async (db, group_id, samples = [], hashs = [], pa
 
 Shop.getWhereByGroupIndexWinMod = async (db, group_id, samples = [], hashs = [], partner) => {
 	//win.key_id - позиция, win.value_id - модель
+	const bind = await Shop.getBind(db)
 	const from = ['shop_allitemgroups ig, sources_wvalues win']
 	//const from = ['shop_itemgroups ig, sources_wvalues win']
 	const join = []
-	const where = [`win.entity_id = :brendart_prop_id and win.prop_id = :brendmodel_prop_id `]
+	const where = [`win.entity_id = ${bind.brendart_prop_id} and win.prop_id = ${bind.brendmodel_prop_id}`]
 	
 
 
@@ -2018,7 +2021,7 @@ Shop.getWhereByGroupIndexWinMod = async (db, group_id, samples = [], hashs = [],
 	//const group_ids = await Shop.getAllGroupIds(db, group_id)
 	//where.push(`ig.group_id in (${group_ids.join(',')})`)
 
-	where.push(`ig.group_id = :group_id`)
+	where.push(`ig.group_id = ${group_id}`)
 	
 	
 	const sort = await Shop.addWhereSamples(db, from, join, where, samples, hashs, partner)
@@ -2028,12 +2031,13 @@ Shop.getWhereByGroupIndexWinMod = async (db, group_id, samples = [], hashs = [],
 Shop.getWhereByGroupIndexSort = async (db, group_id, samples = [], hashs = [], partner) => {
 	//win.key_id - позиция, wva.value_id - модель
 	const from = ['sources_sources so, sources_wcells wce, shop_allitemgroups ig, sources_wvalues win']
+	const bind = await Shop.getBind(db)
 	const join = []
 	const where = [`
 		wce.source_id = so.source_id
 		
-		and wce.entity_id = :brendart_prop_id 
-		and wce.prop_id = :brendmodel_prop_id
+		and wce.entity_id = ${bind.brendart_prop_id} 
+		and wce.prop_id = ${bind.brendmodel_prop_id}
 		
 
 		and win.entity_id = wce.entity_id 
@@ -2041,7 +2045,7 @@ Shop.getWhereByGroupIndexSort = async (db, group_id, samples = [], hashs = [], p
 		and win.prop_id = wce.prop_id 
 
 		and wce.key_id = ig.key_id
-		and ig.group_id = :group_id
+		and ig.group_id = ${group_id}
 	`]
 	
 
@@ -2268,8 +2272,8 @@ Shop.getFreeGroupNicksByBrendartNick = async (db, brendart_nick) => {
 	//Позиции могли попасть в неразмещённые группы
 	const list = await db.all(`
 		select gr.group_id, gr.group_nick from shop_itemgroups ig, shop_groups gr
-		where gr.group_id = ig.group_id and ig.key_id = :value_id
-	`, value)
+		where gr.group_id = ig.group_id and ig.key_id = ${value.value_id}
+	`)
 	const group_nicks = []
 	for (const {group_nick, group_id} of list) {
 		if (!await Shop.isInRootById(db, group_id)) continue

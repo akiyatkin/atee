@@ -47,7 +47,7 @@ rest.addResponse('get-filter-prop-more-search', async view => {
 	if (prop.type == 'value') {
 		list = await db.all(`
 			WITH RECURSIVE group_tree AS (
-				SELECT :group_id as group_id
+				SELECT ${group_id} as group_id
 				UNION ALL
 				SELECT sg.group_id
 				FROM shop_groups sg, group_tree gt 
@@ -58,19 +58,19 @@ rest.addResponse('get-filter-prop-more-search', async view => {
 			WHERE 
 				ig.group_id = gt.group_id
 				and wva.key_id = ig.key_id
-				and wva.entity_id = :brendart_prop_id
-				and wva.prop_id = :prop_id
+				and wva.entity_id = ${bind.brendart_prop_id}
+				and wva.prop_id = ${prop_id}
 				and va.value_id = wva.value_id
 				and (${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'})
 			ORDER BY RAND()
 			LIMIT 12
-		`, {...bind, prop_id, group_id})
+		`)
 
 		
 	} else if (prop.type == 'number') {
 		list = await db.all(`
 			WITH RECURSIVE group_tree AS (
-				SELECT :group_id as group_id
+				SELECT ${group_id} as group_id
 				UNION ALL
 				SELECT sg.group_id
 				FROM shop_groups sg, group_tree gt 
@@ -81,12 +81,12 @@ rest.addResponse('get-filter-prop-more-search', async view => {
 			WHERE 
 				ig.group_id = gt.group_id
 				and wn.key_id = ig.key_id
-				and wn.entity_id = :brendart_prop_id
-				and wn.prop_id = :prop_id
+				and wn.entity_id = ${bind.brendart_prop_id}
+				and wn.prop_id = ${prop_id}
 				and (${hashs.map(hash => 'wn.number like "%' + hash.join('%" and wn.number like "%') + '%"').join(' or ') || '1 = 1'})
 			ORDER BY RAND()
 			LIMIT 12
-		`, {...bind, prop_id, group_id})
+		`)
 	}
 	view.ans.list = list.map(row => {
 		row['left'] = row.value_title || row.nick
@@ -451,8 +451,8 @@ rest.addResponse('get-search-list', async (view) => {
 			SELECT max(win.number) as max, min(win.number) as min
 			FROM ${from.join(', ')} ${join.join(' ')}
 			WHERE ${where.join(' and ')}
-			and win.prop_id = :prop_id
-		`, {group_id: group.group_id, ...bind, prop_id: prop.prop_id}) 
+			and win.prop_id = ${prop.prop_id}
+		`) 
 		// row.max = Number(row.max)
 		// row.min = Number(row.min)
 		return row

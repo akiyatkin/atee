@@ -83,7 +83,8 @@ export const ROOT = (data, env) => err(data, env) || `
 		</div>
 		<div>
 			<p>
-				Открытых соединений: <b>${data.connections_count}</b>
+				Открытых соединений: <b>${data.connections_count}</b><br>
+				Подготовленных запросов: <b>${data.prepared_count}</b>
 			</p>
 			<p>
 				На хостингах бывает ограничение по количеству открытых соединений.
