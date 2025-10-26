@@ -63,19 +63,8 @@ YML.getDateLastWeekDay = (weekDay) => { //0 вс
 	date.setDate(date.getDate() - diff)
 	return date.getTime()
 }
-YML.getfile = file => {
-	return String(file['#text']).replaceAll(',','&comma;') + '#' + file['@_name']
-}
-YML.getdoc = doc => {
-	if (Array.isArray(doc)) {
-		doc = doc.map(p => YML.getfile(p))
-	} else if (doc) {
-		doc = [YML.getfile(doc)]
-	} else {
-		doc = []
-	}
-	return doc
-}
+
+
 YML.getsrc = src => {
 	return String(src).replaceAll(',','&comma;')
 }
@@ -203,9 +192,19 @@ YML.getName = (param, synonyms, renameCol) => {
 	return name 
 }
 
+
 YML.getFileSrc = f => f['#text'].replaceAll(',','&#44;') + '#' + (f['@_name']||'').replaceAll(',',' ').replaceAll('#',' ')
 YML.getPictureSrc = src => src.replaceAll(',','&#44;')
-
+YML.getdoc = doc => {
+	if (Array.isArray(doc)) {
+		doc = doc.map(p => YML.getFileSrc(p))
+	} else if (doc) {
+		doc = [YML.getFileSrc(doc)]
+	} else {
+		doc = []
+	}
+	return doc
+}
 YML.loadSheets = async (SRC, callback, headers) => {
 	const {
 		offers, 
@@ -220,17 +219,21 @@ YML.loadSheets = async (SRC, callback, headers) => {
 		
 		await callback(sheet, row_index, offer)
 
-		Sources.sheet.addCell(sheet, row_index, 'Группы', categories.join(', '))
-
-		
+		const addCell = (title, value) => Sources.sheet.addCell(sheet, row_index, title, value)
+		addCell('Группы', categories.join(', '))
 
 		offer.picture ??= []
 		if (!Array.isArray(offer.picture)) offer.picture = [offer.picture]		
-		Sources.sheet.addCell(sheet, row_index, 'images', offer.picture.map(YML.getPictureSrc).join(', '))
+		addCell('images', offer.picture.filter(src => !~src.indexOf('.mp4')).map(YML.getPictureSrc).join(', '))
+
+		if (!Array.isArray(offer.picture)) offer.picture = [offer.picture]		
+		addCell('videos', offer.picture.filter(src => ~src.indexOf('.mp4')).map(YML.getPictureSrc).join(', '))
 
 		offer.file ??= []
 		if (!Array.isArray(offer.file)) offer.file = [offer.file]
-		Sources.sheet.addCell(sheet, row_index, 'files', offer.file.map(YML.getFileSrc).join(', '))
+		offer.doc ??= []
+		if (!Array.isArray(offer.doc)) offer.doc = [offer.doc]
+		addCell('files', [...offer.file.map(YML.getFileSrc), ...offer.doc.map(YML.getFileSrc)].join(', '))
 		
 		offer.param ??= []
 		if (!Array.isArray(offer.param)) offer.param = [offer.param]
@@ -239,7 +242,7 @@ YML.loadSheets = async (SRC, callback, headers) => {
 			if (!text) continue
 			const name = param['@_name'] + (param['@_unit'] ?  ', ' + param['@_unit'] : '')
 			if (!name) continue
-			Sources.sheet.addCell(sheet, row_index, name, text)
+			addCell(name, text)
 		}
 		
 	}

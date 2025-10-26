@@ -136,7 +136,7 @@ rest.addResponse('settings', ['admin'], async view => {
 		WHERE date_start is not null
 	`)
 
-
+	view.data.connections_count = (await db.fetch(`SHOW STATUS WHERE variable_name = "Threads_connected"`)).Value
 	view.data.values = await db.col(`SELECT count(*) FROM sources_values`)
 	view.data.sources = await db.col(`SELECT count(*) FROM sources_sources`)
 	view.data.entities = await db.col(`SELECT count(*) FROM sources_props pr, sources_sheets sh WHERE sh.entity_id = pr.prop_id`)

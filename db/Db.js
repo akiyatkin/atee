@@ -9,6 +9,7 @@ let conf = false
 const CONF = await config('db')
 
 const createPool = async () => {
+
     if (!CONF?.config) {
         console.error('Configuration is missing');
         return false;
@@ -44,7 +45,7 @@ const createPool = async () => {
             ...poolConfig,
             ...CONF.config
         };
-
+        console.log('createPool')
         const pool = mysql.createPool(finalConfig);
 
         // Проверяем работоспособность через получение соединения
@@ -55,14 +56,19 @@ const createPool = async () => {
         } finally {
             connection.release();
         }
-        
+        process.on('SIGINT', async () => {
+            console.log('pool.end')
+            await pool.end()
+            process.exit(0)
+        })
         return pool;
 
     } catch (error) {
         console.error('Failed to create database pool:', error);
         return false;
     }
-};
+   
+}
 let pool = await createPool()
 export class Db {
     constructor() {
