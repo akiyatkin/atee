@@ -795,7 +795,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 		-- and (val.value_id is null or val.value_nick != '')
 		-- and (pr.type != 'value' or (val.value_id is not null and val.value_nick != ''))
 		
-		${props.length ? 'and pr.prop_nick in ("' + props.join('","') + '")' : 'and (pr.known != "system"${checkcost})'}
+		${props.length ? 'and pr.prop_nick in ("' + props.join('","') + '")' : 'and (pr.known != "system"' + checkcost + ')'}
 	`))
 
 	const models = Object.groupBy(itemprops, row => key_id_to_model_id[row.key_id])
