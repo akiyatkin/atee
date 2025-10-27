@@ -38,8 +38,8 @@ rest.addResponse('get-entity-export', ['admin'], async view => {
 			pr.represent_prop + 0 as represent_prop
 
 		FROM sources_props pr on pr.prop_id = en.prop_id
-		WHERE en.entity_id = :entity_id
-	`, {entity_id})
+		WHERE en.entity_id = ${entity_id}
+	`)
 
 	if (!entity.comment) delete entity.comment
 	if (entity.represent_prop == 1) delete entity.represent_prop
@@ -271,8 +271,8 @@ rest.addResponse('get-entity-prop-search', ['admin'], async view => {
 		FROM sources_props
 		WHERE
 		(${hashs.map(hash => 'p.prop_nick like "%' + hash.join('%" and p.prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
-		and entity_id = :entity_id
-	`, {entity_id})
+		and entity_id = ${entity_id}
+	`)
 
 	view.ans.list = list.map(row => {
 		row['left'] = row.prop_title
@@ -365,8 +365,8 @@ rest.addResponse('get-inter-prop-search', ['admin'], async view => {
 		FROM sources_props p
 		WHERE 
 		(${hashs.map(hash => 'p.prop_nick like "%' + hash.join('%" and p.prop_nick like "%') + '%"').join(' or ') || '1 = 1'})
-		and entity_id = :entity_id
-	`, {entity_id})
+		and entity_id = ${entity_id}
+	`)
 
 	view.ans.list = list.map(row => {
 		row['left'] = row.prop_title

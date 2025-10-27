@@ -118,14 +118,14 @@ Shop.getAllGroupIds = Access.poke(async (db, group_id) => { //От корня, �
 	// } else {
 		const group_ids = await db.colAll(`
 			WITH RECURSIVE group_tree AS (
-				SELECT ${group_id} as group_id
+				SELECT ${root_id} as group_id
 				UNION ALL
 				SELECT sg.group_id
 				FROM shop_groups sg, group_tree gt 
 				WHERE sg.parent_id = gt.group_id
 			)
 			SELECT group_id FROM group_tree
-		`, {group_id: root_id})
+		`)
 		return group_ids
 	//}
 })
@@ -998,12 +998,12 @@ Shop.getBrendmodelByBrendart = Access.poke(async (db, brendart_nick) => {
 			sources_wvalues wva,
 			sources_values mva
 				
-		WHERE win.entity_id = :brendart_prop_id
+		WHERE win.entity_id = ${bind.brendart_prop_id}
 		and mva.value_id = wva.value_id
 		and wva.key_id = win.key_id and wva.entity_id = win.entity_id and wva.prop_id = win.prop_id
-		and win.prop_id = :brendmodel_prop_id
+		and win.prop_id = ${bind.brendmodel_prop_id}
 		and win.key_id = :key_id
-	`, {...bind, key_id})
+	`, {key_id})
 
 	return brendmodel_nick
 })

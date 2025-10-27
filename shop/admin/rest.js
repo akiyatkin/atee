@@ -251,38 +251,38 @@ rest.addResponse('poss', ['admin'], async view => {
 			key_ids = await db.colAll(`
 				SELECT it.key_id
 				FROM sources_items it, shop_allitemgroups ig
-				WHERE it.entity_id = :brendart_prop_id
-				and ig.group_id = :group_id
+				WHERE it.entity_id = ${bind.brendart_prop_id}
+				and ig.group_id = ${group_id}
 				and it.key_id = ig.key_id
 				and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || 'it.search != ""'}) 
 				ORDER BY RAND()
 				LIMIT ${count}
-			`, {group_id, ...bind})		
+			`)		
 			view.data.count = await db.col(`
 				SELECT count(distinct it.key_id)
 				FROM sources_items it, shop_allitemgroups ig
-				WHERE it.entity_id = :brendart_prop_id
-				and ig.group_id = :group_id
+				WHERE it.entity_id = ${bind.brendart_prop_id}
+				and ig.group_id = ${group_id}
 				and it.key_id = ig.key_id
 				and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || 'it.search != ""'}) 
-			`, {group_id, ...bind})
+			`)
 		} else {
 			key_ids = await db.colAll(`
 				SELECT it.key_id
 				FROM sources_items it, sources_wvalues wva
-				WHERE it.entity_id = :brendart_prop_id and wva.key_id = it.key_id and it.entity_id = wva.entity_id 
-				and wva.prop_id = :brendmodel_prop_id
+				WHERE it.entity_id = ${bind.brendart_prop_id} and wva.key_id = it.key_id and it.entity_id = wva.entity_id 
+				and wva.prop_id = ${bind.brendmodel_prop_id}
 				and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || 'it.search != ""'}) 
 				ORDER BY RAND()
 				LIMIT ${count}
-			`, {...bind})
+			`)
 			view.data.count = await db.col(`
 				SELECT count(*)
 				FROM sources_items it, sources_wvalues wva
-				WHERE it.entity_id = :brendart_prop_id and wva.key_id = it.key_id and it.entity_id = wva.entity_id
-				and wva.prop_id = :brendmodel_prop_id
+				WHERE it.entity_id = ${bind.brendart_prop_id} and wva.key_id = it.key_id and it.entity_id = wva.entity_id
+				and wva.prop_id = ${bind.brendmodel_prop_id}
 				and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || 'it.search != ""'}) 
-			`, {...bind})
+			`)
 		}
 	} else {
 		let from = []
@@ -292,22 +292,22 @@ rest.addResponse('poss', ['admin'], async view => {
 		if (group_id) {
 			from = ['shop_allitemgroups ig, sources_wvalues win']
 			where = [`
-				win.entity_id = :brendart_prop_id 
-				and win.prop_id = :brendmodel_prop_id 
+				win.entity_id = ${bind.brendart_prop_id}
+				and win.prop_id = ${bind.brendmodel_prop_id}
 				and ig.key_id = win.key_id
-				and group_id = :group_id
+				and group_id = ${group_id}
 			`]
 		} else {
 			from = ['sources_wvalues win']
 			where = [`
-				win.entity_id = :brendart_prop_id 
-				and win.prop_id = :brendmodel_prop_id
+				win.entity_id = ${bind.brendart_prop_id}
+				and win.prop_id = ${bind.brendmodel_prop_id}
 			`]
 		}
 		if (source_id) {
 			from.unshift('sources_wcells wce')
 			where.push(`
-				wce.source_id = :source_id
+				wce.source_id = ${source_id}
 				and wce.key_id = win.key_id and wce.entity_id = win.entity_id
 			`)
 		}
@@ -320,12 +320,12 @@ rest.addResponse('poss', ['admin'], async view => {
 			WHERE ${where.join(' and ')}
 			ORDER BY RAND()
 			LIMIT ${count}
-		`, {source_id, group_id, ...bind})
+		`)
 		view.data.count = await db.col(`
 			SELECT count(distinct win.key_id)
 			FROM ${from.join(', ')} ${join.join(' ')}
 			WHERE ${where.join(' and ')}
-		`, {source_id, group_id, ...bind})
+		`)
 	}
 	
 
@@ -337,8 +337,8 @@ rest.addResponse('poss', ['admin'], async view => {
 		const groups = await db.all(`
 			select gr.group_title, gr.group_id 
 			from shop_groups gr, shop_itemgroups ig
-			where ig.key_id = :key_id and gr.group_id = ig.group_id
-		`, {key_id})
+			where ig.key_id = ${key_id} and gr.group_id = ig.group_id
+		`)
 		table.groups.push(groups)
 	}
 
@@ -439,16 +439,16 @@ rest.addResponse('groups', ['admin'], async view => {
 			SELECT fi.prop_nick, pr.prop_title, pr.prop_id
 			FROM shop_filters fi
 				LEFT JOIN sources_wprops pr on pr.prop_nick = fi.prop_nick
-			WHERE fi.group_id = :group_id
+			WHERE fi.group_id = ${group_id}
 			order by fi.ordain
-		`, group)
+		`)
 		view.data.cards = await db.all(`
 			SELECT ca.prop_nick, pr.prop_title, pr.prop_id
 			FROM shop_cards ca
 				LEFT JOIN sources_wprops pr on pr.prop_nick = ca.prop_nick
-			WHERE ca.group_id = :group_id
+			WHERE ca.group_id = ${group_id}
 			order by ca.ordain
-		`, group)
+		`)
 		
 		
 		
@@ -468,10 +468,10 @@ rest.addResponse('groups', ['admin'], async view => {
 				LEFT JOIN shop_samplevalues spv on (spv.sample_id = sa.sample_id and spv.prop_nick = sp.prop_nick)
 				LEFT JOIN sources_wprops pr on pr.prop_nick = sp.prop_nick
 				LEFT JOIN sources_values va on va.value_nick = spv.value_nick
-				LEFT JOIN sources_wvalues wv on (wv.entity_id = :brendart_prop_id and va.value_id = wv.value_id and wv.prop_id = pr.prop_id)
-			WHERE sa.group_id = :group_id
+				LEFT JOIN sources_wvalues wv on (wv.entity_id = ${bind.brendart_prop_id} and va.value_id = wv.value_id and wv.prop_id = pr.prop_id)
+			WHERE sa.group_id = ${group_id}
 			ORDER BY sa.date_create, sp.date_create, spv.date_create
-		`, {...bind, group_id})
+		`)
 		
 		view.data.samples = Object.groupBy(samples, row => row.sample_id)
 		for (const sample_id in view.data.samples) {
@@ -506,17 +506,17 @@ rest.addResponse('groups', ['admin'], async view => {
 		const {poscount, modcount} = await db.fetch(`
 		 	SELECT count(distinct win.key_id) as poscount, count(distinct win.value_id) as modcount
 		 	FROM sources_wvalues win, shop_allitemgroups ig
-		 	WHERE win.entity_id = :brendart_prop_id and win.prop_id = :brendmodel_prop_id
-		 	and ig.key_id = win.key_id and ig.group_id = :group_id
-		`, {...bind, group_id})
+		 	WHERE win.entity_id = ${bind.brendart_prop_id} and win.prop_id = ${bind.brendmodel_prop_id}
+		 	and ig.key_id = win.key_id and ig.group_id = ${group_id}
+		`)
 		view.data.poscount = poscount
 		view.data.modcount = modcount
 	} else {
 		const {poscount, modcount} = await db.fetch(`
 		 	SELECT count(distinct win.key_id) as poscount, count(distinct win.value_id) as modcount
 		 	FROM sources_wvalues win
-		 	WHERE win.entity_id = :brendart_prop_id and win.prop_id = :brendmodel_prop_id
-		`, {...bind})
+		 	WHERE win.entity_id = ${bind.brendart_prop_id} and win.prop_id = ${bind.brendmodel_prop_id}
+		`)
 		view.data.poscount = poscount
 		view.data.modcount = modcount
 	}

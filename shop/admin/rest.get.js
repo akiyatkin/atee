@@ -40,7 +40,7 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 		if (parent_id) {
 			list = await db.all(`
 				WITH RECURSIVE group_tree AS (
-					SELECT :parent_id as group_id
+					SELECT ${parent_id} as group_id
 					UNION ALL
 					SELECT sg.group_id
 					FROM shop_groups sg, group_tree gt 
@@ -51,25 +51,25 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 				WHERE 
 					ig.group_id = gt.group_id
 					and wva.key_id = ig.key_id
-					and wva.entity_id = :brendart_prop_id
-					and wva.prop_id = :prop_id
+					and wva.entity_id = ${bind.brendart_prop_id}
+					and wva.prop_id = ${prop_id}
 					and va.value_id = wva.value_id
 					and (${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'})
 				ORDER BY RAND()
 				LIMIT 12
-			`, {...bind, prop_id, parent_id})
+			`)
 		} else {
 			list = await db.all(`
 				SELECT distinct va.value_title, va.value_nick as nick
 				FROM sources_wvalues wva, sources_values va
 				WHERE 
-					wva.entity_id = :brendart_prop_id
-					and wva.prop_id = :prop_id
+					wva.entity_id = ${bind.brendart_prop_id}
+					and wva.prop_id = ${prop_id}
 					and va.value_id = wva.value_id
 					and (${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'})
 				ORDER BY RAND()
 				LIMIT 12
-			`, {...bind, prop_id})
+			`)
 		}
 	} else if (prop.type == 'number') {
 		// if (parent_id) {

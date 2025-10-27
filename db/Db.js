@@ -45,7 +45,6 @@ const createPool = async () => {
             ...poolConfig,
             ...CONF.config
         };
-        console.log('createPool')
         const pool = mysql.createPool(finalConfig);
 
         // Проверяем работоспособность через получение соединения
