@@ -5,7 +5,7 @@ import config from '/-config'
 import Access from '/-controller/Access.js'
 import EasySheetsDef from 'easy-sheets'
 import { google } from 'googleapis';
-import Dabudi from '/-dabudi'
+import Dabudi from '/-xlsx/Dabudi.js'
 const EasySheets = EasySheetsDef.default
 
 const dir = 'cache/drive/'
@@ -106,15 +106,15 @@ const Drive = {
 		const rows_source = await Drive.getRows(gid, range, sheet, eternal)
 		if (!rows_source) return false
 		const {descr, rows_table} = Dabudi.splitDescr(rows_source)
-		const {head_titles = [], rows_body} = Dabudi.splitHead(rows_table)
+		const {head = [], rows_body} = Dabudi.splitHead(rows_table)
 
 		const indexes = {}
-		for (const i in head_titles) {
-			const nick = nicked(head_titles[i])
+		for (const i in head) {
+			const nick = nicked(head[i])
 			indexes[nick] = i
 		}
 
-		return {descr, head_titles, indexes, rows_body}
+		return {descr, head_titles: head, indexes, rows_body}
 	}
 }
 export default Drive

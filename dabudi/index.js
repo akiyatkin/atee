@@ -1,3 +1,7 @@
+
+
+//depricated
+
 import nicked from "/-nicked"
 
 /*
@@ -6,7 +10,7 @@ import nicked from "/-nicked"
 */
 
 
-export const Dabudi = {
+export const Dabudi = { //depricated
 	getOne: row => {
 		let group_title = false
 		if (row.every(col => {
@@ -16,7 +20,7 @@ export const Dabudi = {
 			return true
 		})) return group_title	
 	},
-	splitDescr: (rows_source) => {
+	splitDescr: (rows_source) => { //depricated
 		let index = rows_source.findIndex(row => {
 			let count = 0
 			if (!row.some(col => {
@@ -39,7 +43,7 @@ export const Dabudi = {
 		const rows_table = rows_source.slice(index)
 		return {descr, rows_table}
 	},
-	recColIndexOrRename: ({head_titles, head_nicks}, name, oldname, base) => {
+	recColIndexOrRename: ({head_titles, head_nicks}, name, oldname, base) => { //depricated
 		let index = head_titles.indexOf(name)
 		if (~index) return index
 		index = head_titles.indexOf(oldname)
@@ -65,7 +69,7 @@ export const Dabudi = {
 		}
 		return index
 	},
-	recColIndex: ({head_titles, head_nicks}, name, base) => {
+	recColIndex: ({head_titles, head_nicks}, name, base) => { //depricated
 		let index = head_titles.indexOf(name)
 		if (!~index) {
 			index = head_titles.length
@@ -74,7 +78,7 @@ export const Dabudi = {
 		}
 		return index
 	},
-	splitHead: (rows_table, base) => {
+	splitHead: (rows_table, base) => { //depricated
 		if (!rows_table.length) return {heads: {head_nicks:[], head_titles:[]}, rows_body:[]}
 		let rows_body = rows_table.slice(1)
 		const head_titles = rows_table[0]
@@ -100,7 +104,7 @@ export const Dabudi = {
 		const head_nicks = base ? head_titles.map(h => base.onicked(h)) : head_titles.map(h => nicked(h))
 		return {heads: {head_nicks, head_titles}, rows_body}
 	},
-	splitGroups: (rows_body, heads, root_title, index_group, base, groups) => {
+	splitGroups: (rows_body, heads, root_title, index_group, base, groups) => { //depricated
 		const root_nick = base.onicked(root_title)
 		let group_title = root_title.split('#')[0].slice(-base.LONG).trim()
 		let group_nick = root_nick
