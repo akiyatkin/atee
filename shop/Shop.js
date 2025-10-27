@@ -1542,9 +1542,9 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 				${wnumbers_where.join.join(' ')}
 			WHERE 
 				${wnumbers_where.where.join(' and ')}
-				and win.prop_id = :prop_id
+				and win.prop_id = ${prop_id}
 			ORDER BY win.number
-		`, {...bind, ...prop, group_id})
+		`)
 		if (row.min === row.max) return false
 		filter.min = Number(row.min)
 		filter.max = Number(row.max)
@@ -1582,11 +1582,11 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 				${wvalues_where.join.join(' ')}
 			WHERE 
 				${wvalues_where.where.join(' and ')}				
-				and win.prop_id = :prop_id
+				and win.prop_id = ${prop_id}
 				and va.value_id = win.value_id
 			ORDER BY va.value_title
 			LIMIT ${limit}
-		`, {...bind, prop_id, group_id})
+		`)
 
 	} else if (prop.type == 'number') {
 		filter.values = await db.colAll(`
@@ -1596,10 +1596,10 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 				${wnumbers_where.join.join(' ')}
 			WHERE 
 				${wnumbers_where.where.join(' and ')}
-				and win.prop_id = :prop_id				
+				and win.prop_id = ${prop_id}
 			ORDER BY win.number
 			LIMIT ${limit}
-		`, {...bind, prop_id, group_id})
+		`)
 	}
 	filter.havemore = filter.values.length >= limit
 	

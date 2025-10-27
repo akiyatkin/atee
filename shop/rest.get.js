@@ -263,7 +263,7 @@ rest.addResponse('get-search-groups', async view => {
 			SELECT count(distinct win.value_id)
 			FROM ${from.join(', ')} ${join.join(' ')}
 			WHERE ${where.join(' and ')}
-		`, {group_id, ...bind})
+		`)
 	}
 	const groups = view.data.groups = {}
 	for (const group_nick of childs) {
@@ -372,7 +372,7 @@ rest.addResponse('get-search-list', async (view) => {
 		SELECT count(distinct win.value_id)
 		FROM ${from.join(', ')} ${join.join(' ')}
 		WHERE ${where.join(' and ')}
-	`, {group_id: group.group_id, ...bind})
+	`)
 	//const modcount = moditem_ids[0]?.total_rows || 0
 	//const modcount = await Shop.getModcount(db, md, partner, group_nick)
 
@@ -399,7 +399,7 @@ rest.addResponse('get-search-list', async (view) => {
 		GROUP BY win.value_id 
 		ORDER BY ${sort.join(',')}
 		LIMIT ${start}, ${countonpage}
-	`, {group_id: group.group_id, ...bind})
+	`)
 
 	// console.log({group_id: group.group_id, ...bind}, `
 	// 	SELECT 
@@ -493,19 +493,19 @@ rest.addResponse('get-livemodels', async (view) => {
 		GROUP BY win.value_id 
 		ORDER BY RAND()
 		LIMIT ${countonpage}
-	`, {group_id: root.group_id, ...bind})
+	`)
 	
 	const count = await db.col(`
 		SELECT count(distinct win.value_id)
 		FROM ${from.join(', ')} ${join.join(' ')}
 		WHERE ${where.join(' and ')}
-	`, {group_id: root.group_id, ...bind})
+	`)
 
 	const group_ids = await db.colAll(`
 		SELECT distinct ig.group_id
 		FROM ${from.join(', ')} ${join.join(' ')}
 		WHERE ${where.join(' and ')}
-	`, {group_id: root.group_id, ...bind})
+	`)
 	
 	//const count = await Shop.getModcount(db, md, partner, root.group_nick)
 
