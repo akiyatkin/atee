@@ -11,6 +11,7 @@ export default Sharp
 Sharp.resizeFolder = async (dirfrom, dirto, opt) => {
 	const root_from = await Sharp.readdirDeep(dirfrom)
 	const root_to = await Sharp.readdirDeep(dirto)	
+	if(root_from.empty) return
 	await Sharp.runBothDirs(root_from, root_to, async (root_from, root_to) => {
 		if (!root_from.empty && !root_to.empty) return
 		const dir_to = root_to.dir
@@ -68,6 +69,7 @@ Sharp.processImage = async (inputPath, outputPath, opt) => {
 	}
 }
 Sharp.runBothDirs = async (root_fr, root_to, fn, level = 0) => {
+
 	const r = await fn(root_fr, root_to)	
 	if (r != null) return r
 

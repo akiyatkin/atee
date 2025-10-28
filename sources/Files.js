@@ -242,7 +242,7 @@ export const Files = {
 		return 0
 	},
 	readdir: async (dir, exts) => {
-		//let files = await fs.readdir(dir).catch(() => [])
+		//let files = await fs.readdir(dir).catch(() => [])		
 		const dirents = await fs.readdir(dir, {withFileTypes: true}).catch(() => [])
 
 		let files = dirents.map((dirent) => Files.nameInfo(dirent.name, dirent.isFile()))

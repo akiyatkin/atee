@@ -1018,7 +1018,7 @@ Shop.getModelByBrendart = async (db, brendart_nick, partner) => {
 	const model = await Shop.getModelByBrendmodel(db, brendmodel_nick, partner)
 	return model
 }
-Shop.getModelByBrendmodel = Access.poke(async (db, brendmodel_nick, partner) => {
+Shop.getModelByBrendmodel = async (db, brendmodel_nick, partner) => {
 	const bind = await Shop.getBind(db)
 	const value = await Shop.getValueByNick(db, brendmodel_nick)
 	if (!value) return false
@@ -1068,7 +1068,7 @@ Shop.getModelByBrendmodel = Access.poke(async (db, brendmodel_nick, partner) => 
 	const model = list[0]
 
 	return model
-})
+}
 // Shop.splitModPropsFromItems = list => {
 // 	for (const model of list) {
 // 		let model_props = {}

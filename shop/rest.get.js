@@ -2,6 +2,9 @@ import Shop from "/-shop/Shop.js"
 import config from "/-config"
 import Files from "/-showcase/Files.js"
 import unique from "/-nicked/unique.js"
+import fs from "fs/promises"
+import docx from '/-docx'
+import Access from "/-controller/Access.js"
 //import search from "/-shop/search.html.js"
 //import cards from "/-shop/cards.html.js"
 import ddd from "/-words/date.html.js"
@@ -332,7 +335,16 @@ rest.addResponse('get-model', async (view) => {
 
 	const files = view.data.files = (model.recap.files || []).map(src => Files.srcInfo(src))	
 
-
+	view.data.texts = {}
+	for (const item of model.items) {
+		if (!item.texts) continue
+		item.texts = await Promise.all(item.texts.map(src => {
+			const ext = (i => ~i ? src.slice(i + 1) : '')(src.lastIndexOf('.'))
+			console.log(ext)
+			if (ext == 'docx') return docx.read(Access, src)
+			return fs.readFile(src, 'utf8')
+		}))
+	}
 
 	const props = view.data.props = {}
 	const values = view.data.values = {}
