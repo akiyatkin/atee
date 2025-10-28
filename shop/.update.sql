@@ -2,7 +2,7 @@
 -- Host:                         127.0.0.1
 -- Server version:               11.4.0-MariaDB - mariadb.org binary distribution
 -- Server OS:                    Win64
--- HeidiSQL Version:             12.3.0.6589
+-- HeidiSQL Version:             12.11.0.7065
 -- --------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -14,19 +14,19 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
--- Dumping structure for table kvant63.ru.node.shop_actives
+-- Dumping structure for table ladasvet.ru.shop_actives
 CREATE TABLE IF NOT EXISTS `shop_actives` (
   `user_id` mediumint(8) unsigned NOT NULL,
   `order_id` mediumint(8) unsigned NOT NULL,
   PRIMARY KEY (`user_id`) USING BTREE,
-  KEY `FK_bed_actives_bed_orders` (`order_id`),
-  CONSTRAINT `FK_bed_actives_bed_orders` FOREIGN KEY (`order_id`) REFERENCES `shop_orders` (`order_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `FK_bed_actives_user_users` FOREIGN KEY (`user_id`) REFERENCES `user_users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `FK_shop_actives_shop_orders` (`order_id`),
+  CONSTRAINT `FK_shop_actives_shop_orders` FOREIGN KEY (`order_id`) REFERENCES `shop_orders` (`order_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FK_shop_actives_user_users` FOREIGN KEY (`user_id`) REFERENCES `user_users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_allitemgroups
+-- Dumping structure for table ladasvet.ru.shop_allitemgroups
 CREATE TABLE IF NOT EXISTS `shop_allitemgroups` (
   `key_id` int(10) unsigned NOT NULL,
   `group_id` smallint(5) unsigned NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `shop_allitemgroups` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_basket
+-- Dumping structure for table ladasvet.ru.shop_basket
 CREATE TABLE IF NOT EXISTS `shop_basket` (
   `order_id` mediumint(8) unsigned NOT NULL,
   `brendart_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL COMMENT 'model_id не можем сохранять, так как может поменяться',
@@ -51,23 +51,23 @@ CREATE TABLE IF NOT EXISTS `shop_basket` (
   `json_hash` char(8) CHARACTER SET latin1 COLLATE latin1_bin DEFAULT NULL COMMENT 'хэш данных позиции - было ли изменение в описании замороженной позиции используется до распаковки json и сравнения его с позицией в каталоге',
   `json_cost` int(10) unsigned DEFAULT NULL COMMENT 'Только для аналитики, в аналитике json не разворачивается. Данные о позиции берутся из каталога. Но цена должна быть та что в моменте продажи.',
   PRIMARY KEY (`order_id`,`brendart_nick`) USING BTREE,
-  CONSTRAINT `FK_bed_basket_bed_orders` FOREIGN KEY (`order_id`) REFERENCES `shop_orders` (`order_id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `FK_shop_basket_shop_orders` FOREIGN KEY (`order_id`) REFERENCES `shop_orders` (`order_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_cards
+-- Dumping structure for table ladasvet.ru.shop_cards
 CREATE TABLE IF NOT EXISTS `shop_cards` (
   `group_id` smallint(6) unsigned NOT NULL,
   `prop_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
   `ordain` smallint(5) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`group_id`,`prop_nick`) USING BTREE,
-  CONSTRAINT `FK_bed_cards_bed_groups` FOREIGN KEY (`group_id`) REFERENCES `shop_groups` (`group_id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `FK_shop_cards_shop_groups` FOREIGN KEY (`group_id`) REFERENCES `shop_groups` (`group_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_filters
+-- Dumping structure for table ladasvet.ru.shop_filters
 CREATE TABLE IF NOT EXISTS `shop_filters` (
   `group_id` smallint(6) unsigned NOT NULL,
   `prop_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS `shop_filters` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_groups
+-- Dumping structure for table ladasvet.ru.shop_groups
 CREATE TABLE IF NOT EXISTS `shop_groups` (
   `group_id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
   `parent_id` smallint(5) unsigned DEFAULT NULL,
@@ -91,13 +91,13 @@ CREATE TABLE IF NOT EXISTS `shop_groups` (
   `description` text NOT NULL DEFAULT '',
   `image_src` text NOT NULL DEFAULT '',
   PRIMARY KEY (`group_id`) USING BTREE,
-  KEY `FK_bed_groups_bed_groups` (`parent_id`),
-  CONSTRAINT `FK_bed_groups_bed_groups` FOREIGN KEY (`parent_id`) REFERENCES `shop_groups` (`group_id`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `FK_shop_groups_shop_groups` (`parent_id`),
+  CONSTRAINT `FK_shop_groups_shop_groups` FOREIGN KEY (`parent_id`) REFERENCES `shop_groups` (`group_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_itemgroups
+-- Dumping structure for table ladasvet.ru.shop_itemgroups
 CREATE TABLE IF NOT EXISTS `shop_itemgroups` (
   `key_id` int(10) unsigned NOT NULL,
   `group_id` smallint(5) unsigned NOT NULL,
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS `shop_itemgroups` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_orders
+-- Dumping structure for table ladasvet.ru.shop_orders
 CREATE TABLE IF NOT EXISTS `shop_orders` (
   `order_id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` mediumint(8) unsigned DEFAULT NULL COMMENT 'Пользователь может быть удалён. Заказ останется. Надо сообщить что пользователь удалился. Автор кто непосредственно создал заказ, владельцы указаны в cart_userorders',
@@ -160,13 +160,13 @@ CREATE TABLE IF NOT EXISTS `shop_orders` (
   `dateemail` datetime DEFAULT NULL COMMENT 'Дата email пользователю',
   `dateedit` datetime DEFAULT NULL COMMENT 'Дата редактирования',
   PRIMARY KEY (`order_id`) USING BTREE,
-  KEY `FK_bed_orders_user_users` (`user_id`),
-  CONSTRAINT `FK_bed_orders_user_users` FOREIGN KEY (`user_id`) REFERENCES `user_users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `FK_shop_orders_user_users` (`user_id`),
+  CONSTRAINT `FK_shop_orders_user_users` FOREIGN KEY (`user_id`) REFERENCES `user_users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_props
+-- Dumping structure for table ladasvet.ru.shop_props
 CREATE TABLE IF NOT EXISTS `shop_props` (
   `prop_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
   `card_tpl` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT 'default' COMMENT 'Считываем из html.js файла возможные значения',
@@ -177,7 +177,7 @@ CREATE TABLE IF NOT EXISTS `shop_props` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for procedure kvant63.ru.node.shop_recalcPrev
+-- Dumping structure for procedure ladasvet.ru.shop_recalcPrev
 DELIMITER //
 CREATE PROCEDURE `shop_recalcPrev`()
 BEGIN 
@@ -272,7 +272,7 @@ FROM shop_stat_sources WHERE year = nowYear AND month = nowMonth;
 END//
 DELIMITER ;
 
--- Dumping structure for procedure kvant63.ru.node.shop_recalcStat
+-- Dumping structure for procedure ladasvet.ru.shop_recalcStat
 DELIMITER //
 CREATE PROCEDURE `shop_recalcStat`()
 BEGIN 
@@ -955,31 +955,31 @@ DROP TEMPORARY TABLE IF EXISTS shop_stat_temp_filters;
 END//
 DELIMITER ;
 
--- Dumping structure for table kvant63.ru.node.shop_sampleprops
+-- Dumping structure for table ladasvet.ru.shop_sampleprops
 CREATE TABLE IF NOT EXISTS `shop_sampleprops` (
   `sample_id` smallint(5) unsigned NOT NULL,
   `prop_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
   `date_create` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'Для сортировки',
   `spec` enum('empty','any','exactly') NOT NULL DEFAULT 'exactly',
   PRIMARY KEY (`sample_id`,`prop_nick`) USING BTREE,
-  CONSTRAINT `FK_bed_sampleprops_bed_samples` FOREIGN KEY (`sample_id`) REFERENCES `shop_samples` (`sample_id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `FK_shop_sampleprops_shop_samples` FOREIGN KEY (`sample_id`) REFERENCES `shop_samples` (`sample_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_samples
+-- Dumping structure for table ladasvet.ru.shop_samples
 CREATE TABLE IF NOT EXISTS `shop_samples` (
   `sample_id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
   `group_id` smallint(5) unsigned NOT NULL,
   `date_create` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'Для сортировки',
   PRIMARY KEY (`sample_id`,`group_id`) USING BTREE,
-  KEY `FK_bed_gsamples_bed_groups` (`group_id`),
-  CONSTRAINT `FK_bed_gsamples_bed_groups` FOREIGN KEY (`group_id`) REFERENCES `shop_groups` (`group_id`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `FK_shop_gsamples_shop_groups` (`group_id`),
+  CONSTRAINT `FK_shop_gsamples_shop_groups` FOREIGN KEY (`group_id`) REFERENCES `shop_groups` (`group_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_samplevalues
+-- Dumping structure for table ladasvet.ru.shop_samplevalues
 CREATE TABLE IF NOT EXISTS `shop_samplevalues` (
   `sample_id` smallint(5) unsigned NOT NULL,
   `prop_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
@@ -987,13 +987,13 @@ CREATE TABLE IF NOT EXISTS `shop_samplevalues` (
   `date_create` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'Для сортировки',
   `number` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`sample_id`,`prop_nick`,`value_nick`) USING BTREE,
-  CONSTRAINT `FK_bed_samplepropvalues_bed_samples` FOREIGN KEY (`sample_id`) REFERENCES `shop_samples` (`sample_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `FK_bed_samplevalues_bed_sampleprops` FOREIGN KEY (`sample_id`, `prop_nick`) REFERENCES `shop_sampleprops` (`sample_id`, `prop_nick`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `FK_shop_samplepropvalues_shop_samples` FOREIGN KEY (`sample_id`) REFERENCES `shop_samples` (`sample_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FK_shop_samplevalues_shop_sampleprops` FOREIGN KEY (`sample_id`, `prop_nick`) REFERENCES `shop_sampleprops` (`sample_id`, `prop_nick`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_stat
+-- Dumping structure for table ladasvet.ru.shop_stat
 CREATE TABLE IF NOT EXISTS `shop_stat` (
   `year` smallint(5) unsigned NOT NULL,
   `month` enum('1','2','3','4','5','6','7','8','9','10','11','12') CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
@@ -1019,7 +1019,7 @@ CREATE TABLE IF NOT EXISTS `shop_stat` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_stat_brands
+-- Dumping structure for table ladasvet.ru.shop_stat_brands
 CREATE TABLE IF NOT EXISTS `shop_stat_brands` (
   `year` smallint(5) unsigned NOT NULL,
   `month` enum('1','2','3','4','5','6','7','8','9','10','11','12') CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
@@ -1045,7 +1045,7 @@ CREATE TABLE IF NOT EXISTS `shop_stat_brands` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_stat_groups
+-- Dumping structure for table ladasvet.ru.shop_stat_groups
 CREATE TABLE IF NOT EXISTS `shop_stat_groups` (
   `year` smallint(5) unsigned NOT NULL,
   `month` enum('1','2','3','4','5','6','7','8','9','10','11','12') CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
@@ -1073,7 +1073,7 @@ CREATE TABLE IF NOT EXISTS `shop_stat_groups` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_stat_groups_brands
+-- Dumping structure for table ladasvet.ru.shop_stat_groups_brands
 CREATE TABLE IF NOT EXISTS `shop_stat_groups_brands` (
   `year` smallint(5) unsigned NOT NULL,
   `month` enum('1','2','3','4','5','6','7','8','9','10','11','12') CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
@@ -1102,7 +1102,7 @@ CREATE TABLE IF NOT EXISTS `shop_stat_groups_brands` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_stat_groups_sources
+-- Dumping structure for table ladasvet.ru.shop_stat_groups_sources
 CREATE TABLE IF NOT EXISTS `shop_stat_groups_sources` (
   `year` smallint(5) unsigned NOT NULL,
   `month` enum('1','2','3','4','5','6','7','8','9','10','11','12') CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
@@ -1133,7 +1133,7 @@ CREATE TABLE IF NOT EXISTS `shop_stat_groups_sources` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_stat_sources
+-- Dumping structure for table ladasvet.ru.shop_stat_sources
 CREATE TABLE IF NOT EXISTS `shop_stat_sources` (
   `year` smallint(5) unsigned NOT NULL,
   `month` enum('1','2','3','4','5','6','7','8','9','10','11','12') CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
@@ -1161,7 +1161,7 @@ CREATE TABLE IF NOT EXISTS `shop_stat_sources` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_transports
+-- Dumping structure for table ladasvet.ru.shop_transports
 CREATE TABLE IF NOT EXISTS `shop_transports` (
   `order_id` mediumint(8) unsigned NOT NULL,
   `type` enum('city','self','cdek_pvz','any','cdek_courier','pochta_simple','pochta_1','pochta_courier') DEFAULT NULL COMMENT 'Выбор пользователя',
@@ -1169,19 +1169,19 @@ CREATE TABLE IF NOT EXISTS `shop_transports` (
   `min` tinyint(4) DEFAULT NULL COMMENT 'Cрок в днях',
   `max` tinyint(4) DEFAULT NULL COMMENT 'Cрок в днях',
   UNIQUE KEY `order_id` (`order_id`,`type`) USING BTREE,
-  CONSTRAINT `FK_bed_transports_bed_orders` FOREIGN KEY (`order_id`) REFERENCES `shop_orders` (`order_id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `FK_shop_transports_shop_orders` FOREIGN KEY (`order_id`) REFERENCES `shop_orders` (`order_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- Data exporting was unselected.
 
--- Dumping structure for table kvant63.ru.node.shop_userorders
+-- Dumping structure for table ladasvet.ru.shop_userorders
 CREATE TABLE IF NOT EXISTS `shop_userorders` (
   `order_id` mediumint(8) unsigned NOT NULL,
   `user_id` mediumint(8) unsigned NOT NULL,
   PRIMARY KEY (`order_id`,`user_id`) USING BTREE,
-  KEY `FK_bed_userorders_user_users` (`user_id`),
-  CONSTRAINT `FK_bed_userorders_bed_orders` FOREIGN KEY (`order_id`) REFERENCES `shop_orders` (`order_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `FK_bed_userorders_user_users` FOREIGN KEY (`user_id`) REFERENCES `user_users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `FK_shop_userorders_user_users` (`user_id`),
+  CONSTRAINT `FK_shop_userorders_shop_orders` FOREIGN KEY (`order_id`) REFERENCES `shop_orders` (`order_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FK_shop_userorders_user_users` FOREIGN KEY (`user_id`) REFERENCES `user_users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- Data exporting was unselected.

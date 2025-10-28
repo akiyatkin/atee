@@ -15,8 +15,5 @@
 	"bugs": {
 		"url": "https://github.com/akiyatkin/atee/issues"
 	},
-	"homepage": "https://github.com/akiyatkin/atee#readme",
-	"dependencies": {
-		"mysql2": "^2"
-	}
+	"homepage": "https://github.com/akiyatkin/atee#readme"
 }
