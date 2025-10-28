@@ -28,18 +28,38 @@ export const TABLE = (data, env) => err(data, env) || `
 			content:"🛡️";
 		}*/
 	</style>
-	<div style="margin:2em 0 2em; display: flex; flex-wrap:wrap; gap: 1em; justify-content: flex-end">
-		${field.prompt({
-			value: 'Добавить свойство', 
-			name: 'title',
-			input: '',
-			label: 'Название свойства', 
-			type: 'text', 
-			action: '/-sources/set-prop-create', 
-			args: {entity_id: data.entity_id},
-			global: 'check'
-		})}
-	</div>
+	<form style="display: flex; margin: 1em 0; gap: 1em; flex-wrap: wrap">
+		<div class="float-label">
+			<input id="freeinp" name="search" type="search" placeholder="Поиск" value="${env.bread.get.search ?? ''}">
+			<label for="freeinp">Поиск</label>
+		</div>
+		<div style="display: flex; justify-content: space-between; flex-grow: 1; gap: 1em;">
+			<button type="submit">Найти</button>
+			${field.prompt({
+				value: 'Добавить свойство', 
+				name: 'title',
+				input: '',
+				label: 'Название свойства', 
+				type: 'text', 
+				action: '/-sources/set-prop-create', 
+				args: {entity_id: data.entity_id},
+				global: 'check'
+			})}
+		</div>
+		<script>
+			(form => {
+				const btn = form.querySelector('button')
+				const input = form.querySelector('input')
+				form.addEventListener('submit', async (e) => {
+					e.preventDefault()
+					const Client = await window.getClient()
+					Client.go('props?search=' + input.value, false)
+					Client.reloaddiv("${env.layer.div}")
+				})
+			})(document.currentScript.parentElement)
+		</script>
+	</form>
+	
 	<div class="revscroll" style="margin: 2em 0">
 		<table draggable="false" class="list">
 			<thead>
@@ -47,7 +67,6 @@ export const TABLE = (data, env) => err(data, env) || `
 					<td></td>
 					<td></td>
 					<td>Свойство</td>
-					<td>Колонок</td>
 					<td>Тип</td>
 					<td>Значений</td>
 					<td>Комментарий</td>
@@ -101,7 +120,6 @@ const showTr = (data, env, prop) => `
 		<td>
 			<a href="prop/${prop.prop_id}">${prop.prop_title}</a>
 		</td>
-		<td>${prop.cols}</td>
 		<td>
 			<!-- ${prop.type} -->
 			${field.setpop({

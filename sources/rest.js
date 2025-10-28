@@ -252,6 +252,7 @@ rest.addResponse('main', async view => {
 })
 rest.addResponse('props', ['admin'], async view => {
 	const db = await view.get('db')
+	const hashs = await view.get('hashs')
 	const list = view.data.list = await db.all(`
 		SELECT 
 			pr.prop_id,
@@ -261,10 +262,12 @@ rest.addResponse('props', ['admin'], async view => {
 			pr.known,
 			pr.multi + 0 as multi,
 			pr.comment,
-			pr.represent_prop + 0 as represent_prop,
-			(select count(*) from sources_cols co where co.prop_id = pr.prop_id) as cols
+			pr.represent_prop + 0 as represent_prop
 		FROM sources_props pr
-		ORDER BY pr.ordain
+		where 
+		(${hashs.map(hash => 'pr.prop_nick like "%' + hash.join('%" and pr.prop_nick like "%') + '%"').join(' or ') || '1 = 1'}) 
+		ORDER BY rand()
+		limit 10
 	`)
 	//view.data.list = list.slice(0, 1000)
 	return view.ret()

@@ -50,11 +50,11 @@
 	"json":{
 		"recalc:ROOT":"/-sources/get-recalc",
 		"main:ROOT":"/-sources/main",
-		"props:TABLE":"/-sources/props",
 		"settings:ROOT":"/-sources/settings",
 		"memory:ROOT":"/-sources/memory"
 	},
 	"jsontpl":{
+		"props:TABLE":"/-sources/props?hashs=${env.bread.get.search ?? ''}",
 		"rows:ROOT":"/-sources/rows?query=${env.bread.get.search ?? ''}",
 		"sheet:ROOT":"/-sources/sheet?source_id=${env.bread.get.source_id ?? ''}",
 		"sheet:DATES":"/-sources/sheet-dates?source_id=${env.bread.get.source_id ?? ''}&appear=${env.bread.get.appear ?? ''}&hashs=${env.bread.get.search ?? ''}",

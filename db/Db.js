@@ -34,7 +34,7 @@ const createPool = async () => {
     const poolConfig = {
         waitForConnections: false,
         connectionLimit: 50,
-        queueLimit: 100,
+        queueLimit: 10,
         // acquireTimeout и timeout убраны полностью
     };
 
@@ -48,12 +48,12 @@ const createPool = async () => {
         const pool = mysql.createPool(finalConfig);
 
         // Проверяем работоспособность через получение соединения
-        const connection = await pool.getConnection();
+        const db = await pool.getConnection();
         try {
-            await connection.execute('SELECT 1');
+            await db.execute('SELECT 1');
             console.log('Database pool ready');
         } finally {
-            connection.release();
+            db.release();
         }
         return pool;
 
@@ -63,7 +63,7 @@ const createPool = async () => {
     }
    
 }
-let pool = await createPool()
+const pool = await createPool()
 process.on('SIGINT', async () => {
     console.log('pool.end')
     await pool.end()
@@ -90,80 +90,18 @@ export class Db {
     }
 
     async connect() {
-        if (!pool) {
-            console.log('Pool not initialized, creating new pool...');
-            pool = await createPool();
-            if (!pool) {
-                console.error('Failed to create database pool');
-                return false;
-            }
-        }
-
         try {
-            this.db = await pool.getConnection();
-            
-            // Проверяем соединение
-            await this.db.ping();
-            
-            this.reconnectAttempts = 0;
-            //console.log('Database connection established successfully');
+            this.db = await pool.getConnection();            
             return this;
-
         } catch (error) {
             console.error('Failed to get database connection:', error.message);
-            return await this.handleReconnection();
+           throw error
         }
     }
-
-    async handleReconnection() {
-        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-            console.error(`Max reconnection attempts (${this.maxReconnectAttempts}) exceeded`);
-            return false;
-        }
-
-        this.reconnectAttempts++;
-        console.log(`Reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
-
-        // Задержка между попытками
-        const delay = 1000 * this.reconnectAttempts;
-        await new Promise(resolve => setTimeout(resolve, delay));
-
-        try {
-            // Пересоздаем пул при необходимости
-            if (this.shouldRecreatePool()) {
-                console.log('Recreating database pool...');
-                pool = await createPool();
-            }
-
-            if (!pool) {
-                console.error('Pool recreation failed');
-                return false;
-            }
-
-            this.db = await pool.getConnection();
-            await this.db.ping();
-            
-            console.log('Reconnection successful');
-            this.reconnectAttempts = 0;
-            return this;
-
-        } catch (reconnectError) {
-            console.error(`Reconnection attempt ${this.reconnectAttempts} failed:`, reconnectError.message);
-            return await this.handleReconnection();
-        }
-    }
-
-    shouldRecreatePool() {
-        // Пересоздаем пул при первой попытке или после серьезных ошибок
-        return this.reconnectAttempts === 1;
-    }
-
     // Транзакции
     async start() {
         this.transdeep++;
         if (this.transdeep === 1) {
-            await this.ensureConnection();
-            
             // Проверяем, не находимся ли мы уже в транзакции
             const inTransaction = await this.col('SELECT @@autocommit');
             if (inTransaction === 1) { // autocommit = 1 значит не в транзакции
@@ -200,31 +138,11 @@ export class Db {
         return true;
     }
 
-    // Вспомогательный метод для проверки соединения
-    async ensureConnection() {
-        if (!this.db) {
-            const connected = await this.connect();
-            if (!connected) {
-                throw new Error('No database connection available');
-            }
-        }
-
-        try {
-            await this.db.ping();
-        } catch (error) {
-            console.log('Connection lost, reconnecting...');
-            const reconnected = await this.connect();
-            if (!reconnected) {
-                throw new Error('Failed to reconnect to database');
-            }
-        }
-    }
-
     // Универсальный метод выполнения запросов
     async executeQuery(sql, values = null) {
-        
-        await this.ensureConnection();
-        
+        if (!this.db) {
+            console.log('Попытка выполнить запрос после того как соединение было освобождено', sql, values)
+        }
         try {
             if (values && Object.keys(values).length) {
                 return await this.db.execute({ sql, values });
@@ -232,32 +150,15 @@ export class Db {
                 return await this.db.query(sql);
             }
         } catch (error) {
-            console.error('Нет соединения:', {
+            console.error('Error executeQuery', {
                 sql: sql.substring(0, 200) + (sql.length > 200 ? '...' : ''),
                 values: values,
                 error: error.message
-            });
-            
-            // Повторяем запрос при ошибках соединения
-            if (this.isConnectionError(error)) {
-                console.log('Connection error, retrying query...');
-                await this.connect();
-                return await this.executeQuery(sql, values);
-            }
-            
-            throw error;
+            })
+            throw error
         }
     }
 
-    isConnectionError(error) {
-        const connectionErrors = [
-            'PROTOCOL_CONNECTION_LOST',
-            'ER_CON_COUNT_ERROR',
-            'ECONNRESET',
-            'EPIPE'
-        ];
-        return connectionErrors.includes(error?.code);
-    }
 
     // SELECT методы
     async fetch(sql, values = null) {
