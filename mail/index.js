@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer'
 import fs from 'fs/promises'
 import config from '/-config'
-import csv from '/-csv'
+//import csv from '/-csv'
 
 const conf = await config('mail')
 const transport = conf.nodemailer ? nodemailer.createTransport(conf.nodemailer) : false
