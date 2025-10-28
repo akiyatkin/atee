@@ -32,8 +32,8 @@ Ecommerce.getProduct = (data, {coupon, item, listname, position, group_nick, qua
 	const cena = item['cena']?.[0]
 	const oldcost = item['staraya-cena']?.[0]
 	const product = {
-		"id": item.brendmodel[0],
-		"sku": item.brendart[0],
+		"id": item.brendmodel.?[0] || 'Нет БрендМодель',
+		"sku": item.brendart.?[0] || 'Нет БрендАрт',
 		"name" : cards.getItemName(data, item), //gain('naimenovanie') || gain('brend') gain('model'),
 		"brand": gain('brend'),
 		"variant": gain('art'),
