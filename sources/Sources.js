@@ -1209,7 +1209,7 @@ Sources.sheet.getCostWithZero = (text) => {
 	let textnumber = text.replaceAll(/\s/g, '')
 	textnumber = textnumber.replace(',','.')
 	textnumber = textnumber.replace('&comma;','.')
-	return Math.round(Number(textnumber))
+	return Math.round(parseInt(textnumber))
 }
 Sources.sheet.getCostDiscountWithZero = (text, dis) => {
 	if (text == null) return null
