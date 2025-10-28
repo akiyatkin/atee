@@ -8,11 +8,12 @@ ImpExp.export = async (db, tables) => {
 	for (const table of tables) {
 		dump[table] = await db.all(`SELECT * FROM ${table}`)	
 	}
-	const text = "`" + JSON.stringify(dump)	+ "`"
+
 	return `
 	<textarea style="width: 100%;" rows="10" id="impextcontainer"></textarea>
-	<script>
-	    document.getElementById('impextcontainer').textContent = ${text}
+	<script type="module">
+		const dump = ${JSON.stringify(dump)}		
+	    document.getElementById('impextcontainer').textContent = JSON.stringify(dump)
 	</script>
 
 `
