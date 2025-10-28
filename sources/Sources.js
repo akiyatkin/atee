@@ -1206,7 +1206,7 @@ Sources.sheet = {}
 Sources.sheet.getCostWithZero = (text) => {
 	if (typeof text == 'number') return Math.round(text)
 	if (typeof text != 'string') return text
-	let textnumber = text.replace(/\s/g, '')
+	let textnumber = text.replaceAll(/\s/g, '')
 	textnumber = textnumber.replace(',','.')
 	textnumber = textnumber.replace('&comma;','.')
 	return Math.round(Number(textnumber))
