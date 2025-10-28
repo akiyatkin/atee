@@ -1570,7 +1570,8 @@ import ImpExp from "/-sources/ImpExp.js"
 rest.addResponse('set-import', ['admin'], async view => {
 	const db = await view.get('db')
 	const json = await view.get('json#required')
-	if (!json) return view.err('Укажите данные')	
+	if (!json) return view.err('Укажите данные')
+		console.log('asdf')
 	const msg = await ImpExp.import(db, json, rest_sources.exporttables)
 	if (msg) return view.err(msg)
 

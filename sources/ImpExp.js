@@ -8,7 +8,14 @@ ImpExp.export = async (db, tables) => {
 	for (const table of tables) {
 		dump[table] = await db.all(`SELECT * FROM ${table}`)	
 	}
-	return '<textarea style="width: 100%;" rows="10">' + JSON.stringify(dump) + '</textarea>'
+	const text = "`" + JSON.stringify(dump)	+ "`"
+	return `
+	<textarea style="width: 100%;" rows="10" id="impextcontainer"></textarea>
+	<script>
+	    document.getElementById('impextcontainer').textContent = ${text}
+	</script>
+
+`
 }
 // ImpExp.convertISODateToMySQL = (isoDateString) => {
 //     const date = new Date(isoDateString);
@@ -39,6 +46,7 @@ ImpExp.import = async (db, json, tables) => {
 	try {
 		dump = JSON.parse(json)
 	} catch(e) {
+		console.log(e)
 		 return 'Данные не распознаны'
 	}
 	for (const table of tables) {
