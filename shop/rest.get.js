@@ -339,7 +339,6 @@ rest.addResponse('get-model', async (view) => {
 		if (!item.texts) continue
 		item.texts = await Promise.all(item.texts.map(src => {
 			const ext = (i => ~i ? src.slice(i + 1) : '')(src.lastIndexOf('.'))
-			console.log(ext)
 			if (ext == 'docx') return docx.read(Access, src)
 			return fs.readFile(src, 'utf8')
 		}))

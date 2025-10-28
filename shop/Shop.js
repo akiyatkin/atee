@@ -84,10 +84,11 @@ Shop.getGainHead = async (item, gain) => {
 	else if (brendmodel != brendart && art) head.title = [brendmodel, art].join(' ')
 	
 
-	head.title = [brendart].join(' ')
+
 	if (image_src) head.image_src = image_src
-	if (naimenovanie) head.description = naimenovanie
-	else if (opisanie) head.description = opisanie
+	
+	if (opisanie) head.description = opisanie
+	else if (naimenovanie) head.description = naimenovanie
 	
 
 	if (!head.title) head.title = brendart
