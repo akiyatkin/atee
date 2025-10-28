@@ -33,10 +33,13 @@ cards.getItemName = (data, selitem) => { //ecommerce.name (в паре с getVar
 
 cards.getVariant = (data, model, item) => { //ecommerce.variant
 	if (model.items.length == 1) return '' //variant не будет указан
+		console.log(item)
 	const list = model.iprops.filter(prop_nick => {
 		const prop = data.props[prop_nick]
+		if (!prop?.type) return false
 		if (prop.type == 'text') return false
 		if (prop.known == 'column') return false
+		if (prop.known == 'system') return false
 		if (model.recap[prop_nick].length < 2) return false //В имя не надо вставлять то что нельзя выбрать если значение только одно
 		if (!item[prop_nick]) return false
 		return true
@@ -46,7 +49,8 @@ cards.getVariant = (data, model, item) => { //ecommerce.variant
 		if (prop.unit) return titles.map(title => title + ' ' + prop.unit)
 		return titles
 	})
-	const title = unique(list.flat()).sort().join(', ') 
+	//const title = unique(list.flat()).join(', ') //.sort()
+	const title = list.flat().join(', ')
 
 	return title
 }

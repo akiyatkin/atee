@@ -1408,7 +1408,7 @@ rest.addAction('set-col-prop-reset', ['admin','checkrecalc'], async view => {
 })
 rest.addAction('set-prop-create', ['admin','checkrecalc'], async view => {
 	const db = await view.get('db')
-	const prop_title = await view.get('search') || await view.get('title')
+	const prop_title = await view.get('query') || await view.get('title')
 	const prop_nick = nicked(prop_title)
 	if (!prop_nick) return view.err('Требуется название')
 	

@@ -284,7 +284,7 @@ const getItem = (data, env) => {
 }
 rest.addResponse('get-item-check', async (view) => {
 	const art = await view.get('art')
-	const search = await view.get('search')	
+	const search = await view.get('query')	
 	const conf = await config('shop', true)
 	const model = view.data.model = await view.get('model#required')
 
@@ -348,7 +348,7 @@ rest.addResponse('get-model', async (view) => {
 	const values = view.data.values = {}
 	for (const prop_nick in model.recap) {
 		const prop = props[prop_nick] = await Shop.getPropByNick(db, prop_nick)
-		if (prop.type != 'value') continue
+		if (prop.type == 'text') continue
 		for (const value_nick of model.recap[prop_nick]) {
 			values[value_nick] = await Shop.getValueByNick(db, value_nick)
 		}
