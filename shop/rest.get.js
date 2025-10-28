@@ -334,8 +334,7 @@ rest.addResponse('get-model', async (view) => {
 
 
 	const files = view.data.files = (model.recap.files || []).map(src => Files.srcInfo(src))	
-
-	view.data.texts = {}
+	
 	for (const item of model.items) {
 		if (!item.texts) continue
 		item.texts = await Promise.all(item.texts.map(src => {
