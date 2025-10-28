@@ -76,7 +76,6 @@ ImpExp.import = async (db, json, tables) => {
 		await db.exec(`TRUNCATE TABLE ${table}`)
 		await db.exec(`SET SESSION time_zone = @@session.time_zone;`)
 
-		console.log(table)
 		const bulk = new BulkInserter(db, table, keys);
 		for (const row of rows) await bulk.insert(Object.values(row).map((value, i) => {
 			if (value === null) return null

@@ -1,5 +1,6 @@
 import { createRequire } from "module"
 import Sources from "/-sources/Sources.js"
+import unique from "/-nicked/unique.js"
 const require = createRequire(import.meta.url)
 const { XMLParser } = require("fast-xml-parser");
 import readChars from "/-sources/readChars.js"
@@ -205,6 +206,7 @@ YML.getdoc = doc => {
 	}
 	return doc
 }
+const regtestemptyvalue = /^[-_=+()\{\}\[\]\^\s]*$/
 YML.loadSheets = async (SRC, callback, headers) => {
 	const {
 		offers, 
@@ -237,12 +239,18 @@ YML.loadSheets = async (SRC, callback, headers) => {
 		
 		offer.param ??= []
 		if (!Array.isArray(offer.param)) offer.param = [offer.param]
+		const values = {}
 		for (const param of offer.param) {
 			const text = String(param['#text'] || '').trim()
+			if (regtestemptyvalue.test(text)) continue
 			if (!text) continue
 			const name = param['@_name'] + (param['@_unit'] ?  ', ' + param['@_unit'] : '')
-			if (!name) continue
-			addCell(name, text)
+			if (!name) continue	
+			values[name] ??= []
+			values[name].push(text)
+		}
+		for (const name in values) {
+			addCell(name, unique(values[name]).join(', ')) //заменяет если такая колонка уже есть
 		}
 		
 	}
