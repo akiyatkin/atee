@@ -73,7 +73,6 @@ export class Db {
     constructor() {
         this.transdeep = 0;
         this.conf = conf;
-        this.db = null;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 3;
     }
@@ -82,21 +81,8 @@ export class Db {
         return 'Db';
     }
 
-    release() {
-        if (this.db) {
-            this.db.release();
-            this.db = null;
-        }
-    }
-
     async connect() {
-        try {
-            this.db = await pool.getConnection();            
-            return this;
-        } catch (error) {
-            console.error('Failed to get database connection:', error.message);
-           throw error
-        }
+        return this;
     }
     // Транзакции
     async start() {
@@ -140,14 +126,11 @@ export class Db {
 
     // Универсальный метод выполнения запросов
     async executeQuery(sql, values = null) {
-        if (!this.db) {
-            console.log('Попытка выполнить запрос после того как соединение было освобождено', sql, values)
-        }
         try {
             if (values && Object.keys(values).length) {
-                return await this.db.execute({ sql, values });
+                return await pool.execute({ sql, values });
             } else {
-                return await this.db.query(sql);
+                return await pool.query(sql);
             }
         } catch (error) {
             console.error('Error executeQuery', {

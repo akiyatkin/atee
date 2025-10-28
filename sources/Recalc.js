@@ -17,7 +17,7 @@ Recalc.checkShutdown = async (funchange) => {
 	} else if (!dates.date_recalc_publicate) {
 		Recalc.deferredPublicate(db)
 	}
-	db.release()
+	//db.release()
 }
 
 
@@ -95,7 +95,7 @@ Recalc.recalc = async (funchange, publicate_required) => {
 		//Нужно при публикации сбрасывать? а если это работа с группами?
 		Access.setAccessTime() //Когда это не нужно? оставил коммент - но там и пересчёт не требуется
 	}
-	db.release()
+	//db.release()
 }
 Recalc.recalc.counter = 0
 export default Recalc

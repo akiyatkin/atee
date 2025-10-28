@@ -4,7 +4,7 @@ class BulkInserter {
 		this.columns = columns;
 		this.batchSize = batchSize;
 		this.buffer = [];
-		this.db = db.db;
+		this.db = db;
 		this.onDuplicateUpdate = onDuplicateUpdate;
 	}
 	
@@ -41,7 +41,7 @@ class BulkInserter {
 				sql += ` ON DUPLICATE KEY UPDATE ${updateClause}`;
 			}
 			
-			const result = await this.db.query(sql, [this.buffer]);
+			await this.db.query(sql, [this.buffer]);
 			
 			// Очищаем буфер
 			this.buffer = [];

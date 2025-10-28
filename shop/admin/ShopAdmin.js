@@ -1882,7 +1882,7 @@ ShopAdmin.scheduleDailyRestat = async (time = '01:09') => {
 			await db.affectedRows(`CALL shop_recalcPrev()`)
 		}
 		
-		await db.release()
+		//await db.release()
 		return 'ok'
 	})
 }

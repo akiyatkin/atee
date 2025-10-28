@@ -4,7 +4,7 @@ class BulkDeleter {
         this.keyColumns = keyColumns;
         this.batchSize = batchSize;
         this.buffer = [];
-        this.db = db.db;
+        this.db = db;
     }
     
     delete (keyData) {
@@ -34,7 +34,7 @@ class BulkDeleter {
             ).join(' OR ');
             
             const sql = `DELETE FROM ${this.tableName} WHERE ${conditions}`;
-            const result = await this.db.query(sql);
+            await this.db.query(sql);
             
             this.buffer = [];
             
@@ -65,8 +65,7 @@ class BulkDeleter {
                 ON ${joinConditions}
             `;
             
-            const result = await this.db.query(sql);
-            console.log(`Удалено ${result.affectedRows} записей`);
+            await this.db.query(sql);
             this.buffer = [];
             
         } catch (err) {

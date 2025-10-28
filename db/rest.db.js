@@ -5,18 +5,6 @@ const rest = new Rest()
 rest.addVariable('isdb', async view => {
 	const db = await new Db().connect()
 	if (!db) return false
-	//console.log('db','connect', db.db.threadId)
-	view.after(async () => {
-		//if (!view.ans.result) db.back()
-
-		if (view.ans.result) {
-		 	await db.commit()
-		} else {
-		 	await db.back()
-		}
-		//console.log('db','release', db.db.threadId)
-		db.release()
-	})
 	return db
 })
 rest.addVariable('db', async view => {
@@ -25,17 +13,17 @@ rest.addVariable('db', async view => {
 	return view.err('Нет соединения с базой данных!')
 })
 
-rest.addVariable('start', async view => { //depricated
-	const db = await view.get('db')
-	await db.start()
-	// view.after(async () => {
-	// 	if (view.ans.result) {
-	// 		await db.commit()
-	// 	} else {
-	// 		await db.back()
-	// 	}
-	// })
-})
+// rest.addVariable('start', async view => { //depricated
+// 	const db = await view.get('db')
+// 	await db.start()
+// 	// view.after(async () => {
+// 	// 	if (view.ans.result) {
+// 	// 		await db.commit()
+// 	// 	} else {
+// 	// 		await db.back()
+// 	// 	}
+// 	// })
+// })
 
 
 export default rest

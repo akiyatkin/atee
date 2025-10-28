@@ -167,7 +167,6 @@ const User = {
 		return User.sendup(db, user_id, view.visitor.client.host, email)
 	},
 	addEmail: async (db, user_id, email) => {
-		await db.start()
 		await db.affectedRows(`
 			UPDATE
 				user_uemails
@@ -186,8 +185,7 @@ const User = {
 				search = :search,
 				date_add = now(),
 				ordain = 1
-		`, {search, email, user_id})
-		await db.commit()
+		`, {search, email, user_id})		
 	},
 	delAllEmail: async (db, user_id) => {
 		return await db.affectedRows(`

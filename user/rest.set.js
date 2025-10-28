@@ -156,7 +156,6 @@ rest.addAction('set-user-id', async (view) => {
 })
 
 rest.addAction('set-signup-email', async (view) => {
-	await view.get('start')
 	await view.get('recaptcha')
 	let email = await view.get('email#required')
 	const db = await view.get('db')	

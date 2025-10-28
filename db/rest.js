@@ -13,7 +13,7 @@ rest.addResponse('get-state', async view => {
 	view.ans.admin = await Access.isAdmin(visitor.client.cookie)
 	const db = await new Db().connect()
 	view.ans.db = !!db
-	db.release()
+	//db.release()
 	return view.ret()
 })
 rest.addResponse('get-tables', async view => {
