@@ -548,7 +548,7 @@ Shop.getBind = Access.wait(async db => {
 	const bind = {}
 	for (const name in list) {
 		const prop = await Shop.getPropByNick(db, name)
-		if (!prop) throw 'Требуется обязательное свойство ' + name
+		//if (!prop) throw 'Требуется обязательное свойство ' + name
 		bind[`${name}_prop_id`] = prop.prop_id || null
 	}
 	return bind
