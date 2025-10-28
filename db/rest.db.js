@@ -5,6 +5,7 @@ const rest = new Rest()
 rest.addVariable('isdb', async view => {
 	const db = await new Db().connect()
 	if (!db) return false
+	//console.log('db','connect', db.db.threadId)
 	view.after(async () => {
 		//if (!view.ans.result) db.back()
 
@@ -13,6 +14,7 @@ rest.addVariable('isdb', async view => {
 		} else {
 		 	await db.back()
 		}
+		//console.log('db','release', db.db.threadId)
 		db.release()
 	})
 	return db

@@ -287,7 +287,9 @@ rest.addResponse('get-item-check', async (view) => {
 	const search = await view.get('query')	
 	const conf = await config('shop', true)
 	const model = view.data.model = await view.get('model#required')
-
+	if (model.items.find(item => !item.brendart)) {
+		console.log('wtf !item.brendart', art, search, model)
+	}
 	const item = model.items.find(item => item.art?.[0] == art || item.brendart[0] == art)
 	
 	if (!item) {

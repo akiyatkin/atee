@@ -32,8 +32,8 @@ const createPool = async () => {
     };
 
     const poolConfig = {
-        waitForConnections: true,
-        connectionLimit: 20,
+        waitForConnections: false,
+        connectionLimit: 50,
         queueLimit: 100,
         // acquireTimeout и timeout убраны полностью
     };
@@ -55,11 +55,6 @@ const createPool = async () => {
         } finally {
             connection.release();
         }
-        process.on('SIGINT', async () => {
-            console.log('pool.end')
-            await pool.end()
-            process.exit(0)
-        })
         return pool;
 
     } catch (error) {
@@ -69,6 +64,11 @@ const createPool = async () => {
    
 }
 let pool = await createPool()
+process.on('SIGINT', async () => {
+    console.log('pool.end')
+    await pool.end()
+    process.exit(0)
+})
 export class Db {
     constructor() {
         this.transdeep = 0;
