@@ -620,6 +620,18 @@ const showFree = (data, env, freetable, addcheckbox = false) => !freetable.rows.
 					${(freetable?.rows || []).map(row => showTr(data, env, row, freetable?.indexes, addcheckbox)).join('')}
 				</tbody>
 			</table>
+			<script>
+				(async div => {
+					const table = div.querySelector('table')
+					table.addEventListener('click', (e) => {
+						const old = table.querySelector('.clicked')
+						if (old) old.classList.remove('clicked')
+						const tr = e.target.closest('tr')
+						if (!tr) return
+						tr.classList.add('clicked')
+					})
+				})(document.currentScript.parentElement)
+			</script>
 		</div>
 		${addcheckbox ? resumeCheckBox(data, env) : ''}
 		${!env.bread.get.count && freetable.poscount > freetable?.rows.length ? linkMore(data, env) : ''}

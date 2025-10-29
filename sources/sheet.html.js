@@ -354,7 +354,18 @@ export const TABLE = (data, env, sheet = data.sheet, source = data.source) => !d
 				${data.texts.map((row, text_index) => showCellsTr(data, env, sheet, source, row, text_index)).join('')}
 			</tbody>
 		</table>
-		
+		<script>
+			(async div => {
+				const table = div.querySelector('table')
+				table.addEventListener('click', (e) => {
+					const old = table.querySelector('.clicked')
+					if (old) old.classList.remove('clicked')
+					const tr = e.target.closest('tr')
+					if (!tr) return
+					tr.classList.add('clicked')
+				})
+			})(document.currentScript.parentElement)
+		</script>
 		<script>
 			(async div => {
 				const name = 'sources_sheet_${source.source_id}_${sheet.sheet_index}'

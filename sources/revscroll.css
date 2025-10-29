@@ -25,6 +25,9 @@
 .revscroll table td {
 	padding: 1px 0.6ch;
 }
+.revscroll .clicked {
+	background-color: var(--color);
+}
 .revscroll > * {
 	border: none;
 	transform: rotateX(180deg);

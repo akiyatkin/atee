@@ -340,6 +340,18 @@ export const TABLE = (data, env) => err(data, env) || `
 				${(data.brands || []).map(row => showRow(data, env, data.group, row)).join('')}
 			</tbody>
 		</table>
+		<script>
+			(async div => {
+				const table = div.querySelector('table')
+				table.addEventListener('click', (e) => {
+					const old = table.querySelector('.clicked')
+					if (old) old.classList.remove('clicked')
+					const tr = e.target.closest('tr')
+					if (!tr) return
+					tr.classList.add('clicked')
+				})
+			})(document.currentScript.parentElement)
+		</script>
 	</div>
 `
 const showStatHead = (data, env) => `

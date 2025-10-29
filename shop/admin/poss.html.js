@@ -49,16 +49,18 @@ const showFree = (data, env, table) => `
 				${table.rows.map((row, i) => showRowTr(data, env, row, table.key_ids[i], table.groups[i])).join('')}
 			</tbody>
 		</table>
-		<!-- <script>
+		<script>
 			(async div => {
-				const name = 'sources_poss_'
-				div.scrollLeft = window.sessionStorage.getItem(name) || 0
-				div.addEventListener('scroll', e => {
-					window.sessionStorage.setItem(name, div.scrollLeft)
-				}, {passive: true})
-
+				const table = div.querySelector('table')
+				table.addEventListener('click', (e) => {
+					const old = table.querySelector('.clicked')
+					if (old) old.classList.remove('clicked')
+					const tr = e.target.closest('tr')
+					if (!tr) return
+					tr.classList.add('clicked')
+				})
 			})(document.currentScript.parentElement)
-		</script> -->
+		</script>
 	</div>
 `
 const showRowTr = (data, env, row, key_id, groups) => `

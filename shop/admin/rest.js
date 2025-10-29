@@ -384,6 +384,7 @@ rest.addResponse('brands', ['admin'], async view => {
 })
 rest.addResponse('props', ['admin'], async view => {
 	const db = await view.get('db')
+	const hashs = await view.get('hashs')
 	const list = await db.all(`
 		SELECT 
 			bp.prop_nick, 
@@ -416,7 +417,10 @@ rest.addResponse('props', ['admin'], async view => {
 			pr.prop_id
 		FROM sources_props pr
 			LEFT JOIN shop_props bp on pr.prop_nick = bp.prop_nick
-		order by pr.ordain
+		WHERE
+		(${hashs.map(hash => 'pr.prop_nick like "%' + hash.join('%" and pr.prop_nick like "%') + '%"').join(' or ') || '1 = 1'}) 
+		ORDER BY rand()
+		limit 20
 	`)
 	for(const row of list) {
 		view.data.props.unshift(row)

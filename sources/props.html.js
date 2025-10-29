@@ -36,6 +36,7 @@ export const TABLE = (data, env) => err(data, env) || `
 		<div style="display: flex; justify-content: space-between; flex-grow: 1; gap: 1em;">
 			<button type="submit">Найти</button>
 			${field.prompt({
+				cls: 'a',
 				value: 'Добавить свойство', 
 				name: 'title',
 				input: '',
