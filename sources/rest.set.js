@@ -521,7 +521,7 @@ rest.addAction('set-sources-renovate', ['checkrecalc'], async view => { //Нет
 
 	const promise = Recalc.recalc(async (db) => {
 		await renovateSourcesAll(db, view.visitor)
-		await Sources.recalcAllChanges(db)		
+		await Sources.recalcAllChanges(db)
 	}, !go)
 	
 	if (!go) return view.ret()
