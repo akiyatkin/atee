@@ -71,6 +71,7 @@ process.on('SIGINT', async () => {
 })
 export class Db {
     constructor() {
+        this.pool = pool;
         this.transdeep = 0;
         this.conf = conf;
         this.reconnectAttempts = 0;
@@ -127,17 +128,17 @@ export class Db {
     // Универсальный метод выполнения запросов
     async executeQuery(sql, values = null) {
         try {
-            if (values && Object.keys(values).length) {
-                return await pool.execute({ sql, values });
+            if (values && (values?.length || Object.keys(values).length)) {
+                return await pool.execute(sql, values);
             } else {
                 return await pool.query(sql);
             }
         } catch (error) {
-            console.error('Error executeQuery', {
-                sql: sql.substring(0, 200) + (sql.length > 200 ? '...' : ''),
-                values: values,
-                error: error.message
-            })
+            // console.error('Error executeQuery', {
+            //     sql: sql.substring(0, 200) + (sql.length > 200 ? '...' : ''),
+            //     values: values,
+            //     error: error.message
+            // })
             throw error
         }
     }

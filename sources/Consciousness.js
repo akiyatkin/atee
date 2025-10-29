@@ -2789,7 +2789,7 @@ Consciousness.recalcSearchByEntityIdAndSourceId = async (db, entity_id, source_i
 
 Consciousness.recalcWinner = async (db) => {
 	console.time('recalcWinner')
-	const conn = await db.getConnection()
+	const conn = await db.pool.getConnection()
 	await conn.beginTransaction()
 	await conn.query(`DELETE FROM sources_wcells`)
 	await conn.query(`DELETE FROM sources_wdates`)

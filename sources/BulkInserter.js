@@ -28,10 +28,10 @@ class BulkInserter {
 		
 		try {
 			const columnsStr = '`' + this.columns.join('`, `') + '`';
-			const placeholders = this.columns.map(() => '?').join(', ');
-			
+			const singleRowPlaceholder = this.columns.map(() => '?').join(', ');
+			const allPlaceholders = this.buffer.map(() => singleRowPlaceholder).join('),(');
 			// Базовый SQL для вставки
-			let sql = `INSERT INTO ${this.tableName} (${columnsStr}) VALUES ?`;
+			let sql = `INSERT INTO ${this.tableName} (${columnsStr}) VALUES (${allPlaceholders})`;
 			
 			// Добавляем ON DUPLICATE KEY UPDATE если нужно
 			if (this.onDuplicateUpdate) {
@@ -40,9 +40,7 @@ class BulkInserter {
 					.join(', ');
 				sql += ` ON DUPLICATE KEY UPDATE ${updateClause}`;
 			}
-			
-			await this.db.execute(sql, [this.buffer]);
-			
+			await this.db.exec(sql, this.buffer.flat());
 			// Очищаем буфер
 			this.buffer = [];
 			
