@@ -365,7 +365,7 @@ Sources.insertSheets = async (db, source, sheets) => {
 	await db.exec(`DELETE FROM sources_rows WHERE source_id = :source_id`, source)
 	await db.exec(`DELETE FROM sources_cells WHERE source_id = :source_id`, source)
 	
-	const sources_sheets = new BulkInserter(db, 'sources_sheets', ['source_id', 'sheet_index', 'sheet_title']);
+	const sources_sheets = new BulkInserter(db.pool, 'sources_sheets', ['source_id', 'sheet_index', 'sheet_title']);
 	for (const sheet_index in sheets) {
 		const {title: sheet_title, rows, head} = sheets[sheet_index]
 		await sources_sheets.insert([source_id, sheet_index, sheet_title])
@@ -376,7 +376,7 @@ Sources.insertSheets = async (db, source, sheets) => {
 	}
 	await sources_sheets.flush()
 
-	const sources_cols = new BulkInserter(db, 'sources_cols', ['source_id', 'sheet_index', 'col_index', 'col_nick', 'col_title']);
+	const sources_cols = new BulkInserter(db.pool, 'sources_cols', ['source_id', 'sheet_index', 'col_index', 'col_nick', 'col_title']);
 	for (const sheet_index in sheets) {
 		const {title: sheet_title, rows, head} = sheets[sheet_index]
 		const colsunique = {}
@@ -403,7 +403,7 @@ Sources.insertSheets = async (db, source, sheets) => {
 	}
 	await sources_cols.flush()
 
-	const sources_rows = new BulkInserter(db, 'sources_rows', ['source_id', 'sheet_index', 'row_index']);
+	const sources_rows = new BulkInserter(db.pool, 'sources_rows', ['source_id', 'sheet_index', 'row_index']);
 	for (const sheet_index in sheets) {
 		const {title: sheet_title, rows, head} = sheets[sheet_index]
 		for (const row_index in rows) {
@@ -416,7 +416,7 @@ Sources.insertSheets = async (db, source, sheets) => {
 	}
 	await sources_rows.flush()
 
-	const sources_cells = new BulkInserter(db, 'sources_cells', ['source_id', 'sheet_index', 'row_index', 'col_index', 'text']);
+	const sources_cells = new BulkInserter(db.pool, 'sources_cells', ['source_id', 'sheet_index', 'row_index', 'col_index', 'text']);
 	
 	for (const sheet_index in sheets) {
 		const {title: sheet_title, rows, head} = sheets[sheet_index]

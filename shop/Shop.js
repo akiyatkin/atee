@@ -1179,7 +1179,7 @@ Shop.prepareCost = (model, partner) => {
 // 	const topids = await db.colAll(`SELECT group_id from shop_groups where parent_id is null`)
 // 	await db.affectedRows(`TRUNCATE shop_itemgroups`)
 	
-// 	const shop_itemgroups = new BulkInserter(db, 'shop_itemgroups', ['group_id', 'key_id'], 100);
+// 	const shop_itemgroups = new BulkInserter(db.pool, 'shop_itemgroups', ['group_id', 'key_id'], 100);
 // 	//let count = 0
 // 	for (const top_id of topids) {
 // 		await Shop.runGroupDown(db, top_id, async ({group_id}) => {

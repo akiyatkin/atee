@@ -27,7 +27,7 @@ cards.getItemPath = (data, item) => {
 
 cards.getItemName = (data, selitem) => { //ecommerce.name (в паре с getVariant)
 	const gain = (name) => cards.getSomeTitle(data, selitem, name)
-	if (selitem.naimenovanie) return gain('naimenovanie')
+	if (selitem.naimenovanie) return gain('brendmodel') + ' ' +gain('naimenovanie')
 	return gain('brendmodel')
 }
 

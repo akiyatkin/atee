@@ -627,9 +627,9 @@ Consciousness.setCellType = async (db, cell) => {
 	// `, {...cell, value_id, number, date, pruning})
 }
 Consciousness.setListCellType = async (db, list) => {
-	//const sources_sheets = new BulkInserter(db, 'sources_sheets', ['source_id', 'sheet_index', 'sheet_title']);
+	//const sources_sheets = new BulkInserter(db.pool, 'sources_sheets', ['source_id', 'sheet_index', 'sheet_title']);
 	const sources_cells = new BulkInserter(
-		db, 
+		db.pool, 
 		'sources_cells', 
 		['source_id', 'sheet_index', 'row_index', 'col_index', 'multi_index', 'value_id', 'number', 'date', 'pruning'], // Ключевые колонки для WHERE
 		100, 
@@ -678,7 +678,7 @@ Consciousness.recalcMulti_list = async (db, list) => {
 	}
 	await delete_sources_cells.flush()
 
-	const insert_sources_cells = new BulkInserter(db, 'sources_cells', ['source_id', 'sheet_index', 'row_index', 'col_index', 'multi_index', 'text'])
+	const insert_sources_cells = new BulkInserter(db.pool, 'sources_cells', ['source_id', 'sheet_index', 'row_index', 'col_index', 'multi_index', 'text'])
 	for (const {source_id, sheet_index, row_index, col_index, text, cnt, multi} of list) {
 		const texts = multi ? text.split(', ').map(v => v.trim()) : [text]
 		for (const multi_index in texts) {
@@ -2408,7 +2408,7 @@ Consciousness.recalcRowSearch = async (db) => {
 	await Consciousness.recalcRowSearch_list(db, texts)
 }
 Consciousness.recalcRowSearch_list = async (db, texts) => {
-	const sources_rows = new BulkInserter(db, 'sources_rows', 
+	const sources_rows = new BulkInserter(db.pool, 'sources_rows', 
 		['source_id', 'sheet_index', 'row_index', 'search'], // Ключевые колонки для WHERE
 		1000, true
 	)
@@ -2455,7 +2455,7 @@ Consciousness.recalcItemSearch = async (db) => {
 	
 }
 Consciousness.recalcItemSearch_list = async (db, texts) => {
-	const sources_items = new BulkInserter(db, 'sources_items', ['entity_id', 'key_id', 'search'], 100, true)	
+	const sources_items = new BulkInserter(db.pool, 'sources_items', ['entity_id', 'key_id', 'search'], 100, true)	
 	for (const {entity_id, key_id, text} of texts) {
 		let search = nicked(text)
 		search = search.split('-')

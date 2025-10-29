@@ -308,7 +308,7 @@ rest.addAction('set-sample-boxes', ['admin','checkrecalc'], async view => {
 		`, {sample_id, prop_nick})
 	}
 
-	const shop_samplevalues = new BulkInserter(db, 'shop_samplevalues', ['sample_id', 'prop_nick', 'value_nick'], 100, true)
+	const shop_samplevalues = new BulkInserter(db.pool, 'shop_samplevalues', ['sample_id', 'prop_nick', 'value_nick'], 100, true)
 	for (const value_nick of nicks) {
 		await shop_samplevalues.insert([sample_id, prop_nick, value_nick])
 	}

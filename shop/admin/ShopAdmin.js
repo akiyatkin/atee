@@ -1270,7 +1270,7 @@ ShopAdmin.runGroupUp = async (db, group_id, func) => {
 ShopAdmin.recalcIndexGroups = async (db, group_id = null) => {
 	console.time('recalcIndexGroups')
 	group_id = group_id ? await db.col(`select parent_id from shop_groups where group_id = :group_id`, {group_id}) || null : null
-	//const shop_allitemgroups = new BulkInserter(db, 'shop_allitemgroups', ['group_id', 'key_id'], 1000, true);
+	//const shop_allitemgroups = new BulkInserter(db.pool, 'shop_allitemgroups', ['group_id', 'key_id'], 1000, true);
 	await ShopAdmin.runGroupDown(db, group_id, async (group_id) => {
 		//await db.exec(`DELETE FROM shop_itemgroups WHERE group_id = :group_id`, {group_id})
 		await db.exec(`DELETE FROM shop_allitemgroups WHERE group_id = :group_id`, {group_id})
@@ -1336,8 +1336,8 @@ ShopAdmin.recalcIndexGroups = async (db, group_id = null) => {
 // 		await db.db.query(`DELETE FROM shop_itemgroups WHERE group_id in (?)`, [group_ids])
 // 		await db.db.query(`DELETE FROM shop_allitemgroups WHERE group_id in (?)`, [group_ids])
 // 	}
-// 	const shop_itemgroups = new BulkInserter(db, 'shop_itemgroups', ['group_id', 'key_id']);
-// 	const shop_allitemgroups = new BulkInserter(db, 'shop_allitemgroups', ['group_id', 'key_id'], 1000, true);
+// 	const shop_itemgroups = new BulkInserter(db.pool, 'shop_itemgroups', ['group_id', 'key_id']);
+// 	const shop_allitemgroups = new BulkInserter(db.pool, 'shop_allitemgroups', ['group_id', 'key_id'], 1000, true);
 // 	//Если изменился родитель, изменились и вложенные группы
 // 	for (const group_id of group_ids) {
 // 		const key_ids = await ShopAdmin.getFreeKeyIdsBySamples(db, group_id) //Свободные позиции, которые не попадают во внутрение группы, те будут уже к своим группам преписаны
@@ -1375,7 +1375,7 @@ ShopAdmin.recalcIndexGroups = async (db, group_id = null) => {
 // 		await db.db.query(`DELETE FROM shop_itemgroups WHERE group_id in (?)`, [group_ids])
 // 		await db.db.query(`DELETE FROM shop_allitemgroups WHERE group_id in (?)`, [group_ids])
 // 	}
-// 	const shop_itemgroups = new BulkInserter(db, 'shop_itemgroups', ['group_id', 'key_id']);
+// 	const shop_itemgroups = new BulkInserter(db.pool, 'shop_itemgroups', ['group_id', 'key_id']);
 
 
 // 	for (const top_id of top_ids) {

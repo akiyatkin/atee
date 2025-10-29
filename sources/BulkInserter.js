@@ -1,10 +1,10 @@
 class BulkInserter {
-	constructor(db, tableName, columns, batchSize = 100, onDuplicateUpdate = false) {
+	constructor(connpool, tableName, columns, batchSize = 100, onDuplicateUpdate = false) {
 		this.tableName = tableName;
 		this.columns = columns;
 		this.batchSize = batchSize;
 		this.buffer = [];
-		this.db = db;
+		this.connpool = connpool;
 		this.onDuplicateUpdate = onDuplicateUpdate;
 	}
 	
@@ -40,7 +40,7 @@ class BulkInserter {
 					.join(', ');
 				sql += ` ON DUPLICATE KEY UPDATE ${updateClause}`;
 			}
-			await this.db.exec(sql, this.buffer.flat());
+			await this.connpool.execute(sql, this.buffer.flat());
 			// Очищаем буфер
 			this.buffer = [];
 			
