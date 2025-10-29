@@ -632,7 +632,7 @@ Consciousness.setListCellType = async (db, list) => {
 		db, 
 		'sources_cells', 
 		['source_id', 'sheet_index', 'row_index', 'col_index', 'multi_index', 'value_id', 'number', 'date', 'pruning'], // Ключевые колонки для WHERE
-		10000, 
+		100, 
 		true
 	)
 	for (const cell of list) {
