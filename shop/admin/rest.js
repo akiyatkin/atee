@@ -267,6 +267,7 @@ rest.addResponse('poss', ['admin'], async view => {
 				and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || 'it.search != ""'}) 
 			`)
 		} else {
+
 			key_ids = await db.colAll(`
 				SELECT it.key_id
 				FROM sources_items it, sources_wvalues wva

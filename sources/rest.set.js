@@ -724,32 +724,35 @@ rest.addAction('set-prop-ordain', ['admin','checkrecalc'], async view => {
 })
 rest.addAction('set-reset-values', ['admin','checkrecalc'], async (view) => {
 	const db = await rest.data('db')
-	
-	
-	// await db.exec(`DELETE FROM sources_appears`)
-	// await db.exec(`DELETE FROM sources_cells`)
-	// await db.exec(`DELETE FROM sources_cols`)
-	// await db.exec(`DELETE FROM sources_rows`)
-	// await db.exec(`DELETE FROM sources_sheets`)
-	// await db.exec(`DELETE FROM sources_items`)
-	// await db.exec(`DELETE FROM sources_values`)
-	
-	await db.exec(`SET FOREIGN_KEY_CHECKS = 0`) //truncate быстрей, но с FK не работает
-	console.log('sources_appears')
-	await db.exec(`TRUNCATE TABLE sources_appears`)
-	console.log('sources_cells')
-	await db.exec(`TRUNCATE TABLE sources_cells`)
-	console.log('sources_cols')
-	await db.exec(`TRUNCATE TABLE sources_cols`)
-	console.log('sources_rows')
-	await db.exec(`TRUNCATE TABLE sources_rows`)
-	console.log('sources_sheets')
-	await db.exec(`TRUNCATE TABLE sources_sheets`)
-	console.log('sources_items')
-	await db.exec(`TRUNCATE TABLE sources_items`)
-	console.log('sources_values')
-	await db.exec(`TRUNCATE TABLE sources_values`)
-	await db.exec(`SET FOREIGN_KEY_CHECKS = 1`)
+	const conn = await db.pool.getConnection()
+	try {
+		// await db.exec(`DELETE FROM sources_appears`)
+		// await db.exec(`DELETE FROM sources_cells`)
+		// await db.exec(`DELETE FROM sources_cols`)
+		// await db.exec(`DELETE FROM sources_rows`)
+		// await db.exec(`DELETE FROM sources_sheets`)
+		// await db.exec(`DELETE FROM sources_items`)
+		// await db.exec(`DELETE FROM sources_values`)
+		
+		await conn.query(`SET FOREIGN_KEY_CHECKS = 0`) //truncate быстрей, но с FK не работает
+		console.log('sources_appears')
+		await conn.query(`TRUNCATE TABLE sources_appears`)
+		console.log('sources_cells')
+		await conn.query(`TRUNCATE TABLE sources_cells`)
+		console.log('sources_cols')
+		await conn.query(`TRUNCATE TABLE sources_cols`)
+		console.log('sources_rows')
+		await conn.query(`TRUNCATE TABLE sources_rows`)
+		console.log('sources_sheets')
+		await conn.query(`TRUNCATE TABLE sources_sheets`)
+		console.log('sources_items')
+		await conn.query(`TRUNCATE TABLE sources_items`)
+		console.log('sources_values')
+		await conn.query(`TRUNCATE TABLE sources_values`)
+		await conn.query(`SET FOREIGN_KEY_CHECKS = 1`)
+	} finally {
+		await conn.release()
+	}
 
 	await db.exec(`
 		UPDATE sources_sources

@@ -2831,7 +2831,7 @@ Consciousness.recalcWinner = async (db) => {
 	 		and co.represent_col = 1
 	 		and pr_col.represent_prop = 1 
 	 		and pr_key.represent_prop = 1
-	 		and (sh.entity_id != co.prop_id or so.master = 1)
+	 		-- and (sh.entity_id != co.prop_id or so.master = 1) -- свойство БрендАрт надо брать у мастера
 
 	 		and pr_key.prop_id = sh.entity_id
 	 		and ce.sheet_index = co.sheet_index and ce.col_index = co.col_index and ce.multi_index = 0
