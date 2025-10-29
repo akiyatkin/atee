@@ -138,6 +138,16 @@ rest.addResponse('settings', ['admin'], async view => {
 	
 
 	
+
+	// Статистика пула
+	const pool = db.pool.pool
+	view.data.pool = {}
+	view.data.pool['Текущая очередь'] = pool._queue ? pool._queue.length : 0;
+	view.data.pool['Всего соединений'] = pool._allConnections ? pool._allConnections.length : 0;
+	view.data.pool['Свободных соединений'] = pool._freeConnections ? pool._freeConnections.length : 0;
+	view.data.pool['Ожидающих запросов'] = pool._allConnections && pool._freeConnections ? pool._allConnections.length - pool._freeConnections.length : 0;
+
+
     view.data.prepared_count = (await db.fetch(`SHOW GLOBAL STATUS LIKE "Prepared_stmt_count"`)).Value
 	view.data.connections_count = (await db.fetch(`SHOW STATUS WHERE variable_name = "Threads_connected"`)).Value
 	view.data.values = await db.col(`SELECT count(*) FROM sources_values`)
