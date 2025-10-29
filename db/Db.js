@@ -34,7 +34,7 @@ const createPool = async () => {
     const poolConfig = {
         waitForConnections: true,
         connectionLimit: 50,
-        queueLimit: 50,
+        queueLimit: 1000,
         // acquireTimeout и timeout убраны полностью
     };
 
