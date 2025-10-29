@@ -80,6 +80,18 @@ export const TABLE = (data, env) => err(data, env) || `
 		</table>
 		${showScriptDrag(data, env)}
 		<script>
+			(async div => {
+				const table = div.querySelector('table')
+				table.addEventListener('click', (e) => {
+					const old = table.querySelector('.clicked')
+					if (old) old.classList.remove('clicked')
+					const tr = e.target.closest('tr')
+					if (!tr) return
+					tr.classList.add('clicked')
+				})
+			})(document.currentScript.parentElement)
+		</script>
+		<script>
 			(div => {
 				const name = 'represent_prop'
 				for (const btn of div.getElementsByClassName(name)) {
