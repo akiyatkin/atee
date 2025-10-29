@@ -29,7 +29,7 @@ class BulkDeleter {
             // Создаем условия для каждой пары ключей
             const conditions = this.buffer.map(keyValues => 
                 `(${this.keyColumns.map((col, index) => 
-                    `${col} = ${this.db.escape(keyValues[index])}`
+                    `${col} = ${this.db.pool.escape(keyValues[index])}`
                 ).join(' AND ')})`
             ).join(' OR ');
             
@@ -51,7 +51,7 @@ class BulkDeleter {
         try {
             // Создаем временные значения для JOIN
             const values = this.buffer.map(keyValues => 
-                `(${keyValues.map(val => this.db.escape(val)).join(', ')})`
+                `(${keyValues.map(val => this.db.pool.escape(val)).join(', ')})`
             ).join(', ');
             
             const columnsStr = this.keyColumns.join(', ');
