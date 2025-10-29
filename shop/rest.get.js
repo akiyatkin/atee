@@ -295,7 +295,7 @@ rest.addResponse('get-item-check', async (view) => {
 	if (!item) {
 		const item = model.items[0]
 		view.data.redirect = `${conf.root_path}/item/${item.brendmodel[0]}/${item.art?.[0] || item.brendart[0]}${search ? '?' + search : ''}`
-		console.log('redirect', view.data.redirect)
+		//console.log('redirect', view.data.redirect)
 	}
 
 	// const single = model.recap.brendmodel[0] == model.recap.brendart[0]

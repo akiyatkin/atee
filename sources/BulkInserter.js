@@ -41,7 +41,7 @@ class BulkInserter {
 				sql += ` ON DUPLICATE KEY UPDATE ${updateClause}`;
 			}
 			
-			await this.db.query(sql, [this.buffer]);
+			await this.db.execute(sql, [this.buffer]);
 			
 			// Очищаем буфер
 			this.buffer = [];
