@@ -318,7 +318,7 @@ cards.price = (item) => {
 		`
 	} else if (cena) {
 		html += `
-			<big><b>${cost(cena.at(0))}${cards.unit()}</b></big>
+			<big><b>${cost(cena.at(0))}${cards.unit()}</b></big> ${cards.discountbadge(item)}
 		`
 	}
 	
@@ -362,7 +362,11 @@ cards.getModelDiscount = (model) => {
 	if (!discounts[1]) return `-${discounts[0]}%`
 	return `До -${discounts.at(-1)}%`
 }
-
+cards.discountbadge = (item) => {
+	const discount = cards.getItemDiscount(item)
+	if (!discount) return ''
+	return `&nbsp;<span class="badge badge_discount">-${discount}%</span>`
+}
 cards.badgenalichie = (data, env, model) => {
 	const gain = (name) => cards.getSomeTitle(data, model.recap, name)
 	const discount = cards.getModelDiscount(model)

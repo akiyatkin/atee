@@ -714,7 +714,9 @@ import ImpExp from "/-sources/ImpExp.js"
 rest.addResponse('set-import', ['admin'], async view => {
 	const db = await view.get('db')
 	const json = await view.get('json#required')
-	if (!json) return view.err('Укажите данные')	
+	if (!json) return view.err('Укажите данные')
+	await db.affectedRows(`TRUNCATE shop_itemgroups`)
+	await db.affectedRows(`TRUNCATE shop_allitemgroups`)
 	const msg = await ImpExp.import(db, json, rest_shopadmin.exporttables)
 	if (msg) return view.err(msg)
 

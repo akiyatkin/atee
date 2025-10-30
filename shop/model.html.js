@@ -289,7 +289,7 @@ tpl.showMainData = (data, env, model, selitem) => `
 		<div>
 			<b>${cards.line('Модель', cards.getSomeTitle(data, model.recap, 'model'))}</b>
 			${cards.line('Бренд', tpl.filters(data, env, model, model.recap, 'brend'))}
-			${cards.line('Скидка', cards.getModelDiscount(model))}
+			
 
 			
 
@@ -298,7 +298,7 @@ tpl.showMainData = (data, env, model, selitem) => `
 			${(model.items.length > 1 || !selitem) ? cards.block(tpl.showItemButtons(data, env, model)) : ''}
 			
 			${selitem ? cards.block(tpl.showTableItem(data, env, model, selitem)) : ''}
-			<div style="text-align: right;">
+			<div>
 				${selitem ? cards.block(selitem.cena ? tpl.buyButton(data, env, model, selitem) : tpl.orderButton(data, env, model, selitem)) : ''}
 			</div>
 
@@ -349,19 +349,19 @@ tpl.showTableItem = (data, env, model, selitem) => `
 	</table>
 `
 const showCost = (value) => value ? `${cost(value)}${common.unit()}` : ''
-const showItemIfCost = (mod, item, oldcost = item['Старая цена'] || mod['Старая цена']) => mod.Цена ? '' : (item.Цена ? `
-	<p>
-		<s>${showCost(oldcost)}</s>
+// const showItemIfCost = (mod, item, oldcost = item['Старая цена'] || mod['Старая цена']) => mod.Цена ? '' : (item.Цена ? `
+// 	<p>
+// 		<s>${showCost(oldcost)}</s>
 
-		<big>&nbsp;<b>${showCost(item.Цена || mod.Цена)}</b>&nbsp;</big>
-		${item.discount ? showDiscount(item) : ''}
+// 		<big>&nbsp;<b>${showCost(item.Цена || mod.Цена)}</b>&nbsp;</big>
+// 		${item.discount ? showDiscount(item) : ''}
 
-	</p>
-`: `
-	<p>
-		<big><b>Цена по запросу</b></big>
-	</p>
-`)
+// 	</p>
+// `: `
+// 	<p>
+// 		<big><b>Цена по запросу</b></big>
+// 	</p>
+// `)
 
 
 tpl.getItemButton = (data, env, model, item, i) => {

@@ -315,6 +315,7 @@ rest.addResponse('get-item-check', async (view) => {
 
 rest.addResponse('get-model', async (view) => {
 	const db = await view.get('db')
+
 	const conf = view.data.conf = await config('shop', true)
 	const root = view.data.root = await view.get('root#required')
 	
@@ -326,7 +327,6 @@ rest.addResponse('get-model', async (view) => {
 	
 
 	//const groups = view.data.groups = await Shop.samples.getFreeGroupNicksByItem(db, model.recap)
-
 	
 	const groups = view.data.groups = {}
 	for (const group_nick of model.group_nicks) {

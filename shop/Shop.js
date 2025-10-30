@@ -747,6 +747,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 		model_id_to_group_nicks[row.value_id] ??= []
 		for (const group_id of group_ids) {
 			const group = await Shop.getGroupById(db, group_id)
+
 			model_id_to_group_nicks[row.value_id].push(group.group_nick)
 		}
 	}
@@ -871,8 +872,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 	// for (const model of list) {
 	// 	//model.groups = model_id_to_group_nicks[row.value_id]
 	// }
-	//Сделали recap
-
+	//Сделали recap	
 	for (const model of list) {
 		model.recap = {}
 		for (const item of model.items) {
@@ -1131,9 +1131,9 @@ Shop.prepareCost = (model, partner) => {
 	// 		item['staraya-cena'] ??= item['cena']
 	// 		item['cena'] = item['cena'].map(number => Math.round(number * (100 - partner.discount) / 100))
 	// 	}
-	// }
+	// }	
 	for (const item of model.items) {
-		if (!item['cena'] || item['staraya-cena'] == item['cena']) delete item['staraya-cena']
+		if (!item['cena'] || item['staraya-cena']?.[0] == item['cena'][0]) delete item['staraya-cena']
 	}
 }
 
