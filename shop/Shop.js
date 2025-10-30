@@ -260,7 +260,7 @@ Shop.getGroupById = Access.poke(async (db, group_id = false) => {
 	if (!group) return false
 
 	
-	const childs = await db.all(`select group_id, group_nick from shop_groups where parent_id = ${group_id}`)
+	const childs = await db.all(`select group_id, group_nick from shop_groups where parent_id = ${group_id} order by ordain`)
 	group.child_ids = []
 	group.child_nicks = []
 	for (const child of childs) {
@@ -1471,8 +1471,8 @@ Shop.runGroupUp = async (db, group_id, func) => {
 Shop.getGroupFilterChilds = async (db, group_id = null) => {
 	const conf = await config('shop')
 	const childs = await Shop.runGroupUp(db, group_id, group => {
-		if (group.group_nick == conf.root_nick) return [...group.childs] //Выше подниматься нельзя
-		if (group.childs.length) return [...group.childs]
+		if (group.group_nick == conf.root_nick) return [...group.child_nicks] //Выше подниматься нельзя
+		if (group.child_nicks.length) return [...group.child_nicks]
 	})
 	// for (const i in childs) {
 	// 	childs[i] = await Shop.getGroupById(db, childs[i])

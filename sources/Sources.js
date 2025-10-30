@@ -114,7 +114,7 @@ Sources.getTable = async (db, rows) => {
 }
 Sources.recalcAllChanges = async (db) => {
 	await Sources.recalcAllChangesWithoutRowSearch(db)
-	await Consciousness.recalcRowSearch(db)
+	// await Consciousness.recalcRowSearch(db)
 }
 Sources.recalcAllChangesWithoutRowSearch = async (db) => {
 	await Consciousness.recalcEntitiesPropId(db)
@@ -403,11 +403,12 @@ Sources.insertSheets = async (db, source, sheets) => {
 	}
 	await sources_cols.flush()
 
-	const sources_rows = new BulkInserter(db.pool, 'sources_rows', ['source_id', 'sheet_index', 'row_index']);
+	const sources_rows = new BulkInserter(db.pool, 'sources_rows', ['source_id', 'sheet_index', 'row_index', 'search']);
 	for (const sheet_index in sheets) {
 		const {title: sheet_title, rows, head} = sheets[sheet_index]
 		for (const row_index in rows) {
-			await sources_rows.insert([source_id, sheet_index, row_index])
+			const search = Consciousness.getSearch(rows[row_index].join(' '))
+			await sources_rows.insert([source_id, sheet_index, row_index, search])
 			// await db.exec(`
 			// 	INSERT INTO sources_rows (source_id, sheet_index, row_index)
 			// 	VALUES (:source_id, :sheet_index, :row_index)

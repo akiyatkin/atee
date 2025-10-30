@@ -65,7 +65,7 @@ rest.addAction('set-recalc', ['admin','checkrecalc'], async view => {
 	//const monitor = new PerformanceMonitor()
 	Recalc.recalc(async (db) => {
 		await Sources.recalcAllChangesWithoutRowSearch(db)
-		await Consciousness.recalcRowSearch(db)
+		// await Consciousness.recalcRowSearch(db)
 		// monitor.start('recalcEntitiesPropId')
 		// await Consciousness.recalcEntitiesPropId(db) //11.14ms
 		// monitor.start('recalcMulti')
@@ -554,7 +554,7 @@ rest.addAction('set-sources-load', ['checkrecalc'], async view => { //Нет adm
 		// await Consciousness.recalcWinner(db)
 
 		// await Consciousness.recalcAppear(db)
-		await Consciousness.recalcRowSearch(db)
+		// await Consciousness.recalcRowSearch(db)
 		// await Consciousness.recalcItemSearch(db)
 	}, true)
 	const go = await view.get('go')
@@ -809,7 +809,7 @@ rest.addAction('set-source-renovate', ['admin','checkrecalc'], async view => {
 		// await Consciousness.recalcWinner(db)
 
 		// await Consciousness.recalcAppear(db)
-		await Consciousness.recalcRowSearch(db)
+		// await Consciousness.recalcRowSearch(db)
 		// await Consciousness.recalcItemSearch(db)
 	}, true)
 	//return view.ret('Загрузка запущена!')
@@ -844,7 +844,7 @@ rest.addAction('set-source-load', ['admin','checkrecalc'], async view => {
 
 		// await Consciousness.recalcWinner_bySource(db, source_id) //40 946.25ms		
 		// await Consciousness.recalcAppear_bySource(db, source_id) //0 371.52ms		
-		await Consciousness.recalcRowSearch_bySource(db, source_id)
+		// await Consciousness.recalcRowSearch_bySource(db, source_id)
 		// await Consciousness.recalcItemSearch_bySource(db, source_id)
 
 		source.duration_recalc = Date.now() - timer_recalc
@@ -976,11 +976,11 @@ rest.addAction('set-source-clear', ['admin','checkrecalc'], async view => {
 		return
 		
 		
-		await Consciousness.recalcWinner_bySource(db, source_id)
+		//await Consciousness.recalcWinner_bySource(db, source_id)
 
 		//await Consciousness.recalcAppear(db)
-		await Consciousness.recalcRowSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
-		await Consciousness.recalcItemSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
+		//await Consciousness.recalcRowSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
+		//await Consciousness.recalcItemSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
 	}, true)
 	
 	/*

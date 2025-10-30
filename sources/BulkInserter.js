@@ -28,19 +28,23 @@ class BulkInserter {
 		
 		try {
 			const columnsStr = '`' + this.columns.join('`, `') + '`';
-			const singleRowPlaceholder = this.columns.map(() => '?').join(', ');
-			const allPlaceholders = this.buffer.map(() => singleRowPlaceholder).join('),(');
-			// Базовый SQL для вставки
-			let sql = `INSERT INTO ${this.tableName} (${columnsStr}) VALUES (${allPlaceholders})`;
+			
+			// Базовый SQL для вставки с плейсхолдером VALUES ?
+			let sql = `INSERT INTO ${this.tableName} (${columnsStr}) VALUES ?`;
 			
 			// Добавляем ON DUPLICATE KEY UPDATE если нужно
 			if (this.onDuplicateUpdate) {
 				const updateClause = this.columns
-					.map(column => `${column} = VALUES(${column})`)
+					.map(column => `\`${column}\` = VALUES(\`${column}\`)`)
 					.join(', ');
 				sql += ` ON DUPLICATE KEY UPDATE ${updateClause}`;
 			}
-			await this.connpool.execute(sql, this.buffer.flat());
+			
+			// Преобразуем буфер в формат для плейсхолдера VALUES ?
+			const values = [this.buffer];
+			
+			await this.connpool.query(sql, values);
+			
 			// Очищаем буфер
 			this.buffer = [];
 			

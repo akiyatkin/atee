@@ -1248,6 +1248,14 @@ Consciousness.insertItems_byEntity = async (db, entity_id) => {
 
 }
 Consciousness.insertItems_bySource = async (db, source_id) => {
+	/*
+		Чтобы определить search нужно знать победителей, 
+		чтобы знать победителей нужно знать у кого есть key_id
+
+		search это прям публикация и до публикации не должен изменятсья
+
+		- sources_witems
+	*/
 	await db.exec(`
 		DELETE it FROM sources_items it, sources_rows ro, sources_sheets sh
 		WHERE 
@@ -2339,95 +2347,99 @@ Consciousness.recalcRepresentSheet_bySheet = async (db, source_id, sheet_index) 
 // 	`, {source_id, sheet_index})
 // }
 
-Consciousness.recalcRowSearch_bySource = async (db, source_id) => {
-	const texts = await db.all(`
-		SELECT 
-			ce.source_id, 
-			ce.sheet_index, 
-			ce.row_index, 
-			GROUP_CONCAT(ce.text SEPARATOR ' ') as text
-		FROM sources_cells ce
-		WHERE ce.source_id = :source_id
-		GROUP BY ce.sheet_index, ce.row_index
-	`, {source_id})
-	await Consciousness.recalcRowSearch_list(db, texts)
-	// for (const {text, sheet_index, row_index} of texts) {
-	// 	let search = nicked(text)
-	// 	search = search.split('-')
-	// 	search = unique(search)
-	// 	search.sort()
-	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-	// 	await db.exec(`
-	// 		UPDATE sources_rows
-	// 		SET search = :search
-	// 		WHERE source_id = :source_id
-	// 		and sheet_index = :sheet_index
-	// 		and row_index = :row_index
-	// 	`, {source_id, sheet_index, row_index, search})
-	// }
-}
-Consciousness.recalcRowSearch_bySheet = async (db, source_id, sheet_index) => {
-	const texts = await db.all(`
-		SELECT 
-			ce.source_id, 
-			ce.sheet_index, 
-			ce.row_index, 
-			GROUP_CONCAT(ce.text SEPARATOR ' ') as text
-		FROM sources_cells ce
-		WHERE 
-			ce.source_id = :source_id and ce.sheet_index = :sheet_index
-		GROUP BY ce.row_index
-	`, {source_id, sheet_index})
-	await Consciousness.recalcRowSearch_list(db, texts)
-	// for (const {text, sheet_index, row_index} of texts) {
-	// 	let search = nicked(text)
-	// 	search = search.split('-')
-	// 	search = unique(search)
-	// 	search.sort()
-	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-	// 	await db.exec(`
-	// 		UPDATE sources_rows
-	// 		SET search = :search
-	// 		WHERE source_id = :source_id
-	// 		and sheet_index = :sheet_index
-	// 		and row_index = :row_index
-	// 	`, {source_id, sheet_index, row_index, search})
-	// }
-}
+// Consciousness.recalcRowSearch_bySource = async (db, source_id) => {
+// 	const texts = await db.all(`
+// 		SELECT 
+// 			ce.source_id, 
+// 			ce.sheet_index, 
+// 			ce.row_index, 
+// 			GROUP_CONCAT(ce.text SEPARATOR ' ') as text
+// 		FROM sources_cells ce
+// 		WHERE ce.source_id = :source_id
+// 		GROUP BY ce.sheet_index, ce.row_index
+// 	`, {source_id})
+// 	await Consciousness.recalcRowSearch_list(db, texts)
+// 	// for (const {text, sheet_index, row_index} of texts) {
+// 	// 	let search = nicked(text)
+// 	// 	search = search.split('-')
+// 	// 	search = unique(search)
+// 	// 	search.sort()
+// 	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+// 	// 	await db.exec(`
+// 	// 		UPDATE sources_rows
+// 	// 		SET search = :search
+// 	// 		WHERE source_id = :source_id
+// 	// 		and sheet_index = :sheet_index
+// 	// 		and row_index = :row_index
+// 	// 	`, {source_id, sheet_index, row_index, search})
+// 	// }
+// }
+// Consciousness.recalcRowSearch_bySheet = async (db, source_id, sheet_index) => {
+// 	const texts = await db.all(`
+// 		SELECT 
+// 			ce.source_id, 
+// 			ce.sheet_index, 
+// 			ce.row_index, 
+// 			GROUP_CONCAT(ce.text SEPARATOR ' ') as text
+// 		FROM sources_cells ce
+// 		WHERE 
+// 			ce.source_id = :source_id and ce.sheet_index = :sheet_index
+// 		GROUP BY ce.row_index
+// 	`, {source_id, sheet_index})
+// 	await Consciousness.recalcRowSearch_list(db, texts)
+// 	// for (const {text, sheet_index, row_index} of texts) {
+// 	// 	let search = nicked(text)
+// 	// 	search = search.split('-')
+// 	// 	search = unique(search)
+// 	// 	search.sort()
+// 	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+// 	// 	await db.exec(`
+// 	// 		UPDATE sources_rows
+// 	// 		SET search = :search
+// 	// 		WHERE source_id = :source_id
+// 	// 		and sheet_index = :sheet_index
+// 	// 		and row_index = :row_index
+// 	// 	`, {source_id, sheet_index, row_index, search})
+// 	// }
+// }
 
-Consciousness.recalcRowSearch = async (db) => {
-	const texts = await db.all(`
-		SELECT 
-			ce.source_id, 
-			ce.sheet_index, 
-			ce.row_index, 
-			GROUP_CONCAT(ce.text SEPARATOR ' ') as text
-		FROM sources_cells ce
-		GROUP BY ce.source_id, ce.sheet_index, ce.row_index
-	`)
-	await Consciousness.recalcRowSearch_list(db, texts)
+// Consciousness.recalcRowSearch = async (db) => {
+// 	const texts = await db.all(`
+// 		SELECT 
+// 			ce.source_id, 
+// 			ce.sheet_index, 
+// 			ce.row_index, 
+// 			GROUP_CONCAT(ce.text SEPARATOR ' ') as text
+// 		FROM sources_cells ce
+// 		GROUP BY ce.source_id, ce.sheet_index, ce.row_index
+// 	`)
+// 	await Consciousness.recalcRowSearch_list(db, texts)
+// }
+Consciousness.getSearch = (text) => {
+	let search = nicked(text)
+	search = search.split('-')
+	search = unique(search)
+	search.sort()
+	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+	return search
 }
-Consciousness.recalcRowSearch_list = async (db, texts) => {
-	const sources_rows = new BulkInserter(db.pool, 'sources_rows', 
-		['source_id', 'sheet_index', 'row_index', 'search'], // Ключевые колонки для WHERE
-		1000, true
-	)
-	for (const {source_id, text, sheet_index, row_index} of texts) {
-		let search = nicked(text)
-		search = search.split('-')
-		search = unique(search)
-		search.sort()
-		search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-		await sources_rows.insert([source_id, sheet_index, row_index, search])
-		// await db.exec(`
-		// 	UPDATE sources_rows
-		// 	SET search = :search
-		// 	WHERE sheet_index = :sheet_index
-		// 	and row_index = :row_index
-		// `, {sheet_index, row_index, search})
-	}
-	await sources_rows.flush()
-}
+// Consciousness.recalcRowSearch_list = async (db, texts) => {
+// 	const sources_rows = new BulkInserter(db.pool, 'sources_rows', 
+// 		['source_id', 'sheet_index', 'row_index', 'search'], // Ключевые колонки для WHERE
+// 		1000, true
+// 	)
+// 	for (const {source_id, text, sheet_index, row_index} of texts) {
+// 		const search = Consciousness.getSearch(text)
+// 		await sources_rows.insert([source_id, sheet_index, row_index, search])
+// 		// await db.exec(`
+// 		// 	UPDATE sources_rows
+// 		// 	SET search = :search
+// 		// 	WHERE sheet_index = :sheet_index
+// 		// 	and row_index = :row_index
+// 		// `, {sheet_index, row_index, search})
+// 	}
+// 	await sources_rows.flush()
+// }
 Consciousness.recalcItemSearch = async (db) => {
 	await db.exec(`
 		UPDATE sources_items it SET search = ''
@@ -2450,7 +2462,7 @@ Consciousness.recalcItemSearch = async (db) => {
 			and wi.col_index = ce.col_index
 		GROUP BY wi.key_id
 	`)
-	console.log(texts.length) //прайсы с key_id без поиска
+
 	await Consciousness.recalcItemSearch_list(db, texts)
 	
 }
@@ -2585,46 +2597,46 @@ Consciousness.recalcItemSearch_bySheet = async (db, source_id, sheet_index) => {
 	// }
 }
 
-Consciousness.recalcSearchByEntityIdAndSourceId = async (db, entity_id, source_id) => {	
-	await db.exec(`
-		UPDATE sources_items it
-			LEFT JOIN sources_wcells wi on (wi.entity_id = it.entity_id and wi.key_id = it.key_id and wi.prop_id = :entity_id)
-		SET search = ''
-		WHERE it.entity_id = :entity_id and wi.entity_id is null
-	`, {entity_id})
+// Consciousness.recalcSearchByEntityIdAndSourceId = async (db, entity_id, source_id) => {	
+// 	await db.exec(`
+// 		UPDATE sources_items it
+// 			LEFT JOIN sources_wcells wi on (wi.entity_id = it.entity_id and wi.key_id = it.key_id and wi.prop_id = :entity_id)
+// 		SET search = ''
+// 		WHERE it.entity_id = :entity_id and wi.entity_id is null
+// 	`, {entity_id})
 	
-	const texts = await db.all(`
-		SELECT 
-			wi.key_id, 
-			concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
-		FROM 
-			sources_cells ce, 
-			sources_wcells wi, 
-			sources_props pr
-		WHERE 
-			wi.source_id = :source_id
-			and wi.entity_id = :entity_id
-			and pr.prop_id = wi.prop_id
-			and wi.source_id = ce.source_id
-			and wi.sheet_index = ce.sheet_index
-			and wi.row_index = ce.row_index
-			and wi.col_index = ce.col_index
-		GROUP BY wi.key_id
-	`, {source_id, entity_id})
+// 	const texts = await db.all(`
+// 		SELECT 
+// 			wi.key_id, 
+// 			concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
+// 		FROM 
+// 			sources_cells ce, 
+// 			sources_wcells wi, 
+// 			sources_props pr
+// 		WHERE 
+// 			wi.source_id = :source_id
+// 			and wi.entity_id = :entity_id
+// 			and pr.prop_id = wi.prop_id
+// 			and wi.source_id = ce.source_id
+// 			and wi.sheet_index = ce.sheet_index
+// 			and wi.row_index = ce.row_index
+// 			and wi.col_index = ce.col_index
+// 		GROUP BY wi.key_id
+// 	`, {source_id, entity_id})
 	
-	for (const {key_id, text} of texts) {
-		let search = nicked(text)
-		search = search.split('-')
-		search = unique(search)
-		search.sort()
-		search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-		await db.exec(`
-			UPDATE sources_items
-			SET search = :search
-			WHERE entity_id = :entity_id and key_id = :key_id
-		`, {entity_id, key_id, search})
-	}
-}
+// 	for (const {key_id, text} of texts) {
+// 		let search = nicked(text)
+// 		search = search.split('-')
+// 		search = unique(search)
+// 		search.sort()
+// 		search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+// 		await db.exec(`
+// 			UPDATE sources_items
+// 			SET search = :search
+// 			WHERE entity_id = :entity_id and key_id = :key_id
+// 		`, {entity_id, key_id, search})
+// 	}
+// }
 // Consciousness.recalcGroups = async (db) => {
 // 	await db.exec(`
 // 		DELETE FROM sources_groups
