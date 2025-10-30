@@ -497,7 +497,10 @@ const renovateSourcesAll = async (db, visitor) => {
 	
 }
 const renovateSources = async (db, visitor, list, callback) => {
-	const proms1 = list.filter(callback).map(source => Sources.renovate(db, source, visitor))
+	const proms1 = list.filter(callback).map(source => {
+		if (!source.represent_source) return
+		return Sources.renovate(db, source, visitor)
+	})
 	await Promise.all(proms1)
 	// for await (const end of proms1) {
 	// 	if (!end) continue

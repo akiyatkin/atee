@@ -139,7 +139,7 @@ Sources.recalcWinnerAppearSearch = async db => {
 	// monitor.start('recalcRowSearch')
 	//await Consciousness.recalcRowSearch(db) //делается явно только в set-source-load, set-source-renovate, set-sources-load, set-sources-renovate, set-reset-values, set-source-clear
 	//monitor.start('recalcItemSearch')
-	await Consciousness.recalcItemSearch(db)
+	//await Consciousness.recalcItemSearch(db)
 
 	//monitor.stop()
 	//console.log(monitor.getReport())

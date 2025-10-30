@@ -13,7 +13,7 @@ export const ROOT = (data, env) => `
 const showProps = (data, env) => `	
 	<form style="display: flex; margin: 1em 0; gap: 1em; flex-wrap: wrap">
 		<div class="float-label">
-			<input id="freeinp" name="search" type="search" placeholder="Поиск" value="${env.bread.get.search ?? ''}">
+			<input id="freeinp" name="query" type="search" placeholder="Поиск" value="${env.bread.get.search ?? ''}">
 			<label for="freeinp">Поиск</label>
 		</div>
 		<div style="display: flex; justify-content: space-between; flex-grow: 1; gap: 1em;">

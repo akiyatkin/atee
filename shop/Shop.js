@@ -566,7 +566,7 @@ Shop.getBind = Access.wait(async db => {
 
 
 // 	//win.key_id - позиция, wva.value_id - модель
-// 	const from = ['sources_wcells win, sources_wvalues wva, sources_items wit']
+// 	const from = ['sources_wcells win, sources_wvalues wva, sources_witems wit']
 // 	const where = [
 // 		'win.entity_id = :brendart_prop_id and win.prop_id = :brendmodel_prop_id',
 // 		'wva.entity_id = win.entity_id and wva.key_id = win.key_id and wva.prop_id = win.prop_id',
@@ -1630,7 +1630,7 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 // 		and wva.entity_id = win.entity_id and wva.prop_id = win.prop_id and wva.key_id = win.key_id
 // 	`]
 // 	if (hashs.length) {
-// 		from.unshift('sources_items wit')
+// 		from.unshift('sources_witems wit')
 // 		where.push('wit.entity_id = win.entity_id and wit.key_id = win.key_id')
 // 		where.push('(' + hashs.map(hash => 'wit.search like "% ' + hash.join('%" and wit.search like "% ') + '%"').join(' or ')+')' || '1 = 1')
 // 	}
@@ -1804,7 +1804,7 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 // }
 Shop.addWhereSamples = async (db, from, join, where, samples, hashs, partner, emptydef = false) => {
 	if (hashs.length) {
-		from.unshift('sources_items wit')
+		from.unshift('sources_witems wit')
 		where.push('wit.entity_id = win.entity_id and wit.key_id = win.key_id')
 		where.push('(' + hashs.map(hash => 'wit.search like "% ' + hash.join('%" and wit.search like "% ') + '%"').join(' or ')+')' || '1 = 1')
 	}
@@ -1972,7 +1972,7 @@ Shop.addWhereSamples = async (db, from, join, where, samples, hashs, partner, em
 // 	const join = []
 // 	const where = [`win.entity_id = :brendart_prop_id`]
 // 	if (hashs.length) {
-// 		from.unshift('sources_items wit')
+// 		from.unshift('sources_witems wit')
 // 		where.push('wit.entity_id = win.entity_id and wit.key_id = win.key_id')
 // 		where.push('(' + hashs.map(hash => 'wit.search like "% ' + hash.join('%" and wit.search like "% ') + '%"').join(' or ')+')' || '1 = 1')
 // 	}
@@ -2107,7 +2107,7 @@ Shop.getWhereByGroupIndexSort = async (db, group_id, samples = [], hashs = [], p
 // 		win.entity_id = :brendart_prop_id
 // 	`]
 // 	if (hashs.length) {
-// 		from.unshift('sources_items wit')
+// 		from.unshift('sources_witems wit')
 // 		where.push('wit.entity_id = win.entity_id and wit.key_id = win.key_id')
 // 		where.push('(' + hashs.map(hash => 'wit.search like "% ' + hash.join('%" and wit.search like "% ') + '%"').join(' or ')+')' || '1 = 1')
 // 	}

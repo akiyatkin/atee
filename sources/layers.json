@@ -54,11 +54,11 @@
 		"memory:ROOT":"/-sources/memory"
 	},
 	"jsontpl":{
-		"props:TABLE":"/-sources/props?hashs=${env.bread.get.search ?? ''}",
-		"rows:ROOT":"/-sources/rows?query=${env.bread.get.search ?? ''}",
+		"props:TABLE":"/-sources/props?query=${env.bread.get.query ?? ''}",
+		"rows:ROOT":"/-sources/rows?query=${env.bread.get.query ?? ''}",
 		"sheet:ROOT":"/-sources/sheet?source_id=${env.bread.get.source_id ?? ''}",
-		"sheet:DATES":"/-sources/sheet-dates?source_id=${env.bread.get.source_id ?? ''}&appear=${env.bread.get.appear ?? ''}&hashs=${env.bread.get.search ?? ''}",
-		"sheet:TABLE":"/-sources/sheet-table?source_id=${env.bread.get.source_id ?? ''}&sheet_index=${env.bread.get.sheet_index ?? ''}&keyfilter=${env.bread.get.keyfilter ?? ''}&appear=${env.bread.get.appear ?? ''}&hashs=${env.bread.get.search ?? ''}&limit=${env.bread.get.limit ?? ''}",
+		"sheet:DATES":"/-sources/sheet-dates?source_id=${env.bread.get.source_id ?? ''}&appear=${env.bread.get.appear ?? ''}&query=${env.bread.get.query ?? ''}",
+		"sheet:TABLE":"/-sources/sheet-table?source_id=${env.bread.get.source_id ?? ''}&sheet_index=${env.bread.get.sheet_index ?? ''}&keyfilter=${env.bread.get.keyfilter ?? ''}&appear=${env.bread.get.appear ?? ''}&query=${env.bread.get.query ?? ''}&limit=${env.bread.get.limit ?? ''}",
 		"sheet:SOURCE":"/-sources/sheet-source?source_id=${env.bread.get.source_id ?? ''}",
 		
 		"disappear:ROOT":"/-sources/disappear",
@@ -70,7 +70,7 @@
 		"2entity:ROOT":"/-sources/entity?entity_id=${env.crumb.name}",
 		"2entity:ENTITY":"/-sources/entity?entity_id=${env.crumb.name}",
 		
-		"prop:ROOT":"/-sources/prop?prop_id=${env.crumb.name}&hashs=${env.bread.get.search ?? ''}",
+		"prop:ROOT":"/-sources/prop?prop_id=${env.crumb.name}&query=${env.bread.get.query ?? ''}",
 		
 
 		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}&m=${env.bread.get.m ?? ''}"

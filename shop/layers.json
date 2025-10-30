@@ -19,7 +19,7 @@
 	"onlyclient":["recalc:ROOT"],
 	"jsontpl":{
 		"recalc:ROOT":"/-sources/get-recalc?admin=${env.bread.get.admin ?? ''}",
-		"props:ROOT":"/-shop/admin/props?admin=${env.bread.get.admin ?? ''}&hashs=${env.bread.get.search ?? ''}",
+		"props:ROOT":"/-shop/admin/props?admin=${env.bread.get.admin ?? ''}&query=${env.bread.get.query ?? ''}",
 		"main:ROOT":"/-shop/admin/main?admin=${env.bread.get.admin ?? ''}",
 		"settings:ROOT":"/-shop/admin/settings?admin=${env.bread.get.admin ?? ''}",
 		"brief:TABLE":"/-shop/admin/brief?detail=${env.bread.get.detail ?? ''}&source_id=${env.bread.get.source_id ?? ''}&brand_nick=${env.bread.get.brand_nick ?? ''}&group_id=${env.crumb.child?.name ?? ''}&admin=${env.bread.get.admin ?? ''}",

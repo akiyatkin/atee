@@ -247,10 +247,11 @@ rest.addResponse('poss', ['admin'], async view => {
 
 	let key_ids
 	if (!origm) {
+
 		if (group_id) {
 			key_ids = await db.colAll(`
 				SELECT it.key_id
-				FROM sources_items it, shop_allitemgroups ig
+				FROM sources_witems it, shop_allitemgroups ig
 				WHERE it.entity_id = ${bind.brendart_prop_id}
 				and ig.group_id = ${group_id}
 				and it.key_id = ig.key_id
@@ -260,7 +261,7 @@ rest.addResponse('poss', ['admin'], async view => {
 			`)		
 			view.data.count = await db.col(`
 				SELECT count(distinct it.key_id)
-				FROM sources_items it, shop_allitemgroups ig
+				FROM sources_witems it, shop_allitemgroups ig
 				WHERE it.entity_id = ${bind.brendart_prop_id}
 				and ig.group_id = ${group_id}
 				and it.key_id = ig.key_id
@@ -270,7 +271,7 @@ rest.addResponse('poss', ['admin'], async view => {
 
 			key_ids = await db.colAll(`
 				SELECT it.key_id
-				FROM sources_items it, sources_wvalues wva
+				FROM sources_witems it, sources_wvalues wva
 				WHERE it.entity_id = ${bind.brendart_prop_id} and wva.key_id = it.key_id and it.entity_id = wva.entity_id 
 				and wva.prop_id = ${bind.brendmodel_prop_id}
 				and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || 'it.search != ""'}) 
@@ -279,7 +280,7 @@ rest.addResponse('poss', ['admin'], async view => {
 			`)
 			view.data.count = await db.col(`
 				SELECT count(*)
-				FROM sources_items it, sources_wvalues wva
+				FROM sources_witems it, sources_wvalues wva
 				WHERE it.entity_id = ${bind.brendart_prop_id} and wva.key_id = it.key_id and it.entity_id = wva.entity_id
 				and wva.prop_id = ${bind.brendmodel_prop_id}
 				and (${hashs.map(hash => 'it.search like "% ' + hash.join('%" and it.search like "% ') + '%"').join(' or ') || 'it.search != ""'}) 
@@ -314,6 +315,7 @@ rest.addResponse('poss', ['admin'], async view => {
 		}
 		
 		const sort = await Shop.addWhereSamples(db, from, join, where, [md.mget], hashs)
+
 
 		key_ids = await db.colAll(`
 			SELECT distinct win.key_id

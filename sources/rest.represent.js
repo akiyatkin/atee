@@ -375,7 +375,7 @@ rest.addAction('set-represent_sheets', ['admin','checkrecalc'], async view => {
 		await Consciousness.recalcWinner_bySource(db, source_id)//await Consciousness.recalcWinner(db)
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-		await Consciousness.recalcItemSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
+		//await Consciousness.recalcItemSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
 	}, true)
 
 	return view.ret()
@@ -437,7 +437,7 @@ rest.addAction('set-represent_cols', ['admin'], async view => {
 		await Consciousness.recalcWinner_bySource(db, source_id)//await Consciousness.recalcWinner(db)
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-		await Consciousness.recalcItemSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
+		//await Consciousness.recalcItemSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
 	}, true)
 	view.data.cls = represent.calcCls(source.represent_source, newvalue)
 	return view.ret()
@@ -467,7 +467,7 @@ rest.addAction('set-represent_cells', ['admin'], async view => {
 		await Consciousness.recalcWinner_bySource(db, source_id)//await Consciousness.recalcWinner(db)
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-		await Consciousness.recalcItemSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
+		//await Consciousness.recalcItemSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
 	}, true)
 	view.data.cls = represent.calcCls(source.represent_source, newvalue)
 	return view.ret()
@@ -539,7 +539,7 @@ rest.addAction('set-represent_sheet', ['admin','checkrecalc','setaccess'], async
 
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-		await Consciousness.recalcItemSearch_bySheet(db, sheet.source_id, sheet.sheet_index) //Асинхронно расчитывается, не зависит от расчёта represent
+		//await Consciousness.recalcItemSearch_bySheet(db, sheet.source_id, sheet.sheet_index) //Асинхронно расчитывается, не зависит от расчёта represent
 	}, true)
 	
 	return view.ret()
@@ -574,7 +574,7 @@ rest.addAction('set-represent_source', ['admin'], async view => {
 		await Consciousness.recalcWinner_bySource(db, source_id)//await Consciousness.recalcWinner(db)
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-		await Consciousness.recalcItemSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
+		//await Consciousness.recalcItemSearch_bySource(db, source_id) //Асинхронно расчитывается, не зависит от расчёта represent
 	}, true)
 	view.data.cls = represent.calcCls(
 		1, 
@@ -613,7 +613,7 @@ rest.addAction('set-represent_entity', ['admin'], async view => {
 		await Consciousness.recalcWinner(db)//await Consciousness.recalcWinner(db)
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-		await Consciousness.recalcItemSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
+		//await Consciousness.recalcItemSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
 	}, true)
 	view.data.cls = represent.calcCls(
 		1, 
@@ -660,7 +660,7 @@ rest.addAction('set-represent_prop', ['admin'], async view => {
 		await Consciousness.recalcWinner(db)//await Consciousness.recalcWinner(db)
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-		await Consciousness.recalcItemSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
+		//await Consciousness.recalcItemSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
 	}, true)
 	view.data.cls = `${defcustom(newvalue)}`
 	return view.ret()
@@ -795,7 +795,7 @@ rest.addAction('set-represent_col', ['admin'], async view => {
 
 		//await Consciousness.recalcAppear(db)
 		//Consciousness.recalcRowSearch(db) //Асинхронно расчитывается, не зависит от расчёта represent
-		await Consciousness.recalcItemSearch_bySheet(db, sheet.source_id, sheet.sheet_index) //Асинхронно расчитывается, не зависит от расчёта represent		
+		//await Consciousness.recalcItemSearch_bySheet(db, sheet.source_id, sheet.sheet_index) //Асинхронно расчитывается, не зависит от расчёта represent		
 	}, true)
 	view.data.cls = represent.calcCls(col.represent_col, newvalue, source.represent_source)
 	col.cls = represent.calcCls(

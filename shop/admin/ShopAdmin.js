@@ -133,7 +133,7 @@ ShopAdmin.getWhereBySamples = async (db, samples, hashs = [], partner = false, f
 
 	// //and wca.entity_id = win.entity_id and wca.key_id = win.key_id and wca.prop_id = win.prop_id
 	// if (hashs.length) {
-	// 	from.unshift('sources_items wit')
+	// 	from.unshift('sources_witems wit')
 	// 	where.push('wit.entity_id = win.entity_id and wit.key_id = win.key_id')
 	// 	where.push('(' + hashs.map(hash => 'wit.search like "% ' + hash.join('%" and wit.search like "% ') + '%"').join(' or ')+')' || '1 = 1')
 	// }
@@ -1709,7 +1709,7 @@ ShopAdmin.reorderGroups = async (db) => {
 // 		const child_ids = group.child_ids
 // 		const key_ids = await db.colAll(`
 // 			SELECT ig.key_id 
-// 			FROM sources_items it, shop_allitemgroups ig
+// 			FROM sources_witems it, shop_allitemgroups ig
 // 			${child_ids.map(child_id => `LEFT JOIN shop_allitemgroups ig${child_id} ON (ig${child_id}.key_id = wce.key_id AND ig${child_id}.group_id = ${child_id})`).join(' ')}
 // 			WHERE ig.group_id = :parent_id
 // 			and it.key_id = ig.key_id and it.entity_id = :brendart_prop_id
@@ -1719,7 +1719,7 @@ ShopAdmin.reorderGroups = async (db) => {
 // 		`, {...bind, parent_id})
 // 		const poscount = await db.colAll(`
 // 			SELECT count(*) 
-// 			FROM sources_items it, shop_allitemgroups ig
+// 			FROM sources_witems it, shop_allitemgroups ig
 // 			${child_ids.map(child_id => `LEFT JOIN shop_allitemgroups ig${child_id} ON (ig${child_id}.key_id = wce.key_id AND ig${child_id}.group_id = ${child_id})`).join(' ')}
 // 			WHERE ig.group_id = :parent_id
 // 			and it.key_id = ig.key_id and it.entity_id = :brendart_prop_id
@@ -1731,7 +1731,7 @@ ShopAdmin.reorderGroups = async (db) => {
 // 		const child_ids = await db.colAll(`select group_id from shop_groups where parent_id is null`)
 // 		const key_ids = await db.colAll(`
 // 			SELECT it.key_id 
-// 			FROM sources_items it
+// 			FROM sources_witems it
 // 			${child_ids.map(child_id => `LEFT JOIN shop_allitemgroups ig${child_id} ON (ig${child_id}.key_id = it.key_id AND ig${child_id}.group_id = ${child_id})`).join(' ')}
 // 			WHERE it.entity_id = 1 
 // 			and it.search != ''
@@ -1741,7 +1741,7 @@ ShopAdmin.reorderGroups = async (db) => {
 // 		`)
 // 		const poscount = await db.colAll(`
 // 			SELECT count(*)
-// 			FROM sources_items it
+// 			FROM sources_witems it
 // 			${child_ids.map(child_id => `LEFT JOIN shop_allitemgroups ig${child_id} ON (ig${child_id}.key_id = it.key_id AND ig${child_id}.group_id = ${child_id})`).join(' ')}
 // 			WHERE it.entity_id = 1 
 // 			and it.search != ''
@@ -1757,7 +1757,7 @@ ShopAdmin.getFreeKeyIdsByGroupIndex = async (db, group_id = null, hashs = [], li
 		const child_ids = await db.colAll(`select group_id from shop_groups where parent_id is null`)
 		const key_ids = await db.colAll(`
 			SELECT it.key_id 
-			FROM sources_items it
+			FROM sources_witems it
 			${child_ids.map(child_id => `LEFT JOIN shop_allitemgroups ig${child_id} ON (ig${child_id}.key_id = it.key_id AND ig${child_id}.group_id = ${child_id})`).join(' ')}
 			WHERE it.entity_id = ${bind.brendart_prop_id}
 			and it.search != ''
@@ -1767,7 +1767,7 @@ ShopAdmin.getFreeKeyIdsByGroupIndex = async (db, group_id = null, hashs = [], li
 		`)
 		const poscount = await db.colAll(`
 			SELECT count(*)
-			FROM sources_items it
+			FROM sources_witems it
 			${child_ids.map(child_id => `LEFT JOIN shop_allitemgroups ig${child_id} ON (ig${child_id}.key_id = it.key_id AND ig${child_id}.group_id = ${child_id})`).join(' ')}
 			WHERE it.entity_id = ${bind.brendart_prop_id}
 			and it.search != ''
@@ -1778,7 +1778,7 @@ ShopAdmin.getFreeKeyIdsByGroupIndex = async (db, group_id = null, hashs = [], li
 	} else {
 		const key_ids = await db.colAll(`
 			SELECT ig.key_id
-			FROM shop_itemgroups ig, sources_items it
+			FROM shop_itemgroups ig, sources_witems it
 			WHERE ig.group_id = ${group_id}
 			and it.key_id = ig.key_id 
 			and it.entity_id = ${bind.brendart_prop_id}
@@ -1791,7 +1791,7 @@ ShopAdmin.getFreeKeyIdsByGroupIndex = async (db, group_id = null, hashs = [], li
 		const poscount = await db.col(`
 			SELECT 
 				COUNT(*)
-			FROM sources_wvalues wva, shop_itemgroups ig, sources_items it
+			FROM sources_wvalues wva, shop_itemgroups ig, sources_witems it
 			WHERE ig.group_id = ${group_id}
 			and it.key_id = ig.key_id 
 			and it.entity_id = ${bind.brendart_prop_id}

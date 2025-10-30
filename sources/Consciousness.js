@@ -2440,162 +2440,162 @@ Consciousness.getSearch = (text) => {
 // 	}
 // 	await sources_rows.flush()
 // }
-Consciousness.recalcItemSearch = async (db) => {
-	await db.exec(`
-		UPDATE sources_items it SET search = ''
-	`)
+// Consciousness.recalcItemSearch = async (db) => {
+// 	await db.exec(`
+// 		UPDATE sources_items it SET search = ''
+// 	`)
 	
-	const texts = await db.all(`
-		SELECT 
-			wi.entity_id,
-			wi.key_id, 
-			concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
-		FROM 
-			sources_wcells wi, 
-			sources_cells ce, 
-			sources_props pr
-		WHERE 
-			pr.prop_id = wi.prop_id
-			and wi.source_id = ce.source_id
-			and wi.sheet_index = ce.sheet_index
-			and wi.row_index = ce.row_index
-			and wi.col_index = ce.col_index
-		GROUP BY wi.key_id
-	`)
+// 	const texts = await db.all(`
+// 		SELECT 
+// 			wi.entity_id,
+// 			wi.key_id, 
+// 			concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
+// 		FROM 
+// 			sources_wcells wi, 
+// 			sources_cells ce, 
+// 			sources_props pr
+// 		WHERE 
+// 			pr.prop_id = wi.prop_id
+// 			and wi.source_id = ce.source_id
+// 			and wi.sheet_index = ce.sheet_index
+// 			and wi.row_index = ce.row_index
+// 			and wi.col_index = ce.col_index
+// 		GROUP BY wi.key_id
+// 	`)
 
-	await Consciousness.recalcItemSearch_list(db, texts)
+// 	await Consciousness.recalcItemSearch_list(db, texts)
 	
-}
-Consciousness.recalcItemSearch_list = async (db, texts) => {
-	const sources_items = new BulkInserter(db.pool, 'sources_items', ['entity_id', 'key_id', 'search'], 100, true)	
-	for (const {entity_id, key_id, text} of texts) {
-		let search = nicked(text)
-		search = search.split('-')
-		search = unique(search).filter(r => r)
-		search.sort()
-		search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-		await sources_items.insert([entity_id, key_id, search])
-	}
-	await sources_items.flush()
+// }
+// Consciousness.recalcItemSearch_list = async (db, texts) => {
+// 	const sources_items = new BulkInserter(db.pool, 'sources_items', ['entity_id', 'key_id', 'search'], 100, true)	
+// 	for (const {entity_id, key_id, text} of texts) {
+// 		let search = nicked(text)
+// 		search = search.split('-')
+// 		search = unique(search).filter(r => r)
+// 		search.sort()
+// 		search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+// 		await sources_items.insert([entity_id, key_id, search])
+// 	}
+// 	await sources_items.flush()
 
-	// for (const {entity_id, key_id, text} of texts) {
+// 	// for (const {entity_id, key_id, text} of texts) {
 
-	// 	let search = nicked(text)
-	// 	search = search.split('-')
-	// 	search = unique(search)
-	// 	search.sort()
-	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-	// 	await db.exec(`
-	// 		UPDATE sources_items
-	// 		SET search = :search
-	// 		WHERE entity_id = :entity_id and key_id = :key_id
-	// 	`, {entity_id, key_id, search})
-	// }
-}
-Consciousness.recalcItemSearch_bySource = async (db, source_id) => {
-	const texts = await db.all(`
-		SELECT 
-			wi.entity_id,
-			wi.key_id, 
-			concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
-		FROM 
-			sources_wcells wi, 
-			sources_cells ce, 
-			sources_props pr
-		WHERE 
-			ce.source_id = :source_id
-			and pr.prop_id = wi.prop_id
-			and wi.source_id = ce.source_id
-			and wi.sheet_index = ce.sheet_index
-			and wi.row_index = ce.row_index
-			and wi.col_index = ce.col_index
-		GROUP BY wi.key_id
-	`, {source_id})
-	await Consciousness.recalcItemSearch_list(db, texts)
-	// for (const {entity_id, key_id, text} of texts) {
+// 	// 	let search = nicked(text)
+// 	// 	search = search.split('-')
+// 	// 	search = unique(search)
+// 	// 	search.sort()
+// 	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+// 	// 	await db.exec(`
+// 	// 		UPDATE sources_items
+// 	// 		SET search = :search
+// 	// 		WHERE entity_id = :entity_id and key_id = :key_id
+// 	// 	`, {entity_id, key_id, search})
+// 	// }
+// }
+// Consciousness.recalcItemSearch_bySource = async (db, source_id) => {
+// 	const texts = await db.all(`
+// 		SELECT 
+// 			wi.entity_id,
+// 			wi.key_id, 
+// 			concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
+// 		FROM 
+// 			sources_wcells wi, 
+// 			sources_cells ce, 
+// 			sources_props pr
+// 		WHERE 
+// 			ce.source_id = :source_id
+// 			and pr.prop_id = wi.prop_id
+// 			and wi.source_id = ce.source_id
+// 			and wi.sheet_index = ce.sheet_index
+// 			and wi.row_index = ce.row_index
+// 			and wi.col_index = ce.col_index
+// 		GROUP BY wi.key_id
+// 	`, {source_id})
+// 	await Consciousness.recalcItemSearch_list(db, texts)
+// 	// for (const {entity_id, key_id, text} of texts) {
 
-	// 	let search = nicked(text)
-	// 	search = search.split('-')
-	// 	search = unique(search)
-	// 	search.sort()
-	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-	// 	await db.exec(`
-	// 		UPDATE sources_items
-	// 		SET search = :search
-	// 		WHERE entity_id = :entity_id and key_id = :key_id
-	// 	`, {entity_id, key_id, search})
-	// }
-}
+// 	// 	let search = nicked(text)
+// 	// 	search = search.split('-')
+// 	// 	search = unique(search)
+// 	// 	search.sort()
+// 	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+// 	// 	await db.exec(`
+// 	// 		UPDATE sources_items
+// 	// 		SET search = :search
+// 	// 		WHERE entity_id = :entity_id and key_id = :key_id
+// 	// 	`, {entity_id, key_id, search})
+// 	// }
+// }
 
-Consciousness.recalcItemSearch_byKey = async (db, entity_id, key_id) => {
-	const texts = await db.all(`
-		SELECT 
-			wi.entity_id,
-			wi.key_id, 
-			concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
-		FROM 
-			sources_wcells wi, 
-			sources_cells ce, 
-			sources_props pr
-		WHERE 
-			wi.entity_id = :entity_id and wi.key_id = :key_id
-			and pr.prop_id = wi.prop_id
-			and wi.source_id = ce.source_id
-			and wi.sheet_index = ce.sheet_index
-			and wi.row_index = ce.row_index
-			and wi.col_index = ce.col_index
-		GROUP BY wi.key_id
-	`, {entity_id, key_id})
-	await Consciousness.recalcItemSearch_list(db, texts)
-	// for (const {entity_id, key_id, text} of texts) {
+// Consciousness.recalcItemSearch_byKey = async (db, entity_id, key_id) => {
+// 	const texts = await db.all(`
+// 		SELECT 
+// 			wi.entity_id,
+// 			wi.key_id, 
+// 			concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
+// 		FROM 
+// 			sources_wcells wi, 
+// 			sources_cells ce, 
+// 			sources_props pr
+// 		WHERE 
+// 			wi.entity_id = :entity_id and wi.key_id = :key_id
+// 			and pr.prop_id = wi.prop_id
+// 			and wi.source_id = ce.source_id
+// 			and wi.sheet_index = ce.sheet_index
+// 			and wi.row_index = ce.row_index
+// 			and wi.col_index = ce.col_index
+// 		GROUP BY wi.key_id
+// 	`, {entity_id, key_id})
+// 	await Consciousness.recalcItemSearch_list(db, texts)
+// 	// for (const {entity_id, key_id, text} of texts) {
 
-	// 	let search = nicked(text)
-	// 	search = search.split('-')
-	// 	search = unique(search)
-	// 	search.sort()
-	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-	// 	await db.exec(`
-	// 		UPDATE sources_items
-	// 		SET search = :search
-	// 		WHERE entity_id = :entity_id and key_id = :key_id
-	// 	`, {entity_id, key_id, search})
-	// }
-}
-Consciousness.recalcItemSearch_bySheet = async (db, source_id, sheet_index) => {
-	const texts = await db.all(`
-		SELECT 
-			wi.entity_id,
-			wi.key_id, 
-			concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
-		FROM 
-			sources_wcells wi, 
-			sources_cells ce, 
-			sources_props pr
-		WHERE 
-			ce.source_id = :source_id
-			and ce.sheet_index = :sheet_index
-			and pr.prop_id = wi.prop_id
-			and wi.source_id = ce.source_id
-			and wi.sheet_index = ce.sheet_index
-			and wi.row_index = ce.row_index
-			and wi.col_index = ce.col_index
-		GROUP BY wi.key_id
-	`, {source_id, sheet_index})
-	await Consciousness.recalcItemSearch_list(db, texts)
-	// for (const {entity_id, key_id, text} of texts) {
+// 	// 	let search = nicked(text)
+// 	// 	search = search.split('-')
+// 	// 	search = unique(search)
+// 	// 	search.sort()
+// 	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+// 	// 	await db.exec(`
+// 	// 		UPDATE sources_items
+// 	// 		SET search = :search
+// 	// 		WHERE entity_id = :entity_id and key_id = :key_id
+// 	// 	`, {entity_id, key_id, search})
+// 	// }
+// }
+// Consciousness.recalcItemSearch_bySheet = async (db, source_id, sheet_index) => {
+// 	const texts = await db.all(`
+// 		SELECT 
+// 			wi.entity_id,
+// 			wi.key_id, 
+// 			concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
+// 		FROM 
+// 			sources_wcells wi, 
+// 			sources_cells ce, 
+// 			sources_props pr
+// 		WHERE 
+// 			ce.source_id = :source_id
+// 			and ce.sheet_index = :sheet_index
+// 			and pr.prop_id = wi.prop_id
+// 			and wi.source_id = ce.source_id
+// 			and wi.sheet_index = ce.sheet_index
+// 			and wi.row_index = ce.row_index
+// 			and wi.col_index = ce.col_index
+// 		GROUP BY wi.key_id
+// 	`, {source_id, sheet_index})
+// 	await Consciousness.recalcItemSearch_list(db, texts)
+// 	// for (const {entity_id, key_id, text} of texts) {
 
-	// 	let search = nicked(text)
-	// 	search = search.split('-')
-	// 	search = unique(search)
-	// 	search.sort()
-	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
-	// 	await db.exec(`
-	// 		UPDATE sources_items
-	// 		SET search = :search
-	// 		WHERE entity_id = :entity_id and key_id = :key_id
-	// 	`, {entity_id, key_id, search})
-	// }
-}
+// 	// 	let search = nicked(text)
+// 	// 	search = search.split('-')
+// 	// 	search = unique(search)
+// 	// 	search.sort()
+// 	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+// 	// 	await db.exec(`
+// 	// 		UPDATE sources_items
+// 	// 		SET search = :search
+// 	// 		WHERE entity_id = :entity_id and key_id = :key_id
+// 	// 	`, {entity_id, key_id, search})
+// 	// }
+// }
 
 // Consciousness.recalcSearchByEntityIdAndSourceId = async (db, entity_id, source_id) => {	
 // 	await db.exec(`
@@ -2798,168 +2798,217 @@ Consciousness.recalcItemSearch_bySheet = async (db, source_id, sheet_index) => {
 	
 // 	await db.commit()
 // }
+Consciousness.insertWitems = async (db, items) => {
+	const sources_items = new BulkInserter(db.pool, 'sources_witems', ['entity_id', 'key_id', 'search'], 10)	
+	for (const {entity_id, key_id, text} of items) {
+		const search = Consciousness.getSearch(text)
+		await sources_items.insert([entity_id, key_id, search])
+	}
+	await sources_items.flush()
 
+	// for (const {entity_id, key_id, text} of texts) {
+
+	// 	let search = nicked(text)
+	// 	search = search.split('-')
+	// 	search = unique(search)
+	// 	search.sort()
+	// 	search = ' ' + search.join(' ') //Поиск выполняется по началу ключа с пробелом '% key%'
+	// 	await db.exec(`
+	// 		UPDATE sources_items
+	// 		SET search = :search
+	// 		WHERE entity_id = :entity_id and key_id = :key_id
+	// 	`, {entity_id, key_id, search})
+	// }
+}
 Consciousness.recalcWinner = async (db) => {
 	console.time('recalcWinner')
 	const conn = await db.pool.getConnection()
-	await conn.beginTransaction()
-	await conn.query(`DELETE FROM sources_wcells`)
-	await conn.query(`DELETE FROM sources_wdates`)
-	await conn.query(`DELETE FROM sources_wtexts`)
-	await conn.query(`DELETE FROM sources_wvalues`)
-	await conn.query(`DELETE FROM sources_wnumbers`)
+	try {
+		await conn.beginTransaction()
+		await conn.query(`DELETE FROM sources_wcells`)
+		await conn.query(`DELETE FROM sources_wdates`)
+		await conn.query(`DELETE FROM sources_wtexts`)
+		await conn.query(`DELETE FROM sources_wvalues`)
+		await conn.query(`DELETE FROM sources_wnumbers`)
 
-	await conn.query(`DELETE FROM sources_wprops`)
+		await conn.query(`DELETE FROM sources_wprops`)
+		
 
-	// await conn.exec(`
-	// 	CREATE TABLE sources_wprops_temp AS SELECT * FROM sources_props;
-	// `)
-	await conn.query(`INSERT INTO sources_wprops SELECT * FROM sources_props`)
-	await conn.query(`
-		INSERT INTO sources_wcells (
-			entity_id, key_id, 
-			prop_id, 
-			source_id, sheet_index, 
-			row_index, col_index
-		)
-		SELECT 
-		 	sh.entity_id, ro.key_id, 
-		 	co.prop_id, 
-		 	ce.source_id, ce.sheet_index, 
-		 	ce.row_index, ce.col_index
-	 	FROM sources_cells ce, sources_cols co, sources_sources so, 
-	 		sources_sheets sh, sources_rows ro, 
-	 		sources_props pr_col, 
-	 		sources_items it,
-	 		sources_props pr_key
+		
+		
 
-	 	WHERE 
-	 		-- ce.represent = 1  
-	 		-- ce.represent_cell_summary = 1 
-	 		-- and ce.represent_item_summary = 1
+		// await conn.exec(`
+		// 	CREATE TABLE sources_wprops_temp AS SELECT * FROM sources_props;
+		// `)
+		await conn.query(`INSERT INTO sources_wprops SELECT * FROM sources_props`)
+		await conn.query(`
+			INSERT INTO sources_wcells (
+				entity_id, key_id, 
+				prop_id, 
+				source_id, sheet_index, 
+				row_index, col_index
+			)
+			SELECT 
+			 	sh.entity_id, ro.key_id, 
+			 	co.prop_id, 
+			 	ce.source_id, ce.sheet_index, 
+			 	ce.row_index, ce.col_index
+		 	FROM sources_cells ce, sources_cols co, sources_sources so, 
+		 		sources_sheets sh, sources_rows ro, 
+		 		sources_props pr_col, 
+		 		sources_items it,
+		 		sources_props pr_key
 
-	 		so.represent_source = 1
-	 		and sh.represent_sheet = 1
-	 		and co.represent_col = 1
-	 		and pr_col.represent_prop = 1 
-	 		and pr_key.represent_prop = 1
-	 		-- and (sh.entity_id != co.prop_id or so.master = 1) -- свойство БрендАрт надо брать у мастера
+		 	WHERE 
+		 		-- ce.represent = 1  
+		 		-- ce.represent_cell_summary = 1 
+		 		-- and ce.represent_item_summary = 1
 
-	 		and pr_key.prop_id = sh.entity_id
-	 		and ce.sheet_index = co.sheet_index and ce.col_index = co.col_index and ce.multi_index = 0
-	 		and pr_col.prop_id = co.prop_id
-	 		and it.entity_id = sh.entity_id and it.key_id = ro.key_id and it.master = 1
-	 		and ce.source_id = co.source_id
-	 		and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
-	 		and so.source_id = ce.source_id
-	 		and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
+		 		so.represent_source = 1
+		 		and sh.represent_sheet = 1
+		 		and co.represent_col = 1
+		 		and pr_col.represent_prop = 1 
+		 		and pr_key.represent_prop = 1
+		 		-- and (sh.entity_id != co.prop_id or so.master = 1) -- свойство БрендАрт надо брать у мастера
+
+		 		and pr_key.prop_id = sh.entity_id
+		 		and ce.sheet_index = co.sheet_index and ce.col_index = co.col_index and ce.multi_index = 0
+		 		and pr_col.prop_id = co.prop_id
+		 		and it.entity_id = sh.entity_id and it.key_id = ro.key_id and it.master = 1
+		 		and ce.source_id = co.source_id
+		 		and sh.source_id = ce.source_id and sh.sheet_index = ce.sheet_index
+		 		and so.source_id = ce.source_id
+		 		and ro.source_id = ce.source_id and ro.sheet_index = ce.sheet_index and ro.row_index = ce.row_index
 
 
-	 		and (ce.text is not null)
+		 		and (ce.text is not null)
 
-	 	ORDER BY so.ordain, ce.sheet_index, ce.row_index, pr_col.ordain
-	 	ON DUPLICATE KEY UPDATE
-  			source_id = VALUES(source_id),
-  			sheet_index = VALUES(sheet_index),
-  			row_index = VALUES(row_index),
-  			col_index = VALUES(col_index)
-	`)
-	
+		 	ORDER BY so.ordain, ce.sheet_index, ce.row_index, pr_col.ordain
+		 	ON DUPLICATE KEY UPDATE
+	  			source_id = VALUES(source_id),
+	  			sheet_index = VALUES(sheet_index),
+	  			row_index = VALUES(row_index),
+	  			col_index = VALUES(col_index)
+		`)
+		
 
-	//Могут быть дубли multi_index, но их нужно проигнорировать
-	await conn.query(`
-		INSERT IGNORE INTO sources_wvalues (
-			entity_id, key_id, 
-			prop_id, 
-			value_id, 
-			multi_index
-		)
-		SELECT 
-		 	wi.entity_id, wi.key_id, 
-		 	wi.prop_id, 
-		 	ce.value_id, 
-		 	ce.multi_index
-	 	FROM sources_wcells wi, sources_cells ce, sources_values va
-	 	WHERE 
-	 		va.value_id = ce.value_id
-	 		and va.value_nick != ''
-	 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
-	 		
-	`)
+		//Могут быть дубли multi_index, но их нужно проигнорировать
+		await conn.query(`
+			INSERT IGNORE INTO sources_wvalues (
+				entity_id, key_id, 
+				prop_id, 
+				value_id, 
+				multi_index
+			)
+			SELECT 
+			 	wi.entity_id, wi.key_id, 
+			 	wi.prop_id, 
+			 	ce.value_id, 
+			 	ce.multi_index
+		 	FROM sources_wcells wi, sources_cells ce, sources_values va
+		 	WHERE 
+		 		va.value_id = ce.value_id
+		 		and va.value_nick != ''
+		 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
+		 		
+		`)
 
-	
-	await conn.query(`
-		INSERT IGNORE INTO sources_wnumbers (
-			entity_id, key_id, 
-			prop_id, number, 
-			multi_index
-		)
-		SELECT 
-		 	wi.entity_id, wi.key_id, 
-		 	wi.prop_id, ce.number, 
-		 	ce.multi_index
-	 	FROM sources_wcells wi, sources_cells ce
-	 	WHERE 
-	 		ce.number is not null
-	 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
-	 		
-	`)
+		
+		await conn.query(`
+			INSERT IGNORE INTO sources_wnumbers (
+				entity_id, key_id, 
+				prop_id, number, 
+				multi_index
+			)
+			SELECT 
+			 	wi.entity_id, wi.key_id, 
+			 	wi.prop_id, ce.number, 
+			 	ce.multi_index
+		 	FROM sources_wcells wi, sources_cells ce
+		 	WHERE 
+		 		ce.number is not null
+		 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
+		 		
+		`)
 
-	
-	await conn.query(`
-		INSERT IGNORE INTO sources_wdates (
-			entity_id, key_id, 
-			prop_id, date, multi_index
-		)
-		SELECT 
-		 	wi.entity_id, wi.key_id, 
-		 	wi.prop_id, ce.date, ce.multi_index
-	 	FROM sources_wcells wi, sources_cells ce
-	 	WHERE 
-	 		ce.date is not null
-	 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
-	 		
-	`)
+		
+		await conn.query(`
+			INSERT IGNORE INTO sources_wdates (
+				entity_id, key_id, 
+				prop_id, date, multi_index
+			)
+			SELECT 
+			 	wi.entity_id, wi.key_id, 
+			 	wi.prop_id, ce.date, ce.multi_index
+		 	FROM sources_wcells wi, sources_cells ce
+		 	WHERE 
+		 		ce.date is not null
+		 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
+		 		
+		`)
 
-	
-	await conn.query(`
-		INSERT INTO sources_wtexts (
-			entity_id, key_id, 
-			prop_id, text, multi_index
-		)
-		SELECT 
-		 	wi.entity_id, wi.key_id, 
-		 	wi.prop_id, ce.text, ce.multi_index
-	 	FROM sources_wcells wi, sources_cells ce, sources_props pr
-	 	WHERE 
-	 		pr.type = 'text'
-	 		and ce.text != ''
-	 		and wi.prop_id = pr.prop_id
-	 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
-	`)
+		
+		await conn.query(`
+			INSERT INTO sources_wtexts (
+				entity_id, key_id, 
+				prop_id, text, multi_index
+			)
+			SELECT 
+			 	wi.entity_id, wi.key_id, 
+			 	wi.prop_id, ce.text, ce.multi_index
+		 	FROM sources_wcells wi, sources_cells ce, sources_props pr
+		 	WHERE 
+		 		pr.type = 'text'
+		 		and ce.text != ''
+		 		and wi.prop_id = pr.prop_id
+		 		and ce.source_id = wi.source_id and ce.sheet_index = wi.sheet_index and ce.row_index = wi.row_index and ce.col_index = wi.col_index
+		`)
 
-	await conn.query(`
-		DELETE win FROM sources_wcells win
-			LEFT JOIN sources_wnumbers wnum on (wnum.entity_id = win.entity_id and wnum.key_id = win.key_id and wnum.prop_id = win.prop_id)
-			LEFT JOIN sources_wtexts wtxt on (wtxt.entity_id = win.entity_id and wtxt.key_id = win.key_id and wtxt.prop_id = win.prop_id)
-			LEFT JOIN sources_wdates wdate on (wdate.entity_id = win.entity_id and wdate.key_id = win.key_id and wdate.prop_id = win.prop_id)
-			LEFT JOIN sources_wvalues wval on (wval.entity_id = win.entity_id and wval.key_id = win.key_id and wval.prop_id = win.prop_id)
-		WHERE 
-			wnum.entity_id is null and wval.entity_id is null and wtxt.entity_id is null and wdate.entity_id is null
-	`)
-	// await conn.query(`
-	// 	DELETE win FROM sources_wcells win
-	// 		LEFT JOIN sources_wnumbers wnum on (wnum.entity_id = win.entity_id and wnum.key_id = win.key_id and wnum.prop_id = win.prop_id)
-	// 		LEFT JOIN sources_wtexts wtxt on (wtxt.entity_id = win.entity_id and wtxt.key_id = win.key_id and wtxt.prop_id = win.prop_id)
-	// 		LEFT JOIN sources_wdates wdate on (wdate.entity_id = win.entity_id and wdate.key_id = win.key_id and wdate.prop_id = win.prop_id)
-	// 		LEFT JOIN sources_wvalues wval on (wval.entity_id = win.entity_id and wval.key_id = win.key_id and wval.prop_id = win.prop_id)
-	// 		LEFT JOIN sources_values va on (va.value_id = wval.value_id)
-	// 	WHERE 
-	// 		(wnum.entity_id is null and wval.entity_id is null and wtxt.entity_id is null and wdate.entity_id is null)
-	// 		or 
-	// `)
-	await conn.commit()
-	conn.release()
+		await conn.query(`
+			DELETE win FROM sources_wcells win
+				LEFT JOIN sources_wnumbers wnum on (wnum.entity_id = win.entity_id and wnum.key_id = win.key_id and wnum.prop_id = win.prop_id)
+				LEFT JOIN sources_wtexts wtxt on (wtxt.entity_id = win.entity_id and wtxt.key_id = win.key_id and wtxt.prop_id = win.prop_id)
+				LEFT JOIN sources_wdates wdate on (wdate.entity_id = win.entity_id and wdate.key_id = win.key_id and wdate.prop_id = win.prop_id)
+				LEFT JOIN sources_wvalues wval on (wval.entity_id = win.entity_id and wval.key_id = win.key_id and wval.prop_id = win.prop_id)
+			WHERE 
+				wnum.entity_id is null and wval.entity_id is null and wtxt.entity_id is null and wdate.entity_id is null
+		`)
+		// await conn.query(`
+		// 	DELETE win FROM sources_wcells win
+		// 		LEFT JOIN sources_wnumbers wnum on (wnum.entity_id = win.entity_id and wnum.key_id = win.key_id and wnum.prop_id = win.prop_id)
+		// 		LEFT JOIN sources_wtexts wtxt on (wtxt.entity_id = win.entity_id and wtxt.key_id = win.key_id and wtxt.prop_id = win.prop_id)
+		// 		LEFT JOIN sources_wdates wdate on (wdate.entity_id = win.entity_id and wdate.key_id = win.key_id and wdate.prop_id = win.prop_id)
+		// 		LEFT JOIN sources_wvalues wval on (wval.entity_id = win.entity_id and wval.key_id = win.key_id and wval.prop_id = win.prop_id)
+		// 		LEFT JOIN sources_values va on (va.value_id = wval.value_id)
+		// 	WHERE 
+		// 		(wnum.entity_id is null and wval.entity_id is null and wtxt.entity_id is null and wdate.entity_id is null)
+		// 		or 
+		// `)
+
+		await conn.query(`DELETE FROM sources_witems`)
+		await conn.commit()
+		const [items] = await conn.query(`
+			SELECT 
+				wi.entity_id,
+				wi.key_id, 
+				concat(GROUP_CONCAT(ce.text SEPARATOR '-'),"-",GROUP_CONCAT(distinct pr.prop_nick SEPARATOR '-')) as text
+			FROM 
+				sources_wcells wi, 
+				sources_cells ce, 
+				sources_props pr
+			WHERE 
+				pr.prop_id = wi.prop_id
+				and wi.source_id = ce.source_id
+				and wi.sheet_index = ce.sheet_index
+				and wi.row_index = ce.row_index
+				and wi.col_index = ce.col_index
+			GROUP BY wi.key_id
+		`)
+		await Consciousness.insertWitems(db, items)
+		
+	} finally {
+		conn.release()
+	}
 	console.timeEnd('recalcWinner')
 }
 

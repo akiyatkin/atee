@@ -493,7 +493,7 @@ rest.addResponse('get-livemodels', async (view) => {
 	
 
 	const bind = await Shop.getBind(db)
-	const {from, join, where} = await Shop.getWhereByGroupIndexWinMod(db, root.group_id, [md.mget], md.hashs, partner)
+	const {from, join, where} = await Shop.getWhereByGroupIndexWinMod(db, root.group_id, [md.mget], md.hashs, partner)	
 
 	const countonpage = 12
 	
