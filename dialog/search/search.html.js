@@ -15,7 +15,7 @@ export const POPUP = (data, env) => `
 		${descr(env)}
 		<form action="${action(env)}">
 			<div class="float-label">
-				<input name="search" value="${value(env)}" placeholder="${placeholder(env)}" id="${env.sid}s" type="search">
+				<input name="query" value="${value(env)}" placeholder="${placeholder(env)}" id="${env.sid}s" type="search">
 				<label for="${env.sid}s">${placeholder(env)}</label>
 			</div>
 		</form>

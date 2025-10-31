@@ -187,12 +187,13 @@ const showEntity = (data, env, entity) => {
 const showSearch = (data, env) => `
 	<form style="margin: 1em 0; display: flex; gap: 1em; clear:both">
 		
-		<input name="search" type="search" style="flex-grow:1" value="${env.bread.get.search ?? ''}"><button type="submit">Найти</button>
+		<input name="query" type="search" style="flex-grow:1" value="${env.bread.get.query ?? ''}"><button type="submit">Найти</button>
 		<script>
 			(form => {
 				const go = async () => {
 					const addget = await import('/-sources/addget.js').then(r => r.default)
-					const query = addget(new URLSearchParams(window.location.search), {search: form.search.value.trim()})
+					const input = form.query
+					const query = addget(new URLSearchParams(window.location.search), {query: input.value.trim()})
 					const Client = await window.getClient()
 					Client.go('sheet' + query)
 				}

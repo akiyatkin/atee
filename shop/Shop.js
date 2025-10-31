@@ -1988,6 +1988,7 @@ Shop.getWhereByGroupIndexWin = async (db, group_id, samples = [], hashs = [], pa
 	//win.key_id - позиция, wva.value_id - модель
 	const bind = await Shop.getBind(db)
 	const from = [`shop_allitemgroups ig, ${wintable} win`]
+	
 	const join = []
 	const where = [`win.entity_id = ${bind.brendart_prop_id}`]
 	
@@ -2001,7 +2002,7 @@ Shop.getWhereByGroupIndexWin = async (db, group_id, samples = [], hashs = [], pa
 	where.push(`ig.group_id = ${group_id}`)
 
 	const sort = await Shop.addWhereSamples(db, from, join, where, samples, hashs, partner)
-
+	
 	return {from, join, where, sort}
 }
 
@@ -2033,7 +2034,11 @@ Shop.getWhereByGroupIndexSort = async (db, group_id, samples = [], hashs = [], p
 	//win.key_id - позиция, wva.value_id - модель
 	const from = ['sources_sources so, sources_wcells wce, shop_allitemgroups ig, sources_wvalues win']
 	const bind = await Shop.getBind(db)
+	const cena = await Shop.getPropByNick(db, 'cena')
+	const image = await Shop.getPropByNick(db, 'images')
 	const join = []
+	join.push(`left join sources_wnumbers cena on (cena.entity_id = win.entity_id and cena.key_id = win.key_id and cena.prop_id = ${cena.prop_id}) and cena.multi_index = 0`)
+	join.push(`left join sources_wtexts image on (image.entity_id = win.entity_id and image.key_id = win.key_id and image.prop_id = ${image.prop_id} and image.multi_index = 0)`)
 	const where = [`
 		wce.source_id = so.source_id
 		
@@ -2062,13 +2067,13 @@ Shop.getWhereByGroupIndexSort = async (db, group_id, samples = [], hashs = [], p
 	//where.push(`ig.group_id = :group_id`)
 	
 	const sort = await Shop.addWhereSamples(db, from, join, where, samples, hashs, partner)
-
 	let sortsel = []
-	if (!sort.length) {
-		sortsel.push('min(CONCAT((so.ordain + 99), (wce.sheet_index + 99), (wce.row_index + 999))) as sortkey')
-		sort.push('sortkey')
-	}
-
+	
+	// if (!sort.length) {	
+	// 	//sortsel.push('min(CONCAT((so.ordain + 99), (wce.sheet_index + 99), (wce.row_index + 999))) as sortkey')
+	// 	//sort.push('sortkey')
+	// }
+	sort.push('SIGN(image.text) DESC, SIGN(cena.number) DESC, so.ordain, wce.sheet_index, wce.row_index')
 	return {from, join, where, sort, sortsel}
 }
 // Shop.getWhereBySamplesSort = async (db, samples, hashs = [], partner = '') => {

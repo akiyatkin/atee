@@ -225,7 +225,7 @@ export const ROOT = (data, env, prop = data.prop, entity = data.entity) => err(d
 const showSearch = (data, env, prop) => `
 	<form style="display: flex; margin: 1em 0; gap: 1em">
 		<div class="float-label">
-			<input id="freeinp" name="search" type="search" placeholder="Поиск" value="${env.bread.get.search ?? ''}">
+			<input id="freeinp" name="query" type="search" placeholder="Поиск" value="${env.bread.get.query ?? ''}">
 			<label for="freeinp">Поиск</label>
 		</div>
 		<button type="submit">Найти</button>
@@ -233,10 +233,12 @@ const showSearch = (data, env, prop) => `
 			(form => {
 				const btn = form.querySelector('button')
 				const input = form.querySelector('input')
+				input.focus()
+				input.setSelectionRange(input.value.length, input.value.length)
 				form.addEventListener('submit', async (e) => {
 					e.preventDefault()
 					const Client = await window.getClient()
-					Client.go('prop/${prop.prop_id}?search=' + input.value, false)
+					Client.go('prop/${prop.prop_id}?query=' + input.value, false)
 					Client.reloaddiv("${env.layer.div}")
 				})
 			})(document.currentScript.parentElement)

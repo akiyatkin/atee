@@ -148,7 +148,7 @@ export const Search = {
 
 		const state = Search.getState(form)
 		state.click = click
-		const input = form.elements.search
+		const input = form.elements.query
 		if (!input) return false
 		input.classList.add('searchinput')
 		input.setAttribute('autocomplete','off')

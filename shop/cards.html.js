@@ -68,7 +68,7 @@ cards.LIST = (data, env) => `
 			grid-gap: 2em;
 			grid-template-columns: 1fr 1fr 1fr 1fr
 		}
-		@media (max-width:1400px) {
+		@media (max-width:1200px) {
 			${env.scope} .listcards { grid-template-columns: 1fr 1fr 1fr }
 		}
 		@media (max-width:900px) {
@@ -302,6 +302,28 @@ cards.addget = (get, params) => addget(get, params, ['m', 'query', 'count'])
 
 cards.cost = (item) => item.cena ? cost(item.cena[0]) + cards.unit() : ''
 
+// cards.cardprice = (item) => {
+// 	let html = ''
+// 	const staraya = item['staraya-cena']
+// 	const cena = item.cena
+// 	if (!cena) return html
+// 	if (staraya && staraya.at(0) > cena.at(0)) {
+// 		html += `<s style="opacity: .5;">${cost(staraya.at(-1))}${cards.unit()}</s>`
+// 	}
+
+// 	if (cena.length > 1) {
+// 		html += `
+// 			От&nbsp;<b>${cost(cena.at(0))}</b> 
+// 			до&nbsp;<b>${cost(cena.at(-1))}${cards.unit()}</b>
+// 		`
+// 	} else if (cena) {
+// 		html += `
+// 			<big><b>${cost(cena.at(0))}${cards.unit()}</b></big>
+// 		`
+// 	}
+	
+// 	return html
+// }
 cards.price = (item) => {
 	let html = ''
 	const staraya = item['staraya-cena']
@@ -318,7 +340,7 @@ cards.price = (item) => {
 		`
 	} else if (cena) {
 		html += `
-			<big><b>${cost(cena.at(0))}${cards.unit()}</b></big> ${cards.discountbadge(item)}
+			<big><b>${cost(cena.at(0))}${cards.unit()}</b></big> ${cards.discountBadge(item)}
 		`
 	}
 	
@@ -343,7 +365,7 @@ cards.image = (data, env, item) => `
 cards.nalichie = (data, env, mod) => {
 	if (!mod.recap['nalichie'] && !mod.recap['staraya-cena']) return ''
 	return `
-		<div style="position:absolute; right: 0px; z-index:1; margin: 1rem; top:0">${cards.badgenalichie(data, env, mod)}</div>
+		<div style="position:absolute; right: 0px; z-index:1; margin: 1rem; top:0">${cards.nalichieBadge(data, env, mod)}</div>
 	`
 }
 cards.getDiscounts = (model) => {
@@ -362,10 +384,20 @@ cards.getModelDiscount = (model) => {
 	if (!discounts[1]) return `-${discounts[0]}%`
 	return `До -${discounts.at(-1)}%`
 }
-cards.discountbadge = (item) => {
+cards.discountBadge = (item) => {
 	const discount = cards.getItemDiscount(item)
 	if (!discount) return ''
 	return `&nbsp;<span class="badge badge_discount">-${discount}%</span>`
+}
+cards.nalichieBadge = (data, env, model) => {
+	const gain = (name) => cards.getSomeTitle(data, model.recap, name)
+	const discount = cards.getModelDiscount(model)
+	return model.recap.nalichie ? `
+		<a rel="nofollow" href="${cards.getGroupPath(data, data.group?.group_nick || model.groups?.[0])}${cards.addget(env.bread.get, {m:(data.md?.m || '') + ':nalichie::.' + model.recap.nalichie?.[0] + '=1'})}" 
+			class="badge badge_${model.recap.nalichie?.[0]}">
+			${gain('nalichie')}
+		</a>
+	` : ''
 }
 cards.badgenalichie = (data, env, model) => {
 	const gain = (name) => cards.getSomeTitle(data, model.recap, name)
@@ -414,7 +446,7 @@ cards.img = (data, env, item, src) => `
 			width: 100%;
 			height:auto;
 			aspect-ratio: 1 / 1; /* Соотношение сторон */
-			object-fit: cover;
+			object-fit: contain;
 			vertical-align: middle; 
 		" 
 		src="${~src.indexOf(':') ? src : '/' + src}"

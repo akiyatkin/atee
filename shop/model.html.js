@@ -27,7 +27,7 @@ tpl.showBreadcrumbs = (data, env, model) => `
 	<div style="margin: 1em 0 0.5em; display: flex; justify-content: space-between;">
 		${cards.badgecss(data, env)}
 		<div>${model.group_nicks.map(group_nick => tpl.showGroupLink(data, env, data.groups[group_nick])).join(', ')}</div>
-		<div>${cards.badgenalichie(data, env, model)}</div>
+		<div>${cards.nalichieBadge(data, env, model)}</div>
 	</div>
 `
 

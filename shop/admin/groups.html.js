@@ -591,7 +591,7 @@ const showFree = (data, env, freetable, addcheckbox = false) => !freetable.rows.
 	<div>
 		<form style="display: flex; margin: 1em 0; gap: 1em">
 			<div class="float-label">
-				<input id="freeinp" name="search" type="search" placeholder="Поиск" value="${env.bread.get.query ?? ''}">
+				<input id="freeinp" name="query" type="search" placeholder="Поиск" value="${env.bread.get.query ?? ''}">
 				<label for="freeinp">Поиск</label>
 			</div>
 			<button type="submit">Найти</button>

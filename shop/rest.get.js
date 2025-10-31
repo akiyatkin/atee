@@ -377,8 +377,7 @@ rest.addResponse('get-search-list', async (view) => {
 	
 	//const group_ids = await Shop.getAllGroupIds(db, group.group_id)
 	
-	const {from, join, where, sort, sortsel} = await Shop.getWhereByGroupIndexSort(db, group.group_id, [md.mget], md.hashs, partner)
-	
+	const {from, join, where, sort} = await Shop.getWhereByGroupIndexSort(db, group.group_id, [md.mget], md.hashs, partner)	
 
 	const modcount = await db.col(`
 		SELECT count(distinct win.value_id)
@@ -405,7 +404,6 @@ rest.addResponse('get-search-list', async (view) => {
 		SELECT 
 			win.value_id, 
 			GROUP_CONCAT(win.key_id separator ',') as key_ids
-			${sortsel.length ? ',' + sortsel.join(', ') : ''}
 		FROM ${from.join(', ')} ${join.join(' ')}
 		WHERE ${where.join(' and ')}
 		GROUP BY win.value_id 
