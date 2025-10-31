@@ -39,7 +39,7 @@ const STATCOLS = `
 	withname,
 	withall
 `
-rest.addResponse('brief-plop', ['admin','recalcStat'], async view => {
+rest.addAction('brief-plop', ['admin','recalcStat'], async view => {
 	const db = await view.get('db')
 	const detail = await view.get('detail') || 'groups'
 	
@@ -120,7 +120,7 @@ rest.addVariable('recalcStat', async view => {
 	await ShopAdmin.checkRestat(db)
 	
 })
-rest.addResponse('brief', ['admin','recalcStat'], async view => {
+rest.addAction('brief', ['admin','recalcStat'], async view => {
 	const db = await view.get('db')
 
 	
@@ -219,7 +219,7 @@ rest.addResponse('brief', ['admin','recalcStat'], async view => {
 
 	return view.ret()
 })
-rest.addResponse('poss', ['admin'], async view => {
+rest.addAction('poss', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	const bind = await Shop.getBind(db)
@@ -350,7 +350,7 @@ rest.addResponse('poss', ['admin'], async view => {
 	return view.ret()
 })
 
-rest.addResponse('main', async view => {
+rest.addAction('main', async view => {
 	const isdb = await view.get('isdb')
 	view.data.admin = await Access.isAdmin(view.visitor.client.cookie)
 	view.data.isdb = !!isdb
@@ -366,7 +366,7 @@ rest.addResponse('main', async view => {
 	view.data.dir = conf.dir
 	return view.ret()
 })
-rest.addResponse('settings', ['admin'], async view => {
+rest.addAction('settings', ['admin'], async view => {
 
 	const conf = await config('shop')
 	view.data.dir = conf.dir
@@ -379,12 +379,12 @@ rest.addResponse('settings', ['admin'], async view => {
 	view.data.tables = await db.estimate(rest_shopadmin.TABLES)
 	return view.ret()
 })
-rest.addResponse('brands', ['admin'], async view => {
+rest.addAction('brands', ['admin'], async view => {
 	const db = await view.get('db')
 
 	return view.ret()
 })
-rest.addResponse('props', ['admin'], async view => {
+rest.addAction('props', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	const list = await db.all(`
@@ -430,7 +430,7 @@ rest.addResponse('props', ['admin'], async view => {
 	
 	return view.ret()
 })
-rest.addResponse('groups', ['admin'], async view => {
+rest.addAction('groups', ['admin'], async view => {
 	const db = await view.get('db')
 	const group_id = await view.get('group_id')
 	const group = view.data.group = await ShopAdmin.getGroupById(db, group_id)

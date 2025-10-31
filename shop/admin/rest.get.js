@@ -8,7 +8,7 @@ import rest_shopadmin from '/-shop/admin/rest.shopadmin.js'
 rest.extra(rest_shopadmin)
 
 
-// rest.addResponse('get-recalc', ['admin'], async view => {
+// rest.addAction('get-recalc', ['admin'], async view => {
 // 	const db = await view.get('db')
 // 	const dates = view.data.activities = await ShopAdmin.getActivities(db) //change, index
 // 	//const laststart = (dates.date_recalc || 0) * 1000
@@ -20,7 +20,7 @@ rest.extra(rest_shopadmin)
 // 	return view.ret()
 // })
 
-rest.addResponse('get-prop-value-search', ['admin'], async view => {
+rest.addAction('get-prop-value-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const type = await view.get('type') //samplevalue
 	
@@ -136,7 +136,7 @@ rest.addResponse('get-prop-value-search', ['admin'], async view => {
 	
 	return view.ret()
 })
-rest.addResponse('get-group-search', ['admin'], async view => {
+rest.addAction('get-group-search', ['admin'], async view => {
 	const db = await view.get('db')
 
 	const hashs = await view.get('hashs')
@@ -169,7 +169,7 @@ rest.addResponse('get-group-search', ['admin'], async view => {
 })
 
 
-rest.addResponse('get-tpl-sub', ['admin'], async view => {
+rest.addAction('get-tpl-sub', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	const query_nick = await view.get('query_nick')
@@ -189,7 +189,7 @@ rest.addResponse('get-tpl-sub', ['admin'], async view => {
 //view.ans.count = list.length
 	return view.ret()
 })
-rest.addResponse('get-group-filter-prop-search', ['admin'], async view => {
+rest.addAction('get-group-filter-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	const query_nick = await view.get('query_nick')
@@ -227,7 +227,7 @@ rest.addResponse('get-group-filter-prop-search', ['admin'], async view => {
 	
 	return view.ret()
 })
-rest.addResponse('get-prop-search', ['admin'], async view => {
+rest.addAction('get-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	const query_nick = await view.get('query_nick')
@@ -264,7 +264,7 @@ rest.addResponse('get-prop-search', ['admin'], async view => {
 
 	return view.ret()
 })
-rest.addResponse('get-group-card-prop-search', ['admin'], async view => {
+rest.addAction('get-group-card-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	const query_nick = await view.get('query_nick')
@@ -300,7 +300,7 @@ rest.addResponse('get-group-card-prop-search', ['admin'], async view => {
 	})
 	return view.ret()
 })
-rest.addResponse('get-sample-prop-search', ['admin'], async view => {
+rest.addAction('get-sample-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	const type = await view.get('type#required')
@@ -357,7 +357,7 @@ rest.addResponse('get-sample-prop-search', ['admin'], async view => {
 })
 
 import ImpExp from "/-sources/ImpExp.js"
-rest.addResponse('get-export', ['admin'], async view => {
+rest.addAction('get-export', ['admin'], async view => {
 	const db = await view.get('db')	
 	const msg = await ImpExp.export(db, rest_shopadmin.exporttables)
 	if (msg) return view.ret(msg)

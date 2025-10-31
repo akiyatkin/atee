@@ -32,7 +32,7 @@ rest.extra(rest_db)
 export default rest
 
 
-rest.addResponse('rows', ['admin'], async view => {
+rest.addAction('rows', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	
@@ -124,7 +124,7 @@ rest.addResponse('rows', ['admin'], async view => {
 	return view.ret()
 })
 
-rest.addResponse('settings', ['admin'], async view => {
+rest.addAction('settings', ['admin'], async view => {
 
 	const conf = await config('sources')
 	view.data.dir = conf.dir
@@ -172,7 +172,7 @@ rest.addResponse('settings', ['admin'], async view => {
 	return view.ret()
 })
 
-rest.addResponse('main', async view => {
+rest.addAction('main', async view => {
 	const isdb = await view.get('isdb')
 	const hashs = await view.get('hashs')
 	view.data.admin = await Access.isAdmin(view.visitor.client.cookie)
@@ -270,7 +270,7 @@ rest.addResponse('main', async view => {
 	
 	return view.ret()
 })
-rest.addResponse('props', ['admin'], async view => {
+rest.addAction('props', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	const list = view.data.list = await db.all(`
@@ -292,7 +292,7 @@ rest.addResponse('props', ['admin'], async view => {
 	//view.data.list = list.slice(0, 1000)
 	return view.ret()
 })
-rest.addResponse('prop', ['admin'], async view => {
+rest.addAction('prop', ['admin'], async view => {
 	const db = await view.get('db')
 	const prop_id = await view.get('prop_id#required')
 	const prop = view.data.prop = await Sources.getProp(db, prop_id)
@@ -358,7 +358,7 @@ rest.addResponse('prop', ['admin'], async view => {
 	//view.data.list = list.slice(0, 1000)
 	return view.ret()
 })
-rest.addResponse('entity', ['admin'], async view => {
+rest.addAction('entity', ['admin'], async view => {
 	const db = await view.get('db')
 	const entity_id = view.data.entity_id = await view.get('entity_id')
 	const entity = view.data.entity = await Sources.getEntity(db, entity_id)
@@ -375,7 +375,7 @@ rest.addResponse('entity', ['admin'], async view => {
 
 	return view.ret()
 })
-rest.addResponse('entities', ['admin'], async view => {
+rest.addAction('entities', ['admin'], async view => {
 	const db = await view.get('db')
 	const list = view.data.list = await Sources.getEntities(db)
 	return view.ret()
@@ -436,7 +436,7 @@ const getTotalSize = Access.wait(async directoryPath => {
 
 	return convertBytes(totalSize)
 })
-rest.addResponse('memory', ['admin'], async view => {
+rest.addAction('memory', ['admin'], async view => {
 	const db = await view.get('db')
 	view.data.os = {}
 	view.data.os.freemem = convertBytes(os.freemem())
@@ -455,7 +455,7 @@ rest.addResponse('memory', ['admin'], async view => {
 
 	return view.ret()
 })
-rest.addResponse('disappear', ['admin'], async view => {
+rest.addAction('disappear', ['admin'], async view => {
 	const db = await view.get('db')
 
 	const variations = view.data.variations = Object.groupBy(await db.all(`
@@ -473,7 +473,7 @@ rest.addResponse('disappear', ['admin'], async view => {
 	
 	return view.ret()
 })
-rest.addResponse('disappear-table', ['admin'], async view => {
+rest.addAction('disappear-table', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id')
 	const entity_id = await view.get('entity_id')
@@ -503,7 +503,7 @@ rest.addResponse('disappear-table', ['admin'], async view => {
 	}
 	return view.ret()
 })
-// rest.addResponse('position', ['admin'], async view => {
+// rest.addAction('position', ['admin'], async view => {
 // 	const db = await view.get('db')
 // 	const entity_id = await view.get('entity_id#required')
 // 	const key_id = await view.get('key_id#required')
@@ -511,7 +511,7 @@ rest.addResponse('disappear-table', ['admin'], async view => {
 // 	const item = view.data.item = await Sources.getItem(db, entity_id, key_id)
 // 	return view.ret()
 // })
-// rest.addResponse('position-table', ['admin'], async view => {
+// rest.addAction('position-table', ['admin'], async view => {
 // 	const db = await view.get('db')
 // 	const entity_id = await view.get('entity_id#required')
 // 	const key_id = await view.get('key_id#required')
@@ -569,14 +569,14 @@ rest.addResponse('disappear-table', ['admin'], async view => {
 // 	view.data.cells = cells
 // 	return view.ret()
 // })
-// rest.addResponse('positions', ['admin'], async view => {
+// rest.addAction('positions', ['admin'], async view => {
 // 	const db = await view.get('db')
 // 	const entity_id = await view.get('entity_id#required')
 // 	const entity = view.data.entity = await Sources.getEntity(db, entity_id)
 // 	const search = view.get('search')
 // 	return view.ret()
 // })
-// rest.addResponse('positions-table', ['admin'], async view => {
+// rest.addAction('positions-table', ['admin'], async view => {
 // 	const db = await view.get('db')
 // 	const entity_id = await view.get('entity_id#required')
 // 	const entity = view.data.entity = await Sources.getEntity(db, entity_id)
@@ -650,21 +650,21 @@ rest.addResponse('disappear-table', ['admin'], async view => {
 // 	view.data.props = Object.values(props).filter(prop => prop.finded)
 // 	return view.ret()
 // })
-rest.addResponse('sheet', ['admin'], async view => {
+rest.addAction('sheet', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const source = view.data.source = await Sources.getSource(db, source_id)
 	
 	return view.ret()
 })
-rest.addResponse('sheet-source', ['admin'], async view => {
+rest.addAction('sheet-source', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const source = view.data.source = await Sources.getSource(db, source_id)	
 	return view.ret()
 })
 
-rest.addResponse('sheet-dates', ['admin'], async view => {
+rest.addAction('sheet-dates', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const source = view.data.source = await Sources.getSource(db, source_id)
@@ -837,7 +837,7 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 	
 	return view.ret()
 })
-// rest.addResponse('sheet-sheets', ['admin'], async view => {
+// rest.addAction('sheet-sheets', ['admin'], async view => {
 // 	const db = await view.get('db')
 // 	const source_id = await view.get('source_id#required')
 // 	const source = view.data.source = await Sources.getSource(db, source_id)
@@ -967,7 +967,7 @@ rest.addResponse('sheet-dates', ['admin'], async view => {
 
 // 	return view.ret()
 // })
-rest.addResponse('sheet-table', ['admin'], async view => {
+rest.addAction('sheet-table', ['admin'], async view => {
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')
 	const source = view.data.source = await Sources.getSource(db, source_id)
@@ -1588,7 +1588,7 @@ rest.addResponse('sheet-table', ['admin'], async view => {
 	
 	return view.ret()
 })
-rest.addResponse('source', ['admin'], async view => {
+rest.addAction('source', ['admin'], async view => {
 	
 	const db = await view.get('db')
 	const source_id = await view.get('source_id#required')

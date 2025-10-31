@@ -20,13 +20,13 @@ rest.extra(rest_search)
 
 export default rest
 
-rest.addResponse('get-recalc', ['admin'], async view => {
+rest.addAction('get-recalc', ['admin'], async view => {
 	const db = await view.get('db')
 	const dates = view.data.dates = await Recalc.getDates(db)
 	return view.ret()
 })
 
-rest.addResponse('get-entity-export', ['admin'], async view => {
+rest.addAction('get-entity-export', ['admin'], async view => {
 	const db = await view.get('db')
 	const entity_id = await view.get('entity_id#required')
 
@@ -87,7 +87,7 @@ rest.addResponse('get-entity-export', ['admin'], async view => {
 
 	return view.ret()
 })
-// rest.addResponse('get-source-export', ['admin'], async view => {
+// rest.addAction('get-source-export', ['admin'], async view => {
 // 	const db = await view.get('db')
 // 	const source_id = await view.get('source_id#required')
 // 	const source = view.data.source = await db.fetch(`
@@ -173,7 +173,7 @@ rest.addResponse('get-entity-export', ['admin'], async view => {
 // 	}
 // 	return view.ret()
 // })
-rest.addResponse('get-source-entity-search', ['admin'], async view => {
+rest.addAction('get-source-entity-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	
@@ -207,7 +207,7 @@ rest.addResponse('get-source-entity-search', ['admin'], async view => {
 	view.ans.count = list.length
 	return view.ret()
 })
-rest.addResponse('get-sheet-entity-search', ['admin'], async view => {
+rest.addAction('get-sheet-entity-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	
@@ -241,7 +241,7 @@ rest.addResponse('get-sheet-entity-search', ['admin'], async view => {
 	view.ans.count = list.length
 	return view.ret()
 })
-rest.addResponse('get-entity-search', ['admin'], async view => {
+rest.addAction('get-entity-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	
@@ -262,7 +262,7 @@ rest.addResponse('get-entity-search', ['admin'], async view => {
 	return view.ret()
 })
 
-rest.addResponse('get-entity-prop-search', ['admin'], async view => {
+rest.addAction('get-entity-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	const entity_id = await view.get('entity_id#required')
@@ -297,7 +297,7 @@ rest.addResponse('get-entity-prop-search', ['admin'], async view => {
 	view.ans.count = list.length
 	return view.ret()
 })
-rest.addResponse('get-col-prop-search', ['admin'], async view => {
+rest.addAction('get-col-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	const list = await db.all(`
@@ -330,7 +330,7 @@ rest.addResponse('get-col-prop-search', ['admin'], async view => {
 	view.ans.count = list.length
 	return view.ret()
 })
-rest.addResponse('get-prop-type-search', ['admin'], async view => {
+rest.addAction('get-prop-type-search', ['admin'], async view => {
 	view.ans.list = [
 		{
 			'left':'number',
@@ -356,7 +356,7 @@ rest.addResponse('get-prop-type-search', ['admin'], async view => {
 	view.ans.count = 4
 	return view.ret()
 })
-rest.addResponse('get-inter-prop-search', ['admin'], async view => {
+rest.addAction('get-inter-prop-search', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
 	const entity_id = await view.get('entity_id#required')
@@ -389,7 +389,7 @@ rest.addResponse('get-inter-prop-search', ['admin'], async view => {
 
 
 import ImpExp from "/-sources/ImpExp.js"
-rest.addResponse('get-export', ['admin'], async view => {
+rest.addAction('get-export', ['admin'], async view => {
 	const db = await view.get('db')	
 	const msg = await ImpExp.export(db, rest_sources.exporttables)
 	if (msg) return view.ret(msg)
