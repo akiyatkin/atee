@@ -174,18 +174,24 @@ rest.addResponse('settings', ['admin'], async view => {
 
 rest.addResponse('main', async view => {
 	const isdb = await view.get('isdb')
+	const hashs = await view.get('hashs')
 	view.data.admin = await Access.isAdmin(view.visitor.client.cookie)
 	view.data.isdb = !!isdb
 	if (!view.data.admin || !view.data.isdb) return view.err()
+	
+	const conf = await config('sources')
+	view.data.dir = conf.dir
 
 	const db = await view.get('db')
+	view.data.comment = await db.col(`select comment from sources_settings`)
+	const list = view.data.list = await Sources.getSources(db, hashs)
 	
-	const list = view.data.list = await Sources.getSources(db)
-	
-	
+	if (!list.length) return view.err('Источники не найдены')
+
 	const rows = await db.allto('source_id', `
 		SELECT source_id, count(*) as count
 		FROM sources_rows 
+		WHERE source_id in (${list.map(source => source.source_id).join(",")})
 		GROUP BY source_id
 	`)
 	
@@ -213,6 +219,11 @@ rest.addResponse('main', async view => {
 		source.rows = rows[source.source_id]?.count || 0
 		source.news = news[source.source_id]?.count || 0
 		source.prunings = prunings[source.source_id]?.count || 0
+		source.cls = represent.calcCls(
+			1, 
+			null,
+			source.represent_source
+		)
 	}
 	// for (const source of list) {
 		
@@ -244,7 +255,7 @@ rest.addResponse('main', async view => {
 		
 	// }
 	
-	view.data.comment = await db.col(`select comment from sources_settings`)
+	
 
 	// for (const source of list) {
 	// 	source.entities = await db.colAll(`
@@ -255,8 +266,7 @@ rest.addResponse('main', async view => {
 	// 	`, source)
 	// }
 
-	const conf = await config('sources')
-	view.data.dir = conf.dir
+
 	
 	return view.ret()
 })

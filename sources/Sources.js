@@ -1010,13 +1010,15 @@ Sources.getSource = async (db, source_id) => {
 	return source
 }
 
-Sources.getSources = async (db, entity_id) => {
+Sources.getSources = async (db, hashs) => {
 	
 	const list = await db.all(`
 		SELECT 
 			${SELECT_SOURCE}
 		FROM sources_sources so
 			LEFT JOIN sources_props pr on pr.prop_id = so.entity_id
+		WHERE
+			(${hashs.map(hash => 'so.source_nick like "%' + hash.join('%" and so.source_nick like "%') + '%"').join(' or ') || 'so.source_nick != ""'}) 
 		ORDER BY so.ordain
 	`)
 

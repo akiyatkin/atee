@@ -47,32 +47,66 @@ const showMain = (data, env) => `
 		})}
 	</div>
 	<div style="white-space: pre; font-style: italic; margin-right: 2em;">${data.comment}</div>
-	<div style="clear: both; margin: 1em 0; display: flex; flex-wrap: wrap; gap: 1em; justify-content: space-between;">
-		${field.button({
-			async: true,
-			label: 'Актуализировать все', 
-			action: '/-sources/set-sources-renovate',
-			reloaddiv: env.layer.div,
-		})}
-		<div>
-			${field.button({
-				label: 'Проверить все', 
-				action: '/-sources/set-sources-check',
-				reloaddiv: env.layer.div,
-			})}
-			${field.prompt({
-				value: 'Добавить источник', 
-				name: 'title',
-				input: '',
-				label: 'Имя файла', 
-				descr: 'Укажите, соответсвующее источнику, имя файла в папке с обработками ' + data.dir + '. Расширение файла обязательно .js, можно не указывать.',
-				type: 'text', 
-				action: '/-sources/set-source-add', 
-				go: 'source/',
-				goid: 'source_id'
-			})}			
+
+
+
+	<form style="display: flex; margin: 1em 0; gap: 1em; flex-wrap: wrap">
+		<div class="float-label">
+			<input id="freeinp" name="query" type="search" placeholder="Поиск" value="${env.bread.get.query ?? ''}">
+			<label for="freeinp">Поиск</label>
 		</div>
-	</div>
+		<div style="display: flex; justify-content: space-between; flex-grow: 1; gap: 1em;">
+			<div><button type="submit">Найти</button></div>
+			<div style="clear: both; display: flex; flex-wrap: wrap; gap: 1em; justify-content: end">
+				
+				${field.button({
+					async: true,
+					label: 'Актуализировать все', 
+					action: '/-sources/set-sources-renovate',
+					reloaddiv: env.layer.div,
+				})}
+
+				<div>
+					${field.button({
+						label: 'Проверить все', 
+						action: '/-sources/set-sources-check',
+						reloaddiv: env.layer.div,
+					})}
+					${field.prompt({
+						value: 'Добавить источник', 
+						name: 'title',
+						input: '',
+						label: 'Имя файла', 
+						descr: 'Укажите, соответсвующее источнику, имя файла в папке с обработками ' + data.dir + '. Расширение файла обязательно .js, можно не указывать.',
+						type: 'text', 
+						action: '/-sources/set-source-add', 
+						go: 'source/',
+						goid: 'source_id'
+					})}			
+				</div>
+			</div>
+		</div>
+		<script>
+			(form => {
+				const btn = form.querySelector('button')
+				const input = form.querySelector('input')
+				input.focus()
+				input.setSelectionRange(input.value.length, input.value.length)
+				form.addEventListener('submit', async (e) => {
+					e.preventDefault()
+					const Client = await window.getClient()
+					Client.go('?query=' + input.value, false)
+					Client.reloaddiv("${env.layer.div}")
+				})
+			})(document.currentScript.parentElement)
+		</script>
+	</form>
+	
+	${data.msg ? data.msg : showTable(data, env)}
+	
+	
+`
+const showTable = (data, env) => `
 	
 	<!-- <div class="revscroll"> -->
 		<table draggable="false">
@@ -108,7 +142,6 @@ const showMain = (data, env) => `
 		<p>Каждый повтор свойства позиции перезаписывает предыдущее значение. Источники применяются сверху вниз. Чем ниже, тем приоритетнее, чем дальше лист или чем дальше колнка, тем приоритетней значение.</p>
 	</div>
 	
-	
 `
 const showScriptReload = (data, env) => `
 	<style>
@@ -124,14 +157,32 @@ const showScriptReload = (data, env) => `
 	</script>
 `
 const showSourceTr = (data, env, source) => `
-	<tr data-id="${source.source_id}" style="white-space: nowrap;" class="item status_${source.class}">
+	<tr data-id="${source.source_id}" style="white-space: nowrap;" class="item status_${source.class} ${source.represent_source ? '': 'mute'}">
 		<td>
-			<a class="${source.master ? '' : 'mute'}" title="Содержание ${source.master ? 'мастера' : 'прайса'}" href="sheet?source_id=${source.source_id}">${source.source_title}</a>
-			<!-- <div class="${source.master ? '' : 'mute'}">
-				${source.master ? 'Мастер' : 'Прайс'}
-			</div> -->
+			<a title="Содержание ${source.master ? 'мастера' : 'прайса'}" href="sheet?source_id=${source.source_id}">${source.source_title}</a>
+			
 			<div>
-				<a class="${source.master ? '' : 'mute'}" title="Ревизия ${source.master ? 'мастера' : 'прайса'}" href="source/${source.source_id}">${date.dm(source.date_exam)}</a>
+				<a title="Ревизия ${source.master ? 'мастера' : 'прайса'}" href="source/${source.source_id}">${date.dm(source.date_exam)}</a>
+			</div>
+			<div>
+				
+				<button style="stroke-width: 1;" title="Изменить видимость источника. Скрытые источники не актуализируются." 
+				data-name="represent_source" class="eye transparent ${source.cls.main} ${source.cls.custom}">${svg.eye()}</button>
+				<script>
+
+					(async div => {
+						const btn = div.querySelector('button')
+						btn.addEventListener('click', async () => {
+							const represent = await import('/-sources/represent.js').then(r => r.default)
+							const data = await represent.set(btn, btn.dataset.name, {source_id: ${source?.source_id}})
+							if (!data.result) return
+							const Client = await window.getClient()
+							Client.reloaddiv('${env.layer.div}')
+						})
+						
+					})(document.currentScript.parentElement)
+				</script>
+				${source.master ? 'Мастер' : 'Слуга'}
 			</div>
 		</td>
 		<td>
@@ -235,7 +286,7 @@ const showLoadStat = (data, env, source) => `
 // 				reloaddiv: env.layer.div
 // 			})}
 const showNews = (source) => `
-	<a class="mute" style="color: red" href="sheet?source_id=${source.source_id}&keyfilter=unknown">${source.news} ${words(source.prunings, 'колонка', 'колонки', 'колонок')}</a>
+	<a class="mute" style="color: red" href="sheet?source_id=${source.source_id}&keyfilter=unknown">${source.news} ${words(source.news, 'колонка', 'колонки', 'колонок')}</a>
 `
 const showPrunings = (source) => `
 	<a class="mute" style="color: red" href="sheet?source_id=${source.source_id}&keyfilter=pruning&limit=10000">${source.prunings} ${words(source.prunings, 'упрощение', 'упрощения', 'упрощений')}</a>

@@ -51,6 +51,8 @@ export const TABLE = (data, env) => err(data, env) || `
 			(form => {
 				const btn = form.querySelector('button')
 				const input = form.querySelector('input')
+				input.focus()
+				input.setSelectionRange(input.value.length, input.value.length)
 				form.addEventListener('submit', async (e) => {
 					e.preventDefault()
 					const Client = await window.getClient()

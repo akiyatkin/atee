@@ -15,7 +15,7 @@ svg.cross = () => `
 		<path class="two" stroke-width="2" d="M 0 24 L 24 0" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
 	</svg>
 `
-svg.eye = (custom, def) => `
+svg.eye = () => `
 	<svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor">
 		<ellipse class="iris" cx="8.5" cy="6" rx="7" ry="5" />
 		<ellipse class="pupil" cx="8.5" cy="6" rx="2" ry="3" />

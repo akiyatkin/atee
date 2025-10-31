@@ -49,11 +49,12 @@
 	},
 	"json":{
 		"recalc:ROOT":"/-sources/get-recalc",
-		"main:ROOT":"/-sources/main",
+		
 		"settings:ROOT":"/-sources/settings",
 		"memory:ROOT":"/-sources/memory"
 	},
 	"jsontpl":{
+		"main:ROOT":"/-sources/main?query=${env.bread.get.query ?? ''}",
 		"props:TABLE":"/-sources/props?query=${env.bread.get.query ?? ''}",
 		"rows:ROOT":"/-sources/rows?query=${env.bread.get.query ?? ''}",
 		"sheet:ROOT":"/-sources/sheet?source_id=${env.bread.get.source_id ?? ''}",
