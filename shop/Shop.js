@@ -1517,7 +1517,7 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 	if (!~['more','column'].indexOf(prop.known)) return false
 	
 
-	const limit = 10
+	const limit = 12
 	const mget = {...md.mget}
 	delete mget[prop_nick]
 	const nmd = {m: Shop.makemark(mget).join(':'), mget, query: md.query, hashs: md.hashs}

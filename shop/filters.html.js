@@ -276,7 +276,7 @@ filters.prop = {
 		`
 			<span style="white-space:nowrap; margin-right:0.7em">${
 				filter.values.map(value_nick => filters.item(data, env, filter, value_nick)).join(',</span> <span style="white-space:nowrap; margin-right:0.7em">')
-			}</span>
+			}</span>${filter.havemore ? showHaveMore(data, env, filter) : ''}
 		`, filter.descr
 	),
 	line: (data, filter, env) => filters.line(
@@ -290,7 +290,7 @@ filters.prop = {
 	just: (data, filter, env) => filters.just(`
 		<span style="white-space:nowrap; margin-right:0.7em">${
 			filter.values.map(value_nick => filters.item(data, env, filter, value_nick)).join(',</span> <span style="white-space:nowrap; margin-right:0.7em">')
-		}</span>
+		}</span>${filter.havemore ? showHaveMore(data, env, filter) : ''}
 	`, filter.descr)
 }
 const showHaveMore = (data, env, filter, title = 'выбрать…') => `<span style="white-space:nowrap; margin-left:0.7em; float:right">
