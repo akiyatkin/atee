@@ -253,7 +253,7 @@ Sources.execRestFunc = async (file, fnname, visitor, res, source) => {
 	const stat = await fs.stat(file).catch(r => console.log('Ошибка execRestFunc','<==========>', r,'</==========>'))
 	if (!stat) return 'Не найден файл'
 	res.date_mtime = new Date(stat.mtime)
-	const rest = await import('/' + file).then(r => r.default).catch(r => console.log(r))
+	const rest = await import('/' + file+'?t=' + Date.now()).then(r => r.default).catch(r => console.log(r))
 	if (!rest || !rest.get) return `Исключение в коде ` + file
 	const reans = await rest.get(fnname, req, visitor).catch(r => console.log(r))
 	if (!reans || !reans.data) return `Исключение в ${fnname}`
