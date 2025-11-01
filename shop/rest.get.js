@@ -512,9 +512,10 @@ rest.addResponse('get-livemodels', async (view) => {
 	`)
 
 	const group_ids = await db.colAll(`
-		SELECT distinct ig.group_id
-		FROM ${from.join(', ')} ${join.join(' ')}
+		SELECT distinct g.group_id
+		FROM shop_itemgroups g, ${from.join(', ')} ${join.join(' ')}
 		WHERE ${where.join(' and ')}
+		and g.key_id = win.key_id
 	`)
 	
 	//const count = await Shop.getModcount(db, md, partner, root.group_nick)
