@@ -27,7 +27,7 @@ const showEmails = (data, env) => `
 			pointer-events: none;
 		}
 		${env.scope} .item {
-			cursor: move;
+			
 			transition: background-color 0.1s
 		}
 		${env.scope} .item.selected {
@@ -35,7 +35,7 @@ const showEmails = (data, env) => `
 			background-color: lightblue;
 		}
 	</style>
-	<table>
+	<table draggable="false">
 		<thead>
 			<tr>
 				<td>Email</td>
@@ -50,9 +50,10 @@ const showEmails = (data, env) => `
 	</table>
 	<script>
 		(async div => {
+			const table = div.querySelector('table')
 			const Drag = await import('/-note/theory/Drag.js').then(r => r.default)
-			Drag.make(div.tBodies[0], '/-user/set-email-ordain')
-		})(document.currentScript.previousElementSibling)
+			Drag.make(table.tBodies[0], '/-user/set-email-ordain')
+		})(document.currentScript.parentElement)
 	</script>
 	<p>
 		${field.prompt({

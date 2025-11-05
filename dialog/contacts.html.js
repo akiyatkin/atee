@@ -27,15 +27,12 @@ cont.CALLBACK = (data, env) => `
 				import("/-form/Autosave.js").then(r => r.default.init(form))
 			
 				if (form.closest('dialog')) {
-					const goalButton = () => {
-						const goal = 'button'
+					const reachGoal = goal => {
+						console.log('Goal.reach ' + goal)
 						const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
-						if (metrikaid) {
-							console.log('Goal.reach ' + goal)
-							ym(metrikaid, 'reachGoal', goal);
-						}
+						if (metrikaid) ym(metrikaid, 'reachGoal', goal)
 					}
-					goalButton()
+					reachGoal('button')
 				}
 
 				form.addEventListener('submit', e => {

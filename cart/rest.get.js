@@ -31,46 +31,7 @@ import User from "/-user/User.js"
 
 
 
-// rest.addResponse('get-myorders', async view => {
-// 	const { user, db } = await view.gets(['user', 'db'])
-// 	if (!user) return {result:0, msg: 'Нет данных'}
-	
-// 	const orders = await db.all(`
-// 		SELECT 
-// 			o.order_nick, 
-// 			o.status, 
-// 			o.order_id, 
-// 			sum, 
-// 			count,
-// 			UNIX_TIMESTAMP(datecheck) as datecheck, 
-// 			UNIX_TIMESTAMP(datewait) as datewait
-// 		FROM cart_userorders uo, cart_orders o
-// 		WHERE uo.user_id = :user_id and uo.order_id = o.order_id
-// 		ORDER BY order_id DESC
-// 	`, { user_id: user.user_id })
-	
-// 	let years = {}
-// 	for (const index in orders) {
-// 		const order = orders[index]
-// 		const date = new Date((order.datecheck || order.datewait) * 1000)
-// 		const year = date.getFullYear()
-// 		if (!years[year]) years[year] = {title: year, months: {}} 
-// 		const month = formatter.format(date)	
-// 		if (!years[year].months[month]) years[year].months[month] = {title: month, list: []}
-// 		years[year].months[month].list.push(index)
-// 	}
-// 	years = Object.values(years)
-// 	for (const year of years) {
-// 		year.months = Object.values(year.months)
-// 	}
 
-// 	return {
-// 		user,
-// 		years,
-// 		orders,
-// 		result:1
-// 	}
-// })
 
 
 rest.addResponse('get-tocheck', async view => {
