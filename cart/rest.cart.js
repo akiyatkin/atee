@@ -5,6 +5,8 @@ import rest_user from '/-user/rest.user.js'
 import Cart from "/-cart/Cart.js"
 const rest = new Rest(rest_funcs, rest_vars, rest_user)
 
+rest.addArgument('ip', view => view.visitor.client.ip)
+rest.addArgument('host', view => view.visitor.client.host)
 
 rest.addArgument('source', ['escape'])
 rest.addArgument('content', ['escape'])
