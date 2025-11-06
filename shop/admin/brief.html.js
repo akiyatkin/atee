@@ -315,19 +315,6 @@ export const TABLE = (data, env) => err(data, env) || `
 			<tbody>
 				${(data.groups || []).map(row => showRow(data, env, row.group, row)).join('')}
 			</tbody>
-			
-			<thead>
-				<tr style="opacity: 0.3;">
-					<!-- <th>Год</th>
-					<th>Месяц</th> -->
-					<th>Источники</th>
-					${showStatHead(data,env)}
-				</tr>
-			</thead>
-			<tbody>
-				${(data.sources || []).map(row => showRow(data, env, data.group, row)).join('')}
-			</tbody>
-
 			<thead style="font-weight: bold;">
 				<tr style="opacity: 0.3;">
 					<!-- <th>Год</th>
@@ -338,6 +325,17 @@ export const TABLE = (data, env) => err(data, env) || `
 			</thead>
 			<tbody>
 				${(data.brands || []).map(row => showRow(data, env, data.group, row)).join('')}
+			</tbody>
+			<thead>
+				<tr style="opacity: 0.3;">
+					<!-- <th>Год</th>
+					<th>Месяц</th> -->
+					<th>Источники</th>
+					${showStatHead(data,env)}
+				</tr>
+			</thead>
+			<tbody>
+				${(data.sources || []).map(row => showRow(data, env, data.group, row)).join('')}
 			</tbody>
 		</table>
 		<script>
