@@ -24,7 +24,7 @@ rest.extra(rest_shop)
 rest.addResponse('get-partner', async view => {
 	const partner = view.data.partner = await view.get('partner')
 	const conf = view.data.conf = await config('shop', true)
-	if (!partner) return view.err()
+	if (!partner) return view.ret()
 	return view.ret()
 })
 rest.addResponse('get-conf', async view => {

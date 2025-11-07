@@ -16,7 +16,7 @@ tpl.successmsg = (data, env) => `
 `
 tpl.POPUP = (data, env) => `
 	<h1>Вход для партнёра</h1>
-	${data.result
+	${data.partner
 		? '<p>Активный ключ <b>' + data.partner.title + '</b></p>' + tpl.successmsg(data, env)
 		: '<p>Нет активного ключа</p>'
 	}
@@ -52,11 +52,10 @@ tpl.POPUP = (data, env) => `
 				const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 				Dialog.hide(Dialog.findPopup(form))
 				const ans = await fetch('/-shop/get-partner?partner=' + need.hash).then(e => e.json()).catch(e => false)
-				console.log(ans)
 				Dialog.open({
 					tpl:'/-shop/partner.html.js', 
 					data:ans,
-					sub:ans.result ? 'SUCCESS' : 'ERROR'
+					sub:ans.partner ? 'SUCCESS' : 'ERROR'
 				})
 			})
 		})(document.currentScript.previousElementSibling)
