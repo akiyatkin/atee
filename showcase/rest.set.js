@@ -8,8 +8,13 @@ import unique from '/-nicked/unique.js'
 import Rest from "/-rest"
 import rest_vars from '/-showcase/rest.vars.js'
 import rest_admin from '/-controller/rest.admin.js'
+import rest_db from '/-db/rest.db.js'
 
-const rest = new Rest(rest_vars, rest_admin)
+const rest = new Rest()
+rest.extra(rest_admin)
+rest.extra(rest_vars)
+rest.extra(rest_db)
+
 export default rest
 
 import { whereisit } from '/-controller/whereisit.js'
