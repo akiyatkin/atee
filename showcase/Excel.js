@@ -36,7 +36,7 @@ export const Excel = {
 	},
 	loadTable: async (visitor, src, brand, base, msgs = [], root_title) => {
 
-		const listsheets = await Excel.read(visitor, src)
+		const listsheets = await Excel.read(visitor, src)		
 		if (!listsheets) return false
 		const models = {}
 		const root = root_title
@@ -74,7 +74,7 @@ export const Excel = {
 			sheets[sheet_name] = { descr, heads, indexes }
 
 			
-			let {rows_items} = Dabudi.splitGroups(rows_body, heads, root, indexes.group_nick, groups)
+			let {rows_items} = Dabudi.splitGroups(rows_body, heads, root, indexes.group_nick, base, groups)
 			
 			//if (sheet == 'Светодиодные ленты') console.log(1, sheet, groups, indexes.group_nick, root, heads)
 			const {head_titles, head_nicks} = heads
