@@ -8,14 +8,18 @@ import unique from '/-nicked/unique.js'
 import Rest from "/-rest"
 import rest_vars from '/-showcase/rest.vars.js'
 import rest_admin from '/-controller/rest.admin.js'
-import rest_db from '/-db/rest.db.js'
+
 
 const rest = new Rest()
 rest.extra(rest_admin)
 rest.extra(rest_vars)
-rest.extra(rest_db)
+
 
 export default rest
+
+rest.addVariable('start', () => {
+	
+})
 
 import { whereisit } from '/-controller/whereisit.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
