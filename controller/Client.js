@@ -12,7 +12,7 @@ export const Client = {
 		//Client.search = Client.makeabs(search || Client.getSearch())
 		Client.search = search
 		const get = Object.fromEntries(new URLSearchParams(location.search))
-		Client.bread = new Bread(Client.getPath(), get, Client.search, root)
+		Client.bread = new Bread(Client.getPath().slice(1), get, Client.search, root)
 		Client.theme = Theme.harvest(get, document.cookie)
 
 		navigator.serviceWorker?.register('/-controller/sw.js', { scope:'/' })
