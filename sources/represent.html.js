@@ -179,9 +179,7 @@ main.head.cell = (data, env, cell = data.cell || {text: null}, prop = data.prop)
 	
 	<div>${prop ? showTypeStat(data, env, prop, cell) : 'Не выбрано свойство колонки'}</div>
 	${cell.pruning ? main.showOrig(cell) : ''}
-	<div style="background: ${cell.winner ? '#eaf7d1': '#f5e6e6'}; padding:1em; margin: 1em 0" title="value_id: ${data.cell?.value_id || ''}">
-		${!prop || prop.type == 'text' ? (cell.text ?? '') : (cell.number ? cell.number / 10 ** prop.scale : '') + (cell.date ?? '') + (cell.value_title ?? '')}
-	</div>
+	<div style="background: ${cell.winner ? '#eaf7d1': '#f5e6e6'}; padding:1em; margin: 1em 0; white-space: pre;" title="value_id: ${data.cell?.value_id || ''}">${!prop || prop.type == 'text' ? (cell.text ?? '') : (cell.number ? cell.number / 10 ** prop.scale : '') + (cell.date ?? '') + (cell.value_title ?? '')}</div>
 	${data.cell ? main.showSummary(data, env) : ''}
 	${data.rels ? main.showRelations(data, env) : ''}
 	

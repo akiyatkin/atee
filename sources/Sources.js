@@ -242,6 +242,8 @@ Sources.execRestFunc = async (file, fnname, visitor, res, source) => {
 	} catch (e) {
 		params = {}
 		console.log('Ошибка в params', file, fnname, e)
+		res = {result:0}
+		return 'Ошибка в params'
 	}
 
 	const req = {
@@ -1010,7 +1012,7 @@ Sources.getSource = async (db, source_id) => {
 	return source
 }
 
-Sources.getSources = async (db, hashs) => {
+Sources.getSources = async (db, hashs = []) => {
 	
 	const list = await db.all(`
 		SELECT 
@@ -1236,8 +1238,8 @@ Sources.sheet.getCostDiscount = (text, dis) => {
 Sources.sheet.delRows = (sheet, title, values) => { //Удаляем строку в котрой колонка title равна значению value
 	if (!values || !Array.isArray(values)) return
 	const index = sheet.head.indexOf(title)
-	if (!~index) return	
-	sheet.rows = sheet.rows.filter(row => !~values.indexOf(row[index]))	
+	if (!~index) return
+	sheet.rows = sheet.rows.filter(row => !~values.indexOf(row[index]))
 }
 Sources.sheet.delCol = (sheet, title) => {
 	const index = sheet.head.indexOf(title)

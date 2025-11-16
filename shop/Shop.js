@@ -293,7 +293,7 @@ Shop.getGroupById = Access.poke(async (db, group_id = false) => {
 		        parent_id, 
 		        group_title, 
 		        0 AS level,
-		        group_title AS category
+		        CAST(group_title AS CHAR(1000)) AS category
 		    FROM shop_groups
 		    WHERE parent_id IS null
 		    
