@@ -53,8 +53,7 @@ rest.addResponse('get-yandex', async view => {
 	const data = {}
 	data.partner = partner
 	
-	console.time('get-yandex')
-
+	console.time('get-yandex')	
 
 	const {count, list} = await Shop.getPlopsWithPropsNoMultiByMd(db, group_id, feed.samples, feed.hashs, partner, {
 		limit: false,

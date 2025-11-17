@@ -1330,7 +1330,7 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, samples = [{}], hashs =
 				vamod.value_nick as brendmodel_nick, 
 				GROUP_CONCAT(distinct mig.group_id separator ',') as group_ids,
 				${cols2.join(',')}
-			FROM shop_itemgroups mig, (${from.join(', ')} ${join.join(' ')})
+			FROM shop_allitemgroups mig, (${from.join(', ')} ${join.join(' ')})
 				LEFT JOIN sources_values vakey on (vakey.value_id = win.key_id)
 				LEFT JOIN sources_values vamod on (vamod.value_id = win.value_id)
 				${join2.join(' ')}

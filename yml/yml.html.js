@@ -68,6 +68,7 @@ yml.showOffer = (data, env, plop) => `
 		${plop.group_nicks.map(group_nick => yml.collectionid(data, env, group_nick)).join('')}
 		${yml.oldprice(data, env, plop)}
 		<currencyId>RUB</currencyId>
+		<typePrefix>${data.groups[plop.group_nicks.at(-1)].group_title}</typePrefix>
 		<categoryId>${plop.group_ids[0]}</categoryId>
 		${plop.images_title ? yml.image(plop.images_title) : ''}
 		${yml.brand(data, env, plop)}

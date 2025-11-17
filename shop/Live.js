@@ -157,7 +157,6 @@ export const Live = {
 			e.preventDefault()
 			const need = await Live.getNeed(input)
 			const src = form.dataset.path + (need.query ? '?query=' + need.query : '')
-			console.log(src)
 			//const addget = await import('/-sources/addget.js').then(r => r.default)
 
 

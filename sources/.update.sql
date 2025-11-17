@@ -144,7 +144,6 @@ CREATE TABLE IF NOT EXISTS `sources_custom_values` (
 CREATE TABLE IF NOT EXISTS `sources_items` (
   `entity_id` smallint(5) unsigned NOT NULL,
   `key_id` int(10) unsigned NOT NULL DEFAULT 0,
-  `search` text CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '' COMMENT 'Поисковый индекс определён только для победителей со свойствами в sources_wcells',
   `master` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`entity_id`,`key_id`) USING BTREE,
   KEY `FK_sources_items_sources_values` (`key_id`,`entity_id`) USING BTREE,
@@ -292,6 +291,20 @@ CREATE TABLE IF NOT EXISTS `sources_values` (
   UNIQUE KEY `nick` (`value_nick`) USING BTREE,
   KEY `Index 3` (`value_title`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci ROW_FORMAT=DYNAMIC COMMENT='Значения хранятся в переменных в оперативной памяти';
+
+
+
+CREATE TABLE IF NOT EXISTS `sources_witems` (
+  `entity_id` smallint(5) unsigned NOT NULL,
+  `key_id` int(10) unsigned NOT NULL DEFAULT 0,
+  `search` text CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '' COMMENT 'Поисковый индекс определён только для победителей со свойствами в sources_wcells',
+  PRIMARY KEY (`entity_id`,`key_id`) USING BTREE,
+  KEY `FK_sources_items_sources_values` (`key_id`,`entity_id`) USING BTREE,
+  FULLTEXT KEY `search items` (`search`),
+  CONSTRAINT `sources_witems_ibfk_1` FOREIGN KEY (`entity_id`) REFERENCES `sources_props` (`prop_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `sources_witems_ibfk_2` FOREIGN KEY (`key_id`) REFERENCES `sources_values` (`value_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
+
 
 -- Data exporting was unselected.
 
