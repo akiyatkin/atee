@@ -46,15 +46,26 @@ let REST_DIRECTS = {}
 let REST_HYPHENS = {}
 for (const r in RESTS) { //Напрямую можно обратиться только к элементам в node_modules, rest проекта только через дефис
 	// && (RESTS[r]['innodemodules'] || RESTS[r]['ext'])
-	if (!REST_DIRECTS[RESTS[r]['direct']])
+	
+	if (!REST_DIRECTS[RESTS[r]['direct']]) {
 		REST_DIRECTS[RESTS[r]['direct']] = {part: RESTS[r]['direct'], rest:r, innodemodules: RESTS[r]['innodemodules']}
-	if (!REST_HYPHENS[RESTS[r]['hyphen']])
+	}
+
+	if (!REST_HYPHENS[RESTS[r]['hyphen']] || REST_HYPHENS[RESTS[r]['hyphen']].innodemodules) {
 		REST_HYPHENS[RESTS[r]['hyphen']] = {part: RESTS[r]['hyphen'], rest:r, innodemodules: RESTS[r]['innodemodules']}
+	}
 }
 REST_HYPHENS = Object.values(REST_HYPHENS)
 REST_DIRECTS = Object.values(REST_DIRECTS)
 REST_HYPHENS.sort(fnsort)
 REST_DIRECTS.sort(fnsort)
+
+//console.log(RESTS)
+// const v = REST_HYPHENS.find(v => v.part == 'yml')
+// v.innodemodules = false
+// v.rest = 'yml/rest.js'
+
+
 
 const CONTS = {}
 await searchRest('.', 'layers.json', CONTS)
