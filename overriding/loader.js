@@ -10,8 +10,8 @@ export const resolve = async (specifier, context, defaultResolve) => {
 	if (!specifier.startsWith('/')) return defaultResolve(specifier, context)
 	if (specifier.startsWith('/-')) {
 		for (const pre of ['./', ...modules, "node_modules/"]) {
-			const checkspec = pre + specifier.slice(2)		
-			const r = await fs.stat(checkspec).then(r => r.isFile()).catch(r => false)
+			const checkspec = pre + specifier.slice(2)
+			const r = await fs.stat(checkspec.split('?')[0]).then(r => r.isFile()).catch(r => false)
 			if (!r) continue
 			return defaultResolve(project_root + checkspec, context)
 		}
@@ -19,7 +19,7 @@ export const resolve = async (specifier, context, defaultResolve) => {
 	} else {
 		//Подмена корня сработает и без дефиса
 		const directsrc = specifier.slice(1)
-		const r = await fs.stat(directsrc).then(r => r.isFile()).catch(r => false)
+		const r = await fs.stat(directsrc.split('?')[0]).then(r => r.isFile()).catch(r => false)
 		if (r) return defaultResolve(project_root + directsrc, context)
 		
 		//Разрешение путей из прилинкованной библиотеки в дереве проекта @atee/nicked, file-icon-vectors и т.п

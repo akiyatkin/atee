@@ -33,6 +33,7 @@ const Server = {
 			}
 			const usersearch = request.url.replace(/\/+/,'/').replace(/\/$/,'')//Дубли и слешей не ломают путь, но это плохо...
 			const route = await router(usersearch || '/')
+
 			if (route.secure) return error_before(403, 'Forbidden')
 			// const {
 			// 	search, secure, get, path, ext,
@@ -64,7 +65,7 @@ const Server = {
 				} catch (e) {
 					console.error(e)				
 				}
-
+				
 				
 				if (!reans?.data) return error_before(404, 'Empty answer')
 				//if (!reans?.data) return error_before(500, 'Not a suitable answer')

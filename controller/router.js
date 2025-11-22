@@ -229,6 +229,7 @@ export const router = async (search) => {
 	let cont = false
 	
 	const src = await webresolve('/' + path).catch(e => false)	
+	
 	const name = src ? getSrcName(src) : ''
 
 	if (src && name) { //найден файл
