@@ -1,5 +1,5 @@
-import Rest from "/-rest"
-import nicked from "/-nicked"
+import Rest from "@atee/rest"
+import nicked from "@atee/nicked"
 import unique from "/-nicked/unique.js"
 
 const rest = new Rest()

@@ -1,4 +1,4 @@
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import Db from "/-db/Db.js"
 import rest_db from "/-db/rest.db.js"
 import rest_admin from "/-controller/rest.admin.js"

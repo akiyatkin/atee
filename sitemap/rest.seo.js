@@ -1,4 +1,4 @@
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import Layers from '/-controller/Layers.js'
 import TPL from '/-sitemap/layout.html.js'
 import Access from '/-controller/Access.js'
@@ -7,7 +7,7 @@ import { loadJSON } from '/-controller/router.js'
 import rest_funcs from '/-rest/rest.funcs.js'
 import rest_path from '/-controller/rest.path.js'
 
-import nicked from '/-nicked'
+import nicked from "@atee/nicked"
 
 const rest = new Rest(rest_funcs, rest_path)
 

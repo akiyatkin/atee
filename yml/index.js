@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
-import cproc from '/-cproc'
-import config from '/-config'
+import cproc from "@atee/cproc"
+import config from '@atee/config'
 import Shop from "/-shop/Shop.js"
 
 await fs.mkdir('cache/yml/', { recursive: true }).catch(e => null)

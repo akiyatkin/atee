@@ -1,4 +1,4 @@
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import Access from "/-controller/Access.js"
 import rest_funcs from '/-rest/rest.funcs.js'
 const rest = new Rest(rest_funcs)

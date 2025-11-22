@@ -1,14 +1,14 @@
 import controller from '/-controller/rest.js'
 import { file, files, filesw } from './files.js'
 import { whereisit } from './whereisit.js'
-import { ReadStream } from 'fs'
-import { pathToFileURL, fileURLToPath } from 'url'
+import { ReadStream } from 'node:fs'
+import url from 'node:url'
 
 import Theme from '/-controller/Theme.js'
 
-import config from '/-config'
-import path from 'path'
-import fs from 'fs/promises'
+import config from '@atee/config'
+import path from 'node:path'
+import fs from 'node:fs/promises'
 
 const conf = await config('controller')
 
@@ -77,30 +77,24 @@ CONT_DIRECTS = Object.values(CONT_DIRECTS)
 CONT_DIRECTS.sort(fnsort)
 
 
-const webresolve = async search => {
-	const href = pathToFileURL('./').href
-	let src = await import.meta.resolve(search, href)
-	if (src) src = fileURLToPath(src)
-	if (src) await fs.access(src)
-	return src
-}
+
 
 // const webresolve = async search => {
 // 	try {
-// 		const src = await import.meta.resolve(search, pathToFileURL('./').href)
-// 		return fileURLToPath(src)
+// 		const src = await import.meta.resolve(search, url.pathToFileURL('./').href)
+// 		return url.fileURLToPath(src)
 // 	} catch (e) {
 // 		return false
 // 	}
 // }
 //const webresolve = async search => {
-	//return await import.meta.resolve(search, pathToFileURL('./').href).then(src => fileURLToPath(src)).catch(() => false)
+	//return await import.meta.resolve(search, url.pathToFileURL('./').href).then(src => url.fileURLToPath(src)).catch(() => false)
 
 	//В адресах в layers.json относительные пути не поддерживаются
 	//console.log(search)
 
-	// return await import.meta.resolve(search, pathToFileURL('./').href).then(async src => {
-	// 	src = fileURLToPath(src)
+	// return await import.meta.resolve(search, url.pathToFileURL('./').href).then(async src => {
+	// 	src = url.fileURLToPath(src)
 	// 	if ((await fs.lstat(src)).isFile()) { //Нелепый фикс... resolver на папку возвращает иногда путь до файла
 	// 		return src
 	// 	}
@@ -192,7 +186,7 @@ const explode = (sep, str) => {
 	return ~i ? [str.slice(0, i), str.slice(i + 1)] : [str]
 }
 const userpathparse = (search) => {
-	//У request всегда есть ведущий /слэш
+	//У request всегда есть ведущий /слэш	
 	search = search.slice(1)
 	//try { search = decodeURI(search) } catch { }
 	let [path = '', params = ''] = explode('?', search)
@@ -204,6 +198,25 @@ const userpathparse = (search) => {
 	const secure = !!~path.indexOf('/.') || path[0] == '.'
 	return {secure, path, get}
 }
+// const webresolve = async search => {
+// 	const href = url.pathToFileURL('./').href	//pathToFileURL
+// 	let src = await import.meta.resolve(search, href)
+// 	if (src) src = url.fileURLToPath(src)
+// 	if (src) {
+// 		if (!(await fs.stat(src)).isFile()) return false
+// 	}
+// 	return src
+// }
+//const project_root = url.pathToFileURL(process.cwd()).href + '/'
+const webresolve = async search => {
+	let src = import.meta.resolve(search, import.meta.url) //project_root
+	src = url.fileURLToPath(src)
+	if (!(await fs.stat(src)).isFile()) return false
+	return src
+}
+
+
+
 export const router = async (search) => {
 
 	//У search всегда есть ведущий /слэш
@@ -214,11 +227,8 @@ export const router = async (search) => {
 	let root = ''
 	let rest = false
 	let cont = false
-
-	//if (ext) {
 	
-	const src = await webresolve('/' + path).catch(e => false)
-
+	const src = await webresolve('/' + path).catch(e => false)	
 	const name = src ? getSrcName(src) : ''
 
 	if (src && name) { //найден файл

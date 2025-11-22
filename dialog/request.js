@@ -1,4 +1,4 @@
-import cproc from "/-cproc"
+import cproc from "/@atee/cproc"
 import send from "/-dialog/send.js"
 let postcounter = 0
 

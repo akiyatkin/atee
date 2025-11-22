@@ -1,7 +1,7 @@
-import nicked from '/-nicked'
+import nicked from "@atee/nicked"
 import fs from "fs/promises"
-import Rest from "/-rest"
-import config from '/-config'
+import Rest from "@atee/rest"
+import config from '@atee/config'
 import Upload from "/-showcase/Upload.js"
 
 import rest_db from '/-db/rest.db.js'

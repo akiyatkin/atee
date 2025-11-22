@@ -1,5 +1,5 @@
-import Rest from "/-rest"
-import mail from "/-mail"
+import Rest from "@atee/rest"
+import mail from "@atee/mail"
 import rest_mail from "/-mail/rest.mail.js"
 
 const rest = new Rest(rest_mail)

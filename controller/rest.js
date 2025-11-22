@@ -1,6 +1,6 @@
 import path from 'path'
 import { readFile, utimes } from "fs/promises"
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import Bread from '/-controller/Bread.js'
 import { router, loadJSON } from './router.js'
 import Access from '/-controller/Access.js'
@@ -107,9 +107,8 @@ rest.addResponse('get-layers', async view => {
 	view.data.vt = timings.view_time
 	
 
-	if (!next) return view.err()
-	
-	const nroute = await router(next)
+	//if (!next) return view.err()
+	const nroute = await router(next || '/')
 	view.data.root = nroute.root
 	
 	if (nroute.rest || nroute.secure) return view.err()

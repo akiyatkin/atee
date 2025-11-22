@@ -5,7 +5,7 @@ import fs from "fs/promises"
 import nicked from '/-nicked/nicked.js'
 import unique from '/-nicked/unique.js'
 import kcproc from '/-cproc/kcproc.js'
-import xlsx from '/-xlsx'
+import xlsx from '@atee/xlsx'
 import Hand from '/-showcase/Hand.js'
 export class Upload {
 	constructor (opt) {

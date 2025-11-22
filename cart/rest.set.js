@@ -1,8 +1,8 @@
 //set для интерфейса
-import Rest from '/-rest'
+import Rest from "@atee/rest"
 import rest_admin from '/-controller/rest.admin.js'
 import rest_cart from '/-cart/rest.cart.js'
-import Mail from '/-mail'
+import Mail from "@atee/mail"
 import rest_vars from '/-catalog/rest.vars.js'
 import rest_mail from '/-mail/rest.mail.js'
 import User from '/-user/User.js'

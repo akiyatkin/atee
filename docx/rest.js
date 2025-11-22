@@ -1,9 +1,9 @@
-import Rest from "/-rest"
-import docx from '/-docx'
+import Rest from "@atee/rest"
+import docx from '@atee/docx'
 import Access from '/-controller/Access.js'
 import rest_funcs from '/-rest/rest.funcs.js'
-import fs from 'fs/promises'
-import nicked from '/-nicked'
+import fs from 'node:fs/promises'
+import nicked from "@atee/nicked"
 
 
 const rest = new Rest(rest_funcs)

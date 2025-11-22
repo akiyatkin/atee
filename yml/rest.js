@@ -1,7 +1,7 @@
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import tpl from "/-yml/yml.html.js"
-import yml from '/-yml'
-import config from '/-config'
+import yml from '@atee/yml'
+import config from '@atee/config'
 import unique from "/-nicked/unique.js"
 import Shop from "/-shop/Shop.js"
 

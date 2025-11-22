@@ -1,8 +1,8 @@
-import fs from "fs/promises"
-import nicked from '/-nicked'
-import docx from '/-docx'
-import mail from '/-mail'
-import config from '/-config'
+import fs from "node:fs/promises"
+import nicked from "@atee/nicked"
+import docx from '@atee/docx'
+import mail from "@atee/mail"
+import config from '@atee/config'
 import unique from "/-nicked/unique.js"
 import Access from "/-controller/Access.js"
 import Files from "/-showcase/Files.js"
@@ -10,7 +10,7 @@ import Catalog from "/-catalog/Catalog.js"
 import Showcase from "/-showcase/Showcase.js"
 
 
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 const rest = new Rest() //rest_live, rest_funcs, rest_mail, rest_db, rest_catalog
 
 import rest_live from '/-catalog/rest.live.js'

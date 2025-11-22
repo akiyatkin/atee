@@ -1,5 +1,5 @@
 import fs from "fs/promises"
-import nicked from '/-nicked'
+import nicked from "@atee/nicked"
 import unique from '/-nicked/unique.js'
 import sharp from "sharp"
 const Sharp = {}

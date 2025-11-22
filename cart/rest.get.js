@@ -1,5 +1,5 @@
 //get для интерфейса
-import Rest from '/-rest'
+import Rest from "@atee/rest"
 const rest = new Rest()
 export default rest
 

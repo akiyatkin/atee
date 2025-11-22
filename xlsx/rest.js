@@ -1,5 +1,5 @@
-import Rest from "/-rest"
-import xlsx from '/-xlsx'
+import Rest from "@atee/rest"
+import xlsx from '@atee/xlsx'
 const rest = new Rest()
 export default rest
 

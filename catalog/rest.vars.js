@@ -1,11 +1,11 @@
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import rest_funcs from '/-rest/rest.funcs.js'
 import rest_db from '/-db/rest.db.js'
-import nicked from '/-nicked'
+import nicked from "@atee/nicked"
 const rest = new Rest(rest_funcs, rest_db)
 import Catalog from "/-catalog/Catalog.js"
 import User from "/-user/User.js"
-import config from "/-config"
+import config from "@atee/config"
 
 rest.addArgument('model_nick', ['nicked'])
 rest.addArgument('brand_nick', ['nicked'])

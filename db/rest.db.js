@@ -1,4 +1,4 @@
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import Db from "/-db/Db.js"
 
 const rest = new Rest()

@@ -1,5 +1,5 @@
-import nicked from "/-nicked"
-import Rest from "/-rest"
+import nicked from "@atee/nicked"
+import Rest from "@atee/rest"
 import unique from "/-nicked/unique.js"
 import rest_vars from '/-catalog/rest.vars.js'
 import Catalog from "/-catalog/Catalog.js"

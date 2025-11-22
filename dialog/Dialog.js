@@ -1,4 +1,4 @@
-import nicked from "/-nicked"
+import nicked from "/@atee/nicked"
 const cls = (cls, el) => el.getElementsByClassName(cls)
 const link = document.createElement('link')
 link.rel = 'stylesheet'

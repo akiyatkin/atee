@@ -1,10 +1,9 @@
 import Access from "/-controller/Access.js"
 import Db from "/-db/Db.js"
-import nicked from "/-nicked"
+import nicked from "@atee/nicked"
 import unique from "/-nicked/unique.js"
 import filter from "/-nicked/filter.js"
-import fs from 'fs/promises'
-import config from '/-config'
+import fs from 'node:fs/promises'
 import Base from '/-showcase/Base.js'
 import Showcase from '/-showcase/Showcase.js'
 

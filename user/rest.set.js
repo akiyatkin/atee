@@ -1,5 +1,5 @@
 //set для интерфейса
-import Rest from '/-rest'
+import Rest from "@atee/rest"
 import User from '/-user/User.js'
 import crypto from 'crypto'
 

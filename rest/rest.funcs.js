@@ -1,5 +1,5 @@
-import Rest from '/-rest'
-import nicked from '/-nicked'
+import Rest from "@atee/rest"
+import nicked from "@atee/nicked"
 
 const rest = new Rest()
 export default rest

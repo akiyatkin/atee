@@ -1,4 +1,4 @@
-import nicked from '/-nicked'
+import nicked from "@atee/nicked"
 import Layers from '/-controller/Layers.js'
 import TPL from '/-sitemap/layout.html.js'
 import Access from '/-controller/Access.js'
@@ -6,7 +6,7 @@ import { loadJSON } from '/-controller/router.js'
 import Theme from '/-controller/Theme.js'
 import Bread from '/-controller/Bread.js'
 
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 const rest = new Rest()
 
 import rest_funcs from '/-rest/rest.funcs.js'

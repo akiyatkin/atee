@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import nicked from '/-nicked/nicked.js'
-import cproc from '/-cproc'
-import config from '/-config'
+import cproc from "@atee/cproc"
+import config from '@atee/config'
 import Access from '/-controller/Access.js'
 import EasySheetsDef from 'easy-sheets'
 import { google } from 'googleapis';

@@ -1,4 +1,4 @@
-import cproc from "/-cproc"
+import cproc from "/@atee/cproc"
 /*
 	строго последовательное выполнение без пропусков
 */

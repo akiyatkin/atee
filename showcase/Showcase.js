@@ -1,6 +1,6 @@
 import Access from "/-controller/Access.js"
-import config from "/-config"
-import nicked from "/-nicked"
+import config from "@atee/config"
+import nicked from "@atee/nicked"
 import fs from 'fs/promises'
 
 const Showcase = {

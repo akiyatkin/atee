@@ -1,7 +1,7 @@
 import Catalog from "/-catalog/Catalog.js"
 import User from '/-user/User.js'
-import Mail from '/-mail'
-import nicked from '/-nicked'
+import Mail from "@atee/mail"
+import nicked from "@atee/nicked"
 
 
 const Cart = {

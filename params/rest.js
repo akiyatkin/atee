@@ -1,5 +1,5 @@
 
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 const rest = new Rest()
 
 import rest_funcs from "/-rest/rest.funcs.js"
@@ -11,14 +11,14 @@ rest.extra(rest_seo)
 import rest_path from '/-controller/rest.path.js'
 rest.extra(rest_path)
 
-import Dabudi from '/-dabudi'
+import Dabudi from '@atee/dabudi'
 import Base from '/-showcase/Base.js'
-import nicked from '/-nicked'
+import nicked from "@atee/nicked"
 import unique from '/-nicked/unique.js'
 import Access from '/-controller/Access.js'
-import config from '/-config'
-import xlsx from '/-xlsx'
-import drive from '/-drive'
+import config from '@atee/config'
+import xlsx from '@atee/xlsx'
+import drive from "@atee/drive"
 
 
 

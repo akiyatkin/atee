@@ -1,7 +1,7 @@
 // const id = id => document.getElementById(id)
 // const tag = (tag, el) => el.getElementsByTagName(tag)
 // const cls = (cls, el) => el.getElementsByClassName(cls)
-import nicked from "/-nicked"
+import nicked from "/@atee/nicked"
 const pops = {}
 export const action = (btn, callback, name = '') => {
 	const key = name + btn.name

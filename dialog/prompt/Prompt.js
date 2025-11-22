@@ -1,4 +1,4 @@
-import nicked from "/-nicked"
+import nicked from "@atee/nicked"
 import createPromise from "/-controller/createPromise.js"
 import Dialog from "/-dialog/Dialog.js"
 

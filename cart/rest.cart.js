@@ -1,4 +1,4 @@
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import rest_funcs from '/-rest/rest.funcs.js'
 import rest_vars from '/-catalog/rest.vars.js'
 import rest_user from '/-user/rest.user.js'

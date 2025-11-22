@@ -1,5 +1,5 @@
 import Access from "/-controller/Access.js"
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 const rest = new Rest()
 import rest_set from '/-showcase/rest.set.js'
 rest.extra(rest_set)

@@ -1,4 +1,4 @@
-import nicked from "/-nicked"
+import nicked from "/@atee/nicked"
 import common from "/-catalog/common.html.js"
 
 const links = {}

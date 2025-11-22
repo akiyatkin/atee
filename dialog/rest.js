@@ -1,6 +1,6 @@
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import mailtpl from '/-dialog/mail.html.js'
-import mail from '/-mail'
+import mail from "@atee/mail"
 
 import rest_mail from '/-mail/rest.mail.js'
 import rest_funcs from '/-rest/rest.funcs.js'

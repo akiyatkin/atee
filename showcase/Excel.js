@@ -1,6 +1,6 @@
-import Dabudi from '/-dabudi'
-import nicked from "/-nicked"
-import xlsx from "/-xlsx"
+import Dabudi from "@atee/dabudi"
+import nicked from "@atee/nicked"
+import xlsx from "@atee/xlsx"
 import Files from "./Files.js"
 
 

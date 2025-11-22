@@ -1,6 +1,6 @@
 /* rest для интерфейса */
-import Rest from "/-rest"
-import config from '/-config'
+import Rest from "@atee/rest"
+import config from '@atee/config'
 
 
 import rest_set from '/-user/rest.set.js'

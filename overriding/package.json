@@ -1,0 +1,7 @@
+{
+	"name": "@atee/overriding",  
+	"type": "module",
+	"dependencies":{
+		"file-icon-vectors": "^1"
+	}
+}

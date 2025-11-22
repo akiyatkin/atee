@@ -1,4 +1,4 @@
-import nicked from "/-nicked"
+import nicked from "/@atee/nicked"
 const conf = (env, name, def) => env.layer.conf?.[name] ?? def
 const placeholder = env => conf(env, 'placeholder', 'Укажите что-нибудь')
 const type = env => conf(env, 'type', 'text')

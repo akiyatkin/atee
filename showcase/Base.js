@@ -2,7 +2,7 @@ import Access from "/-controller/Access.js"
 import fs from "fs/promises"
 import nicked from '/-nicked/nicked.js'
 import unique from '/-nicked/unique.js'
-import config from "/-config"
+import config from "@atee/config"
 import Showcase from "/-showcase/Showcase.js"
 
 class Base {

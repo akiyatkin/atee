@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
-import cproc from '/-cproc'
-import config from '/-config'
+import cproc from '@atee/cproc'
+import config from '@atee/config'
 
 import times from '/-controller/times.js'
 import Relate from '/-controller/Relate.js'

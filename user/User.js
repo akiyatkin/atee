@@ -1,7 +1,7 @@
-import Mail from '/-mail'
-import config from '/-config'
+import Mail from "@atee/mail"
+import config from '@atee/config'
 import crypto from 'crypto'
-import nicked from "/-nicked"
+import nicked from "@atee/nicked"
 
 const User = {
 	harvest: async (view) => {

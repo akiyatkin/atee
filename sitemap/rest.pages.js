@@ -1,7 +1,7 @@
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import Access from "/-controller/Access.js"
 import fs from "fs/promises"
-import config from "/-config"
+import config from "@atee/config"
 
 const rest = new Rest()
 export default rest

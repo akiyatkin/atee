@@ -246,12 +246,18 @@ export default class Layers {
 	constructor(root) {
 		this.root = root
 	}
+	// async getSource () {
+	// 	//root должен быть без ведущего слэша и работать с дефисом
+	// 	let root = this.root
+	// 	if (root) root = '-' + root
+	// 	//const { default: rule } = await import('/' + root + '/layers.json', {assert: { type: "json" }})
+	// 	const { default: rule } = await import('/' + root + '/layers.json', {with: {type: "json" }})
+	// 	return rule
+	// }
 	async getSource () {
 		//root должен быть без ведущего слэша и работать с дефисом
-		let root = this.root
-		if (root) root = '-' + root
-		//const { default: rule } = await import('/' + root + '/layers.json', {assert: { type: "json" }})
-		const { default: rule } = await import('/' + root + '/layers.json', {with: {type: "json" }})
+		const root = this.root ? '/-' + this.root + '/' : '/-'
+		const rule = await import(root + 'layers.json', {with: {type: "json" }}).then(r => r.default)
 		return rule
 	}
 }

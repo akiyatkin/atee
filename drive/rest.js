@@ -1,9 +1,9 @@
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import Access from '/-controller/Access.js'
 import rest_funcs from '/-rest/rest.funcs.js'
 import fs from 'fs/promises'
-import nicked from '/-nicked'
-import drive from '/-drive'
+import nicked from "@atee/nicked"
+import drive from "@atee/drive"
 //import { createReadStream, readFileSync } from 'fs'
 
 const rest = new Rest(rest_funcs)

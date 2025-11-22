@@ -9,7 +9,7 @@ import rest from '/-controller/rest.js'
 import Bread from './Bread.js'
 import Doc from './Doc.js'
 import getPost from './getPost.js'
-import config from '/-config'
+import config from '@atee/config'
 import Visitor from '/-controller/Visitor.js'
 
 const conf = await config('controller')

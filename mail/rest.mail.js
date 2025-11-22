@@ -1,9 +1,9 @@
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import rest_funcs from '/-rest/rest.funcs.js'
-import config from '/-config'
+import config from '@atee/config'
 import UTM from '/-form/UTM.js'
 const rest = new Rest(rest_funcs)
-import Mail from '/-mail'
+import Mail from "@atee/mail"
 
 rest.addArgument('g-recaptcha-response')
 rest.addVariable('recaptcha', async (view) => { //depricated use recaptcha#required

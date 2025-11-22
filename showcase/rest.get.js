@@ -1,11 +1,11 @@
 import Access from "/-controller/Access.js"
 import Files from "/-showcase/Files.js"
-import nicked from '/-nicked'
+import nicked from "@atee/nicked"
 import filter from '/-nicked/filter.js'
-import fs from "fs/promises"
-import xlsx from "/-xlsx"
+import fs from "node:fs/promises"
+import xlsx from "@atee/xlsx"
 
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 const rest = new Rest()
 export default rest
 

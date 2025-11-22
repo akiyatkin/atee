@@ -1,5 +1,5 @@
 import cards from "/-catalog/cards.html.js"
-import nicked from "/-nicked"
+import nicked from "/@atee/nicked"
 import cost from "/-words/cost.js"
 import links from "/-catalog/links.html.js"
 import common from "/-catalog/common.html.js"

@@ -1,7 +1,7 @@
 import mammoth from 'mammoth';
 import fs from 'fs/promises'
 import nicked from '/-nicked/nicked.js'
-import cproc from '/-cproc'
+import cproc from "@atee/cproc"
 
 
 const dir = 'cache/docx/'

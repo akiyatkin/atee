@@ -3,7 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import fs from 'node:fs'
 
-import config from "/-config"
+import config from "@atee/config"
 
 import { createRequire } from "module"
 const require = createRequire(import.meta.url)

@@ -1,9 +1,9 @@
-import nicked from "/-nicked"
-import Rest from "/-rest"
+import nicked from "@atee/nicked"
+import Rest from "@atee/rest"
 import http from "http"
 import https from "https"
 import dns from "node:dns/promises"
-import config from "/-config"
+import config from "@atee/config"
 import Access from '/-controller/Access.js'
 import fs from 'fs/promises'
 import { ReadStream, createReadStream, createWriteStream } from 'fs'

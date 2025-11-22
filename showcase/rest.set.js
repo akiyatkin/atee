@@ -5,7 +5,7 @@ import fs from "fs/promises"
 import nicked from '/-nicked/nicked.js'
 import unique from '/-nicked/unique.js'
 
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import rest_vars from '/-showcase/rest.vars.js'
 import rest_admin from '/-controller/rest.admin.js'
 
