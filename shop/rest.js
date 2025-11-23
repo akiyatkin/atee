@@ -1,7 +1,7 @@
-import nicked from '/-nicked'
-import config from '/-config'
+import nicked from "@atee/nicked"
+import config from "@atee/config"
 import Shop from "/-shop/Shop.js"
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 const rest = new Rest()
 export default rest
 

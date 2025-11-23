@@ -170,7 +170,7 @@ const showScriptDrag = (data, env) => `
 	<script>
 		(async table => {
 			const list = table.tBodies[0]
-			const Drag = await import('/-note/theory/Drag.js').then(r => r.default)
+			const Drag = await import('/-drag/Drag.js').then(r => r.default)
 			Drag.make(list, async ({id, next_id}) => {
 				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 				const ans = await senditmsg(list, '/-sources/set-prop-ordain', {id, next_id})

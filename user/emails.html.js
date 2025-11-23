@@ -51,7 +51,7 @@ const showEmails = (data, env) => `
 	<script>
 		(async div => {
 			const table = div.querySelector('table')
-			const Drag = await import('/-note/theory/Drag.js').then(r => r.default)
+			const Drag = await import('/-drag/Drag.js').then(r => r.default)
 			Drag.make(table.tBodies[0], '/-user/set-email-ordain')
 		})(document.currentScript.parentElement)
 	</script>

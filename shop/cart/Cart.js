@@ -1,8 +1,8 @@
 
 import Shop from "/-shop/Shop.js"
 import User from '/-user/User.js'
-import Mail from '/-mail'
-import nicked from '/-nicked'
+import Mail from '@atee/mail'
+import nicked from '@atee/nicked'
 import crypto from 'node:crypto'
 import Access from "/-controller/Access.js"
 

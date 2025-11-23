@@ -1,0 +1,7 @@
+{
+	"name": "@atee/drag",  
+	"type": "module",
+	"dependencies":{
+		"file-icon-vectors": "^1"
+	}
+}

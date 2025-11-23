@@ -10,7 +10,7 @@ import Sources from "/-sources/Sources.js"
 
 import Consciousness from "/-sources/Consciousness.js"
 
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 const rest = new Rest()
 
 import rest_admin from '/-controller/rest.admin.js'

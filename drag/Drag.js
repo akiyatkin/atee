@@ -1,4 +1,3 @@
-//depricated use -drag/Drag.js
 const Drag = {}
 
 Drag.make = (div, actionsave, callback) => {

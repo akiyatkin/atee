@@ -1,10 +1,10 @@
 import Access from "/-controller/Access.js"
-import nicked from '/-nicked'
+import nicked from "@atee/nicked"
 import filter from '/-nicked/filter.js'
 import Recalc from "/-sources/Recalc.js"
-import xlsx from "/-xlsx"
-import Rest from "/-rest"
-import config from "/-config"
+import xlsx from "@atee/xlsx"
+import Rest from "@atee/rest"
+import config from "@atee/config"
 import Sources from "/-sources/Sources.js"
 import eye from "/-sources/represent.js"
 const rest = new Rest()

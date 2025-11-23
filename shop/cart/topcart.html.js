@@ -1,7 +1,12 @@
-import tpl from "/@atee/cart/topcart.html.js"
-import panel from "/-cart/panel.html.js"
+import panel from "/-shop/cart/panel.html.js"
 import cost from "/-words/cost.js"
-import common from "/-catalog/common.html.js"
+import cards from "/-shop/cards.html.js"
+
+
+const tpl = {}
+export default tpl
+
+
 tpl.USER = (data, env) => `
 	<div class="header_table">
 		<style>
@@ -64,7 +69,7 @@ tpl.USER = (data, env) => `
 	</div>
 `
 tpl.CART = (data, env) => panel.isShowPanel(data) ? `
-	<button title="На ${cost((data.list||[]).reduce((val, pos) => val + pos.sum, 0))}${common.unit()}" 
+	<button title="На ${cost((data.list||[]).reduce((val, pos) => val + pos.sum, 0))}${cards.unit()}" 
 		style="cursor:pointer; background: transparent;" class="header_table_cart transparent">
 		<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 			<path d="M22.7141 1.28564H20.7764C19.8439 1.28564 19.035 1.9302 18.8269 2.83927L17.646 7.99685" stroke="#4C6056" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -91,4 +96,20 @@ tpl.CART = (data, env) => panel.isShowPanel(data) ? `
 		})(document.currentScript.previousElementSibling)
 	</script>
 `: ''
-export default tpl
+
+
+
+// const getWaitOrder = (orders) => {
+// 	const waitorder = orders.find(o => o.status == 'wait')
+// 	return waitorder
+// }
+// const getWaitOrderId = (orders) => {
+// 	const waitorder = getWaitOrder(orders)
+// 	if (!waitorder) return 0
+// 	return waitorder.order_id
+// }
+// const getWaitOrderCount = (orders) => {
+// 	const waitorder = getWaitOrder(orders)
+// 	if (!waitorder) return 0
+// 	return waitorder.count
+// }

@@ -1,4 +1,4 @@
-import nicked from "/-nicked"
+import nicked from "/@atee/nicked"
 import cost from "/-words/cost.js"
 import addget from '/-sources/addget.js'
 import unique from "/-nicked/unique.js"

@@ -1,9 +1,9 @@
-import config from "/-config"
-import nicked from "/-nicked"
+import config from "@atee/config"
+import nicked from "@atee/nicked"
 import Access from "/-controller/Access.js"
 import Shop from "/-shop/Shop.js"
 import ShopAdmin from "/-shop/admin/ShopAdmin.js"
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 const rest = new Rest()
 export default rest
 

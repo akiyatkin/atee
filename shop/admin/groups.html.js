@@ -446,7 +446,7 @@ const showScriptDragCards = (data, env) => `
 		(async table => {
 			const list = table.tBodies[0]
 			if (!list) return
-			const Drag = await import('/-note/theory/Drag.js').then(r => r.default)
+			const Drag = await import('/-drag/Drag.js').then(r => r.default)
 			Drag.make(list, async ({id, next_id}) => {
 				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 				const ans = await senditmsg(list, '/-shop/admin/set-card-ordain', {group_id : "${data.group.group_id}", prop_nick: id, next_nick: next_id})
@@ -675,7 +675,7 @@ const resumeCheckBox = (data, env) => `
 			resume.addEventListener('click', async () => {
 				const Client = await window.getClient()
 				const nicks = []
-				const nicked = await import('/-nicked').then(r => r.default)
+				const nicked = await import('/@atee/nicked').then(r => r.default)
 				for (const box of boxes) if (box.checked) nicks.push(nicked(box.value))
 				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 				const group_id = ${data.group.group_id || null}
@@ -706,7 +706,7 @@ const showScriptDragGroups = (data, env) => `
 		(async table => {
 			const list = table.tBodies[0]
 			if (!list) return
-			const Drag = await import('/-note/theory/Drag.js').then(r => r.default)
+			const Drag = await import('/-drag/Drag.js').then(r => r.default)
 			Drag.make(list, async ({id, next_id}) => {
 				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 				const ans = await senditmsg(list, '/-shop/admin/set-group-ordain', {id, next_id})
@@ -719,7 +719,7 @@ const showScriptDragFilters = (data, env) => `
 		(async table => {
 			const list = table.tBodies[0]
 			if (!list) return
-			const Drag = await import('/-note/theory/Drag.js').then(r => r.default)
+			const Drag = await import('/-drag/Drag.js').then(r => r.default)
 			Drag.make(list, async ({id, next_id}) => {
 				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 				const ans = await senditmsg(list, '/-shop/admin/set-filter-ordain', {group_id : "${data.group.group_id}", prop_nick: id, next_nick: next_id})

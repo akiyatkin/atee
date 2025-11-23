@@ -1,4 +1,4 @@
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import Recalc from "/-sources/Recalc.js"
 
 const rest = new Rest()

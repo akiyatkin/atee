@@ -11,8 +11,7 @@ rest.extra(rest_seo)
 import rest_path from '/-controller/rest.path.js'
 rest.extra(rest_path)
 
-import Dabudi from '@atee/dabudi'
-import Base from '/-showcase/Base.js'
+import Dabudi from '/-xlsx/Dabudi.js'
 import nicked from "@atee/nicked"
 import unique from '/-nicked/unique.js'
 import Access from '/-controller/Access.js'
@@ -41,14 +40,14 @@ const getTable = async (name, eternal) => {
 		const rows_source = table.data
 		if (!rows_source) return false
 		const {descr, rows_table} = Dabudi.splitDescr(rows_source)
-		const {head_titles, rows_body} = Dabudi.splitHead(rows_table)
+		const {head, rows_body} = Dabudi.splitHead(rows_table)
 
 		const indexes = {}
-		for (const i in head_titles) {
-			const nick = nicked(head_titles[i])
+		for (const i in head) {
+			const nick = nicked(head[i])
 			indexes[nick] = i
 		}
-		return {name, descr, head_titles, indexes, rows_body}
+		return {name, descr, head_titles:head, indexes, rows_body}
 	} else {
 		return false
 	}
@@ -269,18 +268,16 @@ rest.addResponse('get-menu', async view => {
 		}
 	} else if (conf.src) {
 		const lists = await xlsx.read(Access, conf.src) || []
-		list = lists.find(d => d.name == name)
+		list = lists.find(d => d.name == name)		
 		if (!list) return view.err('Лист не найден')
 	} else {
 		return view.err('Некорректный конфиг', 500)
 	}
-	
-	const base = new Base(view)
+		
 	const {descr, rows_table} = Dabudi.splitDescr(list.data)
-	const {heads, rows_body} = Dabudi.splitHead(rows_table, base)
-	const titles = heads.head_titles
+	const {head, rows_body} = Dabudi.splitHead(rows_table)
+	const titles = head
 	const rows = rows_body.filter(row => row.filter(cel => cel).length)
-	const sheet = { descr, heads, rows}
 	if (!titles.length) return view.err('Данные не найдены')
 
 	const data = rows.map(row => {

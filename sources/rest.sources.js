@@ -1,7 +1,7 @@
-import nicked from '/-nicked'
+import nicked from "@atee/nicked"
 import fs from "fs/promises"
-import Rest from "/-rest"
-import config from '/-config'
+import Rest from "@atee/rest"
+import config from "@atee/config"
 import Sources from "/-sources/Sources.js"
 
 const rest = new Rest()

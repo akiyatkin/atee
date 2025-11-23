@@ -1,8 +1,8 @@
 import Cart from "/-shop/cart/Cart.js"
 import Shop from "/-shop/Shop.js"
-import Rest from '/-rest'
+import Rest from "@atee/rest"
 import User from '/-user/User.js'
-import config from "/-config"
+import config from "@atee/config"
 const rest = new Rest()
 export default rest
 

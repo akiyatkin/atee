@@ -1,6 +1,6 @@
 
 
-//depricated
+//depricated use xlsx/Dabudi.js
 
 import nicked from "@atee/nicked"
 

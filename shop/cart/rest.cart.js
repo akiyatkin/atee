@@ -1,6 +1,6 @@
 import Shop from "/-shop/Shop.js"
 import Cart from "/-shop/cart/Cart.js"
-import Rest from '/-rest'
+import Rest from "@atee/rest"
 const rest = new Rest()
 export default rest
 

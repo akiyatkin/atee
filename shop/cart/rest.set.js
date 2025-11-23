@@ -1,8 +1,8 @@
 import User from '/-user/User.js'
 import Cart from "/-shop/cart/Cart.js"
 import Shop from "/-shop/Shop.js"
-import Mail from '/-mail'
-import Rest from '/-rest'
+import Mail from "@atee/mail"
+import Rest from "@atee/rest"
 import Ecommerce from "/-shop/Ecommerce.js"
 const rest = new Rest()
 export default rest

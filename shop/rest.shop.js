@@ -1,9 +1,9 @@
-import nicked from '/-nicked'
+import nicked from "@atee/nicked"
 import Shop from "/-shop/Shop.js"
 import User from "/-user/User.js"
-import config from "/-config"
+import config from "@atee/config"
 
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import unique from "/-nicked/unique.js"
 
 const rest = new Rest()

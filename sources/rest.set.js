@@ -14,7 +14,7 @@ import Consciousness from "/-sources/Consciousness.js"
 import { whereisit } from '/-controller/whereisit.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 const rest = new Rest()
 
 import rest_admin from '/-controller/rest.admin.js'

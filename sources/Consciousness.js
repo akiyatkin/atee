@@ -1,5 +1,5 @@
 import Sources from "/-sources/Sources.js"
-import nicked from "/-nicked"
+import nicked from "@atee/nicked"
 import unique from "/-nicked/unique.js"
 import BulkInserter from "./BulkInserter.js"
 import BulkDeleter from "./BulkDeleter.js"

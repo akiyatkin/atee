@@ -1,4 +1,4 @@
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import Shop from "/-shop/Shop.js"
 
 const rest = new Rest()

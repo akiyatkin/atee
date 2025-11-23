@@ -4,11 +4,11 @@ import path from 'node:path'
 import fs from 'node:fs/promises'
 import Recalc from "/-sources/Recalc.js"
 import Access from "/-controller/Access.js"
-import nicked from '/-nicked'
-import config from "/-config"
+import nicked from "@atee/nicked"
+import config from "@atee/config"
 import Sources from "/-sources/Sources.js"
 import represent from "/-sources/represent.js"
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 const rest = new Rest()
 
 import rest_set from '/-sources/rest.set.js'

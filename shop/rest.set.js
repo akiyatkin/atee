@@ -1,7 +1,7 @@
 import Shop from "/-shop/Shop.js"
-import config from "/-config"
-import Mail from '/-mail'
-import Rest from '/-rest'
+import config from "@atee/config"
+import Mail from "@atee/mail"
+import Rest from "@atee/rest"
 const rest = new Rest()
 export default rest
 

@@ -1,5 +1,5 @@
-import nicked from "/-nicked"
-import config from "/-config"
+import nicked from "@atee/nicked"
+import config from "@atee/config"
 import unique from "/-nicked/unique.js"
 import BulkInserter from "./BulkInserter.js"
 import Access from "/-controller/Access.js"

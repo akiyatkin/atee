@@ -1,15 +1,15 @@
 import Shop from "/-shop/Shop.js"
-import config from "/-config"
-import Files from "/-showcase/Files.js"
+import config from "@atee/config"
+import Files from "/-sources/Files.js"
 import unique from "/-nicked/unique.js"
-import fs from "fs/promises"
-import docx from '/-docx'
+import fs from "node:fs/promises"
+import docx from "@atee/docx"
 import Access from "/-controller/Access.js"
 //import search from "/-shop/search.html.js"
 //import cards from "/-shop/cards.html.js"
 import ddd from "/-words/date.html.js"
-import nicked from "/-nicked"
-import Rest from '/-rest'
+import nicked from "@atee/nicked"
+import Rest from "@atee/rest"
 const rest = new Rest()
 export default rest
 

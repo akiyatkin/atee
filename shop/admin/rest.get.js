@@ -1,6 +1,6 @@
 import Shop from "/-shop/Shop.js"
-import nicked from "/-nicked"
-import Rest from '/-rest'
+import nicked from "@atee/nicked"
+import Rest from "@atee/rest"
 const rest = new Rest()
 export default rest
 

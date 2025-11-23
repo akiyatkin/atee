@@ -1,13 +1,13 @@
 import fs from "fs/promises"
 import ShopAdmin from "/-shop/admin/ShopAdmin.js"
 import Shop from "/-shop/Shop.js"
-import nicked from "/-nicked"
+import nicked from "@atee/nicked"
 import Recalc from "/-sources/Recalc.js"
 import BulkInserter from "/-sources/BulkInserter.js"
 import { whereisit } from '/-controller/whereisit.js'
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
-import Rest from '/-rest'
+import Rest from "@atee/rest"
 const rest = new Rest()
 export default rest
 
