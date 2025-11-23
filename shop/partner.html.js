@@ -41,13 +41,17 @@ tpl.POPUP = (data, env) => `
 				let theme = url.searchParams.get('theme')
 				theme = theme ? theme + ':' : ''
 				
-				let m = url.searchParams.get('m')
-				m = m ? 'm=' + m + '&' : ''
+				const getNeed = await import('/-nicked/getNeed.js').then(r => r.default)
+				const need = getNeed(inp)
 
-				const need = await import('/-nicked/getNeed.js').then(r => r.default(inp))
+				const addget = await import('/-words/addget.js').then(r => r.default)
 
 				const Client = await window.getClient()
-				Client.go('?'+ m +'theme=' + theme + 'partner=' + need.hash)
+
+				Client.go(addget(Client.bread.get, {theme: theme + 'partner=' + need.hash}))
+				//let m = url.searchParams.get('m')
+				//m = m ? 'm=' + m + '&' : ''
+				//Client.go('?'+ m +'theme=' + theme + 'partner=' + need.hash)
 				
 				const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 				Dialog.hide(Dialog.findPopup(form))
