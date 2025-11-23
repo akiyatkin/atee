@@ -1,6 +1,7 @@
+//depricated use start.js с --import
+
 import module from 'node:module';
 module.register('../overriding/loader.js', import.meta.url);
-//module.register('./loader.js', import.meta.url);
 
 const Server = await import('./Server.js').then(r => r.default)
 const config = await import('@atee/config').then(r => r.default)

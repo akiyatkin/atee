@@ -1,3 +1,5 @@
+//depricated old version 23.11.25 use --import with overriding/register
+
 import { pathToFileURL } from 'url'
 import { readdir } from 'fs/promises'
 
