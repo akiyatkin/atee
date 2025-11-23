@@ -100,7 +100,7 @@ const Cart = {
 					where order_id = :order_id
 				`, {order_id})
 				for (const row of rows) {
-					await Cart.addItem(db, wait_id, row.brendart_nick, item.quantity)
+					await Cart.addItem(db, wait_id, row.brendart_nick, row.quantity)
 				}
 				await db.exec(`
 					REPLACE INTO shop_actives (user_id, order_id) VALUES(:user_id, :wait_id)
