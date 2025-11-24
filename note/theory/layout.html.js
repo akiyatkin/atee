@@ -24,7 +24,7 @@ tpl.ROOT = (data, env) => `
 
 			const go = async () => {
 				const Client = await window.getClient()
-				const nicked = await import('/-nicked').then(r => r.default)
+				const nicked = await import('/@atee/nicked').then(r => r.default)
 				const val = nicked(input.value)
 				if (val) Client.go('/theory/search/' + val)
 				else Client.go('/theory')

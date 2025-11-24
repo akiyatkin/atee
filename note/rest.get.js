@@ -1,4 +1,4 @@
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 
 const rest = new Rest()
 import rest_db from "/-db/rest.db.js"
@@ -16,7 +16,7 @@ rest.extra(rest_note)
 
 import NoteDB from "/-note/NoteDB.js"
 
-import config from "/-config"
+import config from "@atee/config"
 
 
 rest.addResponse('get-note-props', async (view) => {

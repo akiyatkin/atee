@@ -1,6 +1,6 @@
 import User from "/-user/User.js"
-import config from "/-config"
-import Rest from "/-rest"
+import config from "@atee/config"
+import Rest from "@atee/rest"
 const rest = new Rest(rest_db)
 import rest_db from "/-db/rest.db.js"
 rest.extra(rest_db)
@@ -13,7 +13,7 @@ rest.extra(rest_mail)
 import rest_note from "/-rest.note.js"
 rest.extra(rest_note)
 
-import Mail from "/-mail"
+import Mail from "@atee/mail"
 
 import NoteDB from "/-note/NoteDB.js"
 

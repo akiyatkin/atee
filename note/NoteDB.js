@@ -1,5 +1,5 @@
 import config from '@atee/config'
-import nicked from '/-nicked'
+import nicked from '@atee/nicked'
 import WS from '/-note/WS.js'
 const NoteDB = {}
 

@@ -7,8 +7,7 @@ const WS = {}
 WS.NOTES = {}
 WS.start = async () => {
 	const db = await new Db().connect()
-	if (!db) throw 'Нет соединения с базой данных при первом соединении'
-	db.db.release()
+	if (!db) throw 'Нет соединения с базой данных при первом соединении'	
 	await db.exec(`
 		UPDATE note_stats
 		SET focus = 0, open = 0
@@ -282,7 +281,6 @@ WS.checkReject = async (note, state) => {
 WS._getNote = async (note_id) => {
 	const db = await new Db().connect()
 	if (!db) throw 'Нет соединения с базой данных при первом соединении'
-	db.db.release()
 	const note = await db.fetch(`SELECT note_id, text, title, rev FROM note_notes WHERE note_id = :note_id`, {note_id})
 	note.states = [] //states[state, state]
 	note.db = db
@@ -293,12 +291,13 @@ WS.getNote = (note_id) => {
 		WS.NOTES[note_id] = WS._getNote(note_id)
 	} else {
 		WS.NOTES[note_id] = WS.NOTES[note_id].then(note => {
-			return note.db.db.ping().then(r => note).catch(async e => {
-				console.log('new connection')
-				note.db = await new Db().connect()
-				if (!note.db) throw 'Нет соединения с базой данных при повторном соединении'
-				return note
-			})
+			return note
+			// return note.db.pool.ping().then(r => note).catch(async e => {
+			// 	console.log('new connection')
+			// 	note.db = await new Db().connect()
+			// 	if (!note.db) throw 'Нет соединения с базой данных при повторном соединении'
+			// 	return note
+			// })
 		})
 	}
 	return WS.NOTES[note_id]

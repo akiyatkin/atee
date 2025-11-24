@@ -1,6 +1,6 @@
 import mammoth from 'mammoth';
-import fs from 'fs/promises'
-import nicked from '/-nicked/nicked.js'
+import fs from 'node:fs/promises'
+import nicked from '@atee/nicked'
 import cproc from "@atee/cproc"
 
 

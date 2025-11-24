@@ -1,5 +1,5 @@
-import fs from 'fs/promises'
-import nicked from '/-nicked/nicked.js'
+import fs from 'node:fs/promises'
+import nicked from '@atee/nicked'
 import cproc from "@atee/cproc"
 import config from '@atee/config'
 import Access from '/-controller/Access.js'

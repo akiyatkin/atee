@@ -1,6 +1,6 @@
 import nxlsx from 'node-xlsx';
-import fs from 'fs/promises'
-import nicked from '/-nicked/nicked.js'
+import fs from 'node:fs/promises'
+import nicked from '@atee/nicked'
 import cproc from "@atee/cproc"
 import Dabudi from '/-xlsx/Dabudi.js'
 const readJSON = async src => JSON.parse(await fs.readFile(src))
