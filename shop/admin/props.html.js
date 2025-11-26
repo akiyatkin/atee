@@ -42,7 +42,7 @@ const showProps = (data, env) => `
 				form.addEventListener('submit', async (e) => {
 					e.preventDefault()
 					const Client = await window.getClient()
-					Client.go('props?search=' + input.value, false)
+					Client.go('props?query=' + input.value, false)
 					Client.reloaddiv("${env.layer.div}")
 				})
 			})(document.currentScript.parentElement)
