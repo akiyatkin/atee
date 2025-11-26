@@ -21,12 +21,12 @@ const showsignupform = (data, env) => `
 	<script>
 		(form => {
 			import("/-form/Autosave.js").then(r => r.default.init(form))
-			form.addEventListener('submit', e => {
+			form.addEventListener('submit', async e => {
 				e.preventDefault()
-				import('/-dialog/submit.js').then(r => r.default(form)).then(async res => {
-					const Client = await window.getClient()
-					Client.reload()
-				})
+				const submit = await import('/-dialog/submit.js').then(r => r.default)
+				const res = await submit(form)
+				const Client = await window.getClient()
+				Client.reload()
 			})
 		})(document.currentScript.previousElementSibling)
 	</script>

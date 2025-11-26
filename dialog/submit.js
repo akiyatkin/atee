@@ -5,5 +5,3 @@ export default async (form, userlayer) => {
 	await recaptcha(form)
 	return await action(form, userlayer)
 }
-
-

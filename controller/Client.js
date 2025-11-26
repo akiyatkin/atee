@@ -67,12 +67,7 @@ export const Client = {
 	},
 	getPath: () => decodeURI(location.pathname.replace(/\/$/,'')) || '/',
 	getSearch: () => Client.getPath() + decodeURI(location.search) + location.hash,
-	reload: () => { //depricated?
-		//'/' переход с главной
-		//'' переход с ничего
-		Client.search = ''
-		return Client.refreshState()
-	},
+	
 	reloaddivs:[],
 	reloaddiv: (gs) => {
 		const stack_name = 'reloaddivs'
@@ -107,6 +102,12 @@ export const Client = {
 	
 	refreshState: (scroll = false) => {
 		return Client.replaceState(Client.next?.search ?  Client.next.search : Client.search + location.hash, scroll)
+	},
+	reload: (scroll) => {
+		//'/' переход с главной
+		//'' переход с ничего
+		//Client.search = ''
+		return Client.refreshState(scroll)
 	},
 	scroll: promise => {
 		const go = () => {
