@@ -321,7 +321,6 @@ const showHaveMore = (data, env, filter, title = 'выбрать…') => `<span 
 </span>`
 filters.option = (data, filter, value_nick) => `
 		<option 
-			style="opacity: ${~filter.remains.indexOf(value_nick) ? '1':'0.3'}" 
 			${data.md.mget[filter.prop_nick]?.[value_nick] ? 'selected' : ''} 
 			value="${value_nick}">
 				${data.props[filter.prop_nick].type == 'value' ? cards.getValueTitleByNick(data, value_nick) : value_nick}

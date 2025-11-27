@@ -46,7 +46,7 @@ const showRows = (data, env, table) => `
 		</table>
 		<script>
 			(async div => {
-				const name = 'sources_rows_${env.bread.get.search || ''}'
+				const name = 'sources_rows_${env.bread.get.query || ''}'
 				div.scrollLeft = window.sessionStorage.getItem(name) || 0
 				div.addEventListener('scroll', e => {
 					window.sessionStorage.setItem(name, div.scrollLeft)

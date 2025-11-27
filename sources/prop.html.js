@@ -268,7 +268,7 @@ const showValueTr = (data, env, row) => `
 		<td><nobr>${date.sdmyhi(row.date)}</nobr></td>
 		<td>${row.value_id ?? ''}</td>
 		<td>${row.value_title ? showValueTitle(data, env, row) : ''}</td>
-		<td>${row.value_nick ?? ''}</td>
+		<td><a href="rows?query=${row.value_nick ?? ''}">${row.value_nick ?? ''}</a></td>
 		
 	</tr>
 `
