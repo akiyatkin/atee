@@ -1,6 +1,6 @@
-import Rest from "/-rest"
-import { Notion } from "./../Notion.js"
-import fs from 'fs/promises'
+import Rest from "@atee/rest"
+import Notion from "/-notion/Notion.js"
+import fs from 'node:fs/promises'
 const rest = new Rest()
 
 rest.addArgument('nick')

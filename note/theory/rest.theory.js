@@ -1,5 +1,5 @@
-import config from "/-config"
-import Rest from "/-rest"
+import config from "@atee/config"
+import Rest from "@atee/rest"
 const rest = new Rest(rest_db)
 
 import rest_db from "/-db/rest.db.js"

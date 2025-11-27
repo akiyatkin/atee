@@ -1,4 +1,4 @@
-import Rest from "/-rest"
+import Rest from "@atee/rest"
 import rest_funcs from '/-rest/rest.funcs.js'
 import Notion from "/-notion/Notion.js"
 import Access from "/-controller/Access.js"

@@ -1,12 +1,12 @@
 //import Client from "/node_modules/@notionhq/client/build/src/Client.js"
 import { Client } from "@notionhq/client"
-import fs from 'fs/promises'
+import fs from 'node:fs/promises'
 import { whereisit } from '/-controller/whereisit.js'
 import probe from 'probe-image-size';
-import config from '/-config';
+import config from '@atee/config';
 const { FILE_MOD_ROOT, IMPORT_APP_ROOT } = whereisit(import.meta.url)
 
-export const Notion = {
+const Notion = {
 	getConfig: async () => config('notion'),
 	getConnect: async () => {
 		const CONFIG = await Notion.getConfig()
