@@ -655,7 +655,7 @@ field.areamin = ({name, cls, label, action, value, args = {}}) => {
 	const id = 'field-' + nicked(label)
 	return `
 		
-		<div style="overflow:auto; padding:2px 5px" contenteditable id="${id}" class="field ${cls || ''}">${value}</div>
+		<div style="overflow:auto; padding:2px 5px" contenteditable="true" id="${id}" class="field ${cls || ''}">${value}</div>
 		<script>
 			(float => {
 				const field = float.querySelector('.field')					
