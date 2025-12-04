@@ -135,7 +135,7 @@ export class Rest {
 		})
 		return unique(views)
 	}
-	addView (view) {
+	async addView (view) {
 		const visitor = view.visitor
 		// this.runRests(rest => {
 		// 	const list = rest.getRestStore(visitor).views
@@ -192,6 +192,10 @@ export class Rest {
 				return reans
 			})
 		}
+
+
+		
+		
 		return reans
 	}
 	async req (action, req = {}, visitor) { //reans request и action 
@@ -201,18 +205,21 @@ export class Rest {
 		const opt = orest.list[action]
 		if (!opt?.response) return Rest.makeReans({data: {msg: 'Method Not Allowed', result: 0}, status: 405, ext: 'json'})
 		const view = new View(orest, opt, req, visitor)
-		orest.addView(view)
+		await orest.addView(view)
 
 		
 		// const views = view.rest.getViews(view.visitor)
 		// console.log('req', rest.name, orest.name, views.length, req)
 		
-		return rest.exec(view)
+		for (const callback of orest.beforelisteners) await callback(view)
+		const reans = await rest.exec(view)
+		for (const callback of orest.afterlisteners) await callback(view)
+		return reans
 	}
 	data (action, req = {}, visitor = false) { //ans любой
 		return this.get(action, req, visitor).then(reans => reans.data)
 	}
-	get (action, req = {}, visitor = false) { //ans любой
+	async get (action, req = {}, visitor = false) { //ans любой
 
 		if (!visitor) visitor = new Visitor()
 		const rest = this
@@ -222,12 +229,15 @@ export class Rest {
 		if (!orest) return Promise.resolve(Rest.makeReans({data: {msg: 'Not Found', result: 0}, status: 404, ext: 'json',}))
 		const opt = orest.list[action]
 		const view = new View(orest, opt, req, visitor) //Создаётся у родительского реста
-		orest.addView(view)
+		await orest.addView(view)
 		// const views = view.rest.getViews(view.visitor)
 		// console.log('get', rest.name, orest.name, views.length, req)
 		// return
 		
-		return rest.exec(view)
+		for (const callback of orest.beforelisteners) await callback(view)
+		const reans = await rest.exec(view)
+		for (const callback of orest.afterlisteners) await callback(view)
+		return reans
 	}
 	add (pname, a1, a2, a3, a4) {
 		let before, func, after, replace

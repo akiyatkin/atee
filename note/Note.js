@@ -62,7 +62,7 @@ const Note = {
 	},
 	viewHTML: (note) => {
 		const html = Note.makeHTML(note.text, note.cursors, note.waitchanges)
-		note.view.innerHTML = html + '<br>'
+		note.view.innerHTML = html
 	},
 	makeHTML: (text, cursors, waitchanges = [], marks = []) => {
 		cursors = Object.values(cursors)
@@ -156,7 +156,6 @@ const Note = {
 			delete pos.end
 			delete pos.start
 		}
-		
 
 		lights.reverse()
 		let prev = text.length
@@ -206,7 +205,7 @@ const Note = {
 			}
 			
 		}
-		return html
+		return html + '<br>'
 		
 		/*
 			`

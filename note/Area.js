@@ -140,6 +140,18 @@ Area.control = (area) => {
 		setControlH(area)
 	}
 }
+Area.mousedown = async (area, e) => {
+	if (e.detail != 2) return
+	const parseLinks = await import('/-note/parseLinks.js').then(r => r.default)
+	const marks = parseLinks(area.value)	
+	for (const mark of marks) {
+		if (mark.start > area.selectionStart) continue
+		if (mark.start + mark.size < area.selectionEnd) continue
+		
+		area.selectionStart = mark.start
+		area.selectionEnd = mark.start + mark.size
+	}    
+}
 Area.keydown = (area, e) => {
 	if (e.keyCode === HOME) { //Home
 		const text = area.value

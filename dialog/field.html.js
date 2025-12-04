@@ -620,13 +620,16 @@ field.area = ({name, label, action, value, args = {}}) => {
 					const END = 35
 					field.addEventListener('keydown', e => {
 						if (~[HOME, END].indexOf(e.keyCode)) { //input ради preventDefault стандартного действия, нет input
-							e.preventDefault() 
+							e.preventDefault()
 							Area.keydown(field, e)
 						}
 						if (~[ENTER, TAB].indexOf(e.keyCode)) { //input ради preventDefault стандартного ввода, есть input
 							e.preventDefault()
 							Area.keydown(field, e)
 						}
+					})
+					field.addEventListener('mousedown', e => {
+						Area.mousedown(field, e)
 					})
 
 					field.addEventListener('input', async () => {

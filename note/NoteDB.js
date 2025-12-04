@@ -75,14 +75,21 @@ NoteDB.getProps = async (db, note_id) => {
 
 	return note
 }
-NoteDB.create = (db, user_id, text = '') => {
+NoteDB.create = async (db, user_id, text = '') => {
 	const title = text
 	const nick = nicked(title)
 	const length = text.length
-	return db.insertId(`
+	const sql = `
 		INSERT INTO note_notes (text, editor_id, creater_id, title, nick, length) 
 		VALUES (:text, :user_id, :user_id, :title, :nick, :length)
-	`, {text, nick, user_id, length, title})
+	`
+	const values = {text, nick, user_id, length, title}
+	if (db.insertId) {
+		return db.insertId(sql, values)
+	} else { //transaction
+		const [result] = await db.execute(sql, values);
+		return result.insertId;
+	}
 }
 // NoteDB.insert = async (db, note_id, insert, user_id) => {
 // 	const note = await NoteDB.getNote(db, note_id)

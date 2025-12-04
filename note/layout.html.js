@@ -24,20 +24,15 @@ const removeProp = (note, prop) => {
 	return mynote
 }
 note.show = (note, placeholder = "Напишите что-нибудь") => `
-	<style>
-		.notewrapper {
-			opacity:0;	
-		}
-	</style>
-	<div class="notewrapper">
-		<div class="note view" 
-			aria-hidden="true"
-			placeholder="${placeholder}" aria-label="${placeholder}">${Note.makeHTML(note.text, note.cursors)}<br></div>
-		<textarea ${note.ismy == 'view' ? 'disabled' : ''} autocomplete="off" style="--hue: ${note.hue}" class="note area" 
-			spellcheck="false"
-			placeholder="${placeholder}" aria-label="${placeholder}" role="textbox" 
-			tabindex="0">
-${escapeText(note.text)}</textarea>
+	<div class="notewrapper wrap">
+		<style>
+			.notewrapper {
+				opacity:0;
+			}
+		</style>
+		<div class="note view" aria-hidden="true" placeholder="${placeholder}" aria-label="${placeholder}">${Note.makeHTML(note.text, note.cursors)}</div>
+		<textarea ${note.ismy == 'view' ? 'disabled' : ''} autocomplete="off" style="--hue: ${note.hue}" class="note area" spellcheck="false" placeholder="${placeholder}" aria-label="${placeholder}" role="textbox" tabindex="0">
+${escapeText(note.text)}</textarea>		
 		<script>
 			(wrap => {
 				const note = ${JSON.stringify(removeProp(note, 'text'))}
@@ -56,6 +51,14 @@ ${escapeText(note.text)}</textarea>
 				note.area.selectionDirection = beforecursor.direction ? 'forward' : 'backward'
 
 				note.view = wrap.querySelector('.view')
+				note.view.addEventListener('click', e => {
+					const link = e.target.closest('.note_link')
+					if (!link) {
+						e.preventDefault()
+						return
+					}
+					alert(1)
+				})
 				note.waitchanges = []
 				note.inputpromise = new Promise(async resolve => {
 					const Note = await import('/-note/Note.js').then(r => r.default)
@@ -144,6 +147,10 @@ ${escapeText(note.text)}</textarea>
 						const Area = await import('/-note/Area.js').then(r => r.default)
 						await Area.keydown(note.area, e)
 					}
+				})
+				note.area.addEventListener('mousedown', async e => {
+					const Area = await import('/-note/Area.js').then(r => r.default)
+					Area.mousedown(note.area, e)
 				})
 				note.area.addEventListener('keyup', async e => {
 					if (note.inputpromise.start) return

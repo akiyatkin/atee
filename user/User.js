@@ -77,7 +77,6 @@ const User = {
 		return {user_id, token: r[1]}
 	},
 	getUserIdByEmail: async (db, email) => {
-		db = db.gets ? await db.get('db') : db
 		return await db.col(`
 			SELECT e.user_id
 			FROM user_uemails e 
@@ -85,7 +84,6 @@ const User = {
 		`, { email })
 	},
 	getUserByEmail: async (db, email) => {
-		db = db.gets ? await db.get('db') : db
 		const user_id = await User.getUserIdByEmail(db, email)
 		if (!user_id) return false
 		return User.getUserById(db, user_id)

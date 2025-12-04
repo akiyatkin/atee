@@ -81,6 +81,9 @@ const showArea = (data, env) => {
 						Area.keydown(field, e)
 					}
 				})
+				field.addEventListener('mousedown', e => {
+					Area.mousedown(field, e)
+				})
 			</script>		
 		</div>
 	`
