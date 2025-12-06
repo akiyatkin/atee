@@ -1,8 +1,13 @@
 .notewrapper {
 	/*height:100%;*/
 	opacity:1!important;
-	--color: pink;
-	border: 1px solid #eee;
+	/*--color: pink;*/	
+
+}
+
+.notewrapper {
+	display: grid;
+	overflow-y: auto;
 }
 .notewrapper .note {
 	outline: none; 
@@ -24,6 +29,7 @@
 	grid-row: 1 / 2;
 	margin:0;
 	border:none;
+	border: 1px solid #eee;
 }
 .notewrapper .note {
 	white-space: pre;
@@ -56,6 +62,7 @@
 	color: black;
 	background-color: color-mix(in srgb, var(--color) 20%, transparent);
 	transition: background-color 0.1s;
+	
 }
 .notewrapper.focus .view {
 /*	background-color: white;*/
@@ -74,10 +81,7 @@
 }
 
 
-.notewrapper {
-	display: grid;
-	overflow-y: auto;
-}
+
 
 
 .notewrapper .cursor {
@@ -145,10 +149,10 @@
 
 
 
-.notewrapper .note_link {
+/*.notewrapper .note_link {
 	color:blue;
 }
-
+*/
 .notewrapper .note_bold {
 	font-weight: bold;
 }

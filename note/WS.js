@@ -148,6 +148,7 @@ WS.setChange = (state, note, change) => {
 	WS.setUpdate(state, note, change)
 	
 }
+
 WS.setUpdate = (state, note, change) => {
 	WS.setSearch(note)
 	if (change.start < 255) WS.setTitle(state.ws, note)
@@ -206,7 +207,18 @@ WS.sendToEveryone = (fromsocket, note, data) => {
 		ws.send('{"payload":' + strdata + ',"my":' + my + '}')
 	}
 }
-
+WS.getCursor = (db, note_id, user_id) => {
+	return db.fetch(`SELECT 
+			user_id,
+			cursor_start as start, 
+			cursor_size as size,
+			cursor_direction as direction
+		FROM note_stats 
+		WHERE 
+			note_id = :note_id
+			and user_id = :user_id
+	`, {note_id, user_id})
+}
 WS.connection = (ws, request) => {
 	const state = request.state
 	const note_id = state.note_id
@@ -215,58 +227,73 @@ WS.connection = (ws, request) => {
 	state.ws = ws
 	state.hangchanges = []
 
-	const note = state.note
-	const states = note.states
-	state.myindex = states.length
-	states.push(state)
-	const db = note.db
+	const isspy = state.rev
+	
 
-	ws.on('close', () => {
-		//sendSignal(ws, note, 'blur', {user_id})
-		WS.closeState(state.note_id, state).then(note => {
-			WS.sendSignal(ws, note, 'leave', {user_id})
-		})
-	})
 
 	ws.on('error', console.error)
 
 	ws.on('message', async data => {
-
-
 		
 		data = JSON.parse(data.toString())
-		const {change, cursor, signal} = data
-		const base = change?.base || cursor?.base || signal?.base
-		state.hangchanges = state.hangchanges.filter(ch => ch.rev > base) //Оставили только изменения, которые были после base
-		
 		const note = await WS.getNote(state.note_id, user_id)
-		
 		WS.checkReject(note, state).then(is => {
 			if (!is) {
 				return WS.sendSignal(ws, note, 'reject', {user_id})
 			}
 		})
 		if (state.ismy == 'view') {
-			if (change)	return WS.sendSignal(ws, note, 'onlyview', {user_id})
+			if (data.insert || data.change) {
+				return WS.sendSignal(ws, note, 'onlyview', {user_id})
+			}
 		}
 		
-		if (change) WS.setChange(state, note, change)
-		if (cursor) WS.setCursor(state, note, cursor)
-		if (signal) WS.setSignal(state, note, signal)	
 		
+		const base = data.change?.base || data.cursor?.base || data.signal?.base
+		if (base) state.hangchanges = state.hangchanges.filter(ch => ch.rev > base) //Оставили только изменения, которые были после base		
+		
+		if (data.insert) {
+			const change = data.insert //{insert:''}
+
+			change.cursor = await WS.getCursor(note.db, note_id, user_id)
+			change.base = note.rev
+
+			change.start = change.cursor.start
+			change.remove = note.text.slice(change.cursor.start, change.cursor.start + change.cursor.size)
+			change.cursor.size = 0
+			
+			Move.cursorAfter(change.cursor, [change])
+			WS.saveCursor(note.db, note_id, change.cursor)
+			WS.setChange(state, note, change)
+		}
+		if (data.change) WS.setChange(state, note, data.change)
+		if (data.cursor) WS.setCursor(state, note, data.cursor)
+		if (data.signal) WS.setSignal(state, note, data.signal)
+
 	})
 
-	db.exec(`
+	if (!isspy) return //Необходимый ключ для слежения и оповещения
+
+	const note = state.note
+	state.myindex = note.states.length
+	note.states.push(state)
+	ws.on('close', () => {
+		//sendSignal(ws, note, 'blur', {user_id})
+		WS.closeState(state.note_id, state).then(note => {
+			WS.sendSignal(ws, note, 'leave', {user_id})
+		})
+	})
+	if (note.rev != state.rev) {
+		state.rev = note.rev
+		WS.sendSignal(ws, note, 'reset', {text: note.text, rev: note.rev})
+	}
+	note.db.exec(`
 		UPDATE note_stats
 		SET date_load = FROM_UNIXTIME(:date_load), date_open = now(), count_opens = count_opens + 1, open = 1
 		WHERE note_id = :note_id and user_id = :user_id
 	`, {user_id, note_id, date_load: state.date_load}).then(r => {
 		WS.sendSignal(ws, note, 'joined', {user_id, hue: state.hue})
 	})
-	if (note.rev != state.rev) {
-		state.rev = note.rev
-		WS.sendSignal(ws, note, 'reset', {text: note.text, rev: note.rev})
-	}
 }
 WS.isAccept = (db, note_id, user_id) => {
 	return false
@@ -306,10 +333,10 @@ WS.verifyClient = async (info) => {
 	const request = info.req
 	const params = new URL(request.headers.origin + request.url).searchParams
 	const state = {
-		rev: params.get('rev'),
+		rev: params.get('rev') || false,
 		note_id: params.get('note_id'),
 		user_id: params.get('user_id'),
-		date_load: params.get('date_load'),
+		date_load: params.get('date_load') || false, //передаётся вместе rev
 		user_token: params.get('user_token')
 	}
 	state.ismy = true
@@ -319,7 +346,9 @@ WS.verifyClient = async (info) => {
 		return false
 	}
 
-	for (const name in state) if (!state[name]) return err(name + ' required')
+	for (const name of ['note_id', 'user_id', 'user_token']) if (!state[name]) return err(name + ' required')
+
+
 	const note = await WS.getNote(state.note_id)
 	if (!note?.note_id) return err('note_id')
 	state.note = note

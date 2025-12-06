@@ -11,7 +11,8 @@ if (Move.debug && globalThis.window) {
 }
 
 
-const Note = {	
+const Note = {
+
 	getCursor: (note) => ({
 		start: note.area.selectionStart,
 		size: note.area.selectionEnd - note.area.selectionStart,
@@ -52,6 +53,7 @@ const Note = {
 
 		//await note.inputpromise
 		//note.inputpromise.start = true
+		
 		note.area.selectionStart = mycursor.start
 		note.area.selectionEnd = mycursor.start + mycursor.size
 		note.area.selectionDirection = mycursor.direction ? 'forward' : 'backward'
@@ -248,7 +250,7 @@ const Note = {
 		// 	Note.moveBack({cursor, waitchanges})
 		// }
 
-		const socket = await Note.open(note)   
+		const socket = await Note.open(note)
 
 		/*
 			text - abc
@@ -292,109 +294,128 @@ const Note = {
 			socket.send(data)
 		}
 	},
-	getLink: (note) => {
+	insert: async (note_id, subject) => {
+		const link = await Note.getInsertLink(note_id)
+		const socket = new WebSocket(link)
+		socket.addEventListener('open', e => {
+			const insert = {insert:subject}
+			socket.send(JSON.stringify({insert}))
+			socket.close()
+		})
+		
+		
+	},
+	getAreaLink: (note) => {
 		const wshost = note.wshost
 		const protocol = location.protocol === "https:" ? "wss" : "ws"
 		return protocol + '://'+ wshost + `/?rev=${note.rev}&date_load=${note.now}&note_id=${note.note_id}&user_id=${note.user_id}&user_token=${note.user_token}`
 	},
+	getInsertLink: async (note_id) => {
+		//, user_id, user_token
+		const Acc = await import('/-user/Acc.js').then(r => r.default)
+		const {user_id, token} = Acc.get()
+		if (!user_id) return false
+		const conf = await import('/-config/get?name=note', {with:{type:'json'}}).then(r => r.default.conf)
+		const wshost = conf.wshost
+		const protocol = location.protocol === "https:" ? "wss" : "ws"
+		return protocol + '://'+ wshost + `/?note_id=${note_id}&user_id=${user_id}&user_token=${token}`
+	},
 	open: (note) => {
-		if (!note.socket) {
-			const socket = new Promise((resolve, reject) => {
-				const link = Note.getLink(note)
-				const socket = new WebSocket(link)
-				socket.addEventListener('open', e => {
-					for (const change of note.waitchanges) {
-						Note.send(note, {change})
-					}
-					note.wrap.classList.add('joined')
-					return resolve(socket)
-				})
-				const error = async e => {
-					// for (const change of note.waitchanges) {
-					// 	change.error = true
-					// }
-					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-					Dialog.alert('Упс, что-то пошло не так. Нет соединения с сервером. <br>Обновите страницу или попробуйте продолжить позже.')
+		if (note.socket) return note.socket
+		const socket = new Promise((resolve, reject) => {
+			const link = Note.getAreaLink(note)
+			const socket = new WebSocket(link)
+			socket.addEventListener('open', e => {
+				for (const change of note.waitchanges) {
+					Note.send(note, {change})
 				}
-				socket.addEventListener('error', error)
-				socket.addEventListener('message', async event => {
-					const {payload, my} = JSON.parse(event.data)
-					const {cursor, change, signal} = payload
-					if (signal) {
-						signal.myuser = signal.user_id == note.user_id
-						signal.my = my
-						note.wrap.dispatchEvent(new CustomEvent("note-signal", { bubbles: false, detail: signal }))
-						if (signal.type == 'reset') {
-							note.rev = signal.rev
-							note.text = signal.text
-							note.area.value = note.text
-							Note.viewHTML(note)
-						} else if (signal.type == 'onlyview') {
-							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-							Dialog.alert('Доступен только просмотр. Такие дела.')	
-						} else if (signal.type == 'reject') {
-							if (signal.myuser) {
-								const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-								Dialog.alert('Ваш доступ был отозван. Такие дела.')	
-							}
-						} else if (signal.type == 'leave') {
-							delete note.cursors[signal.user_id]
-						} else if (signal.type == 'joined') {
-							if (signal.user_id == note.user_id) {
-								note.area.style = "--hue: " + signal.hue
-							}
-						} else if (signal.type == 'rename') {
-						} else if (signal.type == 'blur') {
-							Note.viewHTML(note)
-						} else if (signal.type == 'focus') {
-							if (signal.cursor.user_id != note.user_id) {
-								Move.cursorAfter(signal.cursor, note.waitchanges)
-								note.cursors[signal.cursor.user_id] = signal.cursor
-								Note.viewHTML(note)
-							}
-						}
-					}
-					await note.inputpromise
-					
-
-					if (cursor) {
-						Note.cursorHTML(note, cursor)
-					} else if (change) {
-						if (my) {
-							note.rev = change.rev
-							//Note.send(note, {signal:{type:'base', base:note.rev}})
-							note.waitchanges.shift()
-							Note.viewHTML(note)
-						} else {
-							for (const wait of note.waitchanges) {
-								Move.changeAfter(wait, [change])
-
-							}
-							Note.changeHTML(note, change)
-						}
-						note.wrap.dispatchEvent(new CustomEvent("note-change", { bubbles: false, detail: change }))
-						//const data = JSON.stringify({signal:{type:'base', base:note.rev}})
-						//socket.send(data)
-					}
-				})
-				socket.addEventListener('close', event => {
-					note.wrap.classList.remove('joined')
-					delete note.socket
-				})
-				const cancel = () => {
-					if (!note.area.closest('body') && socket.readyState < 2) {
-						socket.removeEventListener('error', error)
-						socket.close()
-					}
-					if (socket.readyState > 1) {
-						window.removeEventListener('crossing-sitemap-headready', cancel)
-					}
-				}
-				window.addEventListener('crossing-sitemap-headready', cancel)
+				note.wrap.classList.add('joined')
+				return resolve(socket)
 			})
-			note.socket = socket
-			
-		}
+			const error = async e => {
+				// for (const change of note.waitchanges) {
+				// 	change.error = true
+				// }
+				const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+				Dialog.alert('Упс, что-то пошло не так. Нет соединения с сервером. <br>Обновите страницу или попробуйте продолжить позже.')
+			}
+			socket.addEventListener('error', error)
+			socket.addEventListener('message', async event => {
+				const {payload, my} = JSON.parse(event.data)
+				const {cursor, change, signal} = payload
+				if (signal) {
+					signal.myuser = signal.user_id == note.user_id
+					signal.my = my
+					note.wrap.dispatchEvent(new CustomEvent("note-signal", { bubbles: false, detail: signal }))
+					if (signal.type == 'reset') {
+						note.rev = signal.rev
+						note.text = signal.text
+						note.area.value = note.text
+						Note.viewHTML(note)
+					} else if (signal.type == 'onlyview') {
+						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+						Dialog.alert('Доступен только просмотр. Такие дела.')	
+					} else if (signal.type == 'reject') {
+						if (signal.myuser) {
+							const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+							Dialog.alert('Ваш доступ был отозван. Такие дела.')	
+						}
+					} else if (signal.type == 'leave') {
+						delete note.cursors[signal.user_id]
+					} else if (signal.type == 'joined') {
+						if (signal.user_id == note.user_id) {
+							note.area.style = "--hue: " + signal.hue
+						}
+					} else if (signal.type == 'rename') {
+					} else if (signal.type == 'blur') {
+						Note.viewHTML(note)
+					} else if (signal.type == 'focus') {
+						if (signal.cursor.user_id != note.user_id) {
+							Move.cursorAfter(signal.cursor, note.waitchanges)
+							note.cursors[signal.cursor.user_id] = signal.cursor
+							Note.viewHTML(note)
+						}
+					}
+				}
+				await note.inputpromise 	//ЧТо это???? 
+				
+
+				if (cursor) {
+					Note.cursorHTML(note, cursor)
+				} else if (change) {
+					if (my) {
+						note.rev = change.rev
+						//Note.send(note, {signal:{type:'base', base:note.rev}})
+						note.waitchanges.shift()
+						Note.viewHTML(note)
+					} else {
+						for (const wait of note.waitchanges) {
+							Move.changeAfter(wait, [change])
+
+						}
+						Note.changeHTML(note, change)
+					}
+					note.wrap.dispatchEvent(new CustomEvent("note-change", { bubbles: false, detail: change }))
+					//const data = JSON.stringify({signal:{type:'base', base:note.rev}})
+					//socket.send(data)
+				}
+			})
+			socket.addEventListener('close', event => {
+				note.wrap.classList.remove('joined')
+				delete note.socket
+			})
+			const cancel = () => {
+				if (!note.area.closest('body') && socket.readyState < 2) {
+					socket.removeEventListener('error', error)
+					socket.close()
+				}
+				if (socket.readyState > 1) {
+					window.removeEventListener('crossing-sitemap-headready', cancel)
+				}
+			}
+			window.addEventListener('crossing-sitemap-headready', cancel)
+		})
+		note.socket = socket
 		return note.socket
 	}
 }

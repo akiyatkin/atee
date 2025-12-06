@@ -36,7 +36,7 @@ ${escapeText(note.text)}</textarea>
 		<script>
 			(wrap => {
 				const note = ${JSON.stringify(removeProp(note, 'text'))}
-				window.note = note
+				//window.note = note
 				note.area = wrap.getElementsByClassName('area')[0]
 				note.wrap = wrap
 				note.text = note.area.value
@@ -51,31 +51,23 @@ ${escapeText(note.text)}</textarea>
 				note.area.selectionDirection = beforecursor.direction ? 'forward' : 'backward'
 
 				note.view = wrap.querySelector('.view')
-				note.view.addEventListener('click', e => {
-					const link = e.target.closest('.note_link')
-					if (!link) {
-						e.preventDefault()
-						return
-					}
-					alert(1)
-				})
+				
 				note.waitchanges = []
 				note.inputpromise = new Promise(async resolve => {
 					const Note = await import('/-note/Note.js').then(r => r.default)
 					const Move = await import('/-note/Move.js').then(r => r.default)
 					Note.Move = Move
-					window.Note = Note
+					//window.Note = Note
 					await checkUser(note)
 					resolve(Note)
 				})
 				
-				const checkUser = async (note) => {
+				const checkUser = async (note) => {					
+					if (note.user_id) return //При авторизации слой должен обновиться, при global user
 					const send = await import('/-dialog/send.js').then(r => r.default)
-					if (!note.user_id) { //При авторизации слой должен обновиться, при global user
-						const ans = await send('/-user/set-user-id')
-						note.user_id = ans.user_id
-						note.user_token = ans.user_token
-					}
+					const ans = await send('/-user/set-user-id')
+					note.user_id = ans.user_id
+					note.user_token = ans.user_token
 				}
 				
 
@@ -105,6 +97,8 @@ ${escapeText(note.text)}</textarea>
 
 				note.area.addEventListener('select', async e => {
 					if (note.inputpromise.start) return
+					if (document.activeElement != note.area) return
+					//if (!wrap.classList.contains('focus')) return //Если курсор пользователя смещается сервером, надо исключить такое событие
 					const Note = await note.inputpromise
 					const cursor = Note.getCursor(note)
 					if (beforecursor.base == cursor.base && beforecursor.size == cursor.size && beforecursor.start == cursor.start && beforecursor.direction == cursor.direction) return

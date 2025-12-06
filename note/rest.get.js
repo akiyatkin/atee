@@ -215,6 +215,7 @@ rest.addResponse('get-note-check', async view => {
 rest.addResponse('get-note', async (view) => {
 	
 	const user = await view.get('user')
+	//view.ans.user = user
 	const db = await view.get('db')
 
 	const note = await view.get('note#area')
