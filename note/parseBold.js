@@ -1,7 +1,7 @@
 import nicked from "/@atee/nicked"
 
 const parse = (text) => {	
-	const reg = /(^|\n)\t*(\*\*[^\n]+)/g;
+	const reg = /(^|\n)\t*(\*\*[^\n]+\*\*)/g;
 	const matches = [...text.matchAll(reg)]
 	const marks = []
 	for (const m of matches) {

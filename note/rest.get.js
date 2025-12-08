@@ -18,7 +18,6 @@ import NoteDB from "/-note/NoteDB.js"
 
 import config from "@atee/config"
 
-
 rest.addResponse('get-note-props', async (view) => {
 	
 	const note = await view.get('note#required')

@@ -3,6 +3,9 @@ import Move from '/-note/Move.js'
 import send from '/-dialog/send.js'
 import escapeText from '/-note/escapeText.js'
 
+import parseBrackets from "/-note/parseBrackets.js"
+import parseBold from "/-note/parseBold.js"
+
 const splice = (text, start, size, chunk) => {
 	return text.slice(0, start) + chunk + text.slice(start + size)
 }
@@ -22,11 +25,16 @@ const Note = {
 	makeTEXT: (text, change) => {
 		return splice(text, change.start, change.remove.length, change.insert)
 	},
-	cursorHTML: async (note, cursor) => {
+	cursorHTML: async (note, cursor, my) => {
 		if (cursor.user_id != note.user_id) {
 			Move.cursorAfter(cursor, note.waitchanges)
 			note.cursors[cursor.user_id] = cursor
-			Note.viewHTML(note)
+			note.view.innerHTML = Note.viewHTML(note)
+		} else if (!my) {
+			//Нужно подвинуть курсор в area
+			note.area.selectionStart = cursor.start
+			note.area.selectionEnd = cursor.start + cursor.size
+			note.area.direction = cursor.direction
 		}
 	},
 	changeHTML: async (note, change) => {
@@ -49,8 +57,8 @@ const Note = {
 
 		note.rev = change.rev
 		note.area.value = note.text = Note.makeTEXT(note.text, change)
-		Note.viewHTML(note)
-
+		
+		note.view.innerHTML = Note.viewHTML(note)
 		//await note.inputpromise
 		//note.inputpromise.start = true
 		
@@ -62,11 +70,14 @@ const Note = {
 
 		
 	},
-	viewHTML: (note) => {
-		const html = Note.makeHTML(note.text, note.cursors, note.waitchanges)
-		note.view.innerHTML = html
-	},
-	makeHTML: (text, cursors, waitchanges = [], marks = []) => {
+	// viewHTML: (note) => {
+	// 	note.view.innerHTML = Note.makeHTML(note)
+	// },
+	viewHTML: (note, marks = []) => {
+		let {text, cursors, waitchanges = [], isbracket, isbold} = note
+		if (isbracket) marks.push(...parseBrackets(text))
+		if (isbold) marks.push(...parseBold(text))
+		
 		cursors = Object.values(cursors)
 
 		// [2,3,4,5] - надо подсветить 2 после применения 3,4,5
@@ -240,7 +251,7 @@ const Note = {
 		//return escapeText(text)
 	},
 	
-	send: async (note, {signal, cursor, change}) => {
+	sendArea: async (note, {signal, cursor, change}) => {
 		// if (change) {
 		// 	Note.moveBack({cursor:change.after, waitchanges})
 		// 	Note.moveBack({cursor:change.before, waitchanges})
@@ -294,23 +305,21 @@ const Note = {
 			socket.send(data)
 		}
 	},
-	insert: async (note_id, subject) => {
-		const link = await Note.getInsertLink(note_id)
+	sendOnce: async (note_id, data) => {
+		const link = await Note.getOnceLink(note_id)
 		const socket = new WebSocket(link)
-		socket.addEventListener('open', e => {
-			const insert = {insert:subject}
-			socket.send(JSON.stringify({insert}))
+		return new Promise(resolve => socket.addEventListener('open', e => {
+			socket.send(JSON.stringify(data))
 			socket.close()
-		})
-		
-		
+			resolve()
+		}))
 	},
 	getAreaLink: (note) => {
 		const wshost = note.wshost
 		const protocol = location.protocol === "https:" ? "wss" : "ws"
 		return protocol + '://'+ wshost + `/?rev=${note.rev}&date_load=${note.now}&note_id=${note.note_id}&user_id=${note.user_id}&user_token=${note.user_token}`
 	},
-	getInsertLink: async (note_id) => {
+	getOnceLink: async (note_id) => {
 		//, user_id, user_token
 		const Acc = await import('/-user/Acc.js').then(r => r.default)
 		const {user_id, token} = Acc.get()
@@ -327,7 +336,7 @@ const Note = {
 			const socket = new WebSocket(link)
 			socket.addEventListener('open', e => {
 				for (const change of note.waitchanges) {
-					Note.send(note, {change})
+					Note.sendArea(note, {change})
 				}
 				note.wrap.classList.add('joined')
 				return resolve(socket)
@@ -351,7 +360,21 @@ const Note = {
 						note.rev = signal.rev
 						note.text = signal.text
 						note.area.value = note.text
-						Note.viewHTML(note)
+						note.view.innerHTML = Note.viewHTML(note)
+					} else if (signal.type == 'isslash') {
+						note.isslash = signal.bit
+					} else if (signal.type == 'isbracket') {
+						note.isbracket = signal.bit
+						note.view.innerHTML = Note.viewHTML(note)
+					} else if (signal.type == 'isbold') {
+						note.isbold = signal.bit
+						note.view.innerHTML = Note.viewHTML(note)
+					} else if (signal.type == 'iswrap') {
+						note.iswrap = signal.bit
+						const wrapper = note.view.closest('.notewrapper')
+						if (signal.bit) wrapper.classList.add('wrap')
+						else wrapper.classList.remove('wrap')
+
 					} else if (signal.type == 'onlyview') {
 						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 						Dialog.alert('Доступен только просмотр. Такие дела.')	
@@ -368,12 +391,12 @@ const Note = {
 						}
 					} else if (signal.type == 'rename') {
 					} else if (signal.type == 'blur') {
-						Note.viewHTML(note)
+						note.view.innerHTML = Note.viewHTML(note)
 					} else if (signal.type == 'focus') {
 						if (signal.cursor.user_id != note.user_id) {
 							Move.cursorAfter(signal.cursor, note.waitchanges)
 							note.cursors[signal.cursor.user_id] = signal.cursor
-							Note.viewHTML(note)
+							note.view.innerHTML = Note.viewHTML(note)
 						}
 					}
 				}
@@ -381,13 +404,13 @@ const Note = {
 				
 
 				if (cursor) {
-					Note.cursorHTML(note, cursor)
+					Note.cursorHTML(note, cursor, my)
 				} else if (change) {
 					if (my) {
 						note.rev = change.rev
-						//Note.send(note, {signal:{type:'base', base:note.rev}})
+						//Note.sendArea(note, {signal:{type:'base', base:note.rev}})
 						note.waitchanges.shift()
-						Note.viewHTML(note)
+						note.view.innerHTML = Note.viewHTML(note)
 					} else {
 						for (const wait of note.waitchanges) {
 							Move.changeAfter(wait, [change])

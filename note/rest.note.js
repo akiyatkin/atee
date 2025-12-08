@@ -1,5 +1,6 @@
 import config from "@atee/config"
 import Rest from "@atee/rest"
+import WS from "/-note/WS.js"
 const rest = new Rest()
 
 import rest_funcs from "/-rest/rest.funcs.js"
@@ -13,6 +14,11 @@ rest.extra(rest_user)
 
 import NoteDB from "/-note/NoteDB.js"
 
+rest.addArgument('bit', ['int'], (view, value) => {
+		if (value == null) return null
+		return value ? 1 : 0
+})
+rest.addVariable('bit#required', ['bit','required'])
 
 
 rest.addFunction('accept', async (view, note_id) => {
@@ -59,7 +65,7 @@ rest.addVariable('note#area#required', ['note', 'area', 'required'])
 rest.addArgument('id', ['int#required'])
 rest.addArgument('next_id', ['int'])
 
-// rest.addArgument('note_id', ['int','unsigned'])
+rest.addArgument('note_id', ['int','unsigned'])
 rest.addVariable('note_id#accept', ['note_id','accept'])
 
 rest.addArgument('page', async (view, name) => {

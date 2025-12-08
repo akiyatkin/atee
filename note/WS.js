@@ -44,14 +44,22 @@ WS.setSignal = (state, note, signal) => {
 		signal.cursor.user_id = user_id
 		signal.cursor.hue = state.hue
 
-		WS.sendSignal(state.ws, note, 'focus', {user_id, cursor: signal.cursor})
+		WS.sendSignal(state.ws, note, {type: 'focus', user_id, cursor: signal.cursor})
 	} else if (signal.type == 'blur') {
 		db.exec(`
 			UPDATE note_stats
 			SET date_blur = now(), focus = 0
 			WHERE note_id = :note_id and user_id = :user_id
 		`, {note_id, user_id})
-		WS.sendSignal(state.ws, note, 'blur', {user_id})
+		WS.sendSignal(state.ws, note, {type: 'blur', user_id})
+	} else if (signal.type == 'isslash') {
+		WS.sendSignal(state.ws, note, signal)
+	} else if (signal.type == 'iswrap') {
+		WS.sendSignal(state.ws, note, signal)
+	} else if (signal.type == 'isbracket') {
+		WS.sendSignal(state.ws, note, signal)
+	} else if (signal.type == 'isbold') {
+		WS.sendSignal(state.ws, note, signal)
 	}
 }
 WS.setCursor = (state, note, cursor) => {
@@ -80,7 +88,7 @@ WS.saveCursor = (db, note_id, cursor, my, ischange) => {
 	
 }
 const splice = (text, start, size, chunk) => text.slice(0, start) + chunk + text.slice(start + size)
-const clearText = (text) => text.replace(/<(.|\n)*?>/g, '').replace('<','').replace('>','')
+
 WS.saveHistory = (note) => {
 	note.db.exec(`
 		INSERT INTO note_history (note_id, date_edit, editor_id, text, title, rev, length, search)
@@ -177,28 +185,28 @@ WS.writeSearch = (note) => {
 		WHERE note_id = :note_id
 	`, {note_id, search})
 }
+//const clearText = (text) => text.replace(/<(.|\n)*?>/g, '').replace('<','').replace('>','')
+//const title = clearText((note.text.match(/\s*(.*)\n*/)?.[1] || '').slice(0,255).trim())
 WS.setTitle = (ws, note) => {
 	const db = note.db
 	const note_id = note.note_id
 
-	const title = note.text.match(/^[^\S\n]*[^<>\s][^<>\n]*(?=\n|$)/m)?.[0] || ''
-	//const title = clearText((note.text.match(/\s*(.*)\n*/)?.[1] || '').slice(0,255).trim())
+	const title = (note.text.match(/^[^\S\n]*[^<>\s][^<>\n]*(?=\n|$)/m)?.[0] || '').replaceAll('*','').trim()
+	
 
 	if (note.title == title) return
 	note.title = title
-	const nick = nicked(title).slice(0,255).trim()
+	const nick = nicked(nicked(title).slice(0,255))
 	return db.exec(`
 		UPDATE note_notes
 		SET title = :title, nick = :nick
 		WHERE note_id = :note_id
 	`, {note_id, title, nick}).then(r => {
-		return WS.sendSignal(ws, note, 'rename', {title, nick})
+		return WS.sendSignal(ws, note, {type: 'rename', title, nick})
 	})
 }
-WS.sendSignal = (ws, note, type, signal = {}) => {
-	signal.type = type
-	WS.sendToEveryone(ws, note, {signal})
-}
+WS.sendSignal = (ws, note, signal = {}) => WS.sendToEveryone(ws, note, {signal})
+
 WS.sendToEveryone = (fromsocket, note, data) => {
 	const strdata = JSON.stringify(data)
 	for (const {ws, hangchanges} of note.states) {
@@ -239,12 +247,12 @@ WS.connection = (ws, request) => {
 		const note = await WS.getNote(state.note_id, user_id)
 		WS.checkReject(note, state).then(is => {
 			if (!is) {
-				return WS.sendSignal(ws, note, 'reject', {user_id})
+				return WS.sendSignal(ws, note, {type: 'reject', user_id})
 			}
 		})
 		if (state.ismy == 'view') {
 			if (data.insert || data.change) {
-				return WS.sendSignal(ws, note, 'onlyview', {user_id})
+				return WS.sendSignal(ws, note, {type: 'onlyview', user_id})
 			}
 		}
 		
@@ -278,21 +286,21 @@ WS.connection = (ws, request) => {
 	state.myindex = note.states.length
 	note.states.push(state)
 	ws.on('close', () => {
-		//sendSignal(ws, note, 'blur', {user_id})
+		//sendSignal(ws, note, {type: 'blur', user_id})
 		WS.closeState(state.note_id, state).then(note => {
-			WS.sendSignal(ws, note, 'leave', {user_id})
+			WS.sendSignal(ws, note, {type: 'leave', user_id})
 		})
 	})
 	if (note.rev != state.rev) {
 		state.rev = note.rev
-		WS.sendSignal(ws, note, 'reset', {text: note.text, rev: note.rev})
+		WS.sendSignal(ws, note, {type: 'reset', text: note.text, rev: note.rev})
 	}
 	note.db.exec(`
 		UPDATE note_stats
 		SET date_load = FROM_UNIXTIME(:date_load), date_open = now(), count_opens = count_opens + 1, open = 1
 		WHERE note_id = :note_id and user_id = :user_id
 	`, {user_id, note_id, date_load: state.date_load}).then(r => {
-		WS.sendSignal(ws, note, 'joined', {user_id, hue: state.hue})
+		WS.sendSignal(ws, note, {type: 'joined', user_id, hue: state.hue})
 	})
 }
 WS.isAccept = (db, note_id, user_id) => {

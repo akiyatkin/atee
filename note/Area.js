@@ -65,6 +65,9 @@ const setControlMarker = (area, symbol) => {
 		area.selectionEnd = selEnd
 	}
 }
+Area.getControlT = () => {
+	return "	"
+}
 const setControlT = (area, symbol = 't') => {
 	area.selectionStart = area.selectionStart - 2
 	document.execCommand('insertText', false, '')
@@ -82,15 +85,12 @@ const setControlT = (area, symbol = 't') => {
 	
 	area.selectionStart = slineStart
 	area.selectionEnd = slineStart
-	document.execCommand('insertText', false, "\t")
+	const str = Area.getControlT() + ' '
+	document.execCommand('insertText', false, str)
 	area.selectionStart = selStart + 2
 	area.selectionEnd = selEnd + 2
 }
-const setControlD = (area, symbol = 'd') => {
-	area.selectionStart = area.selectionStart - 2
-	const selStart = area.selectionStart
-	const selEnd = area.selectionEnd
-
+Area.getControlD = () => {
 	const date = new Date()
 	let month = date.getMonth() + 1
 	if (month < 10) month = '0' + month
@@ -98,18 +98,19 @@ const setControlD = (area, symbol = 'd') => {
 	let day = date.getDate()
 	if (day < 10) day = '0' + day
 
-	const str = day + '.' + month + ' '
-
-
+	const str = day + '.' + month
+	return str
+}
+const setControlD = (area, symbol = 'd') => {
+	area.selectionStart = area.selectionStart - 2
+	const selStart = area.selectionStart
+	const selEnd = area.selectionEnd
+	const str = Area.getControlD() + ' '
 	document.execCommand('insertText', false, str)
 	area.selectionStart = selStart + str.length
 	area.selectionEnd = area.selectionStart
 }
-const setControlH = (area, symbol = 'm') => {
-	area.selectionStart = area.selectionStart - 2
-	const selStart = area.selectionStart
-	const selEnd = area.selectionEnd
-
+Area.getControlH = () => {
 	const date = new Date()
 	
 	let hours = date.getHours()
@@ -118,7 +119,24 @@ const setControlH = (area, symbol = 'm') => {
 	let minutes = date.getMinutes()
 	if (minutes < 10) minutes = '0' + minutes
 
-	const str = hours + ':' + minutes + '#'
+	const str = hours + ':' + minutes
+	return str
+}
+const setControlH = (area, symbol = 'm') => {
+	area.selectionStart = area.selectionStart - 2
+	const selStart = area.selectionStart
+	const selEnd = area.selectionEnd
+
+	const str = Area.getControlH() + '#'
+	// const date = new Date()
+	
+	// let hours = date.getHours()
+	// if (hours < 10) hours = '0' + hours
+
+	// let minutes = date.getMinutes()
+	// if (minutes < 10) minutes = '0' + minutes
+
+	// const str = hours + ':' + minutes + '#'
 
 
 	document.execCommand('insertText', false, str)

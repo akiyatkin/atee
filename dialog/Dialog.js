@@ -46,12 +46,16 @@ export const Dialog = {
 		return html
 	},
 	reload: async (layer) => {
-		if (!layer || !Dialog.parents.length) return
-		const html = await Dialog.getHtml(layer)
+		layer ||= Dialog.weekmaplayers.get(Dialog.parents.at(-1))
+		if (!layer) return
 		const popup = document.getElementById(layer.div)
+		if (!popup) return
+		const html = await Dialog.getHtml(layer)
+		
 		await Dialog.html(popup, html)
 		return popup
 	},
+	weekmaplayers: new WeakMap(),
 	open: async (layer, div = document.body, onshow, onhide) => {
 		const {tpl, sub, parsed = '', json = '', data} = layer
 		const id = 'dialog-' + nicked([tpl,sub,json,parsed].join('-'))
@@ -69,8 +73,9 @@ export const Dialog = {
 			hides.set(popup, list)
 		}
 		await Dialog.frame(popup, html)
-		
+		Dialog.weekmaplayers.set(popup, layer)
 		Dialog.show(popup, onshow)
+		popup.layer = layer
 		return popup
 	},
 	alert: async (html) => {

@@ -84,7 +84,7 @@ td > p {
 	padding:0;
 }
 .a {
-	border-bottom: none;
+	/*border-bottom: none;*/
 	text-align: left;
 	background-color: transparent;
 	color: inherit;
@@ -110,7 +110,7 @@ td > p {
 /*	border-bottom: dashed 1px currentColor;*/
 }
 .a:hover {
-	border-bottom: none;
+	/*border-bottom: none;*/
 	text-decoration: underline dashed 0.5px;
 /*	color: var(--primary);*/
 	box-shadow: none;
