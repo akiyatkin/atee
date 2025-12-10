@@ -43,6 +43,10 @@ CREATE TABLE IF NOT EXISTS `note_notes` (
   `date_edit` datetime NOT NULL DEFAULT current_timestamp(),
   `creater_id` mediumint(8) unsigned DEFAULT NULL,
   `length` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `iswrap` bit(1) NOT NULL DEFAULT b'1',
+  `isslash` bit(1) NOT NULL DEFAULT b'0',
+  `isbracket` bit(1) NOT NULL DEFAULT b'1',
+  `isbold` bit(1) NOT NULL DEFAULT b'1'
   PRIMARY KEY (`note_id`),
   FULLTEXT KEY `search` (`search`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
