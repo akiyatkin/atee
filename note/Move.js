@@ -1,5 +1,5 @@
 const Move = {
-	debug: false,
+	//debug: false,
 	changeAfter: (change, list, wait = false) => {
 		/*
 			change

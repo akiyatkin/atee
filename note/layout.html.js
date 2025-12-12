@@ -127,7 +127,11 @@ ${escapeText(note.text)}</textarea>
 				//note.area.focus()
 				//}, {once: true})
 				
-
+				// note.area.addEventListener('paste', async e => {
+				// 	const text = e.clipboardData.getData('text')
+				// 	const Area = await import('/-note/Area.js').then(r => r.default)
+				// 	await Area.paste(note.area, e, text)
+				// })
 				note.area.addEventListener('keydown', async e => {
 					if (~[HOME, END].indexOf(e.keyCode)) { //input ради preventDefault стандартного действия, нет input
 						e.preventDefault() 
@@ -161,13 +165,18 @@ ${escapeText(note.text)}</textarea>
 					const aob = note.area.textLength
 					const text_before = note.area.value
 					note.inputpromise = new Promise(resolve => note.area.addEventListener('input', async () => {
+						
+						const Note = await import('/-note/Note.js').then(r => r.default)
+						await checkUser(note)
+
 						const symbol = note.area.value[note.area.selectionStart - 2]
 						if (symbol == '/' && note.isslash) {
 							const Area = await import('/-note/Area.js').then(r => r.default)
 							Area.control(note.area)
 						}
-						const Note = await import('/-note/Note.js').then(r => r.default)
-						await checkUser(note)
+
+						//await new Promise(resolve => setTimeout(resolve, Math.round(Math.random()) * 1000 + 1))
+
 						resolve(Note)
 					}, {once:true}))
 					note.inputpromise.start = true
@@ -179,9 +188,10 @@ ${escapeText(note.text)}</textarea>
 					let text_after = note.area.value
 					const limit = 65000
 					if (note.area.textLength > limit) {
-						const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
-						Dialog.alert('Допустимая длина заметки '+limit+' символов.<br>Если больше, то это уже и не заметка получается.')
 						text_after = note.area.value = text_after.slice(0, limit)
+						import('/-dialog/Dialog.js').then(r => r.default).then(Dialog => {
+							Dialog.alert('Допустимая длина заметки '+limit+' символов.<br>Если больше, то это уже и не заметка получается.')	
+						})
 					}
 					const an = note.area.selectionEnd
 					const anb = note.area.textLength

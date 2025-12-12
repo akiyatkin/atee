@@ -9,23 +9,7 @@ const Area = {}
 // 	return str.slice(0, index) + (add || "") + str.slice(index + count);
 // }
 
-const isSpace = (smb) => {
-	if (smb == '\t') return true
-	if (smb == ' ') return true
-}
-const getStartline = (text, pos) => {
-	let startline = pos // find start of the current line
-	while (startline > 0 && text[startline - 1] != '\n') startline--
-	if (!isSpace(text[pos - 1])) {
-		while (startline < text.length && (isSpace(text[startline]))) startline++
-	}
-	return startline
-}
-const getEndline = (text, pos) => {
-	let endline = pos // find start of the current line
-	while (endline < text.length && text[endline] != '\n') endline++	
-	return endline
-}
+
 const TAB = 9
 const ENTER = 13
 const HOME = 36
@@ -170,10 +154,68 @@ Area.mousedown = async (area, e) => {
 		area.selectionEnd = mark.start + mark.size
 	}    
 }
+const isSpace = (smb) => {
+	if (smb == '\t') return true
+	if (smb == ' ') return true
+}
+const getStartline = (text, pos) => {
+	let startline = pos // find start of the current line
+	while (startline > 0 && text[startline - 1] != '\n') startline--
+	return startline
+}
+const getStartlineWithTabs = (text, pos) => {
+	let startline = getStartline(text, pos)
+	const step = text.slice(startline, pos)
+	if (/\S/.test(step)) { //В тексте до начала есть симвоволы, значит отступ надо сохранить
+		while (startline < text.length && (isSpace(text[startline]))) startline++
+	}
+	// if (!isSpace(text[pos - 1])) { //Сохраняем табуляцию если после символа ищем начало
+	// 	while (startline < text.length && (isSpace(text[startline]))) startline++
+	// }
+	return startline
+}
+const getStartlineMarker = (text, pos) => {
+	//"					  sadf"
+	//"{{start}prefix{tabs}}sadf{pos}"
+	const start = getStartline(text, pos)
+	let step = text.slice(start, pos)
+	let tabs = start
+	//if (/\S/.test(step)) { //В тексте до начала есть симвоволы, значит отступ надо сохранить
+		while (tabs < text.length && /[\s]/.test(text[tabs])) tabs++
+	//}
+	if (tabs > pos) tabs = pos
+	const prefix = text.slice(start, tabs)
+
+	const row = text.slice(tabs, pos)
+	//Нужно найти первый пробел с начала строки от tabs до pos
+	const space = row.indexOf(' ')
+	let marker = row.slice(0, space == -1 ? pos : space)
+	if (!~['+','-','*'].indexOf(marker)) marker = ''
+	return {start, tabs, prefix, marker}
+}
+const getEndline = (text, pos) => {
+	let endline = pos // find start of the current line
+	while (endline < text.length && text[endline] != '\n') endline++	
+	return endline
+}
+// //textarea.addEventListener('paste', function(event) {
+// Area.paste = (area, e, pastedText) => {
+//     const newline = ~pastedText.indexOf("\n")
+    
+//     if (!newline) {
+// 		const {marker} = getStartlineMarker(pastedText, pastedText.length)
+// 		if (marker) { //Во вставке есть маркер, надо заменить
+// 			const {start, tabs, prefix, marker} = getStartlineMarker(area.value, area.selectionStart)
+// 			if (marker && (area.selectionStart - (marker.length + 1) == tabs)) {
+// 				area.selectionStart -= marker.length + 1
+// 			}
+// 		}
+// 	}
+// }
 Area.keydown = (area, e) => {
 	if (e.keyCode === HOME) { //Home
 		const text = area.value
-		const startlineFromEnd = getStartline(text, area.selectionEnd)
+		const startlineFromEnd = getStartlineWithTabs(text, area.selectionEnd)
 		if (!e.shiftKey) {
 			area.selectionStart = area.selectionEnd = startlineFromEnd
 		} else {
@@ -184,7 +226,7 @@ Area.keydown = (area, e) => {
 						area.selectionEnd = area.selectionStart
 						area.selectionStart = startlineFromEnd
 					} else {
-						const startlineFromStart = getStartline(text, area.selectionStart)
+						const startlineFromStart = getStartlineWithTabs(text, area.selectionStart)
 						area.selectionStart = startlineFromStart
 					}
 					area.selectionDirection = 'backward'
@@ -196,7 +238,7 @@ Area.keydown = (area, e) => {
 				if (startlineFromEnd < area.selectionStart) {
 					area.selectionStart = startlineFromEnd
 				} else {
-					const startlineFromStart = getStartline(text, area.selectionStart)
+					const startlineFromStart = getStartlineWithTabs(text, area.selectionStart)
 					area.selectionStart = startlineFromStart
 				}
 				
@@ -264,28 +306,59 @@ Area.keydown = (area, e) => {
 		const myStart = area.selectionStart
 		if (text[myEnd - 1] == '\n') {
 			document.execCommand('insertText', false, "\n")
-		
-			
-			//document.execCommand('insertText', false, "\n")
 		} else {
 			//const exception = text[myStart - 2] && ~['+','-'].indexOf(text[myStart - 2])
 			//if (exception) area.selectionStart = myStart - 2
 			//const end
-			while (sel > 0 && text[sel - 1] != '\n') sel--
-			let flineStart = sel
-			while (isSpace(text[sel])) sel++
-			const slineStart = Math.min(sel, area.selectionEnd)
-			let smb = text[slineStart]
-			let prefix = ''	
-			if (text[slineStart + 1] == ' ' && ~['+','-'].indexOf(smb) && text[slineStart + 2]) {
-				if (text[slineStart + 2].trim()) {
-					if (smb == '+') smb = '-'
-					prefix = smb + ' '
+
+			const {start, tabs, prefix, marker} = getStartlineMarker(area.value, area.selectionStart)
+
+			
+			//console.log({start, tabs, prefix, marker})
+
+			if (marker) { //Маркированный список
+				// if (area.selectionStart - 2 == tabs) {
+				// 	area.selectionStart -= 2
+				// 	//document.execCommand('insertText', false, "\n" + prefix)
+				// 	document.execCommand('insertText', false, "")
+				if (area.selectionStart - 2 == tabs) {
+					//area.selectionStart -= 2
+					document.execCommand('insertText', false, "\n" + prefix)
 				} else {
-					//area.selectionStart = slineStart
+					document.execCommand('insertText', false, "\n" + prefix + (marker == '+' ? '-' : marker) + ' ')
 				}
+			// } else if(/^\d+\.$/.test(marker)) { //Нумерованный список
+			// 	if (area.selectionStart - (marker.length + 1) == tabs) {
+			// 		area.selectionStart -= marker.length + 1
+			// 		document.execCommand('insertText', false, "")
+			// 	} else {
+			// 		document.execCommand('insertText', false, "\n" + prefix + (marker - 1 + 2) + '. ')
+			// 	}
+			} else {
+				document.execCommand('insertText', false, "\n" + prefix)
 			}
-			document.execCommand('insertText', false, "\n" + text.substr(flineStart, slineStart - flineStart) + prefix)
+
+
+
+			// const flineStart = getStartline(text, sel)
+			// sel = flineStart
+			// // while (sel > 0 && text[sel - 1] != '\n') sel--
+			// // let flineStart = sel //Начало строки
+			// while (isSpace(text[sel])) sel++
+			// const slineStart = Math.min(sel, area.selectionEnd)
+
+
+			// let smb = text[slineStart]
+			// let prefix = ''	
+			// if (text[slineStart + 1] == ' ' && ~['+','-'].indexOf(smb) && text[slineStart + 2]) {
+			// 	if (text[slineStart + 2].trim()) {
+			// 		if (smb == '+') smb = '-'
+			// 		prefix = smb + ' '
+			// 	} else {
+			// 		//area.selectionStart = slineStart
+			// 	}
+			// }
+			// document.execCommand('insertText', false, "\n" + text.substr(flineStart, slineStart - flineStart) + prefix)
 		}
 	} else if (e.keyCode === TAB) { // Tab newinput
 		if (area.selectionStart == area.selectionEnd) {

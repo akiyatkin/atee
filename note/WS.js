@@ -97,6 +97,7 @@ WS.saveHistory = (note) => {
 	`, note)
 }
 WS.setChange = (state, note, change) => {
+	//console.log(change.insert ? 'Вставить': 'Удалить', state.hangchanges)
 	Move.changeAfter(change, state.hangchanges)
 	
 	const db = note.db
@@ -162,14 +163,10 @@ WS.setUpdate = (state, note, change) => {
 	if (change.start < 255) WS.setTitle(state.ws, note)
 }
 
-let search_timer = false
+
 WS.setSearch = (note) => {
-	if (search_timer) return
-	search_timer = true
-	setTimeout(() => {
-		search_timer = false
-		WS.writeSearch(note)
-	}, 10000) //индексируем с задержкой
+	clearTimeout(note.search_timer)
+	note.search_timer = setTimeout(() => WS.writeSearch(note), 10000) //индексируем с задержкой
 }
 WS.writeSearch = (note) => {
 	const db = note.db
@@ -191,8 +188,7 @@ WS.setTitle = (ws, note) => {
 	const db = note.db
 	const note_id = note.note_id
 
-	const title = (note.text.match(/^[^\S\n]*[^<>\s][^<>\n]*(?=\n|$)/m)?.[0] || '').replaceAll('*','').trim()
-	
+	const title = (note.text.match(/^[^\S\n]*[^<>\s][^<>\n]*(?=\n|$)/m)?.[0] || '').replaceAll('*','').trim().slice(0, 255)
 
 	if (note.title == title) return
 	note.title = title
@@ -228,7 +224,8 @@ WS.getCursor = (db, note_id, user_id) => {
 	`, {note_id, user_id})
 }
 WS.connection = (ws, request) => {
-	const state = request.state
+	const state = request.state //user_id, note_id, date_load
+	const note = state.note
 	const note_id = state.note_id
 	const user_id = state.user_id
 	state.access_check_timer = false
@@ -282,9 +279,11 @@ WS.connection = (ws, request) => {
 
 	if (!isspy) return //Необходимый ключ для слежения и оповещения
 
-	const note = state.note
+	
 	state.myindex = note.states.length
 	note.states.push(state)
+
+	
 	ws.on('close', () => {
 		//sendSignal(ws, note, {type: 'blur', user_id})
 		WS.closeState(state.note_id, state).then(note => {

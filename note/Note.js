@@ -9,9 +9,9 @@ import parseBold from "/-note/parseBold.js"
 const splice = (text, start, size, chunk) => {
 	return text.slice(0, start) + chunk + text.slice(start + size)
 }
-if (Move.debug && globalThis.window) {
-	window.Test = await import('/-note/Test.js').then(r => r.default)
-}
+// if (Move.debug && globalThis.window) {
+// 	window.Test = await import('/-note/Test.js').then(r => r.default)
+// }
 
 
 const Note = {
@@ -296,14 +296,21 @@ const Note = {
 
 		const data = JSON.stringify({signal, cursor, change})
 
-		if (Move.debug) {
-			setTimeout(() => {
-				if (socket.readyState > 1) return
-				socket.send(data)
-			}, 1000)
-		} else {
-			socket.send(data)
-		}
+		//if (change?.insert) await new Promise(resolve => setTimeout(resolve, 1000))
+		//else  await new Promise(resolve => setTimeout(resolve, 1))
+		//await new Promise(resolve => setTimeout(resolve, Math.round(Math.random()) * 1000 + 1))
+		//await new Promise(resolve => setTimeout(resolve, 1000))
+		socket.send(data)
+
+
+		// if (Move.debug) {
+		// 	setTimeout(() => {
+		// 		if (socket.readyState > 1) return
+		// 		socket.send(data)
+		// 	}, 1000)
+		// } else {
+			
+		//}
 	},
 	sendOnce: async (note_id, data) => {
 		const link = await Note.getOnceLink(note_id)

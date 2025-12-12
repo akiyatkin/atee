@@ -66,7 +66,6 @@ const showArea = (data, env) => {
 			<script type="module">
 				import Area from '/-note/Area.js'
 				const field = document.getElementById('${id}')
-				console.log(field)
 				const TAB = 9
 				const ENTER = 13
 				const HOME = 36
