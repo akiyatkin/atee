@@ -65,8 +65,8 @@ rest.addResponse('get-filter-prop-more-search', async view => {
 				and wva.prop_id = ${prop_id}
 				and va.value_id = wva.value_id
 				and (${hashs.map(hash => 'va.value_nick like "%' + hash.join('%" and va.value_nick like "%') + '%"').join(' or ') || '1 = 1'})
-			ORDER BY RAND()
-			LIMIT 12
+			-- ORDER BY RAND()
+			LIMIT 1000
 		`)
 
 		
