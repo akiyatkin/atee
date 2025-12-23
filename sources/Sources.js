@@ -1239,7 +1239,7 @@ Sources.sheet.delRows = (sheet, title, values) => { //Удаляем строк�
 	if (!values || !Array.isArray(values)) return
 	const index = sheet.head.indexOf(title)
 	if (!~index) return
-	sheet.rows = sheet.rows.filter(row => values.some(value => value != row[index]))
+	sheet.rows = sheet.rows.filter(row => !values.some(value => value == row[index]))
 }
 Sources.sheet.delCol = (sheet, title) => {
 	const index = sheet.head.indexOf(title)
