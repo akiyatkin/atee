@@ -18,7 +18,7 @@ tpl.showError = (data, env) => `
 	<div style="margin: 1em 0 0.5em">${tpl.showGroupLink(data, env, data.root)}</div>
 	<h1 id="page" style="margin-top:0"><b>${env.crumb.parent.name}</b></h1>
 	<p>
-		Модель в магазине не найдена
+		Модель в магазине не найдена.
 	</p>
 `
 tpl.showGroupLink = (data, env, group) => `
@@ -295,7 +295,7 @@ tpl.showMainData = (data, env, model, selitem) => `
 
 			${model.recap.cena?.length > 1 ? cards.block(cards.price(model.recap)) : ''}
 			
-			${(model.items.length > 1 || !selitem) ? cards.block(tpl.showItemButtons(data, env, model)) : ''}
+			${(model.items.length > 1 || !selitem) ? cards.block(tpl.showItemButtons(data, env, model, selitem)) : ''}
 			
 			${selitem ? cards.block(tpl.showTableItem(data, env, model, selitem)) : ''}
 			<div>
@@ -364,23 +364,21 @@ const showCost = (value) => value ? `${cost(value)}${common.unit()}` : ''
 // `)
 
 
-tpl.getItemButton = (data, env, model, item, i) => {
-	// const single = item.brendart[0] == item.brendmodel[0]
-	const name = env.crumb.name
-	const selected = item.art?.[0] == name || item.brendart[0] == name // || single
+tpl.getItemButton = (data, env, model, item, i, selitem) => {
+	const selected = item == selitem
 
 	const title = cards.getVariant(data, model, item)
 	
 	return selected ? 
 	`<span style="display: inline-block; border-radius:var(--radius);
 			padding:0.6ch 1ch;
-			border:solid rgba(0,0,0,0.7) 3px;">
+			border:solid rgba(0,0,0,0.3) 3px;">
 		${title}
 	</span>` : 
 	`<a style="text-decoration:none; display:inline-block; border-radius:var(--radius);
-		padding:0 1ch;
+		padding:0.6ch 1ch;
 		border:solid rgba(0,0,0,0.15) 3px;" 
-		class="a" data-scroll="none" rel="nofollow" 
+		class="a" data-scroll="none" rel="nofollow"
 		href="${cards.getItemPath(data, item)}">
 		${title}
 	</a><script>
@@ -404,9 +402,9 @@ tpl.getItemButton = (data, env, model, item, i) => {
 `
 }
 
-tpl.showItemButtons = (data, env, model) => `
+tpl.showItemButtons = (data, env, model, selitem) => `
 	<div style="display: flex; flex-wrap: wrap; gap: 1ch;">
-		${model.items.map((item, i) => tpl.getItemButton(data, env, model, item, i)).join('')}
+		${model.items.map((item, i) => tpl.getItemButton(data, env, model, item, i, selitem)).join('')}
 		<script>
 			(async div => {
 				const reachGoal = goal => {
