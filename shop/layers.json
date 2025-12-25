@@ -102,15 +102,7 @@
 			"layout":{
 				"index:ROOT":{
 					"MAIN":"inform:ROOT"
-				},
-				"inform:ROOT":{
-					"PLOP":"inform:PLOP",
-					"TABLE":"inform:TABLE"
-				}
-				
-			},
-			"child":{
-				"layout":{}
+				}				
 			}
 		},
 		"poss":{

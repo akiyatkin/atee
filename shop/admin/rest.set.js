@@ -271,6 +271,17 @@ rest.addAction('set-group-description', ['admin'], async view => {
 	`, {description, group_id})
 	return view.ret()
 })
+rest.addAction('set-brand-comment', ['admin'], async view => {
+	const db = await view.get('db')
+	const comment = await view.get('comment#required')
+	const brand_nick = await view.get('brand_nick#required')	
+	await db.exec(`
+		INSERT INTO shop_brands (brand_nick, comment)
+		VALUES (:brand_nick, :comment)
+		ON DUPLICATE KEY UPDATE comment = :comment		
+	`, {comment, brand_nick})
+	return view.ret()
+})
 rest.addAction('set-group-image_src', ['admin'], async view => {
 	const db = await view.get('db')
 	const image_src = await view.get('image_src')

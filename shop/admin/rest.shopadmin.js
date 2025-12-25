@@ -23,6 +23,10 @@ rest.extra(rest_search)
 rest.addArgument('description', ['string'])
 rest.addArgument('image_src', ['string'])
 
+rest.addArgument('comment', ['string'])
+rest.addVariable('comment#required', ['comment', 'required'])
+
+
 rest.addArgument('nicks', ['array'])
 rest.addVariable('nicks#required', ['nicks'], (view, nicks) => {
 	if (!nicks.length) return view.err('Требуется указать nicks')
@@ -81,7 +85,7 @@ rest.addVariable('group', async (view) => {
 rest.addArgument('brand_nick', ['string'], async (view, brand_nick) => {	
 	if (!brand_nick) return null
 	const db = await view.get('db')
-	const value = Shop.getValueByNick(db, brand_nick)
+	const value = await Shop.getValueByNick(db, brand_nick)
 	if (!value) return view.err('Не найден бренд')
 	return brand_nick
 })
