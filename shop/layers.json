@@ -13,7 +13,7 @@
 		"recalc:ROOT":["check"]
 	},
 	"parsedtpl":{
-		"brief:PLOP":"${env.bread.get.preset ?? ''}",
+		"brief:PLOP":"${env.bread.get.preset ?? ''}",		
 		"recalc:ROOT":"${env.timings.view_time}"
 	},
 	"onlyclient":["recalc:ROOT"],
@@ -24,6 +24,7 @@
 		"settings:ROOT":"/-shop/admin/settings?admin=${env.bread.get.admin ?? ''}",
 		"brief:TABLE":"/-shop/admin/brief?detail=${env.bread.get.detail ?? ''}&source_id=${env.bread.get.source_id ?? ''}&brand_nick=${env.bread.get.brand_nick ?? ''}&group_id=${env.crumb.child?.name ?? ''}&admin=${env.bread.get.admin ?? ''}",
 		"brief:PLOP":"/-shop/admin/brief-plop?detail=${env.bread.get.detail ?? ''}&source_id=${env.bread.get.source_id ?? ''}&brand_nick=${env.bread.get.brand_nick ?? ''}&group_id=${env.crumb.child?.name ?? ''}&admin=${env.bread.get.admin ?? ''}",
+		"inform:ROOT":"/-shop/admin/inform?admin=${env.bread.get.admin ?? ''}",		
 		"shop-manager:YEARS":"/-shop/cart/get-manager-years?status=${env.bread.get.status ?? ''}&admin=${env.bread.get.admin ?? ''}",
 		"shop-manager:MONTHS":"/-shop/cart/get-manager-months?year=${env.crumb.name}&status=${env.bread.get.status ?? ''}&admin=${env.bread.get.admin ?? ''}",
 		"shop-manager:ORDERS":"/-shop/cart/get-manager-orders?year=${env.crumb.parent.name}&month=${env.crumb.name}&status=${env.bread.get.status ?? ''}&admin=${env.bread.get.admin ?? ''}",
@@ -43,6 +44,7 @@
 		"aside":"/-shop/admin/aside.html.js",
 		"main":"/-shop/admin/main.html.js",
 		"props":"/-shop/admin/props.html.js",
+		"inform":"/-shop/admin/inform.html.js",
 		"groups":"/-shop/admin/groups.html.js"
 	},
 	"layout":{
@@ -93,6 +95,14 @@
 			},
 			"child":{
 				"layout":{}
+			}
+		},
+		"inform":{
+			"head":{"title":"Инфо"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"inform:ROOT"
+				}				
 			}
 		},
 		"poss":{

@@ -120,6 +120,47 @@ rest.addVariable('recalcStat', async view => {
 	await ShopAdmin.checkRestat(db)
 	
 })
+rest.addAction('inform', ['admin','recalcStat'], async view => {
+	const db = await view.get('db')
+
+	const conf = await config('shop')
+	view.data.root_nick = conf.root_nick
+	view.data.root_path = conf.root_path
+	const group_id = await Shop.getGroupIdByNick(db, conf.root_nick)
+
+	const ym = ShopAdmin.getNowYM()
+	
+	view.data.brands = await db.all(`
+		SELECT
+			va.value_nick as brand_nick,
+			va.value_title as brand_title,
+			br.comment,
+			poscount,
+			modcount,
+			groupcount,
+			brandcount,
+			sourcecount,
+			basketcount,
+			ordercount,
+			UNIX_TIMESTAMP(date_cost) as date_cost,
+			withcost,
+			withimg,
+			withdescr,
+			withall
+
+		FROM
+			shop_stat_groups_brands st,
+			sources_values va
+				LEFT JOIN shop_brands br ON (va.value_nick = br.brand_nick)
+			
+		WHERE year = :year and month = :month
+			and va.value_nick = st.brand_nick
+			and st.group_id = :group_id
+		ORDER by year DESC, month DESC
+	`, {group_id, ...ym})
+
+	return view.ret()
+})
 rest.addAction('brief', ['admin','recalcStat'], async view => {
 	const db = await view.get('db')
 
