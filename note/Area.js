@@ -143,10 +143,10 @@ Area.control = (area) => {
 	}
 }
 Area.mousedown = async (area, e) => {
-	if (e.detail != 2) return
+	if (e.detail != 2) return //Правильное выделение ссылок при двойном клике
 	const parseLinks = await import('/-note/parseLinks.js').then(r => r.default)
 	const marks = parseLinks(area.value)	
-	for (const mark of marks) {
+	for (const mark of marks) { 
 		if (mark.start > area.selectionStart) continue
 		if (mark.start + mark.size < area.selectionEnd) continue
 		

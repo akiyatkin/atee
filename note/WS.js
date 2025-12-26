@@ -21,9 +21,7 @@ WS.closeState = async (note_id, state) => {
 		UPDATE note_stats
 		SET date_close = now(), open = 0
 		WHERE note_id = :note_id and user_id = :user_id
-	`, {user_id, note_id}).then(r => {
-		
-	})
+	`, {user_id, note_id})
 	note.states.splice(note.states.indexOf(state), 1)
 	if (!note.states.length) delete WS.NOTES[note_id]
 	return note
@@ -41,76 +39,40 @@ WS.setSignal = (state, note, signal) => {
 			SET date_focus = now(), focus = 1
 			WHERE note_id = :note_id and user_id = :user_id
 		`, {note_id, user_id})
-		signal.cursor.user_id = user_id
-		signal.cursor.hue = state.hue
-
-		WS.sendSignal(state.ws, note, {type: 'focus', user_id, cursor: signal.cursor})
+		//signal.cursor.user_id = user_id
+		//signal.cursor.hue = state.hue
 	} else if (signal.type == 'blur') {
 		db.exec(`
 			UPDATE note_stats
 			SET date_blur = now(), focus = 0
 			WHERE note_id = :note_id and user_id = :user_id
 		`, {note_id, user_id})
-		WS.sendSignal(state.ws, note, {type: 'blur', user_id})
-	} else if (signal.type == 'isslash') {
-		WS.sendSignal(state.ws, note, signal)
-	} else if (signal.type == 'iswrap') {
-		WS.sendSignal(state.ws, note, signal)
-	} else if (signal.type == 'isbracket') {
-		WS.sendSignal(state.ws, note, signal)
-	} else if (signal.type == 'isbold') {
-		WS.sendSignal(state.ws, note, signal)
 	}
+
+	//WS.sendToEveryone(state, note, {signal})
 }
 WS.setCursor = (state, note, cursor) => {
 	const db = note.db
 	const user_id = state.user_id
 	const note_id = note.note_id
-	cursor.user_id = user_id
-	cursor.hue = state.hue
+	//cursor.user_id = user_id
+	//cursor.hue = state.hue
 	Move.cursorAfter(cursor, state.hangchanges)
 	cursor.rev = note.rev
-	WS.saveCursor(db, note_id, cursor, true)
-	WS.sendToEveryone(state.ws, note, {cursor})
+	WS.saveCursor(db, user_id, note_id, cursor)
+	//WS.sendToEveryone(state, note, {cursor})
 }
-WS.saveCursor = (db, note_id, cursor, my, ischange) => {
-	const user_id = cursor.user_id
-	db.exec(`
-		UPDATE note_stats
-		SET 
-			${ischange ? 'date_change = now(), count_changes = count_changes + 1, ' : ''} 
-			date_cursor = now(), 
-			cursor_start = :start, 
-			cursor_size = :size, 
-			cursor_direction = :direction
-		WHERE note_id = :note_id and user_id = :user_id
-	`, {...cursor, note_id})
-	
-}
-const splice = (text, start, size, chunk) => text.slice(0, start) + chunk + text.slice(start + size)
-
-WS.saveHistory = (note) => {
-	note.db.exec(`
-		INSERT INTO note_history (note_id, date_edit, editor_id, text, title, rev, length, search)
-		SELECT n.note_id, n.date_edit, n.editor_id, n.text, n.title, n.rev, length, n.search
-		FROM note_notes n WHERE note_id = :note_id and date(date_edit) != date(now())
-	`, note)
-}
-WS.setChange = (state, note, change) => {
-	//console.log(change.insert ? 'Вставить': 'Удалить', state.hangchanges)
+WS.setChange = (state, note, change) => {	
 	Move.changeAfter(change, state.hangchanges)
-	
+
 	const db = note.db
 	const user_id = state.user_id
 	const note_id = note.note_id
 	
-	note.text = splice(note.text, change.start, change.remove.length, change.insert)
-	change.rev = state.rev = ++note.rev
-
-	
-
 	WS.saveHistory(note)
-	
+
+	note.text = splice(note.text, change.start, change.remove.length, change.insert)
+	state.rev = ++note.rev
 
 	db.exec(`
 		UPDATE note_notes
@@ -122,17 +84,9 @@ WS.setChange = (state, note, change) => {
 		rev: note.rev,
 		note_id, user_id
 	})
-
-
 	
-
-
-	
-	change.cursor.user_id = user_id
-	
-
-	Move.cursorAfter(change.cursor, state.hangchanges)
-	WS.saveCursor(db, note_id, change.cursor, true, true)
+	//Move.cursorAfter(change.cursor, state.hangchanges)
+	//WS.saveCursor(db, user_id, note_id, change.cursor, true) //true, true
 	
 	db.all(`SELECT 
 			user_id,
@@ -142,25 +96,48 @@ WS.setChange = (state, note, change) => {
 		FROM note_stats 
 		WHERE 
 			note_id = :note_id
-			and focus = 0
-			and user_id != :user_id
 	`, {note_id, user_id}).then(others => {
+		/*-- and focus = 0
+			-- and user_id != :user_id*/
 		for (const cursor of others) {
 			Move.cursorAfter(cursor, [change])
-			WS.saveCursor(db, note_id, cursor)
+			WS.saveCursor(db, cursor.user_id, note_id, cursor)
+
 		}
 	})
-
-	change.cursor.hue = state.hue
-	WS.sendToEveryone(state.ws, note, {change})
-	//console.log('change', change.base, 'rev', change.rev, 'hangchanges', state.hangchanges.length)
 	WS.setUpdate(state, note, change)
 	
+	//WS.sendToEveryone(state, note, {change})
 }
+
+
+WS.saveCursor = (db, user_id, note_id, cursor, ischange) => {
+	db.exec(`
+		UPDATE note_stats
+		SET 
+			${ischange ? 'date_change = now(), count_changes = count_changes + 1, ' : ''} 
+			date_cursor = now(), 
+			cursor_start = :start, 
+			cursor_size = :size, 
+			cursor_direction = :direction
+		WHERE note_id = :note_id and user_id = :user_id
+	`, {...cursor, user_id, note_id})
+	
+}
+const splice = (text, start, size, chunk) => text.slice(0, start) + chunk + text.slice(start + size)
+
+WS.saveHistory = (note) => {
+	note.db.exec(`
+		INSERT INTO note_history (note_id, date_edit, editor_id, text, title, rev, length, search)
+		SELECT n.note_id, n.date_edit, n.editor_id, n.text, n.title, n.rev, length, n.search
+		FROM note_notes n WHERE note_id = :note_id and date(date_edit) != date(now())
+	`, {...note})
+}
+
 
 WS.setUpdate = (state, note, change) => {
 	WS.setSearch(note)
-	if (change.start < 255) WS.setTitle(state.ws, note)
+	if (change.start < 255) WS.setTitle(state, note)
 }
 
 
@@ -184,7 +161,7 @@ WS.writeSearch = (note) => {
 }
 //const clearText = (text) => text.replace(/<(.|\n)*?>/g, '').replace('<','').replace('>','')
 //const title = clearText((note.text.match(/\s*(.*)\n*/)?.[1] || '').slice(0,255).trim())
-WS.setTitle = (ws, note) => {
+WS.setTitle = (state, note) => {
 	const db = note.db
 	const note_id = note.note_id
 
@@ -193,22 +170,26 @@ WS.setTitle = (ws, note) => {
 	if (note.title == title) return
 	note.title = title
 	const nick = nicked(nicked(title).slice(0,255))
-	return db.exec(`
+	db.exec(`
 		UPDATE note_notes
 		SET title = :title, nick = :nick
 		WHERE note_id = :note_id
-	`, {note_id, title, nick}).then(r => {
-		return WS.sendSignal(ws, note, {type: 'rename', title, nick})
-	})
+	`, {note_id, title, nick})
+	const signal = {type: 'rename', title, nick}
+	WS.sendToEveryone(state, note, {signal})
 }
-WS.sendSignal = (ws, note, signal = {}) => WS.sendToEveryone(ws, note, {signal})
+//WS.sendSignal = (ws, note, signal = {}) => WS.sendToEveryone(state, note, {signal})
 
-WS.sendToEveryone = (fromsocket, note, data) => {
+WS.sendToEveryone = (from, note, data) => {
 	const strdata = JSON.stringify(data)
-	for (const {ws, hangchanges} of note.states) {
-		const my = ws == fromsocket ? 1 : 0
+	const {user_id, hue} = from
+	const strfrom = JSON.stringify({user_id, hue})
+	for (const to of note.states) {
+		const {ws, hangchanges, rev} = to
+		const my = ws == from.ws ? 1 : 0
 		if (!my && data.change) hangchanges.push(data.change)
-		ws.send('{"payload":' + strdata + ',"my":' + my + '}')
+		const strto = JSON.stringify({rev})
+		ws.send('{"payload":' + strdata + ',"my":' + my + ',"to":' + strto + ',"from":' + strfrom +'}')
 	}
 }
 WS.getCursor = (db, note_id, user_id) => {
@@ -244,12 +225,12 @@ WS.connection = (ws, request) => {
 		const note = await WS.getNote(state.note_id, user_id)
 		WS.checkReject(note, state).then(is => {
 			if (!is) {
-				return WS.sendSignal(ws, note, {type: 'reject', user_id})
+				return WS.sendToEveryone(state, note, {signal:{type: 'reject', user_id}})
 			}
 		})
 		if (state.ismy == 'view') {
 			if (data.insert || data.change) {
-				return WS.sendSignal(ws, note, {type: 'onlyview', user_id})
+				return WS.sendToEveryone(state, note, {signal:{type: 'onlyview', user_id}})
 			}
 		}
 		
@@ -260,20 +241,28 @@ WS.connection = (ws, request) => {
 		if (data.insert) {
 			const change = data.insert //{insert:''}
 
-			change.cursor = await WS.getCursor(note.db, note_id, user_id)
+			const cursor = await WS.getCursor(note.db, note_id, user_id)
 			change.base = note.rev
-
-			change.start = change.cursor.start
-			change.remove = note.text.slice(change.cursor.start, change.cursor.start + change.cursor.size)
-			change.cursor.size = 0
+			change.start = cursor.start
+			change.remove = note.text.slice(cursor.start, cursor.start + cursor.size)
+			cursor.size = 0
 			
-			Move.cursorAfter(change.cursor, [change])
-			WS.saveCursor(note.db, note_id, change.cursor)
-			WS.setChange(state, note, change)
+			
+			Move.cursorAfter(cursor, [change])
+
+			//WS.setChange(state, note, change)
+			data.change = change
+			data.cursor = cursor
+
+			//WS.saveCursor(note.db, user_id, note_id, change.cursor)
+			//WS.sendToEveryone(state, note, {cursor:change.cursor})
+
 		}
 		if (data.change) WS.setChange(state, note, data.change)
 		if (data.cursor) WS.setCursor(state, note, data.cursor)
 		if (data.signal) WS.setSignal(state, note, data.signal)
+
+		WS.sendToEveryone(state, note, data)
 
 	})
 
@@ -286,21 +275,24 @@ WS.connection = (ws, request) => {
 	
 	ws.on('close', () => {
 		//sendSignal(ws, note, {type: 'blur', user_id})
-		WS.closeState(state.note_id, state).then(note => {
-			WS.sendSignal(ws, note, {type: 'leave', user_id})
-		})
+		WS.closeState(state.note_id, state)
+		WS.sendToEveryone(state, note, {signal:{type: 'leave', user_id}})
 	})
 	if (note.rev != state.rev) {
 		state.rev = note.rev
-		WS.sendSignal(ws, note, {type: 'reset', text: note.text, rev: note.rev})
+		WS.sendToEveryone(state, note, {signal:{type: 'reset', text: note.text, rev: note.rev}})
 	}
 	note.db.exec(`
 		UPDATE note_stats
 		SET date_load = FROM_UNIXTIME(:date_load), date_open = now(), count_opens = count_opens + 1, open = 1
 		WHERE note_id = :note_id and user_id = :user_id
-	`, {user_id, note_id, date_load: state.date_load}).then(r => {
-		WS.sendSignal(ws, note, {type: 'joined', user_id, hue: state.hue})
+	`, {user_id, note_id, date_load: state.date_load})
+
+	WS.getCursor(note.db, note_id, user_id).then(cursor => {
+		const signal = {type: 'joined'}
+		WS.sendToEveryone(state, note, {signal, cursor})	
 	})
+	
 }
 WS.isAccept = (db, note_id, user_id) => {
 	return false
@@ -323,16 +315,16 @@ WS._getNote = async (note_id) => {
 WS.getNote = (note_id) => {
 	if (!WS.NOTES[note_id]) {
 		WS.NOTES[note_id] = WS._getNote(note_id)
-	} else {
-		WS.NOTES[note_id] = WS.NOTES[note_id].then(note => {
-			return note
-			// return note.db.pool.ping().then(r => note).catch(async e => {
-			// 	console.log('new connection')
-			// 	note.db = await new Db().connect()
-			// 	if (!note.db) throw 'Нет соединения с базой данных при повторном соединении'
-			// 	return note
-			// })
-		})
+		//} else {
+		// WS.NOTES[note_id] = WS.NOTES[note_id].then(note => {
+		// 	return note
+		// 	// return note.db.pool.ping().then(r => note).catch(async e => {
+		// 	// 	console.log('new connection')
+		// 	// 	note.db = await new Db().connect()
+		// 	// 	if (!note.db) throw 'Нет соединения с базой данных при повторном соединении'
+		// 	// 	return note
+		// 	// })
+		// })
 	}
 	return WS.NOTES[note_id]
 }
@@ -340,9 +332,9 @@ WS.verifyClient = async (info) => {
 	const request = info.req
 	const params = new URL(request.headers.origin + request.url).searchParams
 	const state = {
-		rev: params.get('rev') || false,
-		note_id: params.get('note_id'),
-		user_id: params.get('user_id'),
+		rev: Number(params.get('rev')) || false,
+		note_id: Number(params.get('note_id')),
+		user_id: Number(params.get('user_id')),
 		date_load: params.get('date_load') || false, //передаётся вместе rev
 		user_token: params.get('user_token')
 	}

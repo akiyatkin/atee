@@ -68,6 +68,7 @@ Sitemap: https://${env.host}/sitemap.xml
 Clean-param: t
 Clean-param: theme
 Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term
+Clean-param: ybaip
 Clean-param: etext`
 
 
