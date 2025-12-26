@@ -21,7 +21,7 @@ export const ROOT = (data, env) => err(data, env) || `
 			</tr>
 		</thead>
 		<tbody>
-			${data.brands.map(brand => showInformRow(data, env, brand)).join('')}
+			${data.brands.sort((a, b) => new Date(b.date_cost) - new Date(a.date_cost)).map(brand => showInformRow(data, env, brand)).join('')}
 		</tbody>
 	</table>
 `
@@ -30,7 +30,7 @@ const showInformRow = (data, env, brand) => `
 		<td>
 			<a href="${data.root_path}/group/${data.root_nick}?m=brend.${brand.brand_nick}=1">${brand.brand_title}</a></td>
 		<td>${ddd.dm(brand.date_cost)}</td>
-		<td>${brand.poscount}</td>		
+		<td>${brand.poscount}</td>
 		<td><a href="${data.root_path}/group/${data.root_nick}?m=cena=empty:brend.${brand.brand_nick}=1">${brand.poscount - brand.withcost}</a></td>
 		<td>${brand.basketcount}</td>
 		<td>${brand.ordercount}</td>
@@ -39,7 +39,7 @@ const showInformRow = (data, env, brand) => `
 				${field.prompt({
 					cls: 'a mute',
 					type: 'area',
-					name: 'comment', 
+					name: 'comment',
 					label: 'Комментарий',
 					value: svg.edit(), 
 					action: '/-shop/admin/set-brand-comment',
@@ -51,4 +51,7 @@ const showInformRow = (data, env, brand) => `
 			<div style="white-space: pre; font-style: italic; margin-right:2em">${brand.comment || ''}</div>
 		</td>	
 	</tr>
+`
+const ftrBrands = (data, env, brand) => `
+
 `
