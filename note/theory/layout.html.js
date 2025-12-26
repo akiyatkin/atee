@@ -172,13 +172,12 @@ tpl.EDIT = (data, env) => data.result ? `
 		<script>
 			(div => {
 				const wrap = div.querySelector('.notewrapper')
-				const user_id = ${note.user_id||0}
 				wrap.addEventListener('note-signal', async e => {
-					const signal = e.detail
+					const {user_id, my, signal} = e.detail
 					const Client = await window.getClient()
 					if (signal.type == 'joined') {
 					} else if (signal.type == 'reject') {
-						if (signal.myuser) {
+						if (user_id == ${note.user_id}) {
 							Client.go('/theory')
 						}
 					} else if (signal.type == 'leave') {

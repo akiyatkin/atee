@@ -150,8 +150,7 @@ rest.addAction('set-user-id', async (view) => {
 		user = await User.create(db)
 		User.setCookie(view, user)
 	}
-	view.ans.user_id = user.user_id
-	view.ans.user_token = user.token
+	view.ans.user = user
 	return view.ret()
 })
 

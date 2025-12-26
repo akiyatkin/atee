@@ -1,7 +1,7 @@
 .notewrapper {
 	/*height:100%;*/
 	opacity:1!important;
-	/*--color: pink;*/	
+	--color: gray;
 
 }
 
@@ -60,7 +60,7 @@
 	/*color: transparent;
 	color: rgba(0,0,0,1);*/
 	color: black;
-	background-color: color-mix(in srgb, var(--color) 20%, transparent);
+	background-color: color-mix(in srgb, var(--color) 10%, transparent);
 	transition: background-color 0.1s;
 	
 }

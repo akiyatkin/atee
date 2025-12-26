@@ -24,7 +24,7 @@ tpl.ROOT = (data, env) => `
 							const ans = e.detail
 							if (!ans.result) return
 							const Note = await import('/-note/Note.js').then(r => r.default)
-							Note.sendOnce(${data.note.note_id}, {signal: {type:'iswrap', bit: ans.bit}})
+							Note.send(${data.note.note_id}, {signal: {type:'iswrap', bit: ans.bit}})
 						})
 					})(document.currentScript.previousElementSibling)
 				</script>
@@ -46,7 +46,7 @@ tpl.ROOT = (data, env) => `
 							const ans = e.detail
 							if (!ans.result) return
 							const Note = await import('/-note/Note.js').then(r => r.default)
-							Note.sendOnce(${data.note.note_id}, {signal: {type:'isslash', bit: ans.bit}})
+							Note.send(${data.note.note_id}, {signal: {type:'isslash', bit: ans.bit}})
 						})
 					})(document.currentScript.previousElementSibling)
 				</script>
@@ -68,7 +68,7 @@ tpl.ROOT = (data, env) => `
 							const ans = e.detail
 							if (!ans.result) return
 							const Note = await import('/-note/Note.js').then(r => r.default)
-							Note.sendOnce(${data.note.note_id}, {signal: {type:'isbracket', bit: ans.bit}})
+							Note.send(${data.note.note_id}, {signal: {type:'isbracket', bit: ans.bit}})
 						})
 					})(document.currentScript.previousElementSibling)
 				</script>
@@ -90,7 +90,7 @@ tpl.ROOT = (data, env) => `
 							const ans = e.detail
 							if (!ans.result) return
 							const Note = await import('/-note/Note.js').then(r => r.default)
-							Note.sendOnce(${data.note.note_id}, {signal:{type:'isbold', bit: ans.bit}})
+							Note.send(${data.note.note_id}, {signal:{type:'isbold', bit: ans.bit}})
 						})
 					})(document.currentScript.previousElementSibling)
 				</script>
@@ -120,7 +120,7 @@ tpl.ROOT = (data, env) => `
 					if (text == '/d') text = Area.getControlD() + ' '
 					if (text == '/h') text = Area.getControlH() + ' '
 					if (text == '/t') text = Area.getControlT()
-					await Note.sendOnce(${data.note.note_id}, {insert: {insert:text}})
+					await Note.send(${data.note.note_id}, {insert: {insert:text}})
 					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
 					Dialog.reload()
 				})
