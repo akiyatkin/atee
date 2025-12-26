@@ -10,7 +10,7 @@ export const ROOT = (data, env) => err(data, env) || `
 	<p><a href="${data.root_path}/group/${data.root_nick}?m=cena=empty">Каталог</a></p>
 	<table>
 		<thead>
-			<tr>
+			<tr style="font-size: 1.2rem;">
 				<td>Бренды</td>
 				<td>Дата прайса</td>
 				<td>Количество позиций</td>			
@@ -28,7 +28,7 @@ export const ROOT = (data, env) => err(data, env) || `
 const showInformRow = (data, env, brand) => `
 	<tr>
 		<td>
-			<a href="${data.root_path}/group/${data.root_nick}?m=brend.${brand.brand_nick}=1">${brand.brand_title}</a></td>
+			<a style="font-size: 1.2rem" href="${data.root_path}/group/${data.root_nick}?m=brend.${brand.brand_nick}=1">${brand.brand_title}</a></td>
 		<td>${ddd.dm(brand.date_cost)}</td>
 		<td>${brand.poscount}</td>
 		<td><a href="${data.root_path}/group/${data.root_nick}?m=cena=empty:brend.${brand.brand_nick}=1">${brand.poscount - brand.withcost}</a></td>
