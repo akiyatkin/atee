@@ -59,6 +59,7 @@ WS.setCursor = (state, note, cursor) => {
 	//cursor.hue = state.hue
 	Move.cursorAfter(cursor, state.hangchanges)
 	cursor.rev = note.rev
+
 	WS.saveCursor(db, user_id, note_id, cursor)
 	//WS.sendToEveryone(state, note, {cursor})
 }
@@ -96,6 +97,7 @@ WS.setChange = (state, note, change) => {
 		FROM note_stats 
 		WHERE 
 			note_id = :note_id
+			and user_id != :user_id
 	`, {note_id, user_id}).then(others => {
 		/*-- and focus = 0
 			-- and user_id != :user_id*/

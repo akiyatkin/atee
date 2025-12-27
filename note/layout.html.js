@@ -153,6 +153,7 @@ tpl.show = (note, placeholder = "Напишите что-нибудь") => `
 					
 					const cursor = createCursor(area, note)
 					
+					
 					const an = area.selectionEnd
 					const anb = area.textLength //anb - after, insert
 					const aob = text_before.length //aob - before, remove
