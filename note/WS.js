@@ -60,8 +60,19 @@ WS.setCursor = (state, note, cursor) => {
 	Move.cursorAfter(cursor, state.hangchanges)
 	cursor.rev = note.rev
 
-	WS.saveCursor(db, user_id, note_id, cursor)
+	WS.statSaveCursor(db, user_id, note_id, cursor)
 	//WS.sendToEveryone(state, note, {cursor})
+}
+WS.statSaveCursor = (db, user_id, note_id, cursor) => {
+	db.exec(`
+		UPDATE note_stats
+		SET 
+			date_cursor = now(), 
+			cursor_start = :start, 
+			cursor_size = :size, 
+			cursor_direction = :direction
+		WHERE note_id = :note_id and user_id = :user_id
+	`, {...cursor, user_id, note_id})
 }
 WS.setChange = (state, note, change) => {	
 	Move.changeAfter(change, state.hangchanges)
@@ -87,7 +98,7 @@ WS.setChange = (state, note, change) => {
 	})
 	
 	//Move.cursorAfter(change.cursor, state.hangchanges)
-	//WS.saveCursor(db, user_id, note_id, change.cursor, true) //true, true
+	//WS.statSaveCursor(db, user_id, note_id, change.cursor, true) //true, true
 	
 	db.all(`SELECT 
 			user_id,
@@ -103,29 +114,35 @@ WS.setChange = (state, note, change) => {
 			-- and user_id != :user_id*/
 		for (const cursor of others) {
 			Move.cursorAfter(cursor, [change])
-			WS.saveCursor(db, cursor.user_id, note_id, cursor)
+			WS.statChangeCursor(db, cursor.user_id, note_id, cursor)
 
 		}
 	})
+	WS.statDateChange(db, user_id, note_id)
 	WS.setUpdate(state, note, change)
 	
 	//WS.sendToEveryone(state, note, {change})
 }
-
-
-WS.saveCursor = (db, user_id, note_id, cursor, ischange) => {
+WS.statDateChange = (db, user_id, note_id) => {
 	db.exec(`
 		UPDATE note_stats
 		SET 
-			${ischange ? 'date_change = now(), count_changes = count_changes + 1, ' : ''} 
-			date_cursor = now(), 
+			date_change = now(), 
+			count_changes = count_changes + 1
+		WHERE note_id = :note_id and user_id = :user_id
+	`, {user_id, note_id})
+}
+WS.statChangeCursor = (db, user_id, note_id, cursor) => {
+	db.exec(`
+		UPDATE note_stats
+		SET 
 			cursor_start = :start, 
 			cursor_size = :size, 
 			cursor_direction = :direction
 		WHERE note_id = :note_id and user_id = :user_id
 	`, {...cursor, user_id, note_id})
-	
 }
+
 const splice = (text, start, size, chunk) => text.slice(0, start) + chunk + text.slice(start + size)
 
 WS.saveHistory = (note) => {
@@ -256,7 +273,7 @@ WS.connection = (ws, request) => {
 			data.change = change
 			data.cursor = cursor
 
-			//WS.saveCursor(note.db, user_id, note_id, change.cursor)
+			//WS.statSaveCursor(note.db, user_id, note_id, change.cursor)
 			//WS.sendToEveryone(state, note, {cursor:change.cursor})
 
 		}

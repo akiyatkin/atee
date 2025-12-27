@@ -94,6 +94,11 @@ tpl.show = (note, placeholder = "Напишите что-нибудь") => `
 					const {user, Place} = await PlacePromise
 					Place.send(wrap, note, user, {cursor})
 				})
+				area.addEventListener('select', async e => {
+					const cursor = createCursor(area, note)
+					const {user, Place} = await PlacePromise
+					Place.send(wrap, note, user, {cursor})
+				})
 				if (note.ismy == 'view') return
 				
 				area.addEventListener('mousedown', async e => {
@@ -152,7 +157,7 @@ tpl.show = (note, placeholder = "Напишите что-нибудь") => `
 					const {user, Place, Light} = await inputPromise
 					
 					const cursor = createCursor(area, note)
-					
+
 					
 					const an = area.selectionEnd
 					const anb = area.textLength //anb - after, insert
