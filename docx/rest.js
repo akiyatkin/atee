@@ -50,7 +50,7 @@ const nameInfo = (file, isFile = true) => {
 	return { secure, num, name, ext, file }
 }
 
-
+rest.addArgument('path', ['string'])
 rest.addArgument('src', async (view, src) => {
 	if (/\/\./.test(src)) return view.err('forbidden', 403)
 	if (!/data\//.test(src)) return view.err('forbidden', 403)
@@ -79,6 +79,7 @@ rest.addResponse('get-head', async view => {
 
 rest.addResponse('get-sitemap', async view => {
 	const src = await view.get('src')
+	const path = await view.get('path')
 	const title = await view.get('title') || 'Страницы'
 	const index = src.lastIndexOf('/')
 	if (!index) index = 0
@@ -93,7 +94,7 @@ rest.addResponse('get-sitemap', async view => {
 		if (finfo.heading) head.title = finfo.heading
 		if (finfo.preview) head.description = finfo.preview
 		if (finfo.img) head.image_src = finfo.img
-		files[finfo.name] = head
+		files[path+finfo.name] = head
 	}
 	const nick = nicked(title)
 	view.ans.headings = {
@@ -169,14 +170,14 @@ const getList = (src) => {
 			
 			const t = html.match(/<h1[^>]*>.*?<\/h1>/iu)
 			finfo.heading = t ? t[0].replace(/<\/?[^>]+(>|$)/g, " ").replace(/\s+/," ").trim() : finfo.name
-			let text = html.replace(/<style([\S\s]*?)>([\S\s]*?)<\/style>/ig, '').replace(/<h1[^>]*>.*<\/h1>/iu, "").replace(/<\/?[^>]+(>|$)/g, " ").replace(/\s+/," ").trim()
+			let text = html.replace(/<table([\S\s]*?)>([\S\s]*?)<\/table>/ig, '').replace(/<style([\S\s]*?)>([\S\s]*?)<\/style>/ig, '').replace(/<h1[^>]*>.*<\/h1>/iu, "").replace(/<\/?[^>]+(>|$)/g, " ").replaceAll(/\s+/g," ").trim()
 			
 
 			
 			text = text.replace(/\s\./,'.').replace(/\s\!/,'!').replace(/\s\?/,'?').replace(/\s\:/,':').replace(/\s\;/,';')
 
 
-			const r = text.match(/.{200}[^\.!]*[\.!]/u)
+			const r = text.match(/.{50}[^\.!]*[\.!]/u)
 			//const r = text.match(/.{25}[^\.!]*[\.!]/u)
 
 			finfo.preview = r ? r[0] : text
