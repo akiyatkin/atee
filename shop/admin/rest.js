@@ -140,8 +140,8 @@ rest.addAction('inform', ['admin','recalcStat'], async view => {
 			groupcount,
 			brandcount,
 			sourcecount,
-			basketcount,
-			ordercount,
+			-- basketcount,
+			-- ordercount,
 			UNIX_TIMESTAMP(date_cost) as date_cost,
 			withcost,
 			withimg,
@@ -158,6 +158,38 @@ rest.addAction('inform', ['admin','recalcStat'], async view => {
 			and st.group_id = :group_id
 		ORDER by year DESC, month DESC
 	`, {group_id, ...ym})
+
+	const baskets = await db.allto('brand_nick', `
+		SELECT COUNT(*) AS amount,
+			vb.value_nick AS brand_nick
+		FROM shop_basket b, sources_values vk, sources_wvalues wv, sources_props p, sources_values vb
+		WHERE b.brendart_nick = vk.value_nick
+		AND p.prop_nick = 'brend'
+		AND wv.key_id = vk.value_id AND wv.prop_id = p.prop_id
+		AND vb.value_id = wv.value_id
+		AND dateedit > CURRENT_DATE - INTERVAL 90 DAY
+		GROUP BY brand_nick
+	`)
+	for (const brand of view.data.brands) {
+		brand['basket90'] = baskets[brand.brand_nick]?.amount || 0
+	}
+
+	const orders = await db.allto('brand_nick', `
+		SELECT COUNT(DISTINCT b.order_id) AS amount,
+			vb.value_nick AS brand_nick
+		FROM shop_basket b, sources_values vk, sources_wvalues wv, sources_props p, sources_values vb, shop_orders o
+		WHERE b.brendart_nick = vk.value_nick
+		AND p.prop_nick = 'brend'
+		AND wv.key_id = vk.value_id AND wv.prop_id = p.prop_id
+		AND vb.value_id = wv.value_id
+		AND o.order_id = b.order_id AND (o.status = 'check' OR o.status = 'complete')
+		AND b.dateedit > CURRENT_DATE - INTERVAL 90 DAY
+		GROUP BY brand_nick
+	`)
+	for (const brand of view.data.brands) {
+		brand['order90'] = orders[brand.brand_nick]?.amount || 0
+	}
+
 
 	return view.ret()
 })

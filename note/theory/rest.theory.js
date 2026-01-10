@@ -14,7 +14,7 @@ import NoteDB from "/-note/NoteDB.js"
 // 	//if (search) view.nostore = true
 // 	return search
 // })
-rest.addArgument('note_id', ['int#required'])
+//rest.addArgument('note_id', ['int#required'])
 
 
 // rest.addArgument('page', async (view, name) => {

@@ -138,6 +138,7 @@ NoteDB.getNote = async (db, note_id) => {
 		WHERE 
 			note_id = :note_id
 	`, {note_id})
+	
 	return note
 }
 NoteDB.getNoteArea = async (db, note_id, user) => {

@@ -13,9 +13,9 @@ export const ROOT = (data, env) => err(data, env) || `
 			<tr style="font-size: 1.2rem;">
 				<td>Бренды</td>
 				<td>Дата прайса</td>
-				<td>Количество позиций</td>			
+				<td>Позиций</td>			
 				<td>Без цен</td>
-				<td>Добавлений в корзину</td>
+				<td>Корзин</td>
 				<td>Заказов</td>
 				<td>Комментарий</td>
 			</tr>
@@ -32,8 +32,8 @@ const showInformRow = (data, env, brand) => `
 		<td>${ddd.dm(brand.date_cost)}</td>
 		<td>${brand.poscount}</td>
 		<td><a href="${data.root_path}/group/${data.root_nick}?m=cena=empty:brend.${brand.brand_nick}=1">${brand.poscount - brand.withcost}</a></td>
-		<td>${brand.basketcount}</td>
-		<td>${brand.ordercount}</td>
+		<td>${brand.basket90}</td>
+		<td>${brand.order90}</td>
 		<td>
 			<div style="float:right; position: relative; clear:both;">
 				${field.prompt({

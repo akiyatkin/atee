@@ -373,7 +373,7 @@ WS.verifyClient = async (info) => {
 	const db = note.db
 
 	const user_token = await db.col('SELECT token FROM user_users WHERE user_id = :user_id', state)
-	if (state.user_token != user_token) return err('user_token')
+	if (state.user_token != user_token) return err('Неверный user_token')
 
 	let hue = await db.col('SELECT hue FROM note_users WHERE user_id = :user_id', state)
 	if (hue === null) {

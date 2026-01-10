@@ -10,6 +10,9 @@ rest.extra(rest_funcs)
 import rest_theory from "/-note/theory/rest.theory.js"
 rest.extra(rest_theory)
 
+import rest_search from "/-dialog/search/rest.search.js"
+rest.extra(rest_search)
+
 import rest_note from "/-note/rest.note.js"
 rest.extra(rest_note)
 
@@ -52,8 +55,11 @@ rest.addResponse('get-control', async (view) => {
 
 
 rest.addResponse('get-note-page', async (view) => {
+
 	const note = await view.get('note#required')
 	const db = await view.get('db')
+	const theory = await db.fetch('SELECT note_id, published, ordain FROM theory_notes WHERE note_id = :note_id', note)
+	
 
 	note.next = await db.fetch(`
 		SELECT nn.note_id, nn.nick, nn.title
@@ -62,7 +68,7 @@ rest.addResponse('get-note-page', async (view) => {
 		WHERE tn.ordain > :ordain and tn.published = 1
 		ORDER BY tn.ordain 
 		LIMIT 1
-	`, note)
+	`, {...note, ...theory})
 	note.prev = await db.fetch(`
 		SELECT nn.note_id, nn.nick, nn.title
 		FROM theory_notes tn
@@ -70,7 +76,7 @@ rest.addResponse('get-note-page', async (view) => {
 		WHERE tn.ordain < :ordain and tn.published = 1
 		ORDER BY tn.ordain DESC
 		LIMIT 1
-	`, note)
+	`, {...note, ...theory})
 
 
 	view.ans.note = note
@@ -96,13 +102,14 @@ rest.addResponse('get-note-edit', async (view) => {
 rest.addResponse('get-search', async view => {
 	const db = await view.get('db')
 	const manager = await view.get('manager')
-	const search = await view.get('search')
+	const hashs = await view.get('hashs')
 
-	const hashs = unique(search.split('-')).filter(r => !!r).sort()
+	
 
 	const where = ['n.note_id = t.note_id']
 	if (hashs.length) {
-		where.push(`n.search like "% ${hashs.join('%" and n.search like "% ')}%"`)
+		//where.push(`n.search like "% ${hashs.join('%" and n.search like "% ')}%"`)
+		where.push(`(${hashs.map(hash => 'n.search like "%' + hash.join('%" and n.search like "%') + '%"').join(' or ') || '1 = 1'})`)
 	}
 	if (!manager) {
 		where.push('t.published = 1')
