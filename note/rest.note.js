@@ -32,7 +32,7 @@ rest.addFunction('accept', async (view, note_id) => {
 rest.addArgument('note', async (view, note) => {
 	view.nostore = true
 	if (!note) return null
-	const db = await view.get('db')
+	const db = await view.get('db')	
 	const r = note.split('-')
 	const note_id = parseInt(r.shift())
 	if (!note_id) return null

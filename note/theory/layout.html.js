@@ -91,7 +91,7 @@ tpl.showNotFound = (data, env) => `
 
 tpl.showNote = (data, env, note) => `
 	<div data-id="${note.note_id}" class="item ${note.published ? 'published' : '' }">
-		<a href="/theory/note/${note.note_id}-${note.nick}">${note.title || 'Пустая запись'}</a> <small style="opacity:0.5">${ago.show(note.date_edit)}</small>
+		<a href="/theory/note/${note.note_id}-${note.nick || 'empty'}">${note.title || 'Пустая запись'}</a> <small style="opacity:0.5">${ago.show(note.date_edit)}</small>
 	</div>
 `
 

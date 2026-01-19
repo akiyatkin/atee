@@ -2038,7 +2038,8 @@ Shop.getWhereByGroupIndexSort = async (db, group_id, samples = [], hashs = [], p
 	const image = await Shop.getPropByNick(db, 'images')
 	const join = []
 	join.push(`left join sources_wnumbers cena on (cena.entity_id = win.entity_id and cena.key_id = win.key_id and cena.prop_id = ${cena.prop_id}) and cena.multi_index = 0`)
-	join.push(`left join sources_wtexts image on (image.entity_id = win.entity_id and image.key_id = win.key_id and image.prop_id = ${image.prop_id} and image.multi_index = 0)`)
+
+	if (image) join.push(`left join sources_wtexts image on (image.entity_id = win.entity_id and image.key_id = win.key_id and image.prop_id = ${image.prop_id} and image.multi_index = 0)`)
 	const where = [`
 		wce.source_id = so.source_id
 		
@@ -2073,7 +2074,12 @@ Shop.getWhereByGroupIndexSort = async (db, group_id, samples = [], hashs = [], p
 	// 	//sortsel.push('min(CONCAT((so.ordain + 99), (wce.sheet_index + 99), (wce.row_index + 999))) as sortkey')
 	// 	//sort.push('sortkey')
 	// }
-	sort.push('SIGN(image.text) DESC, SIGN(cena.number) DESC, so.ordain, wce.sheet_index, wce.row_index')
+	if (image) {
+		sort.push('SIGN(image.text) DESC, SIGN(cena.number) DESC, so.ordain, wce.sheet_index, wce.row_index')	
+	} else {
+		sort.push('SIGN(cena.number) DESC, so.ordain, wce.sheet_index, wce.row_index')	
+	}
+	
 	return {from, join, where, sort, sortsel}
 }
 // Shop.getWhereBySamplesSort = async (db, samples, hashs = [], partner = '') => {

@@ -899,7 +899,7 @@ Consciousness.recalcTexts_byProp = async (db, prop_id, oldprop) => {
 				
 				OR
 					(pr.type = 'number' 
-						${oldprop?.scale != prop.scale ? '' : 'AND (ce.number IS NULL) '}
+						${oldprop?.scale != prop?.scale ? '' : 'AND (ce.number IS NULL) '}
 					)
 				OR
 					(pr.type = 'date' 

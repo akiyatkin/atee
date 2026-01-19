@@ -195,8 +195,9 @@ rest.addResponse('get-page', async view => {
 
 rest.addResponse('get-note-check', async view => {
 	const note = await view.get('note')
-	if (note && note.nick != note.request_nick) {
-		view.ans.redirect = `/theory/note/${note.note_id}-${note.nick}`
+	const nick = note.nick || 'empty'
+	if (nick != note.request_nick) {
+		view.ans.redirect = `/theory/note/${note.note_id}-${nick}`
 	}
 	return view.ret()
 })
