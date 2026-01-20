@@ -143,7 +143,6 @@ Sources.recalcWinnerAppearSearch = async db => {
 
 	//monitor.stop()
 	//console.log(monitor.getReport())
-	
 }
 
 
@@ -153,6 +152,12 @@ Sources.scheduleDailyRenovate = (time = '01:09') => {
 		const rest_sources = await import("/-sources/rest.js").then(r => r.default)
 		const data = await rest_sources.data('set-sources-renovate')
 		console.log('/-sources/set-sources-renovate', data.result)
+
+		console.time('OPTIMIZE')
+		//console.log('Выполнена перестройка индексов (Full Text Index size trouble) ')
+		await db.exec('OPTIMIZE TABLE sources_rows, sources_witems')
+		console.timeEnd('OPTIMIZE')
+
 		return data.result
 	})
 }

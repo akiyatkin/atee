@@ -1828,7 +1828,7 @@ Shop.addWhereSamples = async (db, from, join, where, samples, hashs, partner, em
 					)
 				`)
 			} else if (prop.type == 'number') {
-				if (prop_nick == 'cena') {
+				if (prop_nick == 'cena' && !~['empty','any'].indexOf(sample[prop_nick])) {
 					const {prop_id} = partner?.cost_nick ? await Shop.getPropByNick(db, partner?.cost_nick) : prop  //Подмена цены
 					join.push(`
 						LEFT JOIN sources_wnumbers da${i} ON (
