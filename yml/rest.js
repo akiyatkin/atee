@@ -46,38 +46,64 @@ rest.addResponse('get-yandex', async view => {
 
 	const host = view.visitor.client.host
 	const bind = await Shop.getBind(db)
+
 	const group = await Shop.getGroupByNick(db, feed.group_nick)
+
 	if (!group) return view.err('Группа не найдена ' + feed.group_nick)
 	const group_id = group.group_id
 	
 	const data = {}
 	data.partner = partner
 	
-	console.time('get-yandex')	
-
 	const {count, list} = await Shop.getPlopsWithPropsNoMultiByMd(db, group_id, feed.samples, feed.hashs, partner, {
 		limit: false,
 		rand: false,
 		add_group_ids: true,
 		add_group_nicks: true,
-		nicks:['art'], //brendmodel_nick, brendart_nick есть всегда они берутся из стартовой таблицы и явно указывать их не надо
+		//nicks:['art'], //brendmodel_nick, brendart_nick есть всегда они берутся из стартового запроса и явно указывать их не надо
 		titles:[
-			'art',
-			'brendart',
 			'brendmodel',
 			'brend',
 			'model',
 			'naimenovanie',
 			'opisanie',
 			'images',
-			'nalichie',
 			'staraya-cena',
 			'cena'
 		]
 	})
-	data.list = list
 
-	
+	const models = Object.groupBy(list, row => row.brendmodel_nick)
+	for (const brendmodel_nick in models) {
+		const model = {}
+		for (const item of models[brendmodel_nick]) {
+			delete item.brendart_nick
+			for (const prop_nick in item) {
+				model[prop_nick] ??= []
+				model[prop_nick].push(item[prop_nick])
+			}
+		}
+		for (const prop_nick in model) {
+			model[prop_nick] = unique(model[prop_nick]).sort()
+		}
+		
+		models[brendmodel_nick] = model
+
+		model['group_nicks'] = model.group_nicks[0]
+		model['group_ids'] = model.group_ids[0]
+
+		for (const single of ['images_title', 'brendmodel_nick','brendmodel_title','brend_title','model_title','naimenovanie_title','opisanie_title']) {
+			if (!model[single]) continue
+			model[single] = model[single][0]
+		}
+		for (const minify of ['cena_title','staraya-cena_title']) {
+			model[minify] = Math.min(...model[minify])
+		}
+		if (model['cena'] < model['staraya-cena']) delete model['staraya-cena']	
+	}	
+
+	data.list = Object.values(models)
+
 	data.group_ids = []
 	for (const item of data.list) {
 		data.group_ids.push(...item.group_ids)
@@ -110,8 +136,7 @@ rest.addResponse('get-yandex', async view => {
 		for (const name in item) { //['opisanie', 'naimenovanie', 'model']
 		 	item[name] = escapeHTML(item[name])
 		}
-	}
-	console.timeEnd('get-yandex')
+	}	
 	
 	
 	// groups.forEach(group => {

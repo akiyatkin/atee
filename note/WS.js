@@ -242,8 +242,8 @@ WS.connection = (ws, request) => {
 		
 		data = JSON.parse(data.toString())
 		const note = await WS.getNote(state.note_id, user_id)
-		WS.checkReject(note, state).then(is => {
-			if (!is) {
+		WS.checkReject(note, state).then(accept => {
+			if (!accept) {
 				return WS.sendToEveryone(state, note, {signal:{type: 'reject', user_id}})
 			}
 		})

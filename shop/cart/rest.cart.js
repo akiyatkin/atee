@@ -31,6 +31,7 @@ rest.addVariable('getutms', view => view.gets(['referrer_host', 'source', 'conte
 rest.addArgument('quantity', ['sint','unsigned','0'])
 
 rest.addArgument('nocopy', ['int'])
+rest.addArgument('modification', ['escape'])
 rest.addArgument('brendart_nick', ['nicked'])
 rest.addVariable('brendart_nick#required', ['brendart_nick', 'required'])
 

@@ -1,0 +1,8 @@
+import Rest from "@atee/rest"
+const rest = new Rest()
+import rest_get from "/-note/admin/rest.get.js"
+rest.extra(rest_get)
+import rest_set from "/-note/admin/rest.set.js"
+rest.extra(rest_set)
+
+export default rest

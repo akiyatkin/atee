@@ -87,7 +87,7 @@ rest.addResponse('set-note-create', async view => {
 		LIMIT 1
 	`)
 	if (!note_id) {
-		note_id = await NoteDB.create(db, user.user_id)
+		note_id = await NoteDB.create(db, user.user_id, 'theory')
 		await db.exec(`
 			INSERT INTO theory_notes (note_id, published, ordain) 
 			VALUES (:note_id, 0, 1)

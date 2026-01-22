@@ -143,6 +143,28 @@ rest.addResponse('set-remove', async view => {
 	return view.ret()
 })
 
+rest.addAction('set-modification', async view => {
+	const active_id = await view.get('active_id#required')
+	const modification = await view.get('modification')
+	const item = await view.get('item#required')
+	const db = await view.get('db')
+	const brendart_nick = await view.get('brendart_nick')
+
+	const order = await Cart.getOrder(db, active_id)
+	if (order.status != 'wait') return view.err('Заказ уже отправлен, обсудите, пожалуйста, изменения с менеджером!', 422)
+
+	await db.exec(`
+		UPDATE 
+			shop_basket
+		SET
+			modification = :modification
+		WHERE order_id = :active_id 
+			and brendart_nick = :brendart_nick
+	`, { modification, active_id, brendart_nick })
+	
+	return view.ret()
+})
+
 
 rest.addResponse('set-add', async view => {
 	const active_id = await view.get('active_id')

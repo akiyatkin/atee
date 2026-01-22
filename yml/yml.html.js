@@ -48,9 +48,9 @@ yml.collectionid = (data, env, group_nick) => `
 	<collectionId>${group_nick}</collectionId>
 `
 yml.url = (data, env, plop) => data.partner ? `
-	<url>https://${env.host}${env.shop.root_path}/item/${plop.brendmodel_nick}/${plop.art_nick || plop.brendart_nick}?theme=partner=${data.partner.title}</url>
+	<url>https://${env.host}${env.shop.root_path}/item/${plop.brendmodel_nick}?theme=partner=${data.partner.title}</url>
 ` : `
-	<url>https://${env.host}${env.shop.root_path}/item/${plop.brendmodel_nick}/${plop.art_nick || plop.brendart_nick}</url>
+	<url>https://${env.host}${env.shop.root_path}/item/${plop.brendmodel_nick}</url>
 `
 
 yml.price = (data, env, plop) => `
@@ -61,7 +61,7 @@ yml.oldprice = (data, env, plop) => !plop['staraya-cena_title'] ? '' : `
 `
 
 yml.showOffer = (data, env, plop) => `
- 	<offer type="vendor.model" id="${plop.brendart_nick}" available="true">
+ 	<offer type="vendor.model" id="${plop.brendmodel_nick}" available="true">
 		${yml.url(data, env, plop)}
 		<model>${plop.naimenovanie_title || plop.model_title || plop.brendmodel_title}</model>
 		${yml.price(data, env, plop)}

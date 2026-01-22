@@ -95,6 +95,26 @@ export const Files = {
 		}
 		return dindex
 	},
+	indexDirDir: async (dir) => { //Например dir/[RVI]/[D2342]/photo.jpg
+		const ddindex = {}
+		const root = await Files.readdirDeep(dir)
+		for (const droot of root.dirs) {
+			const nick = nicked(droot.name) //brand
+			ddindex[nick] ??= {}
+			for (const ddroot of droot.dirs) { 
+				const key_nick = nicked(ddroot.name) //model
+				ddindex[nick][key_nick] ??= {}
+				for (const finfo of ddroot.files) { //model
+					const way = Files.getWayByExt(finfo.ext) //images, texts, videos
+					const src = ddroot.dir + finfo.file.replaceAll(',','&#44;')
+					ddindex[nick][key_nick][way] ??= []
+					ddindex[nick][key_nick][way].push(src)
+					
+				}
+			}
+		}
+		return ddindex
+	},
 	indexDirFileDeep: async (dir) => { //Например models/RVI-D2342/photo.jpg
 		const findex = {}
 		const root = await Files.readdirDeep(dir)

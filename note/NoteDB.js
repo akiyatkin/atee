@@ -1,5 +1,6 @@
 import config from '@atee/config'
 import nicked from '@atee/nicked'
+import User from '/-user/User.js'
 import WS from '/-note/WS.js'
 const NoteDB = {}
 
@@ -19,7 +20,7 @@ NoteDB.getPropsRev = async (db, note_id, rev) => {
 
 	return note
 }
-NoteDB.getProps = async (db, note_id) => {
+NoteDB.getPropsNote = async (db, note_id) => {
 	const note = await db.fetch(`
 		SELECT
 			UNIX_TIMESTAMP(n.date_edit) as date_edit,
@@ -75,15 +76,21 @@ NoteDB.getProps = async (db, note_id) => {
 
 	return note
 }
-NoteDB.create = async (db, user_id, text = '') => {
+NoteDB.getProps = NoteDB.getPropsNote //depricated
+
+NoteDB.create = async (db, user_id, endorsement, text = '') => {
 	const title = text
 	const nick = nicked(title)
 	const length = text.length
+
+	const edit_token = User.createToken()
+	const view_token = User.createToken()
+
 	const sql = `
-		INSERT INTO note_notes (text, editor_id, creater_id, title, nick, length) 
-		VALUES (:text, :user_id, :user_id, :title, :nick, :length)
+		INSERT INTO note_notes (text, editor_id, creater_id, title, nick, length, view_token, edit_token, endorsement) 
+		VALUES (:text, :user_id, :user_id, :title, :nick, :length, :view_token, :edit_token, :endorsement)
 	`
-	const values = {text, nick, user_id, length, title}
+	const values = {text, nick, user_id, length, title, edit_token, view_token, endorsement}
 	if (db.insertId) {
 		return db.insertId(sql, values)
 	} else { //transaction
@@ -126,6 +133,8 @@ NoteDB.getNote = async (db, note_id) => {
 	const note = await db.fetch(`
 		SELECT 
 			nick, text, title, rev, note_id, creater_id,
+			token_edit, token_view,
+			endorsement,
 			UNIX_TIMESTAMP(now()) as now, 
 			UNIX_TIMESTAMP(date_create) as date_create, 
 			UNIX_TIMESTAMP(date_edit) as date_edit,
@@ -141,11 +150,10 @@ NoteDB.getNote = async (db, note_id) => {
 	
 	return note
 }
-NoteDB.getNoteArea = async (db, note_id, user) => {
-	if (!note_id) return false
-	const note = await NoteDB.getNote(db, note_id)
+
+NoteDB.noteArea = async (db, note, user) => {
 	if (!note) return false
-	
+	const note_id = note.note_id
 	const conf = await config('note')
 	note.wshost = conf.wshost
 	note.cursors = await db.all(`
@@ -195,6 +203,6 @@ NoteDB.getNoteArea = async (db, note_id, user) => {
 	}, {})
 	return note
 }
-
+NoteDB.getNoteArea = NoteDB.noteArea //depricated
 
 export default NoteDB

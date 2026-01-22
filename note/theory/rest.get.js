@@ -92,8 +92,7 @@ rest.addResponse('get-note-edit', async (view) => {
 	setTimeout(() => Access.setAccessTime(), 5000)
 	const user = await view.get('user#required')
 	const db = await view.get('db')
-	note = await NoteDB.getNoteArea(db, note.note_id, user)
-	
+	await NoteDB.noteArea(db, note, user)
 	view.ans.note = note
 	return view.ret()
 })

@@ -29,37 +29,63 @@ rest.addFunction('accept', async (view, note_id) => {
 	return note_id
 })
 
-rest.addArgument('note', async (view, note) => {
-	view.nostore = true
-	if (!note) return null
+rest.addArgument('note', async (view, request_note) => { //можно так note=12
+	const user_id = await view.get('user_id')
+	if (!request_note) return null
+
 	const db = await view.get('db')	
-	const r = note.split('-')
+	const r = request_note.split('-')
 	const note_id = parseInt(r.shift())
 	if (!note_id) return null
-	
-	const real = await NoteDB.getNote(db, note_id)
-	if (!real) return null
+
+	const note = await NoteDB.getNote(db, note_id)
+	if (!note) return null
 
 	const nick = r.join('-')
-	real.request_nick = nick
+	note.request_nick = nick //1-ASDFSADFASDF-ASDFASDFA
 
-	const user_id = await view.get('user_id')
-	const rr = await WS.isAccept(db, note_id, user_id)
-	if (!rr) return view.err('Нет доступа к ноте', 403)
 	
-	return real
+	const rr = await WS.isAccept(db, note_id, user_id) //будет проверен токен, но не админ
+	note.accept = rr
+	//if (!rr) return view.err('Нет доступа к ноте', 403)
+	
+	return note
 })
-rest.addFunction('area', async (view, note) => {
-	if (!note) return
+
+
+rest.addVariable('note#required', ['note', 'required']) //Требуется админу, когда доступ не проверяется
+rest.addVariable('note#view', ['note#required'], (view, note) => {
+	if (!note.accept) return view.err('Нет доступа', 403)
+	return note
+})
+rest.addVariable('note#edit', ['note#required'], (view, note) => {
+	if (note.accept != 'edit') return view.err('Доступен только просмотр ноты', 403)
+	return note
+})
+
+
+// rest.addFunction('area', async (view, note) => {
+// 	if (!note) return
+// 	const user = await view.get('user')
+// 	const db = await view.get('db')
+// 	await NoteDB.noteArea(db, note, user)
+// 	return note
+// })
+// rest.addVariable('note#area', ['note', 'area']) //depricated
+// rest.addVariable('note#area#required', ['note#required', 'area']) //depricated
+// rest.addVariable('note#area#view', ['note#view', 'area']) //depricated
+// rest.addVariable('note#area#edit', ['note#edit', 'area']) //depricated
+
+rest.addVariable('area', ['note'], async (view, note) => {
+	if (!note) return null
 	const user = await view.get('user')
 	const db = await view.get('db')
-	const real = await NoteDB.getNoteArea(db, note.note_id, user)
-	return real
+	await NoteDB.noteArea(db, note, user)
+	return note
 })
-
-rest.addVariable('note#required', ['note', 'required'])
-rest.addVariable('note#area', ['note', 'area'])
-rest.addVariable('note#area#required', ['note', 'area', 'required'])
+rest.addVariable('area#required', ['note#required', 'area']) //Требуется админу, когда доступ не проверяется
+rest.addVariable('area#view', ['note#view', 'area'])
+rest.addVariable('area#edit', ['note#edit', 'area'])
 
 
 rest.addArgument('id', ['int#required'])

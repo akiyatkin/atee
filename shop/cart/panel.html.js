@@ -800,9 +800,9 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 	</script>
 `
 
-tpl.showModification = (data, env, item) => `
+tpl.showModification = (data, env, pos, item = pos.item) => `
 	<div style="margin-bottom:0.25em">
-		<button class="a">${mod.modification || cards.getSomeTitle(data, env, item, 'modifikaciya')}</button>
+		<button class="a">${pos.modification || cards.getSomeTitle(data, item, 'modifikaciya')}</button>
 		<script>
 			(btn => {
 				btn.addEventListener('click', async () => {
@@ -810,13 +810,13 @@ tpl.showModification = (data, env, item) => `
 					const popup = await Dialog.open({
 						tpl:"/-shop/cart/modification.html.js",
 						sub:"ROOT",
-						json:"/-shop/cart/get-modification?brand_nick=${mod.brand_nick}&model_nick=${mod.model_nick}&item_num=${mod.item_num}"
+						json:"/-shop/cart/get-modification?brendart_nick=${item.brendart[0]}"
 					})
 					const form = popup.getElementsByTagName('form')[0]
 					form.addEventListener('submit', async e => {
 						e.preventDefault()
 						const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-						const ans = await senditmsg(btn, '/-shop/cart/set-modification?brand_nick=${mod.brand_nick}&model_nick=${mod.model_nick}&item_num=${mod.item_num}', new FormData(form))
+						const ans = await senditmsg(btn, '/-shop/cart/set-modification?brendart_nick=${item.brendart[0]}', new FormData(form))
 						if (ans.result) Dialog.hide()
 						const Client = await window.getClient()
 						Client.global('shop')
@@ -841,7 +841,7 @@ tpl.showPos = (data, env, pos, item) => {
 				${naimenovanie ? naimenovanie + '.' : ''}
 				<div><a href="${cards.getItemPath(data, item)}">${gain('brendart')}</a> ${pos.changed ? '<span title="Есть изменения">*</span>' : ''}</div>
 			</div>
-			${item.modifikaciya ? tpl.showModification(data, env, item) : ''}
+			${item.modifikaciya ? tpl.showModification(data, env, pos) : ''}
 			<div style="margin: 0.5em 0;"><b>${cards.cost(item)}</b></div>
 		</div>
 		<div class="cost blocksum">

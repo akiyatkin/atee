@@ -1,0 +1,79 @@
+{
+	"index":"index:ROOT",	
+	"json":{
+		"main:ROOT":"/-note/admin/get-admin"
+	},
+	"jsontpl":{
+		"notes:ROOT":"/-note/admin/get-admin-notes?endorsement=${env.bread.get.endorsement ?? ''}",
+		"notes:LIST":"/-note/admin/get-admin-notes-list?endorsement=${env.bread.get.endorsement ?? ''}&query=${env.bread.get.query ?? ''}",
+		"main:NOTE":"/-note/admin/get-admin-note?note_id=${env.crumb.name}",
+		"history:ROOT":"/-note/admin/get-admin-history?note_id=${env.crumb.parent.name}",
+		"history:REV":"/-note/admin/get-admin-history-rev?note_id=${env.crumb.parent.parent.name}&rev=${env.crumb.name}",
+		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}"
+	},
+	"tpl":{
+		"frame":"/-controller/frame.html.js",
+		"controller":"/-controller/layout.html.js",
+		"index":"/-controller/index-board.html.js",
+		"aside":"/-note/admin/aside.html.js",
+		"main":"/-note/admin/main.html.js",
+		"history":"/-note/admin/history.html.js",
+		"notes":"/-note/admin/notes.html.js"
+	},
+	"head":{
+		"title":"Административный кабинет"
+	},
+	"layout":{
+		"index:ROOT": {
+			"MAIN":"main:ROOT",
+			"ASIDE":"aside:ROOT"
+		}
+	},
+	"childs":{
+		"notes":{
+			"head":{ "title":"Список заметок", "hidden":true },
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"notes:ROOT"
+				},
+				"notes:ROOT":{
+					"LIST":"notes:LIST"
+				}
+			},
+			"child":{
+				"head":{ "title":"Заметка" },
+				"layout":{
+					"index:ROOT":{
+						"MAIN":"main:NOTE"
+					}
+				},
+				"childs":{
+					"history":{
+						"head":{ "title":"История" },
+						"layout":{
+							"index:ROOT":{
+								"MAIN":"history:ROOT"
+							}
+						},
+						"child":{
+							"head":{ "title":"Заметка в истории" },
+							"layout":{
+								"index:ROOT":{
+									"MAIN":"history:REV"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"error":{
+			"head":{"hidden":true, "title":"Ошибка"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"controller:ERROR"
+				}
+			}
+		}
+	}
+}
