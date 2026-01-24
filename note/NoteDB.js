@@ -133,7 +133,7 @@ NoteDB.getNote = async (db, note_id) => {
 	const note = await db.fetch(`
 		SELECT 
 			nick, text, title, rev, note_id, creater_id,
-			token_edit, token_view,
+			edit_token, view_token,
 			endorsement,
 			UNIX_TIMESTAMP(now()) as now, 
 			UNIX_TIMESTAMP(date_create) as date_create, 

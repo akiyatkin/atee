@@ -1,24 +1,37 @@
 {
 	"index":"index:ROOT",	
 	"json":{
+		"theory:BUTTON":"/-user/get-user",
+		"theory:ALL":"/-note/theory/get-note-all",
 		"main:ROOT":"/-note/admin/get-admin"
 	},
 	"jsontpl":{
+		"theory:CONTROL":"/-note/theory/get-control?note=${env.crumb.name}",
+		"theory:PAGE":"/-note/theory/get-note-page?note=${env.crumb.name}",
+		"theory:EDIT":"/-note/theory/get-note-edit?note=${env.crumb.name}",
+		"theory:LIST":"/-note/theory/get-search?query=${env.bread.get.query ?? ''}",
 		"notes:ROOT":"/-note/admin/get-admin-notes?endorsement=${env.bread.get.endorsement ?? ''}",
 		"notes:LIST":"/-note/admin/get-admin-notes-list?endorsement=${env.bread.get.endorsement ?? ''}&query=${env.bread.get.query ?? ''}",
 		"main:NOTE":"/-note/admin/get-admin-note?note_id=${env.crumb.name}",
 		"history:ROOT":"/-note/admin/get-admin-history?note_id=${env.crumb.parent.name}",
 		"history:REV":"/-note/admin/get-admin-history-rev?note_id=${env.crumb.parent.parent.name}&rev=${env.crumb.name}",
-		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}"
+		"index:ROOT":"/-sitemap/get-head?path=${env.bread.path}&root=${env.bread.root}",
+
+		"note:ROOT":"/-note/get-note?note=${env.crumb.name}",
+		"note-props:ROOT":"/-note/get-note-props?note=${env.crumb.parent.name}",
+		"note-props:REV":"/-note/get-note-rev?note=${env.crumb.parent.parent.name}&rev=${env.crumb.name}"
 	},
 	"tpl":{
+		"note":"/-note/layout.html.js",
+		"note-props":"/-note/props.html.js",
 		"frame":"/-controller/frame.html.js",
 		"controller":"/-controller/layout.html.js",
 		"index":"/-controller/index-board.html.js",
 		"aside":"/-note/admin/aside.html.js",
 		"main":"/-note/admin/main.html.js",
 		"history":"/-note/admin/history.html.js",
-		"notes":"/-note/admin/notes.html.js"
+		"notes":"/-note/admin/notes.html.js",
+		"theory":"/-note/theory/layout.html.js"
 	},
 	"head":{
 		"title":"Административный кабинет"
@@ -28,8 +41,74 @@
 			"MAIN":"main:ROOT",
 			"ASIDE":"aside:ROOT"
 		}
-	},
+	},	
 	"childs":{
+		"theory":{
+			"head":{"title":"Журнал"},
+			"layout":{
+				"index:ROOT":{
+					"MAIN":"theory:ROOT"
+				},
+				"theory:ROOT":{
+					"BUTTON":"theory:BUTTON",
+					"LIST":"theory:LIST"
+				}
+			},
+			"childs":{
+				"all":{
+					"head":{ "hidden":true, "title":"Все записи" },
+					"layout":{
+						"index:ROOT":{
+							"MAIN":"theory:ALL"
+						}
+					}
+				},
+				"edit":{
+					"layout":{},
+					"child":{
+						"checktpl":"/-get-note-check?note=${env.crumb.name}&path=@atee/note/theory/edit",
+						"head":{"jsontpl":"/-get-note-head?note=${env.crumb.name}"},
+						"layout":{
+							"index:ROOT":{
+								"MAIN":"note:ROOT"
+							}
+						},
+						"childs":{
+							"props":{
+								"head":{ "title":"Свойства" },
+								"layout":{
+									"index:ROOT":{
+										"MAIN":"note-props:ROOT"
+									}
+								},
+								"child":{
+									"layout":{
+										"index:ROOT":{
+											"MAIN":"note-props:REV"
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"note":{
+					"layout":{},
+					"child":{
+						"head":{"jsontpl":"/-note/theory/get-head?note=${env.crumb.name}"},
+						"checktpl":"/-note/theory/get-note-check?note=${env.crumb.name}&path=@atee/note/theory/note/",
+						"layout":{
+							"index:ROOT":{
+								"MAIN":"theory:PAGE"
+							},
+							"theory:PAGE":{
+								"CONTROL":"theory:CONTROL"
+							}
+						}
+					}
+				}
+			}
+		},
 		"notes":{
 			"head":{ "title":"Список заметок", "hidden":true },
 			"layout":{

@@ -37,7 +37,7 @@ rest.addResponse('get-filter-prop-more-search', async view => {
 	const hashs = await view.get('hashs')
 
 	const prop = await view.get('prop')
-	if (!~['more','column',].indexOf(prop.known)) return view.err('Нет доступа к свойству', 403)
+	if (!~['more','column','secondary'].indexOf(prop.known)) return view.err('Нет доступа к свойству', 403)
 	if (!~['value','text','date','number',].indexOf(prop.type)) return view.err('Нет доступа к свойству', 403)
 	const prop_id = prop?.prop_id
 	

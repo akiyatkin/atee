@@ -1,6 +1,6 @@
 import cards from "/-shop/cards.html.js"
 import cost from "/-words/cost.js"
-
+import addget from "/-words/addget.js"
 import Ecommerce from "/-shop/Ecommerce.js"
 
 const tpl = {}
@@ -27,7 +27,7 @@ tpl.showBreadcrumbs = (data, env, model) => `
 	<div style="margin: 1em 0 0.5em; display: flex; justify-content: space-between;">
 		${cards.badgecss(data, env)}
 		<div>${model.group_nicks.map(group_nick => tpl.showGroupLink(data, env, data.groups[group_nick])).join(', ')}</div>
-		<div>${cards.nalichieBadge(data, env, model)}</div>
+		<div>${cards.badgeModelNalichieDiscount(data, env, model)}</div>
 	</div>
 `
 
@@ -36,7 +36,7 @@ tpl.showModel = (data, env, model, selitem = tpl.getSelItem(data, env)) =>`
 	<h1 id="page" style="margin-top:0">${cards.getItemName(data, selitem)}</h1>
 	${tpl.showMainData(data, env, model, selitem)}
 	<div style="margin-bottom:2rem">
-		${model.iprops.length ? tpl.showItemsTable(data, env, model) : ''}
+		<!--model.iprops.length ? tpl.showItemsTable(data, env, model) : ''-->
 		${model.recap.naimenovanie?.length > 1 || model.recap.opisanie?.length > 1 ? model.items.map(item => tpl.showItemDescription(data, env, item, model)).join('') : ''}
 		${selitem['skryt-filtry'] ? '' : tpl.showModelProps(data, env, model)}
 		
@@ -61,7 +61,7 @@ tpl.showModelProps = (data, env, model) => {
 	const mprops = Object.keys(model.recap).filter(prop_nick => {
 		if (~model.iprops.indexOf(prop_nick)) return false
 		const prop = data.props[prop_nick]
-		if (prop.known != 'more') return false
+		if (!~['more','secondary'].indexOf(prop.known)) return false
 		return true
 	}).sort((a, b) => {
 		const propa = data.props[a]
@@ -92,13 +92,13 @@ tpl.showTrProp = (data, env, item, prop_nick) => {
 tpl.isItemPropNotTable = (data, env, prop_nick) => {
 	const prop = data.props[prop_nick]
 	if (prop.type != 'text') return false
-	if (prop.known != 'more') return false
+	if (!~['more','secondary'].indexOf(prop.known)) return false
 	return true
 }
 tpl.isItemPropForTable = (data, env, prop_nick) => {
 	const prop = data.props[prop_nick]
 	if (prop.type == 'text') return false
-	if (prop.known != 'more') return false
+	if (!~['more','secondary'].indexOf(prop.known)) return false
 	return true
 }
 tpl.showItemsTable = (data, env, model) => `
@@ -291,17 +291,19 @@ tpl.showMainData = (data, env, model, selitem) => `
 			${cards.line('Бренд', tpl.filters(data, env, model, model.recap, 'brend'))}
 			
 
-			
-
 			${model.recap.cena?.length > 1 ? cards.block(cards.price(model.recap)) : ''}
 			
-			${(model.items.length > 1 || !selitem) ? cards.block(tpl.showItemButtons(data, env, model, selitem)) : ''}
 			
+			${(model.items.length > 1 || !selitem) ? tpl.showItemButtons(data, env, model, selitem) : ''}
+			
+			${selitem.modifikaciya ? tpl.showModification(data, env, selitem) : ''}
+
 			${selitem ? cards.block(tpl.showTableItem(data, env, model, selitem)) : ''}
 			<div>
 				${selitem ? cards.block(selitem.cena ? tpl.buyButton(data, env, model, selitem) : tpl.orderButton(data, env, model, selitem)) : ''}
 			</div>
-
+			
+			
 			${selitem ? '<div style="font-style:italic; margin-top:2em">' + cards.getSomeTitle(data, selitem, 'opisanie') + '</div>' : ''}
 			
 			
@@ -364,10 +366,10 @@ const showCost = (value) => value ? `${cost(value)}${common.unit()}` : ''
 // `)
 
 
-tpl.getItemButton = (data, env, model, item, i, selitem) => {
+tpl.getItemButton = (data, env, model, item, i, selitem, title) => {
 	const selected = item == selitem
 
-	const title = cards.getVariant(data, model, item)
+	title = title || cards.getVariant(data, model, item)
 	
 	return selected ? 
 	`<span style="display: inline-block; border-radius:var(--radius);
@@ -401,10 +403,140 @@ tpl.getItemButton = (data, env, model, item, i, selitem) => {
 	</script>
 `
 }
+tpl.showItemButtons = (data, env, model, selitem) => {
+	/*Есть выбранный selitem а вместе с ним и выбранные характеристики*/
+	//const title = cards.getVariant(data, model, selitem)
+	const list = cards.getItemPropList(data, env, model)
+	
+	if (list.length < 1) return tpl.showItemButtonsSingleChoice(data, env, model, selitem)
+	
+	
+	// const title = list.map(prop_nick => {
+	// 	const prop = data.props[prop_nick]
+	// 	const titles = cards.getSomeTitles(data, selitem, prop_nick)
+	// 	if (prop.unit) return titles.map(title => title + ' ' + prop.unit)
+	// 	return titles
+	// })
+	const htmls = [`
+		<div style="
+			margin: 1em 0;
+		    border-radius: 1em;
+		">
+		`
+    ]
+	
+	for (const prop_nick of list) {
+		const prop = data.props[prop_nick]
+		htmls.push(`
+			<div style="margin: 0.5em 0;">
+				<div><b>${prop.prop_title}</b></div>
+				${model.recap[prop_nick].map(value_nick => tpl.getPropButton(data, env, model, list, selitem, prop_nick, value_nick)).join(' &nbsp; ')}
+			</div>
+		`)
+	}
+	
+	htmls.push('</div>')
+	return htmls.join('')
+}
+const escapeHTML = str => typeof(str) != 'string' ? str : str.replace(/[&<>'"]/g, tag => ({
+	'&': '&amp;',
+	'<': '&lt;',
+	'>': '&gt;',
+	"'": '&#39;',
+	'"': '&quot;'
+}[tag]));
+tpl.showModification = (data, env, item) => `
+	<div style="margin:0.5em 0">
 
-tpl.showItemButtons = (data, env, model, selitem) => `
-	<div style="display: flex; flex-wrap: wrap; gap: 1ch;">
-		${model.items.map((item, i) => tpl.getItemButton(data, env, model, item, i, selitem)).join('')}
+		<div><b>${cards.getSomeTitle(data, item, 'modifikaciya')}</b></div>
+		<button class="a">${escapeHTML(env.bread.get.modification) || 'Выбрать...'}</button>
+		<script>
+			(btn => {
+				btn.addEventListener('click', async () => {
+					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+					const popup = await Dialog.open({
+						tpl:"/-shop/cart/modification.html.js",
+						sub:"ROOT",
+						json:"/-shop/cart/get-modification?brendart_nick=${item.brendart[0]}"
+					})
+					const form = popup.getElementsByTagName('form')[0]
+					form.addEventListener('submit', async e => {
+						e.preventDefault()
+						const addget = await import('/-words/addget.js').then(r => r.default)
+						const Client = await window.getClient()
+						const modification = form.elements.modification.value
+						Client.go(addget(Client.bread.get, {modification}))
+						Dialog.hide()
+					})
+				})
+			})(document.currentScript.previousElementSibling)
+		</script>
+	</div>
+`
+tpl.getPropButton = (data, env, model, list, selitem, prop_nick, value_nick) => {
+	list = list.filter(nick => nick != prop_nick) //другие свойства кроме выбранного
+	
+	const items = model.items.filter(item => { //все items с нужным значением. Клик и одно из них выбирается, то которое больше похоже на уже выбранное
+		//if (item == selitem) return false
+		if (~item[prop_nick].indexOf(value_nick)) return true
+		return false
+	})
+
+	//но при клике откроем то, у которого остальное всё такое же как и у selitem
+	let item = items.find(item => {
+		if (list.some(othe_prop_nick => {
+			if (selitem[othe_prop_nick].join(',') == item[othe_prop_nick].join(',')) return false
+			return true //это выход
+		})) return false //Нашли другое свойство которое есть в selitem и не равно item
+		return true
+	})
+	
+	if (!item) {
+		item = items[0]
+		//return tpl.getItemA(data, env, model, item, model.items.indexOf(item), selitem, '<span class="mute">' + (data.values[value_nick]?.value_title || value_nick) + '<span>')
+	}
+	
+
+	return tpl.getItemA(data, env, model, item, model.items.indexOf(item), selitem, data.values[value_nick]?.value_title || value_nick)
+}
+tpl.getItemA = (data, env, model, item, i, selitem, title) => {
+	const selected = item == selitem
+
+	title = title || cards.getVariant(data, model, item)
+	
+	return selected ? 
+	`<span>
+		${title}
+	</span>` : 
+	`<a class="a" data-scroll="none" rel="nofollow"
+		href="${cards.getItemPath(data, item)}${addget(env.bread.get, {}, ['modification'])}">
+		${title}
+	</a><script>
+		(async btn => {
+			const products = [${JSON.stringify(
+				Ecommerce.getProduct(data, {
+					coupon:env.theme.partner,
+					item: item, 
+					listname: 'Модель', 
+					position: i + 1, //Позиции одной модели на одном месте получается находятся
+					group_nick: model.group_nicks[0]
+				})
+			)}]
+			const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
+			btn.addEventListener('click', () => Ecommerce.click(products))
+			btn.addEventListener('contextmenu', () => Ecommerce.click(products))
+			btn.addEventListener('auxclick', () => Ecommerce.click(products))
+
+		})(document.currentScript.previousElementSibling)
+	</script>
+`
+}
+//tpl.getItemButton = (data, env, model, item, i, selitem)
+tpl.showItemButtonsSingleChoice = (data, env, model, selitem) => `
+	<div>
+		<div style="display: flex; flex-wrap: wrap; gap: 1ch;">
+			${model.items.map((item, i) => tpl.getItemButton(data, env, model, item, i, selitem)).join('')}
+		</div>
 		<script>
 			(async div => {
 				const reachGoal = goal => {
@@ -482,7 +614,7 @@ tpl.buyButton = (data, env, model, selitem) => {
 				
 					if (!ans.quantity) {
 						const Basket = await import('/-shop/cart/Basket.js').then(r => r.default)
-						await Basket.addButton(btn, {brendart_nick, quantity: 1, nocopy: 1})
+						await Basket.addButton(btn, {brendart_nick, quantity: 1, nocopy: 1, modification: Client.bread.get.modification || ''})
 
 						const Ecommerce = await import("/-shop/Ecommerce.js").then(r => r.default)
 						product.quantity = 1

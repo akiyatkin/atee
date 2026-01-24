@@ -141,7 +141,7 @@ rest.addVariable('lettercase#required', ['lettercase', 'required'])
 
 
 rest.addArgument('known', (view, known) => {
-	if (~['system','more','column'].indexOf(known)) return known
+	if (~['system','more','column','secondary'].indexOf(known)) return known
 	return null
 })
 rest.addVariable('known#required', ['known', 'required'])

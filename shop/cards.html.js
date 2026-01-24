@@ -30,19 +30,25 @@ cards.getItemName = (data, selitem) => { //ecommerce.name (в паре с getVar
 	if (selitem.naimenovanie) return gain('naimenovanie') + '  ' + gain('brendmodel')
 	return gain('brendmodel')
 }
-
-cards.getVariant = (data, model, item) => { //ecommerce.variant
-	if (model.items.length == 1) return '' //variant не будет указан
+cards.getItemPropList = (data, env, model) => {
 	const list = model.iprops.filter(prop_nick => {
 		const prop = data.props[prop_nick]
 		if (!prop?.type) return false
 		if (prop.type == 'text') return false
 		if (prop.known == 'column') return false
-		if (prop.known == 'system') return false
+		if (prop.known == 'secondary') return false
+		//if (prop.known == 'system') return false
 		if (model.recap[prop_nick].length < 2) return false //В имя не надо вставлять то что нельзя выбрать если значение только одно
-		if (!item[prop_nick]) return false
+		//if (!item[prop_nick]) return false
 		return true
-	}).map(prop_nick => {
+	})
+
+	return list
+}
+cards.getVariant = (data, model, item) => { //ecommerce.variant
+	if (model.items.length == 1) return '' //variant не будет указан
+	let list = cards.getItemPropList(data, env, model)
+	list = list.map(prop_nick => {
 		const prop = data.props[prop_nick]
 		const titles = cards.getSomeTitles(data, item, prop_nick)
 		if (prop.unit) return titles.map(title => title + ' ' + prop.unit)
@@ -233,7 +239,16 @@ cards.printProp = (data, env, model, prop_nick) => {
 	const fn = cards.prop[pr.card_tpl] || cards.prop['default']
 	
 
-	const gainTitles = (nick) => cards.getSomeTitles(data, model.recap, nick || prop_nick).join(', ') + unit
+	let gainTitles = () => cards.getSomeTitles(data, model.recap, prop_nick).join(', ') + unit
+
+	if (data.props[prop_nick].type == 'number' && nicks.length > 5) {
+		gainTitles = () => {
+			const titles = nicks
+			const min = titles.at(0)
+			const max = titles.at(-1)
+			return `${min}&mdash;${max} ${unit}`
+		}
+	}
 	const gainTitle = (nick) => cards.getSomeTitle(data, model.recap, nick || prop_nick) + unit
 	const unit = (pr.unit ? (' ' + pr.unit) : '')
 	return fn(data, env, model, pr, nicks, gainTitle, gainTitles)
@@ -329,7 +344,7 @@ cards.price = (item) => {
 	const staraya = item['staraya-cena']
 	const cena = item.cena
 	if (!cena) return html
-	if (staraya && staraya.at(0) > cena.at(0)) {
+	if (staraya && staraya.at(0) > cena.at(0) && cena.length == 1) {
 		html += `<s style="opacity: .5;">${cost(staraya.at(-1))}${cards.unit()}</s>`
 	}
 
@@ -365,7 +380,7 @@ cards.image = (data, env, item) => `
 cards.nalichie = (data, env, mod) => {
 	if (!mod.recap['nalichie'] && !mod.recap['staraya-cena']) return ''
 	return `
-		<div style="position:absolute; right: 0px; z-index:1; margin: 1rem; top:0">${cards.nalichieBadge(data, env, mod)}</div>
+		<div style="position:absolute; right: 0px; z-index:1; margin: 1rem; top:0">${cards.badgeModelNalichieDiscount(data, env, mod)}</div>
 	`
 }
 cards.getDiscounts = (model) => {
@@ -389,17 +404,17 @@ cards.discountBadge = (item) => {
 	if (!discount) return ''
 	return `&nbsp;<span class="badge badge_discount">-${discount}%</span>`
 }
-cards.nalichieBadge = (data, env, model) => {
-	const gain = (name) => cards.getSomeTitle(data, model.recap, name)
-	const discount = cards.getModelDiscount(model)
-	return model.recap.nalichie ? `
-		<a rel="nofollow" href="${cards.getGroupPath(data, data.group?.group_nick || model.groups?.[0])}${cards.addget(env.bread.get, {m:(data.md?.m || '') + ':nalichie::.' + model.recap.nalichie?.[0] + '=1'})}" 
-			class="badge badge_${model.recap.nalichie?.[0]}">
-			${gain('nalichie')}
-		</a>
-	` : ''
-}
-cards.badgenalichie = (data, env, model) => {
+// cards.nalichieBadge = (data, env, model) => {
+// 	const gain = (name) => cards.getSomeTitle(data, model.recap, name)
+// 	const discount = cards.getModelDiscount(model)
+// 	return model.recap.nalichie ? `
+// 		<a rel="nofollow" href="${cards.getGroupPath(data, data.group?.group_nick || model.groups?.[0])}${cards.addget(env.bread.get, {m:(data.md?.m || '') + ':nalichie::.' + model.recap.nalichie?.[0] + '=1'})}" 
+// 			class="badge badge_${model.recap.nalichie?.[0]}">
+// 			${gain('nalichie')}
+// 		</a>
+// 	` : ''
+// }
+cards.badgeModelNalichieDiscount = (data, env, model) => {
 	const gain = (name) => cards.getSomeTitle(data, model.recap, name)
 	const discount = cards.getModelDiscount(model)
 	return model.recap.nalichie ? `

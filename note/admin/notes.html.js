@@ -17,7 +17,7 @@ export const ROOT = (data, env) => err(data, env) || `
 		</span>
 	</h1>
 	<p>
-		<input autocomplete="on" name="search" type="search" placeholder="Поиск..." 
+		<input autocomplete="off" name="search" type="search" placeholder="Поиск..." 
 			style="opacity:0; transition: 0.3s; width:100%; font-size: 1.5rem; padding: 0.5rem 1rem; border-radius: 1rem; border-width:1px; border-color:rgba(0,0,0,0.2)">
 		<script>
 			(input => {
@@ -59,6 +59,8 @@ export const LIST = (data, env) => `
 					<td>Онлайн</td>
 					<td>Редакторов</td>
 					<td>Наблюдателей</td>
+					<td>Создатель</td>
+					<td>Редактор</td>
 				</tr>
 			</thead>
 			<tbody>
@@ -83,5 +85,7 @@ const showNote = (data, env, note) => `
 	<td>${note.useronline}</td>
 	<td>${note.editors}</td>
 	<td>${note.viewers}</td>
+	<td>${note.creater_email || ''}</td>
+	<td>${note.editor_email || ''}</td>
 </tr>
 `

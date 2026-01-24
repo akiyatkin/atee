@@ -13,7 +13,7 @@
 		"recalc:ROOT":["check"]
 	},
 	"parsedtpl":{
-		"brief:PLOP":"${env.bread.get.preset ?? ''}",		
+		"brief:PLOP":"${env.bread.get.preset ?? ''}",
 		"recalc:ROOT":"${env.timings.view_time}"
 	},
 	"onlyclient":["recalc:ROOT"],

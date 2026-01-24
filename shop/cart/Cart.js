@@ -335,7 +335,7 @@ Cart.removeItem = async (db, order_id, item) => {
 	// 	WHERE order_id = :order_id
 	// `, order)
 }
-Cart.addItem = async (db, order_id, brendart_nick, quantity = 0) => {
+Cart.addItem = async (db, order_id, brendart_nick, quantity = 0, modification = '') => {
 	//const brendart_nick = item.brendart[0]
 	const pos = await db.fetch(`
 		SELECT quantity FROM shop_basket 
@@ -346,18 +346,19 @@ Cart.addItem = async (db, order_id, brendart_nick, quantity = 0) => {
 	if (!pos) {
 		await db.exec(`
 			INSERT INTO shop_basket (
-			order_id, brendart_nick, quantity, dateadd, dateedit
+			order_id, brendart_nick, quantity, dateadd, dateedit, modification
 		) VALUES (
-			:order_id, :brendart_nick, :quantity, now(), now()
-		)`, {order_id, brendart_nick, quantity})
+			:order_id, :brendart_nick, :quantity, now(), now(), :modification
+		)`, {order_id, brendart_nick, quantity, modification})
 	} else {
 		await db.exec(`
 			UPDATE shop_basket 
 			SET 
 				quantity = :quantity, 
+				modification = :modification,
 				dateedit = now()
 			WHERE order_id = :order_id and brendart_nick = :brendart_nick
-		`, {order_id, brendart_nick, quantity})
+		`, {order_id, brendart_nick, quantity, modification})
 	}
 	await db.exec(`
 		UPDATE shop_orders 

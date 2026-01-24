@@ -281,7 +281,7 @@ cards.image = (data, mod) => `
 cards.nal = nicked('Наличие')
 
 cards.nalichie = (data, env, mod) => `
-	<div style="position:absolute; right: 0px; z-index:1; margin: 1rem; top:0">${cards.badgenalichie(data, env, mod)}</div>
+	<div style="position:absolute; right: 0px; z-index:1; margin: 1rem; top:0">${cards.badgeModelNalichieDiscount(data, env, mod)}</div>
 `
 cards.badgenalichie = (data, env, mod) => mod.Наличие ? `
 	<a rel="nofollow" href="${links.root}/${links.addm(data)}more.${cards.nal}::.${nicked(mod.Наличие)}=1" 

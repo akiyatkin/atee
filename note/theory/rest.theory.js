@@ -29,6 +29,7 @@ import NoteDB from "/-note/NoteDB.js"
 // 	if (!page) return view.err('Страница не найдена', 404)
 // 	return page
 // })
+
 rest.addArgument('editor_id', ['int'])
 
 

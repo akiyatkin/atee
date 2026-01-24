@@ -6,6 +6,7 @@ const tpl = {}
 export default tpl
 
 tpl.ALL = (data, env) => data.result ? `
+	<p><a href="theory">Теория</a></p>
 	<h1>Все записи</h1>
 	${data.list.map(text => tpl.showText(data, env, text)).join('<hr>')}
 
@@ -18,16 +19,20 @@ tpl.showText = (data, env, text) => `
 tpl.title = (data, env) => `<h1>Теория</h1>`
 tpl.ROOT = (data, env) => `
 	${tpl.title(data,env)}
-	<input autocomplete="on" name="theory" type="search" placeholder="Поиск..." style="opacity:0; transition: 0.3s; width:100%; font-size: 1.5rem; padding: 0.5rem 1rem; border-radius: 1rem; border-width:1px; border-color:rgba(0,0,0,0.2)">
+	<input autocomplete="off" name="theory" type="search" placeholder="Поиск..." style="opacity:0; transition: 0.3s; width:100%; font-size: 1.5rem; padding: 0.5rem 1rem; border-radius: 1rem; border-width:1px; border-color:rgba(0,0,0,0.2)">
 	<script>
 		(input => {
 
 			const go = async () => {
 				const Client = await window.getClient()
 				const nicked = await import('/@atee/nicked').then(r => r.default)
-				const val = nicked(input.value)
-				if (val) Client.go('/theory/search/' + val)
-				else Client.go('/theory')
+				const query = nicked(input.value)
+
+				const addget = await import('/-words/addget.js').then(r => r.default)
+				Client.go('theory' + addget(Client.bread.get, {query}, ['query']))
+
+				// if (val) Client.go('/theory/search/' + val)
+				// else Client.go('/theory')
 			}
 			input.addEventListener('input', go)
 			input.addEventListener('focus', go)
@@ -39,11 +44,11 @@ tpl.ROOT = (data, env) => `
 	</script>
 	<div id="BUTTON"></div>
 	<div id="LIST" style="margin-top:2rem; margin-bottom: 2rem; display: grid; gap: 0.5rem"></div>
+	<p align="right"><a href="theory/all">Открыть всё</a></p>
 `
 tpl.BUTTON = (data, env) => data.user?.manager ? `
 	<div style="position: relative;">
 		<p style="position: absolute; right:0; z-index: 1">
-			<a href="/theory/all">Открыть всё</a>
 			${field.button({label:"Cоздать", action:"/-note/theory/set-note-create", go:"/note/", goid:"note_id"})}
 		</p>
 	</div>
@@ -91,44 +96,46 @@ tpl.showNotFound = (data, env) => `
 
 tpl.showNote = (data, env, note) => `
 	<div data-id="${note.note_id}" class="item ${note.published ? 'published' : '' }">
-		<a href="/theory/note/${note.note_id}-${note.nick || 'empty'}">${note.title || 'Пустая запись'}</a> <small style="opacity:0.5">${ago.show(note.date_edit)}</small>
+		<a href="theory/note/${note.note_id}-${note.nick || 'empty'}">${note.title || 'Пустая запись'}</a> <small style="opacity:0.5">${ago.show(note.date_edit)}</small>
 	</div>
 `
 
 
 
 tpl.CONTROL = (data, env) => {
-	if (data.user?.manager) {
-		return `
-			<p align="right">
-				
-				${
-					field.button({
-						label:"Удалить", 
-						action:"/-note/theory/set-note-delete?note_id=" + data.note.note_id, 
-						go:'/theory', 
-						confirm:'Вы точно хотите удалить запись?'
-					})
-				}
-				
+	const html = `
+		<p align="right">
+			${tpl.showLink(data.theory.prev)} ${!data.theory.prev && !data.theory.next ? '' : '&#8644;'} ${tpl.showLink(data.theory.next)}
+		</p>
+		<!-- <p align="right">
+			<a href="theory">К списку</a>
+		</p> -->
+	`
+	if (!data.user?.manager) return html
+	return html + `
+		<p align="right">
+			
+			
+			${
+				field.switch({
+					name:'published', 
+					action:'/-note/theory/set-switch-published?note_id=' + data.theory.note_id, 
+					value: data.theory.published, 
+					values: {'': 'Не опубликовано','1':'Опубликовано'}
+				})
+			}
 
-				${
-					field.switch({
-						name:'published', 
-						action:'/-note/theory/set-switch-published?note_id=' + data.note.note_id, 
-						value: data.note.published, 
-						values: {'': 'Не опубликовано','1':'Опубликовано'}
-					})
-				}
-
-
-
-				<a target="about:blank" href="/note/${env.crumb.name.split('-').shift()}">Изменить</a>
-			</p>
-		` 
-	} else {
-		return ``
-	}
+			<a href="theory/edit/${data.theory.note_id}">Изменить</a>
+			${
+				field.button({
+					label:"Удалить", 
+					action:"/-note/theory/set-note-delete?note_id=" + data.theory.note_id, 
+					go:'/theory', 
+					confirm:'Вы точно хотите удалить запись?'
+				})
+			}
+		</p>
+	`
 }
 
 
@@ -142,29 +149,27 @@ tpl.printDates = (data, env) => {
 	else return date_create + ' &mdash; ' + date_edit
 }
 tpl.PAGE = (data, env) => (data.result ? `
-	<p align="right" style="float:right; margin-left:1rem">
-		${tpl.printDates(data, env)}
-	</p>
+	<p><a href="theory">Ноты</a></p>
+	
 	
 	${data.note.text || '<h1>Пустая запись</h1>'}
 	
 	
-	<p align="right">
-		${tpl.showLink(data.note.prev)} &#8644; ${tpl.showLink(data.note.next)}
-	</p>
-	<p align="right">
-		<a href="/theory">К списку</a>
-	</p>
+	
 
 	` : `
+	<p><a href="theory">Ноты</a></p>
 	<h1>Ошибка</h1><p>${data.msg}</p>
 `) 
 
 + `
-	<div style="margin-bottom:2rem" id="CONTROL"></div>
+	<p align="right" style="float:right; margin-left:1rem">
+		${tpl.printDates(data, env)}
+	</p>
+	<div style="margin-bottom:2rem; clear:both" id="CONTROL"></div>
 `
 tpl.showLink = (note) => note ? `
-	<a href="/theory/note/${note.note_id}-${note.nick}">${note.title || 'Пустая запись'}</a>
+	<a href="theory/note/${note.note_id}-${note.nick || 'empty'}">${note.title || 'Пустая запись'}</a>
 ` : ''
 tpl.EDIT = (data, env) => data.result ? `
 	<div style="display: flex; flex-direction: column; margin-top:3rem">
@@ -187,8 +192,8 @@ tpl.EDIT = (data, env) => data.result ? `
 			})(document.currentScript.parentNode)
 		</script>
 		<p align="right">
-			<a href="/theory/note/${data.note.note_id}-${data.note.nick}">Посмотреть</a>,
-			<a href="/note/props/${data.note.note_id}">Свойства</a>
+			<a href="theory/note/${data.note.note_id}-${data.note.nick}">Посмотреть</a>,
+			<a href="theory/note/props/${data.note.note_id}">Свойства</a>
 		</p>
 	</div>
 ` : `<h1>Ошибка</h1><p>${data.msg}</p>`

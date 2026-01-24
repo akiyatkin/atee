@@ -43,10 +43,10 @@ Sharp.processImage = async (inputPath, outputPath, opt) => {
 		const { width, height } = metadata
 		
 		if (maxwidth > width) maxwidth = width
-		let maxheight = maxwidth / ratio
+		let maxheight = Math.round(maxwidth / ratio)
 		if (maxheight > height) {
 			maxheight = height
-			maxwidth = maxheight * ratio
+			maxwidth = Math.round(maxheight * ratio)
 		}		
 		//sharp.cache(false)
 		let proc = await sharp(inputPath)

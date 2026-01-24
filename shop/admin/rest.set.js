@@ -401,7 +401,7 @@ rest.addAction('set-group-self_cards', ['admin','setaccess'], async view => {
 })
 rest.addAction('set-group-card', ['admin','setaccess'], async view => {
 	const prop = await view.get('prop#required')
-	if (!~['more','column'].indexOf(prop.known)) return view.err('На карточке будут видны только свойства more или column')
+	if (!~['more','column','secondary'].indexOf(prop.known)) return view.err('На карточке будут видны только свойства more или column')
 	const group_id = await view.get('group_id#required')
 	const db = await view.get('db')
 
@@ -438,7 +438,7 @@ rest.addAction('set-group-self_filters', ['admin','setaccess'], async view => {
 
 rest.addAction('set-group-filter', ['admin','setaccess'], async view => {
 	const prop = await view.get('prop#required')
-	if (!~['more','column'].indexOf(prop.known)) return view.err('Фильтры будут видны только свойств more или column')
+	if (!~['more','column','secondary'].indexOf(prop.known)) return view.err('Фильтры будут видны только свойств more или column')
 	if (!~['value','number'].indexOf(prop.type)) return view.err('Тип свойства <b>'+prop.type+'</b> не подходит для фильтра')
 
 	const group_id = await view.get('group_id#required')

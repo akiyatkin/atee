@@ -481,7 +481,7 @@ Shop.mdfilter = async (db, mgroup) => {
 	for (const prop_nick in mgroup) {
 		const prop = await Shop.getPropByNick(db, prop_nick)
 		if (!prop) continue
-		if (!~['more','column'].indexOf(prop.known)) continue
+		if (!~['more','column','secondary'].indexOf(prop.known)) continue
 
 		if (typeof mgroup[prop_nick] == 'object') {
 			newmgroup[prop_nick] = {}
@@ -953,7 +953,9 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 		const item_props = {}
 		for (const item of model.items) {
 			for (const prop_nick in model_props) {
-				if (String(item[prop_nick]) != String(model_props[prop_nick])) {
+				if (
+					//prop_nick == 'vysota-nojek-sm' || 
+					String(item[prop_nick]) != String(model_props[prop_nick])) {
 					delete model_props[prop_nick]
 					const prop = await Shop.getPropByNick(db, prop_nick)
 					//if (prop.known) continue
@@ -1514,7 +1516,7 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 	const prop_id = prop.prop_id
 	const group_id = group.group_id
 	if (!~['value','number'].indexOf(prop.type)) return false
-	if (!~['more','column'].indexOf(prop.known)) return false
+	if (!~['more','column','secondary'].indexOf(prop.known)) return false
 	
 
 	const limit = 12

@@ -17,6 +17,7 @@ rest.extra(rest_shop)
 import rest_user from '/-user/rest.user.js'
 rest.extra(rest_user)
 
+
 rest.addArgument('year', ['int#required'])
 rest.addArgument('month', ['int#required'])
 

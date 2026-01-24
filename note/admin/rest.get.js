@@ -80,6 +80,8 @@ rest.addResponse('get-admin-notes-list', async (view) => {
 		view.data.notes = await db.all(`
 			SELECT 
 				n.title, n.note_id, n.rev, 
+				COALESCE(u.email) as creater_email,
+				COALESCE(u2.email) as editor_email,
 				SUM(s.open) as useronline, 
 				COUNT(CASE WHEN s.accept = 'edit' THEN s.user_id END) as editors,
 	    		COUNT(CASE WHEN s.accept = 'view' THEN s.user_id END) as viewers,
@@ -88,6 +90,8 @@ rest.addResponse('get-admin-notes-list', async (view) => {
 				UNIX_TIMESTAMP(n.date_edit) as date_edit 
 			FROM note_notes n
 			LEFT JOIN note_stats s on s.note_id = n.note_id
+			LEFT JOIN user_uemails u on (u.user_id = n.creater_id and u.ordain = 1)
+			LEFT JOIN user_uemails u2 on (u2.user_id = n.editor_id and u2.ordain = 1)
 			WHERE n.title != '' 
 				and n.endorsement = :endorsement
 				and (${hashs.map(hash => 'n.search like "%' + hash.join('%" and n.search like "%') + '%"').join(' or ') || '1 = 1'})
@@ -99,6 +103,8 @@ rest.addResponse('get-admin-notes-list', async (view) => {
 		view.data.notes = await db.all(`
 			SELECT 
 				n.title, n.note_id, n.rev, 
+				COALESCE(u.email) as creater_email,
+				COALESCE(u2.email) as editor_email,
 				SUM(s.open) as useronline, 
 				COUNT(CASE WHEN s.accept = 'edit' THEN s.user_id END) as editors,
 	    		COUNT(CASE WHEN s.accept = 'view' THEN s.user_id END) as viewers,
@@ -107,6 +113,8 @@ rest.addResponse('get-admin-notes-list', async (view) => {
 				UNIX_TIMESTAMP(n.date_edit) as date_edit 
 			FROM note_notes n
 			LEFT JOIN note_stats s on s.note_id = n.note_id
+			LEFT JOIN user_uemails u on (u.user_id = n.creater_id and u.ordain = 1)
+			LEFT JOIN user_uemails u2 on (u2.user_id = n.editor_id and u2.ordain = 1)
 			WHERE n.title != ''
 			GROUP BY n.note_id
 			ORDER BY n.date_edit DESC

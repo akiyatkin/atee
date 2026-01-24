@@ -1,3 +1,4 @@
+
 import Rest from "@atee/rest"
 
 const rest = new Rest()
@@ -13,10 +14,13 @@ rest.extra(rest_theory)
 import rest_search from "/-dialog/search/rest.search.js"
 rest.extra(rest_search)
 
+import rest_path from "/-controller/rest.path.js"
+rest.extra(rest_path)
+
 import rest_note from "/-note/rest.note.js"
 rest.extra(rest_note)
 
-import User from "/-user/User.js"
+
 
 // rest.addArgument('note_id', ['int#required'])
 // rest.addArgument('token', ['string'])
@@ -24,7 +28,8 @@ import User from "/-user/User.js"
 
 import unique from "/-nicked/unique.js"
 import Access from "/-controller/Access.js"
-
+import User from "/-user/User.js"
+import Theory from "/-note/theory/Theory.js"
 import NoteDB from "/-note/NoteDB.js"
 
 import config from "@atee/config"
@@ -37,6 +42,7 @@ rest.addResponse('get-note-all', async view => {
 	view.ans.list = await db.colAll(`
 		SELECT text
 		FROM note_notes
+		WHERE endorsement = 'theory'
 	`)
 	return view.ret()
 })
@@ -44,11 +50,11 @@ rest.addResponse('get-note-all', async view => {
 
 
 rest.addResponse('get-control', async (view) => {
-	const user = await view.get('user#required')
+	const user = await view.get('user#required')	
 	const note = await view.get('note#required')
-	delete note.text
-	view.ans.note = note
 	view.ans.user = user
+	const db = await view.get('db')
+	view.ans.theory = await Theory.get(db, note.note_id)
 	return view.ret()
 })
 
@@ -58,27 +64,7 @@ rest.addResponse('get-note-page', async (view) => {
 
 	const note = await view.get('note#required')
 	const db = await view.get('db')
-	const theory = await db.fetch('SELECT note_id, published, ordain FROM theory_notes WHERE note_id = :note_id', note)
 	
-
-	note.next = await db.fetch(`
-		SELECT nn.note_id, nn.nick, nn.title
-		FROM theory_notes tn
-			LEFT JOIN note_notes nn on nn.note_id = tn.note_id
-		WHERE tn.ordain > :ordain and tn.published = 1
-		ORDER BY tn.ordain 
-		LIMIT 1
-	`, {...note, ...theory})
-	note.prev = await db.fetch(`
-		SELECT nn.note_id, nn.nick, nn.title
-		FROM theory_notes tn
-			LEFT JOIN note_notes nn on nn.note_id = tn.note_id
-		WHERE tn.ordain < :ordain and tn.published = 1
-		ORDER BY tn.ordain DESC
-		LIMIT 1
-	`, {...note, ...theory})
-
-
 	view.ans.note = note
 	return view.ret()
 })
@@ -194,9 +180,10 @@ rest.addResponse('get-page', async view => {
 
 rest.addResponse('get-note-check', async view => {
 	const note = await view.get('note')
+	const path = await view.get('path')
 	const nick = note.nick || 'empty'
-	if (nick != note.request_nick) {
-		view.ans.redirect = `/theory/note/${note.note_id}-${nick}`
+	if (nick != note.request_nick) { //Путь должен быть абсолютный, так как относительность считается от точки входа
+		view.ans.redirect = '/' + path + `${note.note_id}-${nick}`
 	}
 	return view.ret()
 })

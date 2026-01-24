@@ -174,7 +174,7 @@ rest.addResponse('set-add', async view => {
 
 	const item = await view.get('item#required')
 
-	
+	const modification = await view.get('modification')
 	const quantity = await view.get('quantity')
 	const nocopy = await view.get( 'nocopy')
 	const utms = await view.get('getutms')
@@ -194,7 +194,7 @@ rest.addResponse('set-add', async view => {
 	
 	if (order.partner?.key != partner?.key) orderrefresh = true
 	view.ans.orderrefresh = orderrefresh
-	await Cart.addItem(db, order_id, item.brendart[0], quantity)
+	await Cart.addItem(db, order_id, item.brendart[0], quantity, modification)
 	const list = await Cart.basket.get(db, order, partner)
 	await Cart.recalcOrder(db, order_id, list, partner)
 	return view.ret()

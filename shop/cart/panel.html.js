@@ -802,7 +802,7 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 
 tpl.showModification = (data, env, pos, item = pos.item) => `
 	<div style="margin-bottom:0.25em">
-		<button class="a">${pos.modification || cards.getSomeTitle(data, item, 'modifikaciya')}</button>
+		<button class="a" style="color:${pos.modification ? '' : 'crimson'}">${pos.modification || cards.getSomeTitle(data, item, 'modifikaciya')}</button>
 		<script>
 			(btn => {
 				btn.addEventListener('click', async () => {
