@@ -494,8 +494,9 @@ rest.addAction('props', ['admin'], async view => {
 			LEFT JOIN shop_props bp on pr.prop_nick = bp.prop_nick
 		WHERE
 		(${hashs.map(hash => 'pr.prop_nick like "%' + hash.join('%" and pr.prop_nick like "%') + '%"').join(' or ') || '1 = 1'}) 
-		ORDER BY rand()
-		limit 20
+		-- ORDER BY rand()
+		order by pr.ordain
+		limit 100
 	`)
 	for(const row of list) {
 		view.data.props.unshift(row)

@@ -286,8 +286,9 @@ rest.addAction('props', ['admin'], async view => {
 		FROM sources_props pr
 		where 
 		(${hashs.map(hash => 'pr.prop_nick like "%' + hash.join('%" and pr.prop_nick like "%') + '%"').join(' or ') || '1 = 1'}) 
-		ORDER BY rand()
-		limit 20
+		-- ORDER BY rand()
+		ORDER BY pr.ordain
+		limit 100
 	`)
 	//view.data.list = list.slice(0, 1000)
 	return view.ret()

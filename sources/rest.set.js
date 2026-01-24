@@ -721,8 +721,10 @@ rest.addAction('set-prop-ordain', ['admin','checkrecalc'], async view => {
 	
 	const prop = await Sources.getProp(db, id)
 	if (!prop) return view.err()
-	await Sources.reorderProps(db)
-	//await Consequences порядок свойств ничего не меняет
+	//await Consequences порядок свойств ничего не меняет НО требуется публикация
+	Recalc.recalc(async (db) => {
+		await Sources.reorderProps(db)
+	}, true)
 	return view.ret()
 })
 rest.addAction('set-reset-values', ['admin','checkrecalc'], async (view) => {

@@ -408,7 +408,7 @@ tpl.showItemButtons = (data, env, model, selitem) => {
 	//const title = cards.getVariant(data, model, selitem)
 	const list = cards.getItemPropList(data, env, model)
 	
-	if (list.length < 1) return tpl.showItemButtonsSingleChoice(data, env, model, selitem)
+	//if (list.length < 1) return tpl.showItemButtonsSingleChoice(data, env, model, selitem)
 	
 	
 	// const title = list.map(prop_nick => {
@@ -475,13 +475,13 @@ tpl.showModification = (data, env, item) => `
 `
 tpl.getPropButton = (data, env, model, list, selitem, prop_nick, value_nick) => {
 	list = list.filter(nick => nick != prop_nick) //другие свойства кроме выбранного
-	
+
 	const items = model.items.filter(item => { //все items с нужным значением. Клик и одно из них выбирается, то которое больше похоже на уже выбранное
 		//if (item == selitem) return false
 		if (~item[prop_nick].indexOf(value_nick)) return true
 		return false
 	})
-
+	
 	//но при клике откроем то, у которого остальное всё такое же как и у selitem
 	let item = items.find(item => {
 		if (list.some(othe_prop_nick => {
