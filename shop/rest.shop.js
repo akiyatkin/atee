@@ -1,6 +1,5 @@
 import nicked from "@atee/nicked"
 import Shop from "/-shop/Shop.js"
-import User from "/-user/User.js"
 import config from "@atee/config"
 
 import Rest from "@atee/rest"

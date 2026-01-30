@@ -9,6 +9,7 @@ import Recalc from "/-sources/Recalc.js"
 import Consciousness from "/-sources/Consciousness.js"
 import PerformanceMonitor from "./PerformanceMonitor.js"
 import represent from "/-sources/represent.js"
+import Db from "/-db/Db.js"
 
 const Sources = {}
 const conf = await config('sources')
@@ -154,6 +155,7 @@ Sources.scheduleDailyRenovate = (time = '01:09') => {
 		console.log('/-sources/set-sources-renovate', data.result)
 
 		console.time('OPTIMIZE')
+		const db = await new Db().connect()
 		//console.log('Выполнена перестройка индексов (Full Text Index size trouble) ')
 		await db.exec('OPTIMIZE TABLE sources_rows, sources_witems')
 		console.timeEnd('OPTIMIZE')
