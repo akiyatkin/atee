@@ -16,7 +16,7 @@ rest.addResponse('main', async view => {
 	const md = view.data.md = await view.get('md')
 	const db = await view.get('db')
 	view.data.conf = await config('shop', true)
-	const root = view.data.root = await view.get('root#required')
+	const root = view.data.root = await view.get('shoproot#required')
 	const childs = view.data.childs = []
 
 	const groups = view.data.groups = {}

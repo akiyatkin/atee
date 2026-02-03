@@ -193,7 +193,7 @@ rest.addResponse('get-group-head', async view => {
 })
 rest.addResponse('get-group-sitemap', async view => {
 	const db = await view.get('db')
-	const root = await view.get('root#required')
+	const root = await view.get('shoproot#required')
 	const conf = await config('shop')
 	const childs = {}
 	const root_path = conf.root_path.slice(1)
@@ -219,7 +219,7 @@ rest.addResponse('get-item-head', async view => {
 })
 rest.addResponse('get-item-sitemap', async view => {
 	const db = await view.get('db')
-	const root = await view.get('root#required')
+	const root = await view.get('shoproot#required')
 	const conf = await config('shop')
 
 	const md = await Shop.getmd(db, '', '', [])
@@ -317,7 +317,7 @@ rest.addResponse('get-model', async (view) => {
 	const db = await view.get('db')
 
 	const conf = view.data.conf = await config('shop', true)
-	const root = view.data.root = await view.get('root#required')
+	const root = view.data.root = await view.get('shoproot#required')
 	
 
 	const partner = await view.get('partner')
@@ -487,7 +487,7 @@ rest.addResponse('get-livemodels', async (view) => {
 
 	const partner = await view.get('partner')
 
-	const root = await view.get('root#required')
+	const root = await view.get('shoproot#required')
 	
 
 	const bind = await Shop.getBind(db)

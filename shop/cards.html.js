@@ -31,7 +31,7 @@ cards.getItemName = (data, selitem) => { //ecommerce.name (в паре с getVar
 	return gain('brendmodel')
 }
 cards.getItemPropList = (data, env, model) => {
-	const list = model.iprops.filter(prop_nick => {
+	let list = model.iprops.filter(prop_nick => {
 		const prop = data.props[prop_nick]
 		if (!prop?.type) return false
 		if (prop.type == 'text') return false
@@ -42,6 +42,9 @@ cards.getItemPropList = (data, env, model) => {
 		//if (!item[prop_nick]) return false
 		return true
 	})
+	if (!list.length) {
+		list = ['art']
+	}
 
 	return list
 }

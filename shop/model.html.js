@@ -5,6 +5,7 @@ import Ecommerce from "/-shop/Ecommerce.js"
 
 const tpl = {}
 export default tpl
+tpl.css = ['/-sources/revscroll.css']
 tpl.getSelItem = (data, env) => {
 	const model = data.model
 	const name = env.crumb.child?.name || ''
@@ -36,7 +37,7 @@ tpl.showModel = (data, env, model, selitem = tpl.getSelItem(data, env)) =>`
 	<h1 id="page" style="margin-top:0">${cards.getItemName(data, selitem)}</h1>
 	${tpl.showMainData(data, env, model, selitem)}
 	<div style="margin-bottom:2rem">
-		<!--model.iprops.length ? tpl.showItemsTable(data, env, model) : ''-->
+		
 		${model.recap.naimenovanie?.length > 1 || model.recap.opisanie?.length > 1 ? model.items.map(item => tpl.showItemDescription(data, env, item, model)).join('') : ''}
 		${selitem['skryt-filtry'] ? '' : tpl.showModelProps(data, env, model)}
 		
@@ -53,6 +54,9 @@ tpl.showModel = (data, env, model, selitem = tpl.getSelItem(data, env)) =>`
 	</div>
 	<div class="modfiles" style="margin-bottom:2rem">
 		${data.files.map(tpl.filerow).join('')}
+	</div>
+	<div class="revscroll">
+		${model.iprops.length ? tpl.showItemsTable(data, env, model) : ''}
 	</div>
 `
 

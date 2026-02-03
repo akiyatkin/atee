@@ -19,7 +19,7 @@ rest.extra(rest_search)
 
 
 
-rest.addVariable('root#required', async view => {
+rest.addVariable('shoproot#required', async view => {
 	const conf = await config('shop')
 	const db = await view.get('db')
 	const group_id = await Shop.getGroupIdByNick(db, conf.root_nick)
