@@ -37,7 +37,7 @@ cards.getItemPropList = (data, env, model) => {
 		if (prop.type == 'text') return false
 		if (prop.known == 'column') return false
 		if (prop.known == 'secondary') return false
-		//if (prop.known == 'system') return false
+		if (prop.known == 'system') return false //Старая цена и Цена по купону достаются принудительно
 		if (model.recap[prop_nick].length < 2) return false //В имя не надо вставлять то что нельзя выбрать если значение только одно
 		//if (!item[prop_nick]) return false
 		return true
