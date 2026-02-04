@@ -15,14 +15,17 @@ yml.ROOT = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
 		${data.group_nicks.map(group_nick => yml.category(data, env, group_nick)).join('')}
 	</categories>
 	<offers>
-		${data.list.map(plop => yml.showOffer(data, env, plop)).join('')}
-	</offers>
-	<collections>
-		${data.group_nicks.map(group_nick => yml.collection(data, env, group_nick)).join('')}
-	</collections>
+ 		${data.list.map(plop => yml.showOffer(data, env, plop)).join('')}
+ 	</offers>
+ 	<collections>
+ 		${data.group_nicks.map(group_nick => yml.collection(data, env, group_nick)).join('')}
+ 	</collections>
+
+
  </shop>
  </yml_catalog>
 `
+
 
 const showParentId = (parent_id) => parent_id ? ` parentId="${parent_id}"` : ''
 yml.category = (data, env, group_nick, group = data.groups[group_nick]) => `
@@ -68,8 +71,8 @@ yml.showOffer = (data, env, plop) => `
 		${plop.group_nicks.map(group_nick => yml.collectionid(data, env, group_nick)).join('')}
 		${yml.oldprice(data, env, plop)}
 		<currencyId>RUB</currencyId>
-		<typePrefix>${data.groups[plop.group_nicks.at(-1)].group_title}</typePrefix>
-		<categoryId>${plop.group_ids[0]}</categoryId>
+		<typePrefix>${plop.group_nicks.length > 1 ? data.groups[plop.group_nicks.at(-1)].parent_title : data.groups[plop.group_nicks[0]].group_title}</typePrefix>
+		<categoryId>${plop.group_nicks.length > 1 ? data.groups[plop.group_nicks.at(-1)].parent_id : plop.group_ids[0]}</categoryId>
 		${plop.images_title ? yml.image(plop.images_title) : ''}
 		${yml.brand(data, env, plop)}
 		${yml.des(plop.opisanie_title)}

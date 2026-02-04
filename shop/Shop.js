@@ -62,7 +62,8 @@ Shop.getPlopHead = async (plop) => {
 	return Shop.getGainHead(plop, gain)
 }
 Shop.getItemHead = async (db, item) => {
-	const gain = async (prop_nick) => Shop.cleanDescription((await Shop.getSomeTitles(db, item, prop_nick)).join(', '))
+	//const gain = async (prop_nick) => Shop.cleanDescription((await Shop.getSomeTitles(db, item, prop_nick)).join(', '))
+	const gain = async (prop_nick) => Shop.cleanDescription(await Shop.getSomeTitle(db, item, prop_nick))
 	return Shop.getGainHead(item, gain)
 }
 Shop.getGainHead = async (item, gain) => {
@@ -85,7 +86,7 @@ Shop.getGainHead = async (item, gain) => {
 	
 
 
-	if (image_src) head.image_src = image_src
+	if (image_src) head.image_src = '/' + image_src
 	
 	if (opisanie) head.description = opisanie
 	else if (naimenovanie) head.description = naimenovanie
@@ -673,6 +674,23 @@ Shop.getSomeTitles = async (db, item, prop_nick) => {
 		}
 	}
 	return res
+}
+Shop.getSomeTitle = async (db, item, prop_nick) => {
+	if (!item[prop_nick]) return []
+	const prop = await Shop.getPropByNick(db, prop_nick)
+	const res = []
+	for (const nick of item[prop_nick]) {
+		if (prop.type == 'value') {
+			const value = await Shop.getValueByNick(db, nick)
+			res.push(value?.value_title || nick)
+		} else if (prop.type == 'date') {
+			res.push(ddd.ai(nick))
+		} else { //text, number
+			res.push(nick)
+		}
+		return res[0]
+	}
+	return ''
 }
 Shop.cleanDescription = (text) => {
 	if (!text) return ''

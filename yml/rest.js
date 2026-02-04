@@ -88,9 +88,15 @@ rest.addResponse('get-yandex', async view => {
 		}
 		
 		models[brendmodel_nick] = model
+		
+		model['group_nicks'] = unique(model['group_nicks'].flat())
+		model['group_ids'] = unique(model['group_ids'].flat())
 
-		model['group_nicks'] = model.group_nicks[0]
-		model['group_ids'] = model.group_ids[0]
+
+		// model['group_nicks'].push(...model.group_nicks)
+		// model['group_ids'] ??= []
+		// model['group_ids'].push(...model.group_ids)
+		//model['group_ids'] = model['group_ids']
 
 		for (const single of ['images_title', 'brendmodel_nick','brendmodel_title','brend_title','model_title','naimenovanie_title','opisanie_title']) {
 			if (!model[single]) continue
@@ -102,14 +108,15 @@ rest.addResponse('get-yandex', async view => {
 		if (model['cena'] < model['staraya-cena']) delete model['staraya-cena']	
 	}	
 
-	data.list = Object.values(models)
-
+	data.list = Object.values(models)	
 	data.group_ids = []
 	for (const item of data.list) {
-		data.group_ids.push(...item.group_ids)
+		data.group_ids.push(...item.group_ids.flat())
 	}
 	data.group_ids = unique(data.group_ids)
 	
+
+
 
 
 
@@ -129,7 +136,7 @@ rest.addResponse('get-yandex', async view => {
 		//{group_id, parent_id, group_title, group_nick, icon, description}
 		data.groups[group_nick] = group
 	}
-
+	
 	const prepareSrc = src => /^http/.test(src) ? encodeURI(src) : 'https://' + host + '/' + encodeURI(src)
 	for (const item of data.list) {
 		if (item.images_title) item.images_title = prepareSrc(item.images_title)
@@ -149,6 +156,7 @@ rest.addResponse('get-yandex', async view => {
 	const shop = await config('shop', true)
 	const xml = tpl.ROOT(data, {conf, shop, host: view.visitor.client.host, email: mail.main || ''})
 	view.ext = 'xml'
+
 	return xml
 })
 export default rest
