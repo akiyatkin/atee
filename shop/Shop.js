@@ -694,6 +694,7 @@ Shop.getSomeTitle = async (db, item, prop_nick) => {
 }
 Shop.cleanDescription = (text) => {
 	if (!text) return ''
+	if (typeof text != 'string') return String(text)
 	text = text
 		.replace(/<script([\S\s]*?)>([\S\s]*?)<\/script>/ig, '')
 		.replace(/<style([\S\s]*?)>([\S\s]*?)<\/style>/ig, '')
