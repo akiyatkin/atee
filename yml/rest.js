@@ -126,6 +126,7 @@ rest.addResponse('get-yandex', async view => {
 	data.group_icons = {}
 	for (const group_id of data.group_ids) {
 		const group = await Shop.getGroupById(db, group_id)
+
 		const group_nick = group.group_nick
 		data.group_nicks.push(group_nick)
 		data.group_descriptions[group_nick] = await Shop.getGroupPage(group_nick, view.visitor)
@@ -135,7 +136,7 @@ rest.addResponse('get-yandex', async view => {
 		}
 		//{group_id, parent_id, group_title, group_nick, icon, description}
 		data.groups[group_nick] = group
-	}
+	}	
 	
 	const prepareSrc = src => /^http/.test(src) ? encodeURI(src) : 'https://' + host + '/' + encodeURI(src)
 	for (const item of data.list) {

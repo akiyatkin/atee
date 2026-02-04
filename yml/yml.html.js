@@ -71,8 +71,8 @@ yml.showOffer = (data, env, plop) => `
 		${plop.group_nicks.map(group_nick => yml.collectionid(data, env, group_nick)).join('')}
 		${yml.oldprice(data, env, plop)}
 		<currencyId>RUB</currencyId>
-		<typePrefix>${plop.group_nicks.length > 1 ? data.groups[plop.group_nicks.at(-1)].parent_title : data.groups[plop.group_nicks[0]].group_title}</typePrefix>
-		<categoryId>${plop.group_nicks.length > 1 ? data.groups[plop.group_nicks.at(-1)].parent_id : plop.group_ids[0]}</categoryId>
+		<typePrefix>${plop.group_nicks.length > 1 ? data.groups[plop.group_nicks.at(-1)].group_title : data.groups[plop.group_nicks[0]].group_title}</typePrefix>
+		<categoryId>${plop.group_nicks.length > 1 ? data.groups[plop.group_nicks.at(-1)].group_id : plop.group_ids[0]}</categoryId>
 		${plop.images_title ? yml.image(plop.images_title) : ''}
 		${yml.brand(data, env, plop)}
 		${yml.des(plop.opisanie_title)}

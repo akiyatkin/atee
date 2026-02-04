@@ -270,10 +270,18 @@ Shop.getGroupById = Access.poke(async (db, group_id = false) => {
 	}
 	group.childs = group.child_nicks //depricated
 
+	
+	const parent = await Shop.getGroupById(db, group.parent_id)
+	if (parent) group.path = [...parent.path, group.group_id]
+	else group.path = [group.group_id]
+	
+	const conf = await config('shop')
+	const root_id = await Shop.getGroupIdByNick(db, conf.root_nick) //Проверка доступа
+	group.public = ~group.path.indexOf(root_id)
+
 	if (group.self_filters) {
 		group.filter_nicks = await db.colAll(`select prop_nick from shop_filters where group_id = ${group_id} order by ordain`)
 	} else {
-		const parent = await Shop.getGroupById(db, group.parent_id)
 		group.filter_nicks = parent.filter_nicks || []
 	}
 	group.filters = group.filter_nicks //depricated
@@ -281,8 +289,7 @@ Shop.getGroupById = Access.poke(async (db, group_id = false) => {
 
 	if (group.self_cards) {
 		group.card_nicks = await db.colAll(`select prop_nick from shop_cards where group_id = ${group_id} order by ordain`)
-	} else {
-		const parent = await Shop.getGroupById(db, group.parent_id)
+	} else {		
 		group.card_nicks = parent.card_nicks || []
 	}
 	group.cards = group.card_nicks //depricated
@@ -312,6 +319,7 @@ Shop.getGroupById = Access.poke(async (db, group_id = false) => {
 		SELECT category FROM tree
 		WHERE group_id = ${group_id}
 	`)
+
 
 	group.toString = () => group_id
 	return group
@@ -766,7 +774,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 		model_id_to_group_nicks[row.value_id] ??= []
 		for (const group_id of group_ids) {
 			const group = await Shop.getGroupById(db, group_id)
-
+			if (!group.public) continue
 			model_id_to_group_nicks[row.value_id].push(group.group_nick)
 		}
 	}
@@ -849,7 +857,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 			items: Object.values(items)
 		}
 	}
-
+	
 	
 	/*
 		const list = {
@@ -1005,6 +1013,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 			configurable: true
 		})
 	}
+	
 	return list
 }
 
@@ -1369,6 +1378,7 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, samples = [{}], hashs =
 				row.group_nicks = []
 				for (const group_id of group_ids) {
 					const group = await Shop.getGroupById(db, group_id)
+					if (!group.public) continue;
 					row.group_nicks.push(group.group_nick)
 				}
 			}
@@ -1376,6 +1386,7 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, samples = [{}], hashs =
 				row.group_titles = []
 				for (const group_id of group_ids) {
 					const group = await Shop.getGroupById(db, group_id)
+					if (!group.public) continue;
 					row.group_titles.push(group.group_title)
 				}
 			}
