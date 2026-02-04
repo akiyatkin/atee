@@ -530,7 +530,8 @@ tpl.getPropButton = (data, env, model, list, selitem, prop_nick, value_nick) => 
 	//но при клике откроем то, у которого остальное всё такое же как и у selitem
 	let item = items.find(item => {
 		if (list.some(othe_prop_nick => {
-			if (selitem[othe_prop_nick].join(',') == item[othe_prop_nick].join(',')) return false
+			if (!selitem[othe_prop_nick] && !item[othe_prop_nick]) return false
+			if (selitem[othe_prop_nick] && item[othe_prop_nick] && selitem[othe_prop_nick].join(',') == item[othe_prop_nick].join(',')) return false
 			return true //это выход
 		})) return false //Нашли другое свойство которое есть в selitem и не равно item
 		return true
