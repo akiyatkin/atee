@@ -16,7 +16,9 @@ rest.extra(rest_mail)
 import rest_set_manager from '/-shop/cart/rest.set.manager.js'
 rest.extra(rest_set_manager)
 
-rest.addResponse('set-submit', ['terms#required'], async view => {	
+
+
+rest.addAction('set-submit', ['terms#required'], async view => {	
 
 	const user_id = await view.get('user_id#required')
 	const user = await view.get('user#required')
@@ -73,7 +75,7 @@ rest.addResponse('set-submit', ['terms#required'], async view => {
 		return view.ret('Спасибо за заказ. Менеджер оповещён, ответит в течение 24 часов, как можно скорее.')
 	}
 
-	let ouser = order.email ? await User.getUserByEmail(view, order.email) : false
+	let ouser = order.email ? await User.getUserByEmail(db, order.email) : false
 
 	if (user.user_id == ouser.user_id) return ready() //Это я и я зарегистрирован
 	
@@ -111,7 +113,7 @@ rest.addResponse('set-submit', ['terms#required'], async view => {
 
 
 
-rest.addResponse('set-newactive', async view => {
+rest.addAction('set-newactive', async view => {
 	const user_id = await view.get('user_id#required')
 	const db = await view.get('db')
 	const order_id = await view.get('order_id#required')
@@ -125,7 +127,7 @@ rest.addResponse('set-newactive', async view => {
 	
 	return view.ret()
 })
-rest.addResponse('set-remove', async view => {
+rest.addAction('set-remove', async view => {
 	const active_id = await view.get('active_id#required')
 	const partner = await view.get('partner')
 	const db = await view.get('db')
@@ -166,7 +168,7 @@ rest.addAction('set-modification', async view => {
 })
 
 
-rest.addResponse('set-add', async view => {
+rest.addAction('set-add', async view => {
 	const active_id = await view.get('active_id')
 
 	const partner = await view.get('partner')
@@ -200,7 +202,7 @@ rest.addResponse('set-add', async view => {
 	return view.ret()
 })
 
-rest.addResponse('set-clear', async view => {
+rest.addAction('set-clear', async view => {
 	const db = await view.get('db')
 	const order_id = await view.get('order_id#required')
 	const partner = await view.get('partner')
@@ -224,7 +226,7 @@ rest.addResponse('set-clear', async view => {
 
 	return view.ret()
 })
-rest.addResponse('set-field', async view => {
+rest.addAction('set-field', async view => {
 	//const { db, field, value, active_id, user } = await view.gets(['db', 'field', 'value', 'user', 'active_id#required'])
 	
 	const db = await view.get('db')
@@ -257,3 +259,172 @@ rest.addResponse('set-field', async view => {
 	if (!r) return view.err('Ошибка на сервере', 500)
 	return view.ret('Указанные данные сохранены')
 })
+
+
+
+
+// rest.addAction('set-migrate-cart-from-showcase-to-shop', ['admin'], async view => {
+// 	const db = await view.get('db')	
+// 	const conn = await db.pool.getConnection()
+// 	try {
+// 		// await conn.query(`
+// 		// 	ALTER TABLE sources_props
+// 		// 	CHANGE COLUMN known known ENUM('system','more','column','secondary') NOT NULL DEFAULT 'more' COMMENT 'system показывается в админке shop, чтобы настроить группы, но не показывается нигде в интерфейсе даже в json' COLLATE 'utf8mb3_general_ci'
+// 		// `)
+// 		// await conn.query(`
+// 		// 	ALTER TABLE sources_wprops
+// 		// 	CHANGE COLUMN known known ENUM('system','more','column','secondary') NOT NULL DEFAULT 'more' COMMENT 'system показывается в админке shop, чтобы настроить группы, но не показывается нигде в интерфейсе даже в json' COLLATE 'utf8mb3_general_ci'
+// 		// `)
+	
+		
+// 		await conn.query(`SET FOREIGN_KEY_CHECKS = 0`) //truncate быстрей, но с FK не работает
+// 		await conn.query(`TRUNCATE TABLE shop_basket`)
+// 		await conn.query(`TRUNCATE TABLE shop_orders`)
+// 		await conn.query(`TRUNCATE TABLE shop_actives`)
+// 		await conn.query(`TRUNCATE TABLE shop_userorders`)
+
+
+// 		await conn.query(`
+// 			INSERT INTO shop_actives (user_id, order_id)
+// 			SELECT user_id, order_id
+// 			FROM cart_actives
+// 		`)
+// 		await conn.query(`
+// 			INSERT INTO shop_userorders (user_id, order_id)
+// 			SELECT user_id, order_id
+// 			FROM cart_userorders
+// 		`)
+// 		await conn.query(`
+// 			INSERT INTO shop_orders (
+// 				order_id, 
+// 				user_id, 
+// 				order_nick, 
+// 				commentuser, 
+// 				commentmanager, 
+// 				email, 
+// 				phone, 
+// 				name, 
+// 				callback, 
+// 				status, 
+// 				lang, 
+// 				paid, 
+// 				pay, 
+// 				paydata, 
+// 				city_id, 
+// 				freeze, 
+// 				partnerjson, 
+// 				transport, 
+// 				pvz, 
+// 				address, 
+// 				tk, 
+// 				zip, 
+// 				referrer_host, 
+// 				source, 
+// 				content, 
+// 				campaign, 
+// 				medium, 
+// 				term, 
+// 				referrer_host_nick, 
+// 				source_nick, 
+// 				content_nick, 
+// 				campaign_nick, 
+// 				medium_nick, 
+// 				term_nick, 
+// 				count, 
+// 				sum, 
+// 				weight, 
+// 				datecreate, 
+// 				datefreeze, 
+// 				datecancel, 
+// 				datewait, 
+// 				datepay, 
+// 				datepaid, 
+// 				datecheck, 
+// 				datecomplete, 
+// 				dateemail, 
+// 				dateedit
+// 			)
+// 			SELECT 
+// 				order_id, 
+// 				user_id, 
+// 				order_nick, 
+// 				commentuser, 
+// 				commentmanager, 
+// 				email, 
+// 				phone, 
+// 				name, 
+// 				callback, 
+// 				status, 
+// 				lang, 
+// 				paid, 
+// 				pay, 
+// 				paydata, 
+// 				city_id, 
+// 				freeze, 
+// 				partnerjson, 
+// 				transport, 
+// 				pvz, 
+// 				address, 
+// 				tk, 
+// 				zip, 
+// 				referrer_host, 
+// 				source, 
+// 				content, 
+// 				campaign, 
+// 				medium, 
+// 				term, 
+// 				referrer_host_nick, 
+// 				source_nick, 
+// 				content_nick, 
+// 				campaign_nick, 
+// 				medium_nick, 
+// 				term_nick, 
+// 				count, 
+// 				sum, 
+// 				weight, 
+// 				datecreate, 
+// 				datefreeze, 
+// 				datecancel, 
+// 				datewait, 
+// 				datepay, 
+// 				datepaid, 
+// 				datecheck, 
+// 				datecomplete, 
+// 				dateemail, 
+// 				dateedit
+// 			FROM cart_orders
+// 		`)
+		
+
+// 		const [[{prop_id}]] = await conn.query(`select prop_id from showcase_props where prop_nick='art'`)
+
+// 		const [rows, fields] = const conn.query(`select * from shop_basket`)
+
+// 		for (const row of rows) {
+// 			//order_id, dateadd, dateedit, modification, json
+
+// 			//if (row)
+// 			'shirina-sm'
+// 			const art = nicked('Будущее 90x200')
+// 			row['brendart_nick'] = row['brand_nick']+'-'+art
+// 			delete row['model_nick'] = ''
+// 			delete row['brand_nick'] = ''
+// 			delete row['item_num'] = ''
+
+// 			row['quantity'] = row['count']
+// 			delete row['count'] = ''
+			
+// 			row['json'] = row['json']
+// 			row['json_hash'] = row['hash']
+// 			row['json_cost'] = ''
+// 			delete row['hash'] = ''
+// 		}
+
+// 		await conn.query(`SET FOREIGN_KEY_CHECKS = 1`)
+// 	} finally {
+// 		await conn.release()
+// 	}
+	
+
+
+// })

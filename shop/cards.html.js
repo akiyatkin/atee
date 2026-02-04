@@ -177,7 +177,7 @@ cards.card = (data, env, model, i) => {
 }
 cards.data = (data, env, model) => `
 	<div style="margin: 1rem 1rem 0.5rem 1rem;; flex-grow:1; display:flex; flex-direction: column; justify-content: space-between">
-		${cards.nalichie(data, env, model)}
+		${model.recap.cena?.length > 1 ? cards.nalichie(data, env, model) : ''}
 		<a href="${cards.getItemPath(data, model.items[0])}#page"
 			style="
 				padding: 0; color: inherit; border: none; 

@@ -434,11 +434,51 @@ tpl.showItemButtons = (data, env, model, selitem) => {
 		htmls.push(`
 			<div style="margin: 0.5em 0;">
 				<div><b>${prop.prop_title}</b></div>
-				${model.recap[prop_nick].map(value_nick => tpl.getPropButton(data, env, model, list, selitem, prop_nick, value_nick)).join(' &nbsp; ')}
+				${model.recap[prop_nick].map(value_nick => tpl.getPropButton(data, env, model, list, selitem, prop_nick, value_nick)).join(' ')}
 			</div>
 		`)
 	}
 	
+	
+	htmls.push(`
+		<script>
+			(async div => {
+				const reachGoal = goal => {
+					if (!div.closest('body')) return
+					console.log('Goal.reach ' + goal)
+					const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
+					if (metrikaid) ym(metrikaid, 'reachGoal', goal)
+				}
+				for (const a of div.getElementsByTagName('a')) {
+					a.addEventListener('click', e => reachGoal('position'))
+					a.addEventListener('contextmenu', e => reachGoal('position'))
+					a.addEventListener('auxclick', e => reachGoal('position'))
+				}
+				
+				
+
+				const products = ${JSON.stringify(
+					model.items.map((item, i) => {
+						// const single = item.brendart[0] == item.brendmodel[0]
+						const name = env.crumb.name
+						//if (item.art?.[0] == name || item.brendart[0] == name || single) return ''
+						if (item.art?.[0] == name || item.brendart[0] == name) return ''
+						
+						return Ecommerce.getProduct(data, {
+							coupon:env.theme.partner,
+							item: item, 
+							listname: 'Модель', 
+							position: i + 1,
+							group_nick: model.group_nicks[0]
+						})
+					}).filter(val => val)
+				)}
+				const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
+				Ecommerce.impressions(products)
+
+			})(document.currentScript.parentElement)
+		</script>
+	`)
 	htmls.push('</div>')
 	return htmls.join('')
 }
@@ -453,7 +493,7 @@ tpl.showModification = (data, env, item) => `
 	<div style="margin:0.5em 0">
 
 		<div><b>${cards.getSomeTitle(data, item, 'modifikaciya')}</b></div>
-		<button class="a">${escapeHTML(env.bread.get.modification) || 'Выбрать...'}</button>
+		<button style="margin-top: 0.3em;" class="a">${escapeHTML(env.bread.get.modification) || 'Выбрать...'}</button>
 		<script>
 			(btn => {
 				btn.addEventListener('click', async () => {
@@ -464,12 +504,13 @@ tpl.showModification = (data, env, item) => `
 						json:"/-shop/cart/get-modification?brendart_nick=${item.brendart[0]}"
 					})
 					const form = popup.getElementsByTagName('form')[0]
+
 					form.addEventListener('submit', async e => {
 						e.preventDefault()
 						const addget = await import('/-words/addget.js').then(r => r.default)
 						const Client = await window.getClient()
 						const modification = form.elements.modification.value
-						Client.go(addget(Client.bread.get, {modification}))
+						Client.go(addget(Client.bread.get, {modification}), false)
 						Dialog.hide()
 					})
 				})
@@ -509,10 +550,14 @@ tpl.getItemA = (data, env, model, item, i, selitem, title) => {
 	title = title || cards.getVariant(data, model, item)
 	
 	return selected ? 
-	`<span>
+	`<span style="display: inline-block; margin-top:0.3em; border-radius:var(--radius);
+		padding:0 0.5ch; margin-right:2px; line-height: 1.5; text-decoration: none;
+		border:solid rgba(0,0,0,0.7) 3px;">
 		${title}
 	</span>` : 
-	`<a class="a" data-scroll="none" rel="nofollow"
+	`<a style="margin-top:0.3em; display:inline-block; border-radius:var(--radius);
+	padding:0 0.5ch; margin-right:2px; line-height: 1.5; text-decoration: none;
+	border:solid rgba(0,0,0,0.15) 3px;" class="a" data-scroll="none" rel="nofollow"
 		href="${cards.getItemPath(data, item)}${addget(env.bread.get, {}, ['modification'])}">
 		${title}
 	</a><script>

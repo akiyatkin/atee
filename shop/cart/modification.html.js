@@ -9,4 +9,13 @@ tpl.ROOT = (data, env) => err(data, env) || `
 		</div>
 		<button type="submit">Сохранить</button>
 	</form>
+	<script type="module">
+		const reachGoal = goal => {
+			//if (!btn.closest('body')) return
+			console.log('Goal.reach ' + goal)
+			const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
+			if (metrikaid) ym(metrikaid, 'reachGoal', goal)
+		}
+		reachGoal('modification')
+	</script>
 `

@@ -735,7 +735,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 	const bind = await Shop.getBind(db)
 	const key_id_to_model_id = {}
 	const model_id_to_group_nicks = {}
-	if (props.length && partner.cost_nick) props.push(partner.cost_nick)
+	if (props.length && partner?.cost_nick) props.push(partner.cost_nick)
 	
 	for (const row of moditems_ids) {
 		row.key_ids.split(',').forEach((key_id) => {

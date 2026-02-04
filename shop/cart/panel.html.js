@@ -271,7 +271,7 @@ tpl.ROOT = (data, env) => `
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
-const checkbox = (name, title, checked) => `
+tpl.checkbox = (name, title, checked) => `
 	<div style="align-items: flex-start; display: grid; grid-template-columns: max-content 1fr;">
 		<input ${checked ? 'checked' : ''} style="margin-right: 10px; transform: scale(1.4); transform-origin: left center" 
 		type="checkbox" id="contacts_${name}" name="${name}"> 
@@ -395,7 +395,7 @@ tpl.showForm = (data, env) => `
 					${data.order.status == 'wait' ? tpl.svgres('optional', data.order.commentuser) : ''}
 				</div>
 			</div>
-			${data.order.status == 'wait' ? showSubmit(data, env) : ''}
+			${data.order.status == 'wait' ? tpl.showSubmit(data, env) : ''}
 		</form>		
 `
 tpl.formMessage = (data, env) => `
@@ -455,7 +455,7 @@ const showOrders = (data, env) => `
 	</script>
 `
 const showOrder = (data, env, order) => `<button title="${TITLES[order.status]}" ${data.order.order_id == order.order_id ? 'disabled ' : ''}data-order_id="${order.order_id}" style="${order.status == 'complete' ? 'color:green':''} ${order.status == 'cancel' ? 'color:gray; text-decoration: line-through':''} ${order.status == 'wait' ? 'color:red':''}" class="a">${order.order_nick}</button>`
-const showSubmit = (data, env) => `
+tpl.showSubmit = (data, env) => `
 	<input type="hidden" name="source" value="">
 	<input type="hidden" name="content" value="">
 	<input type="hidden" name="campaign" value="">
@@ -463,7 +463,7 @@ const showSubmit = (data, env) => `
 	<input type="hidden" name="term" value="">
 	<input type="hidden" name="referrer_host" value="">
 	<div style="max-width: 500px;">
-		${checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на усфловиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}
+		${tpl.checkbox('terms','<span style="display: block; font-size: 12px; line-height: 14px">Я даю согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на усфловиях и для целей, определенных в <a href="/terms">Согласии</a> на обработку персональных данных.</span>', true)}
 	</div>
 	<div class="formfield submit">
 		<div style="display:flex; justify-content: space-between; align-items: center;">

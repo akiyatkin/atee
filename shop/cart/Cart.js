@@ -65,7 +65,7 @@ const Cart = {
 		return {subject, html, email}
 	},
 	getMailData: async (db, sub, order_id, visitor, partner) => {
-		const order = await Cart.getOrder(db, order_id)
+		const order = await Cart.getOrderById(db, order_id)
 		let list = await Cart.basket.get(db, order, partner)
 		list = list.filter(pos => pos.quantity > 0)
 		const vars = {
