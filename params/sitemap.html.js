@@ -88,6 +88,6 @@ const showBlock = (data, env, heading) => `
 	${Object.entries(heading.items).map(([href, head]) => showLink(href, head)).join('')}
 `
 const showHeading = (data, env, heading) => `
-	<div style="float:right; margin-left:1ch"><a href="${env.crumb.parent}">Карта сайта</a></div>
-	<h2>${heading.title}</h2>
+	<div style="float:right; margin-left:1ch; margin-top:1em"><a href="${env.crumb.parent}">Карта сайта</a></div>
+	<h1>${heading.title}</h1>
 `

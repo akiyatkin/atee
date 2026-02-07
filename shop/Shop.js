@@ -42,6 +42,13 @@ Shop.getGroupIcon = async (group_nick, visitor) => {
 	if (!isfile.isFile()) return false
 	return src
 }
+Shop.getPageByNick = async (page_nick) => {
+	const conf = await config('shop')
+	const page = conf.pages[page_nick]
+	if (!page) return null
+	page.hashs = (page.query || '').split(', ').map(hash => unique(nicked(hash).split('-')).filter(r => r).sort()).filter(r => r.length)
+	return page
+}
 Shop.getGroupHead = async (group, visitor) => {
 	const group_nick = group.group_nick
 	const head = {

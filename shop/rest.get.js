@@ -113,16 +113,26 @@ rest.addResponse('get-filter-prop-more-search', async view => {
 	return view.ret()
 })
 rest.addResponse('get-search-filters', async view => {
-
+	const db = await view.get('db')
+	const conf = view.data.conf = await config('shop', true)
+	const type = await view.get('type')
+	let group, md
+	if (type == 'page') {
+		const page = await view.get('page#required')
+		group = await Shop.getGroupByNick(db, page.group_nick)
+		md = { m: '', mget: page.mget, query: page.query, hashs: page.hashs }		
+		
+	} else {
+		group = view.data.group = await view.get('group#required')
+		md = view.data.md = await view.get('md')
+	}
+	view.data.group = group
+	view.data.md = md
 	
-	const md = view.data.md = await view.get('md')
+
+
 
 	const partner = await view.get('partner')
-	const conf = view.data.conf = await config('shop', true)
-	const group = view.data.group = await view.get('group#required')
-
-	const db = await view.get('db')
-
 	
 	const filters = view.data.filters = []
 	
@@ -165,14 +175,27 @@ rest.addResponse('get-search-filters', async view => {
 })
 
 rest.addResponse('get-search-root', async view => {
-	view.data.conf = await config('shop', true)
-	const md = view.data.md = await view.get('md')	
-	const group = view.data.group = await view.get('group#required')
-
 	const db = await view.get('db')
+	const conf = view.data.conf = await config('shop', true)
+	const type = await view.get('type')
+	let group, md
+	if (type == 'page') {
+		const page = await view.get('page#required')
+		group = await Shop.getGroupByNick(db, page.group_nick)
+		md = { m: '', mget: page.mget, query: page.query, hashs: page.hashs }		
+		
+	} else {
+		group = view.data.group = await view.get('group#required')
+		md = view.data.md = await view.get('md')
+	}
+	view.data.group = group
+	view.data.md = md
+	
 	await Shop.prepareMgetPropsValues(db, view.data, md.mget)
+	
+	
 
-	const group_nick = await view.get('group_nick#required')
+	const group_nick = group.group_nick
 	view.data.text = await Shop.getGroupPage(group_nick, view.visitor)
 
 	//if (reans.status == 404) reans.data = `<script>console.log('Статья поиска ${src}')</script>`
@@ -187,7 +210,7 @@ rest.addResponse('get-search-root', async view => {
 })
 
 rest.addResponse('get-group-head', async view => {
-	const group = await view.get('group#required')
+	const group = await view.get('group#required')	
 	const head = await Shop.getGroupHead(group, view.vistor)
 	return head
 })
@@ -249,11 +272,27 @@ rest.addResponse('get-item-sitemap', async view => {
 })
 
 rest.addResponse('get-search-groups', async view => {
-	const md = view.data.md = await view.get('md')
-	const partner = await view.get('partner')
-	const conf = view.data.conf = await config('shop', true)
-	const group = view.data.group = await view.get('group#required')
 	const db = await view.get('db')
+	const conf = view.data.conf = await config('shop', true)
+	const type = await view.get('type')
+	let group, md
+	if (type == 'page') {
+		const page = await view.get('page#required')
+		group = await Shop.getGroupByNick(db, page.group_nick)
+		md = { m: '', mget: page.mget, query: page.query, hashs: page.hashs }		
+		
+	} else {
+		group = view.data.group = await view.get('group#required')
+		md = view.data.md = await view.get('md')
+	}
+	view.data.group = group
+	view.data.md = md
+	
+
+	const partner = await view.get('partner')
+	
+	
+	
 	const bind = await Shop.getBind(db)
 	const childs = view.data.childs = await Shop.getGroupFilterChilds(db, group.group_id)
 
@@ -362,12 +401,24 @@ rest.addResponse('get-model', async (view) => {
 
 
 rest.addResponse('get-search-list', async (view) => {	
-	const md = view.data.md = await view.get('md')
-	const conf = view.data.conf = await config('shop', true)
-	const group = view.data.group = await view.get('group#required')
-	const group_nick = view.data.group_nick = await view.get('group_nick#required')
-
 	const db = await view.get('db')
+	const conf = view.data.conf = await config('shop', true)
+	const type = await view.get('type')
+	let group, md
+	if (type == 'page') {
+		const page = await view.get('page#required')
+		group = await Shop.getGroupByNick(db, page.group_nick)
+		md = { m: '', mget: page.mget, query: page.query, hashs: page.hashs }		
+		
+	} else {
+		group = view.data.group = await view.get('group#required')
+		md = view.data.md = await view.get('md')
+	}
+	view.data.group = group
+	view.data.md = md
+	const group_nick = group.group_nick
+	
+		
 	const partner = await view.get('partner')
 
 	let p = await view.get('p')

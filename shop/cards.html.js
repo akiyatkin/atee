@@ -15,7 +15,11 @@ cards.unit = (prop) => {
 	return ''
 }
 
-cards.getGroupPath = (data, group_nick) => [data.conf.root_path, 'group', group_nick].join('/')
+cards.getGroupPath = (data, group_nick) => [data.conf.root_path, 'group', group_nick].join('/') //depricated
+cards.getPagePath = (data, page_nick) => [data.conf.root_path, 'page', page_nick].join('/') //depricated
+
+cards.getPath = (conf, type, page_nick) => [conf.root_path, type, page_nick].join('/')
+
 cards.getParentPath = (data, group) => data.conf.root_path + (group.group_nick == data.conf.root_nick ? '' : '/group/' + group.parent_nick)
 cards.getItemPath = (data, item) => {
 	const path = [data.conf.root_path, 'item', item.brendmodel[0]]

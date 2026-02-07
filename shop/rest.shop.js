@@ -17,6 +17,23 @@ rest.extra(rest_db)
 import rest_search from "/-dialog/search/rest.search.js" //аргументы hashs, hash, search 
 rest.extra(rest_search)
 
+rest.addArgument('page', ['nicked'], async (view, page) => {
+	page = await Shop.getPageByNick(page)
+	return page
+})
+
+rest.addArgument('type', ['nicked'])
+//rest.addArgument('page_nick', ['nicked'])
+
+
+rest.addVariable('page#required', ['page', 'required'])
+rest.addVariable('page#always', ['page'], async (view, page) => {
+	if (page) return page
+	const conf = await config('shop')
+	if (!conf.pages.main) return view.err('Не найден main page')
+	return conf.pages.main
+})
+
 
 
 rest.addVariable('shoproot#required', async view => {

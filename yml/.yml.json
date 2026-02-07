@@ -1,19 +1,5 @@
 {
 	"pub":["name","company"],
 	"name":"",
-	"company":"",
-	"feeds":{
-		"main":{
-			"group_nick":"catalog",
-			"hashs":[],
-			"samples": [{
-				"naimenovanie":"any",
-				"opisanie":"any",
-				"images":"any",
-				"cena": {
-					"from": 1000
-				}
-			}]
-		}
-	}
+	"company":""
 }

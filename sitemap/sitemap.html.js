@@ -17,5 +17,5 @@ const showBlock = (data, env, heading) => `
 	</p>
 `
 const showHeading = (data, env, heading) => `
-	<h2>${heading.title}</h2>
+	<h1>${heading.title}</h1>
 `

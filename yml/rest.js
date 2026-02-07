@@ -11,17 +11,17 @@ import rest_funcs from "/-rest/rest.funcs.js"
 import rest_catalog from '/-shop/rest.shop.js'
 const rest = new Rest(rest_vars, rest_funcs, rest_catalog)
 
-rest.addArgument('feed', ['nicked'], async (view, feed) => {
-	const conf = await config('yml')
-	return conf.feeds[feed]
-})
-rest.addVariable('feed#required', ['feed', 'required'])
-rest.addVariable('feed#always', ['feed'], async (view, feed) => {
-	if (feed) return feed
-	const conf = await config('yml')
-	if (!conf.feeds.main) return view.err('Не найден main feed')
-	return conf.feeds.main
-})
+// rest.addArgument('feed', ['nicked'], async (view, feed) => {
+// 	const conf = await config('shop')
+// 	return conf.pages[feed]
+// })
+// rest.addVariable('feed#required', ['feed', 'required'])
+// rest.addVariable('feed#always', ['feed'], async (view, feed) => {
+// 	if (feed) return feed
+// 	const conf = await config('shop')
+// 	if (!conf.pages.main) return view.err('Не найден main feed')
+// 	return conf.pages.main
+// })
 
 
 const escapeHTML = str => typeof(str) != 'string' ? str : str.replace(/[&<>'"]/g, tag => ({
@@ -33,29 +33,31 @@ const escapeHTML = str => typeof(str) != 'string' ? str : str.replace(/[&<>'"]/g
 }[tag]));
 
 rest.addResponse('get-feeds', async view => {
-	const conf = await config('yml')
-	view.ans.data = Object.keys(conf.feeds)
+	const conf = await config('shop')
+	view.ans.data = Object.keys(conf.pages)
 	return view.ret()
 })
 
 rest.addResponse('get-yandex', async view => {
 
-	const feed = await view.get('feed#always')
+	const page = await view.get('page#always')
 	const db = await view.get('db')
 	const partner = await view.get('partner')
 
 	const host = view.visitor.client.host
 	const bind = await Shop.getBind(db)
 
-	const group = await Shop.getGroupByNick(db, feed.group_nick)
+	const group = await Shop.getGroupByNick(db, page.group_nick)
 
-	if (!group) return view.err('Группа не найдена ' + feed.group_nick)
+	if (!group) return view.err('Группа не найдена ' + page.group_nick)
 	const group_id = group.group_id
 	
 	const data = {}
 	data.partner = partner
 	
-	const {count, list} = await Shop.getPlopsWithPropsNoMultiByMd(db, group_id, feed.samples, feed.hashs, partner, {
+	
+
+	const {count, list} = await Shop.getPlopsWithPropsNoMultiByMd(db, group_id, [page.mget], page.hashs, partner, {
 		limit: false,
 		rand: false,
 		add_group_ids: true,

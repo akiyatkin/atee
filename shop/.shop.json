@@ -7,7 +7,21 @@
 	"checkShutdown": true,
 	"group_pages":"data/shop/_pages/",
 	
-
+	"pages":{
+		"main":{
+			"title":"Каталог",
+			"group_nick":"catalog",
+			"query":"",
+			"mget": {
+				"naimenovanie":"any",
+				"opisanie":"any",
+				"images":"any",
+				"cena": {
+					"from": 1000
+				}
+			}
+		}
+	},
 	"partners":{
 		"1998":{
 			"title":"1998",
