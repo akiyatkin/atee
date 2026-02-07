@@ -1,5 +1,7 @@
 {
-	"pub":["root_nick", "root_path", "limit", "cart"],
+	"pub":["root_nick", "root_path", "limit", "cart", "name","company"],
+	"name":"",
+	"company":"",
 	"cart":true,
 	"root_nick":"catalog",
 	"root_path":"/shop",

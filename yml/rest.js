@@ -155,9 +155,8 @@ rest.addResponse('get-yandex', async view => {
 	// })
 
 	const mail = await config('mail')
-	const conf = await config('yml', true)
 	const shop = await config('shop', true)
-	const xml = tpl.ROOT(data, {conf, shop, host: view.visitor.client.host, email: mail.main || ''})
+	const xml = tpl.ROOT(data, {shop, host: view.visitor.client.host, email: mail.main || ''})
 	view.ext = 'xml'
 
 	return xml

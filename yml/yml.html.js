@@ -4,8 +4,8 @@ export default yml
 yml.ROOT = (data, env) => `<?xml version="1.0" encoding="UTF-8"?>
 <yml_catalog date="${new Date().toISOString()}">
 <shop>
-	<name>${env.conf.name || env.host}</name>
-	<company>${env.conf.company || env.host}</company>
+	<name>${env.shop.name || env.host}</name>
+	<company>${env.shop.company || env.host}</company>
 	<url>https://${env.host}</url>
 	<email>${env.email || ''}</email>
 	<currencies>
