@@ -47,6 +47,7 @@ Shop.getPageByNick = async (page_nick) => {
 	const page = conf.pages[page_nick]
 	if (!page) return null
 	page.hashs = (page.query || '').split(', ').map(hash => unique(nicked(hash).split('-')).filter(r => r).sort()).filter(r => r.length)
+	page.m = Shop.makemark(page.mget).join(':')
 	return page
 }
 Shop.getGroupHead = async (group, visitor) => {

@@ -120,7 +120,8 @@ rest.addResponse('get-search-filters', async view => {
 	if (type == 'page') {
 		const page = await view.get('page#required')
 		group = await Shop.getGroupByNick(db, page.group_nick)
-		md = { m: '', mget: page.mget, query: page.query, hashs: page.hashs }		
+
+		md = { m:page.m, mget: page.mget, query: page.query, hashs: page.hashs }		
 		
 	} else {
 		group = view.data.group = await view.get('group#required')

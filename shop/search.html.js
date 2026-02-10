@@ -122,11 +122,11 @@ const sortIcon = (data, env) => {
 	let href, title
 	
 	if (data.md.mget.cena?.upto != null) {
-		title = 'дешевле'
+		title = 'дороже'
 		const number = data.md.mget.cena.upto
 		href = cards.addget(env.bread.get, {m:data.md.m + ':cena::.from='+(number >= data.filtercost.max ? data.filtercost.min : number), p:null})
 	} else if (data.md.mget.cena?.from != null) {
-		title = 'дороже'
+		title = 'дешевле'
 		const number = data.md.mget.cena.from
 		href = cards.addget(env.bread.get, {m:data.md.m + ':cena::.upto='+ (number <= data.filtercost.min ? data.filtercost.max : number), p:null})
 	} else {
