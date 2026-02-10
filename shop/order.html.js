@@ -26,10 +26,11 @@ const checkbox = (name, title, checked) => `
 `
 const getSelItem = (data, env) => {
 	const model = data.model
-	const name = env.crumb.name
+	const name = env.crumb.child?.name
+	
 	// const single = model.recap.brendart[0] == model.recap.brendmodel[0]
 	// return model.items.find(item => item.art?.[0] == name || item.brendart[0] == name || single) || false
-	return model.items.find(item => item.art?.[0] == name || item.brendart[0] == name) || false
+	return model.items.find(item => item.art?.[0] == name || item.brendart[0] == name) || model.items[0]
 }
 export const ROOT = (data, env) => `${showBody(data, env, data.model, getSelItem(data, env))}`
 export const showBody = (data, env, model, item) => {
@@ -43,7 +44,7 @@ export const showBody = (data, env, model, item) => {
 			Менеджер перезвонит в рабочее время.
 		</p>
 		<form action="/-shop/set-order">
-			<input name="brendmodel" type="hidden" value="${item.brendmodel[0]}">
+			<input name="brendmodel" type="hidden" value="${item.brendmodel?.[0]}">
 			<input name="art" type="hidden" value="${item.art?.[0] || item.brendart[0]}">
 			<input name="partner" type="hidden" value="${env.theme.partner}">
 			<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom:1rem">
