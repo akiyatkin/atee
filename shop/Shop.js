@@ -285,7 +285,7 @@ Shop.getGroupById = Access.poke(async (db, group_id = false) => {
 	
 	const conf = await config('shop')
 	const root_id = await Shop.getGroupIdByNick(db, conf.root_nick) //Проверка доступа
-	group.public = ~group.path.indexOf(root_id)
+	group.public = !!~group.path.indexOf(root_id)
 
 	if (group.self_filters) {
 		group.filter_nicks = await db.colAll(`select prop_nick from shop_filters where group_id = ${group_id} order by ordain`)
