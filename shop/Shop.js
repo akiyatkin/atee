@@ -1875,7 +1875,7 @@ Shop.addWhereSamples = async (db, from, join, where, samples, hashs, partner, em
 						LEFT JOIN sources_wnumbers da${i} ON (
 							da${i}.entity_id = win.entity_id 
 							and da${i}.key_id = win.key_id 
-							and da${i}.prop_id = ${prop_id || 0}
+							and da${i}.prop_id = ${prop_id || prop.prop_id}
 						)
 					`)
 				} else {
