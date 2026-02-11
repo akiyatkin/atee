@@ -77,9 +77,11 @@ yml.showOffer = (data, env, plop) => `
 		${yml.brand(data, env, plop)}
 		${yml.des(plop.opisanie_title)}
 		${yml.article(data, env, plop)}
+		${yml.nalichie(data, env, plop)}
 	</offer>
 `
-yml.article = (data, env, plop) => !plop.model_title ? '' : `<param name="article">${plop.model_title}</param>`
+yml.article = (data, env, plop) => !plop.model_title ? '' : `<param name="Артикул">${plop.model_title}</param>`
+yml.nalichie = (data, env, plop) => !plop.nalichie_title ? '' : `<param name="Акция">${plop.nalichie_title}</param>`
 yml.brand = (data, env, plop) => !plop.brend_title ? '' : `<vendor>${plop.brend_title}</vendor>`
 yml.des = (des) => des ? `
 	<description><![CDATA[

@@ -24,16 +24,16 @@ tpl.showError = (data, env) => `
 `
 tpl.showGroupLink = (data, env, group) => `
 	<a data-scroll="none" href="${cards.getGroupPath(data, group.group_nick)}">${group.group_title}</a>`
-tpl.showBreadcrumbs = (data, env, model) => `
+tpl.showBreadcrumbs = (data, env, model, selitem) => `
 	<div style="margin: 1em 0 0.5em; display: flex; justify-content: space-between;">
 		${cards.badgecss(data, env)}
 		<div>${model.group_nicks.map(group_nick => tpl.showGroupLink(data, env, data.groups[group_nick])).join(', ')}</div>
-		<div>${cards.badgeModelNalichieDiscount(data, env, model)}</div>
+		<div>${cards.badge.itemNalichieOrDiscount(data, env, model, selitem)}</div>
 	</div>
 `
 
 tpl.showModel = (data, env, model, selitem = tpl.getSelItem(data, env)) =>`
-	${tpl.showBreadcrumbs(data, env, model)}
+	${tpl.showBreadcrumbs(data, env, model, selitem)}
 	<h1 id="page" style="margin-top:0">${cards.getItemName(data, selitem)}</h1>
 	${tpl.showMainData(data, env, model, selitem)}
 	<div style="margin-bottom:2rem">
@@ -55,9 +55,9 @@ tpl.showModel = (data, env, model, selitem = tpl.getSelItem(data, env)) =>`
 	<div class="modfiles" style="margin-bottom:2rem">
 		${data.files.map(tpl.filerow).join('')}
 	</div>
-	<div class="revscroll">
+	
 		${model.iprops.length ? tpl.showItemsTable(data, env, model) : ''}
-	</div>
+
 `
 
 
@@ -106,18 +106,33 @@ tpl.isItemPropForTable = (data, env, prop_nick) => {
 	return true
 }
 tpl.showItemsTable = (data, env, model) => `
-	<table style="margin-top:2em; margin-bottom: 2em">
-		<thead>
-			<tr>
-				<td>Арт</td>
-				${model.iprops.filter(prop_nick => tpl.isItemPropForTable(data, env, prop_nick)).map(prop_nick => tpl.itemhead(data, env, prop_nick)).join('')}
-				${model.recap.cena ? '<td>Цена</td>' : ''}
-			</tr>
-		</thead>
-		<tbody>
-			${model.items.map((item, i) => tpl.showItemsTableBodyTr(data, env, model, item, i)).join('')}
-		</tbody>
-	</table>
+	<div class="revscroll">
+		<table style="margin-top:2em; margin-bottom: 2em">
+			<thead>
+				<tr>
+					<td>Арт</td>
+					${model.iprops.filter(prop_nick => tpl.isItemPropForTable(data, env, prop_nick)).map(prop_nick => tpl.itemhead(data, env, prop_nick)).join('')}
+					${model.recap.cena ? '<td>Цена</td>' : ''}
+					${model.recap.nalichie ? '<td></td>' : ''}
+				</tr>
+			</thead>
+			<tbody>
+				${model.items.map((item, i) => tpl.showItemsTableBodyTr(data, env, model, item, i)).join('')}
+			</tbody>
+		</table>
+		<script>
+			(async div => {
+				const table = div.querySelector('table')
+				table.addEventListener('click', (e) => {
+					const old = table.querySelector('.clicked')
+					if (old) old.classList.remove('clicked')
+					const tr = e.target.closest('tr')
+					if (!tr) return
+					tr.classList.add('clicked')
+				})
+			})(document.currentScript.parentElement)
+		</script>
+	</div>
 `
 tpl.showItemsTableBodyTr = (data, env, model, item, i) => {
 	const name = env.crumb.name
@@ -129,6 +144,7 @@ tpl.showItemsTableBodyTr = (data, env, model, item, i) => {
 			<td>${art_td}</td>
 			${model.iprops.filter(prop_nick => tpl.isItemPropForTable(data, env, prop_nick)).map(prop_nick => tpl.itemprop(data, env, item, prop_nick)).join('')}
 			${model.recap.cena ? '<td>' + cards.cost(item) + '</td>' : ''}
+			${model.recap.nalichie ? '<td>' + cards.getSomeTitle(data, item, 'nalichie') + '</td>' : ''}
 		</tr>
 	`
 }
@@ -293,16 +309,17 @@ tpl.showMainData = (data, env, model, selitem) => `
 		<div>
 			<b>${cards.line('Модель', cards.getSomeTitle(data, model.recap, 'model'))}</b>
 			${cards.line('Бренд', tpl.filters(data, env, model, model.recap, 'brend'))}
-			
-
+						
 			${model.recap.cena?.length > 1 ? cards.block(cards.price(model.recap)) : ''}
-			
 			
 			${(model.items.length > 1 || !selitem) ? tpl.showItemButtons(data, env, model, selitem) : ''}
 			
 			${selitem.modifikaciya ? tpl.showModification(data, env, selitem) : ''}
 
 			${selitem ? cards.block(tpl.showTableItem(data, env, model, selitem)) : ''}
+			
+			${selitem ? cards.badge.nalichie(data, env, selitem, model.group_nicks[0]) : ''}
+
 			<div>
 				${selitem ? cards.block(selitem.cena ? tpl.buyButton(data, env, model, selitem) : tpl.orderButton(data, env, model, selitem)) : ''}
 			</div>

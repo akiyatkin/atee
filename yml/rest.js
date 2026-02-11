@@ -68,6 +68,7 @@ rest.addResponse('get-yandex', async view => {
 			'brend',
 			'model',
 			'naimenovanie',
+			'nalichie',
 			'opisanie',
 			'images',
 			'staraya-cena',
