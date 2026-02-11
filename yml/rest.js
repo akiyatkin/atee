@@ -105,6 +105,7 @@ rest.addResponse('get-yandex', async view => {
 			model[single] = model[single][0]
 		}
 		for (const minify of ['cena_title','staraya-cena_title']) {
+			if (!model[minify]) continue
 			model[minify] = Math.min(...model[minify])
 		}
 		if (model['cena'] < model['staraya-cena']) delete model['staraya-cena']	
