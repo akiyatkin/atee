@@ -12,6 +12,8 @@
 	"pages":{
 		"main":{
 			"title":"Каталог",
+			"description":"",
+			"image_src":"",
 			"group_nick":"catalog",
 			"query":"",
 			"mget": {

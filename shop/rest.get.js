@@ -233,6 +233,37 @@ rest.addResponse('get-group-sitemap', async view => {
 	}
 	return view.ret()
 })
+rest.addResponse('get-page-head', async view => {
+	const page = await view.get('page#required')	
+	const head = {
+		//group:'Страницы каталога',
+		title: page.title,
+		//name: page.title,
+		description: page.description || '',
+		image_src: page.image_src || ''
+	}
+	return head
+})
+rest.addResponse('get-page-sitemap', async view => {	
+	const conf = await config('shop')
+	
+	const title = 'Каталог'
+	const nick = nicked(title)
+
+	const path = conf.root_path.slice(1)
+	const items = {}
+	for (const page_nick in conf.pages) {
+		const page = conf.pages[page_nick]
+		items[path + '/page/' + page_nick] = {
+			title: page.title,
+			description: page.description || '',
+			image_src: page.image_src || ''
+		}
+	}
+
+	view.data.headings = {[nick]: {title, items}}
+	return view.ret()
+})
 rest.addResponse('get-item-head', async view => {
 	const model = await view.get('model#required')
 	const art = await view.get('art')
@@ -241,6 +272,7 @@ rest.addResponse('get-item-head', async view => {
 
 	return Shop.getItemHead(db, item)
 })
+
 rest.addResponse('get-item-sitemap', async view => {
 	const db = await view.get('db')
 	const root = await view.get('shoproot#required')
