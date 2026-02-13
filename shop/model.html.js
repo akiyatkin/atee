@@ -428,7 +428,6 @@ tpl.showItemButtons = (data, env, model, selitem) => {
 	/*Есть выбранный selitem а вместе с ним и выбранные характеристики*/
 	//const title = cards.getVariant(data, model, selitem)
 	const list = cards.getItemPropList(data, env, model)
-	
 	//if (list.length < 1) return tpl.showItemButtonsSingleChoice(data, env, model, selitem)
 	
 	
@@ -454,6 +453,7 @@ tpl.showItemButtons = (data, env, model, selitem) => {
 				${model.recap[prop_nick].map(value_nick => tpl.getPropButton(data, env, model, list, selitem, prop_nick, value_nick)).join(' ')}
 			</div>
 		`)
+		
 	}
 	
 	
@@ -543,6 +543,13 @@ tpl.getPropButton = (data, env, model, list, selitem, prop_nick, value_nick) => 
 		if (~item[prop_nick].indexOf(value_nick)) return true
 		return false
 	})
+
+	
+	if (prop_nick == 'shirina-sm' && value_nick == '140') {
+		console.log(items.map(item => {
+			return item['shirina-sm'] + 'x' + item['dlina-sm'] + ' ' + item['spalnyh-mest'] + ' ' + item['vysota-nojek-do-matrasa-sm']
+		}), items.length)
+	}
 	
 	//но при клике откроем то, у которого остальное всё такое же как и у selitem
 	let item = items.find(item => {

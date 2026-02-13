@@ -93,8 +93,18 @@ Shop.getGainHead = async (item, gain) => {
 	else if (brendmodel != brendart && art) head.title = [brendmodel, art].join(' ')
 	
 
+	/*
+			cache/shop/resized/asdfasd.png
+			https://amatek.ru/asdfa.png
 
-	if (image_src) head.image_src = '/' + image_src
+
+	*/
+	
+	if (image_src) {
+		if (!/^https?:\/\//.test(image_src)) head.image_src = '/' + image_src
+		else head.image_src = image_src
+	}
+
 	
 	if (opisanie) head.description = opisanie
 	else if (naimenovanie) head.description = naimenovanie

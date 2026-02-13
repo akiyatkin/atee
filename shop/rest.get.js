@@ -285,6 +285,7 @@ rest.addResponse('get-item-sitemap', async view => {
 		limit: false,
 		rand: false,
 		nicks:['art'], //brendmodel_nick, brendart_nick есть всегда
+		add_group_ids: true,
 		titles:['brendart','brendmodel', 'opisanie','brend','art','model','naimenovanie', 'images']
 	})
 	console.timeEnd('Shop.getPlopsWithPropsNoMultiByMd')
@@ -292,15 +293,24 @@ rest.addResponse('get-item-sitemap', async view => {
 	//MRL LED 1125 дымчатый
 	const childs = {}
 	const root_path = conf.root_path.slice(1)
-	for (const plop of list) {
-		const path = [root_path, 'item', plop.brendmodel_nick, plop.art_nick || plop.brendmodel_nick].join('/')
-		childs[path] = await Shop.getPlopHead(plop)
-	}	
+
 	const title = 'Позиции';
 	const nick = nicked(title)
-	view.data.headings = {
-		[nick]: { title, items:childs }
-	}
+	view.data.headings = {}
+	for (const plop of list) {
+		const path = [root_path, 'item', plop.brendmodel_nick, plop.art_nick || plop.brendmodel_nick].join('/')
+		const head = await Shop.getPlopHead(plop)
+
+		const group_id = plop.group_ids.at(-1)
+		const group = await Shop.getGroupById(db, group_id)
+		const key = nick + '-' + group.group_nick
+		view.data.headings[key] ??= { title: title + ' ' + group.group_title, items:[] }
+		view.data.headings[key].items.push(head)
+	}	
+	
+	// view.data.headings = {
+	// 	[nick]: { title, items:childs }
+	// }
 	return view.ret()
 })
 
