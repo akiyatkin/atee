@@ -447,6 +447,9 @@ tpl.showItemButtons = (data, env, model, selitem) => {
 	
 	for (const prop_nick of list) {
 		const prop = data.props[prop_nick]
+		if (!prop) {
+			console.log('Не найдено свойство в data.props', model.recap.brendmodel)
+		}
 		htmls.push(`
 			<div style="margin: 0.5em 0;">
 				<div><b>${prop.prop_title}</b></div>
@@ -535,6 +538,44 @@ tpl.showModification = (data, env, item) => `
 		</script>
 	</div>
 `
+
+function arraysEqual(a, b) {
+	if (a === b) return true;
+	if (a.length !== b.length) return false;
+
+	for (let i = 0; i < a.length; i++) {
+	if (a[i] != b[i]) return false;
+	}
+	return true;
+}
+const getThisItem = (selitem, items, list) => { 
+	//Все items подходят с текущим next значением, но выбрано selitem
+	//Надо выбрать такой, item, который больше всего похож на selitem
+
+
+	for (const item of items) {
+		item.coincidence = 0
+		for (const othe_prop_nick of list) {
+			if (arraysEqual(selitem[othe_prop_nick], item[othe_prop_nick])) item.coincidence++
+		}
+	}
+	let fitem = items[0]
+	for (const item of items) {
+		if (fitem.coincidence < item.coincidence) fitem = item
+	}
+	return fitem
+
+
+	// const item = items.find(item => {
+	// 	if (list.some(othe_prop_nick => {
+	// 		if (!selitem[othe_prop_nick] && !item[othe_prop_nick]) return false
+	// 		if (selitem[othe_prop_nick] && item[othe_prop_nick] && selitem[othe_prop_nick].join(',') == item[othe_prop_nick].join(',')) return false
+	// 		return true //это выход
+	// 	})) return false //Нашли другое свойство которое есть в selitem и не равно item
+	// 	return true
+	// }) || items[0]
+	// return item
+}
 tpl.getPropButton = (data, env, model, list, selitem, prop_nick, value_nick) => {
 	list = list.filter(nick => nick != prop_nick) //другие свойства кроме выбранного
 
@@ -544,27 +585,14 @@ tpl.getPropButton = (data, env, model, list, selitem, prop_nick, value_nick) => 
 		return false
 	})
 
-	
-	if (prop_nick == 'shirina-sm' && value_nick == '140') {
-		console.log(items.map(item => {
-			return item['shirina-sm'] + 'x' + item['dlina-sm'] + ' ' + item['spalnyh-mest'] + ' ' + item['vysota-nojek-do-matrasa-sm']
-		}), items.length)
-	}
-	
+	const item = getThisItem(selitem, items, list, prop_nick, value_nick)
 	//но при клике откроем то, у которого остальное всё такое же как и у selitem
-	let item = items.find(item => {
-		if (list.some(othe_prop_nick => {
-			if (!selitem[othe_prop_nick] && !item[othe_prop_nick]) return false
-			if (selitem[othe_prop_nick] && item[othe_prop_nick] && selitem[othe_prop_nick].join(',') == item[othe_prop_nick].join(',')) return false
-			return true //это выход
-		})) return false //Нашли другое свойство которое есть в selitem и не равно item
-		return true
-	})
 	
-	if (!item) {
-		item = items[0]
-		//return tpl.getItemA(data, env, model, item, model.items.indexOf(item), selitem, '<span class="mute">' + (data.values[value_nick]?.value_title || value_nick) + '<span>')
-	}
+	
+	// if (!item) {
+	// 	item = items[0]
+	// 	//return tpl.getItemA(data, env, model, item, model.items.indexOf(item), selitem, '<span class="mute">' + (data.values[value_nick]?.value_title || value_nick) + '<span>')
+	// }
 	
 
 	return tpl.getItemA(data, env, model, item, model.items.indexOf(item), selitem, data.values[value_nick]?.value_title || value_nick)
