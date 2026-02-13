@@ -304,8 +304,8 @@ rest.addResponse('get-item-sitemap', async view => {
 		const group_id = plop.group_ids.at(-1)
 		const group = await Shop.getGroupById(db, group_id)
 		const key = nick + '-' + group.group_nick
-		view.data.headings[key] ??= { title: title + ' ' + group.group_title, items:[] }
-		view.data.headings[key].items.push(head)
+		view.data.headings[key] ??= { title: title + ' ' + group.group_title, items:{} }
+		view.data.headings[key].items[path] = head
 	}	
 	
 	// view.data.headings = {
