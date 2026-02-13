@@ -163,7 +163,7 @@ tpl.showArtlink = (data, env, model, item, i) => {
 	const path = cards.getItemPath(data, item)
 	const name = env.crumb.name
 	// const single = item.brendart[0] == item.brendmodel[0]
-	const art_title = cards.getSomeTitle(data, item, 'art')
+	const art_title = cards.getSomeTitle(data, item, 'art') || cards.getSomeTitle(data, item, 'brendart')
 	const selected = item.art?.[0] == name || item.brendart[0] == name // || single
 	const art_td = selected ? `<b>${art_title}</b>` : `
 		<a href="${path}#page">${art_title}</a>
@@ -447,9 +447,6 @@ tpl.showItemButtons = (data, env, model, selitem) => {
 	
 	for (const prop_nick of list) {
 		const prop = data.props[prop_nick]
-		if (!prop) {
-			console.log('Не найдено свойство в data.props', model.recap.brendmodel)
-		}
 		htmls.push(`
 			<div style="margin: 0.5em 0;">
 				<div><b>${prop.prop_title}</b></div>

@@ -47,7 +47,8 @@ cards.getItemPropList = (data, env, model) => {
 		return true
 	})
 	if (!list.length) {
-		list = ['art']
+		if (model.recap.art) list = ['art']
+		else list = ['brendart']
 	}
 
 	return list
