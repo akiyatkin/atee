@@ -538,6 +538,8 @@ tpl.showModification = (data, env, item) => `
 
 function arraysEqual(a, b) {
 	if (a === b) return true;
+	if (!a && b) return false
+	if (a && !b) return false
 	if (a.length !== b.length) return false;
 
 	for (let i = 0; i < a.length; i++) {
