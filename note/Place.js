@@ -1,4 +1,4 @@
-import Note from '/-note/Note.js'
+//import Note from '/-note/Note.js'
 import Move from '/-note/Move.js'
 import Light from '/-note/Light.js'
 import send from '/-dialog/send.js'
@@ -8,7 +8,7 @@ const Place = {Move}
 Place.getLink = (note, user) => {
 	const wshost = note.wshost
 	const protocol = location.protocol === "https:" ? "wss" : "ws"
-	return protocol + '://'+ wshost + `/?rev=${note.rev}&date_load=${note.now}&note_id=${note.note_id}&user_id=${user.user_id}&user_token=${user.token}`
+	return protocol + '://'+ wshost + `/?rev=${note.rev}&date_load=${note.now}&note_id=${note.note_id}&user_id=${user.user_id}&user_token=${user.token}&request_nick=${note.request_nick}`
 }
 
 Place.getOrCreateUser = async () => {

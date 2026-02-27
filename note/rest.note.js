@@ -24,12 +24,14 @@ rest.addVariable('bit#required', ['bit','required'])
 rest.addFunction('accept', async (view, note_id) => {
 	const db = await view.get('db')
 	const user_id = await view.get('user_id')
-	const r = await WS.isAccept(db, note_id, user_id)
+	const endorsement = await db.col('select endorsement from note_notes where note_id = :note_id', {note_id})
+	const r = await WS.isAccept(db, note_id, user_id, endorsement)
 	if (!r) return view.err('Нет доступа к ноте', 403)
 	return note_id
 })
 
 rest.addArgument('note', async (view, request_note) => { //можно так note=12
+
 	const user_id = await view.get('user_id')
 	if (!request_note) return null
 
@@ -44,9 +46,9 @@ rest.addArgument('note', async (view, request_note) => { //можно так not
 	const nick = r.join('-')
 	note.request_nick = nick //1-ASDFSADFASDF-ASDFASDFA
 
-	
-	const rr = await WS.isAccept(db, note_id, user_id) //будет проверен токен, но не админ
-	note.accept = rr
+	note.accept = await WS.isAccept(db, note_id, user_id, note.endorsement, nick) //будет проверен токен, но не админ сайта //user_id и note_id точно существуют
+	if (note.accept != 'edit') delete note.edit_token
+	if (!note.accept) delete note.view_token
 	//if (!rr) return view.err('Нет доступа к ноте', 403)
 	
 	return note
@@ -93,6 +95,15 @@ rest.addArgument('next_id', ['int'])
 
 rest.addArgument('note_id', ['int','unsigned'])
 rest.addVariable('note_id#accept', ['note_id','accept'])
+rest.addVariable('note_id#required', ['note_id','required'])
+rest.addVariable('note_id#edit', ['note_id#required'], async (view, note_id) => {
+	const db = await view.get('db')
+	const user_id = await view.get('user_id')
+	const endorsement = await db.col('select endorsement from note_notes where note_id = :note_id', {note_id})
+	const accept = await WS.isAccept(db, note_id, user_id, endorsement, false)
+	if (accept != 'edit') return view.err('Нет доступа', 401)
+	return note_id
+})
 
 rest.addArgument('page', async (view, name) => {
 	const conf = await config('note')

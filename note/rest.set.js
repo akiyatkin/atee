@@ -43,7 +43,7 @@ rest.addAction('set-user-hue', async view => {
 
 rest.addAction('set-switch-iswrap', async view => {
 	const propname = 'iswrap'
-	const note_id = await view.get('note_id#accept')
+	const note_id = await view.get('note_id#edit')
 	const db = await view.get('db')
 	const note = await NoteDB.getNote(db, note_id)
 	const bit = Number(!note[propname])
@@ -58,7 +58,7 @@ rest.addAction('set-switch-iswrap', async view => {
 
 rest.addAction('set-switch-isslash', async view => {
 	const propname = 'isslash'
-	const note_id = await view.get('note_id#accept')
+	const note_id = await view.get('note_id#edit')
 	const db = await view.get('db')
 	const note = await NoteDB.getNote(db, note_id)
 	const bit = Number(!note[propname])
@@ -72,7 +72,7 @@ rest.addAction('set-switch-isslash', async view => {
 })
 rest.addAction('set-switch-isbold', async view => {
 	const propname = 'isbold'
-	const note_id = await view.get('note_id#accept')
+	const note_id = await view.get('note_id#edit')
 	const db = await view.get('db')
 	const note = await NoteDB.getNote(db, note_id)
 	const bit = Number(!note[propname])
@@ -86,7 +86,7 @@ rest.addAction('set-switch-isbold', async view => {
 })
 rest.addAction('set-switch-isbracket', async view => {
 	const propname = 'isbracket'
-	const note_id = await view.get('note_id#accept')
+	const note_id = await view.get('note_id#edit')
 	const db = await view.get('db')
 	const note = await NoteDB.getNote(db, note_id)
 	const bit = Number(!note[propname])

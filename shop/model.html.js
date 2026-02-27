@@ -32,16 +32,24 @@ tpl.showBreadcrumbs = (data, env, model, selitem) => `
 	</div>
 `
 
+/*
+	${
+		model.recap.naimenovanie?.length > 1 || model.recap.opisanie?.length > 1 
+		? 
+		model.items.map(item => tpl.showItemDescription(data, env, item, model)).join('') 
+		: 
+		''
+	}
+*/
 tpl.showModel = (data, env, model, selitem = tpl.getSelItem(data, env)) =>`
 	${tpl.showBreadcrumbs(data, env, model, selitem)}
 	<h1 id="page" style="margin-top:0">${cards.getItemName(data, selitem)}</h1>
 	${tpl.showMainData(data, env, model, selitem)}
 	<div style="margin-bottom:2rem">
-		
-		${model.recap.naimenovanie?.length > 1 || model.recap.opisanie?.length > 1 ? model.items.map(item => tpl.showItemDescription(data, env, item, model)).join('') : ''}
 		${selitem['skryt-filtry'] ? '' : tpl.showModelProps(data, env, model)}
-		
 	</div>
+	
+
 	<div class="modtext" style="margin-bottom:2rem">
 		<style>
 			${env.scope} .modtext img {

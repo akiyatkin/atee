@@ -1,7 +1,7 @@
 import Acc from '/-user/Acc.js'
 import send from '/-dialog/send.js'
 
-const Note = {
+const Note = { // В браузере
 	send: async (note_id, data) => { 
 		//Например 	Note.send(1, {signal: {type:'iswrap', bit: 1}})
 		//			Note.send(1, {insert: {insert:'text'}}) там где курсор

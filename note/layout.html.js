@@ -33,7 +33,7 @@ tpl.show = (note, placeholder = "Напишите что-нибудь") => `
 			}
 		</style>
 		<div class="note view" aria-hidden="true" placeholder="${placeholder}" aria-label="${placeholder}">${Light.view(note)}</div>
-		<textarea ${note.ismy == 'view' ? 'disabled' : ''} autocomplete="off" style="--hue: ${note.hue}" class="note area" spellcheck="false" placeholder="${placeholder}" aria-label="${placeholder}" role="textbox" tabindex="0">${Light.area(note)}</textarea>
+		<textarea ${note.accept == 'view' ? 'disabled' : ''} autocomplete="off" style="--hue: ${note.hue}" class="note area" spellcheck="false" placeholder="${placeholder}" aria-label="${placeholder}" role="textbox" tabindex="0">${Light.area(note)}</textarea>
 		<script>
 			(wrap => {
 				let Area = false

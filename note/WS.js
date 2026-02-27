@@ -199,6 +199,19 @@ WS.setTitle = (state, note) => {
 }
 //WS.sendSignal = (ws, note, signal = {}) => WS.sendToEveryone(state, note, {signal})
 
+
+WS.sendToMe = (from, note, data) => {
+	const strdata = JSON.stringify(data)
+	const {user_id, hue} = from
+	const strfrom = JSON.stringify({user_id, hue})
+	for (const to of note.states) {
+		const {ws, rev} = to
+		const my = ws == from.ws ? 1 : 0
+		if (!my) continue
+		const strto = JSON.stringify({rev})
+		ws.send('{"payload":' + strdata + ',"my":' + my + ',"to":' + strto + ',"from":' + strfrom +'}')
+	}
+}
 WS.sendToEveryone = (from, note, data) => {
 	const strdata = JSON.stringify(data)
 	const {user_id, hue} = from
@@ -247,9 +260,9 @@ WS.connection = (ws, request) => {
 				return WS.sendToEveryone(state, note, {signal:{type: 'reject', user_id}})
 			}
 		})
-		if (state.ismy == 'view') {
+		if (state.accept == 'view') {
 			if (data.insert || data.change) {
-				return WS.sendToEveryone(state, note, {signal:{type: 'onlyview', user_id}})
+				return WS.sendToMe(state, note, {signal:{type: 'onlyview', user_id}})
 			}
 		}
 		
@@ -313,7 +326,7 @@ WS.connection = (ws, request) => {
 	})
 	
 }
-WS.isAccept = (db, note_id, user_id) => {
+WS.isAccept = (db, note_id, user_id = null, endorsement, request_nick = false) => {
 	return false
 }
 WS.checkReject = async (note, state) => {
@@ -321,12 +334,12 @@ WS.checkReject = async (note, state) => {
 	if (state.access_check_timer) return true
 	state.access_check_timer = true
 	setTimeout(() => state.access_check_timer = false, 10000)
-	return WS.isAccept(db, note.note_id, state.user_id)
+	return WS.isAccept(db, note.note_id, state.user_id, note.endorsement, state.request_nick)
 }
 WS._getNote = async (note_id) => {
 	const db = await new Db().connect()
 	if (!db) throw 'Нет соединения с базой данных при первом соединении'
-	const note = await db.fetch(`SELECT note_id, text, title, rev FROM note_notes WHERE note_id = :note_id`, {note_id})
+	const note = await db.fetch(`SELECT note_id, text, title, rev, endorsement FROM note_notes WHERE note_id = :note_id`, {note_id})
 	note.states = [] //states[state, state]
 	note.db = db
 	return note
@@ -347,56 +360,51 @@ WS.getNote = (note_id) => {
 	}
 	return WS.NOTES[note_id]
 }
-WS.verifyClient = async (info) => {
+WS.verifyClient = async (info, callback) => {
 	const request = info.req
 	const params = new URL(request.headers.origin + request.url).searchParams
 	const state = {
 		rev: Number(params.get('rev')) || false,
+		date_load: params.get('date_load') || false, //передаётся вместе rev
+
 		note_id: Number(params.get('note_id')),
 		user_id: Number(params.get('user_id')),
-		date_load: params.get('date_load') || false, //передаётся вместе rev
-		user_token: params.get('user_token')
-	}
-	state.ismy = true
-	const err = msg => {
-		console.log(msg)
-		state.ismy = false
-		return false
-	}
+		user_token: params.get('user_token'),
 
-	for (const name of ['note_id', 'user_id', 'user_token']) if (!state[name]) return err(name + ' required')
+		request_nick: params.get('request_nick'),
+		accept: false,
+		note: false
+	}
+	
+
+	for (const name of ['note_id', 'user_id', 'user_token']) if (!state[name])  return callback(false, 400, 'Missing required parameter: ' + name)
 
 
 	const note = await WS.getNote(state.note_id)
-	if (!note?.note_id) return err('note_id')
+	if (!note?.note_id) return callback(false, 401, 'Invalid note_id')
 	state.note = note
+
+
 	const db = note.db
 
 	const user_token = await db.col('SELECT token FROM user_users WHERE user_id = :user_id', state)
-	if (state.user_token != user_token) return err('Неверный user_token')
+	if (state.user_token != user_token) return callback(false, 401, 'Invalid user_token')
 
-	let hue = await db.col('SELECT hue FROM note_users WHERE user_id = :user_id', state)
-	if (hue === null) {
+	
+	state.accept = await WS.isAccept(db, state.note_id, state.user_id, note.endorsement, state.request_nick)
+	if (!state.accept) return callback(false, 401, 'Access denied')
+
+	const isstat = await db.col('SELECT note_id FROM note_stats WHERE note_id = :note_id and user_id = :user_id', state)
+	if (!isstat) await db.exec('INSERT INTO note_stats (note_id, user_id) VALUES (:note_id, :user_id)', state)
+
+	state.hue = await db.col('SELECT hue FROM note_users WHERE user_id = :user_id', state)
+	if (!state.hue) {
 		state.hue = Math.floor(Math.random() * 36) * 10
-		db.exec(`
-			INSERT INTO note_users (user_id, hue)
-			VALUES (:user_id, :hue)
-		`, state)
-	} else {
-		state.hue = hue
+		await db.exec('INSERT INTO note_users (user_id, hue) VALUES (:user_id, :hue)', state)
 	}
 
-	await (async () => {
-		const isstat = await db.col(`SELECT note_id FROM note_stats  WHERE note_id = :note_id and user_id = :user_id`, state)
-		if (!isstat) {
-			db.exec(`
-				INSERT INTO note_stats (note_id, user_id)
-				VALUES (:note_id, :user_id)
-			`, state)
-		}
-	})()
 	request.state = state
-	return state
+	callback(true)
 }
 
 

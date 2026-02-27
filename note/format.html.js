@@ -102,12 +102,9 @@ tpl.ROOT = (data, env) => `
 		<div class="note view">${data.note.text.slice(data.note.cursor_start, data.note.cursor_size + data.note.cursor_start)}</div>
 	</div> -->
 	
-	<div>Позиция курсора: ${data.note.cursor_start}, выделено: ${data.note.cursor_size}</div>
-	<div>Вставить после курсора: 
-		<button class="a insert" data-text="/t">таб</button>, 
-		<button class="a insert" data-text="/d">${Area.getControlD()}</button>
-		<button class="a insert" data-text="/h">${Area.getControlH()}</button>
-	</div>
+	
+	${data.note.accept == 'edit' ? insertAfter(data) : '<p>Доступ только для просмотра</p>'}
+	
 	
 	
 	<script>
@@ -128,4 +125,12 @@ tpl.ROOT = (data, env) => `
 		})(document.currentScript.parentNode)
 	</script>
 
+`
+const insertAfter = (data) => `
+	<div>Позиция курсора: ${data.note.cursor_start}, выделено: ${data.note.cursor_size}</div>
+	<div>Вставить после курсора: 
+		<button class="a insert" data-text="/t">таб</button>, 
+		<button class="a insert" data-text="/d">${Area.getControlD()}</button>
+		<button class="a insert" data-text="/h">${Area.getControlH()}</button>
+	</div>
 `
