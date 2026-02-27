@@ -9,15 +9,30 @@ export default Sharp
 
 
 Sharp.resizeFolder = async (dirfrom, dirto, opt) => {
-	const root_from = await Sharp.readdirDeep(dirfrom)
-	const root_to = await Sharp.readdirDeep(dirto)	
-	if(root_from.empty) return
+
+	let root_from = await Sharp.readdirDeep(dirfrom)
+	let root_to = await Sharp.readdirDeep(dirto)
+	if (root_from.empty) return
+
+	let dirchanged = false
 	await Sharp.runBothDirs(root_from, root_to, async (root_from, root_to) => {
 		if (!root_from.empty && !root_to.empty) return
 		const dir_to = root_to.dir
-		if (root_from.empty) await fs.rm(dir_to, {recursive: true})
-		if (root_to.empty) await fs.mkdir(dir_to)
+		if (root_from.empty) {
+			await fs.rm(dir_to, {recursive: true})
+			dirchanged = true
+		}
+		if (root_to.empty) {
+			await fs.mkdir(dir_to)
+			dirchanged = true
+		}
 	})
+	
+	if (dirchanged) {
+		root_from = await Sharp.readdirDeep(dirfrom)
+		root_to = await Sharp.readdirDeep(dirto)
+	}
+
 
 	await Sharp.runBothFiles(root_from, root_to, async (root_from, info_from, root_to, info_to) => {
 		if (info_from && info_to) return
@@ -35,6 +50,7 @@ Sharp.resizeFolder = async (dirfrom, dirto, opt) => {
 			console.log('Удалили', src_to)
 		}
 	})
+
 }
 Sharp.processImage = async (inputPath, outputPath, opt) => {
 	let {maxwidth = 2000, ratio = 1, fit = 'contain', convert = 'avif'} = opt

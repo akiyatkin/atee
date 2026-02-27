@@ -215,6 +215,7 @@ const showSourceTr = (data, env, source) => `
 					label: 'Проверить', 
 					action: '/-sources/set-source-check',
 					args: {source_id: source.source_id},
+					reloaddiv: env.layer.div,
 					global: 'check'
 				})}
 			</div>
