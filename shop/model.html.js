@@ -312,7 +312,7 @@ tpl.showMainData = (data, env, model, selitem) => `
 			}
 		</style>	
 		
-		${model.recap.images ? tpl.showGallery(data, env, selitem || model.recap) : ''}
+		${model.recap.images ? tpl.showGallery(data, env, selitem?.images ? selitem : model.recap) : ''}
 		
 		<div>
 			<b>${cards.line('Модель', cards.getSomeTitle(data, model.recap, 'model'))}</b>

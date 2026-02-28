@@ -1242,7 +1242,7 @@ Sources.sheet.getCostDiscount = (text, dis) => {
 	return cost
 }
 
-Sources.sheet.delRows = (sheet, title, values) => { //Удаляем строку в котрой колонка title равна значению value
+Sources.sheet.delRows = (sheet, title, values) => { //Удаляем строку в котрой колонка title равна значению value в массиве []
 	if (!values || !Array.isArray(values)) return
 	const index = sheet.head.indexOf(title)
 	if (!~index) return
