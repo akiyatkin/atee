@@ -871,8 +871,9 @@ rest.addAction('set-comment', ['admin'], async view => {
 	const comment = await view.get('comment')
 	view.ans.comment = 'Обновлено'
 	await db.exec(`
-		UPDATE sources_settings
-		SET comment = :comment
+		INSERT INTO sources_settings (comment) VALUES (:comment)
+		ON DUPLICATE KEY UPDATE 
+		comment = VALUES(comment)
 	`, {comment})
 	return view.ret()
 })

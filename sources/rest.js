@@ -183,7 +183,7 @@ rest.addAction('main', async view => {
 	view.data.dir = conf.dir
 
 	const db = await view.get('db')
-	view.data.comment = await db.col(`select comment from sources_settings`)
+	view.data.comment = await db.col(`select comment from sources_settings`) || 'Общий комментарий'
 	const list = view.data.list = await Sources.getSources(db, hashs)
 	
 	if (!list.length) return view.err('Источники не найдены')

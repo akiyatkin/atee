@@ -2,18 +2,16 @@ import Access from "/-controller/Access.js"
 import Db from "/-db/Db.js"
 const Recalc = {}
 //funchange могут различаться, выполняются сразу. Нужны чтобы интерфейс иллюстрировал изменения, но вот публикация и индексация уже необязательна и откладывается
-//funpub должен быть один, так как откладывается каждый раз и остаётся тот что был передан последним, и значит каждый должен быть равнозначным
 Recalc.checkShutdown = async (funchange) => {
 	console.log('Recalc.checkShutdown')
 	const db = await new Db().connect()
-	//После создания структуры бд и перезапуска, должна быть первая запись в sources_settings
-	await db.exec(`INSERT IGNORE INTO sources_settings (singleton, comment) VALUES ('X','Общий комментарий')`)
+
 	const dates = await Recalc.getDates(db)
 	//Если были действия с источниками, надо чтобы даже если сервер падал, запустилась публикация
 	if (!dates.date_recalc_finish && !dates.date_recalc_publicate) {
-		await Recalc.recalc(funchange, true)
+		await Recalc.recalc(funchange, true) //и опубликовать
 	} else if (!dates.date_recalc_finish) {
-		await Recalc.recalc(funchange)
+		await Recalc.recalc(funchange) //только пересчитать
 	} else if (!dates.date_recalc_publicate) {
 		Recalc.deferredPublicate(db)
 	}
@@ -28,7 +26,7 @@ Recalc.getDates = async (db) => {
 			UNIX_TIMESTAMP(date_recalc_finish) as date_recalc_finish,
 			UNIX_TIMESTAMP(date_recalc_publicate) as date_recalc_publicate 
 		FROM sources_settings
-	`)
+	`) || {}
 	return dates
 }
 
@@ -45,11 +43,21 @@ Recalc.addPublicate = (funcindex) => {
 }
 Recalc.reset = async (db) => {
 	clearTimeout(Recalc.deferredPublicate.timer)
-	await db.exec(`UPDATE sources_settings SET date_recalc_start = now(),  date_recalc_finish = now(),  date_recalc_publicate = now()`)
+	await db.exec(`
+		INSERT INTO sources_settings (date_recalc_start, date_recalc_finish, date_recalc_publicate) VALUES (now(), now(), now())
+		ON DUPLICATE KEY UPDATE 
+		date_recalc_start = VALUES(date_recalc_start),
+		date_recalc_finish = VALUES(date_recalc_finish),
+		date_recalc_publicate = VALUES(date_recalc_publicate)
+	`)
 }
 Recalc.publicate = async (db) => {
 	clearTimeout(Recalc.deferredPublicate.timer)
-	await db.exec(`UPDATE sources_settings SET date_recalc_publicate = now()`) //Если после этого будет date_recalc_publicate = null то индексировать надо заного
+	await db.exec(`
+		INSERT INTO sources_settings (date_recalc_publicate) VALUES (now())
+		ON DUPLICATE KEY UPDATE 
+		date_recalc_publicate = VALUES(date_recalc_publicate)
+	`) //Если после этого будет date_recalc_publicate = null то индексировать надо заного
 	for (const func of Recalc.pub_funcs) {
 		await func(db)
 	}
@@ -66,9 +74,20 @@ Recalc.recalc = async (funchange, publicate_required) => {
 	Recalc.recalc.counter++
 	if (dates.date_recalc_finish)	{
 		if (publicate_required) {
-			await db.exec(`UPDATE sources_settings SET date_recalc_start = now(), date_recalc_finish = null, date_recalc_publicate = null`)
+			await db.exec(`
+				INSERT INTO sources_settings (date_recalc_start, date_recalc_finish, date_recalc_publicate) VALUES (now(), null, null)
+				ON DUPLICATE KEY UPDATE 
+				date_recalc_start = VALUES(date_recalc_start),
+				date_recalc_finish = VALUES(date_recalc_finish),
+				date_recalc_publicate = VALUES(date_recalc_publicate)
+			`)
 		} else {
-			await db.exec(`UPDATE sources_settings SET date_recalc_start = now(), date_recalc_finish = null`)
+			await db.exec(`
+				INSERT INTO sources_settings (date_recalc_start, date_recalc_finish) VALUES (now(), null)
+				ON DUPLICATE KEY UPDATE 
+				date_recalc_start = VALUES(date_recalc_start),
+				date_recalc_finish = VALUES(date_recalc_finish)
+			`)
 		}
 	} else {
 		console.log('Наложение Recalc.recalc')
@@ -87,7 +106,11 @@ Recalc.recalc = async (funchange, publicate_required) => {
 	
 	Recalc.recalc.counter--
 
-	if (!Recalc.recalc.counter)	await db.exec(`UPDATE sources_settings SET date_recalc_finish = now()`)
+	if (!Recalc.recalc.counter)	await db.exec(`
+		INSERT INTO sources_settings (date_recalc_finish) VALUES (now())
+		ON DUPLICATE KEY UPDATE 
+		date_recalc_finish = VALUES(date_recalc_finish)
+	`)
 	
 	if (publicate_required) {
 		Recalc.deferredPublicate(db)

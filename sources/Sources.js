@@ -1206,8 +1206,14 @@ Sources.getEntities = async (db) => {
 	return list
 }
 
-Sources.resetStarts = async (db) => {
-	await db.exec(`UPDATE sources_settings SET date_recalc_start = now(),  date_recalc_finish = now()`)
+Sources.resetStarts = async (db) => {	
+	//await db.exec(`REPLACE sources_settings SET date_recalc_start = now(),  date_recalc_finish = now(), singleton = "X"`)
+	await db.exec(`
+		INSERT INTO sources_settings (date_recalc_start, date_recalc_finish) VALUES (now(), now())
+		ON DUPLICATE KEY UPDATE 
+		date_recalc_start = VALUES(date_recalc_start),
+		date_recalc_finish = VALUES(date_recalc_finish)
+	`)
 	await db.exec(`UPDATE sources_sources SET date_start = null`)
 }
 
