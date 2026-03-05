@@ -82,9 +82,11 @@ export const Files = {
 		const dindex = {}
 		const dirs = (await Files.readdir(dir)).filter(dinfo => dinfo.ext === null)
 		for (const dinfo of dirs) {
+
 			const nick = nicked(dinfo.name)
 			dindex[nick] ??= {}
-			const path = dir + dinfo.name + '/'
+			const path = dir + dinfo.file + '/'
+
 			const files = (await Files.readdir(path)).filter(dinfo => dinfo.ext !== null)
 			for (const finfo of files) {
 				const way = Files.getWayByExt(finfo.ext)
@@ -92,6 +94,13 @@ export const Files = {
 				dindex[nick][way] ??= []
 				dindex[nick][way].push(src)
 			}
+
+			/*const subfolders = (await Files.readdir(path)).filter(dinfo => dinfo.ext === null)
+			for (const finfo of subfolders) {
+				const src = path + finfo.file.replaceAll(',','&#44;') //Когда достаём данные надо менять обратно в Shop.prepareFiles(model) в getModels
+				dindex[nick]['subfolders'] ??= []
+				dindex[nick]['subfolders'].push(src)
+			}*/
 		}
 		return dindex
 	},
@@ -115,7 +124,7 @@ export const Files = {
 		}
 		return ddindex
 	},
-	indexDirFileDeep: async (dir) => { //Например models/RVI-D2342/photo.jpg
+	indexDirFileDeep: async (dir) => { //Например models/[RVI]/../[D2342].jpg
 		const findex = {}
 		const root = await Files.readdirDeep(dir)
 		for (const droot of root.dirs) {
@@ -139,7 +148,24 @@ export const Files = {
 		}
 		return findex
 	},
-	runRootFiles: (root, callback, level = 0) => {
+	indexDirKeyFileDeep: async (dir) => { //Например featuresfiles/[RVI-D2342]/../D2342.jpg
+		const kindex = {}
+		const root = await Files.readdirDeep(dir)
+		for (const droot of root.dirs) {
+			const nick = nicked(droot.name)
+			kindex[nick] ??= {}
+			await Files.runRootFiles(droot, async (root, finfo, level) => {
+				//if (!~Files.destinies.images.indexOf(finfo.ext)) return
+				const way = Files.getWayByExt(finfo.ext)
+				const src = root.dir + finfo.file.replaceAll(',','&#44;')
+				kindex[nick] ??= {}
+				kindex[nick][way] ??= []
+				kindex[nick][way].push(src)
+			})
+		}
+		return kindex
+	},
+	runRootFiles: (root, callback, level = 0) => { //Deep
 		const p1 = Promise.all(root.files.map((info, i) => callback(root, info, level, i)))
 		const p2 = Promise.all(root.dirs.map(root => Files.runRootFiles(root, callback, level + 1)))
 		return Promise.all([p1,p2])
@@ -212,7 +238,7 @@ export const Files = {
 		if (isFile) {
 			i = file.lastIndexOf('.')
 			name = ~i ? file.slice(0, i) : file
-			ext = nicked((~i ? file.slice(i + 1) : '')).slice(0,4)
+			ext = nicked((~i ? file.slice(i + 1) : '')).slice(0,4) // ''
 		} else {
 			name = file
 			ext = null

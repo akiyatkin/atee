@@ -116,10 +116,9 @@ rest.addAction('brief-plop', ['admin','recalcStat'], async view => {
 })
 rest.addVariable('recalcStat', async view => {
 	const db = await view.get('db')
-
-	await ShopAdmin.checkRestat(db)
-	
+	await ShopAdmin.checkRestat(db)	
 })
+
 rest.addAction('inform', ['admin','recalcStat'], async view => {
 	const db = await view.get('db')
 

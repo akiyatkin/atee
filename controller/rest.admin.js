@@ -24,6 +24,7 @@ rest.addArgument('admin', async (view, password) => {
 		const result = await Access.isAdmin(password)
 		if (result) {
 			view.headers['Set-Cookie'] = '-controller=' + encodeURIComponent(password ?? '') + '; path=/; SameSite=Strict; expires=Fri, 31 Dec 9999 23:59:59 GMT'
+			view.nostore = true
 			return true
 		}
 	}
