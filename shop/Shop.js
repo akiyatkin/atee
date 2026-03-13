@@ -843,7 +843,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 		-- and (pr.type != 'value' or (val.value_id is not null and val.value_nick != ''))
 		
 		${props.length ? 'and pr.prop_nick in ("' + props.join('","') + '")' : 'and (pr.known != "system"' + checkcost + ')'}
-		order by pr.ordain
+		order by pr.ordain, wdate.multi_index, wnum.multi_index, wval.multi_index, wtxt.multi_index
 	`))
 
 	const models = Object.groupBy(itemprops, row => key_id_to_model_id[row.key_id])
@@ -1013,8 +1013,14 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 		model.iprops = Object.keys(item_props) //Различия позиций в модели
 		//model.model_props = Object.keys(model_props)
 		//console.log(model)
+
+		
 		
 	}
+
+	
+
+
 	for (const model of list) {  //Для таблицы в карточке товара
 		for (const item of model.items) {
 			Object.defineProperty(item, 'toString', {
@@ -1031,7 +1037,8 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 			configurable: true
 		})
 	}
-	
+
+
 	return list
 }
 

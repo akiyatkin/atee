@@ -407,6 +407,7 @@ rest.addResponse('get-model', async (view) => {
 
 	const model = view.data.model = await view.get('model#required')	
 	
+	
 
 	//const groups = view.data.groups = await Shop.samples.getFreeGroupNicksByItem(db, model.recap)
 	

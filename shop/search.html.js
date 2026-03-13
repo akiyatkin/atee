@@ -45,7 +45,7 @@ tpl.PAGINATION = (data, env) => !data.result ? '' : `
 `
 tpl.LIST = (data, env) => data.result ? `
 	${data.list.length ? tpl.listcards(data, env) : '<div style="margin: 2rem 0; ">К сожалению, ничего не найдено.</div>'}
-	${data.countonpage == data.list.length ? tpl.pag(data, env) : ''}
+	${data.countonpage == data.list.length || data.page != 1 ? tpl.pag(data, env) : ''}
 ` : `<div style="margin: 2rem 0; ">${data.msg || 'Данные не найдены'}</div>`
 
 tpl.pag = (data, env, scroll) => `
