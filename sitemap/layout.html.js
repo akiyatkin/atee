@@ -2,20 +2,34 @@ const sitemap = {}
 export default sitemap
 const csslink = src => `<link rel="stylesheet" href="${src}">`
 const forattr = value => value ? value.replaceAll('"','&quot;') : ''
+const addhost = (host, src) => {
+	if (!src) return ''
+	const reg = /^https?:\/\//i;
+	if (reg.test(src)) return src
+	else return 'https://' + host + src
+}
 sitemap.HEAD = (head, env) => `
 	<title>${forattr(head?.title)}</title>
 	<meta name="description" content="${forattr(head?.description)}">
 	<meta name="keywords" content="${forattr(head?.keywords)}">
 	<meta name="robots" content="${head?.robots ? forattr(head?.robots) : (head?.hidden ? 'noindex,nofollow' : 'all')}" />
-	<meta property="og:image" content="${head?.image_src ?? ''}">
-	<link rel="image_src" href="${head?.image_src ?? ''}">
-	<link rel="canonical" href="https://${env.host}${head?.canonical??''}">
+
+	<meta property="og:image" content="${addhost(env.host, head?.image_src)}">
+	<link rel="image_src" href="${addhost(env.host, head?.image_src)}">
+	<link rel="canonical" href="${addhost(env.host, head?.canonical)}">
+	
 	<link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
 	${head?.css?.map(csslink).join('') || ''}
 	<script type="module">//Независимая обработка metatags и sitemap
 		//При переходах нужно это всё обновлять
 		const qs = q => document.head.querySelector(q) || {}
 		const temp = document.createElement('div')
+		const addhost = (host, src) => {
+			if (!src) return ''
+			const reg = /^https?:\/\//i;
+			if (reg.test(src)) return src
+			else return 'https://' + host + src
+		}
 		const rules = {
 			title: title => {
 				temp.innerHTML = title
@@ -40,11 +54,11 @@ sitemap.HEAD = (head, env) => `
 				}
 			},
 			image_src: src => {
-				qs('meta[property="og:image"]').content = src
-				qs('link[rel=image_src]').href = src
+				qs('meta[property="og:image"]').content = addhost('${env.host}', src)
+				qs('link[rel=image_src]').href = addhost('${env.host}', src)
 			},
 			canonical: src => {
-				qs('link[rel="canonical"]').href = src
+				qs('link[rel="canonical"]').href = addhost('${env.host}', src)
 			}
 		}
 		let lasthead
