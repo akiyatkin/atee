@@ -588,7 +588,7 @@ tpl.getPropButton = (data, env, model, list, selitem, prop_nick, value_nick) => 
 
 	const items = model.items.filter(item => { //все items с нужным значением. Клик и одно из них выбирается, то которое больше похоже на уже выбранное
 		//if (item == selitem) return false
-		if (~item[prop_nick].indexOf(value_nick)) return true
+		if (~item[prop_nick]?.indexOf(value_nick)) return true
 		return false
 	})
 
