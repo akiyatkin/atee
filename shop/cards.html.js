@@ -28,7 +28,11 @@ cards.getItemPath = (data, item) => {
 	path.push(item.art?.[0] || item.brendart[0])
 	return path.join('/')
 }
-
+cards.getPlopPath = (conf, plop) => {
+	const path = [conf.root_path, 'item', plop.brendmodel_nick]
+	path.push(plop.art_nick || plop.brendart_nick)
+	return path.join('/')
+}
 cards.getItemName = (data, selitem) => { //ecommerce.name (в паре с getVariant)
 	const gain = (name) => cards.getSomeTitle(data, selitem, name)
 	if (selitem.naimenovanie) return gain('naimenovanie') + '  ' + gain('brendmodel')
@@ -515,6 +519,7 @@ cards.img = (data, env, item, src) => `
 // 	>	
 // `
 cards.imager = (src, w, h) => {
+	if (!src) return src
 	const imager = '/-imager/webp?cache&fit=contain'
 	const esrc = encodeURIComponent(src)
 

@@ -16,10 +16,13 @@ tpl.getSelItem = (data, env) => {
 tpl.ROOT = (data, env) => data.result ? tpl.showModel(data, env, data.model) : tpl.showError(data, env)
 
 tpl.showError = (data, env) => `
-	<div style="margin: 1em 0 0.5em">${tpl.showGroupLink(data, env, data.root)}</div>
-	<h1 id="page" style="margin-top:0"><b>${env.crumb.parent.name}</b></h1>
+	<div style="margin: 1em 0 0.5em">${data.group ? tpl.showGroupLink(data, env, data.root) : ''}</div>
+	<h1 id="page" style="margin-top:0"><b>${env.crumb.name}</b></h1>
 	<p>
 		Модель в магазине не найдена.
+	</p>
+	<p>
+		${data.msg || ''}
 	</p>
 `
 tpl.showGroupLink = (data, env, group) => `

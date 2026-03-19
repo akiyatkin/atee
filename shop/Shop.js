@@ -748,17 +748,20 @@ Shop.prepareMgetPropsValues = async (db, data, mget) => {
 }
 
 Shop.prepareModelsPropsValues = async (db, data, models) => { //basket.list, models.list
-	data.props ??= {}
-	data.values ??= {}	
 	for (const model of models) {
 		const item = model.item || model.recap
-		for (const prop_nick in item) {
-			const prop = data.props[prop_nick] ??= await Shop.getPropByNick(db, prop_nick)
-			if (prop.type != 'value') continue
-			for (const value_nick of item[prop_nick]) {
-				data.values[value_nick] ??= await Shop.getValueByNick(db, value_nick)
-				
-			}
+		await Shop.prepareItemPropsValues(db, data, item)
+	}	
+}
+Shop.prepareItemPropsValues = async (db, data, item) => { //basket.list, models.list
+	data.props ??= {}
+	data.values ??= {}	
+	for (const prop_nick in item) {
+		const prop = data.props[prop_nick] ??= await Shop.getPropByNick(db, prop_nick)
+		if (prop.type != 'value') continue
+		for (const value_nick of item[prop_nick]) {
+			data.values[value_nick] ??= await Shop.getValueByNick(db, value_nick)
+			
 		}
 	}	
 }
@@ -1290,7 +1293,7 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, samples = [{}], hashs =
 	titles = unique(titles)
 
 	const {from, join, where, sort} = await Shop.getWhereByGroupIndexWinMod(db, group_id, samples, hashs, partner)	
-	
+	console.log(samples, from, where, join)
 	const bind = await Shop.getBind(db)
 	
 	//const propids = {}

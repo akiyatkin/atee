@@ -429,6 +429,7 @@ rest.addResponse('get-model', async (view) => {
 		}))
 	}
 
+	
 	const props = view.data.props = {}
 	const values = view.data.values = {}
 	for (const prop_nick in model.recap) {
