@@ -1291,9 +1291,7 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, samples = [{}], hashs =
 	titles.push('staraya-cena') //Нужна старая цена зачем?
 	if (partner.cost_nick) titles.push(partner.cost_nick)
 	titles = unique(titles)
-
 	const {from, join, where, sort} = await Shop.getWhereByGroupIndexWinMod(db, group_id, samples, hashs, partner)	
-	console.log(samples, from, where, join)
 	const bind = await Shop.getBind(db)
 	
 	//const propids = {}
