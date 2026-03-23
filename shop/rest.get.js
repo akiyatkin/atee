@@ -372,6 +372,9 @@ rest.addResponse('get-item-check', async (view) => {
 	if (model.items.find(item => !item.brendart)) {
 		console.log('wtf !item.brendart', art, search, model)
 	}
+
+	//http://127.0.0.1:8888/shop/item/dk-metall-sofiya?utm_source=yandex&utm_medium=cpc&utm_campaign=%7Bcampaign_id%7D&utm_content=%7Bgbid%7D%7C%7Bphrase_id%7D%7C%7Bregion_name%7D%7C%7Bposition_type%7D%7C%7Bposition%7D%7C%7Bdevice_type%7D%7C%7Bsource_type%7D&utm_term=%7BPHRASE%7D%7C%7Baddphrases%7D
+
 	const item = model.items.find(item => item.art?.[0] == art || item.brendart[0] == art)
 	
 	if (!item) {

@@ -109,10 +109,12 @@ rest.addResponse('get-layers', async view => {
 
 	//if (!next) return view.err()
 	const nroute = await router(next || '/')
+
 	view.data.root = nroute.root
 	
 	if (nroute.rest || nroute.secure) return view.err()
 	const bread = new Bread(nroute.path, nroute.get, nroute.search, nroute.root)
+	
 	const rule = await Layers.getRule(nroute.root)
 	
 

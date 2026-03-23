@@ -115,7 +115,6 @@ const Server = {
 					pv: false,
 					nt: route.search
 				}
-				
 				const reans = await rest.get('get-layers', req, visitor)
 				let json = reans.data
 				
@@ -143,6 +142,7 @@ const Server = {
 					// if (!json.layers) return error_before(500, 'layers not defined')
 					// if (!json.layers.length) return error_before(500, 'layers empty')
 					const bread = new Bread(route.path, route.get, route.search, json.root) //root+path+get = search
+
 					bread.status = status
 					try {
 
