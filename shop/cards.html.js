@@ -491,11 +491,11 @@ cards.imgs = (data, env, item) => `
 	</script>
 
 `
-//MEMORYTEST
+/*loading="lazy"*/
 cards.img = (data, env, item, src) => `
 	
 	<img 
-		loading="lazy"
+		
 		alt="${cards.getSomeTitle(data, item, 'model')}" 
 		width="400" 
 		height="400" 

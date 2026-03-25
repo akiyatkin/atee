@@ -1123,11 +1123,12 @@ Sources.createProp = async (db, prop_title, type = 'text') => {
 	const ordain = await db.col('SELECT max(ordain) FROM sources_props') + 1
 	const {name, unit} = Sources.getNameUnit(prop_title)
 	if (unit.lenght > 10) return false
+	const multi = type == 'value' ? 1 : 0
 	const prop_id = await db.insertId(`
-		INSERT INTO sources_props (prop_title, prop_nick, type, ordain, name, unit)
-		VALUES (:prop_title, :prop_nick, :type, :ordain, :name, :unit)
+		INSERT INTO sources_props (prop_title, prop_nick, type, ordain, name, unit, multi)
+		VALUES (:prop_title, :prop_nick, :type, :ordain, :name, :unit, :multi)
 		ON DUPLICATE KEY UPDATE prop_title = VALUES(prop_title), prop_id = LAST_INSERT_ID(prop_id)
-	`, {prop_title, prop_nick, ordain, name, unit, type})
+	`, {prop_title, prop_nick, ordain, name, unit, type, multi})
 	await Sources.reorderProps(db)
 	return prop_id
 }
