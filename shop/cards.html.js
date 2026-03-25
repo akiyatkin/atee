@@ -470,8 +470,9 @@ cards.badge.itemNalichieOrDiscount = (data, env, model, item) => {
 	`
 	return ''
 }
+/*Протестировать на iPhone opacity: 0*/
 cards.imgs = (data, env, item) => `
-	<div style="position: relative; margin-bottom:0.5em; transition: opacity 0.3s; opacity: 0">
+	<div style="position: relative; margin-bottom:0.5em; transition: opacity 0.3s; opacity: 1">
 		<div style="color: rgba(0,0,0,0.3); pointer-events: none; opacity: 0; position: absolute; height: 100%; display: flex; align-items: center;" class="left">
 			&nbsp;←&nbsp;
 		</div>
