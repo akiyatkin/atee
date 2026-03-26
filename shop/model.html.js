@@ -292,7 +292,7 @@ tpl.showPreviews = (data, env, item) => `
 // `
 
 
-
+//${selitem.modifikaciya ? tpl.showModification(data, env, selitem) : ''}
 tpl.showMainData = (data, env, model, selitem) => `
 	<div class="mod_content">
 		<style>
@@ -325,7 +325,7 @@ tpl.showMainData = (data, env, model, selitem) => `
 			
 			${(model.items.length > 1 || !selitem) ? tpl.showItemButtons(data, env, model, selitem) : ''}
 			
-			${selitem.modifikaciya ? tpl.showModification(data, env, selitem) : ''}
+			
 
 			${selitem ? cards.block(tpl.showTableItem(data, env, model, selitem)) : ''}
 			
