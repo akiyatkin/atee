@@ -616,9 +616,8 @@ tpl.showSubmit = (data, env) => `
 					const products = data.list.map((pos, i) => {
 						return Ecommerce.getProduct(data, {
 							coupon:Client.theme.partner,
-							item: pos.item, 
+							recap: pos.item, 
 							listname: 'Корзина', 
-							position: i + 1, 
 							quantity: 0,
 							group_nick: pos.group_nicks[0]
 						})
@@ -738,13 +737,17 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 			}
 		}
 		panel.classList.add('up')		
-		const products = ${JSON.stringify(data.list.map((pos, i) => Ecommerce.getProduct(data, {
-			coupon:env.theme.partner,
-			item: pos.item, 
-			listname: 'Корзина', 
-			position: i + 1, 
-			group_nick: pos.group_nicks[0]
-		})))}
+		const products = ${JSON.stringify(data.list.map((pos, i) => {
+			const prod = Ecommerce.getProduct(data, {
+				coupon:env.theme.partner,
+				recap: pos.item, 
+				listname: 'Корзина', 
+				position: i + 1, 
+				group_nick: pos.group_nicks[0]
+			})
+			prod.art_nick = pos.art_nick
+			return prod
+		}))}
 
 		const blocks = panel.querySelectorAll('.blocksum')
 		for (const i in blocks) {
@@ -757,6 +760,7 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 			
 			const args = {}
 			args.brendart_nick = product.sku
+			args.art_nick = product.art_nick
 			args.nocopy = false //Копировать или создать пустую copy = true - значит можно копировать заказ если редактируется не активный заказ
 
 			input.addEventListener('input', async () => {
@@ -810,13 +814,13 @@ tpl.showModification = (data, env, pos, item = pos.item) => `
 					const popup = await Dialog.open({
 						tpl:"/-shop/cart/modification.html.js",
 						sub:"ROOT",
-						json:"/-shop/cart/get-modification?brendart_nick=${item.brendart[0]}"
+						json:"/-shop/cart/get-modification?art_nick=${item.art[0]}&brendart_nick=${item.brendart[0]}"
 					})
 					const form = popup.getElementsByTagName('form')[0]
 					form.addEventListener('submit', async e => {
 						e.preventDefault()
 						const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-						const ans = await senditmsg(btn, '/-shop/cart/set-modification?brendart_nick=${item.brendart[0]}', new FormData(form))
+						const ans = await senditmsg(btn, '/-shop/cart/set-modification?art_nick=${item.art[0]}&brendart_nick=${item.brendart[0]}', new FormData(form))
 						if (ans.result) Dialog.hide()
 						const Client = await window.getClient()
 						Client.global('shop')
@@ -838,8 +842,8 @@ tpl.showPos = (data, env, pos, item) => {
 		<a href="${cards.getItemPath(data, item)}" class="image">${item.images ? tpl.showImage(data, env, pos, item) : ''}</a>
 		<div class="info">
 			<div>
-				${naimenovanie ? naimenovanie + '.' : ''}
-				<div><a href="${cards.getItemPath(data, item)}">${gain('brendart')}</a> ${pos.changed ? '<span title="Есть изменения">*</span>' : ''}</div>
+				${naimenovanie ? naimenovanie + '' : ''}
+				<div><a href="${cards.getItemPath(data, item)}">${gain('brend')} ${gain('artikul') || gain('art')}</a> ${pos.changed ? '<span title="Есть изменения">*</span>' : ''}</div>
 			</div>
 			${item.modifikaciya ? tpl.showModification(data, env, pos) : ''}
 			<div style="margin: 0.5em 0;"><b>${cards.cost(item)}</b></div>

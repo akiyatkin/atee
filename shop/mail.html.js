@@ -74,7 +74,7 @@ tpl.showPos = (pos, data) => {
 	const naimenovanie = gain('naimenovanie')
 	return `
 		<div style="margin-bottom:1rem">
-			<div>${gain('brendart')}</div>
+			<div>${gain('brend')} ${gain('artikul') || gain('art')}</div>
 			<div>${pos.modification || ''}</div>
 			<div><b>${pos.quantity}</b> по <b>${cards.cost(pos.item)}</b> = <b>${cost(pos.quantity * pos.item.cena[0])}${cards.unit()}</b></div>
 		</div>

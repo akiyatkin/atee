@@ -42,7 +42,8 @@ CREATE TABLE IF NOT EXISTS `shop_allitemgroups` (
 -- Dumping structure for table kvant63.ru.node.shop_basket
 CREATE TABLE IF NOT EXISTS `shop_basket` (
   `order_id` mediumint(8) unsigned NOT NULL,
-  `brendart_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL COMMENT 'model_id не можем сохранять, так как может поменяться',
+  `brendart_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL COMMENT 'brendart после селектора позиций',
+  `brendart_base` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL COMMENT 'brendart из каталога',
   `quantity` smallint(5) unsigned NOT NULL,
   `dateadd` datetime DEFAULT NULL COMMENT 'Дата добавления, в том числе в замороженный заказ менеджером, позиция не обновляется из каталога если уже была',
   `dateedit` datetime DEFAULT NULL COMMENT 'Дата изменений, в том числе в замороженном заказ менеджером, позиция не обновляется с каталога',
@@ -143,18 +144,18 @@ CREATE TABLE IF NOT EXISTS `shop_orders` (
   `address` text DEFAULT NULL COMMENT 'Адрес в городе',
   `tk` tinytext DEFAULT NULL COMMENT 'Рекомендуемая ТК',
   `zip` text DEFAULT NULL COMMENT 'Индекс',
-  `referrer_host` varchar(63) NOT NULL DEFAULT '',
-  `source` varchar(63) NOT NULL DEFAULT '',
-  `content` varchar(63) NOT NULL DEFAULT '',
-  `campaign` varchar(63) NOT NULL DEFAULT '',
-  `medium` varchar(63) NOT NULL DEFAULT '',
-  `term` varchar(63) NOT NULL DEFAULT '',
-  `referrer_host_nick` varchar(63) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
-  `source_nick` varchar(63) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
-  `content_nick` varchar(63) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
-  `campaign_nick` varchar(63) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
-  `medium_nick` varchar(63) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
-  `term_nick` varchar(63) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
+  `referrer_host` varchar(127) NOT NULL DEFAULT '',
+  `source` varchar(127) NOT NULL DEFAULT '',
+  `content` varchar(127) NOT NULL DEFAULT '',
+  `campaign` varchar(127) NOT NULL DEFAULT '',
+  `medium` varchar(127) NOT NULL DEFAULT '',
+  `term` varchar(127) NOT NULL DEFAULT '',
+  `referrer_host_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
+  `source_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
+  `content_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
+  `campaign_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
+  `medium_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
+  `term_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
   `count` smallint(5) unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш количества позиций(строчек) в корзине. Для сводной таблицы МЕНЕДЖЕРА',
   `sum` int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш суммы заказа без стоимости доставки. Для сводной таблицы МЕНЕДЖЕРА',
   `weight` mediumint(8) unsigned NOT NULL DEFAULT 0 COMMENT 'Кэш - расчётный вес',
@@ -385,7 +386,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS shop_stat_temp_orders AS (
 	FROM shop_orders o, shop_basket b, sources_values va
 	WHERE YEAR(o.dateedit) = nowYear AND MONTH(o.dateedit) = nowMonth
 	AND b.order_id = o.order_id
-	AND va.value_nick = b.brendart_nick
+	AND va.value_nick = b.brendart_base
 );
 
 

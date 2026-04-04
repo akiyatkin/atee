@@ -66,7 +66,7 @@ const Cart = {
 	},
 	getMailData: async (db, sub, order_id, visitor, partner) => {
 		const order = await Cart.getOrderById(db, order_id)
-		let list = await Cart.basket.get(db, order, partner)
+		let {list, props, values} = await Cart.basket.get(db, order, partner)
 		list = list.filter(pos => pos.quantity > 0)
 		const vars = {
 			host: visitor.client.host,
@@ -95,12 +95,12 @@ const Cart = {
 				//Содержание order_id надо перенести в wait_id и удалить order_id
 				//Чтобы переносить надо знать есть ли уже такая позиция в заявке
 				const rows = await db.all(`
-					select quantity, brendart_nick 
+					select quantity, brendart_nick, art_nick 
 					from shop_basket 
 					where order_id = :order_id
 				`, {order_id})
 				for (const row of rows) {
-					await Cart.addItem(db, wait_id, row.brendart_nick, row.quantity)
+					await Cart.addItem(db, wait_id, row.brendart_nick, row.art_nick, row.quantity)
 				}
 				await db.exec(`
 					REPLACE INTO shop_actives (user_id, order_id) VALUES(:user_id, :wait_id)
@@ -190,11 +190,18 @@ const Cart = {
 	},
 	copyBasket: async (db, from_id, to_id) => {
 		const bind = await Shop.getBind(db)
+		// await db.exec(`
+		// 	INSERT INTO shop_basket (order_id, brendart_nick, art_nick, quantity, dateadd, dateedit, modification)
+		// 	SELECT :to_id, ba.brendart_nick, ba.art_nick, ba.quantity, now(), now(), ba.modification
+		// 	FROM shop_basket ba, sources_wvalues wva, sources_values va
+		// 	WHERE ba.order_id = :from_id and ba.brendart_nick = va.value_nick and wva.entity_id = :brendart_prop_id and wva.prop_id = wva.entity_id and va.value_id = wva.value_id
+		// `, {...bind, from_id, to_id})
 		await db.exec(`
-			INSERT INTO shop_basket (order_id, brendart_nick, quantity, dateadd, dateedit, modification)
-			SELECT :to_id, ba.brendart_nick, ba.quantity, now(), now(), ba.modification
-			FROM shop_basket ba, sources_wvalues wva, sources_values va
-			WHERE ba.order_id = :from_id and ba.brendart_nick = va.value_nick and wva.entity_id = :brendart_prop_id and wva.prop_id = wva.entity_id and va.value_id = wva.value_id
+			INSERT INTO shop_basket (order_id, brendart_nick, art_nick, quantity, dateadd, dateedit, modification)
+			SELECT :to_id, ba.brendart_nick, ba.art_nick, ba.quantity, now(), now(), ba.modification
+			FROM shop_basket ba
+			WHERE ba.order_id = :from_id
+			ORDER by dateadd DESC
 		`, {...bind, from_id, to_id})
 	},
 	castWaitActive: async (db, user_id, active_id, utms, nocopy = false) => {
@@ -317,11 +324,12 @@ Cart.getOrder = Cart.getOrderById //depricated
 
 Cart.removeItem = async (db, order_id, item) => {
 	const brendart_nick = item.brendart[0]
+	const art_nick = item.art[0]
 	await db.exec(`
 		DELETE FROM shop_basket 
 		WHERE order_id = :order_id 
-			and brendart_nick = :brendart_nick
-	`, {order_id, brendart_nick})
+			and brendart_nick = :brendart_nick and art_nick = :art_nick
+	`, {order_id, brendart_nick, art_nick})
 	await db.exec(`
 		UPDATE shop_orders 
 		SET dateedit = now()
@@ -335,21 +343,20 @@ Cart.removeItem = async (db, order_id, item) => {
 	// 	WHERE order_id = :order_id
 	// `, order)
 }
-Cart.addItem = async (db, order_id, brendart_nick, quantity = 0, modification = '') => {
-	//const brendart_nick = item.brendart[0]
+Cart.addItem = async (db, order_id, brendart_nick, art_nick, quantity = 0, modification = '') => {
 	const pos = await db.fetch(`
 		SELECT quantity FROM shop_basket 
-		WHERE order_id = :order_id and brendart_nick = :brendart_nick
+		WHERE order_id = :order_id and brendart_nick = :brendart_nick and art_nick = :art_nick
 		FOR UPDATE
-	`, {order_id, brendart_nick})
+	`, {order_id, brendart_nick, art_nick})
 
 	if (!pos) {
 		await db.exec(`
 			INSERT INTO shop_basket (
-			order_id, brendart_nick, quantity, dateadd, dateedit, modification
+			order_id, brendart_nick, art_nick, quantity, dateadd, dateedit, modification
 		) VALUES (
-			:order_id, :brendart_nick, :quantity, now(), now(), :modification
-		)`, {order_id, brendart_nick, quantity, modification})
+			:order_id, :brendart_nick, :art_nick, :quantity, now(), now(), :modification
+		)`, {order_id, brendart_nick, art_nick, quantity, modification})
 	} else {
 		await db.exec(`
 			UPDATE shop_basket 
@@ -499,25 +506,28 @@ Cart.updateUtms = async (db, order_id, utms) => {
 	utms['campaign_nick'] = nicked(utms.campaign)
 	utms['medium_nick'] = nicked(utms.medium)
 	utms['term_nick'] = nicked(utms.term)	
-
-	await db.exec(`
-		UPDATE shop_orders 
-		SET 
-			referrer_host = :referrer_host,
-			source = :source,
-			content = :content,
-			campaign = :campaign,
-			medium = :medium,
-			term = :term,
-			referrer_host_nick = :referrer_host_nick,
-			source_nick = :source_nick,
-			content_nick = :content_nick,
-			campaign_nick = :campaign_nick,
-			medium_nick = :medium_nick,
-			term_nick = :term_nick
-		WHERE 
-			order_id = :order_id
-	`, {order_id, ...utms})
+	try {
+		await db.exec(`
+			UPDATE shop_orders 
+			SET 
+				referrer_host = :referrer_host,
+				source = :source,
+				content = :content,
+				campaign = :campaign,
+				medium = :medium,
+				term = :term,
+				referrer_host_nick = :referrer_host_nick,
+				source_nick = :source_nick,
+				content_nick = :content_nick,
+				campaign_nick = :campaign_nick,
+				medium_nick = :medium_nick,
+				term_nick = :term_nick
+			WHERE 
+				order_id = :order_id
+		`, {order_id, ...utms})
+	} catch (e) {
+		console.log('try catch в Cart.updateUtms', e)
+	}
 }
 Cart.setStatus = async (db, order_id, status) => {
 	return await db.exec(`
@@ -557,14 +567,14 @@ Cart.basket.json2item = async (db, pos) => {
 		pos.item = JSON.parse(pos.json)
 		delete pos.json
 		Object.defineProperty(pos.item, 'toString', {
-			value: () => pos.brendart_nick,
+			value: () => pos.item.art ? pos.item.brend[0] + '-' + pos.item.art[0] : pos.item.brendart[0],
 			enumerable: false, // ключевое свойство - не перечисляемое
 			writable: true,
 			configurable: true
 		})
 		for (const prop_nick in pos.item) {
 			const prop = await Shop.getPropByNick(db, prop_nick)	
-			if (prop.type == 'number') { //Нужно сохранить без scale и когда достаётся применить новый на тот момент scale
+			if (prop.type == 'number') {
 				pos.item[prop_nick] = pos.item[prop_nick].map(num => num * 10 ** prop.scale)
 			}
 		}
@@ -575,21 +585,29 @@ Cart.basket.json2item = async (db, pos) => {
 }	
 Cart.basket.get = async (db, {order_id, freeze}, partner) => { //Cart.getBasket 
 	const poss = await db.all(`
-		SELECT brendart_nick, quantity, modification, json, json_hash
+		SELECT brendart_nick, art_nick, quantity, modification, json, json_hash
 		FROM shop_basket 
 		WHERE order_id = :order_id
-		ORDER by dateedit DESC
+		ORDER by dateadd DESC
 	`, {order_id})
+	
 	for (const pos of poss) {
 		pos.group_nicks = await Shop.getFreeGroupNicksByBrendartNick(db, pos.brendart_nick)
 	}
 	
+	const data = {props:{}, values:{}}
 	if (freeze) {
 		for (const pos of poss) {
 			await Cart.basket.json2item(db, pos)
 			if (!pos.item) continue
-			
-			const item = await Shop.getItemByBrendart(db, pos.brendart_nick, partner)
+			if (!pos.group_nicks.length) {
+				pos.changed = true
+				continue
+			}
+			const {item, props, values} = await Shop.getItemByBrendart(db, pos.brendart_nick, pos.art_nick, partner)
+			Object.assign(data.values, values)
+			Object.assign(data.props, props)
+			//У изменённого в каталоге item будут другие value_title для art, model ... title нужно хранить в json или обрабатывать
 			if (item) {
 				//Кэш должен фомироваться с приведёнными number
 				const json_hash = await Cart.basket.createHashStore(db, item)
@@ -601,14 +619,19 @@ Cart.basket.get = async (db, {order_id, freeze}, partner) => { //Cart.getBasket
 	} else {
 		for (const pos of poss) {
 			if (!pos.group_nicks.length) continue
-			pos.item = await Shop.getItemByBrendart(db, pos.brendart_nick, partner)
+			const {item, props, values} = await Shop.getItemByBrendart(db, pos.brendart_nick, pos.art_nick, partner)
+			Object.assign(data.values, values)
+			Object.assign(data.props, props)
+			pos.item = item
 		}
 	}
-	return poss.filter(pos => {
+	const list = poss.filter(pos => {
 		if (!pos.item?.cena) return false
 		pos.sum = pos.item.cena[0] * pos.quantity
 		return true
 	})	
+
+	return {list, props: data.props, values: data.values}
 }
 // getPartnerByOrderJson: async (db, order_id, partnerjson) => {
 // 	if (!partnerjson) partnerjson = await db.col("SELECT partnerjson from shop_orders where order_id = :order_id", {order_id})
@@ -617,16 +640,16 @@ Cart.basket.get = async (db, {order_id, freeze}, partner) => { //Cart.getBasket
 // },
 Cart.basket.freeze = async (db, order_id, partner) => {
 	const poss = await db.all(`
-		SELECT brendart_nick, quantity, modification, json, json_hash
+		SELECT art_nick, brendart_nick, quantity, modification, json, json_hash
 		FROM shop_basket 
 		WHERE order_id = :order_id
-		ORDER by dateedit DESC
+		ORDER by dateadd DESC
 	`, {order_id})
 	for (const pos of poss) {
 		pos.group_nicks = await Shop.getFreeGroupNicksByBrendartNick(db, pos.brendart_nick)
 		if (!pos.group_nicks.length) continue
-		pos.item = await Shop.getItemByBrendart(db, pos.brendart_nick, partner)
-		if (!pos.item) continue
+		const {item, props, values} = await Shop.getItemByBrendart(db, pos.brendart_nick, pos.art_nick, partner)
+		pos.item = item
 	}
 	for (const pos of poss) { //brendart_nick, modification, count, item
 		if (!pos.item) continue
@@ -642,10 +665,11 @@ Cart.basket.freeze = async (db, order_id, partner) => {
 	}
 	for (const pos of poss) { //brendart_nick, modification, count, item
 		if (pos.item) continue
+
 		await db.exec(`
 			DELETE FROM shop_basket
-			WHERE order_id = :order_id and brendart_nick = :brendart_nick 
-		`, { order_id, brendart_nick: pos.brendart_nick })
+			WHERE order_id = :order_id and brendart_nick = :brendart_nick and art_nick = :art_nick
+		`, { order_id, brendart_nick: pos.brendart_nick, art_nick: pos.art_nick })
 	}
 	await db.exec(`
 		UPDATE shop_orders

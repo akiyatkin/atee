@@ -264,13 +264,36 @@ rest.addResponse('get-page-sitemap', async view => {
 	view.data.headings = {[nick]: {title, items}}
 	return view.ret()
 })
+
+import Selector from "/-shop/Selector.js"
+// rest.addResponse('get-model-head', async view => {
+// 	const model = await view.get('model#required')
+// 	const art = await view.get('art')
+// 	const db = await view.get('db')
+
+// 	const data = {}
+// 	await Shop.prepareItemPropsValues(db, data, model.recap)
+// 	const ps = new Selector(model, data.props, data.values)
+// 	const { root_path } = await config('shop')
+	
+// 	return Shop.getModelHead(ps, model, root_path)
+// })
 rest.addResponse('get-item-head', async view => {
 	const model = await view.get('model#required')
-	const art = await view.get('art')
+	const query_nick = await view.get('art')
 	const db = await view.get('db')
-	const item = model.items.find(item => item.art?.[0] == art || item.brendart[0] == art) || model.items[0]	
 
-	return Shop.getItemHead(db, item)
+	const data = {}
+	await Shop.prepareItemPropsValues(db, data, model.recap)
+	const ps = new Selector(model, data.props, data.values)
+	
+	const item = ps.getItemByArt(query_nick, true)
+	// if (model.items[0]?.brendart[0] == item.brendart[0]) {
+	// 	item['art'] = model.items[0][art]
+	// }
+	//const item = model.items.find(item => item.art?.[0] == art || item.brendart[0] == art) || model.items[0]	
+	const { root_path } = await config('shop')
+	return Shop.getItemHead(ps, item, root_path)
 })
 
 rest.addResponse('get-item-sitemap', async view => {
@@ -286,7 +309,7 @@ rest.addResponse('get-item-sitemap', async view => {
 		rand: false,
 		nicks:['art'], //brendmodel_nick, brendart_nick есть всегда
 		add_group_ids: true,
-		titles:['brendart','brendmodel', 'opisanie','brend','art','model','naimenovanie', 'images']
+		titles:['brendart','brendmodel', 'opisanie','brend','art','artikul','model','naimenovanie', 'images']
 	})
 	console.timeEnd('Shop.getPlopsWithPropsNoMultiByMd')
 
@@ -299,7 +322,7 @@ rest.addResponse('get-item-sitemap', async view => {
 	view.data.headings = {}
 	for (const plop of list) {
 		const path = [root_path, 'item', plop.brendmodel_nick, plop.art_nick || plop.brendmodel_nick].join('/')
-		const head = await Shop.getPlopHead(plop)
+		const head = await Shop.getPlopHead(plop, conf.root_path)
 
 		const group_id = plop.group_ids.at(-1)
 		const group = await Shop.getGroupById(db, group_id)
@@ -526,6 +549,7 @@ rest.addResponse('get-search-list', async (view) => {
 		'brendart',
 		'brendmodel',
 		'brend',
+		'parametrizaciya',
 		'model',
 		'naimenovanie',
 		'images',

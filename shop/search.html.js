@@ -161,22 +161,12 @@ tpl.pagt.disabled = (data, env, scroll, title) => `
 
 
 tpl.listcards = (data, env) => {
-	// const products = data.list.map((model, index) => {
-	// 	return model.items.map(item => Ecommerce.getProduct(data, {
-	// 		coupon:env.theme.partner,
-	// 		item, 
-	// 		listname: 'Каталог', 
-	// 		group_nick: model.groups[0],
-	// 		position: index + 1
-	// 	}))
-	// }).flat()
 	const products = data.list.map((model, i) => {
 		return Ecommerce.getProduct(data, {
 			coupon:env.theme.partner,
-			item: model.items[0], 
-			listname: 'Каталог', 
+			recap: model.recap, 
 			group_nick: model.group_nicks[0],
-			position: i + 1
+			listname: 'Каталог'
 		})
 	})
 

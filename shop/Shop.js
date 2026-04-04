@@ -7,7 +7,7 @@ import unique from "/-nicked/unique.js"
 import filter from "/-nicked/filter.js"
 import fs from 'fs/promises'
 import config from "@atee/config"
-
+import Selector from "/-shop/Selector.js"
 import rest_docx from '/-docx/rest.js'
 
 const Shop = {}
@@ -65,32 +65,66 @@ Shop.getGroupHead = async (group, visitor) => {
 
 	return head
 }
-Shop.getPlopHead = async (plop) => {
-	const gain = async (prop_nick) => Shop.cleanDescription(plop[prop_nick + '_title'])
-	return Shop.getGainHead(plop, gain)
+Shop.getPlopHead = async (plop, root_path) => {
+	const gain = (prop_nick) => Shop.cleanDescription(plop[prop_nick + '_title'])
+	return Shop.getGainItemHead(plop, gain, root_path)
 }
-Shop.getItemHead = async (db, item) => {
+
+Shop.getModelHead = (ps, model, root_path) => {
 	//const gain = async (prop_nick) => Shop.cleanDescription((await Shop.getSomeTitles(db, item, prop_nick)).join(', '))
-	const gain = async (prop_nick) => Shop.cleanDescription(await Shop.getSomeTitle(db, item, prop_nick))
-	return Shop.getGainHead(item, gain)
+	const gain = (prop_nick) => Shop.cleanDescription(ps.getSomeTitle(model.recap, prop_nick))
+	return Shop.getGainModelHead(model, gain, root_path)
 }
-Shop.getGainHead = async (item, gain) => {
+Shop.getItemHead = (ps, item, root_path) => {
+	//const gain = async (prop_nick) => Shop.cleanDescription((await Shop.getSomeTitles(db, item, prop_nick)).join(', '))
+	const gain = (prop_nick) => Shop.cleanDescription(ps.getSomeTitle(item, prop_nick))
+	return Shop.getGainItemHead(item, gain, root_path)
+}
+Shop.getGainModelHead = (mod, gain, root_path) => {
 	
 	//Доступно из-за sitemap plop titles:['brednart','brendmodel', 'opisanie','brend','art','model','naimenovanie', 'images']
 
-	const opisanie = await gain('opisanie')
-	const brend = await gain('brend')
-	const brendart = await gain('brendart')
-	const brendmodel = await gain('brendmodel')
-	const art = await gain('art')
-	const model = await gain('model')
-	const naimenovanie = await gain('naimenovanie')
-	const image_src = await gain('images')
+	const opisanie = gain('opisanie')
+	const brend = gain('brend')
+	const brendart = gain('brendart')
+	const brendmodel = gain('brendmodel')
+	const model = gain('model')
+	const naimenovanie = gain('naimenovanie')
+	const image_src = gain('images')
+	const head = {}	
 	
-	const head = {}
+	head.title = [brendmodel].join(' ')
+	
+	if (image_src) {
+		if (!/^https?:\/\//.test(image_src)) head.image_src = '/' + image_src
+		else head.image_src = image_src
+	}
 
-	if (art && model && brend) head.title = [brend, model, art].join(' ')
-	else if (brendmodel != brendart && art) head.title = [brendmodel, art].join(' ')
+	
+	if (opisanie) head.description = opisanie
+	else if (naimenovanie) head.description = naimenovanie
+	
+	head.canonical = root_path + '/item/' + mod.recap.brendmodel[0]
+	if (!head.description) head.description = 'Купить ' + brendmodel
+	return head
+}
+Shop.getGainItemHead = (item, gain, root_path) => {
+	
+	//Доступно из-за sitemap plop titles:['brednart','brendmodel', 'opisanie','brend','art','model','naimenovanie', 'images']
+
+	const opisanie = gain('opisanie')
+	const brend = gain('brend')
+	const brendart = gain('brendart')
+	const brendmodel = gain('brendmodel')
+	const art = gain('art')
+	const artikul = gain('artikul')
+	const model = gain('model')
+	const naimenovanie = gain('naimenovanie')
+	const image_src = gain('images')
+	const user_art = artikul || art
+	const head = {}	
+	if (user_art && model && brend) head.title = [brend, model, user_art].join(' ')
+	else if (brendmodel != brendart && user_art) head.title = [brendmodel, user_art].join(' ')
 	
 
 	/*
@@ -109,7 +143,10 @@ Shop.getGainHead = async (item, gain) => {
 	if (opisanie) head.description = opisanie
 	else if (naimenovanie) head.description = naimenovanie
 	
+	const brendmodel_nick = item.brendmodel?.[0] || item.brendmodel_nick
+	const query_nick = item.art?.[0] || item.art_nick || item.brendart?.[0] || item.brendart_nick
 
+	head.canonical = root_path + '/item/' + brendmodel_nick + '/' + query_nick
 	if (!head.title) head.title = brendart
 	if (!head.description) head.description = 'Купить ' + brendart
 	return head
@@ -767,6 +804,10 @@ Shop.prepareItemPropsValues = async (db, data, item) => { //basket.list, models.
 }
 Shop.prepareModelsPropsValuesGroups = async (db, data, models) => { //basket.list, models.list
 	await Shop.prepareModelsPropsValues(db, data, models)
+	await Shop.prepareModelsGroups(db, data, models)
+	
+}
+Shop.prepareModelsGroups = async (db, data, models) => { //basket.list, models.list
 	data.groups ??= {}
 	if (models[0]?.group_nicks) return
 	for (const model of models) {
@@ -1008,17 +1049,15 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 					delete model_props[prop_nick]
 					const prop = await Shop.getPropByNick(db, prop_nick)
 					//if (prop.known) continue
-					item_props[prop_nick] = true //нашли item у которого свойство не указано
+					item_props[prop_nick] = prop.ordain //нашли item у которого свойство не указано
 				}
 			}
 		}
 		//Эти свойства хоть и различаются не должны выводиться в таблице
-		model.iprops = Object.keys(item_props) //Различия позиций в модели
+		model.iprops = Object.keys(item_props)
+		model.iprops.sort((b, a) => item_props[b] - item_props[a]) //Различия позиций в модели
 		//model.model_props = Object.keys(model_props)
 		//console.log(model)
-
-		
-		
 	}
 
 	
@@ -1027,7 +1066,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 	for (const model of list) {  //Для таблицы в карточке товара
 		for (const item of model.items) {
 			Object.defineProperty(item, 'toString', {
-				value: () => item.brendart[0],
+				value: () => item.art ? item.brend[0] + '-' + item.art[0] : item.brendart[0],
 				enumerable: false, // ключевое свойство - не перечисляемое
 				writable: true,
 				configurable: true
@@ -1067,10 +1106,42 @@ Shop.getBrendmodelByBrendart = Access.poke(async (db, brendart_nick) => {
 
 	return brendmodel_nick
 })
-Shop.getItemByBrendart = async (db, brendart_nick, partner) => {
+// Shop.getBaseItemByBrendart = async (db, brendart_base, partner) => {
+// 	const model = await Shop.getModelByBrendart(db, brendart_base, partner)
+// 	if (!model) return false
+// 	return model.items.find(item => item.brendart[0] == brendart_base)
+// }
+
+
+// Shop.getItemByBrendart = async (db, brendart_nick, art_nick, partner) => {
+// 	const model = await Shop.getModelByBrendart(db, brendart_nick, partner)
+// 	if (!model) return false
+
+// 	const base_item = model.items.find(item => item.brendart[0] == brendart_nick)
+// 	if (!base_item) return false
+
+
+
+// 	// const base_item = model.items.find(item => (item.art?.[0] || '') == art_nick)
+// 	// if (!base_item) return false
+
+// 	const data = {}
+// 	await Shop.prepareItemPropsValues(db, data, model.recap)
+// 	const ps = new Selector(model, data.props, data.values)
+	
+// 	const item = ps.getItemByBaseArt(base_item, art_nick)
+// 	return item
+// }
+Shop.getItemByBrendart = async (db, brendart_nick, art_nick, partner) => {
 	const model = await Shop.getModelByBrendart(db, brendart_nick, partner)
 	if (!model) return false
-	return model.items.find(item => item.brendart[0] == brendart_nick)
+
+	const data = {}
+	await Shop.prepareItemPropsValues(db, data, model.recap)
+
+	const ps = new Selector(model, data.props, data.values)
+	const item = ps.getItemByArt(art_nick)
+	return {item, props: ps.props, values: ps.values}
 }
 Shop.getModelByBrendart = async (db, brendart_nick, partner) => {
 	const brendmodel_nick = await Shop.getBrendmodelByBrendart(db, brendart_nick)

@@ -14,12 +14,15 @@ export default Ecommerce
 	promoClick — клик по внутренней рекламе.			-
 */
 
-Ecommerce.getProduct = (data, {coupon, item, listname, position, group_nick, quantity = null}) => {
+Ecommerce.getProduct = (data, {coupon, recap, group_nick, listname, quantity = null}) => {
+	//data = {values, groups, props}
 	/*
-		Для быстрого поиска
+
+		Для быстрого поиска отключить!
 		item.brendmodel
 		item.brendart
 		item.naimenovanie
+		item.artikul
 		item.brend
 		item.staraya-cena
 		item.cena
@@ -27,18 +30,17 @@ Ecommerce.getProduct = (data, {coupon, item, listname, position, group_nick, qua
 		item.art
 		group.category
 	*/
-	const gain = (name) => cards.getSomeTitle(data, item, name)
+	const gain = (name) => cards.getSomeTitle(data, recap, name)
 	const group = data.groups[group_nick]
-	const cena = item['cena']?.[0]
-	const oldcost = item['staraya-cena']?.[0]
+	const cena = recap['cena']?.[0]
+	const oldcost = recap['staraya-cena']?.[0]
 	const product = {
-		"id": item.brendmodel?.[0] || 'Нет БрендМодель',
-		"sku": item.brendart?.[0] || 'Нет БрендАрт',
-		"name" : cards.getItemName(data, item), //gain('naimenovanie') || gain('brend') gain('model'),
+		"id": recap.brendmodel?.[0] || 'Нет БрендМодель',
+		"sku": recap.brendart?.[0] || 'Нет БрендАрт',
+		"name" : [gain('naimenovanie'), gain('brendmodel')].filter(r => !!r).join(' '),
 		"brand": gain('brend'),
-		"variant": gain('art'),
-		"list": listname, //Список к которому относится товар
-        "position": position //Позиция товара в списке. Например, 2
+		"variant": gain('artikul') || gain('art'),
+		"list": listname //Список к которому относится товар
 	}	
 	if (group?.category) 	product.category = group.category //Поддерживается иерархия категорий до 5 уровней вложенности. Разделителем уровней является символ /. Например, "Одежда / Мужская одежда / Футболки"
 	if (quantity !== null) 	product.quantity = quantity

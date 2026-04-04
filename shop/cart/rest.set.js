@@ -32,19 +32,24 @@ rest.addAction('set-submit', ['terms#required'], async view => {
 	
 	const ready = async () => {
 		//await Cart.setPartner(db, order_id, partner)
-		const list = await Cart.basket.get(db, order, partner)
+		const {list, props, values} = await Cart.basket.get(db, order, partner)
 		await Cart.recalcOrder(db, order_id, list, partner)
 		await Cart.basket.freeze(db, order_id, partner)
 
 
-		
-		await Shop.prepareModelsPropsValuesGroups(db, view.data, list)
+		view.data.values = values
+		view.data.props = props
+
+		const data = {}
+		await Shop.prepareModelsGroups(db, data, list)
+		view.data.groups = data.groups
+
+		//await Shop.prepareModelsPropsValuesGroups(db, view.data, list)
 		const products = list.map((pos, i) => {
 			const product = Ecommerce.getProduct(view.data, {
 				coupon: partner.key, 
-				item: pos.item, 
-				listname:'Корзина', 
-				position: i + 1, 
+				recap: pos.item, 
+				listname:'Корзина', 				
 				group_nick: pos.group_nicks[0], 
 				quantity: null
 			})
@@ -140,7 +145,7 @@ rest.addAction('set-remove', async view => {
 	await Cart.updateUtms(db, order_id, utms)
 	await Cart.removeItem(db, order_id, item)
 	const order = await Cart.getOrder(db, order_id)
-	const list = await Cart.basket.get(db, order, partner)
+	const {list, props, values} = await Cart.basket.get(db, order, partner)
 	await Cart.recalcOrder(db, order_id, list, partner)
 	return view.ret()
 })
@@ -150,7 +155,8 @@ rest.addAction('set-modification', async view => {
 	const modification = await view.get('modification')
 	const item = await view.get('item#required')
 	const db = await view.get('db')
-	const brendart_nick = await view.get('brendart_nick')
+	const brendart_nick = item.brendart[0]
+	const art_nick = item.art[0]
 
 	const order = await Cart.getOrder(db, active_id)
 	if (order.status != 'wait') return view.err('Заказ уже отправлен, обсудите, пожалуйста, изменения с менеджером!', 422)
@@ -161,8 +167,8 @@ rest.addAction('set-modification', async view => {
 		SET
 			modification = :modification
 		WHERE order_id = :active_id 
-			and brendart_nick = :brendart_nick
-	`, { modification, active_id, brendart_nick })
+			and brendart_nick = :brendart_nick and art_nick = :art_nick
+	`, { modification, active_id, brendart_nick, art_nick })
 	
 	return view.ret()
 })
@@ -175,6 +181,8 @@ rest.addAction('set-add', async view => {
 	const db = await view.get('db')
 
 	const item = await view.get('item#required')
+	const brendart_nick = item.brendart[0]
+	const art_nick = item.art[0]
 
 	const modification = await view.get('modification')
 	const quantity = await view.get('quantity')
@@ -185,9 +193,8 @@ rest.addAction('set-add', async view => {
 
 	const order_id = await Cart.castWaitActive(db, user_id, active_id, utms, nocopy)
 
-
 	
-	view.ans.newwaitorder = order_id != active_id
+	view.ans.newwaitorder = order_id != active_id	
 	await Cart.updateUtms(db, order_id, utms)
 
 	let orderrefresh = false
@@ -196,8 +203,11 @@ rest.addAction('set-add', async view => {
 	
 	if (order.partner?.key != partner?.key) orderrefresh = true
 	view.ans.orderrefresh = orderrefresh
-	await Cart.addItem(db, order_id, item.brendart[0], quantity, modification)
-	const list = await Cart.basket.get(db, order, partner)
+
+	
+	//Модель тоже могла измениться у итоговой позиции item и по item невозможно определить brendart_base
+	await Cart.addItem(db, order_id, brendart_nick, art_nick, quantity, modification)
+	const {list, props, values} = await Cart.basket.get(db, order, partner)
 	await Cart.recalcOrder(db, order_id, list, partner)
 	return view.ret()
 })
@@ -209,8 +219,9 @@ rest.addAction('set-clear', async view => {
 	const order = await Cart.getOrder(db, order_id)
 	if (order.status != 'wait') return view.err('Заказ уже отправлен менеджеру')
 
-	const list = view.data.list = await Cart.basket.get(db, order, partner)
-	await Shop.prepareModelsPropsValuesGroups(db, view.data, list)
+	const {list, props, values} = await Cart.basket.get(db, order, partner)
+	view.data.list = list
+	//await Shop.prepareModelsPropsValuesGroups(db, view.data, list)
 	//await Cart.prepareBasketListPropsValuesGroups(db, view.data, list)
 
 
@@ -259,172 +270,3 @@ rest.addAction('set-field', async view => {
 	if (!r) return view.err('Ошибка на сервере', 500)
 	return view.ret('Указанные данные сохранены')
 })
-
-
-
-
-// rest.addAction('set-migrate-cart-from-showcase-to-shop', ['admin'], async view => {
-// 	const db = await view.get('db')	
-// 	const conn = await db.pool.getConnection()
-// 	try {
-// 		// await conn.query(`
-// 		// 	ALTER TABLE sources_props
-// 		// 	CHANGE COLUMN known known ENUM('system','more','column','secondary') NOT NULL DEFAULT 'more' COMMENT 'system показывается в админке shop, чтобы настроить группы, но не показывается нигде в интерфейсе даже в json' COLLATE 'utf8mb3_general_ci'
-// 		// `)
-// 		// await conn.query(`
-// 		// 	ALTER TABLE sources_wprops
-// 		// 	CHANGE COLUMN known known ENUM('system','more','column','secondary') NOT NULL DEFAULT 'more' COMMENT 'system показывается в админке shop, чтобы настроить группы, но не показывается нигде в интерфейсе даже в json' COLLATE 'utf8mb3_general_ci'
-// 		// `)
-	
-		
-// 		await conn.query(`SET FOREIGN_KEY_CHECKS = 0`) //truncate быстрей, но с FK не работает
-// 		await conn.query(`TRUNCATE TABLE shop_basket`)
-// 		await conn.query(`TRUNCATE TABLE shop_orders`)
-// 		await conn.query(`TRUNCATE TABLE shop_actives`)
-// 		await conn.query(`TRUNCATE TABLE shop_userorders`)
-
-
-// 		await conn.query(`
-// 			INSERT INTO shop_actives (user_id, order_id)
-// 			SELECT user_id, order_id
-// 			FROM cart_actives
-// 		`)
-// 		await conn.query(`
-// 			INSERT INTO shop_userorders (user_id, order_id)
-// 			SELECT user_id, order_id
-// 			FROM cart_userorders
-// 		`)
-// 		await conn.query(`
-// 			INSERT INTO shop_orders (
-// 				order_id, 
-// 				user_id, 
-// 				order_nick, 
-// 				commentuser, 
-// 				commentmanager, 
-// 				email, 
-// 				phone, 
-// 				name, 
-// 				callback, 
-// 				status, 
-// 				lang, 
-// 				paid, 
-// 				pay, 
-// 				paydata, 
-// 				city_id, 
-// 				freeze, 
-// 				partnerjson, 
-// 				transport, 
-// 				pvz, 
-// 				address, 
-// 				tk, 
-// 				zip, 
-// 				referrer_host, 
-// 				source, 
-// 				content, 
-// 				campaign, 
-// 				medium, 
-// 				term, 
-// 				referrer_host_nick, 
-// 				source_nick, 
-// 				content_nick, 
-// 				campaign_nick, 
-// 				medium_nick, 
-// 				term_nick, 
-// 				count, 
-// 				sum, 
-// 				weight, 
-// 				datecreate, 
-// 				datefreeze, 
-// 				datecancel, 
-// 				datewait, 
-// 				datepay, 
-// 				datepaid, 
-// 				datecheck, 
-// 				datecomplete, 
-// 				dateemail, 
-// 				dateedit
-// 			)
-// 			SELECT 
-// 				order_id, 
-// 				user_id, 
-// 				order_nick, 
-// 				commentuser, 
-// 				commentmanager, 
-// 				email, 
-// 				phone, 
-// 				name, 
-// 				callback, 
-// 				status, 
-// 				lang, 
-// 				paid, 
-// 				pay, 
-// 				paydata, 
-// 				city_id, 
-// 				freeze, 
-// 				partnerjson, 
-// 				transport, 
-// 				pvz, 
-// 				address, 
-// 				tk, 
-// 				zip, 
-// 				referrer_host, 
-// 				source, 
-// 				content, 
-// 				campaign, 
-// 				medium, 
-// 				term, 
-// 				referrer_host_nick, 
-// 				source_nick, 
-// 				content_nick, 
-// 				campaign_nick, 
-// 				medium_nick, 
-// 				term_nick, 
-// 				count, 
-// 				sum, 
-// 				weight, 
-// 				datecreate, 
-// 				datefreeze, 
-// 				datecancel, 
-// 				datewait, 
-// 				datepay, 
-// 				datepaid, 
-// 				datecheck, 
-// 				datecomplete, 
-// 				dateemail, 
-// 				dateedit
-// 			FROM cart_orders
-// 		`)
-		
-
-// 		const [[{prop_id}]] = await conn.query(`select prop_id from showcase_props where prop_nick='art'`)
-
-// 		const [rows, fields] = const conn.query(`select * from shop_basket`)
-
-// 		for (const row of rows) {
-// 			//order_id, dateadd, dateedit, modification, json
-
-// 			//if (row)
-// 			'shirina-sm'
-// 			const art = nicked('Будущее 90x200')
-// 			row['brendart_nick'] = row['brand_nick']+'-'+art
-// 			delete row['model_nick'] = ''
-// 			delete row['brand_nick'] = ''
-// 			delete row['item_num'] = ''
-
-// 			row['quantity'] = row['count']
-// 			delete row['count'] = ''
-			
-// 			row['json'] = row['json']
-// 			row['json_hash'] = row['hash']
-// 			row['json_cost'] = ''
-// 			delete row['hash'] = ''
-// 		}
-
-// 		await conn.query(`SET FOREIGN_KEY_CHECKS = 1`)
-// 	} finally {
-// 		await conn.release()
-// 	}
-	
-
-
-// })

@@ -30,6 +30,7 @@ rest.addResponse('get-added', async view => {
 	const db = await view.get('db')
 
 	const brendart_nick = await view.get('brendart_nick')
+	const art_nick = await view.get('art_nick')
 	const user_id = view.data.user_id = await view.get('user_id')
 	
 	view.data.quantity = 0
@@ -45,8 +46,8 @@ rest.addResponse('get-added', async view => {
 
 	view.data.quantity = await db.col(`
 		SELECT quantity FROM shop_basket 
-		WHERE order_id = :wait_id and brendart_nick = :brendart_nick 
-	`, { wait_id, brendart_nick })
+		WHERE order_id = :wait_id and brendart_nick = :brendart_nick and art_nick = :art_nick
+	`, { wait_id, brendart_nick, art_nick })
 	
 
 	return view.ret()
@@ -81,8 +82,9 @@ rest.addResponse('get-panel', async view => {
 	const user = view.data.user = await view.get('user')
 
 	const order = view.data.order = await Cart.getOrder(db, order_id)
-	const list = await Cart.basket.get(db, order, partner)
+	const {list, props, values} = await Cart.basket.get(db, order, partner)
 
+	
 	if (!order.freeze && (!user.email || user.email == order.email)) { //Только тот на кого заявка обновляет партнёрский ключ при просмотре		
 		await Cart.recalcOrder(db, order_id, list, partner)
 	}

@@ -38,40 +38,23 @@ cards.getItemName = (data, selitem) => { //ecommerce.name (в паре с getVar
 	if (selitem.naimenovanie) return gain('naimenovanie') + '  ' + gain('brendmodel')
 	return gain('brendmodel')
 }
-cards.getItemPropList = (data, env, model) => {
-	let list = model.iprops.filter(prop_nick => {
-		const prop = data.props[prop_nick]
-		if (!prop?.type) return false
-		if (prop.type == 'text') return false
-		if (prop.known == 'column') return false
-		if (prop.known == 'secondary') return false
-		if (prop.known == 'system') return false //Старая цена и Цена по купону достаются принудительно
-		if (model.recap[prop_nick].length < 2) return false //В имя не надо вставлять то что нельзя выбрать если значение только одно
-		//if (!item[prop_nick]) return false
-		return true
-	})
-	if (!list.length) {
-		if (model.recap.art) list = ['art']
-		else list = ['brendart']
-	}
 
-	return list
-}
-cards.getVariant = (data, model, item) => { //ecommerce.variant
-	if (model.items.length == 1) return '' //variant не будет указан
-	let list = cards.getItemPropList(data, env, model)
-	list = list.map(prop_nick => {
-		const prop = data.props[prop_nick]
-		const titles = cards.getSomeTitles(data, item, prop_nick)
-		if (prop.unit) return titles.map(title => title + ' ' + prop.unit)
-		return titles
-	})
-	//const title = unique(list.flat()).join(', ') //.sort()
-	const title = list.flat().join(', ')
-	if (!title) return cards.getSomeTitle(data, item, 'art') || cards.getSomeTitle(data, item, 'brendart')
 
-	return title
-}
+// cards.getVariant = (data, model, item) => { //ecommerce.variant
+// 	if (model.items.length == 1) return '' //variant не будет указан
+// 	let list = cards.getSelectablePropNicks(model, data.props)
+// 	list = list.map(prop_nick => {
+// 		const prop = data.props[prop_nick]
+// 		const titles = cards.getSomeTitles(data, item, prop_nick)
+// 		if (prop.unit) return titles.map(title => title + ' ' + prop.unit)
+// 		return titles
+// 	})
+// 	//const title = unique(list.flat()).join(', ') //.sort()
+// 	const title = list.flat().join(', ')
+// 	if (!title) return cards.getSomeTitle(data, item, 'art') || cards.getSomeTitle(data, item, 'brendart')
+
+// 	return title
+// }
 
 
 
@@ -168,10 +151,9 @@ cards.card = (data, env, model, i) => {
 					const products = [${JSON.stringify(
 						Ecommerce.getProduct(data, {
 							coupon:env.theme.partner,
-							item: model.items[0], 
-							listname: 'Каталог', 
-							position: i + 1, //Позиции одной модели на одном месте получается находятся
-							group_nick: model.group_nicks[0]
+							recap: model.recap, 
+							group_nick: model.group_nicks[0],
+							listname: 'Каталог'//Позиции одной модели на одном месте получается находятся
 						})
 					)}]
 					const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
@@ -197,9 +179,8 @@ cards.data = (data, env, model) => `
 		<div>
 			${cards.props(data, env, model)}
 		</div>
-		
 	</div>
-	<div style="text-align:right; margin: 0rem 0.9rem 1rem 0.9rem">${cards.price(model.recap)}</div>
+	<div style="text-align:right; margin: 0rem 0.9rem 1rem 0.9rem">${cards.price(model.recap, model.recap.parametrizaciya)}</div>
 `
 
 cards.getValueTitleByNick = (data, value_nick) => `${data.values[value_nick]?.value_title || '<span style="color: crimson">' + value_nick + '</span>'}`
@@ -351,7 +332,7 @@ cards.cost = (item) => item.cena ? cost(item.cena[0]) + cards.unit() : ''
 	
 // 	return html
 // }
-cards.price = (item) => {
+cards.price = (item, parametrizaciya) => {
 	let html = ''
 	const staraya = item['staraya-cena']
 	const cena = item.cena
@@ -366,9 +347,15 @@ cards.price = (item) => {
 			до&nbsp;<b>${cost(cena.at(-1))}${cards.unit()}</b>
 		`
 	} else if (cena) {
-		html += `
-			<big><b>${cost(cena.at(0))}${cards.unit()}</b></big> ${cards.discountBadge(item)}
-		`
+		if (parametrizaciya) {
+			html += `
+				${cards.discountBadge(item)} <nobr>От <big><b>${cost(cena.at(0))}${cards.unit()}</b></big></nobr>
+			`
+		} else {
+			html += `
+				${cards.discountBadge(item)} <nobr><big><b>${cost(cena.at(0))}${cards.unit()}</b></big></nobr>
+			`
+		}
 	}
 	
 	return html

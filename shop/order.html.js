@@ -90,11 +90,10 @@ export const showBody = (data, env, model, item) => {
 					const products = [${JSON.stringify(
 						Ecommerce.getProduct(data, {
 							coupon:env.theme.partner,
-							item: item, 
-							listname: 'Корзина', 
-							position: 1,
-							quantity: 1,
-							group_nick: model.group_nicks[0]
+							recap: model.recap, 
+							group_nick: model.group_nicks[0],
+							listname: 'Корзина',
+							quantity: 1
 						})
 					)}]
 					const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)

@@ -101,26 +101,6 @@ export const Live = {
 
 
 		if (!ans.result) return
-
-		// Нужен ли impressions и click в быстром поиске? Если ищу, значит знаю что хочу и это только detail.
-		// const Client = await window.getClient()
-		// const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
-
-		// const products = ans.list.map((model, i) => {
-		// 	return Ecommerce.getProduct(ans, {
-		// 		coupon:Client.theme.partner,
-		// 		item: model.items[0], 
-		// 		listname: 'Быстрый поиск', 
-		// 		position: i + 1,
-		// 		group_nick: model.group_nicks[0]
-		// 	})
-		// })
-		// Ecommerce.impressions(products)
-		// for (const a of body.getElementsByClassName('item')){
-		// 	a.addEventListener('contextmenu', () => Ecommerce.click(products.filter(product => product.sku == a.dataset.brendart)))
-		// 	a.addEventListener('auxclick', () => Ecommerce.click(products.filter(product => product.sku == a.dataset.brendart)))
-		// 	a.addEventListener('click', () => Ecommerce.click(products.filter(product => product.sku == a.dataset.brendart)))
-		// }
 	},
 	getNeed: async input => {
 		const { default:getNeed } = await import('/-nicked/getNeed.js')

@@ -5,7 +5,7 @@ const lin = (before, after) => after ? before + after : ''
 
 const split = (sep, str) => {
 	if (!str) return []
-	const i = str.indexOf(sep)
+	const i = sep ? str.indexOf(sep) : -1
 	return ~i ? [str.slice(0, i), str.slice(i + 1)] : [str]
 }
 const wakeup = (root, rule, depth = 0) => {
