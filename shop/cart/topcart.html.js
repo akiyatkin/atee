@@ -90,7 +90,7 @@ tpl.CART = (data, env) => panel.isShowPanel(data) ? `
 				animate('a', btn, 'opacity')
 				
 				const panel = document.querySelector('#PANEL .panel')
-				const Panel = await import('/-cart/Panel.js').then(r => r.default)
+				const Panel = await import('/-shop/cart/Panel.js').then(r => r.default)
 				Panel.toggle(panel)
 			})
 		})(document.currentScript.previousElementSibling)

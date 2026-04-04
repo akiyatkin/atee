@@ -46,14 +46,14 @@ export const ROOT = (data, env) => `
 			(div => {
 				for (const button of div.getElementsByTagName('button')) {
 					button.addEventListener('click', async () => {
-						const ans = await fetch('/-cart/set-newactive?' + new URLSearchParams({ order_id: button.dataset.order_id }).toString()).then(r => r.json()).catch(e => {
+						const ans = await fetch('/-shop/cart/set-newactive?' + new URLSearchParams({ order_id: button.dataset.order_id }).toString()).then(r => r.json()).catch(e => {
 							console.log(e)
 							return {msg:'Ошибка на сервере'}
 						})
 						const Client = await window.getClient()
 						Client.global('cart')
 						Client.reloadts('${env.layer.ts}')
-						const Panel = await import('/-cart/Panel.js').then(r => r.default)
+						const Panel = await import('/-shop/cart/Panel.js').then(r => r.default)
 						const panel = document.querySelector('#PANEL .panel')
 						Panel.up(panel)
 					})

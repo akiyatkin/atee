@@ -42,8 +42,8 @@ CREATE TABLE IF NOT EXISTS `shop_allitemgroups` (
 -- Dumping structure for table kvant63.ru.node.shop_basket
 CREATE TABLE IF NOT EXISTS `shop_basket` (
   `order_id` mediumint(8) unsigned NOT NULL,
-  `brendart_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL COMMENT 'brendart после селектора позиций',
-  `brendart_base` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL COMMENT 'brendart из каталога',
+  `brendart_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL COMMENT '',
+  `art_nick` varchar(127) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL COMMENT '',
   `quantity` smallint(5) unsigned NOT NULL,
   `dateadd` datetime DEFAULT NULL COMMENT 'Дата добавления, в том числе в замороженный заказ менеджером, позиция не обновляется из каталога если уже была',
   `dateedit` datetime DEFAULT NULL COMMENT 'Дата изменений, в том числе в замороженном заказ менеджером, позиция не обновляется с каталога',
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS `shop_basket` (
   `json` mediumtext DEFAULT NULL COMMENT 'freeze json позиции с собранным kits. Не может быть пустой объект - если позиции на момент фриза в каталоге нет, то и в корзине позиция не покажется, так как будет удалена по событию из showcase',
   `json_hash` char(8) CHARACTER SET latin1 COLLATE latin1_bin DEFAULT NULL COMMENT 'хэш данных позиции - было ли изменение в описании замороженной позиции используется до распаковки json и сравнения его с позицией в каталоге',
   `json_cost` int(10) unsigned DEFAULT NULL COMMENT 'Только для аналитики, в аналитике json не разворачивается. Данные о позиции берутся из каталога. Но цена должна быть та что в моменте продажи.',
-  PRIMARY KEY (`order_id`,`brendart_nick`) USING BTREE,
+  PRIMARY KEY (`order_id`,`brendart_nick`, `art_nick`) USING BTREE,
   CONSTRAINT `FK_bed_basket_bed_orders` FOREIGN KEY (`order_id`) REFERENCES `shop_orders` (`order_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci ROW_FORMAT=DYNAMIC;
 
