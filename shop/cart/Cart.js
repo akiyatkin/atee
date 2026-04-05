@@ -3,6 +3,7 @@ import Shop from "/-shop/Shop.js"
 import User from '/-user/User.js'
 import Mail from '@atee/mail'
 import nicked from '@atee/nicked'
+import config from '@atee/config'
 import crypto from 'node:crypto'
 import Access from "/-controller/Access.js"
 
@@ -72,7 +73,8 @@ const Cart = {
 			host: visitor.client.host,
 			ip: visitor.client.ip
 		}
-		const data = {order, vars, list}
+		const conf = await config('shop', true)
+		const data = {order, vars, list, conf}
 		return data
 	},
 
@@ -324,12 +326,20 @@ Cart.getOrder = Cart.getOrderById //depricated
 
 Cart.removeItem = async (db, order_id, item) => {
 	const brendart_nick = item.brendart[0]
-	const art_nick = item.art[0]
-	await db.exec(`
-		DELETE FROM shop_basket 
-		WHERE order_id = :order_id 
-			and brendart_nick = :brendart_nick and art_nick = :art_nick
-	`, {order_id, brendart_nick, art_nick})
+	if (item.art) {
+		const art_nick = item.art?.[0] || ''
+		await db.exec(`
+			DELETE FROM shop_basket 
+			WHERE order_id = :order_id 
+				and brendart_nick = :brendart_nick and art_nick = :art_nick
+		`, {order_id, brendart_nick, art_nick})
+	} else {
+		await db.exec(`
+			DELETE FROM shop_basket 
+			WHERE order_id = :order_id 
+				and brendart_nick = :brendart_nick
+		`, {order_id, brendart_nick})
+	}
 	await db.exec(`
 		UPDATE shop_orders 
 		SET dateedit = now()

@@ -61,7 +61,7 @@ tpl.tocheck = (data) => !data.order ? `<h1>Корзина пуста</h1>` : `
 	<pre style="font-style: italic; margin-bottom:1rem">${data.order.commentuser}</pre>
 	<div style="margin-bottom:1rem">${data.list.length} ${words(data.list.length, 'позиция', 'позиции', 'позиций')}</div>
 	<div style="font-family: monospace; font-size: 0.9rem; margin-bottom: 1rem">
-		${data.list.map(pos => tpl.showPos(pos, data)).join('')}
+		${data.list.map(pos => tpl.showPos(data, pos)).join('')}
 	</div>
 	<div>
 		Стоимость заказа: <b>${cost(data.list.reduce((val, pos) => val + pos.sum, 0))}${cards.unit()}</b>
@@ -69,12 +69,12 @@ tpl.tocheck = (data) => !data.order ? `<h1>Корзина пуста</h1>` : `
 	${tpl.footer(data)}
 `
 
-tpl.showPos = (pos, data) => {
+tpl.showPos = (data, pos) => {
 	const gain = name => cards.getSomeTitle(data, pos.item, name)
 	const naimenovanie = gain('naimenovanie')
 	return `
 		<div style="margin-bottom:1rem">
-			<div>${gain('brend')} ${gain('artikul') || gain('art')}</div>
+			<div>${cards.getItemBill(data, pos.item, 'https://' + data.vars.host)}
 			<div>${pos.modification || ''}</div>
 			<div><b>${pos.quantity}</b> по <b>${cards.cost(pos.item)}</b> = <b>${cost(pos.quantity * pos.item.cena[0])}${cards.unit()}</b></div>
 		</div>

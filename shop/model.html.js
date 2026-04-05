@@ -249,7 +249,7 @@ tpl.showMainData = (ps, data, env, model, selitem) => `
 						
 			${model.recap.cena?.length > 1 ? cards.block(cards.price(model.recap)) : ''}
 			
-			${tpl.showSelector(ps, data.conf.root_path, data, env, model, selitem)}
+			${model.recap.art ? tpl.showSelector(ps, data.conf.root_path, data, env, model, selitem) : ''}
 			
 			
 
@@ -382,7 +382,7 @@ tpl.showModification = (data, env, item) => `
 					const popup = await Dialog.open({
 						tpl:"/-shop/cart/modification.html.js",
 						sub:"ROOT",
-						json:"/-shop/cart/get-modification?art_nick=${item.art[0]}&brendart_nick=${item.brendart[0]}"
+						json:"/-shop/cart/get-modification?art_nick=${item.art?.[0] || ''}&brendart_nick=${item.brendart[0]}"
 					})
 					const form = popup.getElementsByTagName('form')[0]
 
@@ -511,7 +511,7 @@ tpl.buyButton = (data, env, model, selitem) => {
 		<script>
 			(async btn => {
 				const brendart_nick = "${selitem.brendart[0]}"
-				const art_nick = "${selitem.art[0]}"
+				const art_nick = "${selitem.art?.[0] || ''}"
 				const product = ${JSON.stringify(Ecommerce.getProduct(data, {
 					coupon:env.theme.partner,
 					recap: model.recap, 

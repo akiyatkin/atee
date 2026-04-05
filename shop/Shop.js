@@ -144,9 +144,13 @@ Shop.getGainItemHead = (item, gain, root_path) => {
 	else if (naimenovanie) head.description = naimenovanie
 	
 	const brendmodel_nick = item.brendmodel?.[0] || item.brendmodel_nick
-	const query_nick = item.art?.[0] || item.art_nick || item.brendart?.[0] || item.brendart_nick
+	//const query_nick = item.art?.[0] || item.art_nick || item.brendart?.[0] || item.brendart_nick
+	const path = [root_path + '/item/' + brendmodel_nick]
+	const query_nick = item.art?.[0] || item.art_nick
+	if (query_nick) path.push(query_nick)
+	head.canonical = path.join('/')
 
-	head.canonical = root_path + '/item/' + brendmodel_nick + '/' + query_nick
+
 	if (!head.title) head.title = brendart
 	if (!head.description) head.description = 'Купить ' + brendart
 	return head
@@ -970,6 +974,7 @@ Shop.getModelsByItems = async (db, moditems_ids, partner, props = []) => { //mod
 				model.recap[prop_nick] ??= []
 				const prop = await Shop.getPropByNick(db, prop_nick)
 				if (prop.type == 'number') {  //Сортировка латиницы отличается от русского v-в разные места
+
 					item[prop_nick].sort((a, b) => a - b)
 					
 				}
@@ -1239,21 +1244,20 @@ Shop.prepareFiles = (model) => {
 }
 Shop.prepareCost = (model, partner) => {
 	if (partner.cost) {
-		const change = model => {
-			if (!model[partner.cost_nick] || partner.cost_nick == 'cena') {
+		const change = item => {
+			if (!item[partner.cost_nick] || partner.cost_nick == 'cena') {
 				return //нет подмены
 			}
-			
-			model['staraya-cena'] ??= model['cena']
-			
-			model['cena'] = model[partner.cost_nick]
-
+			if (item['cena']) item['staraya-cena'] ??= item['cena']
+			item['cena'] = item[partner.cost_nick]
 			//Скидка зависит от источника, бренда и хз, где всязть скидки? partner глобальный.
 			//delete model[partner.cost]
 		}
-		change(model)
-		if (model.items) for (const item of model.items) {
-			change(item)
+		//change(model.recap)
+		if (model.items) {
+			for (const item of model.items) {
+				change(item)
+			}
 		}
 	}
 	// if (partner.discount) { //Может быть и свойство и скидка от свойства, типа от "Оптовой цены" партнёру ещё и скидка к ней

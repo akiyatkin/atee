@@ -814,13 +814,13 @@ tpl.showModification = (data, env, pos, item = pos.item) => `
 					const popup = await Dialog.open({
 						tpl:"/-shop/cart/modification.html.js",
 						sub:"ROOT",
-						json:"/-shop/cart/get-modification?art_nick=${item.art[0]}&brendart_nick=${item.brendart[0]}"
+						json:"/-shop/cart/get-modification?art_nick=${item.art?.[0] || ''}&brendart_nick=${item.brendart[0]}"
 					})
 					const form = popup.getElementsByTagName('form')[0]
 					form.addEventListener('submit', async e => {
 						e.preventDefault()
 						const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-						const ans = await senditmsg(btn, '/-shop/cart/set-modification?art_nick=${item.art[0]}&brendart_nick=${item.brendart[0]}', new FormData(form))
+						const ans = await senditmsg(btn, '/-shop/cart/set-modification?art_nick=${item.art?.[0] || ''}&brendart_nick=${item.brendart[0]}', new FormData(form))
 						if (ans.result) Dialog.hide()
 						const Client = await window.getClient()
 						Client.global('shop')
@@ -835,6 +835,9 @@ tpl.showModification = (data, env, pos, item = pos.item) => `
 	cards.getItemName - Kemppi Minarc 
 	gain - Kemppi Minarc 
 */
+//${naimenovanie ? naimenovanie + '' : ''}
+//<br><a href="${cards.getItemPath(data, item)}">${gain('brend')} ${gain('artikul') || gain('art')}</a> 
+
 tpl.showPos = (data, env, pos, item) => {
 	const gain = name => cards.getSomeTitle(data, item, name)
 	const naimenovanie = gain('naimenovanie')
@@ -842,8 +845,8 @@ tpl.showPos = (data, env, pos, item) => {
 		<a href="${cards.getItemPath(data, item)}" class="image">${item.images ? tpl.showImage(data, env, pos, item) : ''}</a>
 		<div class="info">
 			<div>
-				${naimenovanie ? naimenovanie + '' : ''}
-				<div><a href="${cards.getItemPath(data, item)}">${gain('brend')} ${gain('artikul') || gain('art')}</a> ${pos.changed ? '<span title="Есть изменения">*</span>' : ''}</div>
+				${cards.getItemBill(data, item)}
+				${pos.changed ? '<span title="Есть изменения">*</span>' : ''}
 			</div>
 			${item.modifikaciya ? tpl.showModification(data, env, pos) : ''}
 			<div style="margin: 0.5em 0;"><b>${cards.cost(item)}</b></div>

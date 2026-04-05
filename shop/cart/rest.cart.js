@@ -36,12 +36,12 @@ rest.addArgument('modification', ['escape'])
 rest.addArgument('brendart_nick', ['nicked'])
 rest.addVariable('brendart_nick#required', ['brendart_nick', 'required'])
 rest.addArgument('art_nick', ['nicked'])
-rest.addVariable('art_nick#required', ['art_nick', 'required'])
+//rest.addVariable('art_nick#required', ['art_nick', 'required'])
 
 rest.addVariable('item', async (view) => {
 	const db = await view.get('db')
 	const brendart_nick = await view.get('brendart_nick#required')
-	const art_nick = await view.get('art_nick#required')
+	const art_nick = await view.get('art_nick')
 	const partner = await view.get('partner')
 
 	const {item, props, values} = await Shop.getItemByBrendart(db, brendart_nick, art_nick, partner)

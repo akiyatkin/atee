@@ -321,14 +321,18 @@ rest.addResponse('get-item-sitemap', async view => {
 	const nick = nicked(title)
 	view.data.headings = {}
 	for (const plop of list) {
-		const path = [root_path, 'item', plop.brendmodel_nick, plop.art_nick || plop.brendmodel_nick].join('/')
+
+		//const path = [root_path, 'item', plop.brendmodel_nick, plop.art_nick || plop.brendmodel_nick].join('/')
+		const path = [root_path, 'item', plop.brendmodel_nick]
+		if (plop.art_nick) path.push(plop.art_nick)
+			
 		const head = await Shop.getPlopHead(plop, conf.root_path)
 
 		const group_id = plop.group_ids.at(-1)
 		const group = await Shop.getGroupById(db, group_id)
 		const key = nick + '-' + group.group_nick
 		view.data.headings[key] ??= { title: title + ' ' + group.group_title, items:{} }
-		view.data.headings[key].items[path] = head
+		view.data.headings[key].items[path.join('/')] = head
 	}	
 	
 	// view.data.headings = {
