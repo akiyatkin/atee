@@ -846,10 +846,9 @@ tpl.showPos = (data, env, pos, item) => {
 		<div class="info">
 			<div>
 				${cards.getItemBill(data, item)}
-				${pos.changed ? '<span title="Есть изменения">*</span>' : ''}
 			</div>
 			${item.modifikaciya ? tpl.showModification(data, env, pos) : ''}
-			<div style="margin: 0.5em 0;"><b>${cards.cost(item)}</b></div>
+			<div style="margin: 0.5em 0;"><b>${cards.cost(item)}</b>${pos.changed ? ' <span title="Есть изменения">*</span>' : ''}</div>
 		</div>
 		<div class="cost blocksum">
 			<div style="grid-area: input; padding-top:3px;">${number.INPUT({min:0, max:1000, value:pos.quantity, name: pos.brendart_nick})}</div>

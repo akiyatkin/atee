@@ -44,8 +44,7 @@ cards.getItemBill = (data, item, httphost = '') => { //ecommerce.name (в пар
 	const id = item.art ? [gain('brend'), gain('artikul') || gain('art')].join(' ') : gain('brendmodel')
 	return `
 		${gain('naimenovanie')}${gain('naimenovanie') ? '<br>' : ''}
-		<a ${httphost ? 'target="_blank" ' : ''}href="${httphost}${cards.getItemPath(data, item)}">${id}</a>
-	`
+		<a ${httphost ? 'target="_blank" ' : ''}href="${httphost}${cards.getItemPath(data, item)}">${id}</a>`
 	//if (item.art) return [gain('naimenovanie'), gain('brend'), gain('artikul') || gain('art')].join(' ')
 	//else return [gain('naimenovanie'), gain('brendmodel')].join(' ')
 }
