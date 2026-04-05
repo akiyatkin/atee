@@ -845,7 +845,7 @@ tpl.showPos = (data, env, pos, item) => {
 		<a href="${cards.getItemPath(data, item)}" class="image">${item.images ? tpl.showImage(data, env, pos, item) : ''}</a>
 		<div class="info">
 			<div>
-				${cards.getItemBill(data, item)}
+				${cards.getPosBill(data, pos)}
 			</div>
 			${item.modifikaciya ? tpl.showModification(data, env, pos) : ''}
 			<div style="margin: 0.5em 0;"><b>${cards.cost(item)}</b>${pos.changed ? ' <span title="Есть изменения">*</span>' : ''}</div>

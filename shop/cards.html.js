@@ -39,6 +39,17 @@ cards.getItemName = (data, selitem) => { //ecommerce.name (в паре с getVar
 	if (selitem.naimenovanie) return gain('naimenovanie') + '  ' + gain('brendmodel')
 	return gain('brendmodel')
 }
+cards.getPosBill = (data, pos, httphost = '') => { //depricated временно, у Pos art_nick правильный в panel.html.js
+	const item = pos.item
+	const gain = (name) => cards.getSomeTitle(data, item, name)
+	const id = item.art ? [gain('brend'), gain('artikul') || gain('art')].join(' ') : gain('brendmodel')
+	return `
+		${gain('naimenovanie')}${gain('naimenovanie') ? '<br>' : ''}
+		<a ${httphost ? 'target="_blank" ' : ''}href="${httphost}${data.conf.root_path}/item/${item.brendmodel[0]}${pos.art_nick ? '/' : ''}${pos.art_nick}">${id}</a>`
+	//if (item.art) return [gain('naimenovanie'), gain('brend'), gain('artikul') || gain('art')].join(' ')
+	//else return [gain('naimenovanie'), gain('brendmodel')].join(' ')
+}
+
 cards.getItemBill = (data, item, httphost = '') => { //ecommerce.name (в паре с getVariant)
 	const gain = (name) => cards.getSomeTitle(data, item, name)
 	const id = item.art ? [gain('brend'), gain('artikul') || gain('art')].join(' ') : gain('brendmodel')
