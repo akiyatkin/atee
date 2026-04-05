@@ -29,6 +29,12 @@ cards.getItemPath = (data, item) => {
 	if (item.art) path.push(item.art[0])
 	return path.join('/')
 }
+cards.getPosPath = (data, pos) => {
+	const item = pos.item
+	const path = [data.conf.root_path, 'item', item.brendmodel[0]]
+	if (pos.art_nick) path.push(pos.art_nick)
+	return path.join('/')
+}
 cards.getPlopPath = (conf, plop) => {
 	const path = [conf.root_path, 'item', plop.brendmodel_nick]
 	path.push(plop.art_nick || plop.brendart_nick)
@@ -39,26 +45,26 @@ cards.getItemName = (data, selitem) => { //ecommerce.name (в паре с getVar
 	if (selitem.naimenovanie) return gain('naimenovanie') + '  ' + gain('brendmodel')
 	return gain('brendmodel')
 }
-cards.getPosBill = (data, pos, httphost = '') => { //depricated временно, у Pos art_nick правильный в panel.html.js
+cards.getPosBill = (data, pos, httphost = '') => {
 	const item = pos.item
 	const gain = (name) => cards.getSomeTitle(data, item, name)
 	const id = item.art ? [gain('brend'), gain('artikul') || gain('art')].join(' ') : gain('brendmodel')
 	return `
 		${gain('naimenovanie')}${gain('naimenovanie') ? '<br>' : ''}
-		<a ${httphost ? 'target="_blank" ' : ''}href="${httphost}${data.conf.root_path}/item/${item.brendmodel[0]}${pos.art_nick ? '/' : ''}${pos.art_nick}">${id}</a>`
+		<a ${httphost ? 'target="_blank" ' : ''}href="${httphost}${cards.getPosPath(data, pos)}">${id}</a>`
 	//if (item.art) return [gain('naimenovanie'), gain('brend'), gain('artikul') || gain('art')].join(' ')
 	//else return [gain('naimenovanie'), gain('brendmodel')].join(' ')
 }
 
-cards.getItemBill = (data, item, httphost = '') => { //ecommerce.name (в паре с getVariant)
-	const gain = (name) => cards.getSomeTitle(data, item, name)
-	const id = item.art ? [gain('brend'), gain('artikul') || gain('art')].join(' ') : gain('brendmodel')
-	return `
-		${gain('naimenovanie')}${gain('naimenovanie') ? '<br>' : ''}
-		<a ${httphost ? 'target="_blank" ' : ''}href="${httphost}${cards.getItemPath(data, item)}">${id}</a>`
-	//if (item.art) return [gain('naimenovanie'), gain('brend'), gain('artikul') || gain('art')].join(' ')
-	//else return [gain('naimenovanie'), gain('brendmodel')].join(' ')
-}
+// cards.getItemBill = (data, item, httphost = '') => { //ecommerce.name (в паре с getVariant)
+// 	const gain = (name) => cards.getSomeTitle(data, item, name)
+// 	const id = item.art ? [gain('brend'), gain('artikul') || gain('art')].join(' ') : gain('brendmodel')
+// 	return `
+// 		${gain('naimenovanie')}${gain('naimenovanie') ? '<br>' : ''}
+// 		<a ${httphost ? 'target="_blank" ' : ''}href="${httphost}${cards.getItemPath(data, item)}">${id}</a>`
+// 	//if (item.art) return [gain('naimenovanie'), gain('brend'), gain('artikul') || gain('art')].join(' ')
+// 	//else return [gain('naimenovanie'), gain('brendmodel')].join(' ')
+// }
 
 
 // cards.getVariant = (data, model, item) => { //ecommerce.variant

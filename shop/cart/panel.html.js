@@ -842,7 +842,7 @@ tpl.showPos = (data, env, pos, item) => {
 	const gain = name => cards.getSomeTitle(data, item, name)
 	const naimenovanie = gain('naimenovanie')
 	return `
-		<a href="${cards.getItemPath(data, item)}" class="image">${item.images ? tpl.showImage(data, env, pos, item) : ''}</a>
+		<a href="${cards.getPosPath(data, pos)}" class="image">${item.images ? tpl.showImage(data, env, pos, item) : ''}</a>
 		<div class="info">
 			<div>
 				${cards.getPosBill(data, pos)}
