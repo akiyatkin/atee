@@ -54,6 +54,7 @@ tpl.showModel = (data, env, model) => {
 	
 	const query_nick = env.crumb.child?.name || '' //арт может быть не выбран, тогда фильр показывается без выбраных кнопок
 	const selitem = ps.getItemByArt(query_nick, true)
+	
 	//const selitem = tpl.getSelItem(data, env)
 	return `
 		${tpl.showBreadcrumbs(data, env, model, selitem)}

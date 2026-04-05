@@ -162,7 +162,7 @@ class Selector {
 		const ps = this
 		//const r = (query_nick || '').split(Selector.art(base_item)) 
 		if (!withdef && base_item.art && !query_nick) return false
-		const r = Selector.explode(Selector.art(base_item),  query_nick) //["","-хвост-после-базового-динамическая-часть"]
+		const r = Selector.explode(query_nick, Selector.art(base_item)) //["","-хвост-после-базового-динамическая-часть"]
 		if (!withdef && !r) return false
 		//console.log(Selector.art(base_item), query_nick, r)
 		const q_dyn = (r[1] || '').split('-').slice(1) //["хвост","после","базового","динамическая","часть"]
@@ -216,7 +216,9 @@ class Selector {
 	getItemByArt (query_nick, withdef = false) { //query_nick = art найти надо что угодно близко похожее в модели
 		//Должно быть точное совпадение, Просто базовый открыть нельзя, потому что у базового некорректный brendart. 
 		const ps = this
+
 		if (!withdef && query_nick && !ps.model.recap.art) return false
+
 		const base_item = Selector.getBaseByQuery(ps.model, query_nick)
 		if (!base_item) return false
 
