@@ -324,22 +324,15 @@ Cart.getOrderById = async (db, order_id) => {
 Cart.getOrder = Cart.getOrderById //depricated
 
 
-Cart.removeItem = async (db, order_id, item) => {
-	const brendart_nick = item.brendart[0]
-	if (item.art) {
-		const art_nick = item.art?.[0] || ''
-		await db.exec(`
-			DELETE FROM shop_basket 
-			WHERE order_id = :order_id 
-				and brendart_nick = :brendart_nick and art_nick = :art_nick
-		`, {order_id, brendart_nick, art_nick})
-	} else {
-		await db.exec(`
-			DELETE FROM shop_basket 
-			WHERE order_id = :order_id 
-				and brendart_nick = :brendart_nick
-		`, {order_id, brendart_nick})
-	}
+Cart.removeItem = async (db, order_id, brendart_nick, art_nick) => {
+	//const brendart_nick = item.brendart[0]
+	
+	await db.exec(`
+		DELETE FROM shop_basket 
+		WHERE order_id = :order_id 
+			and brendart_nick = :brendart_nick and art_nick = :art_nick
+	`, {order_id, brendart_nick, art_nick})
+	
 	await db.exec(`
 		UPDATE shop_orders 
 		SET dateedit = now()

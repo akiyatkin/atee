@@ -136,14 +136,18 @@ rest.addAction('set-remove', async view => {
 	const active_id = await view.get('active_id#required')
 	const partner = await view.get('partner')
 	const db = await view.get('db')
-	const item = await view.get('item#required')
+	//const item = await view.get('item#required')
+
+	const brendart_nick = await view.get('brendart_nick#required')
+	const art_nick = await view.get('art_nick')
+
 	const user_id = await view.get('user_id#required')
 
 
 	const utms = await view.get('getutms')
 	const order_id = await Cart.castWaitActive(db, user_id, active_id, utms, false)
 	await Cart.updateUtms(db, order_id, utms)
-	await Cart.removeItem(db, order_id, item)
+	await Cart.removeItem(db, order_id, brendart_nick, art_nick)
 	const order = await Cart.getOrder(db, order_id)
 	const {list, props, values} = await Cart.basket.get(db, order, partner)
 	await Cart.recalcOrder(db, order_id, list, partner)
