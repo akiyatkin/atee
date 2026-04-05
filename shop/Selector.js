@@ -124,7 +124,7 @@ class Selector {
 		}
 		ps.prop_nicks_selector_primary_dynamic = ps.prop_nicks_dynamic.filter(prop_nick => {
 			const prop = ps.props[prop_nick]
-			ps.model.recap[prop_nick] = prop.nicks
+			if (prop.nicks) ps.model.recap[prop_nick] = prop.nicks
 			//ps.model.iprops.push(prop_nick)
 			return Selector.isPropPrimarySelectable(prop, prop.nicks)
 		})
