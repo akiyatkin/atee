@@ -130,6 +130,7 @@ cards.scriptRemoveSuperfluous = (data, limit = 12) => `
 cards.badgecss = (data, env) => `
 	<style>
 		${env.scope} .badge {
+			white-space: nowrap;
 			border-radius: 8px;
 			border: solid 1px currentColor;
 			background-color: rgba(255,255,255,.9);
