@@ -64,7 +64,7 @@ rest.addResponse('get-modification', async view => {
 		FROM shop_basket 
 		WHERE order_id = :order_id and brendart_nick = :brendart_nick and art_nick = :art_nick
 	`, {order_id, brendart_nick, art_nick })
-
+	if (!pos) return view.err('Позиция не найдена')
 	if (pos.json) {
 		await Cart.basket.json2item(db, pos)
 	}
