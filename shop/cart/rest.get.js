@@ -54,19 +54,28 @@ rest.addResponse('get-added', async view => {
 })
 rest.addResponse('get-modification', async view => {
 	const order_id = await view.get('active_id#required')
-	const item = await view.get('item#required')
-	const db = await view.get('db')
 	const brendart_nick = await view.get('brendart_nick')
+	const art_nick = await view.get('art_nick')
+	const db = await view.get('db')
+
+
+	const pos = await db.fetch(`
+		SELECT brendart_nick, art_nick, json, modification
+		FROM shop_basket 
+		WHERE order_id = :order_id and brendart_nick = :brendart_nick and art_nick = :art_nick
+	`, {order_id, brendart_nick, art_nick })
+
+	if (pos.json) {
+		await Cart.basket.json2item(db, pos)
+	}
+
+	if (!pos.item) pos.item = await view.get('item')
+
+	
+	
 	const user_id = view.data.user_id = await view.get('user_id')
 
-	const modification = await db.col(`
-		SELECT modification
-		FROM shop_basket
-		WHERE order_id = :order_id 
-			and brendart_nick = :brendart_nick
-	`, {order_id, brendart_nick })
-
-	const pos = {item, modification}
+	
 	view.data.pos = pos
 	
 	return view.ret()

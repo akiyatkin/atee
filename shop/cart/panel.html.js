@@ -814,13 +814,13 @@ tpl.showModification = (data, env, pos, item = pos.item) => `
 					const popup = await Dialog.open({
 						tpl:"/-shop/cart/modification.html.js",
 						sub:"ROOT",
-						json:"/-shop/cart/get-modification?art_nick=${item.art?.[0] || ''}&brendart_nick=${item.brendart[0]}"
+						json:"/-shop/cart/get-modification?art_nick=${pos.art_nick}&brendart_nick=${item.brendart[0]}"
 					})
 					const form = popup.getElementsByTagName('form')[0]
 					form.addEventListener('submit', async e => {
 						e.preventDefault()
 						const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-						const ans = await senditmsg(btn, '/-shop/cart/set-modification?art_nick=${item.art?.[0] || ''}&brendart_nick=${item.brendart[0]}', new FormData(form))
+						const ans = await senditmsg(btn, '/-shop/cart/set-modification?art_nick=${pos.art_nick}&brendart_nick=${item.brendart[0]}', new FormData(form))
 						if (ans.result) Dialog.hide()
 						const Client = await window.getClient()
 						Client.global('shop')

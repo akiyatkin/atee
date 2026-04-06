@@ -157,11 +157,12 @@ rest.addAction('set-remove', async view => {
 rest.addAction('set-modification', async view => {
 	const active_id = await view.get('active_id#required')
 	const modification = await view.get('modification')
-	const item = await view.get('item#required')
+	//const item = await view.get('item#required')
 	const db = await view.get('db')
-	const brendart_nick = item.brendart[0]
-	const art_nick = item.art?.[0] || ''
-
+	
+	const brendart_nick = await view.get('brendart_nick')
+	const art_nick = await view.get('art_nick')	
+	
 	const order = await Cart.getOrder(db, active_id)
 	if (order.status != 'wait') return view.err('Заказ уже отправлен, обсудите, пожалуйста, изменения с менеджером!', 422)
 
