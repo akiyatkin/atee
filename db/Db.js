@@ -33,7 +33,7 @@ const createPool = async () => {
 
 	const poolConfig = {
 		waitForConnections: true,
-		connectionLimit: 50,
+		connectionLimit: 20, //Просьба NetAngels
 		queueLimit: 100000,
 		// acquireTimeout и timeout убраны полностью
 	};
