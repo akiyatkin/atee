@@ -51,7 +51,7 @@ const createPool = async () => {
 		const db = await pool.getConnection();
 		try {
 			await db.execute('SELECT 1');
-			console.log('Database pool ready');
+			console.log('Database pool ready, connectionLimit:', poolConfig.connectionLimit);
 		} finally {
 			db.release();
 		}
