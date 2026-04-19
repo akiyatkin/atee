@@ -238,7 +238,7 @@ cards.getSomeTitles = (data, item, prop_nick) => {
 		} else if (prop.type == 'date') {
 			return ddd.ai(nick)
 		} else if (prop.type == 'number') {
-			return nick / 10 ** prop.scale
+			return nick / 10 ** (prop.scale || 0)
 		} else { //text
 			return nick
 		}
@@ -336,7 +336,7 @@ cards.prop = {
 }
 cards.addget = (get, params) => addget(get, params, ['m', 'query', 'count'])
 
-cards.cost = (item) => item.cena ? cost(item.cena[0]) + cards.unit() : ''
+cards.cost = (item) => item.cena?.[0] ? cost(item.cena[0]) + cards.unit() : '&nbsp;'
 
 // cards.cardprice = (item) => {
 // 	let html = ''
@@ -364,7 +364,8 @@ cards.price = (item, parametrizaciya) => {
 	let html = ''
 	const staraya = item['staraya-cena']
 	const cena = item.cena
-	if (!cena) return html
+	
+	if (!cena?.[0]) return html
 	if (staraya && staraya.at(0) > cena.at(0) && cena.length == 1) {
 		html += `<s style="opacity: .5;">${cost(staraya.at(-1))}${cards.unit()}</s>`
 	}

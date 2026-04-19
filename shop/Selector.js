@@ -32,7 +32,13 @@ for (const m in SELECTORS) {
 		
 		prop.prop_title = prop_title
 		if (!prop.titles) continue
-		prop.nicks = prop.titles.map(title => nicked(title))
+		//prop.titles = prop.titles.map(title => title + '')
+		if (prop.type == 'number') {
+			//prop.nicks = prop.titles.map(title => Number(title))
+			prop.nicks = prop.titles.map(title => nicked(title))
+		} else if (prop.type == 'value') {
+			prop.nicks = prop.titles.map(title => nicked(title))
+		}
 
 		if (prop.type == 'value') {
 			prop.titles.forEach((value_title, i) => {
@@ -159,13 +165,17 @@ class Selector {
 			writable: true,
 			configurable: true
 		})
+
+
 		const ps = this
 		//const r = (query_nick || '').split(Selector.art(base_item)) 
 		if (!withdef && base_item.art && !query_nick) return false
 		const r = Selector.explode(query_nick, Selector.art(base_item)) //["","-хвост-после-базового-динамическая-часть"]
 		if (!withdef && !r) return false
 		//console.log(Selector.art(base_item), query_nick, r)
-		const q_dyn = (r[1] || '').split('-').slice(1) //["хвост","после","базового","динамическая","часть"]
+		
+		const q_dyn = (nicked(r[1]) || '').split('-') //["хвост","после","базового","динамическая","часть"]
+
 
 		for (const i in ps.prop_nicks_address_primary) { //Что именно надо взять из адресса
 			const prop_nick = ps.prop_nicks_address_primary[i]
@@ -177,11 +187,14 @@ class Selector {
 				//const prop = ps.props[prop_nick]
 				//const title = prop.type == 'value' ? ps.values[nick] : nick
 				const prop = ps.props[prop_nick]
+
 				if (prop.nicks && prop.nicks.includes(nick)) {
+					
 					if (prop.type == 'value' && !ps.values[nick]) {
 						if (!withdef) return false
 						item[prop_nick] = [def]
 					} else {
+						
 						item[prop_nick] = [nick]	
 					}	
 				} else {
@@ -215,13 +228,11 @@ class Selector {
 	}
 	getItemByArt (query_nick, withdef = false) { //query_nick = art найти надо что угодно близко похожее в модели
 		//Должно быть точное совпадение, Просто базовый открыть нельзя, потому что у базового некорректный brendart. 
-		const ps = this
-
-		if (!withdef && query_nick && !ps.model.recap.art) return false
+		const ps = this		
+		if (!withdef && query_nick && !ps.props.art) return false
 
 		const base_item = Selector.getBaseByQuery(ps.model, query_nick)
 		if (!base_item) return false
-
 		const item = ps.createItem(base_item, query_nick, withdef)
 
 		return item
@@ -441,7 +452,7 @@ class Selector {
 		} else if (prop.type == 'date') {
 			return ddd.ai(nick)
 		} else if (prop.type == 'number') {
-			return nick / 10 ** prop.scale
+			return nick / 10 ** (prop.scale || 0)
 		} else { //text
 			return nick
 		}

@@ -49,7 +49,8 @@ const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
 const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : ''
 
 tpl.tocheck_subject = (data) => `Заказ с сайта ${data.vars.host}`
-tpl.tocheck = (data) => !data.order ? `<h1>Корзина пуста</h1>` : `
+tpl.EMPTYTITLE = `Корзина пуста`
+tpl.tocheck = (data) => !data.order ? `<h1>${tpl.EMPTYTITLE}</h1>` : `
 	<h1>${tpl.TITLES[data.order.status]} № ${data.order.order_nick}</h1>
 	<div style="margin-bottom:1rem">
 		ФИО: ${data.order.name}<br>
@@ -63,12 +64,15 @@ tpl.tocheck = (data) => !data.order ? `<h1>Корзина пуста</h1>` : `
 	<div style="font-family: monospace; font-size: 0.9rem; margin-bottom: 1rem">
 		${data.list.map(pos => tpl.showPos(data, pos)).join('')}
 	</div>
-	<div>
-		Стоимость заказа: <b>${cost(data.list.reduce((val, pos) => val + pos.sum, 0))}${cards.unit()}</b>
-	</div>
+	${tpl.showTotal(data, data.list.reduce((val, pos) => val + pos.sum, 0))}
+	
 	${tpl.footer(data)}
 `
-
+tpl.showTotal = (data, total) => total ? `
+	<div>
+		Стоимость заказа: <b>${cost(total)}${cards.unit()}</b>
+	</div>
+` : ''
 tpl.showPos = (data, pos) => {
 	const gain = name => cards.getSomeTitle(data, pos.item, name)
 	const naimenovanie = gain('naimenovanie')
@@ -76,10 +80,11 @@ tpl.showPos = (data, pos) => {
 		<div style="margin-bottom:1rem">
 			<div>${cards.getPosBill(data, pos, 'https://' + data.vars.host)}
 			<div>${pos.modification || ''}</div>
-			<div><b>${pos.quantity}</b> по <b>${cards.cost(pos.item)}</b> = <b>${cost(pos.quantity * pos.item.cena[0])}${cards.unit()}</b></div>
+			<div><b>${pos.quantity}</b>${tpl.showSum(pos)}</div>
 		</div>
 	`
 }
+tpl.showSum = (pos) => pos.item.cena?.[0] ? ` по <b>${cards.cost(pos.item)}</b> = <b>${cost(pos.quantity * pos.item.cena[0])}${cards.unit()}</b>` : '&nbsp;'
 tpl.footer = (data) => `
 	<p>
 		Поддержка: <a href="https://${data.vars.host}/contacts">${data.vars.host}/contacts</a>

@@ -278,9 +278,9 @@ tpl.checkbox = (name, title, checked) => `
 		<label for="contacts_${name}">${title}</label>
 	</div>
 `
-tpl.SUM = (sum) => `${cost(sum)}${cards.unit()}`
+tpl.SUM = (sum) => sum ? `${cost(sum)}${cards.unit()}` : '&nbsp;'
 tpl.TITLE = (obj) => obj.length ? `<b>${obj.length}</b> ${words(obj.length, 'позиция','позиции','позиций')} <b>${tpl.SUM(obj.sum)}</b>` : `<b>${obj.orders}</b> ${words(obj.orders, 'заказ','заказа','заказов')}` //`В заказе ещё нет товаров` 
-const TITLES = {
+tpl.TITLES = {
 	"wait":"Оформить заказ",
 	"check":"Заказ оформлен",
 	"complete":"Заказ выполнен",
@@ -332,7 +332,7 @@ tpl.ORDER = (data, env) => tpl.isShowPanel(data) ? `
 			}
 		</style>
 		<div class="whenshow">
-			<h1 style="margin-top:1rem;">${TITLES[data.order.status]}
+			<h1 style="margin-top:1rem;">${tpl.TITLES[data.order.status]}
 			${data.user.manager ? showCrown() : ''}
 			<a href="/shop/mail" style="color:inherit; margin-left:1ch; margin-bottom: 2rem; float:right; font-weight: normal">№ ${data.order.order_nick}</a></h1>
 			${data.order.status != 'wait' ? showDate(data.order, env) : ''}
@@ -454,7 +454,7 @@ const showOrders = (data, env) => `
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
-const showOrder = (data, env, order) => `<button title="${TITLES[order.status]}" ${data.order.order_id == order.order_id ? 'disabled ' : ''}data-order_id="${order.order_id}" style="${order.status == 'complete' ? 'color:green':''} ${order.status == 'cancel' ? 'color:gray; text-decoration: line-through':''} ${order.status == 'wait' ? 'color:red':''}" class="a">${order.order_nick}</button>`
+const showOrder = (data, env, order) => `<button title="${tpl.TITLES[order.status]}" ${data.order.order_id == order.order_id ? 'disabled ' : ''}data-order_id="${order.order_id}" style="${order.status == 'complete' ? 'color:green':''} ${order.status == 'cancel' ? 'color:gray; text-decoration: line-through':''} ${order.status == 'wait' ? 'color:red':''}" class="a">${order.order_nick}</button>`
 tpl.showSubmit = (data, env) => `
 	<input type="hidden" name="source" value="">
 	<input type="hidden" name="content" value="">

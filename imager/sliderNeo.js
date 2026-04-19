@@ -52,7 +52,9 @@ export default div => {
 	}
 	const next = () => {
 		const length = child.offsetWidth + gap
+		
 		let len = ((slider.scrollWidth - slider.offsetWidth + slider.scrollLeft) % length)
+		
 		/*
 			slider.scrollWidth = 1000
 			slider.offsetWidth = 200

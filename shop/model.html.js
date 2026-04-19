@@ -251,8 +251,8 @@ tpl.showMainData = (ps, data, env, model, selitem) => `
 			${cards.line('Бренд', tpl.filters(data, env, model, model.recap, 'brend'))}
 						
 			${model.recap.cena?.length > 1 ? cards.block(cards.price(model.recap)) : ''}
-			
-			${model.recap.art ? tpl.showSelector(ps, data.conf.root_path, data, env, model, selitem) : ''}
+
+			${selitem.art ? tpl.showSelector(ps, data.conf.root_path, data, env, model, selitem) : ''}
 			
 			
 
@@ -502,15 +502,15 @@ tpl.getItemA = (ps, root_path, get, item, title) => {
 		${title}
 	</a>`
 }
+tpl.OPENTITLE = `Открыть корзину`
 
-
-
+tpl.ADDTITLE = `Добавить в корзину`
 tpl.buyButton = (data, env, model, selitem) => {
 	if (!data.conf.cart) return tpl.orderButton(data, env, model, selitem)
 	const gain = (name) => cards.getSomeTitle(data, selitem, name)
 	return `
 		<div style="margin-bottom: 1em">${cards.price(selitem)}</div>
-		<button style="font-size:1.2rem; opacity: 0">Добавить в корзину</button>
+		<button style="font-size:1.2rem; opacity: 0">${tpl.ADDTITLE}</button>
 		<script>
 			(async btn => {
 				const brendart_nick = "${selitem.brendart[0]}"
@@ -527,7 +527,7 @@ tpl.buyButton = (data, env, model, selitem) => {
 				const ans = await senditmsg(btn.parentElement, '/-shop/cart/get-added', {art_nick, brendart_nick})
 			
 				btn.style.opacity = 1
-				if (ans.quantity) btn.innerHTML = 'Открыть корзину'
+				if (ans.quantity) btn.innerHTML = '${tpl.OPENTITLE}'
 				
 				btn.addEventListener('click', async () => {
 					const Client = await window.getClient()

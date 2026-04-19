@@ -186,6 +186,7 @@ rest.addAction('set-add', async view => {
 	const db = await view.get('db')
 
 	const item = await view.get('item#required')
+	
 	const brendart_nick = item.brendart[0]
 	const art_nick = item.art?.[0] || ''
 
