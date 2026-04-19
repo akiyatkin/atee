@@ -335,6 +335,7 @@ class Selector {
 			ps.prop_nicks_selector_primary_static //Статичный выбор тоже надо проверить
 		*/
 		const prop_nicks = [...ps.prop_nicks_selector_secondary_dynamic, ...ps.prop_nicks_selector_primary_dynamic]
+		ps.interaction = 1
 		if (ps.check(item, prop_nicks, true)) return item
 		
 		
@@ -352,6 +353,7 @@ class Selector {
 			[1!,2?,3]
 			[1,2,4!]
 		*/
+		ps.interaction = 2
 		for (const other_prop_nick of other_prop_nicks) {
 			const old_value_nicks = item[other_prop_nick]
 			for (const value_nick of ps.model.recap[other_prop_nick]) {
@@ -367,6 +369,7 @@ class Selector {
 		//Найти все совместимые, а потом выбрать ближайшее? Искать пока не будет найдено с разницей в 1
 
 		//Нужно сбросить 2 выбираемых свойства
+		ps.interaction = 3
 		for (const other_prop_nick1 of other_prop_nicks) {
 
 			const old_value_nicks1 = item[other_prop_nick1]

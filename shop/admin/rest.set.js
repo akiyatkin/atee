@@ -68,11 +68,12 @@ rest.addAction('set-tpl-sub', ['admin','checkrecalc','setaccess'], async view =>
 	if (!tpl) return view.err('Некорректный type')
 	if (!tpl.prop[sub]) return view.err('Не найден шаблон')
 	view.data.sub = sub
-	await db.exec(`
-		REPLACE INTO shop_props 
-		SET ${type}_tpl = :sub, prop_nick = :prop_nick
-	`, { sub, prop_nick })
 
+	await db.exec(`
+		INSERT INTO shop_props (prop_nick, ${type}_tpl)
+		VALUES (:prop_nick, :sub)
+		ON DUPLICATE KEY UPDATE ${type}_tpl = :sub
+	`, {sub, prop_nick})
 	
 	return view.ret()
 })

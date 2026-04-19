@@ -462,7 +462,6 @@ tpl.getPropButton = (ps, root_path, get, selitem, prop, value_nick) => {
 	//Нужно найти art уже сейчас который будет выбран при клике, чтобы может art
 
 	const item = ps.getNearestItem(selitem, prop.prop_nick, value_nick)
-
 	//return ps.values[value_nick]?.value_title || value_nick
 	//if (value_nick == 'chernyy-muar') console.log(value_nick, item['art'])
 
@@ -495,7 +494,7 @@ tpl.getItemA = (ps, root_path, get, item, title) => {
 		${title}
 	</span>`
 
-	return `<a style="margin-top:0.3em; display:inline-block; border-radius:var(--radius);
+	return `<a style="${ps.interaction == 2 ? 'opacity:0.5;' : ''}${ps.interaction == 3 ? 'opacity:0.3;' : ''}margin-top:0.3em; display:inline-block; border-radius:var(--radius);
 	padding:0 0.5ch; margin-right:2px; line-height: 1.5; text-decoration: none;
 	border:solid rgba(0,0,0,0.15) 3px;" class="a" data-scroll="none" rel="nofollow"
 		href="${cards.getItemPath({props: ps.props, conf: {root_path}}, item)}${addget(get, {}, ['modification'])}">

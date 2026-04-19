@@ -9,16 +9,16 @@ export default tpl
 
 tpl.ROOT = (data, env) => `
 	<div id="SHOP_TITLE">${tpl.TITLE(data, env)}</div>
-	<div class="grid">
+	<div class="search-grid">
 		<style>
-			${env.scope} > .grid {
+			${env.scope} > .search-grid {
 				margin-bottom:2rem;
 				display: grid; 
 				grid-gap: 1rem; 
 				grid-template-columns: 1fr 1fr;
 			}
 			@media (max-width: 768px) {
-				${env.scope} > .grid {
+				${env.scope} > .search-grid {
 					display: grid; 
 					grid-gap: 1rem; 
 					grid-template-columns: 1fr;
