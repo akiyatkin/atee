@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS `shop_orders` (
   `email` tinytext NOT NULL DEFAULT '' COMMENT '1. У текущего user_id нет - будет добавлен. 2. У текущего другой, если свободен, то будет добавлен текущему пользователю 3. Для менеджера. Создаётся новый пользователь или заявка привяжется к существующему пользователю. Если телефон у одного, почта у другова заявка привяжется к обоим.',
   `phone` tinytext NOT NULL DEFAULT '' COMMENT '1. У текущего user_id нет - будет добавлен. 2. У текущего другой, если свободен, то будет добавлен текущему пользователю 3. Для менеджера. Создаётся новый пользователь или заявка привяжется к существующему пользователю. Если телефон у одного, почта у другова заявка привяжется к обоим.',
   `name` tinytext NOT NULL DEFAULT '',
+  `date` datetime DEFAULT NULL COMMENT 'Дата указанная пользователем',
   `callback` enum('yes','no') DEFAULT NULL COMMENT 'Перезвонить или нет',
   `status` enum('wait','pay','paid','check','complete','cancel') NOT NULL DEFAULT 'wait' COMMENT 'Доступные статусы',
   `lang` enum('ru','en') DEFAULT NULL COMMENT 'Определёный язык интерфейса посетителя',

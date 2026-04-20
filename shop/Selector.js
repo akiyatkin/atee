@@ -180,24 +180,38 @@ class Selector {
 		for (const i in ps.prop_nicks_address_primary) { //Что именно надо взять из адресса
 			const prop_nick = ps.prop_nicks_address_primary[i]
 			const nick = q_dyn[i]
-			
+			const prop = ps.props[prop_nick]
+
 			//Если есть выбранный базовый, то динамические пытаюсят подставиться ближайшие если в адресе их нет, без фанатизма и перебора - либо подойдут перывй либо нет.
-			const def = ps.model.recap[prop_nick][0] //всегда надо что-то назначать в base_item			
+			const def = ps.model.recap[prop_nick]?.[0] || prop.min || 0 //всегда надо что-то назначать в base_item
 			if (nick) {
 				//const prop = ps.props[prop_nick]
 				//const title = prop.type == 'value' ? ps.values[nick] : nick
-				const prop = ps.props[prop_nick]
-
+				
 				if (prop.nicks && prop.nicks.includes(nick)) {
-					
 					if (prop.type == 'value' && !ps.values[nick]) {
 						if (!withdef) return false
 						item[prop_nick] = [def]
 					} else {
 						
-						item[prop_nick] = [nick]	
-					}	
+						item[prop_nick] = [nick]
+					}
+
+				} else if (prop.step) {
+					let broke = false
+					if (nick < prop.min) broke = true
+					if (nick > prop.max) broke = true
+					if ((nick - prop.min) % prop.step) broke = true
+
+					if (broke) {
+						if (!withdef) return false
+						item[prop_nick] = [def]
+					} else {
+						item[prop_nick] = [nick]
+					}
 				} else {
+
+
 					if (!withdef) return false
 					item[prop_nick] = [def]
 				}
@@ -435,6 +449,7 @@ class Selector {
 		return title
 	}
 	static isPropPrimarySelectable (prop, values) {
+		if (prop?.template) return true
 		if (!prop?.type) return false
 		if (!values) return false
 		if (values.length < 2) return false //В имя не надо вставлять то что нельзя выбрать если значение только одно

@@ -336,7 +336,7 @@ cards.prop = {
 }
 cards.addget = (get, params) => addget(get, params, ['m', 'query', 'count'])
 
-cards.cost = (item) => item.cena?.[0] ? cost(item.cena[0]) + cards.unit() : '&nbsp;'
+cards.cost = (item) => item.cena?.[0] ? cost(item.cena[0]) + cards.unit() : ''
 
 // cards.cardprice = (item) => {
 // 	let html = ''

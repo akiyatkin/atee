@@ -10,7 +10,7 @@ const tpl = {}
 export default tpl
 tpl.css = ['/-sources/revscroll.css']
 
-tpl.ROOT = (data, env) => data.result ? tpl.showModel(data, env, data.model) : tpl.showError(data, env)
+tpl.ROOT = (data, env) => data.result ? tpl.showModel(data, env) : tpl.showError(data, env)
 
 tpl.showError = (data, env) => `
 	<div style="margin: 1em 0 0.5em">${data.group ? tpl.showGroupLink(data, env, data.root) : ''}</div>
@@ -48,19 +48,19 @@ tpl.showBreadcrumbs = (data, env, model, selitem) => `
 // 	return model.items.find(item => item.art?.[0] == name || item.brendart[0] == name) || false
 // }
 
-tpl.showModel = (data, env, model) => {
+tpl.showModel = (data, env) => {
 
-	const ps = new Selector(model, data.props, data.values)
+	const ps = new Selector(data.model, data.props, data.values)
 	
 	const query_nick = env.crumb.child?.name || '' //арт может быть не выбран, тогда фильр показывается без выбраных кнопок
 	const selitem = ps.getItemByArt(query_nick, true)
 	
 	//const selitem = tpl.getSelItem(data, env)
 	return `
-		${tpl.showBreadcrumbs(data, env, model, selitem)}
+		${tpl.showBreadcrumbs(data, env, ps.model, selitem)}
 		<h1 id="page" style="margin-top:0">${cards.getItemName(data, selitem)}</h1>
 
-		${tpl.showMainData(ps, data, env, model, selitem)}
+		${tpl.showMainData(ps, data, env, ps.model, selitem)}
 		<div style="margin-bottom:2rem">
 			${selitem['skryt-filtry'] ? '' : tpl.showModelProps(ps, data, env)}
 		</div>
@@ -244,31 +244,31 @@ tpl.showMainData = (ps, data, env, model, selitem) => `
 			}
 		</style>	
 		
-		${model.recap.images ? tpl.showGallery(data, env, selitem?.images ? selitem : model.recap) : ''}
+		${ps.model.recap.images ? tpl.showGallery(data, env, selitem?.images ? selitem : ps.model.recap) : ''}
 		
 		<div>
-			<b>${cards.line('Модель', cards.getSomeTitle(data, model.recap, 'model'))}</b>
-			${cards.line('Бренд', tpl.filters(data, env, model, model.recap, 'brend'))}
+			<b>${cards.line('Модель', cards.getSomeTitle(data, ps.model.recap, 'model'))}</b>
+			${cards.line('Бренд', tpl.filters(data, env, ps.model, ps.model.recap, 'brend'))}
 						
-			${model.recap.cena?.length > 1 ? cards.block(cards.price(model.recap)) : ''}
+			${ps.model.recap.cena?.length > 1 ? cards.block(cards.price(ps.model.recap)) : ''}
 
-			${selitem.art ? tpl.showSelector(ps, data.conf.root_path, data, env, model, selitem) : ''}
+			${selitem.art ? tpl.showSelector(data, env, ps, data.conf.root_path, ps.model, selitem) : ''}
 			
 			
 
-			${selitem ? cards.block(tpl.showTableItem(ps, data, env, model, selitem)) : ''}
+			${selitem ? cards.block(tpl.showTableItem(ps, data, env, ps.model, selitem)) : ''}
 			
-			${selitem ? cards.badge.nalichie(data, env, selitem, model.group_nicks[0]) : ''}
+			${selitem ? cards.badge.nalichie(data, env, selitem, ps.model.group_nicks[0]) : ''}
 
 			<div>
-				${selitem ? cards.block(selitem.cena ? tpl.buyButton(data, env, model, selitem) : tpl.orderButton(data, env, model, selitem)) : ''}
+				${selitem ? cards.block(selitem.cena ? tpl.buyButton(data, env, ps.model, selitem) : tpl.orderButton(data, env, ps.model, selitem)) : ''}
 			</div>
 			
 			
 			${selitem ? '<div style="font-style:italic; margin-top:2em">' + cards.getSomeTitle(data, selitem, 'opisanie') + '</div>' : ''}
 			
 			
-			${selitem ? tpl.ecomDetail(data, env, model, selitem) : ''}
+			${selitem ? tpl.ecomDetail(data, env, ps.model, selitem) : ''}
 		</div>
 	</div>
 	
@@ -295,10 +295,14 @@ tpl.showTableItem = (ps, data, env, model, selitem) => `
 			padding:0;
 			display: table;
 		}
+		${env.scope} .tableitem th {
+			white-space: nowrap;
+		}
 		${env.scope} .tableitem th,
 		${env.scope} .tableitem td {
 			padding:1px 5px;
 			font-size:13px;
+			
 		}
 	</style>
 	<table class="tableitem">
@@ -315,7 +319,7 @@ const showCost = (value) => value ? `${cost(value)}${common.unit()}` : ''
 
 
 
-tpl.showSelector = (ps, root_path, data, env, model, selitem) => {	
+tpl.showSelector = (data, env, ps, root_path, model, selitem) => {	
 	if (!ps.prop_nicks_selector_primary.length) return ''
 	
 	const htmls = [`
@@ -327,7 +331,7 @@ tpl.showSelector = (ps, root_path, data, env, model, selitem) => {
 	
 	for (const prop_nick of ps.prop_nicks_selector_primary) {
 		const prop = ps.props[prop_nick]
-		const html = tpl.getSelectablePropBlock(ps, root_path, env.bread.get, selitem, prop)
+		const html = tpl.template[prop.template || 'titles'](data, env, ps, root_path, env.bread.get, selitem, prop)
 		htmls.push(html)
 	}
 	
@@ -377,7 +381,7 @@ tpl.showModification = (data, env, item) => `
 	<div style="margin:0.5em 0">
 
 		<div><b>${cards.getSomeTitle(data, item, 'modifikaciya')}</b></div>
-		<button style="margin-top: 0.3em;" class="a">${escapeHTML(env.bread.get.modification) || 'Выбрать...'}</button>
+		<button style="margin-top: 0.25em;" class="a">${escapeHTML(env.bread.get.modification) || 'Выбрать...'}</button>
 		<script>
 			(btn => {
 				btn.addEventListener('click', async () => {
@@ -444,7 +448,8 @@ tpl.showModification = (data, env, item) => `
 // 	// }) || items[0]
 // 	// return item
 // }
-tpl.getSelectablePropBlock = (ps, root_path, get, selitem, prop) => {
+tpl.template = {}
+tpl.template.titles = (data, env, ps, root_path, get, selitem, prop) => {
 	const value_nicks = ps.model.recap[prop.prop_nick]
 	return `
 	 	<div style="margin: 0.5em 0;">
@@ -453,28 +458,40 @@ tpl.getSelectablePropBlock = (ps, root_path, get, selitem, prop) => {
 	 	</div>
 	`
 }
+tpl.template.input = (data, env, ps, root_path, get, selitem, prop) => {
+	return `
+	 	<div style="margin: 0.5em 0;">
+	 		<div><b>${prop.prop_title}</b></div>
+	 		<input style="padding: 0.5ch 0.5ch; line-height: 1.5; margin-top:0.25em; font-family: monospace; font-size:1.2em" 
+	 		type="number" step="${prop.step || 1}" min="${prop.min || 0}" max="${prop.max || 100}"
+	 		value="${selitem[prop.prop_nick]?.[0] || prop.min || 0}">
+	 		<script>
+	 			(div => {
+	 				const input = div.getElementsByTagName('input')[0]
+	 				input.addEventListener('change', async () => {
+	 					const Client = await window.getClient()
+	 					const addget = await import('/-words/addget.js').then(r => r.default)
+	 					const Selector = await import('/-shop/Selector.js').then(r => r.default)
+	 					const importJSON = src => import(src, {with:{type:'json'}}).then(e => e.default)
+
+	 					const data = await importJSON("${env.layer.json}")
+	 					const ps = new Selector(data.model, data.props, data.values)
+
+	 					const query_nick = "${env.crumb.child?.name || ''}"
+	 					const selitem = ps.getItemByArt(query_nick, true)
+	 					const item = ps.getNearestItem(selitem, "${prop.prop_nick}", input.value)
+
+	 					const path = ['${root_path}', 'item', item.brendmodel[0]]
+						if (selitem.art) path.push(item.art[0])
+	 					Client.go( path.join('/') + addget(Client.bread.get, {}, ['modification']), false)
+	 				})
+	 			})(document.currentScript.parentElement)
+	 		</script>
+	 	</div>
+	`
+}
 tpl.getPropButton = (ps, root_path, get, selitem, prop, value_nick) => {
-	//return ps.values[value_nick]?.value_title || value_nick
-
-	//У нас нет всех items у которых pro = value_nick
-	
-	
-	//Нужно найти art уже сейчас который будет выбран при клике, чтобы может art
-
 	const item = ps.getNearestItem(selitem, prop.prop_nick, value_nick)
-	//return ps.values[value_nick]?.value_title || value_nick
-	//if (value_nick == 'chernyy-muar') console.log(value_nick, item['art'])
-
-	//console.log(item.brendmodel)
-	//но при клике откроем то, у которого остальное всё такое же как и у selitem
-	
-	
-	// if (!item) {
-	// 	item = items[0]
-	// 	//return tpl.getItemA(data, env, model, item, model.items.indexOf(item), selitem, '<span class="mute">' + (data.values[value_nick]?.value_title || value_nick) + '<span>')
-	// }
-	
-
 	return tpl.getItemA(ps, root_path, get, item, ps.values[value_nick]?.value_title || value_nick)
 }
 tpl.getItemA = (ps, root_path, get, item, title) => {
@@ -483,18 +500,18 @@ tpl.getItemA = (ps, root_path, get, item, title) => {
 
 	//title = title || ps.getItemTitle(item)
 	
-	if (selected) return `<span style="display: inline-block; margin-top:0.3em; border-radius:var(--radius);
+	if (selected) return `<span style="display: inline-block; margin-top:0.25em; border-radius:var(--radius);
 		padding:0 0.5ch; margin-right:2px; line-height: 1.5; text-decoration: none;
 		border:solid rgba(0,0,0,0.7) 3px;">
 		${title}
 	</span>`
 
-	if (lost) return `<span style="display: inline-block; margin-top:0.3em; border-radius:var(--radius);
+	if (lost) return `<span style="display: inline-block; margin-top:0.25em; border-radius:var(--radius);
 		padding:0 0.5ch; margin-right:2px; line-height: 1.5; text-decoration: none; border:solid rgba(0,0,0,0.7) 1px;">
 		${title}
 	</span>`
 
-	return `<a style="${ps.interaction == 2 ? 'opacity:0.5;' : ''}${ps.interaction == 3 ? 'opacity:0.3;' : ''}margin-top:0.3em; display:inline-block; border-radius:var(--radius);
+	return `<a style="${ps.interaction == 2 ? 'opacity:0.6;' : ''}${ps.interaction == 3 ? 'opacity:0.4;' : ''}margin-top:0.25em; display:inline-block; border-radius:var(--radius);
 	padding:0 0.5ch; margin-right:2px; line-height: 1.5; text-decoration: none;
 	border:solid rgba(0,0,0,0.15) 3px;" class="a" data-scroll="none" rel="nofollow"
 		href="${cards.getItemPath({props: ps.props, conf: {root_path}}, item)}${addget(get, {}, ['modification'])}">
@@ -533,7 +550,7 @@ tpl.buyButton = (data, env, model, selitem) => {
 					const partner = Client.theme.partner
 
 					const Panel = await import("/-shop/cart/Panel.js").then(r => r.default)
-					const panel = document.querySelector('.panel')
+					const panel = document.querySelector('#PANEL .panel')
 					if (!panel) return
 					Panel.up(panel)
 				

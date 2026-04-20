@@ -35,6 +35,7 @@ const Panel = {
 		const body = panel.querySelector('.body')
 		body.scrollTo(0, 0)
 		panel.classList.add('show')
+		panel.classList.add('up')
 		Panel.ready(panel)
 	}
 }

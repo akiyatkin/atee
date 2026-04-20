@@ -178,7 +178,17 @@ rest.addAction('set-modification', async view => {
 	return view.ret()
 })
 
+rest.addAction('set-activate', async view => {
+	const active_id = await view.get('active_id')
+	if (active_id) return view.ret()
+	
+	const db = await view.get('db')	
+	const user_id = view.data.user_id = await view.get('user_id') || await User.createAndSet(db, view)
+	const user = await User.getUserById(db, user_id)
+	const order_id = await Cart.create(db, user)
 
+	return view.ret()
+})
 rest.addAction('set-add', async view => {
 	const active_id = await view.get('active_id')
 

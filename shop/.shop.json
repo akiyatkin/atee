@@ -6,6 +6,7 @@
 	"root_nick":"catalog",
 	"root_path":"/shop",
 	"limit":12,
+	"order_date_start":"2020-01-01 00:00:00",
 	"checkShutdown": true,
 	"group_pages":"data/shop/_pages/",
 	"pages":{

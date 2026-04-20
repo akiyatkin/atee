@@ -51,7 +51,7 @@ export const ROOT = (data, env) => `
 							return {msg:'Ошибка на сервере'}
 						})
 						const Client = await window.getClient()
-						Client.global('cart')
+						Client.global('shop')
 						Client.reloadts('${env.layer.ts}')
 						const Panel = await import('/-shop/cart/Panel.js').then(r => r.default)
 						const panel = document.querySelector('#PANEL .panel')

@@ -10,8 +10,18 @@ const tpl = {}
 export default tpl
 
 tpl.css = [...number.css, '/-float-label/style.css']
+
+tpl.MAXHEIGHT = `max-height: calc(8em - 5px);`
+tpl.TITLES = {
+	"wait":"Оформить заказ",
+	"check":"Заказ оформлен",
+	"complete":"Заказ выполнен",
+	"cancel":"Заказ отменён",
+	"empty":"В заказе нет товаров",
+	"pay":"Заказ ожидает оплату"
+}
 tpl.ROOT = (data, env) => `
-	<div class="panel">
+	<div class="panel hide">
 		<style>
 			${env.scope} {
 /*				z-index:200;*/
@@ -35,7 +45,7 @@ tpl.ROOT = (data, env) => `
 			${env.scope} .panel .hand {
 				pointer-events: visiblePainted;
 				margin:0 auto;
-/*				height: 40px;*/
+				height: 40px;
 				position: relative;
 				z-index: 1;
 				margin-bottom: -15px;
@@ -92,7 +102,7 @@ tpl.ROOT = (data, env) => `
 			
 			${env.scope} .panel .body {
 
-				max-height: calc(8em - 5px);
+				${tpl.MAXHEIGHT}
 				transition: max-height 0.3s;
 /*				overflow: auto;*/
 				overflow-y: scroll;
@@ -134,7 +144,9 @@ tpl.ROOT = (data, env) => `
 				margin-top: calc(-1em - 25px - 2px);
 			}
 			${env.scope} .panel.up .body .padding {
-				padding: 20px 0 0 0;
+				padding: 20px 0 20px 0;
+				position: sticky;
+    			top: 0;
 			}
 			/* #PANELBODY ${env.scope} .panel.up .body #PANELORDER .padding {
 				padding:0;
@@ -178,13 +190,13 @@ tpl.ROOT = (data, env) => `
 						C7.534,267.547,14.041,267.547,18.201,263.493z"/>
 				</svg>
 			</div>
-			<button class="title transparent"></button>
+			<button class="title transparent">${tpl.TITLE({orders: 0,length: 0,sum: 0})}</button>
 			<div class="btnhide">
 				<svg width="25" height="25" viewBox="0 0 1024 1024" fill="#000000" class="icon"  version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M176.662 817.173c-8.19 8.471-7.96 21.977 0.51 30.165 8.472 8.19 21.978 7.96 30.166-0.51l618.667-640c8.189-8.472 7.96-21.978-0.511-30.166-8.471-8.19-21.977-7.96-30.166 0.51l-618.666 640z" fill="" /><path d="M795.328 846.827c8.19 8.471 21.695 8.7 30.166 0.511 8.471-8.188 8.7-21.694 0.511-30.165l-618.667-640c-8.188-8.471-21.694-8.7-30.165-0.511-8.471 8.188-8.7 21.694-0.511 30.165l618.666 640z" fill="" /></svg>
 			</div>
 		</div>
 
-		<div class="body" >
+		<div class="body">
 			<div class="container">
 				<div class="content">
 					<div id="PANELBODY"></div>
@@ -279,15 +291,12 @@ tpl.checkbox = (name, title, checked) => `
 	</div>
 `
 tpl.SUM = (sum) => sum ? `${cost(sum)}${cards.unit()}` : '&nbsp;'
-tpl.TITLE = (obj) => obj.length ? `<b>${obj.length}</b> ${words(obj.length, 'позиция','позиции','позиций')} <b>${tpl.SUM(obj.sum)}</b>` : `<b>${obj.orders}</b> ${words(obj.orders, 'заказ','заказа','заказов')}` //`В заказе ещё нет товаров` 
-tpl.TITLES = {
-	"wait":"Оформить заказ",
-	"check":"Заказ оформлен",
-	"complete":"Заказ выполнен",
-	"cancel":"Заказ отменён",
-	"empty":"В заказе нет товаров",
-	"pay":"Заказ ожидает оплату"
+tpl.TITLE = (obj) => {
+	if (obj.length) return `<b>${obj.length}</b> ${words(obj.length, 'позиция','позиции','позиций')} <b>${tpl.SUM(obj.sum)}</b>` 
+	//if (obj.orders) return `<b>${obj.orders}</b> ${words(obj.orders, 'заказ','заказа','заказов')}`
+	else return `Пустой заказ`
 }
+
 tpl.ORDER = (data, env) => tpl.isShowPanel(data) ? `
 <!-- position: sticky; top: 0; -->
 	<div class="padding" style="">
@@ -332,21 +341,26 @@ tpl.ORDER = (data, env) => tpl.isShowPanel(data) ? `
 			}
 		</style>
 		<div class="whenshow">
-			<h1 style="margin-top:1rem;">${tpl.TITLES[data.order.status]}
-			${data.user.manager ? showCrown() : ''}
-			<a href="/shop/mail" style="color:inherit; margin-left:1ch; margin-bottom: 2rem; float:right; font-weight: normal">№ ${data.order.order_nick}</a></h1>
-			${data.order.status != 'wait' ? showDate(data.order, env) : ''}
-			${data.list.length ? tpl.showForm(data, env) : showEmpty(data, env)}
+			${data.list.length || data.order.status != 'wait' ? tpl.showHeading(data, env) : ''}
+			${data.order.status != 'wait' ? tpl.showOrderDate(data.order, env) : ''}
+			${data.list.length ? tpl.showForm(data, env) : tpl.showEmptyBasket(data, env)}
 			${data.orders.length > 1 ? showOrders(data, env) : ''}
 		</div>
 	</div>
 ` : ``
+tpl.showHeading = (data, env) => `
+	<h1 style="margin-top:1rem;">
+		${tpl.TITLES[data.order.status]}
+		${data.user.manager ? showCrown() : ''}
+		<a href="/shop/mail" style="color:inherit; margin-left:1ch; margin-bottom: 2rem; float:right; font-weight: normal">№ ${data.order.order_nick}</a>
+	</h1>
+`
 const showCrown = () => `
 	<a href="/shop/manager/${new Date().getFullYear()}/${new Date().getMonth() + 1}?status=check" title="Вы администратор и можете на любой email оформить заказ. Заказ будет доступен и Вам и новому пользователю">
 		<svg style="color: var(--success); margin-bottom: 3px;" width="24" height="24" viewBox="0 0 18 18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.179 13.425h13.656v3.02H2.179v-3.02z" fill="currentColor" fill-opacity=".8"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8.999 1L2.093 11.031h4.25l6.662-4.315L9 1z" fill="currentColor" fill-opacity=".6"/><path fill-rule="evenodd" clip-rule="evenodd" d="M2.067 12.641L.5 3.752l12.76 8.89H2.068z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M15.927 12.641l1.607-8.858L3.857 12.64h12.07z" fill="currentColor" fill-opacity=".8"/></svg>
 	</a>
 `
-const showDate = (order, env) => `
+tpl.showOrderDate = (order, env) => `
 	<p>
 		${order.status != 'wait' ? printDate('Оформлен', order.datecheck) : ''}
 	</p>
@@ -355,9 +369,11 @@ const showDate = (order, env) => `
 const printDate = (title, d) => d ? `
 	${title}: ${ago(d * 1000)}. ${date.dmy(d)}<br>	
 ` : ''
-const showEmpty = (data, env) => `
-	${data.order.status == 'wait' ? '<p>В заказе ещё нет товаров</p>' : ''}
-`
+
+tpl.showEmptyBasket = (data, env) => ``
+// tpl.showEmptyBasket = (data, env) => `
+// 	${data.order.status == 'wait' ? '<p>В заказе ещё нет товаров</p>' : ''}
+// `
 tpl.showFIO = (data, env) => `
 	<div class="float-label icon name formfield">
 		<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="${env.sid}name" name="name" type="text" placeholder="Получатель (ФИО)" value="${data.order.name || ''}">
@@ -365,11 +381,19 @@ tpl.showFIO = (data, env) => `
 		${data.order.status == 'wait' ? tpl.svgres('required', data.order.name) : ''}
 	</div>
 `
+tpl.showDate = (data, env) => ''
+// tpl.showDate = (data, env) => `
+// 	<div class="float-label icon date formfield">
+// 		<input ${data.order.status == 'wait' ? '' : 'disabled'} id="${env.sid}date" name="date" type="date" placeholder="Дата доставки" value="${data.order.date || ''}">
+// 		<label for="${env.sid}date">Дата доставки</label>
+// 		${data.order.status == 'wait' ? tpl.svgres('optional', data.order.date) : ''}
+// 	</div>
+// `
 tpl.showForm = (data, env) => `
 		
 		<form data-order_nick="${data.order.order_nick}" data-goal="cart" action="/-shop/cart/set-submit?partner=${env.theme.partner || ''}" style="clear:both; border-radius:var(--radius, 10px); display: grid; gap:1rem; ">
 			
-			${tpl.showFIO(data,env)}
+			${tpl.showFIO(data, env)}
 			<div class="float-label icon phone formfield">
 				<input ${data.order.status == 'wait' ? '' : 'disabled'} required id="contacts_phone" name="phone" type="tel" placeholder="Телефон" value="${data.order.phone || ''}">
 				<label for="contacts_phone">Телефон</label>
@@ -381,7 +405,8 @@ tpl.showForm = (data, env) => `
 				${data.order.status == 'wait' ? tpl.svgres('required', data.order.email) : ''}
 			</div>
 			
-			${tpl.showAddress(data,env)}
+			${tpl.showAddress(data, env)}
+			${tpl.showDate(data, env)}
 			${tpl.formMessage(data, env)}
 			
 			
@@ -649,9 +674,23 @@ tpl.svgres = (type, saved) => `
 		<div class="optional${type == 'optional' ? ' show' : ''}"></div>
 	</div>
 `
-tpl.isShowPanel = data => data.result && (data.list.length || data.orders.length > 1)
+
+tpl.whenEmpty = (data, env) => `
+	<a href="/shop/group/catalog" style="display: flex; align-items: center; gap: 1em">
+		<svg style="border: dashed 2px var(--grey);" width="60" height="60" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round">
+			<path d="M10 3V17" stroke-width="1.5" stroke="var(--grey)"/>
+			<path d="M3 10H17" stroke-width="1.5" stroke="var(--grey)"/>
+		</svg>
+		<div>
+			Открыть каталог
+		</div>
+	</a>
+`
+
+tpl.isShowPanel = data => data.result //data.result && (data.list.length || data.orders.length > 1)
 tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 	<div class="padding" style="position: sticky; top: 0">
+		${data.list.length ? '' : tpl.whenEmpty(data, env)}
 		<style>
 			${env.scope} .list {
 				width: fit-content;
@@ -704,10 +743,7 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 			<!-- <div></div><div></div><div style="margin-top:1rem; text-align: right;"><a href="/shop/mail">Спецификация</a></div> -->
 			<!-- <div><a href="/shop/mail">Спецификация</a></div> -->
 		</div>
-		
-		
-		
-		
+		${tpl.bottomList(data, env)}
 	</div>
 	
 	<script type="module">
@@ -736,7 +772,7 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 				state.sum += product.price * product.quantity
 			}
 		}
-		panel.classList.add('up')		
+		panel.classList.add('up')
 		const products = ${JSON.stringify(data.list.map((pos, i) => {
 			const prod = Ecommerce.getProduct(data, {
 				coupon:env.theme.partner,
@@ -780,6 +816,9 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 				recalc()
 				modsum.innerHTML = pantpl.SUM(product.price * product.quantity)
 				title.innerHTML = pantpl.TITLE(state)
+
+				const Client = await window.getClient()
+				Client.global('panel')
 			})
 
 			const del = block.querySelector('.del')
@@ -788,6 +827,9 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 				args.quantity = 0
 				const ans = await Basket.remove(del, args)
 				Ecommerce.remove([product])
+
+				const Client = await window.getClient()
+				Client.global('panel')
 			})
 
 		}
@@ -795,14 +837,22 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 		title.innerHTML = pantpl.TITLE(state)
 	</script>
 ` : `
-	<!-- В заказе ничего нет -->
-	<script>
-		(body => {
-			const panel = body.closest('.panel')
-			panel.classList.remove('up')
-		})(document.currentScript.parentElement)
-	</script>
-`
+<div class="padding">
+	${tpl.whenEmpty(data, env)}
+	${tpl.bottomList(data, env)}
+</div>
+` 
+
+// `
+// 	<!-- В заказе ничего нет -->
+// 	<script>
+// 		(body => {
+// 			const panel = body.closest('.panel')
+// 			panel.classList.remove('up')
+// 		})(document.currentScript.parentElement)
+// 	</script>
+// `
+tpl.bottomList = (data, env) => ``
 
 tpl.showModification = (data, env, pos, item = pos.item) => `
 	<div style="margin-bottom:0.25em">
@@ -853,7 +903,7 @@ tpl.showPos = (data, env, pos, item) => {
 		<div class="cost blocksum">
 			<div style="grid-area: input; padding-top:3px;">${number.INPUT({min:0, max:1000, value:pos.quantity, name: pos.brendart_nick})}</div>
 			<div style="grid-area: sum"><b class="modsum">${tpl.SUM(pos.sum)}</b></div>
-			<div style="grid-area: remove">
+			<div style="grid-area: remove; display: flex;">
 				<button title="Удалить из корзины" class="delbtn del transparent">
 					<svg style="fill:currentColor;" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 						<path d="M20 6H16V5C16 4.20435 15.6839 3.44129 15.1213 2.87868C14.5587 2.31607 13.7956 2 13 2H11C10.2044 2 9.44129 2.31607 8.87868 2.87868C8.31607 3.44129 8 4.20435 8 5V6H4C3.73478 6 3.48043 6.10536 3.29289 6.29289C3.10536 6.48043 3 6.73478 3 7C3 7.26522 3.10536 7.51957 3.29289 7.70711C3.48043 7.89464 3.73478 8 4 8H5V19C5 19.7956 5.31607 20.5587 5.87868 21.1213C6.44129 21.6839 7.20435 22 8 22H16C16.7956 22 17.5587 21.6839 18.1213 21.1213C18.6839 20.5587 19 19.7956 19 19V8H20C20.2652 8 20.5196 7.89464 20.7071 7.70711C20.8946 7.51957 21 7.26522 21 7C21 6.73478 20.8946 6.48043 20.7071 6.29289C20.5196 6.10536 20.2652 6 20 6ZM10 5C10 4.73478 10.1054 4.48043 10.2929 4.29289C10.4804 4.10536 10.7348 4 11 4H13C13.2652 4 13.5196 4.10536 13.7071 4.29289C13.8946 4.48043 14 4.73478 14 5V6H10V5ZM17 19C17 19.2652 16.8946 19.5196 16.7071 19.7071C16.5196 19.8946 16.2652 20 16 20H8C7.73478 20 7.48043 19.8946 7.29289 19.7071C7.10536 19.5196 7 19.2652 7 19V8H17V19Z"/>

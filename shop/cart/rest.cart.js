@@ -114,7 +114,7 @@ rest.addVariable('active_id#required', ['active_id'], async (view, active_id) =>
 
 rest.addArgument('fieldvalue', ['string'])
 rest.addArgument('field', ['string'], (view, val) => {
- 	if (!~['name', 'phone','email','address','commentuser'].indexOf(val)) return view.err('Некорректный запрос, такого поля нет.')
+ 	if (!~['name', 'phone','email','address','commentuser','date'].indexOf(val)) return view.err('Некорректный запрос, такого поля нет.')
  	return val
 })
 

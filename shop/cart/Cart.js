@@ -252,7 +252,9 @@ Cart.createNick = async (db, user) => {
 	// Количество дней нужно округлить в меньшую сторону,
 	// чтобы узнать точное количество прошедших дней
 	// 86400 - количество секунд в 1 дне (60 * 60 * 24) + 000
-	const days = Math.floor((Date.now() - new Date('2020-01-01 00:00:00').getTime()) / 86400000)
+	const conf = await config('shop')
+
+	const days = Math.floor((Date.now() - new Date(conf.order_start_date).getTime()) / 86400000)
 
 	const num = await db.col(`SELECT count(*) + 1 FROM shop_orders WHERE user_id = :user_id`, user)
 	const order_nick = days + '-' + user.user_id + '-' + num
@@ -284,6 +286,7 @@ Cart.getOrderById = async (db, order_id) => {
 			UNIX_TIMESTAMP(datecancel) as datecancel, 
 			UNIX_TIMESTAMP(datecomplete) as datecomplete, 
 			user_id, 
+			UNIX_TIMESTAMP(date) as date, 
 			order_nick, 
 			freeze + 0 as freeze, 
 			name, 
@@ -367,8 +370,8 @@ Cart.addItem = async (db, order_id, brendart_nick, art_nick, quantity = 0, modif
 				quantity = :quantity, 
 				modification = :modification,
 				dateedit = now()
-			WHERE order_id = :order_id and brendart_nick = :brendart_nick
-		`, {order_id, brendart_nick, quantity, modification})
+			WHERE order_id = :order_id and brendart_nick = :brendart_nick and art_nick = :art_nick
+		`, {order_id, brendart_nick, art_nick, quantity, modification})
 	}
 	await db.exec(`
 		UPDATE shop_orders 
