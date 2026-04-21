@@ -1145,7 +1145,7 @@ Shop.getItemByBrendart = async (db, brendart_nick, art_nick, partner) => {
 	await Shop.prepareItemPropsValues(db, data, model.recap)
 
 	const ps = new Selector(model, data.props, data.values)
-	const item = ps.getItemByArt(art_nick)
+	const {titem, item} = ps.getItemByArt(art_nick)
 	return {item, props: ps.props, values: ps.values}
 }
 Shop.getModelByBrendart = async (db, brendart_nick, partner) => {

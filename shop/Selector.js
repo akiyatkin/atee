@@ -20,6 +20,13 @@ for (const m in SELECTORS) {
 	const PARAM = SELECTORS[m]
 	const props = {}
 	const values = {}
+
+	PARAM.props["Арт"] ??= {
+		"known":"column",
+		"type":"value",
+		"check": titem => PARAM.extract.map(name => titem[name]).join(" ")
+	}
+
 	for (const prop_title in PARAM.props) {
 		const prop = PARAM.props[prop_title]
 		const {name, unit} = getNameUnit(prop_title)
@@ -157,27 +164,25 @@ class Selector {
 		if (i !== 0) return false
 		return ~i ? [str.slice(0, i), str.slice(i + sep.length)] : false
 	}
-	createItem (base_item, query_nick, withdef) {
-		const item = {...base_item}
-		Object.defineProperty(item, 'toString', {
-			value: () => item.art ? item.brend[0] + '-' + item.art[0] : item.brendart[0],
-			enumerable: false, // ключевое свойство - не перечисляемое
-			writable: true,
-			configurable: true
-		})
-
+	buildItem (titem, item, query_nick, withdef) {
+		
 
 		const ps = this
-		//const r = (query_nick || '').split(Selector.art(base_item)) 
-		if (!withdef && base_item.art && !query_nick) return false
-		const r = Selector.explode(query_nick, Selector.art(base_item)) //["","-хвост-после-базового-динамическая-часть"]
+		//const r = (query_nick || '').split(Selector.art(item)) 
+		if (!withdef && item.art && !query_nick) return false
+		const r = Selector.explode(query_nick, Selector.art(item)) //["","-хвост-после-базового-динамическая-часть"]
 		if (!withdef && !r) return false
-		//console.log(Selector.art(base_item), query_nick, r)
+		//console.log(Selector.art(item), query_nick, r)
 		
 		const q_dyn = (nicked(r[1]) || '').split('-') //["хвост","после","базового","динамическая","часть"]
 
+		/*
+			pu устанавливаем
+			и в check устанавливаем address_secondary Полиуретан
+		*/
+		
+		for (const i in ps.prop_nicks_address_primary) { //Что именно надо взять из запроса
 
-		for (const i in ps.prop_nicks_address_primary) { //Что именно надо взять из адресса
 			const prop_nick = ps.prop_nicks_address_primary[i]
 			const nick = q_dyn[i]
 			const prop = ps.props[prop_nick]
@@ -188,13 +193,19 @@ class Selector {
 				//const prop = ps.props[prop_nick]
 				//const title = prop.type == 'value' ? ps.values[nick] : nick
 				
-				if (prop.nicks && prop.nicks.includes(nick)) {
-					if (prop.type == 'value' && !ps.values[nick]) {
+				if (prop.nicks) {
+
+					if (prop.nicks.includes(nick)) {
+						if (prop.type == 'value' && !ps.values[nick]) {
+							if (!withdef) return false
+							item[prop_nick] = [def]
+						} else {
+							
+							item[prop_nick] = [nick]
+						}
+					} else { //Нет нужного варианта в адресе
 						if (!withdef) return false
 						item[prop_nick] = [def]
-					} else {
-						
-						item[prop_nick] = [nick]
 					}
 
 				} else if (prop.step) {
@@ -210,10 +221,8 @@ class Selector {
 						item[prop_nick] = [nick]
 					}
 				} else {
-
-
-					if (!withdef) return false
-					item[prop_nick] = [def]
+					//Варианты titles - nicks нужны обязательно, для параметров из адреса
+					throw `Параметр "${prop.prop_title}" считывается из запроса, но у него не укзаны варианты значений titles для проверки или min, max, step`
 				}
 			} else {
 				if (!withdef) return false
@@ -229,15 +238,16 @@ class Selector {
 			//ps.prop_nicks_address_primary_static - определили base_item с правильнмыи static свойствами, но проверку то надо сделать
 			= ps.prop_nicks_address_primary
 		*/
-		const prop_nicks = [...ps.prop_nicks_address_secondary_dynamic, ...ps.prop_nicks_address_primary]
-		if (!ps.check(item, prop_nicks)) return false
-		return item
+		const prop_nicks = [...ps.prop_nicks_address_secondary_dynamic, ...ps.prop_nicks_address_primary] //primary нужно проверить после установки secondary иначе primary сбросятся на основе неправильных secondary
+		if (!ps.check(titem, item, prop_nicks, false)) return false
+		return {titem, item}
 	}
 	
 	getItemByBaseArt (base_item, art_nick) { //query_nick = art найти надо строгое соответствие по base_item
 		const ps = this
-		const item = ps.createItem(base_item, art_nick)
-
+		const {titem, item} = ps.createItem(base_item)
+		const r = ps.buildItem(titem, item, art_nick)
+		if (!r) return r
 		return item
 	}
 	getItemByArt (query_nick, withdef = false) { //query_nick = art найти надо что угодно близко похожее в модели
@@ -247,9 +257,10 @@ class Selector {
 
 		const base_item = Selector.getBaseByQuery(ps.model, query_nick)
 		if (!base_item) return false
-		const item = ps.createItem(base_item, query_nick, withdef)
-
-		return item
+		const {titem, item} = ps.createItem(base_item)
+		const r = ps.buildItem(titem, item, query_nick, withdef)
+		if (!r) return r
+		return {titem, item}
 	}
 	static getBaseByQuery (model, query_nick) { //находим ближайший base
 		const base_items = model.items.filter(item => { //ps-234-white полный артикул, а ps-234 это у базовой позиции и мы найдём по совпадению с начала строки
@@ -271,18 +282,11 @@ class Selector {
 		}
 		return true;
 	}
-	check (item, prop_nicks, isselector = false) {
+	check (titem, item, prop_nicks, isselector = false, installed_prop_nick) {
 		const ps = this
-		const titem = new Proxy(item, {
-			get(item, prop_title) {
-				const prop_nick = ps.propsNickByTitle.get(prop_title)
-				//const titles = ps.getSomeTitles(item, prop_nick).join(", ")
-				const titles = ps.getSomeTitle(item, prop_nick)
-				return titles
-			}
-		})
 		
 		for (const prop_nick of prop_nicks) {
+			if (prop_nick == installed_prop_nick) continue
 			const prop = ps.props[prop_nick]
 			if (!prop.check) continue
 
@@ -303,6 +307,7 @@ class Selector {
 				item[prop_nick] = value_titles
 			}
 		}
+		
 		if (isselector) { //static check
 			//Нужно найти base_item, должен существовать по указанным свойствам
 			if (!ps.model.items.some(base_item => {
@@ -315,7 +320,26 @@ class Selector {
 		}
 		return true
 	}
-
+	createItem (source) {
+		const ps = this
+		const item = {...source}
+		Object.defineProperty(item, 'toString', {
+			value: () => item.art ? item.brend[0] + '-' + item.art[0] : item.brendart[0],
+			enumerable: false, // ключевое свойство - не перечисляемое
+			writable: true,
+			configurable: true
+		})
+		const titem = new Proxy(item, {
+			get(item, prop_title) {
+				const prop_nick = ps.propsNickByTitle.get(prop_title)
+				//const titles = ps.getSomeTitles(item, prop_nick).join(", ")
+				const titles = ps.getSomeTitle(item, prop_nick)
+				return titles
+			}
+		})
+		const ritm = {item, titem}
+		return ritm
+	}
 	getNearestItem (selitem, prop_nick, value_nick) {
 		const ps = this
 		//Все items подходят с текущим next значением, но выбрано selitem
@@ -327,10 +351,13 @@ class Selector {
 
 		//const is_dyn = !!~ps.prop_nicks_selector_primary_dynamic.indexOf(prop_nick) //Это динамически выбираемое свойство
 		//const sel_query_nick = Selector.art(selitem)
-		if (selitem[prop_nick]?.[0] == value_nick) return true //Это сейчас выбранное уже значение
+		//if (selitem[prop_nick]?.[0] == value_nick) return true //Это сейчас выбранное уже значение
 		
+		const ritm = ps.createItem(selitem || ps.model.items[0])
+		const {titem, item} = ritm
 
-		const item = {...(selitem || ps.model.items[0])}
+		if (selitem[prop_nick]?.[0] == value_nick) return ritm //Это сейчас выбранное уже значение
+		
 		//item['brendart_base'] = item['brendart']
 		item[prop_nick] = [value_nick]
 			
@@ -348,9 +375,12 @@ class Selector {
 			ps.prop_nicks_selector_primary_dynamic
 			ps.prop_nicks_selector_primary_static //Статичный выбор тоже надо проверить
 		*/
-		const prop_nicks = [...ps.prop_nicks_selector_secondary_dynamic, ...ps.prop_nicks_selector_primary_dynamic]
+		//art считается вторичным
+		const prop_nicks = [...ps.prop_nicks_selector_primary_dynamic, ...ps.prop_nicks_selector_secondary_dynamic]
 		ps.interaction = 1
-		if (ps.check(item, prop_nicks, true)) return item
+
+		if (ps.check(titem, item, prop_nicks, true, prop_nick)) return ritm
+		
 		
 		
 		/*
@@ -374,7 +404,7 @@ class Selector {
 				if (old_value_nicks[0] == value_nick) continue
 				item[other_prop_nick] = [value_nick]
 
-				if (ps.check(item, prop_nicks, true)) return item
+				if (ps.check(titem, item, prop_nicks, true, prop_nick)) return ritm
 			}
 			item[other_prop_nick] = old_value_nicks //Протестировали одно свойство занчение не нашли, идём дальше
 		}
@@ -398,14 +428,15 @@ class Selector {
 						if (old_value_nicks2[0] == value_nick2) continue
 						item[other_prop_nick1] = [value_nick1]
 						item[other_prop_nick2] = [value_nick2]
-						if (ps.check(item, prop_nicks)) return item
+						if (ps.check(titem, item, prop_nicks, true, prop_nick)) return ritm
 					}
 					item[other_prop_nick2] = old_value_nicks2 //Протестировали одно свойство занчение не нашли, идём дальше
 				}	
 			}
 			item[other_prop_nick1] = old_value_nicks1 //Протестировали одно свойство занчение не нашли, идём дальше
 		}
-		return false //Ближайший не найден
+
+		return false //Ближайший не найден с указанным изменением lost
 		
 
 
