@@ -287,7 +287,9 @@ rest.addResponse('get-item-head', async view => {
 	await Shop.prepareItemPropsValues(db, data, model.recap)
 	const ps = new Selector(model, data.props, data.values)
 	
-	const {titem, item} = ps.getItemByArt(query_nick, true)
+	const r = ps.getItemByArt(query_nick, true)
+	if (!r) return view.err('Позиция не найдена', 404)
+	const {titem, item} = r
 	// if (model.items[0]?.brendart[0] == item.brendart[0]) {
 	// 	item['art'] = model.items[0][art]
 	// }

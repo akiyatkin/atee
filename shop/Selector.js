@@ -240,8 +240,9 @@ class Selector {
 			//ps.prop_nicks_address_primary_static - определили base_item с правильнмыи static свойствами, но проверку то надо сделать
 			= ps.prop_nicks_address_primary
 		*/
+		
 		const prop_nicks = [...ps.prop_nicks_address_secondary_dynamic, ...ps.prop_nicks_address_primary] //primary нужно проверить после установки secondary иначе primary сбросятся на основе неправильных secondary
-		if (!ps.check(titem, item, prop_nicks, false)) return false
+		if (!ps.check(titem, item, prop_nicks, false, false)) return false
 		return {titem, item}
 	}
 	
@@ -258,6 +259,7 @@ class Selector {
 		if (!withdef && query_nick && !ps.props.art) return false
 
 		const base_item = Selector.getBaseByQuery(ps.model, query_nick)
+
 		if (!base_item) return false
 		const {titem, item} = ps.createItem(base_item)
 
@@ -303,7 +305,12 @@ class Selector {
 			
 			
 
-			if (value_titles === false) return false
+			if (value_titles === false) {
+				if (!isselector) {
+					console.log('При заходе на арт проверка свойства вернула false', prop.prop_title, item)
+				}
+				return false
+			}
 			if (value_titles === null) continue
 			if (value_titles === true) continue
 			if (value_titles === undefined) continue
@@ -498,7 +505,7 @@ class Selector {
 			}
 			item[other_prop_nick1] = old_value_nicks1 //Протестировали одно свойство занчение не нашли, идём дальше
 		}
-		
+
 		return false //Ближайший не найден с указанным изменением lost
 		ps.interaction = 4
 
