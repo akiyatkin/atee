@@ -501,9 +501,9 @@ tpl.getPropButton = (ps, root_path, get, selitem, prop, value_nick) => {
 	const lost = ritm === false
 	const css = `display: inline-block; margin-top:0.25em; border-radius:var(--radius);padding:0 0.5ch; margin-right:2px; line-height: 1.5; text-decoration: none;`
 	if (selected) return `<span style="${css}border:solid rgba(0,0,0,0.7) 3px;">${title}</span>`
-	if (lost) return `<span style="${css} border:solid rgba(0,0,0,0.7) 1px;">${title}</span>`
+	if (lost) return `<span style="${css} border:solid rgba(0,0,0,0.2) 3px; opacity:0.1">${title}</span>`
 
-	return `<a style="${ps.interaction == 2 ? 'opacity:0.6;' : ''}${ps.interaction == 3 ? 'opacity:0.4;' : ''}${css} border:solid rgba(0,0,0,0.15) 3px;" 
+	return `<a style="${ps.interaction == 2 ? 'opacity:0.6;' : ''}${ps.interaction == 3 ? 'opacity:0.4;' : ''}${ps.interaction == 4 ? 'opacity:0.2;' : ''}${ps.interaction == 5 ? 'opacity:0.1;' : ''}${css} border:solid rgba(0,0,0,0.15) 3px;" 
 		class="a" data-scroll="none" rel="nofollow"
 		href="${cards.getItemPath({props: ps.props, conf: {root_path}}, ritm.item)}${addget(get, {}, ['modification'])}">
 		${title}

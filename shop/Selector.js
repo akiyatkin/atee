@@ -189,6 +189,7 @@ class Selector {
 
 			//Если есть выбранный базовый, то динамические пытаюсят подставиться ближайшие если в адресе их нет, без фанатизма и перебора - либо подойдут перывй либо нет.
 			const def = ps.model.recap[prop_nick]?.[0] || prop.min || 0 //всегда надо что-то назначать в base_item
+
 			if (nick) {
 				//const prop = ps.props[prop_nick]
 				//const title = prop.type == 'value' ? ps.values[nick] : nick
@@ -226,6 +227,7 @@ class Selector {
 				}
 			} else {
 				if (!withdef) return false
+				//if (prop_nick == 'tolshina-mm') console.log(withdef, prop_nick, def)
 				item[prop_nick] = [def]
 			}
 		}
@@ -258,8 +260,14 @@ class Selector {
 		const base_item = Selector.getBaseByQuery(ps.model, query_nick)
 		if (!base_item) return false
 		const {titem, item} = ps.createItem(base_item)
+
+		
+
 		const r = ps.buildItem(titem, item, query_nick, withdef)
+
 		if (!r) return r
+
+
 		return {titem, item}
 	}
 	static getBaseByQuery (model, query_nick) { //находим ближайший base
@@ -290,10 +298,14 @@ class Selector {
 			const prop = ps.props[prop_nick]
 			if (!prop.check) continue
 
-			let value_titles = prop.check(titem, item)
+			
+			let value_titles = prop.check(titem, titem[prop.prop_title])
+			
+			
+
 			if (value_titles === false) return false
 			if (value_titles === null) continue
-			//if (value_titles === true) continue
+			if (value_titles === true) continue
 			if (value_titles === undefined) continue
 			//if (isNaN(value_titles)) continue
 			if (!Array.isArray(value_titles)) value_titles = [value_titles]
@@ -307,6 +319,8 @@ class Selector {
 				item[prop_nick] = value_titles
 			}
 		}
+		
+		
 		
 		if (isselector) { //static check
 			//Нужно найти base_item, должен существовать по указанным свойствам
@@ -340,6 +354,48 @@ class Selector {
 		const ritm = {item, titem}
 		return ritm
 	}
+	// getNearestItem(selitem, prop_nick, value_nick) {
+	// 	const MAX_INTERACTION_LEVEL = 4;
+	// 	const ps = this;
+		
+	// 	const other_prop_nicks = ps.prop_nicks_selector_primary.filter(nick => nick != prop_nick);
+	// 	const ritm = ps.createItem(selitem || ps.model.items[0]);
+	// 	const {titem, item} = ritm;
+
+	// 	if (selitem[prop_nick]?.[0] == value_nick) return ritm;
+		
+	// 	item[prop_nick] = [value_nick];
+	// 	const prop_nicks = [...ps.prop_nicks_selector_primary_dynamic, ...ps.prop_nicks_selector_secondary_dynamic];
+		
+	// 	ps.interaction = 1;
+	// 	if (ps.check(titem, item, prop_nicks, true, prop_nick)) return ritm;
+		
+	// 	const search = (extra, props = [], start = 0) => {
+	// 		if (props.length === extra) {
+	// 			const old = props.map(p => ({p, v: item[p]}));
+	// 			props.forEach(p => item[p.p] = [p.v]);
+	// 			const ok = ps.check(titem, item, prop_nicks, true, prop_nick);
+	// 			old.forEach(o => item[o.p] = o.v);
+	// 			if (ok) props.forEach(p => item[p.p] = [p.v]);
+	// 			return ok;
+	// 		}
+	// 		for (let i = start; i < other_prop_nicks.length; i++) {
+	// 			const prop = other_prop_nicks[i];
+	// 			for (const val of ps.model.recap[prop]) {
+	// 				if (item[prop][0] == val) continue;
+	// 				if (search(extra, [...props, {p: prop, v: val}], i + 1)) return true;
+	// 			}
+	// 		}
+	// 		return false;
+	// 	};
+		
+	// 	for (let interaction = 2; interaction <= MAX_INTERACTION_LEVEL; interaction++) {
+	// 		ps.interaction = interaction;
+	// 		if (search(interaction - 1)) return ritm;
+	// 	}
+		
+	// 	return false;
+	// }
 	getNearestItem (selitem, prop_nick, value_nick) {
 		const ps = this
 		//Все items подходят с текущим next значением, но выбрано selitem
@@ -377,8 +433,8 @@ class Selector {
 		*/
 		//art считается вторичным
 		const prop_nicks = [...ps.prop_nicks_selector_primary_dynamic, ...ps.prop_nicks_selector_secondary_dynamic]
+		
 		ps.interaction = 1
-
 		if (ps.check(titem, item, prop_nicks, true, prop_nick)) return ritm
 		
 		
@@ -397,17 +453,22 @@ class Selector {
 			[1!,2?,3]
 			[1,2,4!]
 		*/
+		
+		
 		ps.interaction = 2
 		for (const other_prop_nick of other_prop_nicks) {
 			const old_value_nicks = item[other_prop_nick]
 			for (const value_nick of ps.model.recap[other_prop_nick]) {
 				if (old_value_nicks[0] == value_nick) continue
 				item[other_prop_nick] = [value_nick]
-
-				if (ps.check(titem, item, prop_nicks, true, prop_nick)) return ritm
+				if (ps.check(titem, item, prop_nicks, true, prop_nick)) {
+					return ritm
+				}
 			}
 			item[other_prop_nick] = old_value_nicks //Протестировали одно свойство занчение не нашли, идём дальше
 		}
+		
+
 
 		//1 Поиск с разницей 1. Меняем только ещё одно свойство.
 		//Найти все совместимые, а потом выбрать ближайшее? Искать пока не будет найдено с разницей в 1
@@ -424,38 +485,63 @@ class Selector {
 					if (other_prop_nick2 == other_prop_nick1) continue
 
 					const old_value_nicks2 = item[other_prop_nick2]
-					for (const value_nick2 of ps.model.recap[other_prop_nick1]) {
+					for (const value_nick2 of ps.model.recap[other_prop_nick2]) {
 						if (old_value_nicks2[0] == value_nick2) continue
 						item[other_prop_nick1] = [value_nick1]
 						item[other_prop_nick2] = [value_nick2]
-						if (ps.check(titem, item, prop_nicks, true, prop_nick)) return ritm
+						if (ps.check(titem, item, prop_nicks, true, prop_nick)) {
+							return ritm
+						}
 					}
 					item[other_prop_nick2] = old_value_nicks2 //Протестировали одно свойство занчение не нашли, идём дальше
-				}	
+				}
 			}
 			item[other_prop_nick1] = old_value_nicks1 //Протестировали одно свойство занчение не нашли, идём дальше
 		}
+		
+		return false //Ближайший не найден с указанным изменением lost
+		ps.interaction = 4
+
+		// Перебираем комбинации из 3 изменяемых свойств
+		for (const other_prop_nick1 of other_prop_nicks) {
+			const old_value_nicks1 = item[other_prop_nick1]
+			
+			for (const value_nick1 of ps.model.recap[other_prop_nick1]) {
+				if (old_value_nicks1[0] == value_nick1) continue
+
+				for (const other_prop_nick2 of other_prop_nicks) {
+					if (other_prop_nick2 == other_prop_nick1) continue
+					const old_value_nicks2 = item[other_prop_nick2]
+					
+					for (const value_nick2 of ps.model.recap[other_prop_nick2]) {
+						if (old_value_nicks2[0] == value_nick2) continue
+
+						for (const other_prop_nick3 of other_prop_nicks) {
+							if (other_prop_nick3 == other_prop_nick1 || other_prop_nick3 == other_prop_nick2) continue
+							const old_value_nicks3 = item[other_prop_nick3]
+							
+							for (const value_nick3 of ps.model.recap[other_prop_nick3]) {
+								if (old_value_nicks3[0] == value_nick3) continue
+								
+								// Применяем все 3 изменения
+								item[other_prop_nick1] = [value_nick1]
+								item[other_prop_nick2] = [value_nick2]
+								item[other_prop_nick3] = [value_nick3]
+								
+								if (ps.check(titem, item, prop_nicks, true, prop_nick)) {
+									return ritm
+								}
+							}
+							item[other_prop_nick3] = old_value_nicks3 // Восстанавливаем третье свойство
+						}
+					}
+					item[other_prop_nick2] = old_value_nicks2 // Восстанавливаем второе свойство
+				}
+			}
+			item[other_prop_nick1] = old_value_nicks1 // Восстанавливаем первое свойство
+		}
 
 		return false //Ближайший не найден с указанным изменением lost
-		
-
-
-		
-
-		
-		
-		// for (const item of items) {
-		// 	item.coincidence = 0
-		// 	for (const other_prop_nick of other_prop_nicks) {
-		// 		if (arraysEqual(selitem[other_prop_nick], item[other_prop_nick])) item.coincidence++
-		// 	}
-		// }
-		// let fitem = items[0]
-		// for (const item of items) {
-		// 	if (fitem.coincidence < item.coincidence) fitem = item
-		// }
-		// return fitem
-
 	}
 
 
