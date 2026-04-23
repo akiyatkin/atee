@@ -223,7 +223,7 @@ tpl.showPreviews = (data, env, item) => `
 
 //${selitem.modifikaciya ? tpl.showModification(data, env, selitem) : ''}
 tpl.showMainData = (data, env, ps, selritm) => {
-	const seltiem = selritm.item
+	const selitem = selritm.item
 	return `
 		<div class="mod_content">
 			<style>

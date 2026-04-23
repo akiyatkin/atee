@@ -24,6 +24,9 @@ Sources.load = async (db, source, visitor) => {
 
 	const res = {}
 	source.error = await Sources.execRestFunc(source.file, 'get-load', visitor, res, source)
+	if (res.data.date_content === undefined) source.error ||= 'В ответе нет view.data.date_content'
+	if (res.data.sheets === undefined) source.error ||= 'В ответе нет view.data.sheets'
+
 	source.msg_load = res.data?.msg || ''
 	source.duration_rest = Date.now() - timer_rest
 
@@ -450,7 +453,10 @@ Sources.check = async (db, source, visitor) => {
 	const res = {}
 	const timer = Date.now()
 	source.error = await Sources.execRestFunc(source.file, 'get-check', visitor, res, source)
-	//date_content может быть больше чем date_mtime из предыдущей обработки
+
+
+	if (res.data.date_msource === undefined) source.error ||= 'В ответе нет view.data.date_msource'
+	
 
 	source.date_mrest = (res.date_mtime || 0) / 1000
 	source.date_msource = (res.data?.date_msource || 0) / 1000
