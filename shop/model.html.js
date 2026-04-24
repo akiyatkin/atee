@@ -254,7 +254,7 @@ tpl.showMainData = (data, env, ps, selritm) => {
 							
 				${ps.model.recap.cena?.length > 1 ? cards.block(cards.price(ps.model.recap)) : ''}
 
-				${selitem.art ? tpl.showSelector(data, env, ps, data.conf.root_path, selitem) : ''}
+				${selitem.art ? tpl.showSelector(data, env, ps, data.conf.root_path, selritm) : ''}
 				
 				
 
@@ -322,7 +322,8 @@ const showCost = (value) => value ? `${cost(value)}${common.unit()}` : ''
 
 
 
-tpl.showSelector = (data, env, ps, root_path, selitem) => {	
+tpl.showSelector = (data, env, ps, root_path, selritm) => {	
+	const selitem = selritm.item
 	if (!ps.prop_nicks_selector_primary.length) return ''
 	
 	const htmls = [`
@@ -331,10 +332,9 @@ tpl.showSelector = (data, env, ps, root_path, selitem) => {
 		    border-radius: 1em;
 		">
 	`]
-	
-	for (const prop_nick of ps.prop_nicks_selector_primary) {
-		const prop = ps.props[prop_nick]
-		const html = tpl.template[prop.template || 'titles'](data, env, ps, root_path, env.bread.get, selitem, prop)
+	const list = ps.prop_nicks_selector_primary.map(prop_nick => ps.props[prop_nick]).sort((p1, p2) => p1.ordain - p2.ordain)
+	for (const prop of list) {
+		const html = tpl.template[prop.template || 'titles'](data, env, ps, root_path, env.bread.get, selritm, prop)
 		htmls.push(html)
 	}
 	
@@ -452,7 +452,8 @@ tpl.showModification = (data, env, item) => `
 // 	// return item
 // }
 tpl.template = {}
-tpl.template.titles = (data, env, ps, root_path, get, selitem, prop) => {
+tpl.template.titles = (data, env, ps, root_path, get, selritm, prop) => {
+	const selitem = selritm.item
 	const value_nicks = ps.model.recap[prop.prop_nick]
 	return `
 	 	<div style="margin: 0.5em 0;">
@@ -461,7 +462,8 @@ tpl.template.titles = (data, env, ps, root_path, get, selitem, prop) => {
 	 	</div>
 	`
 }
-tpl.template.input = (data, env, ps, root_path, get, selitem, prop) => {
+tpl.template.input = (data, env, ps, root_path, get, selritm, prop) => {
+	const selitem = selritm.item
 	return `
 	 	<div style="margin: 0.5em 0;">
 	 		<div><b>${prop.prop_title}</b></div>
@@ -510,7 +512,7 @@ tpl.getPropButton = (ps, root_path, get, selitem, prop, value_nick) => {
 	</a>`
 }
 tpl.OPENTITLE = `Открыть корзину`
-
+tpl.CREATETITLE = `Сделать заказ`
 tpl.ADDTITLE = `Добавить в корзину`
 tpl.buyButton = (data, env, model, selitem) => {
 	if (!data.conf.cart) return tpl.orderButton(data, env, model, selitem)
@@ -575,7 +577,7 @@ tpl.filters = (data, env, model, item, prop_nick) => (item[prop_nick] || []).map
 `).join(', ')
 tpl.orderButton = (data, env, model, item) =>  `
 	<div style="margin-bottom:1em">${item.cena ? cards.price(item) : '<big><b>Цена по запросу</b></big>'}</div>
-	<button style="font-size:1.2em;">${item.cena ? 'Сделать заказ' : 'Оставить запрос'}</button>
+	<button style="font-size:1.2em;">${item.cena ? tpl.CREATETITLE : 'Оставить запрос'}</button>
 	<script>
 		(btn => {
 			const product = ${JSON.stringify(Ecommerce.getProduct(data, {

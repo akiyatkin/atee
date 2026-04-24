@@ -242,7 +242,13 @@ class Selector {
 		*/
 		
 		const prop_nicks = [...ps.prop_nicks_address_secondary_dynamic, ...ps.prop_nicks_address_primary] //primary нужно проверить после установки secondary иначе primary сбросятся на основе неправильных secondary
-		if (!ps.check(titem, item, prop_nicks, false, false)) return false
+		if (!ps.check(titem, item, prop_nicks, false, false)) {
+			if (withdef && query_nick) {
+				console.log('Не смогли найти позицию по арту, после установки имеющихся значений и дефолтных неимеющихся', query_nick)
+				return ps.buildItem(titem, item, '', true)
+			}
+			return false
+		}
 		return {titem, item}
 	}
 	
@@ -464,14 +470,19 @@ class Selector {
 		
 		ps.interaction = 2
 		for (const other_prop_nick of other_prop_nicks) {
+			const prop1 = ps.props[other_prop_nick]
+			if (!prop1.nicks) continue
 			const old_value_nicks = item[other_prop_nick]
-			for (const value_nick of ps.model.recap[other_prop_nick]) {
-				if (old_value_nicks[0] == value_nick) continue
-				item[other_prop_nick] = [value_nick]
+		
+			for (const value_nick1 of prop1.nicks) {
+			//for (const value_nick1 of ps.model.recap[other_prop_nick]) {
+				if (old_value_nicks[0] == value_nick1) continue
+				item[other_prop_nick] = [value_nick1]
 				if (ps.check(titem, item, prop_nicks, true, prop_nick)) {
 					return ritm
 				}
 			}
+
 			item[other_prop_nick] = old_value_nicks //Протестировали одно свойство занчение не нашли, идём дальше
 		}
 		
@@ -483,16 +494,22 @@ class Selector {
 		//Нужно сбросить 2 выбираемых свойства
 		ps.interaction = 3
 		for (const other_prop_nick1 of other_prop_nicks) {
-
+			
+			const prop1 = ps.props[other_prop_nick1]
+			if (!prop1.nicks) continue
 			const old_value_nicks1 = item[other_prop_nick1]
-			for (const value_nick1 of ps.model.recap[other_prop_nick1]) {
+			for (const value_nick1 of prop1.nicks) {
+			//for (const value_nick1 of ps.model.recap[other_prop_nick1]) {
 				if (old_value_nicks1[0] == value_nick1) continue
 
 				for (const other_prop_nick2 of other_prop_nicks) {
 					if (other_prop_nick2 == other_prop_nick1) continue
 
+					const prop2 = ps.props[other_prop_nick2]
+					if (!prop2.nicks) continue
 					const old_value_nicks2 = item[other_prop_nick2]
-					for (const value_nick2 of ps.model.recap[other_prop_nick2]) {
+					for (const value_nick2 of prop2.nicks) {
+					//for (const value_nick2 of ps.model.recap[other_prop_nick2]) {
 						if (old_value_nicks2[0] == value_nick2) continue
 						item[other_prop_nick1] = [value_nick1]
 						item[other_prop_nick2] = [value_nick2]
@@ -511,23 +528,32 @@ class Selector {
 
 		// Перебираем комбинации из 3 изменяемых свойств
 		for (const other_prop_nick1 of other_prop_nicks) {
+			const prop1 = ps.props[other_prop_nick1]
+			if (!prop1.nicks) continue
 			const old_value_nicks1 = item[other_prop_nick1]
-			
-			for (const value_nick1 of ps.model.recap[other_prop_nick1]) {
+			for (const value_nick1 of prop1.nicks) {
+			//for (const value_nick1 of ps.model.recap[other_prop_nick1]) {
 				if (old_value_nicks1[0] == value_nick1) continue
 
 				for (const other_prop_nick2 of other_prop_nicks) {
 					if (other_prop_nick2 == other_prop_nick1) continue
-					const old_value_nicks2 = item[other_prop_nick2]
 					
-					for (const value_nick2 of ps.model.recap[other_prop_nick2]) {
+					const prop2 = ps.props[other_prop_nick2]
+					if (!prop2.nicks) continue
+					const old_value_nicks2 = item[other_prop_nick2]
+					for (const value_nick2 of prop2.nicks) {
+					//for (const value_nick2 of ps.model.recap[other_prop_nick2]) {
 						if (old_value_nicks2[0] == value_nick2) continue
 
 						for (const other_prop_nick3 of other_prop_nicks) {
 							if (other_prop_nick3 == other_prop_nick1 || other_prop_nick3 == other_prop_nick2) continue
-							const old_value_nicks3 = item[other_prop_nick3]
 							
-							for (const value_nick3 of ps.model.recap[other_prop_nick3]) {
+							
+							const prop3 = ps.props[other_prop_nick3]
+							if (!prop3.nicks) continue
+							const old_value_nicks3 = item[other_prop_nick3]
+							for (const value_nick3 of prop3.nicks) {
+							//for (const value_nick3 of ps.model.recap[other_prop_nick3]) {
 								if (old_value_nicks3[0] == value_nick3) continue
 								
 								// Применяем все 3 изменения

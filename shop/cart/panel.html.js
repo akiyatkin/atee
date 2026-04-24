@@ -20,6 +20,14 @@ tpl.TITLES = {
 	"empty":"В заказе нет товаров",
 	"pay":"Заказ ожидает оплату"
 }
+tpl.EMPTYTITLE = `Корзина пуста`
+
+tpl.TITLE = (obj) => {
+	if (obj.length) return `<b>${obj.length}</b> ${words(obj.length, 'позиция','позиции','позиций')} <b>${tpl.SUM(obj.sum)}</b>` 
+	//if (obj.orders) return `<b>${obj.orders}</b> ${words(obj.orders, 'заказ','заказа','заказов')}`
+	else return `Пустой заказ`
+}
+
 tpl.ROOT = (data, env) => `
 	<div class="panel hide">
 		<style>
@@ -37,6 +45,7 @@ tpl.ROOT = (data, env) => `
 			}
 			${env.scope}:has(.panel.show) {
 				z-index:3;
+				z-index:6;
 			}
 			${env.scope} .panel.up {
 				position: relative;
@@ -291,11 +300,7 @@ tpl.checkbox = (name, title, checked) => `
 	</div>
 `
 tpl.SUM = (sum) => sum ? `${cost(sum)}${cards.unit()}` : '&nbsp;'
-tpl.TITLE = (obj) => {
-	if (obj.length) return `<b>${obj.length}</b> ${words(obj.length, 'позиция','позиции','позиций')} <b>${tpl.SUM(obj.sum)}</b>` 
-	//if (obj.orders) return `<b>${obj.orders}</b> ${words(obj.orders, 'заказ','заказа','заказов')}`
-	else return `Пустой заказ`
-}
+
 
 tpl.ORDER = (data, env) => tpl.isShowPanel(data) ? `
 <!-- position: sticky; top: 0; -->
@@ -415,7 +420,7 @@ tpl.showForm = (data, env) => `
 			<div class="float-label formfield">
 				<textarea ${data.order.status == 'wait' ? '' : 'disabled'} placeholder="Комментарий" id="${env.sid}text" 
 					name="commentuser" style="width:100%; box-sizing: border-box; min-height:130px">${data.order.commentuser || ''}</textarea>
-				<label for="${env.sid}text">Комментарий к заказу</label>
+				<label for="${env.sid}text">Комментарий</label>
 				<div style="align-self: flex-start; margin-top: 0.5rem">
 					${data.order.status == 'wait' ? tpl.svgres('optional', data.order.commentuser) : ''}
 				</div>
@@ -453,7 +458,7 @@ const showYear = (data, env, year) => `
 `
 
 const showOrders = (data, env) => `
-	<h2>Мои заказы</h2>
+	<!-- <h2>Мои заказы</h2> -->
 	<!-- <h2>Заказы <span style="font-weight: normal">${data.ouser.email || ''}</span></h2> -->
 	<style>
 		${env.scope} .orders button:disabled {
@@ -695,12 +700,15 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 			${env.scope} .list {
 				width: fit-content;
 				max-width: 100%;
-				margin: 0 auto;
+				/*margin: 0 auto;*/
 				display: grid;
 				grid-template-columns: max-content 1fr max-content;
 				gap: 1rem;
 			}
-			${env.scope} .cost {
+			${env.scope} .list .image {
+				width:80px;
+			}
+			${env.scope} .list .cost {
 				text-align: right;
 				align-self: flex-start;
 				display: grid;
@@ -720,17 +728,17 @@ tpl.BODY = (data, env) => tpl.isShowPanel(data) ? `
 			@media(max-width: 480px) {
 				${env.scope} .list {
 				}
-				${env.scope} .cost {
+				${env.scope} .list .cost {
 					text-align: left;
 				}
-				${env.scope} .image {
+				${env.scope} .list .image {
 					grid-row: span 2;
 					
 				}
-				${env.scope} .info {
+				${env.scope} .list .info {
 					grid-column: span 2;
 				}
-				${env.scope} .cost {
+				${env.scope} .list .cost {
 					grid-column: span 2;
 				}
 			}

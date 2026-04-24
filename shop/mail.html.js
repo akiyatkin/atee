@@ -1,6 +1,7 @@
 import cards from "/-shop/cards.html.js"
 import words from "/-words/words.js"
 import cost from "/-words/cost.js"
+import panel from "/-shop/cart/panel.html.js"
 
 const tpl = {}
 export default tpl
@@ -36,22 +37,14 @@ tpl.showAddress = (params) => `
 `
 
 
-tpl.TITLES = {
-	"wait":"Оформить заказ",
-	"check":"Заказ оформлен",
-	"complete":"Заказ выполнен",
-	"cancel":"Заказ отменён",
-	"empty":"В заказе нет товаров",
-	"pay":"Заказ ожидает оплату"
-}
 
 const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
 const prefixif = (prefix, val, postfix = '') => val ? prefix + val + postfix : ''
 
 tpl.tocheck_subject = (data) => `Заказ с сайта ${data.vars.host}`
-tpl.EMPTYTITLE = `Корзина пуста`
-tpl.tocheck = (data) => !data.order ? `<h1>${tpl.EMPTYTITLE}</h1>` : `
-	<h1>${tpl.TITLES[data.order.status]} № ${data.order.order_nick}</h1>
+
+tpl.tocheck = (data) => !data.order ? `<h1>${panel.EMPTYTITLE}</h1>` : `
+	<h1>${panel.TITLES[data.order.status]} № ${data.order.order_nick}</h1>
 	<div style="margin-bottom:1rem">
 		ФИО: ${data.order.name}<br>
 		Email: ${data.order.email}<br>
