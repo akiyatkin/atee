@@ -128,8 +128,9 @@ const load = (src, visitor, ext) => { //ext формат требуемых да
 		if (!reans.ext) reans.ext = ext
 		if (reans.data instanceof ReadStream) {
 			const text = await readTextStream(reans.data).catch(e => {
-				console.log('router load', e)
-				throw { status: 404 }
+			    if (typeof reans.data.destroy === 'function') reans.data.destroy()
+			    console.log('router load', e)
+			    throw { status: 404 }
 			})
 			if (ext == 'json') {
 				try {
@@ -153,13 +154,21 @@ const load = (src, visitor, ext) => { //ext формат требуемых да
 export const readTextStream = stream => {
 	return new Promise((resolve, reject) => {
 		let data = ''
+		const cleanup = () => {
+            stream.removeAllListeners()
+            if (typeof stream.destroy === 'function') stream.destroy()
+        }
 		stream.on('readable', () => {
 			const d = stream.read()
 			if (d === null) return
 			data += d
 		})
-		stream.on('error', reject)
+		stream.on('error', (err) => {
+			cleanup()
+			reject(err)
+		})
 		stream.on('end', () => {
+			cleanup()
 			resolve(data)
 		})
 	})
