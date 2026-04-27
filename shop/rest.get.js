@@ -226,7 +226,7 @@ rest.addResponse('get-group-sitemap', async view => {
 		childs[path] = await Shop.getGroupHead(group, view.vistor)
 	})
 	
-	const title = 'Группы';
+	const title = 'Группы каталога';
 	const nick = nicked(title)
 	view.data.headings = {
 		[nick]: { title, items:childs }
@@ -247,7 +247,7 @@ rest.addResponse('get-page-head', async view => {
 rest.addResponse('get-page-sitemap', async view => {	
 	const conf = await config('shop')
 	
-	const title = 'Каталог'
+	const title = 'Страницы каталога'
 	const nick = nicked(title)
 
 	const path = conf.root_path.slice(1)
