@@ -71,7 +71,7 @@ tpl.showPos = (data, pos) => {
 	const naimenovanie = gain('naimenovanie')
 	return `
 		<div style="margin-bottom:1rem">
-			<div>${cards.getPosBill(data, pos, 'https://' + data.vars.host)}
+			<div>${cards.getPosBill(data, pos, 'https://' + data.vars.host)}</div>
 			<div>${pos.modification || ''}</div>
 			<div><b>${pos.quantity}</b>${tpl.showSum(pos)}</div>
 		</div>

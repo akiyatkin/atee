@@ -124,6 +124,16 @@ tpl.ROOT = (data, env) => `
 				grid-template-columns: 1fr 1fr;
 				gap: 1fr;*/
 			}
+			${env.scope} .panel .body::after {
+				content: '';
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				height: 1em; /* высота подсветки */
+				background: linear-gradient(to top, white, transparent);
+				pointer-events: none;
+			}
 			@media (max-width:480px) {
 				${env.scope} .panel .body {
 /*					max-height: 145px;*/
