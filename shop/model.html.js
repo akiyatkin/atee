@@ -328,7 +328,7 @@ tpl.showSelector = (data, env, ps, root_path, selritm) => {
 	
 	const htmls = [`
 		<div style="
-			margin: 1em 0;
+			margin: 0;
 		    border-radius: 1em;
 		">
 	`]
