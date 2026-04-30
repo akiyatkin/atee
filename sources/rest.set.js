@@ -1567,6 +1567,7 @@ rest.addAction('set-source-add', ['admin','checkrecalc'], async view => {
 	`, {source_title, source_nick})
 	
 	const source = await Sources.getSource(db, source_id)
+	
 	await Sources.check(db, source, view.visitor)
 
 	await Sources.reorderSources(db)

@@ -387,7 +387,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS shop_stat_temp_orders AS (
 	FROM shop_orders o, shop_basket b, sources_values va
 	WHERE YEAR(o.dateedit) = nowYear AND MONTH(o.dateedit) = nowMonth
 	AND b.order_id = o.order_id
-	AND va.value_nick = b.brendart_base
+	AND va.value_nick = b.art_nick
 );
 
 
