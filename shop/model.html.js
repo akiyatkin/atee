@@ -294,7 +294,7 @@ tpl.ecomDetail = (data, env, model, selitem) => `
 tpl.showTableItem = (ps, data, env, model, selitem) => `
 	<style>
 		${env.scope} .tableitem {
-			margin:1em 0;
+			margin:1em -5px;
 			padding:0;
 			display: table;
 		}
