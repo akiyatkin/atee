@@ -144,6 +144,7 @@ tpl.filerow = f => `
 globalThis.ViewedImagesOfTheCatalog ??= []
 tpl.showGallery = (data, env, item) => {
 	const images = cards.getSomeTitles(data, item, 'images')
+	globalThis.ViewedImagesOfTheCatalog ??= []
 	const first_image = globalThis.ViewedImagesOfTheCatalog.findLast(src => images.includes(src)) || images[0]
 	
 	return `
@@ -176,6 +177,7 @@ tpl.showGallery = (data, env, item) => {
 							//const file = encodeURIComponent(imgmin.dataset.src)
 							bigimg.src = imgmin.src
 							bigimg.dataset.src = imgmin.dataset.src
+							globalThis.ViewedImagesOfTheCatalog ??= []
 							globalThis.ViewedImagesOfTheCatalog.push(bigimg.dataset.src)
 							//bigimg.srcset = '/-imager/webp?h=500&src='+file+' 1x,/-imager/webp?h=1000&src='+file+' 2x,/-imager/webp?h=1500&src='+file+' 3x,/-imager/webp?h=2000&src='+file+' 4x'
 						})
@@ -185,6 +187,7 @@ tpl.showGallery = (data, env, item) => {
 						const next = selected.nextElementSibling || div.querySelector('.imagemin')
 						if (!next) return
 						next.dispatchEvent(new Event("click"))
+						globalThis.ViewedImagesOfTheCatalog ??= []
 						globalThis.ViewedImagesOfTheCatalog.push(bigimg.dataset.src)
 						console.log(bigimg.dataset.src, globalThis.ViewedImagesOfTheCatalog)
 					})
