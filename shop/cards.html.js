@@ -519,7 +519,7 @@ cards.img = (data, env, item, src) => `
 		style="
 			width: 100%;
 			height:auto;
-			aspect-ratio: 1 / 1; /* Соотношение сторон */
+			aspect-ratio: ${cards.aspect.join(' / ')}; /* Соотношение сторон 1 / 1 */
 			object-fit: contain;
 			vertical-align: middle; 
 		" 
@@ -535,13 +535,15 @@ cards.img = (data, env, item, src) => `
 // 		${cards.imager(src, 400, 400)}
 // 	>	
 // `
-cards.imager = (src, w, h) => {
+cards.aspect = [1, 1]
+cards.imager = (src, w) => { // , h
+	const h = w * cards.aspect[1] / cards.aspect[0]
 	if (!src) return src
 	const imager = '/-imager/webp?cache&fit=contain'
 	const esrc = encodeURIComponent(src)
 
 	//MEMORYTEST
-	return `width="${w}" height="${h}" src="${~src.indexOf(':') ? src : '/' + src}"`
+	return `width="${w}" height="${h}" data-src="${src}" src="${~src.indexOf(':') ? src : '/' + src}"`
 
 	return `
 		width="${w}" 

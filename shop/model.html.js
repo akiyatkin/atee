@@ -141,78 +141,93 @@ tpl.filerow = f => `
 		<div><a target="about:blank" href="${/^http/.test(f.dir) ? '' : '/'}${f.dir + f.file}">${f.anchor || f.name}</a></div>
 	</div>
 	`
-
-tpl.showGallery = (data, env, item) => `
-	<div>
-		<style>
-			${env.scope} .imagemin,
-			${env.scope} .imagemax {
-				max-width: 100%; height:auto
-			}
-			${env.scope} .imagemin.selected {
-				border: solid 2px var(--orange, orange);
-				padding: 2px;
-			}
-			${env.scope} .pointer {
-				cursor: pointer;
-			}
-		</style>
-		<img class="imagemax" fetchpriority="high" style="${item.images.length > 1 ? 'cursor:pointer' : ''}" alt="" 
-			${cards.imager(cards.getSomeTitle(data, item, 'images'), 500, 500)}
-		>
-		${item.images.length > 1 ? tpl.showPreviews(data, env, item) : ''}
-		<script>
-			(div => {
-				const bigimg = div.querySelector('.imagemax')
-				const imgmins = div.querySelectorAll('.imagemin')
-				for (const imgmin of imgmins) {
-					imgmin.addEventListener('click', () => {
-						div.querySelector('.selected').classList.remove('selected')
-						imgmin.classList.add('selected')
-						const file = encodeURIComponent(imgmin.dataset.file)
-						//MEMORYTEST
-						bigimg.src = imgmin.src
-						//bigimg.srcset = '/-imager/webp?h=500&src='+file+' 1x,/-imager/webp?h=1000&src='+file+' 2x,/-imager/webp?h=1500&src='+file+' 3x,/-imager/webp?h=2000&src='+file+' 4x'
-					})
+globalThis.ViewedImagesOfTheCatalog ??= []
+tpl.showGallery = (data, env, item) => {
+	const images = cards.getSomeTitles(data, item, 'images')
+	const first_image = globalThis.ViewedImagesOfTheCatalog.findLast(src => images.includes(src)) || images[0]
+	
+	return `
+		<div>
+			<style>
+				${env.scope} .imagemin,
+				${env.scope} .imagemax {
+					max-width: 100%; height:auto
 				}
-				if (imgmins.length) bigimg.addEventListener('click', () => {
-					const selected = div.querySelector('.selected')
-					const next = selected.nextElementSibling || div.querySelector('.imagemin')
-					if (!next) return
-					next.dispatchEvent(new Event("click"))
-				})
-			})(document.currentScript.parentElement)
-		</script>
-	</div>
-`
-tpl.showPreview = (data, env, item, src, i) => `
+				${env.scope} .imagemin.selected {
+					border: solid 2px var(--orange, orange);
+					padding: 2px;
+				}
+				${env.scope} .pointer {
+					cursor: pointer;
+				}
+			</style>
+			<img class="imagemax" data-src="${first_image}" fetchpriority="high" style="${item.images.length > 1 ? 'cursor:pointer' : ''}" alt="" 
+				${cards.imager(first_image, 500)}
+			>
+			${item.images.length > 1 ? tpl.showPreviews(data, env, item) : ''}
+			<script>
+				(div => {
+					const bigimg = div.querySelector('.imagemax')
+					const imgmins = div.querySelectorAll('.imagemin')
+					for (const imgmin of imgmins) {
+						imgmin.addEventListener('click', () => {
+							div.querySelector('.selected').classList.remove('selected')
+							imgmin.classList.add('selected')
+							//const file = encodeURIComponent(imgmin.dataset.src)
+							bigimg.src = imgmin.src
+							bigimg.dataset.src = imgmin.dataset.src
+							globalThis.ViewedImagesOfTheCatalog.push(bigimg.dataset.src)
+							//bigimg.srcset = '/-imager/webp?h=500&src='+file+' 1x,/-imager/webp?h=1000&src='+file+' 2x,/-imager/webp?h=1500&src='+file+' 3x,/-imager/webp?h=2000&src='+file+' 4x'
+						})
+					}
+					if (imgmins.length) bigimg.addEventListener('click', () => {
+						const selected = div.querySelector('.selected')
+						const next = selected.nextElementSibling || div.querySelector('.imagemin')
+						if (!next) return
+						next.dispatchEvent(new Event("click"))
+						globalThis.ViewedImagesOfTheCatalog.push(bigimg.dataset.src)
+						console.log(bigimg.dataset.src, globalThis.ViewedImagesOfTheCatalog)
+					})
+
+
+				})(document.currentScript.parentElement)
+			</script>
+		</div>
+	`
+}
+tpl.showPreview = (data, env, item, src, selected) => `
 	<img 
-		data-file="${src}" class="imagemin ${i === 0 ? 'selected' : ''}"
+		class="imagemin ${selected ? 'selected' : ''}"
 		alt="" 
-		${cards.imager(src, 70, 70)}
+		${cards.imager(src, 70)}
 	>	
 `
 
-tpl.showPreviews = (data, env, item) => `
-	<div style="position: relative;">
-		<div style="color: rgba(0,0,0,0.3); pointer-events: none; opacity: 0; position: absolute; height: 100%; display: flex; align-items: center;" class="left">
-			&nbsp;←&nbsp;
+tpl.showPreviews = (data, env, item) => {
+	const images = cards.getSomeTitles(data, item, 'images')
+	const first_image = globalThis.ViewedImagesOfTheCatalog.findLast(src => images.includes(src)) || images[0]
+
+	return `
+		<div style="position: relative;">
+			<div style="color: rgba(0,0,0,0.3); pointer-events: none; opacity: 0; position: absolute; height: 100%; display: flex; align-items: center;" class="left">
+				&nbsp;←&nbsp;
+			</div>
+			<div style="color: rgba(0,0,0,0.3); pointer-events: none; position: absolute; height: 100%; right: 0px; display: flex; align-items: center;" class="right">
+				&nbsp;→&nbsp;
+			</div>
+			<div class="sliderNeo" style="cursor: pointer; overflow-x: scroll; white-space: nowrap; display: flex; gap: 1ch; padding: 1ch 0;">
+				${images.map((src, i) => tpl.showPreview(data, env, item, src, src == first_image)).join('')}
+			</div>
 		</div>
-		<div style="color: rgba(0,0,0,0.3); pointer-events: none; position: absolute; height: 100%; right: 0px; display: flex; align-items: center;" class="right">
-			&nbsp;→&nbsp;
-		</div>
-		<div class="sliderNeo" style="cursor: pointer; overflow-x: scroll; white-space: nowrap; display: flex; gap: 1ch; padding: 1ch 0;">
-			${cards.getSomeTitles(data, item, 'images').map((src, i) => tpl.showPreview(data, env, item, src, i)).join('')}
-		</div>
-	</div>
-	<script>
-		(async div => {
-			const sliderNeo = await import('/-imager/sliderNeo.js').then(o => o.default)
-			sliderNeo(div)
-			//div.style.opacity = 1 transition: opacity 0.3s; opacity: 0
-		})(document.currentScript.previousElementSibling)
-	</script>
-`
+		<script>
+			(async div => {
+				const sliderNeo = await import('/-imager/sliderNeo.js').then(o => o.default)
+				sliderNeo(div)
+				//div.style.opacity = 1 transition: opacity 0.3s; opacity: 0
+			})(document.currentScript.previousElementSibling)
+		</script>
+	`
+}
 // tpl.showimage = (src, i) => `	
 // 	<div data-file="${src}" class="imagemin ${i === 0 ? 'selected' : ''}">
 // 		<img width="150" height="150" loading="lazy" alt="" style="max-width: 100%; height:auto" 
@@ -519,7 +534,7 @@ tpl.buyButton = (data, env, model, selitem) => {
 	const gain = (name) => cards.getSomeTitle(data, selitem, name)
 	return `
 		<div style="margin-bottom: 1em">${cards.price(selitem)}</div>
-		<button style="font-size:1.2rem; opacity: 0">${tpl.ADDTITLE}</button>
+		<button style="font-size:1.2rem;" disabled>${tpl.ADDTITLE}</button>
 		<script>
 			(async btn => {
 				const brendart_nick = "${selitem.brendart[0]}"
@@ -535,7 +550,7 @@ tpl.buyButton = (data, env, model, selitem) => {
 				const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
 				const ans = await senditmsg(btn.parentElement, '/-shop/cart/get-added', {art_nick, brendart_nick})
 			
-				btn.style.opacity = 1
+				btn.disabled = false
 				if (ans.quantity) btn.innerHTML = '${tpl.OPENTITLE}'
 				
 				btn.addEventListener('click', async () => {
