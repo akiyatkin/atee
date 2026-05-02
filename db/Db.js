@@ -50,7 +50,7 @@ const createPool = async () => {
 		// Проверяем работоспособность через получение соединения
 		const db = await pool.getConnection();
 		try {
-			await db.execute('SELECT 1');
+			await db.query('SELECT 1');
 			console.log('Database pool ready, connectionLimit:', poolConfig.connectionLimit);
 		} finally {
 			db.release();
@@ -141,9 +141,12 @@ export class Db {
 	}
 
 	// Универсальный метод выполнения запросов
+	static allstmt = {}
 	async executeQuery(sql, values = null) {
 		try {
 			if (values && (values?.length || Object.keys(values).length)) {
+				if (!Db.allstmt[sql]) console.log('Db.allstmt', Object.values(Db.allstmt).length, sql)
+				Db.allstmt[sql] = values
 				return await pool.execute(sql, values);
 			} else {
 				return await pool.query(sql);
