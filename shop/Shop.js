@@ -1514,11 +1514,12 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, samples = [{}], hashs =
 			${limit ? 'LIMIT ' + limit : ''}
 		`, {group_id, ...bind})
 	}
+
 	const count = limit ? await db.col(`
 		SELECT count(distinct win.value_id)
 		FROM (${from.join(', ')} ${join.join(' ')})
 		WHERE ${where.join(' and ')}
-	`, {group_id, ...bind}) : list.length
+	`) : list.length
 	
 	for (const prop_nick of titles) {
 		const prop = await Shop.getPropByNick(db, prop_nick)
