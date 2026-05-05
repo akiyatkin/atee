@@ -189,6 +189,11 @@ rest.addAction('set-activate', async view => {
 
 	return view.ret()
 })
+rest.addAction('get-item', async view => {
+	view.data.item = await view.get('item')
+	view.data.isitem = !!view.data.item
+	return view.ret()
+})
 rest.addAction('set-add', async view => {
 	const active_id = await view.get('active_id')
 

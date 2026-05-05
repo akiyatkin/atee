@@ -193,7 +193,6 @@ class Selector {
 			if (nick) {
 				//const prop = ps.props[prop_nick]
 				//const title = prop.type == 'value' ? ps.values[nick] : nick
-				
 				if (prop.nicks) {
 
 					if (prop.nicks.includes(nick)) {
@@ -231,6 +230,7 @@ class Selector {
 				item[prop_nick] = [def]
 			}
 		}
+
 		/*
 			Создали, надо определить secondary значения
 			ps.prop_nicks_address_secondary_dynamic
@@ -265,13 +265,13 @@ class Selector {
 		if (!withdef && query_nick && !ps.props.art) return false
 
 		const base_item = Selector.getBaseByQuery(ps.model, query_nick)
-
 		if (!base_item) return false
 		const {titem, item} = ps.createItem(base_item)
 
 		
 
 		const r = ps.buildItem(titem, item, query_nick, withdef)
+
 
 		if (!r) return r
 

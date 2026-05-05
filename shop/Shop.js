@@ -1145,6 +1145,7 @@ Shop.getItemByBrendart = async (db, brendart_nick, art_nick, partner) => {
 	await Shop.prepareItemPropsValues(db, data, model.recap)
 
 	const ps = new Selector(model, data.props, data.values)
+
 	const {titem, item} = ps.getItemByArt(art_nick)
 	return {item, props: ps.props, values: ps.values}
 }
@@ -1168,7 +1169,8 @@ Shop.getModelByBrendmodel = async (db, brendmodel_nick, partner) => {
 			GROUP_CONCAT(distinct wva.key_id separator ',') as key_ids,
 			GROUP_CONCAT(distinct mig.group_id separator ',') as group_ids
 		FROM shop_itemgroups mig, sources_wvalues wva, shop_allitemgroups ig
-		WHERE mig.key_id = wva.key_id and wva.value_id = ${value.value_id} and wva.entity_id = ${bind.brendart_prop_id} and wva.prop_id = ${bind.brendmodel_prop_id}
+		WHERE mig.key_id = wva.key_id and wva.value_id = ${value.value_id} 
+		and wva.entity_id = ${bind.brendart_prop_id} and wva.prop_id = ${bind.brendmodel_prop_id}
 		and ig.key_id = wva.key_id and ig.group_id = ${group_id}
 		GROUP BY wva.value_id 
 	`)	

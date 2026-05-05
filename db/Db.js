@@ -145,7 +145,7 @@ export class Db {
 	async executeQuery(sql, values = null) {
 		try {
 			if (values && (values?.length || Object.keys(values).length)) {
-				if (!Db.allstmt[sql]) console.log('Db.allstmt', Object.values(Db.allstmt).length, sql)
+				//if (!Db.allstmt[sql]) console.log('Db.allstmt', Object.values(Db.allstmt).length, sql)
 				Db.allstmt[sql] = values
 				return await pool.execute(sql, values);
 			} else {
