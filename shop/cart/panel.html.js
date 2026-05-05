@@ -34,7 +34,7 @@ tpl.ROOT = (data, env) => `
 			${env.scope} {
 /*				z-index:200;*/
 				position: sticky; bottom:0; 
-				z-index:1;
+				z-index:3;
 				background:white; 
 				border-top: 1px solid var(--border-color);
 				border-bottom: 1px solid var(--border-color);
