@@ -153,6 +153,9 @@ tpl.ROOT = (data, env) => `
 				overflow-x: auto;*/
 
 			}
+			${env.scope} .panel.hide .body::after {
+				display: none;
+			}
 			${env.scope} .panel.hide .body {
 				/*overflow: hidden;
 				overflow-y: visible;*/
