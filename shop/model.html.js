@@ -517,7 +517,7 @@ tpl.getPropButton = (ps, root_path, get, selitem, prop, value_nick) => {
 	const ritm = ps.getNearestItem(selitem, prop.prop_nick, value_nick)
 	
 	const title = ps.values[value_nick]?.value_title || value_nick
-	const selected = selitem[prop.prop_nick][0] == value_nick
+	const selected = selitem[prop.prop_nick]?.[0] == value_nick
 	const lost = ritm === false
 	const css = `display: inline-block; margin-top:0.25em; border-radius:var(--radius);padding:0 0.5ch; margin-right:2px; line-height: 1.5; text-decoration: none;`
 	if (selected) return `<span style="${css}border:solid rgba(0,0,0,0.7) 3px;">${title}</span>`

@@ -1471,7 +1471,8 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, samples = [{}], hashs =
 			GROUP BY win.key_id
 			${rand ? 'ORDER BY RAND()' : ''}
 			${limit ? 'LIMIT ' + limit : ''}
-		`, {group_id, ...bind})		
+		`)
+		//`, {group_id, ...bind})		
 		for (const row of list) {
 			const group_ids = row.group_ids.split(',')
 			
@@ -1512,7 +1513,8 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, samples = [{}], hashs =
 			WHERE ${where.join(' and ')}		
 			${rand ? 'ORDER BY RAND()' : ''}
 			${limit ? 'LIMIT ' + limit : ''}
-		`, {group_id, ...bind})
+		`)
+		//`, {group_id, ...bind})
 	}
 
 	const count = limit ? await db.col(`
