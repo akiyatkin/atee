@@ -242,6 +242,8 @@ class Selector {
 		*/
 		
 		const prop_nicks = [...ps.prop_nicks_address_secondary_dynamic, ...ps.prop_nicks_address_primary] //primary нужно проверить после установки secondary иначе primary сбросятся на основе неправильных secondary
+
+		
 		if (!ps.check(titem, item, prop_nicks, false, false)) {
 			if (withdef && query_nick) {
 				console.log('Не смогли найти позицию по арту, после установки имеющихся значений и дефолтных неимеющихся', query_nick)
@@ -249,6 +251,8 @@ class Selector {
 			}
 			return false
 		}
+
+
 		return {titem, item}
 	}
 	
@@ -267,10 +271,10 @@ class Selector {
 		const base_item = Selector.getBaseByQuery(ps.model, query_nick)
 		if (!base_item) return false
 		const {titem, item} = ps.createItem(base_item)
-
 		
-
 		const r = ps.buildItem(titem, item, query_nick, withdef)
+		
+		
 
 
 		if (!r) return r
@@ -331,8 +335,7 @@ class Selector {
 			} else {
 				item[prop_nick] = value_titles
 			}
-		}
-		
+		}		
 		
 		
 		if (isselector) { //static check
