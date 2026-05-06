@@ -78,7 +78,7 @@ export const Files = {
 		})
 		return mindex
 	},
-	indexDirFiles: async (dir) => { //Например images/RVI-D2342/что угодно
+	indexDirFiles: async (dir) => { //Например images/[RVI-D2342]/что угодно
 		const dindex = {}
 		const dirs = (await Files.readdir(dir)).filter(dinfo => dinfo.ext === null)
 		for (const dinfo of dirs) {
