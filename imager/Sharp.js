@@ -53,7 +53,11 @@ Sharp.resizeFolder = async (dirfrom, dirto, opt) => {
 
 }
 Sharp.processImage = async (inputPath, outputPath, opt) => {
-	let {maxwidth = 2000, ratio = 1, fit = 'contain', convert = 'avif'} = opt
+	let {composite = [{
+        input: false,
+        blend: 'multiply',         // Режим наложения
+        gravity: 'center'
+	}], maxwidth = 2000, ratio = 1, fit = 'contain', convert = 'avif'} = opt
 	try {
 		const metadata = await sharp(inputPath).metadata()
 		const { width, height } = metadata
@@ -74,6 +78,9 @@ Sharp.processImage = async (inputPath, outputPath, opt) => {
 		})
 		if (convert) {
 			proc = await proc[convert]({ quality: 90, effort: 3 })
+		}
+		if (composite[0].input) {
+			proc = await proc.composite(composite)
 		}
 		
 		const buffer = await proc.toBuffer()
