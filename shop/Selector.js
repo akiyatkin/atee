@@ -188,7 +188,7 @@ class Selector {
 			const prop = ps.props[prop_nick]
 
 			//Если есть выбранный базовый, то динамические пытаюсят подставиться ближайшие если в адресе их нет, без фанатизма и перебора - либо подойдут перывй либо нет.
-			const def = ps.model.recap[prop_nick]?.[0] || prop.min || 0 //всегда надо что-то назначать в base_item
+			const def = prop.def ?? ps.model.recap[prop_nick]?.[0] ?? prop.min ?? 0 //всегда надо что-то назначать в base_item
 
 			if (nick) {
 				//const prop = ps.props[prop_nick]
