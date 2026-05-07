@@ -199,7 +199,7 @@ const Cart = {
 		// 	WHERE ba.order_id = :from_id and ba.brendart_nick = va.value_nick and wva.entity_id = :brendart_prop_id and wva.prop_id = wva.entity_id and va.value_id = wva.value_id
 		// `, {...bind, from_id, to_id})
 		await db.exec(`
-			INSERT INTO shop_basket (order_id, brendart_nick, art_nick, quantity, dateadd, dateedit, modification)
+			INSERT IGNORE INTO shop_basket (order_id, brendart_nick, art_nick, quantity, dateadd, dateedit, modification)
 			SELECT :to_id, ba.brendart_nick, ba.art_nick, ba.quantity, now(), now(), ba.modification
 			FROM shop_basket ba
 			WHERE ba.order_id = :from_id
@@ -211,39 +211,62 @@ const Cart = {
 		if (!active_id) return Cart.create(db, user, utms)
 		const order = await Cart.getOrder(db, active_id)
 		if (order.status == 'wait') return active_id
-		let nactive_id
-		if (user.manager) {
-			//Нужно всегда копировать и не добавлять в текущую в ожидании. Умею очищать
-			nactive_id = await Cart.create(db, user, utms, order.order_id)
-			//Отправленная заявка достаётся из json, а в ожидании достаётся из каталога и позции могут пропасть.
-			//При копировании надо скопировать только те что есть
-			await Cart.copyBasket(db, active_id, nactive_id)
+	
+		let nactive_id = await db.col(`
+			SELECT uo.order_id
+			FROM shop_userorders uo, shop_orders o
+			WHERE uo.order_id != :active_id and uo.order_id = o.order_id and uo.user_id = :user_id and o.status = 'wait'
+		`, {
+			active_id, 
+			user_id:user.user_id
+		})
+		if (!nactive_id) { 
+			//Другого заказа, который можно сделать активным нет, надо создать и скопировать
+			nactive_id = await Cart.create(db, user, utms)
 		} else {
-			nactive_id = await db.col(`
-				SELECT uo.order_id
-				FROM shop_userorders uo, shop_orders o
-				WHERE uo.order_id != :active_id and uo.order_id = o.order_id and uo.user_id = :user_id and o.status = 'wait'
+			await db.exec(`
+				UPDATE shop_actives
+				SET order_id = :active_id
+				WHERE user_id = :user_id
 			`, {
-				active_id, 
+				active_id: nactive_id, 
 				user_id:user.user_id
 			})
-			if (!nactive_id) { 
-				//Другого заказа, который можно сделать активным нет, надо создать и скопировать
-				nactive_id = await Cart.create(db, user, utms)
-				if (!nocopy) {
-					await Cart.copyBasket(db, active_id, nactive_id)
-				}
-			} else {
-				await db.exec(`
-					UPDATE shop_actives
-					SET order_id = :active_id
-					WHERE user_id = :user_id
-				`, {
-					active_id: nactive_id, 
-					user_id:user.user_id
-				})
-			}
 		}
+		if (!nocopy) await Cart.copyBasket(db, active_id, nactive_id)
+		
+		// if (user.manager) {
+		// 	//Нужно всегда копировать и не добавлять в текущую в ожидании. Умею очищать
+		// 	nactive_id = await Cart.create(db, user, utms, order.order_id)
+		// 	//Отправленная заявка достаётся из json, а в ожидании достаётся из каталога и позции могут пропасть.
+		// 	//При копировании надо скопировать только те что есть
+		// 	await Cart.copyBasket(db, active_id, nactive_id)
+		// } else {
+		// 	nactive_id = await db.col(`
+		// 		SELECT uo.order_id
+		// 		FROM shop_userorders uo, shop_orders o
+		// 		WHERE uo.order_id != :active_id and uo.order_id = o.order_id and uo.user_id = :user_id and o.status = 'wait'
+		// 	`, {
+		// 		active_id, 
+		// 		user_id:user.user_id
+		// 	})
+		// 	if (!nactive_id) { 
+		// 		//Другого заказа, который можно сделать активным нет, надо создать и скопировать
+		// 		nactive_id = await Cart.create(db, user, utms)
+		// 		if (!nocopy) {
+		// 			await Cart.copyBasket(db, active_id, nactive_id)
+		// 		}
+		// 	} else {
+		// 		await db.exec(`
+		// 			UPDATE shop_actives
+		// 			SET order_id = :active_id
+		// 			WHERE user_id = :user_id
+		// 		`, {
+		// 			active_id: nactive_id, 
+		// 			user_id:user.user_id
+		// 		})
+		// 	}
+		// }
 		return nactive_id
 	}
 }

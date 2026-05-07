@@ -2,6 +2,7 @@ import cards from "/-shop/cards.html.js"
 import words from "/-words/words.js"
 import cost from "/-words/cost.js"
 import panel from "/-shop/cart/panel.html.js"
+import date from "/-words/date.html.js"
 
 const tpl = {}
 export default tpl
@@ -26,16 +27,18 @@ tpl.ip = (ip) => `
 		IP: ${ip} (<a href="https://ip2geolocation.com/?ip=${ip}">GEO</a>)
 	</p>
 `
-tpl.showPartner = (params) => `
-	<br>Код партнёра: ${params.partner?.key || ''} ${params.partner?.discount ? '('+params.partner?.discount + '%)' : ''}
+tpl.showPartner = (order) => `
+	<br>Код партнёра: ${order.partner?.key || ''} ${order.partner?.discount ? '('+order.partner?.discount + '%)' : ''}
 `
-tpl.showCost = (params) => `
-	<br>Цена: ${cards.cost(params.item)}
+tpl.showCost = (order) => `
+	<br>Цена: ${cards.cost(order.item)}
 `
-tpl.showAddress = (params) => `
-	<br>Адрес: ${params.address}
+tpl.showAddress = (order) => `
+	<br>Адрес: ${order.address}
 `
-
+tpl.showDate = (order) => `
+	<br>Дата: ${date.dmyhi(order.date)}
+`
 
 
 const getv = (mod, prop_title) => mod[prop_title] ?? mod.more[prop_title] ?? ''
@@ -49,8 +52,10 @@ tpl.tocheck = (data) => !data.order ? `<h1>${panel.EMPTYTITLE}</h1>` : `
 		ФИО: ${data.order.name}<br>
 		Email: ${data.order.email}<br>
 		Телефон: ${data.order.phone}
+		${data.order.date ? tpl.showDate(data.order) : ''}
 		${data.order.partner ? tpl.showPartner(data.order) : ''}
 		${data.order.address ? tpl.showAddress(data.order) : ''}
+		
 	</div>
 	<pre style="font-style: italic; margin-bottom:1rem">${data.order.commentuser}</pre>
 	<div style="margin-bottom:1rem">${data.list.length} ${words(data.list.length, 'позиция', 'позиции', 'позиций')}</div>

@@ -422,9 +422,8 @@ tpl.showForm = (data, env) => `
 				<label for="${env.sid}email">Email</label>
 				${data.order.status == 'wait' ? tpl.svgres('required', data.order.email) : ''}
 			</div>
-			
-			${tpl.showAddress(data, env)}
 			${tpl.showDate(data, env)}
+			${tpl.showAddress(data, env)}
 			${tpl.formMessage(data, env)}
 			
 			
