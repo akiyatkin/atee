@@ -79,7 +79,7 @@ Sharp.processImage = async (inputPath, outputPath, opt) => {
 		if (convert) {
 			proc = await proc[convert]({ quality: 90, effort: 3 })
 		}
-		if (composite[0].input) {
+		if (composite[0].input && height > 1000) {
 			proc = await proc.composite(composite)
 		}
 		
