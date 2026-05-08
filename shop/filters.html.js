@@ -33,9 +33,9 @@ filters.ROOT = (data, env) => !data.result ? '': `
 			/*color: red;*/
 		}
 	</style>
-	${data.filters.map(filter => showFilter(data, filter, env)).join('')}
+	${data.filters.map(filter => filters.showFilter(data, filter, env)).join('')}
 `
-const showFilter = (data, filter, env) => `
+filters.showFilter = (data, filter, env) => `
 	${(filters.prop[filter.tpl] || filters.prop.default)(data, filter, env)}
 `
 

@@ -48,6 +48,8 @@ rest.addResponse('get-added', async view => {
 		SELECT quantity FROM shop_basket 
 		WHERE order_id = :wait_id and brendart_nick = :brendart_nick and art_nick = :art_nick
 	`, { wait_id, brendart_nick, art_nick })
+
+	view.data.added = view.data.quantity != null
 	
 
 	return view.ret()

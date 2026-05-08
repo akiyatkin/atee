@@ -142,7 +142,9 @@ const User = {
 					user_id = :user_id
 			`, {user_id})
 		}
-		return await User.sendVerify(db, user_id, email, host)
+		const conf = await config('user')
+		if (conf.autosentconfirm) return await User.sendVerify(db, user_id, email, host)
+		return true
 	},
 	sendVerify: async (db, user_id, email, host, go) => {
 		const code_verify = crypto.randomBytes(4).toString('hex').toUpperCase()

@@ -513,6 +513,12 @@ tpl.template.input = (data, env, ps, root_path, get, selritm, prop) => {
 	 	</div>
 	`
 }
+tpl.template.basket = (data, env, ps, root_path, get, selritm, prop) => {
+	const selitem = selritm.item
+	return `
+	 	
+	`
+}
 tpl.getPropButton = (ps, root_path, get, selitem, prop, value_nick) => {
 	const ritm = ps.getNearestItem(selitem, prop.prop_nick, value_nick)
 	
@@ -555,7 +561,7 @@ tpl.buyButton = (data, env, model, selitem) => {
 			
 				btn.disabled = false
 				if (ans.quantity) btn.innerHTML = '${tpl.OPENTITLE}'
-				
+
 				btn.addEventListener('click', async () => {
 					const Client = await window.getClient()
 					const partner = Client.theme.partner
@@ -567,10 +573,11 @@ tpl.buyButton = (data, env, model, selitem) => {
 				
 					if (!ans.quantity) {
 						const Basket = await import('/-shop/cart/Basket.js').then(r => r.default)
-						await Basket.addButton(btn, {brendart_nick, art_nick, quantity: 1, nocopy: 1, modification: Client.bread.get.modification || ''})
+						const quantity = 1
+						await Basket.addButton(btn, {brendart_nick, art_nick, quantity, nocopy: 1, modification: Client.bread.get.modification || ''})
 
 						const Ecommerce = await import("/-shop/Ecommerce.js").then(r => r.default)
-						product.quantity = 1
+						product.quantity = quantity
 						Ecommerce.add([product])
 
 						const reachGoal = goal => {

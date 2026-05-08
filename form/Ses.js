@@ -73,4 +73,5 @@ const Ses = {
 	}).catch(() => null)
 }
 
+export default Ses
 export { Ses }
