@@ -215,8 +215,22 @@ cards.getValueTitleByNick = (data, value_nick) => `${data.values[value_nick]?.va
 
 cards.getSomeTitle = (data, item, prop_nick) => {
 	if (!item[prop_nick]) return ''
-	const prop = data.props[prop_nick]
 	const first = item[prop_nick][0]
+	return cards.getTitleByNick(data, prop_nick, first)	
+	
+	// const prop = data.props[prop_nick]
+	// if (prop.type == 'value') {
+	// 	return cards.getValueTitleByNick(data, first)
+	// } else if (prop.type == 'date') {
+	// 	return ddd.ai(first)
+	// } else if (prop.type == 'number') {
+	// 	return first / 10 ** prop.scale
+	// } else { //text
+	// 	return first
+	// }
+}
+cards.getTitleByNick = (data, prop_nick, first) => {
+	const prop = data.props[prop_nick]
 	if (prop.type == 'value') {
 		return cards.getValueTitleByNick(data, first)
 	} else if (prop.type == 'date') {

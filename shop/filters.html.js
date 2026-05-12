@@ -345,6 +345,5 @@ filters.itemChoice = (data, env, filter, value_nick) => `<a
 	class="a" data-scroll="none" rel="nofollow" 
 	href="${cards.getGroupPath(data, data.group.group_nick)}${cards.addget(env.bread.get, {m:data.md.m + ':' + filter.prop_nick + (filter.singlechoice ? '::.' : '.') + value_nick + '=1'})}"
 	>${data.props[filter.prop_nick].type == 'value' ? cards.getValueTitleByNick(data, value_nick) : value_nick  / 10 ** filter.scale}</a>`
-//opacity: ${~filter.remains.indexOf(value_nick) ? '1' : '0.3'}
 
 
