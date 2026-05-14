@@ -18,7 +18,9 @@ import rest_search from "/-dialog/search/rest.search.js" //аргументы ha
 rest.extra(rest_search)
 
 rest.addArgument('page', ['nicked'], async (view, page) => {
+	if (!page) return null
 	page = await Shop.getPageByNick(page)
+	if (!page) return view.err('Страница каталога не найдена', 404)
 	return page
 })
 

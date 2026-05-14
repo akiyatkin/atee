@@ -1,5 +1,5 @@
 import controller from '/-controller/rest.js'
-import { file, files, filesw } from './files.js'
+import { readStreamAndClose, file, filesw } from './files.js'
 import { whereisit } from './whereisit.js'
 import { ReadStream } from 'node:fs'
 import url from 'node:url'
@@ -112,6 +112,7 @@ export const loadJSON = (src, visitor) => {
 export const loadTEXT = (src, visitor) => {
 	return load(src, visitor, 'txt')
 }
+
 const load = (src, visitor, ext) => { //ext формат требуемых данных
 	const store = visitor.relate(load)
 	const name = src + ':' + ext
@@ -127,11 +128,15 @@ const load = (src, visitor, ext) => { //ext формат требуемых да
 		if (!reans.status) reans.status = 200
 		if (!reans.ext) reans.ext = ext
 		if (reans.data instanceof ReadStream) {
-			const text = await readTextStream(reans.data).catch(e => {
-			    if (typeof reans.data.destroy === 'function') reans.data.destroy()
-			    console.log('router load', e)
-			    throw { status: 404 }
+			const text = await readStreamAndClose(reans.data).catch(e => {
+				console.log('router load', e)
+				throw { status: 404 }
 			})
+			// const text = await readTextStream(reans.data).catch(e => {
+			//     //if (typeof reans.data.destroy === 'function') reans.data.destroy()
+			//     console.log('router load', e)
+			//     throw { status: 404 }
+			// })
 			if (ext == 'json') {
 				try {
 					reans.data = JSON.parse(text)

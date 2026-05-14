@@ -71,7 +71,9 @@ button.process,
 	opacity:0.5;
 	cursor: default;
 }
-
+ul, ol {
+	padding-left: 2.6ch;
+}
 table td, table th {
 	vertical-align: top;
 }
@@ -181,3 +183,7 @@ img.right {
 		height: auto
 	}
 }
+
+
+
+

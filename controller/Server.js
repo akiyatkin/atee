@@ -86,8 +86,14 @@ const Server = {
 					data.on('open', is => {
 						response.writeHead(reans.status, headers)
 						data.pipe(response)
+						response.on('finish', () => {
+							if (!data.destroyed) data.destroy()
+						})
 					})
-					return data.on('error', () => error_after(404, 'Not found'))
+					return data.on('error', () => {
+						if (!data.destroyed) data.destroy()
+						return error_after(404, 'Not found')
+					})
 				} else if (data instanceof Duplex) {
 					response.writeHead(reans.status, headers)
 					data.pipe(response)
