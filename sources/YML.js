@@ -1,54 +1,20 @@
 import { createRequire } from "module"
 import Sources from "/-sources/Sources.js"
+//import XML from "/-sources/XML.js"
 import unique from "/-nicked/unique.js"
 const require = createRequire(import.meta.url)
 const { XMLParser } = require("fast-xml-parser");
 import readChars from "/-sources/readChars.js"
+import safeDateParse from "/-sources/safeDateParse.js"
 const YML = {}
 
-YML.safeDateParse = (dateString) => {
-	if (!dateString || typeof dateString !== 'string') return null;
-	try {
-		// Удаляем лишние пробелы
-		const cleanString = dateString.trim()
-		if (!cleanString) return null
-		
-		// Пытаемся распарсить как ISO строку
-		let timestamp = Date.parse(cleanString)
-		
-		// Если не удалось, пробуем дополнительные форматы
-		if (isNaN(timestamp)) {
-			// Заменяем пробел на 'T' для ISO-подобных форматов
-			const isoLikeString = cleanString.replace(' ', 'T');
-			timestamp = Date.parse(isoLikeString);
-		}
-		
-		// Если все еще не удалось, пробуем ручной парсинг для распространенных форматов
-		if (isNaN(timestamp)) {
-			timestamp = parseCustomFormats(cleanString);
-		}
-
-		if (isNaN(timestamp)) return null;
-
-
-		const date = new Date(timestamp);
-		// Проверяем, что дата валидна
-		if (!(date instanceof Date && !isNaN(date.getTime()))) return null
-
-		return date
-	} catch (error) {
-		// В production-коде здесь можно добавить логирование
-		console.warn('Ошибка парсинга даты:', error.message);
-		return null;
-	}
-}
 
 YML.getModified = async (url, headers = {}) => {
 	const line = await readChars(url, 1000, headers)
 	const dateMatch = line.match(/date="([^"]+)"/);
 	const dateString = dateMatch ? dateMatch[1] : null;
 	if (!dateString) return false	
-	const date = YML.safeDateParse(dateString)
+	const date = safeDateParse(dateString)
 	return date
 }
 YML.getDateLastWeekDay = (weekDay) => { //0 вс
@@ -119,7 +85,7 @@ YML.parse = async (SRC, headers) => {
 		}
 	}
 
-	const date = YML.safeDateParse(ymldata.yml_catalog['@_date'])
+	const date = safeDateParse(ymldata.yml_catalog['@_date'])
 	
 
 	return {
