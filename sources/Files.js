@@ -83,24 +83,27 @@ export const Files = {
 		const dirs = (await Files.readdir(dir)).filter(dinfo => dinfo.ext === null)
 		for (const dinfo of dirs) {
 
-			const nick = nicked(dinfo.name)
-			dindex[nick] ??= {}
-			const path = dir + dinfo.file + '/'
+			const dir_nicks = dinfo.name.split(',').map(n => nicked(n)).filter(n => n)
+			for (const nick of dir_nicks) {
+				//const nick = nicked(dinfo.name)
+				dindex[nick] ??= {}
+				const path = dir + dinfo.file + '/'
 
-			const files = (await Files.readdir(path)).filter(dinfo => dinfo.ext !== null)
-			for (const finfo of files) {
-				const way = Files.getWayByExt(finfo.ext)
-				const src = path + finfo.file.replaceAll(',','&#44;') //Когда достаём данные надо менять обратно в Shop.prepareFiles(model) в getModels
-				dindex[nick][way] ??= []
-				dindex[nick][way].push(src)
+				const files = (await Files.readdir(path)).filter(dinfo => dinfo.ext !== null)
+				for (const finfo of files) {
+					const way = Files.getWayByExt(finfo.ext)
+					const src = path + finfo.file.replaceAll(',','&#44;') //Когда достаём данные надо менять обратно в Shop.prepareFiles(model) в getModels
+					dindex[nick][way] ??= []
+					dindex[nick][way].push(src)
+				}
+
+				/*const subfolders = (await Files.readdir(path)).filter(dinfo => dinfo.ext === null)
+				for (const finfo of subfolders) {
+					const src = path + finfo.file.replaceAll(',','&#44;') //Когда достаём данные надо менять обратно в Shop.prepareFiles(model) в getModels
+					dindex[nick]['subfolders'] ??= []
+					dindex[nick]['subfolders'].push(src)
+				}*/
 			}
-
-			/*const subfolders = (await Files.readdir(path)).filter(dinfo => dinfo.ext === null)
-			for (const finfo of subfolders) {
-				const src = path + finfo.file.replaceAll(',','&#44;') //Когда достаём данные надо менять обратно в Shop.prepareFiles(model) в getModels
-				dindex[nick]['subfolders'] ??= []
-				dindex[nick]['subfolders'].push(src)
-			}*/
 		}
 		return dindex
 	},
