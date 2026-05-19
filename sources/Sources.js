@@ -1307,5 +1307,15 @@ Sources.sheet.addCell = (sheet, row_index, col_title, value) => {
 	}
 	sheet.rows[row_index][col_index] = value
 }
+Sources.sheet.addMultiCell = (sheet, row_index, col_title, value) => {
+	let col_index = sheet.head.indexOf(col_title)
+	if (col_index === -1) {
+		col_index = sheet.head.push(col_title) - 1
+		sheet.rows.forEach(row => row.push(null))
+	}
+
+	if (sheet.rows[row_index][col_index]) sheet.rows[row_index][col_index] += ', ' + value
+	else sheet.rows[row_index][col_index] = value
+}
 
 export default Sources
