@@ -1369,7 +1369,7 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, samples = [{}], hashs =
 	if (partner.cost_nick) titles.push(partner.cost_nick)
 	titles = unique(titles)
 	const {from, join, where, sort} = await Shop.getWhereByGroupIndexWinMod(db, group_id, samples, hashs, partner)	
-	const bind = await Shop.getBind(db)
+	
 	
 	//const propids = {}
 	
@@ -1456,7 +1456,7 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, samples = [{}], hashs =
 	}
 	
 	let list
-	if (add_group_nicks || add_group_nicks || add_group_ids) {
+	if (add_group_nicks || add_group_titles || add_group_ids) {
 		list = await db.all(`
 			SELECT 
 				-- win.key_id,
@@ -1537,6 +1537,7 @@ Shop.getPlopsWithPropsNoMultiByMd = async (db, group_id, samples = [{}], hashs =
 	}
 	if (partner.cost_nick) {
 		for (const item of list) {
+			if (!item[partner.cost_nick + '_title']) continue
 			if (!item['staraya-cena_title']) item['staraya-cena_title'] = item['cena_title']
 			item['cena_title'] = item[partner.cost_nick + '_title']
 		}
