@@ -266,6 +266,7 @@ cards.props = (data, env, model) => `
 		${data.group.cards.map(prop_nick => cards.printProp(data, env, model, prop_nick)).join('')}
 	</div>
 `
+cards.MinNumberSplash = 6
 cards.printProp = (data, env, model, prop_nick) => {
 	
 	const nicks = model.recap[prop_nick]
@@ -276,7 +277,7 @@ cards.printProp = (data, env, model, prop_nick) => {
 
 	let gainTitles = () => cards.getSomeTitles(data, model.recap, prop_nick).join(', ') + unit
 
-	if (data.props[prop_nick].type == 'number' && nicks.length > 5) {
+	if (data.props[prop_nick].type == 'number' && nicks.length > cards.MinNumberSplash) {
 		gainTitles = () => {
 			const titles = nicks
 			const min = titles.at(0)
