@@ -260,7 +260,7 @@ rest.addAction('set-prop-create', ['admin','setaccess'], async view => {
 	
 	return view.ret()
 })
-rest.addAction('set-group-description', ['admin'], async view => {
+rest.addAction('set-group-description', ['admin','setaccess'], async view => {
 	const db = await view.get('db')
 	const description = await view.get('description')
 	const group_id = await view.get('group_id#required')
@@ -283,7 +283,7 @@ rest.addAction('set-brand-comment', ['admin'], async view => {
 	`, {comment, brand_nick})
 	return view.ret()
 })
-rest.addAction('set-group-image_src', ['admin'], async view => {
+rest.addAction('set-group-image_src', ['admin','setaccess'], async view => {
 	const db = await view.get('db')
 	const image_src = await view.get('image_src')
 	const group_id = await view.get('group_id#required')

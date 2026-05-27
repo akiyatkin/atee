@@ -211,7 +211,7 @@ rest.addResponse('get-search-root', async view => {
 })
 
 rest.addResponse('get-group-head', async view => {
-	const group = await view.get('group#required')	
+	const group = await view.get('group#required')
 	const head = await Shop.getGroupHead(group, view.vistor)
 	return head
 })

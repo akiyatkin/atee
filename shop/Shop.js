@@ -379,7 +379,6 @@ Shop.getGroupById = Access.poke(async (db, group_id = false) => {
 		WHERE group_id = ${group_id}
 	`)
 
-
 	group.toString = () => group_id
 	return group
 })
