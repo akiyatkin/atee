@@ -73,13 +73,14 @@ Sharp.processImage = async (inputPath, outputPath, opt) => {
 		proc = await proc.resize(maxwidth, maxheight, {
 			fit: sharp.fit[fit],
 			background: { r: 255, g: 255, b: 255, alpha: 0 },
-			position: sharp.strategy.entropy,
+			//position: sharp.strategy.entropy,
+			position: "center",
 			withoutEnlargement: true
 		})
 		if (convert) {
 			proc = await proc[convert]({ quality: 90, effort: 3 })
 		}
-		if (composite[0].input && height > 1000) {
+		if (composite[0].input && width > maxwidth) {
 			proc = await proc.composite(composite)
 		}
 		
