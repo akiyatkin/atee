@@ -235,14 +235,23 @@ rest.addAction('set-add', async view => {
 
 rest.addAction('set-clear', async view => {
 	const db = await view.get('db')
-	const order_id = await view.get('order_id#required')
+	let order_id = await view.get('order_id')
+	if (!order_id) {
+		const user_id = await view.get('user_id') || await User.createAndSet(db, view)
+		const utms = await view.get('getutms')
+		const active_id = await view.get('active_id')
+		order_id = await Cart.castWaitActive(db, user_id, active_id, utms, true)
+	}
+	if (!order_id) return view.err('Заказ не найден')
+
 	const partner = await view.get('partner')
 	const order = await Cart.getOrder(db, order_id)
+	if (!order) return view.err('Заказ не найден')
 	if (order.status != 'wait') return view.err('Заказ уже отправлен менеджеру')
 
 	const {list, props, values} = await Cart.basket.get(db, order, partner)
 	view.data.list = list
-	//await Shop.prepareModelsPropsValuesGroups(db, view.data, list)
+	await Shop.prepareModelsPropsValuesGroups(db, view.data, list)
 	//await Cart.prepareBasketListPropsValuesGroups(db, view.data, list)
 
 
