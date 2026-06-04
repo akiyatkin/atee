@@ -3,7 +3,7 @@ export default sitemap
 const csslink = src => `<link rel="stylesheet" href="${src}">`
 const forattr = value => value ? value.replaceAll('"','&quot;') : ''
 const addhost = (host, src) => {
-	if (!src) return ''
+	if (!src && src != "") return ''
 	const reg = /^https?:\/\//i;
 	if (reg.test(src)) return src
 	else return 'https://' + host + src
@@ -25,7 +25,7 @@ sitemap.HEAD = (head, env) => `
 		const qs = q => document.head.querySelector(q) || {}
 		const temp = document.createElement('div')
 		const addhost = (host, src) => {
-			if (!src) return ''
+			if (!src && src != "") return ''
 			const reg = /^https?:\/\//i;
 			if (reg.test(src)) return src
 			else return 'https://' + host + src
