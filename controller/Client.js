@@ -471,6 +471,7 @@ const addHtml = async (template, layer, bread, timings, theme) => {
 	const crumb = bread.getCrumb(layer.depth || 0)
 	let html = ''
 	const look = { bread, timings, theme, host:location.host }
+
 	const env = { layer, crumb, ...look }
 	env.sid = 'sid-' + (layer.div || layer.name) + '-' + layer.sub + '-'
 	env.scope = layer.div ? '#' + layer.div : 'html'

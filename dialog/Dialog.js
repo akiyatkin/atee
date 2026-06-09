@@ -30,18 +30,20 @@ export const Dialog = {
 			for (const link of tplobj.css) addCSS(link)
 		}
 		
-		
-		const theme = await import('/-controller/Theme.js').then(r => r.default.get())
+		//const theme = await import('/-controller/Theme.js').then(r => r.default.get())
 		//const layer = {tpl, sub, json, div:id}
 		
-		
-		const env = { layer }
+		const Client = await window.getClient()
+		const bread = Client.bread
+		const theme = Client.theme
+		const timings = Client.timings
+		const crumb = bread.getCrumb(layer.depth || 0)
+		const look = {bread, timings, theme, host: location.host}
+		const env = { layer, crumb, ...look}
+
 		env.sid = 'sid-' + layer.div + '-' + layer.sub + '-'
 		env.scope = '#' + layer.div
-		const Client = await window.getClient()
-		env.bread = Client.bread
-		env.theme = Client.theme
-		env.crumb = env.bread.getCrumb(layer.depth || 0)
+		
 		const html = tplobj[sub](layer.data, env)
 		return html
 	},
