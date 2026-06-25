@@ -147,7 +147,7 @@ Shop.getGainItemHead = (item, gain, root_path) => {
 	//const query_nick = item.art?.[0] || item.art_nick || item.brendart?.[0] || item.brendart_nick
 	const path = [root_path + '/item/' + brendmodel_nick]
 	const query_nick = item.art?.[0] || item.art_nick
-	if (query_nick) path.push(query_nick)
+	//if (query_nick) path.push(query_nick) только модель считается каноническим адресом, позиции не считаются из-за бесконечных вариаций
 	head.canonical = path.join('/')
 
 

@@ -13,7 +13,7 @@ sitemap.HEAD = (head, env) => `
 	<meta name="description" content="${forattr(head?.description)}">
 	<meta name="keywords" content="${forattr(head?.keywords)}">
 	<meta name="robots" content="${head?.robots ? forattr(head?.robots) : (head?.hidden ? 'noindex,nofollow' : 'all')}" />
-
+	<meta name="last-modified" content="${new Date().toISOString()}" />
 	<meta property="og:image" content="${addhost(env.host, head?.image_src)}">
 	<link rel="image_src" href="${addhost(env.host, head?.image_src)}">
 	<link rel="canonical" href="${addhost(env.host, head?.canonical)}">
