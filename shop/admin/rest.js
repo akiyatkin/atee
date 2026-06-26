@@ -310,8 +310,7 @@ rest.addAction('poss', ['admin'], async view => {
 	const origm = await view.get('m')
 	const query = await view.get('query')
 
-	const md = view.data.md = await Shop.getmd(db, origm, query, hashs)
-	
+	const md = view.data.md = await Shop.getmd(db, origm, query, hashs)	
 
 	await Shop.prepareMgetPropsValues(db, view.data, md.mget)
 

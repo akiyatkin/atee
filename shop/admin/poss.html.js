@@ -64,6 +64,9 @@ const showFree = (data, env, table) => `
 			})(document.currentScript.parentElement)
 		</script>
 	</div>
+	<p>
+		<a href="poss${addget(env.bread.get, {count:1000})}">Показать всё</a>
+	</p>
 `
 const showRowTr = (data, env, row, key_id, groups) => `
 	<tr>

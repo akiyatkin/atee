@@ -50,7 +50,7 @@ rest.TABLES = [
 	'sources_wtexts',
 	'sources_wvalues'
 ]
-
+rest.addArgument('count', ['int'])
 rest.addArgument('go', (view, e) => e || false) //Ссылка куда перейти. Как есть попадает в заголовок Location 301
 rest.addArgument('multi', ['sint'], (view, multi) => {
 	if (multi == null) return multi

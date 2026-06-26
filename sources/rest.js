@@ -35,7 +35,7 @@ export default rest
 rest.addAction('rows', ['admin'], async view => {
 	const db = await view.get('db')
 	const hashs = await view.get('hashs')
-	
+	const count = await view.get('count') || 25
 	/*
 			
 			*/
@@ -62,7 +62,7 @@ rest.addAction('rows', ['admin'], async view => {
 			
 			and (${hashs.map(hash => 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"').join(' or ') || 'ro.search != ""'}) 
 		ORDER BY RAND()
-		LIMIT 25
+		LIMIT ${count}
 	`)
 	//and (${hashs.map(hash => 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"').join(' or ') || 'ro.search != ""'}) 
 	//const sql = 'ro.search like "% ' + hash.join('%" and ro.search like "% ') + '%"'

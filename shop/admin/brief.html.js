@@ -384,7 +384,7 @@ const showRow = (data, env, group, stat) => `
 
 const showStatTds = (data, env, group, stat = {}) => `
 	<td>${ddd.dm(stat.date_cost)}</td>
-	<td><a href="poss?source_id=${stat?.source_id || ''}&group_id=${group?.group_id || ''}&m=${stat.brand_nick?'brend='+stat.brand_nick:''}">${stat.poscount ?? '&mdash;'}</a></td>
+	<td><a href="poss?source_id=${stat?.source_id || ''}&group_id=${group?.group_id || ''}&m=${stat.brand_nick?'brend.'+stat.brand_nick+'=1':''}">${stat.poscount ?? '&mdash;'}</a></td>
 	<td>${stat.modcount ?? '&mdash;'}</td>
 	<td>${stat.groupcount ?? '&mdash;'}</td>
 	<td>${stat.brandcount ?? '&mdash;'}</th>
@@ -421,7 +421,7 @@ const showGroupLink = (data, env, stat) => `
 const redTd = (data, group, stat, name, filter_prop_nick, sum = stat.poscount - stat[name]) => {
 	if (sum) {
 		if (filter_prop_nick) {
-			return `<td><a style="opacity:0.5" class="red" href="poss?source_id=${stat?.source_id || ''}&group_id=${group?.group_id || ''}&m=:${filter_prop_nick}=empty${stat.brand_nick?':brend='+stat.brand_nick:''}">${sum}</a></td>`
+			return `<td><a style="opacity:0.5" class="red" href="poss?source_id=${stat?.source_id || ''}&group_id=${group?.group_id || ''}&m=:${filter_prop_nick}=empty${stat.brand_nick?':brend.'+stat.brand_nick+'=1':''}">${sum}</a></td>`
 		} else {
 			// const search = group?.group_id ? '/' + group?.group_id : ''
 			// return `<td><a style="opacity:0.5" class="red" href="groups${search}">${sum}</a></td>`

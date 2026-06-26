@@ -2,6 +2,7 @@ import err from "/-controller/err.html.js"
 import field from "/-dialog/field.html.js"
 import words from "/-words/words.js"
 import date from "/-words/date.html.js"
+import addget from "/-sources/addget.js"
 export const css = ['/-sources/revscroll.css']
 
 export const ROOT = (data, env) => err(data, env) || `
@@ -67,6 +68,9 @@ const showRows = (data, env, table) => `
 			})(document.currentScript.parentElement)
 		</script>
 	</div>
+	<p>
+		<a href="rows${addget(env.bread.get, {count:200})}">Показать всё</a>
+	</p>
 `
 const showHeadTr = (data, env, head) => `
 	<tr>
