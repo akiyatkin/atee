@@ -30,28 +30,42 @@ CREATE TABLE IF NOT EXISTS `note_history` (
 
 -- Data exporting was unselected.
 
+-- --------------------------------------------------------
+-- Host:                         127.0.0.1
+-- Server version:               11.4.0-MariaDB - mariadb.org binary distribution
+-- Server OS:                    Win64
+-- HeidiSQL Version:             12.3.0.6589
+-- --------------------------------------------------------
+
 -- Dumping structure for table notelic.note_notes
 CREATE TABLE IF NOT EXISTS `note_notes` (
   `note_id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `rev` mediumint(8) unsigned NOT NULL DEFAULT 1,
   `text` text NOT NULL DEFAULT '',
   `title` varchar(255) NOT NULL DEFAULT '',
-  `rev` mediumint(8) unsigned NOT NULL DEFAULT 1,
-  `date_create` datetime NOT NULL DEFAULT current_timestamp(),
-  `nick` varchar(255) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
+  `editor_id` mediumint(8) unsigned DEFAULT NULL COMMENT 'Последний кто редактировал. Сохраняется в истории.',
+  `edit_token` char(50) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '0',
+  `view_token` char(24) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
+  `date_edit` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'Дата редактирования. Сохраняется в истории.',
   `search` text CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
-  `editor_id` mediumint(8) unsigned DEFAULT NULL,
-  `date_edit` datetime NOT NULL DEFAULT current_timestamp(),
-  `creater_id` mediumint(8) unsigned DEFAULT NULL,
   `length` smallint(5) unsigned NOT NULL DEFAULT 0,
-  `iswrap` bit(1) NOT NULL DEFAULT b'1',
-  `isslash` bit(1) NOT NULL DEFAULT b'0',
-  `isbracket` bit(1) NOT NULL DEFAULT b'1',
-  `isbold` bit(1) NOT NULL DEFAULT b'1'
+  `date_create` datetime NOT NULL DEFAULT current_timestamp(),
+  `creater_id` mediumint(8) unsigned DEFAULT NULL COMMENT 'Первый кто создал и кого нельзя удалить',
+  `nick` varchar(255) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
+  `iswrap` bit(1) NOT NULL DEFAULT b'1' COMMENT 'Переносить строки',
+  `isslash` bit(1) NOT NULL DEFAULT b'0' COMMENT 'Распозновать /h /d /t /+ /-',
+  `isbracket` bit(1) NOT NULL DEFAULT b'1' COMMENT 'Распозновать {Вставки}',
+  `isbold` bit(1) NOT NULL DEFAULT b'1' COMMENT '** Делать жирным',
+  `endorsement` enum('notelic','theory') DEFAULT NULL,
   PRIMARY KEY (`note_id`),
   FULLTEXT KEY `search` (`search`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Data exporting was unselected.
+
+
+
+
 
 -- Dumping structure for table notelic.note_stats
 CREATE TABLE IF NOT EXISTS `note_stats` (
@@ -73,8 +87,11 @@ CREATE TABLE IF NOT EXISTS `note_stats` (
   `focus` tinyint(1) unsigned NOT NULL DEFAULT 0,
   `count_changes` mediumint(9) NOT NULL DEFAULT 0,
   `count_opens` mediumint(9) NOT NULL DEFAULT 0,
+  `accept` set('edit','view') NOT NULL DEFAULT 'edit',
   PRIMARY KEY (`user_id`,`note_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
 
 -- Data exporting was unselected.
 
@@ -84,6 +101,41 @@ CREATE TABLE IF NOT EXISTS `note_users` (
   `hue` int(4) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Data exporting was unselected.
+
+/*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
+/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
+/*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
+
+
+
+
+-- --------------------------------------------------------
+-- Host:                         127.0.0.1
+-- Server version:               11.4.0-MariaDB - mariadb.org binary distribution
+-- Server OS:                    Win64
+-- HeidiSQL Version:             12.3.0.6589
+-- --------------------------------------------------------
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+-- Dumping structure for table notelic.theory_notes
+CREATE TABLE IF NOT EXISTS `theory_notes` (
+  `note_id` mediumint(8) unsigned NOT NULL,
+  `published` tinyint(1) unsigned NOT NULL DEFAULT 0,
+  `ordain` mediumint(8) unsigned DEFAULT NULL,
+  PRIMARY KEY (`note_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 -- Data exporting was unselected.
 

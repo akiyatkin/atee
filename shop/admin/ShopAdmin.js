@@ -38,6 +38,7 @@ ShopAdmin.getGroupById = async (db, group_id = false) => {
 			gr.group_id,
 			gr.ordain,
 			gr.description,
+			gr.blockquote,
 			gr.image_src,
 			gr.parent_id,
 			pr.group_title as parent_title,

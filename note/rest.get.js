@@ -42,7 +42,14 @@ rest.addResponse('get-note-rev', async (view) => {
 
 
 
-
+rest.addResponse('get-note-head', async view => {
+	const note = await view.get('note#view')
+	if (!note) {
+		view.data.title = 'Заметка не найдена'
+	} else {
+		view.data.title = note.title || 'Пустая заметка'
+	}
+})
 rest.addResponse('get-head', async view => {
 	const note = await view.get('note')
 	if (!note) {

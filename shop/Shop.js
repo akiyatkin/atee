@@ -28,9 +28,9 @@ export default Shop
 // 	}
 // 	return list
 // })
-Shop.getGroupPage = async (group_nick, visitor) => {
+Shop.getGroupPage = async (value_nick, visitor) => {
 	const conf = await config('shop')
-	const src = conf.group_pages + group_nick
+	const src = conf.group_pages + value_nick	
 	const reans = await rest_docx.get('get-html', { src }, visitor)
 	return reans.status == 200 ? reans.data : ''
 }
@@ -305,6 +305,7 @@ Shop.getGroupById = Access.poke(async (db, group_id = false) => {
 			gr.group_title,
 			gr.group_id,
 			gr.description,
+			gr.blockquote,
 			gr.image_src,
 			gr.ordain,
 			gr.parent_id,

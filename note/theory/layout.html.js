@@ -125,7 +125,7 @@ tpl.CONTROL = (data, env) => {
 				})
 			}
 
-			<a href="theory/edit/${data.theory.note_id}">Изменить</a>
+			<a href="note/${data.theory.note_id}">Изменить</a>
 			${
 				field.button({
 					label:"Удалить", 

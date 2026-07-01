@@ -327,6 +327,7 @@ WS.connection = (ws, request) => {
 	
 }
 WS.isAccept = (db, note_id, user_id = null, endorsement, request_nick = false) => {
+	//Обязательная подмена
 	return false
 }
 WS.checkReject = async (note, state) => {
@@ -340,6 +341,7 @@ WS._getNote = async (note_id) => {
 	const db = await new Db().connect()
 	if (!db) throw 'Нет соединения с базой данных при первом соединении'
 	const note = await db.fetch(`SELECT note_id, text, title, rev, endorsement FROM note_notes WHERE note_id = :note_id`, {note_id})
+	if (!note) return false
 	note.states = [] //states[state, state]
 	note.db = db
 	return note

@@ -233,6 +233,13 @@ rest.addResponse('get-group-sitemap', async view => {
 	}
 	return view.ret()
 })
+rest.addResponse('get-search-article', async view => {
+	const value_nick = await view.get('value_nick')	
+	view.ext = 'txt'
+	if (!value_nick) return ""
+	const text = await Shop.getGroupPage(value_nick, view.visitor)
+	return text
+})
 rest.addResponse('get-page-head', async view => {
 	const page = await view.get('page#required')	
 	const head = {

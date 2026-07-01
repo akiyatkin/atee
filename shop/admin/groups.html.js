@@ -254,6 +254,26 @@ const showGroupActions = (data, env) => `
 						
 					</td>
 				</tr>
+				<tr>
+					<td>blockquote</td>
+					<td>
+						<div style="float:right; position: relative; clear:both">
+							${field.prompt({
+								cls: 'a mute',
+								type: 'area',
+								name: 'blockquote', 
+								label: 'html блок (blockquote)',
+								value: svg.edit(), 
+								action: '/-shop/admin/set-group-blockquote', 
+								args: {group_id: data.group.group_id},
+								reloaddiv: env.layer.div,
+								input: data.group.blockquote
+							})}
+						</div>
+						<div style="font-style: italic; margin-right:2em">${data.group.blockquote}</div>
+						
+					</td>
+				</tr>
 			</table>				
 			
 			

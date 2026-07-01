@@ -272,6 +272,18 @@ rest.addAction('set-group-description', ['admin','setaccess'], async view => {
 	`, {description, group_id})
 	return view.ret()
 })
+rest.addAction('set-group-blockquote', ['admin','setaccess'], async view => {
+	const db = await view.get('db')
+	const blockquote = await view.get('blockquote')
+	const group_id = await view.get('group_id#required')
+	//view.ans.blockquote = blockquote
+	await db.exec(`
+		UPDATE shop_groups
+		SET blockquote = :blockquote
+		WHERE group_id = :group_id
+	`, {blockquote, group_id})
+	return view.ret()
+})
 rest.addAction('set-brand-comment', ['admin'], async view => {
 	const db = await view.get('db')
 	const comment = await view.get('comment#required')

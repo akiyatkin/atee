@@ -6,40 +6,43 @@ import Ecommerce from "/-shop/Ecommerce.js"
 const tpl = {}
 export default tpl
 
-
 tpl.ROOT = (data, env) => `
-	<div id="SHOP_TITLE">${tpl.TITLE(data, env)}</div>
-	<div class="search-grid">
-		<style>
-			${env.scope} > .search-grid {
-				margin-bottom:2rem;
-				display: grid; 
-				grid-gap: 1rem; 
-				grid-template-columns: 1fr 1fr;
-			}
-			@media (max-width: 768px) {
-				${env.scope} > .search-grid {
+	<div class="container">
+		<div id="SHOP_TITLE">${tpl.TITLE(data, env)}</div>
+		<div class="search-grid">
+			<style>
+				${env.scope} .search-grid {
+					margin-bottom:2rem;
 					display: grid; 
-					grid-gap: 1rem; 
-					grid-template-columns: 1fr;
+					grid-gap: 2rem; 
+					grid-template-columns: 300px 1fr;
 				}
-			}
-		</style>
-		<div id="SHOP_GROUPS"></div>
-		<div id="SHOP_FILTERS"></div>
+				@media (max-width: 768px) {
+					${env.scope} .search-grid {
+						grid-template-columns: 1fr;
+					}
+				}
+			</style>
+			<div id="SHOP_GROUPS"></div>
+			<div id="SHOP_FILTERS"></div>
+		</div>
+		<div id="page"><div id="SHOP_PAG"></div></div>
+		<div id="SHOP_LIST"></div>
 	</div>
-	<div id="page"><div id="SHOP_PAG"></div></div>
-	<div id="SHOP_LIST"></div>
-	<article style="margin-top:4em; margin-bottom: 4em" id="SHOP_PAGE">${data.text || ''}</article>
+	<article style="margin-top:4em;" id="article"></article>
 `
 
 
 tpl.GROUPS = (data, env) => !data.result ? '' : `
 	<div style="display: grid; height: max-content; gap: 0.4em;">
-		${data.childs.length ? tpl.showGroups(data, env) : ''}
+		${data.childs.length ? tpl.showGroups(data, env) : ''}		
 	</div>
+	${data.group.blockquote ? tpl.showBlockquote(data, env) : ''}
+	
 `
-
+tpl.showBlockquote = (data, env) => `
+	<blockquote style="max-width:fit-content;">${data.group.blockquote}</blockquote>
+`
 tpl.PAGINATION = (data, env) => !data.result ? '' : `
 	${tpl.pag(data, env, 'none')}
 `
@@ -135,7 +138,7 @@ const sortIcon = (data, env) => {
 	}
 	
 	return `
-		<a data-scroll="none" href="${href}">⇅ ${title}</a>
+		<a data-scroll="none" title="Сортировка по цене" href="${href}">⇅ ${title}</a>
 	`
 }
 tpl.pagt = {}

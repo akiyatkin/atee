@@ -21,6 +21,7 @@ rest.extra(rest_search)
 
 
 rest.addArgument('description', ['string'])
+rest.addArgument('blockquote', ['string'])
 rest.addArgument('image_src', ['string'])
 
 rest.addArgument('comment', ['string'])

@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS `shop_groups` (
   `self_cards` bit(1) NOT NULL DEFAULT b'0' COMMENT '1 - свои настройки',
   `description` text NOT NULL DEFAULT '',
   `image_src` text NOT NULL DEFAULT '',
+  `blockquote` text NOT NULL DEFAULT '',
   PRIMARY KEY (`group_id`) USING BTREE,
   KEY `FK_bed_groups_bed_groups` (`parent_id`),
   CONSTRAINT `FK_bed_groups_bed_groups` FOREIGN KEY (`parent_id`) REFERENCES `shop_groups` (`group_id`) ON DELETE CASCADE ON UPDATE CASCADE

@@ -20,15 +20,18 @@ rest.extra(rest_search)
 rest.addArgument('page', ['nicked'], async (view, page) => {
 	if (!page) return null
 	page = await Shop.getPageByNick(page)
-	if (!page) return view.err('Страница каталога не найдена', 404)
 	return page
 })
 
+rest.addArgument('value_nick', ['nicked'])
 rest.addArgument('type', ['nicked'])
 //rest.addArgument('page_nick', ['nicked'])
 
 
-rest.addVariable('page#required', ['page', 'required'])
+rest.addVariable('page#required', ['page'], async (view, page) => {
+	if (!page) return view.err('Страница каталога не найдена', 404)
+	return page
+})
 rest.addVariable('page#always', ['page'], async (view, page) => {
 	if (page) return page
 	const conf = await config('shop')
