@@ -4,7 +4,7 @@ export default tpl
 import err from "/-controller/err.html.js"
 tpl.ROOT = (data, env) => err(data, env) || `
 	<h1>${data.root.group_title}</h1>
-	<div style="display: grid; gap: 0.25em">
+	<div style="display: grid; gap: 0.25em; margin-bottom:2em">
 		${data.childs.map(page_nick => tpl.showPage(data, env, page_nick, data.pages[page_nick], data.groups[data.pages[page_nick].group_nick])).join('')}
 	</div>
 `
