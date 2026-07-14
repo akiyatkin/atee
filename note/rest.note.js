@@ -90,10 +90,16 @@ rest.addVariable('area#view', ['note#view', 'area'])
 rest.addVariable('area#edit', ['note#edit', 'area'])
 
 
-rest.addArgument('id', ['int#required'])
+rest.addArgument('id', ['int'])
 rest.addArgument('next_id', ['int'])
 
-rest.addArgument('note_id', ['int','unsigned'])
+rest.addArgument('note_id', ['int','unsigned'], async (view, note_id) => {
+	if (!note_id) return null
+	const db = await view.get('db')
+	note_id = await db.col('select note_id from note_notes where note_id = :note_id', {note_id})
+	if (!note_id) return null
+	return note_id
+})
 rest.addVariable('note_id#accept', ['note_id','accept'])
 rest.addVariable('note_id#required', ['note_id','required'])
 rest.addVariable('note_id#edit', ['note_id#required'], async (view, note_id) => {

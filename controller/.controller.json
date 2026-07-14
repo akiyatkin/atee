@@ -11,7 +11,8 @@
 	"access":"admin",
 	"403":{
 		"indexOf":["package.json","layers.json","package-lock.json","nodemon.json"],
-		"search":["\\/rest\\..*js"]
+		"search":["\\/rest\\..*js"],
+		"folders":["server"]
 	},
 	"busboy":{
 		"types":["image/jpeg","image/png","image/webp","image/svg+xml"],

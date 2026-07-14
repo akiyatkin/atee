@@ -10,6 +10,7 @@ import NoteDB from "/-note/NoteDB.js"
 
 
 
+
 // rest.addArgument('search', ['nicked'], (view, search) => {
 // 	//if (search) view.nostore = true
 // 	return search
@@ -30,7 +31,7 @@ import NoteDB from "/-note/NoteDB.js"
 // 	return page
 // })
 
-rest.addArgument('editor_id', ['int'])
+//rest.addArgument('editor_id', ['int'])
 
 
 export default rest

@@ -4,10 +4,8 @@ const tpl = {}
 export default tpl
 
 tpl.css = ['/-note/style.css']
-
-
 tpl.checkErr = (data, env) => data.result ? '': `
-	<div class="container">
+	
 		<h1>Ошибка</h1>
 		<p>
 			${data.msg || 'Ошибка на сервере'}.
@@ -15,8 +13,76 @@ tpl.checkErr = (data, env) => data.result ? '': `
 		<p>
 			<a href="/">Перейти на главную страницу</a>.
 		</p>
+	
+`
+
+
+tpl.MAIN = (data, env) => tpl.checkErr(data, env) || `
+	<div>
+		<style>
+			header {
+			    position: static!important;
+			}
+			header:has(.show) {
+			    position: sticky!important;
+			}
+			/*.notewrapper .note {
+				padding:2ch 0;
+			}*/
+		</style>
+		
+		<h1>${data.note.title || 'Без названия'}</h1>
+		${tpl.show(data.note)}
+		<script>
+			(div => {
+				const wrap = div.querySelector('.notewrapper')
+				const area = wrap.querySelector('.area')
+				const h1 = div.querySelector('h1')
+				area.focus()
+				
+				wrap.addEventListener('note-signal', async e => {
+				 	const {signal, user_id, my} = e.detail
+				 	const Client = await window.getClient()
+				 	if (signal.type == 'joined') {
+						//if (signal.my) Client.reloaddiv('NOTES') если NOTES onlyclient то они сами обновятся
+						// Client.reloaddiv('FOOTER')
+				 	} else if (signal.type == 'reject') {
+						// Client.reloaddiv('NOTES')
+				 		if (user_id == ${data.note.user_id}) {
+							//	Client.reloaddiv('FOOTER')
+				 			Client.go('/')
+				 		}
+				// 	} else if (signal.type == 'leave') {
+				// 		Client.reloaddiv('FOOTER')
+				 	} else if (signal.type == 'rename') {
+				 		document.title = signal.title || 'Без названия'
+				 		h1.innerHTML = signal.title || 'Без названия'
+				// 		Client.reloaddiv('NOTES')
+				 	}
+				})
+			})(document.currentScript.parentNode)
+		</script>
+	</div>
+	<div style="margin-top: 0.5em; justify-content: right; display: flex; flex-wrap: wrap; gap: 1em">
+		<button class="a format">Формат</button>
+		<a href="props/${data.note.note_id}">Cвойства</a>
+		<script>
+			(div => {
+				const btn = div.querySelector('.format')
+				if (btn) btn.addEventListener('click', async () => {
+					const Dialog = await import('/-dialog/Dialog.js').then(r => r.default)
+					Dialog.open({
+						tpl:"/-note/format.html.js",
+						sub: "ROOT",
+						json:"/-note/get-note?note=${data.note.note_id}"
+					})
+				})
+			})(document.currentScript.parentElement)
+		</script>
+		
 	</div>
 `
+
 tpl.ROOT = (data, env) => tpl.checkErr(data, env) || `
 	${tpl.show(data.note)}
 `

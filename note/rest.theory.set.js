@@ -12,15 +12,15 @@ import rest_mail from "/-mail/rest.mail.js"
 rest.extra(rest_mail)
 import rest_note from "/-note/rest.note.js"
 rest.extra(rest_note)
-import rest_theory from "/-note/theory/rest.theory.js"
+import rest_theory from "/-note/rest.theory.js"
 rest.extra(rest_theory)
 
-import Theory from "/-note/theory/Theory.js"
+import Theory from "/-note/.Theory.js"
 import Mail from "@atee/mail"
 import NoteDB from "/-note/NoteDB.js"
 import Access from "/-controller/Access.js"
 
-rest.addResponse('set-note-delete', async view => {
+rest.addResponse('set-theory-note-delete', async view => {
 	await view.get('manager#required')
 	const note_id = await view.get('note_id')
 	const db = await view.get('db')
@@ -30,7 +30,7 @@ rest.addResponse('set-note-delete', async view => {
 	Access.setAccessTime()
 	return view.ret()
 })
-rest.addResponse('set-note-ordain', async view => {
+rest.addResponse('set-theory-note-ordain', async view => {
 	const note_id = await view.get('id')
 	const next_id = await view.get('next_id')
 	const db = await view.get('db')
@@ -49,7 +49,7 @@ rest.addResponse('set-note-ordain', async view => {
 	return view.ret()
 })
 
-rest.addResponse('set-switch-published', async view => {
+rest.addResponse('set-theory-switch-published', async view => {
 	await view.get('manager#required')
 	const db = await view.get('db')
 	const note_id = await view.get('note_id')
@@ -71,7 +71,7 @@ rest.addResponse('set-switch-published', async view => {
 	return view.ret()
 })
 
-rest.addResponse('set-note-create', async view => {
+rest.addResponse('set-theory-note-create', async view => {
 	const db = await view.get('db')
 	await view.get('manager#required')
 	let user = await view.get('user')
@@ -101,7 +101,7 @@ rest.addResponse('set-note-create', async view => {
 
 
 
-rest.addResponse('set-user-hue', async view => {
+rest.addResponse('set-theory-user-hue', async view => {
 	const user = await view.get('user#required')
 	const db = await view.get('db')
 	const hue = await view.get('hue')

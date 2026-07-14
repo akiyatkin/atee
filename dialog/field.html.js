@@ -529,34 +529,37 @@ field.search = ({heading = '', cls = '', edit = true, label = 'Поиск', link
 							click: async (row, need) => {
 								const link = "${link || ''}"
 								const goid = "${goid ? goid : ''}"
-								let action = '${action}'								
+								let action = '${action || ''}'
+								if (link) action = false
 								const ask = row.confirm || "${confirm || ''}"
 								if (ask && !window.confirm((row.query_value ? need.value : row.left) + "\\n" + ask)) return
 								if (!descr && ask) descr = ask
 
+								btn.dispatchEvent(new CustomEvent("field-clicked", { detail: row }))
+
 								if (row.action) {
 									action = row.action
-								} else {
-									if (link) {
-										const Client = await window.getClient()
-										Client.go(link + (row[goid] || ''))
-										return true
-									}
+								} else if (link) {
+									const Client = await window.getClient()
+									Client.go(link + (row[goid] || ''))
 								}
-
-								const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
-								const args = ${JSON.stringify(args)}
-								args['${name}'] = row['${find}'] || ''
-								args['query'] = need.query
-								const ans = await senditmsg(btn, action, args)
-								if (ans.result && (ans.value || (ans['${name}'] || ans['${name}'] == 0))) btn.innerHTML = ans.value || ans['${name}']
-								if (ans.result) btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
-								const Client = await window.getClient()
-								
-								if (ans.result && ${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
-								if (ans.result && ${!!global}) Client.global(${JSON.stringify(global)})
-								if (ans.result && ${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
-								if (ans.result && ${!!reload}) Client.reload()
+								let ans = {result: true}
+								if (action) {
+									const senditmsg = await import('/-dialog/senditmsg.js').then(r => r.default)
+									const args = ${JSON.stringify(args)}
+									args['${name}'] = row['${find}'] || ''
+									args['query'] = need.query
+									ans = await senditmsg(btn, action, args)
+									if (ans.result && (ans.value || (ans['${name}'] || ans['${name}'] == 0))) btn.innerHTML = ans.value || ans['${name}']
+								}
+								if (ans.result) {
+									btn.dispatchEvent(new CustomEvent("field-saved", { detail: ans }))
+									const Client = await window.getClient()
+									if (${!!reloaddiv}) Client.reloaddiv(${JSON.stringify(reloaddiv)})
+									if (${!!global}) Client.global(${JSON.stringify(global)})
+									if (${!!go}) Client.go('${go}' + (goid ? ans[goid] : ''))
+									if (${!!reload}) Client.reload()
+								}
 								return ans.result
 							}
 						})

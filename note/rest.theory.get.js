@@ -8,7 +8,7 @@ import rest_user from "/-user/rest.user.js"
 rest.extra(rest_user)
 import rest_funcs from "/-rest/rest.funcs.js"
 rest.extra(rest_funcs)
-import rest_theory from "/-note/theory/rest.theory.js"
+import rest_theory from "/-note/rest.theory.js"
 rest.extra(rest_theory)
 
 import rest_search from "/-dialog/search/rest.search.js"
@@ -29,14 +29,14 @@ rest.extra(rest_note)
 import unique from "/-nicked/unique.js"
 import Access from "/-controller/Access.js"
 import User from "/-user/User.js"
-import Theory from "/-note/theory/Theory.js"
+import Theory from "/-note/.Theory.js"
 import NoteDB from "/-note/NoteDB.js"
 
 import config from "@atee/config"
 
 
 
-rest.addResponse('get-note-all', async view => {
+rest.addResponse('get-theory-note-all', async view => {
 	await view.get('manager#required')
 	const db = await view.get('db')
 	view.ans.list = await db.colAll(`
@@ -49,7 +49,7 @@ rest.addResponse('get-note-all', async view => {
 
 
 
-rest.addResponse('get-control', async (view) => {
+rest.addResponse('get-theory-control', async (view) => {
 	const user = await view.get('user#required')	
 	const note = await view.get('note#required')
 	view.ans.user = user
@@ -60,7 +60,7 @@ rest.addResponse('get-control', async (view) => {
 
 
 
-rest.addResponse('get-note-page', async (view) => {
+rest.addResponse('get-theory-note-page', async (view) => {
 
 	const note = await view.get('note#required')
 	const db = await view.get('db')
@@ -72,7 +72,7 @@ rest.addResponse('get-note-page', async (view) => {
 
 
 
-rest.addResponse('get-note-edit', async (view) => {
+rest.addResponse('get-theory-note-edit', async (view) => {
 	const manager = await view.get('manager#required')
 	let note = await view.get('note#required')
 	setTimeout(() => Access.setAccessTime(), 5000)
@@ -84,7 +84,7 @@ rest.addResponse('get-note-edit', async (view) => {
 })
 
 
-rest.addResponse('get-search', async view => {
+rest.addResponse('get-theory-search', async view => {
 	const db = await view.get('db')
 	const manager = await view.get('manager')
 	const hashs = await view.get('hashs')
@@ -109,7 +109,7 @@ rest.addResponse('get-search', async view => {
 	return view.ret()
 })
 
-rest.addResponse('get-sitemap', async view => {
+rest.addResponse('get-theory-sitemap', async view => {
 	const db = await view.get('db')
 	const list = await db.all(`
 		SELECT n.note_id, n.nick, n.title
@@ -131,7 +131,7 @@ rest.addResponse('get-sitemap', async view => {
 	
 	return view.ret()
 })
-rest.addResponse('get-head', async view => {
+rest.addResponse('get-theory-head', async view => {
 	const note = await view.get('note#required')
 	if (!note) {
 		view.ans.title = 'Заметка не найдена'
@@ -139,7 +139,7 @@ rest.addResponse('get-head', async view => {
 		view.ans.title = note.title || 'Пустая заметка'
 	}
 })
-rest.addResponse('get-page-sitemap', async view => {
+rest.addResponse('get-theory-page-sitemap', async view => {
 	const db = await view.get('db')
 	const conf = await config('notelic')
 	const childs = {}
@@ -159,13 +159,13 @@ rest.addResponse('get-page-sitemap', async view => {
 	}
 	return view.ret()
 })
-rest.addResponse('get-page-head', async view => {
+rest.addResponse('get-theory-page-head', async view => {
 	const page = await view.get('page')
 	view.ans.title = page.title
 	return view.ret()
 })
 
-rest.addResponse('get-page', async view => {
+rest.addResponse('get-theory-page', async view => {
 	const page = await view.get('page')
 	return {
 		nostore: true,
@@ -178,7 +178,7 @@ rest.addResponse('get-page', async view => {
 
 
 
-rest.addResponse('get-note-check', async view => {
+rest.addResponse('get-theory-note-check', async view => {
 	const note = await view.get('note')
 	const path = await view.get('path')
 	const nick = note.nick || 'empty'
@@ -189,7 +189,7 @@ rest.addResponse('get-note-check', async view => {
 })
 
 
-// rest.addResponse('get-note', async (view) => {
+// rest.addResponse('get-theory-note', async (view) => {
 // 	const note = await view.get('note#area')
 // 	const user = await view.get('user')
 // 	if (!note) return view.err('Заметка не найден')

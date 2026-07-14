@@ -7,13 +7,13 @@ import url from 'node:url'
 import Theme from '/-controller/Theme.js'
 
 import config from '@atee/config'
-import path from 'node:path'
+import nodepath from 'node:path'
 import fs from 'node:fs/promises'
 
 const conf = await config('controller')
 
 const searchRest = async (source, file, RESTS, parent = source, innodemodules = false) => {
-	const src = path.posix.join(source, file)
+	const src = nodepath.posix.join(source, file)
 	if (await fs.access(src).then(() => true).catch(() => false)) {
 		const restpath = parent + '/' + file
 		RESTS[restpath] = { direct: parent == '.' ? '' : parent }
@@ -30,9 +30,9 @@ const searchRest = async (source, file, RESTS, parent = source, innodemodules = 
 	}).map(dirent => dirent.name)
 	for (const name of dirs) {
 		if (name[0] == '.') continue
-		const newparent = name == 'node_modules' ? parent : path.posix.join(parent, name)
+		const newparent = name == 'node_modules' ? parent : nodepath.posix.join(parent, name)
 		const innode = name == 'node_modules' ? true : innodemodules
-		await searchRest(path.posix.join(source, name), file, RESTS, newparent, innode)
+		await searchRest(nodepath.posix.join(source, name), file, RESTS, newparent, innode)
 	}
 }
 const fnsort = (a, b) => {
@@ -181,7 +181,7 @@ export const readTextStream = stream => {
 
 
 const getSrcName = (str) => {
-	const i = str.lastIndexOf(path.sep)
+	const i = str.lastIndexOf(nodepath.sep)
 	const name = ~i ? str.slice(i + 1) : ''
 	return ~i && !name ? '' : name
 }
@@ -250,6 +250,7 @@ export const router = async (search) => {
 		const ext = getExt(src)
 		if (~conf['403']['indexOf'].indexOf(name)) secure = true
 		if (conf['403']['search'].some(pattern => ~('/'+name).search(pattern))) secure = true
+		if ((conf['403']['folders'] || []).some(folder => ~src.indexOf(nodepath.sep + folder + nodepath.sep))) secure = true
 
 		if (ext == 'json') { //json файлы возвращаются объектом, //с хранением в оперативной памяти
 			rest = async () => {

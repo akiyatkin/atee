@@ -7,10 +7,36 @@ const rest = new Rest(rest_db, rest_user)
 import rest_admin from '/-controller/rest.admin.js'
 rest.extra(rest_admin)
 
+import rest_search from "/-dialog/search/rest.search.js" //аргументы hash, search 
+rest.extra(rest_search)
+
 export default rest
 
 rest.addResponse('get-user', async view => {
 	const user = view.ans.user = await view.get('user')
+	return view.ret()
+})
+rest.addResponse('get-user-search', ['admin'], async view => {
+	const hashs = await view.get('hashs')	
+	const db = await view.get('db')
+	const list = await db.all(`
+		SELECT u.user_id, e.email
+		from user_users u
+		LEFT JOIN user_uemails e on (e.user_id = u.user_id and e.ordain = 1)
+		WHERE (${hashs.map(hash => 'e.search like "%' + hash.join('%" and e.search like "%') + '%"').join(' or ') || '1 = 1'})
+	`)
+
+	list.map(row => {
+		row['right'] = `<small style="margin-top:3px" class="mute">${row.user_id}</small>`
+		row['left'] = row.email
+		return row
+	})
+	list.push({
+		right: "",
+		left: "Сбросить"
+	})
+	view.ans.list = list
+
 	return view.ret()
 })
 rest.addResponse('get-user-emails', async view => {

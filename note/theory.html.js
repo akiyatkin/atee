@@ -6,7 +6,7 @@ const tpl = {}
 export default tpl
 
 tpl.ALL = (data, env) => data.result ? `
-	<p><a href="theory">Теория</a></p>
+	<p><a href="theory">Журнал</a></p>
 	<h1>Все записи</h1>
 	${data.list.map(text => tpl.showText(data, env, text)).join('<hr>')}
 
@@ -16,7 +16,7 @@ tpl.ALL = (data, env) => data.result ? `
 tpl.showText = (data, env, text) => `
 	<div>${text}</div>
 `
-tpl.title = (data, env) => `<h1>Теория</h1>`
+tpl.title = (data, env) => `<h1>Журнал</h1>`
 tpl.ROOT = (data, env) => `
 	${tpl.title(data,env)}
 	<input autocomplete="off" name="theory" type="search" placeholder="Поиск..." style="opacity:0; transition: 0.3s; width:100%; font-size: 1.5rem; padding: 0.5rem 1rem; border-radius: 1rem; border-width:1px; border-color:rgba(0,0,0,0.2)">
@@ -49,7 +49,7 @@ tpl.ROOT = (data, env) => `
 tpl.BUTTON = (data, env) => data.user?.manager ? `
 	<div style="position: relative;">
 		<p style="position: absolute; right:0; z-index: 1">
-			${field.button({label:"Cоздать", action:"/-note/theory/set-note-create", go:"/note/", goid:"note_id"})}
+			${field.button({label:"Cоздать", action:"/-note/set-theory-note-create", go:"/@atee/note/edit/", goid:"note_id"})}
 		</p>
 	</div>
 ` : ''
@@ -85,8 +85,8 @@ tpl.showList = (data, env) => `
 			const send = await import('/-dialog/send.js').then(r => r.default)
 			const ans = await send('/-user/get-user')
 			if (!ans.user?.manager) return
-			const Drag = await import('/-note/theory/Drag.js').then(r => r.default)
-			Drag.make(div, '/-note/theory/set-note-ordain')
+			const Drag = await import('/-drag/Drag.js').then(r => r.default)
+			Drag.make(div, '/-note/set-theory-note-ordain')
 		})(document.currentScript.previousElementSibling)
 	</script>
 `
@@ -119,18 +119,18 @@ tpl.CONTROL = (data, env) => {
 			${
 				field.switch({
 					name:'published', 
-					action:'/-note/theory/set-switch-published?note_id=' + data.theory.note_id, 
+					action:'/-note/set-theory-switch-published?note_id=' + data.theory.note_id, 
 					value: data.theory.published, 
 					values: {'': 'Не опубликовано','1':'Опубликовано'}
 				})
 			}
 
-			<a href="note/${data.theory.note_id}">Изменить</a>
+			<a href="/@atee/note/edit/${data.theory.note_id}">Изменить</a>
 			${
 				field.button({
 					label:"Удалить", 
-					action:"/-note/theory/set-note-delete?note_id=" + data.theory.note_id, 
-					go:'/theory', 
+					action:"/-note/set-theory-note-delete?note_id=" + data.theory.note_id, 
+					go:'/@atee/note/theory', 
 					confirm:'Вы точно хотите удалить запись?'
 				})
 			}
