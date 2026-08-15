@@ -21,7 +21,7 @@ for (const m in SELECTORS) {
 	const props = {}
 	const values = {}
 
-	PARAM.props["Арт"] ??= {
+	PARAM.props["Арт"] ??= { //Только для случая когда art весь генерируемый и нет статической части
 		"known":"column",
 		"type":"value",
 		"check": titem => PARAM.extract.map(name => titem[name]).join(" ")
@@ -98,9 +98,11 @@ class Selector {
 		//props
 		ps.props = {...PARAM.props}
 
-
 		for (const prop_nick in props) {
 			ps.props[prop_nick] = Object.assign({}, props[prop_nick], ps.props[prop_nick])
+			const prop = ps.props[prop_nick]
+			if (prop.nicks || !~['number','value'].indexOf(prop.type)) continue
+			prop.nicks = model.recap[prop_nick]
 		}
 		//ps.props['brendart'].check ??= titem => [`${titem['Бренд']} ${titem['Арт']}`]
 		//ps.props['brendmodel'].check ??= titem => [`${titem['Бренд']} ${titem['Модель']}`]
@@ -222,7 +224,7 @@ class Selector {
 					}
 				} else {
 					//Варианты titles - nicks нужны обязательно, для параметров из адреса
-					throw `Параметр "${prop.prop_title}" считывается из запроса, но у него не укзаны варианты значений titles для проверки или min, max, step`
+					throw `Параметр "${prop.prop_title}" считывается из запроса, но у него не укзаны варианты значений titles для проверки или min, max, step или не указан type = value или number`
 				}
 			} else {
 				if (!withdef) return false
@@ -339,13 +341,12 @@ class Selector {
 		
 		
 		if (isselector) { //static check
-			//Нужно найти base_item, должен существовать по указанным свойствам
 			if (!ps.model.items.some(base_item => {
-				//Меяющийся свойства без учёта динамики
 				for (const base_prop_nick of ps.prop_nicks_selector_primary_static) {
 					if (!Selector.arraysEqual(base_item[base_prop_nick], item[base_prop_nick])) return false
 				}
-				return true
+
+				return true //Нашли base у которого такие же свойтсва
 			})) return false
 		}
 		return true
@@ -472,11 +473,13 @@ class Selector {
 		
 		
 		ps.interaction = 2
+
 		for (const other_prop_nick of other_prop_nicks) {
+
 			const prop1 = ps.props[other_prop_nick]
-			if (!prop1.nicks) continue
+			if (!prop1.nicks) continue //Могло быть если свойство другого типа не меняемого?
 			const old_value_nicks = item[other_prop_nick]
-		
+			
 			for (const value_nick1 of prop1.nicks) {
 			//for (const value_nick1 of ps.model.recap[other_prop_nick]) {
 				if (old_value_nicks[0] == value_nick1) continue

@@ -1722,7 +1722,7 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 				${wvalues_where.from.join(', ')} 
 				${wvalues_where.join.join(' ')}
 			WHERE 
-				${wvalues_where.where.join(' and ')}				
+				${wvalues_where.where.join(' and ')}
 				and win.prop_id = ${prop_id}
 				and va.value_id = win.value_id
 			ORDER BY va.value_title

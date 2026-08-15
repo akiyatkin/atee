@@ -4,7 +4,8 @@ import nicked from "@atee/nicked"
 import unique from '/-nicked/unique.js'
 import PerformanceMonitor from "/-sources/PerformanceMonitor.js"
 import BulkInserter from "/-sources/BulkInserter.js"
-import scheduleDailyTask from "/-sources/scheduleDailyTask.js"
+//import scheduleDailyTask from "/-sources/scheduleDailyTask.js"
+import scheduleWeekTask from "/-sources/scheduleWeekTask.js"
 import cproc from "@atee/cproc"
 import Recalc from "/-sources/Recalc.js"
 import Db from "/-db/Db.js"
@@ -1866,10 +1867,10 @@ ShopAdmin.checkRestat = async (db) => {
 		}
 	})
 }
-ShopAdmin.scheduleDailyRestat = async (time = '01:09') => {	
-	console.log('ShopAdmin.scheduleDailyRestat', time)
+ShopAdmin.scheduleDailyRestat = async (time = '01:09', weekdays = [1,2,3,4,5,6,7]) => {	
+	console.log('ShopAdmin.scheduleDailyRestat', time, weekdays)
 
-	scheduleDailyTask(time, async () => {
+	scheduleWeekTask(time, async () => {
 		const db = await new Db().connect()
 		
 		const dates = await Recalc.getDates(db)
@@ -1885,7 +1886,7 @@ ShopAdmin.scheduleDailyRestat = async (time = '01:09') => {
 		
 		//await db.release()
 		return 'ok'
-	})
+	}, weekdays)
 }
 ShopAdmin.getFreeTableByGroupIndex = async (db, group_id = null, hashs = [], count = 20) => {
 	const ans = {poscount:0, modcount:0, head: [], rows:[], indexes:{}}

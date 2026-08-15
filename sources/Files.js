@@ -60,7 +60,7 @@ export const Files = {
 		
 		return root
 	},
-	indexFileDeep: async (dir) => { //Например images/что угодно/RVI-D2342, RVI-342.jpg
+	indexFileDeep: async (dir) => { //Например images/что угодно/[RVI-D2342], RVI-342.jpg
 		const mindex = {}
 		const root = await Files.readdirDeep(dir)
 		await Files.runRootFiles(root, async (root, finfo, level) => {

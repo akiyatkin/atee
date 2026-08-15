@@ -4,7 +4,8 @@ import unique from "/-nicked/unique.js"
 import BulkInserter from "./BulkInserter.js"
 import Access from "/-controller/Access.js"
 import fs from "fs/promises"
-import scheduleDailyTask from "/-sources/scheduleDailyTask.js"
+//import scheduleDailyTask from "/-sources/scheduleDailyTask.js"
+import scheduleWeekTask from "/-sources/scheduleWeekTask.js"
 import Recalc from "/-sources/Recalc.js"
 import Consciousness from "/-sources/Consciousness.js"
 import PerformanceMonitor from "./PerformanceMonitor.js"
@@ -150,9 +151,9 @@ Sources.recalcWinnerAppearSearch = async db => {
 }
 
 
-Sources.scheduleDailyRenovate = (time = '01:09') => {	
-	console.log('Sources.scheduleDailyRenovate', time)
-	scheduleDailyTask(time, async () => {
+Sources.scheduleDailyRenovate = (time = '01:09', weekdays = [1,2,3,4,5,6,7]) => {	
+	console.log('Sources.scheduleDailyRenovate', time, weekdays)
+	scheduleWeekTask(time, async () => {
 		const rest_sources = await import("/-sources/rest.js").then(r => r.default)
 		const data = await rest_sources.data('set-sources-renovate')
 		console.log('/-sources/set-sources-renovate', data.result)
@@ -164,7 +165,7 @@ Sources.scheduleDailyRenovate = (time = '01:09') => {
 		console.timeEnd('OPTIMIZE')
 
 		return data.result
-	})
+	}, weekdays)
 }
 
 // Sources.recalcAll = async (db, func) => {
