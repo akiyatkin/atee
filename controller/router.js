@@ -191,7 +191,7 @@ const getExt = (str) => {
 	const c = Math.max(c1, c2)
 	const i = str.lastIndexOf('.')
 	if (c > i) return ''
-	return ~i ? str.slice(i + 1) : ''
+	return ~i ? str.slice(i + 1).toLowerCase() : ''
 }
 
 const explode = (sep, str) => {
