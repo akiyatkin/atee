@@ -1657,7 +1657,7 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 	if (!~['more','column','secondary'].indexOf(prop.known)) return false
 	
 
-	const limit = 12
+	
 	const mget = {...md.mget}
 	delete mget[prop_nick]
 	const nmd = {m: Shop.makemark(mget).join(':'), mget, query: md.query, hashs: md.hashs}
@@ -1672,6 +1672,8 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 		scale: prop.scale,
 		descr: ''
 	}
+
+	const limit = filter.tpl == "select" ? 1200 : 12
 	
 
 	if (filter.tpl == 'slider') {
@@ -1728,7 +1730,6 @@ Shop.getFilterConf = async (db, prop_nick, group, md, partner) => {
 			ORDER BY va.value_title
 			LIMIT ${limit}
 		`)
-
 	} else if (prop.type == 'number') {
 		filter.values = await db.colAll(`
 			SELECT distinct win.number
