@@ -79,7 +79,7 @@ export const showBody = (data, env, model, item) => {
 					const metrikaid = window.Ya ? window.Ya._metrika.getCounters()[0].id : false
 					if (metrikaid) ym(metrikaid, 'reachGoal', goal)
 				}
-				if (Dialog.parents.length) reachGoal('button')
+				//if (Dialog.parents.length) reachGoal('button')
 
 				form.addEventListener('submit', async e => {
 					e.preventDefault()
@@ -98,7 +98,7 @@ export const showBody = (data, env, model, item) => {
 					)}]
 					const Ecommerce = await import('/-shop/Ecommerce.js').then(r => r.default)
 					Ecommerce.purchase(products)
-					reachGoal('callorder')
+					//reachGoal('callorder')
 					reachGoal('cart')
 				})
 			})(document.currentScript.previousElementSibling)
