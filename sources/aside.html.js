@@ -1,6 +1,6 @@
 import field from "/-dialog/field.html.js"
 export const ROOT = (data, env) => `
-	<div style="height:100%; display: grid; grid-template-rows: max-content 1fr max-content; gap: 1em;">
+	<div style="min-height:100%; display: grid; grid-template-rows: max-content 1fr max-content; gap: 1em;">
 		<div></div>
 		<div>
 			<div style="position: sticky; top:1em">
@@ -9,6 +9,9 @@ export const ROOT = (data, env) => `
 					<div><a href="props">Свойства</a></div>
 					<div><a href="disappear">Исчезли</a></div>
 					<div><a href="rows">Строки</a></div>
+					<hr>
+					<div><a href="memory">Память</a></div>
+					<div><a href="settings">Настройки</a></div>
 				</div>
 				<div id="RECALC"></div>
 			</div>
@@ -28,8 +31,7 @@ export const ROOT = (data, env) => `
 					global: 'check'
 				})}
 			</div> -->
-			<div><a href="memory">Память</a></div>
-			<div><a href="settings">Настройки</a></div>
+			
 		</div>
 	</div>
 `

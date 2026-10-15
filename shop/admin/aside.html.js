@@ -11,6 +11,9 @@ export const ROOT = (data, env) => `
 					<div><a href="props">Свойства</a></div>
 					<div><a href="poss">Позиции</a></div>
 					<div><a href="manager">Заказы</a></div>
+					<hr>
+					<div><a href="/@atee/sources">Источники</a></div>
+					<div><a href="settings">Настройки</a></div>
 				</div>
 				<div id="RECALC"></div>
 			</div>
@@ -29,8 +32,7 @@ export const ROOT = (data, env) => `
 				global:'check'
 			})}</div> -->
 
-			<div><a href="/@atee/sources">Источники</a></div>
-			<div><a href="settings">Настройки</a></div>
+			
 		</div>
 	</div>
 `

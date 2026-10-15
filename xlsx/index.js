@@ -50,6 +50,7 @@ export const xlsx = {
 		const {ignore = [], start = 0, starts = {}} = params
 		const listsheets = await xlsx.read(visitor, src)
 		const sheets = []
+		if (!listsheets) return sheets
 		for (const sheet of listsheets) {
 			if (sheet.name[0] == '.') continue
 			if (~ignore.indexOf(sheet.name)) continue
