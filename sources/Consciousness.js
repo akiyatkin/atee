@@ -3004,6 +3004,7 @@ Consciousness.recalcWinner = async (db) => {
 				and wi.col_index = ce.col_index
 			GROUP BY wi.key_id
 		`)
+		console.timeLog('recalcWinner')
 		await Consciousness.insertWitems(db, items)
 		
 	} finally {
